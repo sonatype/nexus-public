@@ -1,0 +1,14 @@
+Example case
+
+/ (/)
+  foo (/foo)
+    bam (/foo/bam)
+      car2 (/foo/bam/car2)*
+    baz (/foo/baz)*
+    bar (/foo/bar)*
+
+
+Maven MD recreate would run against paths:
+/foo/bam/car2
+/foo/baz
+/foo/bar

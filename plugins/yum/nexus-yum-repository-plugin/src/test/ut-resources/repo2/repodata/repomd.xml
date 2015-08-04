@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<repomd xmlns="http://linux.duke.edu/metadata/repo">
+  <revision>1330537339</revision>
+  <data type="other_db">
+    <location xml:base="http://koloriegel.de/" href="repodata/other.sqlite.bz2"/>
+    <checksum type="sha1">ab7e65707a1cd9d6eddb4a965780b9bbd0017231</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>1458</size>
+    <open-size>6144</open-size>
+    <open-checksum type="sha1">1b4f9ed7b52f646434500dc38c55705a8163fae0</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="other">
+    <checksum type="sha1">f26f913ad7f398849e3e0a20d37126fab932a239</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>813</size>
+    <open-size>3042</open-size>
+    <open-checksum type="sha1">63a7d27f5c1120c65de3dd3ca24e0e76727b850c</open-checksum>
+    <location xml:base="http://koloriegel.de/" href="repodata/other.xml.gz"/>
+  </data>
+  <data type="filelists_db">
+    <location xml:base="http://koloriegel.de/" href="repodata/filelists.sqlite.bz2"/>
+    <checksum type="sha1">178e7994a5b629f1b28dc5ef122b908523d02ecc</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>1500</size>
+    <open-size>7168</open-size>
+    <open-checksum type="sha1">d2cae56f0429b170ecdd089d38713dd76eef60aa</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="filelists">
+    <checksum type="sha1">1d506860d80d36a1d7303439a713b749912f80e1</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>817</size>
+    <open-size>3046</open-size>
+    <open-checksum type="sha1">9fdf733a6d828df4b7fe53f6b4f4d7b123147807</open-checksum>
+    <location xml:base="http://koloriegel.de/" href="repodata/filelists.xml.gz"/>
+  </data>
+  <data type="primary_db">
+    <location xml:base="http://koloriegel.de/" href="repodata/primary.sqlite.bz2"/>
+    <checksum type="sha1">664a03fba59119ee56e2156695a62cedce387735</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>2700</size>
+    <open-size>26624</open-size>
+    <open-checksum type="sha1">45ac813e876b74ce01281ce89a26a912bfc6963f</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="primary">
+    <checksum type="sha1">906c62792d1d2634bcbe654016b8b47b4cb922ce</checksum>
+    <timestamp>1330537339</timestamp>
+    <size>1317</size>
+    <open-size>16588</open-size>
+    <open-checksum type="sha1">283ea949fc8610bcdc690f397d8dbc8f68037419</open-checksum>
+    <location xml:base="http://koloriegel.de/" href="repodata/primary.xml.gz"/>
+  </data>
+</repomd>

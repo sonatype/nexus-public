@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2014 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-plugins-npm</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>pom</packaging>
+
+  <licenses>
+    <license>
+      <name>ASL2</name>
+      <url>http://opensource.org/licenses/Apache-2.0</url>
+    </license>
+  </licenses>
+
+  <contributors>
+    <contributor>
+      <name>Georgy Bolyuba</name>
+      <url>https://github.com/georgy</url>
+      <roles>
+        <role>Initial Plugin Author</role>
+      </roles>
+      <properties>
+        <original.repository>https://github.com/georgy/nexus-npm-repository-plugin</original.repository>
+      </properties>
+    </contributor>
+  </contributors>
+
+  <repositories>
+    <repository>
+      <id>rso-public-grid</id>
+      <url>https://repository.sonatype.org/content/groups/sonatype-public-grid/</url>
+    </repository>
+  </repositories>
+
+  <properties>
+    <orientdb.version>2.0.12</orientdb.version>
+
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+  </properties>
+
+  <modules>
+    <module>nexus-npm-repository-client</module>
+    <module>nexus-npm-repository-plugin</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-core</artifactId>
+        <version>${orientdb.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- INTERNAL -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-plugin</artifactId>
+        <classifier>bundle</classifier>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <configuration>
+            <excludes combine.children="append">
+              <!--
+              Sources which were contributed by 'Georgy Bolyuba' and retain customized legal headers.
+              -->
+              <exclude>README.md</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/NpmContentClass.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/NpmPlugin.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/NpmRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/group/DefaultNpmGroupRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/group/NpmGroupRepositoryConfigurator.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/group/NpmGroupRepositoryConfiguration.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/group/NpmGroupRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/hosted/DefaultNpmHostedRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/hosted/NpmHostedRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/hosted/NpmHostedRepositoryConfiguration.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/hosted/NpmHostedRepositoryConfigurator.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/internal/NpmUiContributor.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/internal/NpmMimeRulesSource.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/proxy/NpmProxyRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/proxy/DefaultNpmProxyRepository.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/proxy/NpmProxyRepositoryConfiguration.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/proxy/NpmProxyRepositoryConfigurator.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/templates/NpmGroupRepositoryTemplate.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/templates/NpmRepositoryTemplateProvider.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/templates/NpmHostedRepositoryTemplate.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/templates/NpmProxyRepositoryTemplate.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/main/java/com/bolyuba/nexus/plugin/npm/service/PackageRequest.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/test/java/com/bolyuba/nexus/plugin/npm/internal/NpmMimeRulesSourceTest.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/test/java/com/bolyuba/nexus/plugin/npm/service/PackageRequestTest.java</exclude>
+              <exclude>**/nexus-npm-repository-plugin/src/test/java/com/bolyuba/nexus/plugin/npm/service/PackageCoordinatesTest.java</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+</project>

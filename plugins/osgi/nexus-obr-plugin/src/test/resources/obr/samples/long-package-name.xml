@@ -1,0 +1,43 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<repository name='Untitled' time='20051210072623.031'>
+<resource version='3.0.0' name='org.osgi.test.cases.tracker'
+uri='org.osgi.test.cases.tracker-3.0.0.jar'>
+<size>
+44405
+</size>
+<documentation>
+http://www.osgi.org/
+</documentation>
+<copyright>
+Copyright (c) OSGi Alliance (2000, 2005). All Rights Reserved.
+</copyright>
+<category id='osgi'/>
+<category id='test'/>
+<capability name='bundle'>
+<p v='1' n='manifestversion'/>
+<p v='org.osgi.test.cases.tracker' n='symbolicname'/>
+<p v='3.0.0' t='version' n='version'/>
+</capability>
+<capability name='package'>
+<p v='org.osgi.test.cases.tracker' n='package'/>
+<p v='0.0.0' t='version' n='version'/>
+</capability>
+<require optional='false' multiple='false' name='package'
+filter='(&amp;(package=org.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo)(version&gt;=1.1.0))'>
+Import package org.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo ;version=1.1.0
+</require>
+</resource>
+</repository>

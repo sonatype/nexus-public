@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="searchNGResponse" type="searchNGResponse"/>
+  <xs:element name="search-results" type="searchResponse"/>
+  <xs:complexType name="nexus-artifact">
+    <xs:sequence>
+      <xs:element name="highlightedFragment" type="xs:string" minOccurs="0"/>
+      <xs:element name="version" type="xs:string" minOccurs="0"/>
+      <xs:element name="classifier" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoId" type="xs:string" minOccurs="0"/>
+      <xs:element name="pomLink" type="xs:string" minOccurs="0"/>
+      <xs:element name="contextId" type="xs:string" minOccurs="0"/>
+      <xs:element name="packaging" type="xs:string" minOccurs="0"/>
+      <xs:element name="artifactLink" type="xs:string" minOccurs="0"/>
+      <xs:element name="artifactId" type="xs:string" minOccurs="0"/>
+      <xs:element name="extension" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nexusIndexerResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="nexusNGArtifact">
+    <xs:sequence>
+      <xs:element name="groupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="latestReleaseRepositoryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="artifactHits" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="artifactHit" type="artifactHit" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="latestSnapshot" type="xs:string" minOccurs="0"/>
+      <xs:element name="artifactId" type="xs:string" minOccurs="0"/>
+      <xs:element name="highlightedFragment" type="xs:string" minOccurs="0"/>
+      <xs:element name="latestSnapshotRepositoryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="latestRelease" type="xs:string" minOccurs="0"/>
+      <xs:element name="version" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="artifactHit">
+    <xs:sequence>
+      <xs:element name="artifactLinks" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="artifactLink" type="artifactLink" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="repositoryId" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="artifactLink">
+    <xs:sequence>
+      <xs:element name="classifier" type="xs:string" minOccurs="0"/>
+      <xs:element name="extension" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryDetail">
+    <xs:sequence>
+      <xs:element name="repositoryURL" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryContentClass" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryKind" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryName" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryPolicy" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nexusResponse"/>
+  <xs:complexType name="searchNGResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusIndexerResponse">
+        <xs:sequence>
+          <xs:element name="tooManyResults" type="xs:boolean" minOccurs="1"/>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="nexusNGArtifact" type="nexusNGArtifact" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="count" type="xs:int" minOccurs="1"/>
+          <xs:element name="collapsed" type="xs:boolean" minOccurs="1"/>
+          <xs:element name="repoDetails" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repositoryDetail" type="repositoryDetail" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="totalCount" type="xs:int" minOccurs="1"/>
+          <xs:element name="from" type="xs:int" minOccurs="1"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="searchResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusIndexerResponse">
+        <xs:sequence>
+          <xs:element name="from" type="xs:int" minOccurs="1"/>
+          <xs:element name="tooManyResults" type="xs:boolean" minOccurs="1"/>
+          <xs:element name="totalCount" type="xs:int" minOccurs="1"/>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="artifact" type="nexus-artifact" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="count" type="xs:int" minOccurs="1"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

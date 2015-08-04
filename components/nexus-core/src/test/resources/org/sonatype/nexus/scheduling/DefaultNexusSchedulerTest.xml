@@ -1,0 +1,22 @@
+<plexus>
+  <components>
+    <component>
+      <role>org.sonatype.scheduling.SchedulerTask</role>
+      <role-hint>org.sonatype.nexus.scheduling.DummyWaitingNexusTask</role-hint>
+      <instantiation-strategy>per-lookup</instantiation-strategy>
+      <implementation>org.sonatype.nexus.scheduling.DummyWaitingNexusTask</implementation>
+    </component>
+    <component>
+      <role>org.sonatype.scheduling.SchedulerTask</role>
+      <role-hint>org.sonatype.nexus.scheduling.DummyWaitingNexusRepositoriesTask</role-hint>
+      <instantiation-strategy>per-lookup</instantiation-strategy>
+      <implementation>org.sonatype.nexus.scheduling.DummyWaitingNexusRepositoriesTask</implementation>
+    </component>
+    <component>
+      <role>org.sonatype.scheduling.SchedulerTask</role>
+      <role-hint>ExceptionerNexusTask</role-hint>
+      <instantiation-strategy>per-lookup</instantiation-strategy>
+      <implementation>org.sonatype.nexus.scheduling.ExceptionerNexusTask</implementation>
+    </component>
+  </components>
+</plexus>

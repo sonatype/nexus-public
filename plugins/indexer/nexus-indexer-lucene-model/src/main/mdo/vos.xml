@@ -1,0 +1,670 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model>
+
+  <id>vos</id>
+
+  <name>Nexus Lucene Indexer REST VOs</name>
+
+  <description>
+	<![CDATA[
+		<p>Nexus Value Objects used in REST API</p>
+	]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.rest.model</value>
+    </default>
+  </defaults>
+
+  <classes>
+
+    <!-- Root class for all responses -->
+    <class>
+      <name>NexusIndexerResponse</name>
+      <version>1.0.0+</version>
+      <fields></fields>
+      <superClass>org.sonatype.nexus.rest.model.NexusResponse</superClass>
+    </class>
+    <!-- Search -->
+    <class>
+      <!-- Search response -->
+      <name>SearchResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusIndexerResponse</superClass>
+      <description>REST Response object for a list of search results, contains the typical 'data' parameter, which is a
+        list of search results.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "search-results" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "search-results" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>totalCount</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The total number of results.</description>
+        </field>
+        <field>
+          <name>from</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The starting index of the results.</description>
+        </field>
+        <field>
+          <name>count</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The number of results in this response.</description>
+        </field>
+        <field>
+          <name>tooManyResults</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if too many results were found.</description>
+        </field>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusArtifact</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of found artifacts.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "artifact" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusArtifact</name>
+      <version>1.0.0+</version>
+      <description>Artifact details sent back on search requests.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nexus-artifact" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL that can be used to retrieve the artifact.</description>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The group id of the artifact.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifact id of the artifact.</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the artifact.</description>
+        </field>
+        <field>
+          <name>classifier</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The classifier of the artifact.</description>
+        </field>
+        <field>
+          <name>packaging</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The packaging of the artifact.</description>
+        </field>
+        <field>
+          <name>extension</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The extension of the artifact.</description>
+        </field>
+        <field>
+          <name>repoId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>contextId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The indexing context where the artifact is indexed.</description>
+        </field>
+        <field>
+          <name>pomLink</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>URL that would give you the pom file.</description>
+        </field>
+        <field>
+          <name>artifactLink</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>URL that would give you the artifact file.</description>
+        </field>
+        <field>
+          <name>highlightedFragment</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>A HTML highlighted fragment of the matched hit.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- ArtifactInfo -->
+    <class>
+      <name>ArtifactInfoResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusIndexerResponse</superClass>
+      <description>REST Response object for a artifact-info resource request, contains the typical 'data' parameter,
+        which is the content items requested.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "artifact-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "artifact-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ArtifactInfoResource</type>
+          </association>
+          <required>true</required>
+          <description>List of describe items, that will contain useful information about the retrieved data.
+          </description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ArtifactInfoResource</name>
+      <version>1.0.0+</version>
+      <description>Details about the requested item, that should be useful in finding how the item was retrieved.
+      </description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "artifact-info-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "artifact-info-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>presentLocally</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>The flag that marks item as locally present (hosted/cached).</description>
+        </field>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>repositoryName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository name where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>repositoryPath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The path in repository where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>mimeType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The MIME type of the artifact.</description>
+        </field>
+        <field>
+          <name>uploader</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>User id that uploaded the artifact.</description>
+        </field>
+        <field>
+          <name>uploaded</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>false</required>
+          <description>When the artifact was uploaded.</description>
+        </field>
+        <field>
+          <name>lastChanged</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>false</required>
+          <description>When the artifact was changed for the last time.</description>
+        </field>
+        <field>
+          <name>size</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>Artifact size on disk.</description>
+        </field>
+        <field>
+          <name>sha1Hash</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Sha1 Hash.</description>
+        </field>
+        <field>
+          <name>md5Hash</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Md5 Hash.</description>
+        </field>
+        <field>
+          <name>repositories</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryUrlResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The repositories list containing the artifact.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repositories" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>canDelete</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Informs if current user has what is needed to delete this artifact.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryUrlResource</name>
+      <version>1.0.0+</version>
+      <description>The repository url information for a given artifact</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repository-url-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-url-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>repositoryName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository where the artifact is stored.</description>
+        </field>
+        <field>
+          <name>path</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifact path.</description>
+        </field>
+        <field>
+          <name>artifactUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifact url.</description>
+        </field>
+        <field>
+          <name>canView</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Tells if the users has view access to a given artifact.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Search NG -->
+    <class>
+      <!-- Search response -->
+      <name>SearchNGResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusIndexerResponse</superClass>
+      <description>REST Response object for a list of search results, contains the typical 'data' parameter, which is a
+        list of search results.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "searchNGResponse" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "searchNGResponse" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>totalCount</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The grand total number of results found on index.</description>
+        </field>
+        <field>
+          <name>from</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The starting index of the results.</description>
+        </field>
+        <field>
+          <name>count</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The number of results in this response.</description>
+        </field>
+        <field>
+          <name>tooManyResults</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if too many results were found.</description>
+        </field>
+        <field>
+          <name>collapsed</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if result set is collapsed, and shows latest versions only.</description>
+        </field>
+        <field>
+          <name>repoDetails</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusNGRepositoryDetail</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repositories artifacts found in.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "repoDetails" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repositoryDetail" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusNGArtifact</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of found artifacts.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "nexusNGArtifact" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusNGArtifact</name>
+      <version>1.0.0+</version>
+      <description>Artifact details sent back on search requests.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nexusNGArtifact" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The group id of the artifact.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifact id of the artifact.</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the artifact.</description>
+        </field>
+        <field>
+          <name>latestSnapshot</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The latest snapshot version of the artifact.</description>
+        </field>
+        <field>
+          <name>latestSnapshotRepositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository of latest snapshot version of the artifact.</description>
+        </field>
+        <field>
+          <name>latestRelease</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The latest release version of the artifact.</description>
+        </field>
+        <field>
+          <name>latestReleaseRepositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository of latest release version of the artifact.</description>
+        </field>
+        <field>
+          <name>highlightedFragment</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>A HTML highlighted fragment of the matched hit.</description>
+        </field>
+        <field>
+          <name>artifactHits</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusNGArtifactHit</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of found artifact hits.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "artifactHits" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "artifactHit" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+    
+    <class>
+      <name>NexusNGRepositoryDetail</name>
+      <version>1.0.0+</version>
+      <description>Artifact repository details sent back on search requests.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repositoryDetail" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository ID.</description>
+        </field>
+        <field>
+          <name>repositoryName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository name.</description>
+        </field>
+        <field>
+          <name>repositoryContentClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository content class.</description>
+        </field>
+        <field>
+          <name>repositoryKind</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository kind (hosted, proxy, group).</description>
+        </field>
+        <field>
+          <name>repositoryPolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository policy (RELEASE or SNAPSHOT).</description>
+        </field>
+        <field>
+          <name>repositoryURL</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository base URL.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusNGArtifactHit</name>
+      <version>1.0.0+</version>
+      <description>Artifact hit details sent back on search requests.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "artifactHit" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository ID.</description>
+        </field>
+        <field>
+          <name>artifactLinks</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusNGArtifactLink</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of found artifact hits.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "artifactLinks" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "artifactLink" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusNGArtifactLink</name>
+      <version>1.0.0+</version>
+      <description>Artifact hit link details sent back on search requests.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "artifactLink" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)
+        </annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>classifier</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The classifier of the artifact.</description>
+        </field>
+        <field>
+          <name>extension</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The extension of the artifact.</description>
+        </field>
+      </fields>
+    </class>
+  </classes>
+
+</model>

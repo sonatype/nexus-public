@@ -1,0 +1,90 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <!-- Parent POM -->
+  <parent>
+    <groupId>org.sonatype.nexus</groupId>
+    <artifactId>nexus</artifactId>
+    <version>1.9-SNAPSHOT</version>
+  </parent>
+
+  <!-- the version of maven's project object model -->
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- a unique name for this project -->
+  <artifactId>nexus-api</artifactId>
+
+  <!-- POM packaging -->
+  <packaging>jar</packaging>
+
+  <!-- a short but descriptive name for the project -->
+  <name>Nexus : API</name>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-utils</artifactId>
+    </dependency>
+
+    <!-- Here for "compatibility" reason only! -->
+    <dependency>
+      <groupId>org.sonatype.sisu</groupId>
+      <artifactId>sisu-inject-plexus</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.plexus.appevents</groupId>
+      <artifactId>plexus-app-events-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.plexus</groupId>
+      <artifactId>plexus-task-scheduler</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.spice</groupId>
+      <artifactId>spice-timeline</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.configuration</groupId>
+      <artifactId>base-configuration</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>rome</groupId>
+      <artifactId>rome</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.medsea.mimeutil</groupId>
+      <artifactId>mime-util</artifactId>
+    </dependency>
+
+    <!-- for marking extensions -->
+    <dependency>
+      <groupId>org.sonatype.plugin</groupId>
+      <artifactId>plugin-host-api</artifactId>
+    </dependency>
+
+    <!-- Testing -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-component-metadata</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

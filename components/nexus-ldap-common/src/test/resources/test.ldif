@@ -1,0 +1,153 @@
+version: 1
+
+dn: uid=joe,ou=users,ou=system
+mail: joe.pentaho@pentaho.org
+uniquemember: cn=ceo,ou=roles
+uniquemember: cn=Admin,ou=roles
+objectclass: inetOrgPerson
+objectclass: organizationalPerson
+objectclass: person
+objectclass: groupOfUniqueNames
+objectclass: top
+uid: joe
+cn: joe
+businesscategory: cn=ceo,ou=roles,ou=system
+businesscategory: cn=Admin,ou=roles,ou=system
+userpassword:: cGFzc3dvcmQ=
+sn: Pentaho
+
+dn: uid=suzy,ou=users,ou=system
+mail: suzy.pentaho@pentaho.org
+uniquemember: cn=cto, ou=roles
+uniquemember: cn = is , ou = roles
+objectclass: inetOrgPerson
+objectclass: organizationalPerson
+objectclass: person
+objectclass: groupOfUniqueNames
+objectclass: top
+uid: suzy
+cn: suzy
+userpassword:: cGFzc3dvcmQ=
+businesscategory: cn=cto,ou=roles,ou=system
+businesscategory: cn=is,ou=roles,ou=system
+sn: Pentaho
+
+dn: uid=tiffany,ou=users,ou=system
+mail: tiffany.pentaho@pentaho.org
+uniquemember: cn=devmgr,ou=roles
+uniquemember: cn=dev,ou=roles
+objectclass: inetOrgPerson
+objectclass: organizationalPerson
+objectclass: person
+objectclass: groupOfUniqueNames
+objectclass: top
+uid: tiffany
+cn: tiffany
+businesscategory: cn=devmgr,ou=roles,ou=system
+businesscategory: cn=dev,ou=roles,ou=system
+userpassword:: cGFzc3dvcmQ=
+sn: Pentaho
+
+dn: uid=pat,ou=users,ou=system
+mail: pat.pentaho@pentaho.org
+uniquemember: cn=dev,ou=roles
+objectclass: inetOrgPerson
+objectclass: organizationalPerson
+objectclass: person
+objectclass: groupOfUniqueNames
+objectclass: top
+uid: pat
+cn: pat
+businesscategory: cn=dev,ou=roles,ou=system
+userpassword:: cGFzc3dvcmQ=
+sn: Pentaho
+
+dn: cn=Sales,ou=groups,ou=system
+cn: Sales
+objectclass: groupofuniquenames
+objectclass: top
+uniquemember: uid=joe,ou=users,ou=system
+
+dn: cn=Marketing,ou=groups,ou=system
+cn: Marketing
+objectclass: groupofuniquenames
+objectclass: top
+uniquemember: uid=suzy,ou=users,ou=system
+
+dn: cn=Development,ou=groups,ou=system
+cn: Development
+objectclass: groupOfUniqueNames
+objectclass: top
+uniquemember: uid=pat,ou=users,ou=system
+uniquemember: uid=tiffany,ou=users,ou=system
+
+dn: ou=roles,ou=system
+ou: roles
+objectclass: organizationalUnit
+objectclass: top
+
+dn: cn=devmgr,ou=roles,ou=system
+l: Orlando
+objectclass: organizationalRole
+objectclass: top
+description: Development Manager
+roleoccupant: uid=tiffany,ou=users,ou=system
+cn: devmgr
+
+dn: cn=cto,ou=roles,ou=system
+cn: cto
+description: CTO Role
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=suzy,ou=users,ou=system
+l: Orlando
+st: Florida
+
+dn: cn=ceo,ou=roles,ou=system
+cn: ceo
+description: CEO Role
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=joe,ou=users,ou=system
+l: Orlando
+st: Florida
+
+dn: cn=is,ou=roles,ou=system
+cn: is
+description: Information Systems
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=suzy,ou=users,ou=system
+l: Orlando
+st: Florida
+
+dn: cn=dev,ou=roles,ou=system
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=pat,ou=users,ou=system
+roleoccupant: uid=tiffany,ou=users,ou=system
+cn: dev
+
+dn: cn=Admin,ou=roles,ou=system
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=joe,ou=users,ou=system
+roleoccupant: uid=admin,ou=system
+cn: Admin
+
+dn: cn=Authenticated,ou=roles,ou=system
+objectclass: organizationalRole
+objectclass: top
+roleoccupant: uid=joe,ou=users,ou=system
+roleoccupant: uid=suzy,ou=users,ou=system
+roleoccupant: uid=suzy,ou=users,ou=system
+roleoccupant: uid=pat,ou=users,ou=system
+roleoccupant: uid=pat,ou=users,ou=system
+roleoccupant: uid=tiffany,ou=users,ou=system
+roleoccupant: uid=tiffany,ou=users,ou=system
+cn: Authenticated
+
+dn: cn=Anonymous,ou=roles,ou=system
+cn: Anonymous
+objectclass: organizationalRole
+objectclass: top

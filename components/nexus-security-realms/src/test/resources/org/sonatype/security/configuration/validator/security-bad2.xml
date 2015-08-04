@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<!-- This configuration will cause 3 validation warnings -->
+<!-- This configuration will cause 11 validation error -->
+<security>
+    <version>2.0.0</version>    
+    <privileges>      
+      <privilege>
+        <id>1</id>
+        <name>priv</name>
+        <type>method</type>
+        <properties>
+          <property>
+            <key>method</key>
+            <value>read</value>
+          </property>
+          <property>
+            <key>permission</key>
+            <value>/some/path/</value>
+          </property>
+        </properties>
+      </privilege>      
+    </privileges>    
+    <roles>      
+        <!-- invalid id of 0 -->
+        <!-- no session timeout --> <!-- No longer required, will be removed from model soon -->
+        <role>      
+            <id>0</id>
+            <name>name</name>
+        </role>
+        
+        <!-- no id -->
+        <!-- no name -->
+        <!-- invalid session timeout --> <!-- No longer required, will be removed from model soon -->
+        <role>
+          <sessionTimeout>0</sessionTimeout>
+          <privileges>
+            <privilege>1</privilege>
+          </privileges>
+        </role>
+        
+        <role>
+            <id>arole</id>
+            <name>name</name>
+            <sessionTimeout>25</sessionTimeout>
+            <privileges>
+              <privilege>1</privilege>
+            </privileges>
+        </role>
+        
+        <!-- Duplicate role id -->      
+        <role>
+            <id>arole</id>
+            <name>name</name>
+            <sessionTimeout>25</sessionTimeout>
+            <privileges>
+              <privilege>1</privilege>
+            </privileges>
+        </role>   
+        
+        <!-- including itself -->
+        <role>
+          <id>recursive</id>
+          <name>recursive</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive</role>
+          </roles>
+        </role>
+        
+        <!-- including itself via another role -->
+        <role>
+          <id>recursive2</id>
+          <name>recursive2</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive3</role>
+          </roles>
+        </role>     
+        
+        <!-- including itself via another role -->
+        <role>
+          <id>recursive3</id>
+          <name>recursive3</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive2</role>
+          </roles>
+        </role>          
+        
+        <!-- including itself via another role -->
+        <role>
+          <id>recursive4</id>
+          <name>recursive4</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive5</role>
+          </roles>
+        </role>
+        
+        <!-- including itself via another role -->
+        <role>
+          <id>recursive5</id>
+          <name>recursive5</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive6</role>
+          </roles>
+        </role>
+        
+        <!-- including itself via another role -->
+        <role>
+          <id>recursive6</id>
+          <name>recursive6</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>recursive4</role>
+          </roles>
+        </role>
+        
+        <role>
+          <id>errantRole1</id>
+          <name>role</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>errantRole2</role>
+          </roles>
+        </role>
+        <role>
+          <id>errantRole2</id>
+          <name>role</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>errantRole3</role>
+          </roles>
+        </role>
+        <!-- Invalid roel -->
+        <role>
+          <id>errantRole3</id>
+          <name>role</name>
+          <sessionTimeout>25</sessionTimeout>
+          <roles>
+            <role>errantRoleNotValid</role>
+          </roles>
+        </role>
+    </roles>
+</security>

@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-plugins</artifactId>
+    <version>13</version>
+  </parent>
+
+  <artifactId>maven-site-plugin</artifactId>
+  <version>2.0.1</version>
+  <packaging>maven-plugin</packaging>
+
+  <name>Maven Site Plugin</name>
+  <description>The Maven Site Plugin is a plugin that generates a site for the current project.</description>
+
+  <contributors>
+    <contributor>
+      <name>Naoki Nose</name>
+      <email>ikkoan@mail.goo.ne.jp</email>
+      <roles>
+        <role>Japanese translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Michael Wechner</name>
+      <email>michael.wechner@wyona.com</email>
+      <roles>
+        <role>German translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Christian Schulte</name>
+      <email>cs@schulte.it</email>
+      <roles>
+        <role>German translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Piotr Bzdyl</name>
+      <email>piotr@bzdyl.net</email>
+      <roles>
+        <role>Polish translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Domingos Creado</name>
+      <email>dcreado@users.sf.net</email>
+      <roles>
+        <role>Brazilian Portuguese translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>John Allen</name>
+      <email>john_h_allen@hotmail.com</email>
+    </contributor>
+    <contributor>
+      <name>Laszlo Hornyak Kocka</name>
+      <email>laszlo.hornyak@gmail.com</email>
+      <roles>
+        <role>Hungarian translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Hermod Opstvedt</name>
+      <email>hermod.opstvedt@dnbnor.no</email>
+      <roles>
+        <role>Norwegian translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Yue Ni</name>
+      <email>ni2yue4@gmail.com</email>
+      <roles>
+        <role>Chinese translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Arturo Vazquez</name>
+      <email>vaz@root.com.mx</email>
+      <roles>
+        <role>Spanish translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Woonsan Ko</name>
+      <email>woon_san@yahoo.com</email>
+      <roles>
+        <role>Korean translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Martin Vysny</name>
+      <email>mvy@whitestein.com</email>
+      <roles>
+        <role>Slovak translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Petr Ferschmann</name>
+      <email>pferschmann@softeu.com</email>
+      <roles>
+        <role>Czech translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Kristian Mandrup</name>
+      <email>kristian@mandrup.dk</email>
+      <roles>
+        <role>Danish translator</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Samuel Santos</name>
+      <email>samaxes@gmail.com</email>
+      <roles>
+        <role>Portuguese translator</role>
+      </roles>
+    </contributor>
+  </contributors>
+
+  <prerequisites>
+    <maven>2.0.6</maven>
+  </prerequisites>
+
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/maven/plugins/tags/maven-site-plugin-2.0.1</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/plugins/tags/maven-site-plugin-2.0.1</developerConnection>
+    <url>http://svn.apache.org/viewvc/maven/plugins/tags/maven-site-plugin-2.0.1</url>
+  </scm>
+  <issueManagement>
+    <system>JIRA</system>
+    <url>http://jira.codehaus.org/browse/MSITE</url>
+  </issueManagement>
+
+  <properties>
+    <doxiaVersion>1.0</doxiaVersion>
+    <doxiaSitetoolsVersion>1.0</doxiaSitetoolsVersion>
+    <mavenVersion>2.0.6</mavenVersion>
+    <wagonVersion>1.0-beta-4</wagonVersion>
+  </properties>
+
+  <dependencies>
+    <!-- Maven -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact-manager</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-project</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-settings</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.reporting</groupId>
+      <artifactId>maven-reporting-api</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+
+    <!-- Doxia -->
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-module-xhtml</artifactId>
+      <version>${doxiaVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-sink-api</artifactId>
+      <version>${doxiaVersion}</version>
+    </dependency>
+
+    <!-- Doxia-sitetools -->
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-decoration-model</artifactId>
+      <version>${doxiaSitetoolsVersion}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-container-default</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-site-renderer</artifactId>
+      <version>${doxiaSitetoolsVersion}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-container-default</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-doxia-tools</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+
+    <!-- Wagon -->
+    <dependency>
+      <groupId>org.apache.maven.wagon</groupId>
+      <artifactId>wagon-provider-api</artifactId>
+      <version>${wagonVersion}</version>
+    </dependency>
+
+    <!-- Plexus -->
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-archiver</artifactId>
+      <version>1.0-alpha-7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-container-default</artifactId>
+      <version>1.0-alpha-9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-i18n</artifactId>
+      <version>1.0-beta-7</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>1.5.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mortbay.jetty</groupId>
+      <artifactId>jetty</artifactId>
+      <version>6.1.5</version>
+    </dependency>
+
+    <!-- test -->
+    <dependency>
+      <groupId>org.apache.maven.plugin-testing</groupId>
+      <artifactId>maven-plugin-testing-harness</artifactId>
+      <version>1.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.2-beta-4</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>2.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.1.1</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <profiles>
+    <profile>
+      <id>run-its</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <version>1.3</version>
+            <configuration>
+              <projectsDirectory>src/it</projectsDirectory>
+              <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+              <pomIncludes>
+                <pomInclude>*/pom.xml</pomInclude>
+              </pomIncludes>
+              <postBuildHookScript>verify</postBuildHookScript>
+              <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+              <goals>
+                <goal>clean</goal>
+                <goal>${project.groupId}:${project.artifactId}:${project.version}:site</goal>
+              </goals>
+              <settingsFile>src/it/settings.xml</settingsFile>
+            </configuration>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>install</goal>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+           </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>reporting</id>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>l10n-maven-plugin</artifactId>
+            <version>1.0-alpha-2</version>
+            <configuration>
+              <locales>
+                <locale>ca</locale>
+                <locale>cs</locale>
+                <locale>da</locale>
+                <locale>de</locale>
+                <locale>es</locale>
+                <locale>fr</locale>
+                <locale>hu</locale>
+                <locale>it</locale>
+                <locale>ja</locale>
+                <locale>ko</locale>
+                <locale>nl</locale>
+                <locale>no</locale>
+                <locale>pl</locale>
+                <locale>pt</locale>
+                <locale>pt_BR</locale>
+                <locale>sk</locale>
+                <locale>sv</locale>
+                <locale>tr</locale>
+                <locale>zh_CN</locale>
+                <locale>zh_TW</locale>
+              </locales>
+            </configuration>
+          </plugin>
+        </plugins>
+      </reporting>
+    </profile>
+    <profile>
+      <!-- this should become 'apache-release' when maven-parent-12 is used -->
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <descriptors>
+                   <descriptor>src/main/assembly/source-release.xml</descriptor>
+                  </descriptors>
+                  <tarLongFileMode>gnu</tarLongFileMode>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

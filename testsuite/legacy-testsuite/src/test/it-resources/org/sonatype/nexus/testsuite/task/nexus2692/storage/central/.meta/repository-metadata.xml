@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>http://repo1.maven.org/maven2/</url>
+  <id>central</id>
+  <name>Maven Central</name>
+  <layout>maven2</layout>
+  <policy>release</policy>
+  <localUrl>@rootUrl@/content/repositories/central</localUrl>
+</repository-metadata>

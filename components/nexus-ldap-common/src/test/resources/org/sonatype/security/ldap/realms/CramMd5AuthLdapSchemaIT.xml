@@ -1,0 +1,42 @@
+<plexus>
+	<components>
+		<component>
+			<role>org.sonatype.ldaptestsuite.LdapServer</role>
+			<implementation>
+				org.sonatype.ldaptestsuite.LdapServer
+			</implementation>
+			<configuration>
+				<workingDirectory>
+					${basedir}/target/apache-ds/
+				</workingDirectory>
+				<doDelete>true</doDelete>
+				<port>0</port>
+				
+				<saslHost>localhost</saslHost>
+			    <saslPrincipal>ldap/localhost@EXAMPLE.COM</saslPrincipal>
+			    <searchBaseDn>ou=system</searchBaseDn>
+			    <saslRealms>
+			       <saslRealm>localhost</saslRealm>
+			    </saslRealms>
+				
+				<partitions>
+					<partition>
+						<name>sonatype</name>
+						<suffix>o=sonatype</suffix>
+						<indexedAttributes>
+							<indexedAttribute>
+								objectClass
+							</indexedAttribute>
+							<indexedAttribute>o</indexedAttribute>
+						</indexedAttributes>
+						<rootEntryClasses>
+							<rootEntryClass>top</rootEntryClass>
+							<rootEntryClass>organization</rootEntryClass>
+						</rootEntryClasses>
+						<ldifFile>${test-path}.ldif</ldifFile>
+					</partition>
+				</partitions>
+			</configuration>
+		</component>
+	</components>
+</plexus>

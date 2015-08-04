@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <!-- TODO remove when using Maven Parent 11+ -->
+  <skin>
+    <groupId>org.apache.maven.skins</groupId>
+    <artifactId>maven-stylus-skin</artifactId>
+    <version>1.1-SNAPSHOT</version>
+  </skin>
+
+  <body>
+
+    <breadcrumbs>
+      <!-- TODO: This breadcrumb should be removed when it has been solved in the parent -->
+      <item name="Maven" href="http://maven.apache.org/index.html" />
+      <item name="Mercury" href="http://maven.apache.org/mercury/index.html" />
+      <item name="Mercury Ant" href="http://maven.apache.org/mercury/mercury-mp3/index.html" />
+    </breadcrumbs>
+
+    <menu name="Documentation">
+
+      <item name="Wiki" href="http://docs.codehaus.org/display/MAVEN/Mercury" />
+
+      <item name="Design">
+        <item name="Overview" href="overview.html" />
+      </item>
+
+    </menu>
+
+
+    <menu ref="modules"/>
+
+  </body>
+</project>

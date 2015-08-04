@@ -1,0 +1,193 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>$appName</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!--[if IE]>
+  <link rel="SHORTCUT ICON" href="favicon.ico"/>
+  <![endif]-->
+
+  <link rel="stylesheet" href="static/ext-3.4.1.1/resources/css/ext-all.css"
+        type="text/css" media="screen" charset="utf-8"/>
+  <link rel="stylesheet" href="static/ext-3.4.1.1/resources/css/xtheme-gray.css"
+        type="text/css" media="screen" charset="utf-8"/>
+  <link rel="stylesheet" href="style/$buildQualifier/sonatype-all.css"
+        type="text/css" media="screen" title="no title" charset="utf-8"/>
+
+  #if ($debug)
+    <script src="static/ext-3.4.1.1/adapter/ext/ext-base-debug.js" type="text/javascript" charset="utf-8"></script>
+    <script src="static/ext-3.4.1.1/ext-all-debug.js" type="text/javascript" charset="utf-8"></script>
+  #else
+    ## load aggregated/minified files
+    <script src="static/ext-3.4.1.1/adapter/ext/ext-base.js" type="text/javascript" charset="utf-8"></script>
+    <script src="static/ext-3.4.1.1/ext-all.js" type="text/javascript" charset="utf-8"></script>
+  #end
+
+  <script src="js/$buildQualifier/sonatype-lib.js" type="text/javascript" charset="utf-8"></script>
+
+  ## HACK: Disable CSRFGuard support for now, its too problematic
+  ##<script src="csrfguard.js" type="text/javascript" charset="utf-8"></script>
+
+  <script type="text/javascript" charset="utf-8">
+    requirejs.config({
+      baseUrl: 'static/js',
+      paths: {
+        // css modules need to escape from js base url
+        'static/css': '../css'
+      },
+      urlArgs: "nexusVersion=$nexusVersion"
+    });
+
+    var initUI = function (require, files) {
+      require(['require', 'extjs', 'Nexus/ui', 'Sonatype/all'], function (require, Ext, Nexus, Sonatype) {
+        var all = files.length + ${rJsContributions.size()};
+        loaded = 0;
+
+        function init() {
+          loaded += 1;
+
+          if (loaded < all) {
+            return;
+          }
+
+          var alreadyDone = false;
+
+          function init() {
+            if (!Ext.isReady || alreadyDone) {
+              return;
+            }
+            alreadyDone = true;
+
+            if (Ext.isIE6 || Ext.isIE7) {
+              Ext.MessageBox.alert('Unsupported Browser',
+                      'You are using a version of Internet Explorer that is not supported.<br/>See the <a href="http://links.sonatype.com/products/nexus/oss/docs/browsers">knowledge base article</a> for details.')
+            }
+
+            Nexus.Log.debug('Initializing UI...');
+            Sonatype.init();
+            Sonatype.view.init();
+            Nexus.Log.debug('Loading Nexus Status...');
+            Sonatype.utils.loadNexusStatus();
+          };
+
+          Nexus.Log.debug('Loaded plugins');
+          Ext.onReady(init);
+          init();
+        }
+
+        function errorCallback(error) {
+          if (Nexus.error !== undefined) {
+            Nexus.error.handle(new Error(error.requireType + ': ' + error.requireModules));
+          }
+          else if (console !== undefined) {
+            console.log(new Error(error.requireType + ': ' + error.requireModules));
+          }
+          init();
+        }
+
+        Ext.each(files, function (js) {
+          require([js], init, errorCallback);
+        });
+
+        var deps = ['require'];
+        var bootModules = [];
+
+        ## for each r.js enabled plugin...
+        #foreach($rJs in $rJsContributions)
+          #foreach($dependency in $rJs.getDependencies())
+            deps.push('$dependency');
+          #end
+
+          bootModules.push('$rJs.getModule()');
+        #end
+
+        require(deps, function (require) {
+          Ext.each(bootModules, function (mod) {
+            require([mod], init, errorCallback);
+          });
+        });
+      });
+    }
+
+    var dependencies = [];
+    #foreach( $js in $pluginJsFiles )
+    dependencies.push('$js');
+    #end
+
+    #*
+      Because we use requirejs modules that install stuff into global namespace (... NX.define ...) and use those
+      things *outside of an r.js module* (... NX.define defines r.js modules ...) we have to "layer" our loading here.
+
+      First NX for NX.define et al, then preload sonatype-all.js (cannot load it earlier b/c
+      NX.define is not in place), then require the actual modules contained in sonatype-all.js.
+      Plugin loading is done in initUI(...), *after core UI is initialized* (again, global names that need to be
+      in place first).
+    *#
+    requirejs([
+      'require'
+      #if (!$debug)
+        , 'js/$buildQualifier/nx-all.js'
+      #end
+    ], function (require) {
+      require(['require', 'NX/bootstrap'], function (require) {
+        require([
+          'require'
+          #if (!$debug)
+            , 'js/$buildQualifier/sonatype-all.js'
+          #end
+        ], function (require) {
+          initUI(require, dependencies);
+        })
+      });
+    });
+  </script>
+</head>
+
+<body>
+
+<div id="header">
+  <div id="branding" class="left-side">
+    <img src="images/header_branding.png" alt="Sonatype Nexus"/>
+  </div>
+  <div class="right-side">
+    <div><span id="head-link-l" class="head-link"></span><span id="head-link-m" class="head-link"></span><span
+            id="head-link-r" class="head-link"></span></div>
+    <div id="logo">
+      <span>
+        $formattedAppName
+      </span>
+    </div>
+  </div>
+</div>
+
+<div id="welcome-tab" class="little-padding">
+  ## "manual" loadmask; will be replaced entirely on UI init
+  <div id="loadmask" class="ext-el-mask-msg x-mask-loading"
+       style="margin-left: auto; margin-right: auto; margin-top: 200px; width: 150px; position: relative;">
+    <div>Loading Nexus UI...</div>
+  </div>
+</div>
+
+## Fields required for history management
+<form id="history-form" class="x-hidden">
+  <input type="hidden" id="x-history-field"/>
+  <iframe id="x-history-frame"></iframe>
+</form>
+
+</body>
+</html>

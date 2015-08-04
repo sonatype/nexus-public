@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ldapConfiguration>
+  <connectionInfo>
+    <searchBase>dc=grid,dc=sonatype,dc=com</searchBase>
+    <systemUsername>CN=Administrator,CN=Users,DC=grid,DC=sonatype,DC=com</systemUsername>
+    <systemPassword>CGvfBpcCtdyTimqjW1p5MU1r</systemPassword>
+    <authScheme>simple</authScheme>
+    <protocol>ldap</protocol>
+    <host>grid.sonatype.com</host>
+    <port>3890</port>
+  </connectionInfo>
+  <userAndGroupConfig>
+    <emailAddressAttribute>mail</emailAddressAttribute>
+    <ldapGroupsAsRoles>true</ldapGroupsAsRoles>
+    <groupBaseDn>ou=groups</groupBaseDn>
+    <groupIdAttribute>cn</groupIdAttribute>
+    <groupMemberAttribute>uniqueMember</groupMemberAttribute>
+    <groupMemberFormat>${username}</groupMemberFormat>
+    <groupObjectClass>sAMAccountName</groupObjectClass>
+    <preferredPasswordEncoding>crypt</preferredPasswordEncoding>
+    <userIdAttribute>sAMAccountName</userIdAttribute>
+    <userObjectClass>user</userObjectClass>
+     <!-- <userBaseDn>OU=development</userBaseDn> -->
+     <!-- <userBaseDn></userBaseDn> -->
+    <userRealNameAttribute>cn</userRealNameAttribute>
+    <userSubtree>true</userSubtree>
+    <groupSubtree>true</groupSubtree>
+    <userMemberOfAttribute>memberOf</userMemberOfAttribute>
+  </userAndGroupConfig>
+</ldapConfiguration>

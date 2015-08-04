@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!-- Default nexus security configuration -->
+<!-- used as default config source -->
+<security>
+    <version>2.0.1</version>
+    <roles>
+        <role>
+            <id>ui-search</id>
+            <name>UI: Search</name>
+            <description>Gives access to the Search screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>17</privilege>
+                <privilege>19</privilege>
+                <privilege>54</privilege>
+            </privileges>
+        </role>   
+        <role>
+            <id>anonymous</id>
+            <roles>
+                <role>ui-search</role>
+            </roles>
+        </role>
+    </roles>
+    <privileges>
+        <privilege>
+            <id>17</id>
+            <type>method</type>
+            <name>Search Repositories</name>
+            <description>Give permission to perform searches of repository content.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:index</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>18</id>
+            <type>method</type>
+            <name>Reindex</name>
+            <description>Give permission to Reindex repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:index</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>19</id>
+            <type>method</type>
+            <name>Checksum Search</name>
+            <description>Give permission to perform checksum type searches of repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:identify</value>
+                </property>
+            </properties>
+        </privilege>                    
+    </privileges>
+</security>

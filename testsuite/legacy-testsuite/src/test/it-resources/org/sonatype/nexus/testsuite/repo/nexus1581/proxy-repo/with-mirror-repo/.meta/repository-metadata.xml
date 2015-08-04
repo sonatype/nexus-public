@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <mirrors>
+    <mirror>
+      <id>mirror1</id>
+      <url>${proxy-repo-base-url}/mirror-repo</url>
+    </mirror>
+    <mirror>
+      <id>mirror2</id>
+      <url>${proxy-repo-base-url}/void</url>
+    </mirror>
+  </mirrors>
+</repository-metadata>

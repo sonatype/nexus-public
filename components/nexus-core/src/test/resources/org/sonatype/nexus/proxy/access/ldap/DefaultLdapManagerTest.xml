@@ -1,0 +1,34 @@
+<plexus>
+	<components>
+		<component>
+			<role>org.sonatype.ldaptestsuite.LdapServer</role>
+			<implementation>
+				org.sonatype.ldaptestsuite.LdapServer
+			</implementation>
+			<configuration>
+				<workingDirectory>
+					${basedir}/target/apache-ds/
+				</workingDirectory>
+				<doDelete>true</doDelete>
+				<port>${proxy.server.port}</port>
+				<partitions>
+					<partition>
+						<name>sonatype</name>
+						<suffix>o=sonatype</suffix>
+						<indexedAttributes>
+							<indexedAttribute>
+								objectClass
+							</indexedAttribute>
+							<indexedAttribute>o</indexedAttribute>
+						</indexedAttributes>
+						<rootEntryClasses>
+							<rootEntryClass>top</rootEntryClass>
+							<rootEntryClass>organization</rootEntryClass>
+						</rootEntryClasses>
+						<ldifFile>${basedir}/src/test/resources/sonatype.ldif</ldifFile>
+					</partition>
+				</partitions>
+			</configuration>
+		</component>
+	</components>
+</plexus>

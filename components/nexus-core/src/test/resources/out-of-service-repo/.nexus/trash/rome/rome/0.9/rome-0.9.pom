@@ -1,0 +1,109 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>rome</groupId>
+  <artifactId>rome</artifactId>
+  <name>ROME, RSS and atOM utilitiEs for Java</name>
+  <version>0.9</version>
+  <packaging>jar</packaging>
+  <description>All Roads Lead to ROME.
+      ROME is a set of Atom/RSS Java utilities that make it easy to work in Java with most syndication formats.
+      Today it accepts all flavors of RSS (0.90, 0.91, 0.92, 0.93, 0.94, 1.0 and 2.0) and Atom 0.3 feeds.
+      Rome includes a set of parsers and generators for the various flavors of feeds, as well as converters to convert from one format to another.
+      The parsers can give you back Java objects that are either specific for the format you want to work with, or a generic normalized SyndFeed object that lets you work on with the data without bothering about the underlying format.</description>
+  <url>https://rome.dev.java.net/</url>
+  <issueManagement>
+    <url>https://rome.dev.java.net/servlets/ProjectIssues</url>
+  </issueManagement>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <ciManagement>
+    <notifiers>
+      <notifier>
+        <configuration>
+          <address>dev@rome.dev.java.net</address>
+        </configuration>
+      </notifier>
+    </notifiers>
+  </ciManagement>
+  <inceptionYear>2004</inceptionYear>
+  <mailingLists>
+    <mailingList>
+      <name>dev@rome.dev.java.net</name>
+      <subscribe>https://rome.dev.java.net/servlets/ProjectMailingListList</subscribe>
+      <unsubscribe>https://rome.dev.java.net/servlets/ProjectMailingListList</unsubscribe>
+      <archive>https://rome.dev.java.net/servlets/SummarizeList?listName=dev</archive>
+    </mailingList>
+  </mailingLists>
+  <developers>
+    <developer>
+      <name>Alejandro Abdelnur</name>
+      <url>http://blog.sun.com/roller/page/tucu/</url>
+      <timezone>0</timezone>
+    </developer>
+    <developer>
+      <name>Elaine Chien</name>
+      <timezone>0</timezone>
+    </developer>
+    <developer>
+      <name>Patrick Chanezon</name>
+      <url>http://www.chanezon.com/pat/weblog/</url>
+      <timezone>-9</timezone>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:cvs:pserver:guest@cvs.dev.java.net:/cvs:rome</connection>
+    <url>https://rome.dev.java.net/source/browse/rome/</url>
+  </scm>
+  <organization>
+    <name>Sun Microsystems</name>
+    <url>http://java.sun.com/</url>
+  </organization>
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <testSourceDirectory>src/test</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/java</directory>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>${basedir}/src/data</directory>
+        <includes>
+          <include>**/*.xml</include>
+        </includes>
+      </testResource>
+      <testResource>
+        <directory>src/test</directory>
+        <includes>
+          <include>rome.properties</include>
+        </includes>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <artifactId>surefire</artifactId>
+        <configuration>
+          <includes>
+            <include>**/Test*.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>1.0</version>
+    </dependency>
+  </dependencies>
+</project>

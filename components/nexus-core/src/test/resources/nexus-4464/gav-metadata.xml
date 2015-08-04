@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<metadata modelVersion="1.1.0"> 
+  <groupId>org.sonatype.nexus</groupId> 
+  <artifactId>nexus-api</artifactId> 
+  <version>1.9.3-SNAPSHOT</version> 
+  <versioning> 
+    <snapshot> 
+      <timestamp>20110811.110726</timestamp> 
+      <buildNumber>97</buildNumber> 
+    </snapshot> 
+    <lastUpdated>20110811110726</lastUpdated> 
+    <snapshotVersions> 
+      <snapshotVersion> 
+        <extension>jar</extension> 
+        <value>1.9.3-20110811.110726-97</value> 
+        <updated>20110811110726</updated> 
+      </snapshotVersion> 
+      <snapshotVersion> 
+        <extension>pom</extension> 
+        <value>1.9.3-20110811.110726-97</value> 
+        <updated>20110811110726</updated> 
+      </snapshotVersion> 
+      <snapshotVersion> 
+        <classifier>sources</classifier> 
+        <extension>jar</extension> 
+        <value>1.9.3-20110811.110726-97</value> 
+        <updated>20110811110726</updated> 
+      </snapshotVersion> 
+      <snapshotVersion> 
+        <classifier>tests</classifier> 
+        <extension>jar</extension> 
+        <value>1.9.3-20110811.110726-97</value> 
+        <updated>20110811110726</updated> 
+      </snapshotVersion> 
+    </snapshotVersions> 
+  </versioning> 
+</metadata>

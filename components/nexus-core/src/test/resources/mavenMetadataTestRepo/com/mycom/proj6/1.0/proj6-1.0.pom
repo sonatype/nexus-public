@@ -1,0 +1,5 @@
+<project>
+	<groupId>${parent.groupId}</groupId>
+	<artifactId>proj6</artifactId>
+	<version>1.0</version>
+</project>

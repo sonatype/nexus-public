@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-plugin-console-plugin">
+    <wadl:resource path="/service/local/plugin_console/plugin_infos">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the list of known Nexus plugins with details describing them.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="pluginInfos"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

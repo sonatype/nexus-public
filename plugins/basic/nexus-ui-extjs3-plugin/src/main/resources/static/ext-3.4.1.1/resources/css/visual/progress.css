@@ -1,0 +1,43 @@
+/*
+This file is part of Ext JS 3.4
+
+Copyright (c) 2011-2013 Sencha Inc
+
+Contact:  http://www.sencha.com/contact
+
+Commercial Usage
+Licensees holding valid commercial licenses may use this file in accordance with the Commercial
+Software License Agreement provided with the Software or, alternatively, in accordance with the
+terms contained in a written agreement between you and Sencha.
+
+If you are unsure which license is appropriate for your use, please contact the sales department
+at http://www.sencha.com/contact.
+
+Build date: 2013-04-03 15:07:25
+*/
+.x-progress-wrap {
+    border-color:#6593cf;
+}
+
+.x-progress-inner {
+    background-color:#e0e8f3;
+    background-image:url(../images/default/qtip/bg.gif);
+}
+
+.x-progress-bar {
+    background-color:#9cbfee;
+    background-image:url(../images/default/progress/progress-bg.gif);
+    border-top-color:#d1e4fd;
+    border-bottom-color:#7fa9e4;
+    border-right-color:#7fa9e4;
+}
+
+.x-progress-text {
+    font-size:11px;
+    font-weight:bold;
+    color:#fff;
+}
+
+.x-progress-text-back {
+    color:#396095;
+}

@@ -1,0 +1,118 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+.nx-atlas-view-sysinfo-body,
+.nx-atlas-view-panel-description {
+  font: normal 11px arial, tahoma, verdana, helvetica;
+}
+
+.nx-atlas-view-panel-description {
+  padding: 10px;
+}
+
+.nx-atlas-view-panel-description img {
+  float: left;
+  padding-right: 10px;
+}
+
+.nx-atlas-view-panel-description div {
+  vertical-align: middle;
+}
+
+.nx-atlas-view-sysinfo-body {
+  padding: 4px;
+}
+
+.nx-atlas-view-sysinfo-body img {
+  float: right;
+  padding: 10px;
+}
+
+.nx-atlas-view-sysinfo-body {
+  white-space: pre;
+  word-wrap: normal;
+}
+
+.nx-atlas-view-sysinfo-section {
+  padding-bottom: 5px;
+}
+
+.nx-atlas-view-sysinfo-section h2,
+.nx-atlas-view-sysinfo-nestedsection h2 {
+  font-size: large;
+  font-weight: bold;
+  font-variant: small-caps;
+  padding-bottom: 2px;
+}
+
+.nx-atlas-view-sysinfo-section .property-name,
+.nx-atlas-view-sysinfo-nestedsection .property-name {
+  padding-right: 20px;
+}
+
+.nx-atlas-view-sysinfo-section table {
+  padding-left: 10px;
+}
+
+.nx-atlas-view-sysinfo-nestedsection table {
+  padding-left: 20px;
+  padding-bottom: 10px;
+}
+
+.nx-atlas-view-sysinfo-nestedsection h3 {
+  padding-left: 10px;
+}
+
+.nx-atlas-view-supportzip-description,
+.nx-atlas-view-supportrequest-description {
+  font: normal 11px arial, tahoma, verdana, helvetica;
+  padding: 10px;
+}
+
+.nx-atlas-view-supportzip-description img,
+.nx-atlas-view-supportrequest-description img {
+  float: right;
+  padding: 10px;
+}
+
+.nx-atlas-view-supportzip-form,
+.nx-atlas-view-supportrequest-form {
+  font: normal 11px arial, tahoma, verdana, helvetica;
+  padding-left: 20px;
+}
+
+.nx-atlas-view-supportzip .x-form-cb-label {
+  font: normal 11px arial, tahoma, verdana, helvetica;
+}
+
+.nx-atlas-view-supportzip-created-truncated-warning {
+  padding-top: 10px;
+  padding-bottom: 20px;
+  text-align: center;
+}
+
+.nx-atlas-view-supportzip-created-truncated-warning img {
+  vertical-align: bottom;
+  padding-right: 5px;
+}
+
+.nx-atlas-view-supportzip-created-truncated-warning span {
+  padding: 6px;
+  background-color: #fff8f7;
+  border: solid 1px #d04437;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.nx-atlas-view-supportzip .x-form-item-label {
+  font: bold 11px arial, tahoma, verdana, helvetica;
+}

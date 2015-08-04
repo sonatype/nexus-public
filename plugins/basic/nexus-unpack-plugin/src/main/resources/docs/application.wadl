@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars/>
+  <wadl:resources base="http://localhost:8080/nexus-unpack-plugin">
+    <wadl:resource path="/service/local/repositories/{repositoryId}/content-compressed">
+      <wadl:param name="repositoryId" style="template"/>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Handles uploads of ZIP files. Unpacks zip file to current path. If the delete query parameter is true the
+everything at the current path will be removed before the zip file is unpacked.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="delete" style="query"/>
+        </wadl:request>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Handles uploads of ZIP files. Unpacks zip file to current path. If the delete query parameter is true the
+everything at the current path will be removed before the zip file is unpacked.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="delete" style="query"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

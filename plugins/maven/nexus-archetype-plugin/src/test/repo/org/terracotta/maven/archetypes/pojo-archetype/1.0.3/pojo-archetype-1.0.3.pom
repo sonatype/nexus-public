@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <properties>
+    <forgeTags>Archetype</forgeTags>
+  </properties>
+
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.terracotta.forge</groupId>
+    <artifactId>archetype-parent</artifactId>
+    <version>1.0.1</version>
+  </parent>
+
+  <groupId>org.terracotta.maven.archetypes</groupId>
+  <artifactId>pojo-archetype</artifactId>
+  <version>1.0.3</version>
+  <name>pojo archetype</name>
+  <description>
+    This is a Maven Archetype to create a Plain Old Java Objects project. The archetype generates
+    a simple application that is ready-to-run as a Terracotta DSO clustered application.
+  </description>
+
+  <scm>
+    <connection>scm:svn:http://svn.terracotta.org/svn/forge/projects/pojo-archetype/tags/release-1.0.3</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/forge/projects/pojo-archetype/tags/release-1.0.3</developerConnection>
+    <url>http://svn.terracotta.org/svn/forge/projects/pojo-archetype/tags/release-1.0.3</url>
+  </scm>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>src</descriptorRef>
+            <descriptorRef>bin</descriptorRef>
+          </descriptorRefs>
+          <outputDirectory>${project.build.directory}/site/downloads</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>site</phase>
+            <goals>
+              <goal>assembly</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+</project>

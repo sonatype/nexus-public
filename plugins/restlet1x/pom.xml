@@ -1,0 +1,171 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-plugins-restlet1x</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <restlet.version>1.1.6-SONATYPE-5348-V8</restlet.version>
+  </properties>
+
+  <modules>
+    <module>nexus-restlet-bridge</module>
+    <module>nexus-restlet1x-model</module>
+    <module>nexus-restlet1x-plugin</module>
+    <module>nexus-restlet1x-testsupport-plugin</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet</artifactId>
+        <version>${restlet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet.ext.fileupload</artifactId>
+        <version>${restlet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet.ext.jaxrs</artifactId>
+        <version>${restlet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet.ext.velocity</artifactId>
+        <version>${restlet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.noelios.restlet</groupId>
+        <artifactId>com.noelios.restlet</artifactId>
+        <version>${restlet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.noelios.restlet</groupId>
+        <artifactId>com.noelios.restlet.ext.servlet</artifactId>
+        <version>${restlet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.noelios.restlet</groupId>
+        <artifactId>com.noelios.restlet.ext.jetty</artifactId>
+        <version>${restlet.version}</version>
+        <exclusions>
+          <!--
+          Avoid servlet apis.
+          -->
+          <exclusion>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>servlet-api-2.5</artifactId>
+          </exclusion>
+
+          <!--
+          Avoid old jetty.
+          FIXME: nexus-restlet-bridge tests depend on this, we can not exclude/ban it ATM.
+          -->
+          <!--<exclusion>-->
+          <!--<groupId>org.mortbay.jetty</groupId>-->
+          <!--<artifactId>jetty</artifactId>-->
+          <!--</exclusion>-->
+          <!--<exclusion>-->
+          <!--<groupId>org.mortbay.jetty</groupId>-->
+          <!--<artifactId>jetty-ajp</artifactId>-->
+          <!--</exclusion>-->
+          <!--<exclusion>-->
+          <!--<groupId>org.mortbay.jetty</groupId>-->
+          <!--<artifactId>jetty-sslengine</artifactId>-->
+          <!--</exclusion>-->
+          <!--<exclusion>-->
+          <!--<groupId>org.mortbay.jetty</groupId>-->
+          <!--<artifactId>jetty-util</artifactId>-->
+          <!--</exclusion>-->
+        </exclusions>
+      </dependency>
+
+      <!--
+      Here only to bring in 'org.codehaus.enunciate.contract.jaxrs.ResourceMethodSignature' so that Enunciate can understand
+      restlet1x plugins which have these annotations for documentation generation.
+
+      NOTE: enunciate.version defined in plugins/pom.xml, as we need to configure the maven-plugin of the same version.
+
+      FIXME: Remove need for this dep once we have most bits on JAX-RS compatible resources.
+      -->
+      <dependency>
+        <groupId>org.codehaus.enunciate</groupId>
+        <artifactId>enunciate-core</artifactId>
+        <version>${enunciate.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.codehaus.enunciate</groupId>
+            <artifactId>enunciate-core-rt</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-digester</groupId>
+            <artifactId>commons-digester</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.sf.apt-jelly</groupId>
+            <artifactId>apt-jelly-freemarker</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+</project>

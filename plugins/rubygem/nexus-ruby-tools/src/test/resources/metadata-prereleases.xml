@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2014 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<metadata>
+  <groupId>rubygems</groupId>
+  <artifactId>nokogiri</artifactId>
+  <versioning>
+    <versions>
+      <version>1.5.0.beta.1-SNAPSHOT</version>
+      <version>1.5.0.beta.2-SNAPSHOT</version>
+      <version>1.5.0.beta.3-SNAPSHOT</version>
+      <version>1.5.0.beta.4-SNAPSHOT</version>
+      <version>1.5.1.rc1-SNAPSHOT</version>
+      <version>1.5.3.rc2-SNAPSHOT</version>
+      <version>1.5.3.rc3-SNAPSHOT</version>
+      <version>1.5.3.rc4-SNAPSHOT</version>
+      <version>1.5.3.rc5-SNAPSHOT</version>
+      <version>1.5.3.rc6-SNAPSHOT</version>
+      <version>1.5.4.rc1-SNAPSHOT</version>
+      <version>1.5.4.rc2-SNAPSHOT</version>
+      <version>1.5.4.rc3-SNAPSHOT</version>
+      <version>1.5.5.rc1-SNAPSHOT</version>
+      <version>1.5.5.rc2-SNAPSHOT</version>
+      <version>1.5.5.rc3-SNAPSHOT</version>
+      <version>1.5.6.rc1-SNAPSHOT</version>
+      <version>1.5.6.rc2-SNAPSHOT</version>
+      <version>1.5.6.rc3-SNAPSHOT</version>
+      <version>1.5.7.rc1-SNAPSHOT</version>
+      <version>1.5.7.rc2-SNAPSHOT</version>
+      <version>1.5.7.rc3-SNAPSHOT</version>
+      <version>1.6.0.rc1-SNAPSHOT</version>
+      <version>1.6.2.rc1-SNAPSHOT</version>
+      <version>1.6.2.rc2-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20140416150033</lastUpdated>
+  </versioning>
+</metadata>

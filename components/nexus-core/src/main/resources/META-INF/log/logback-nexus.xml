@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<included>
+  <jmxConfigurator/>
+
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${appender.pattern}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${appender.file}</File>
+    <Append>true</Append>
+    <encoder>
+      <pattern>${appender.pattern}</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${appender.file}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <appender name="metrics" class="com.yammer.metrics.logback.InstrumentedAppender"/>
+
+  <root level="${root.level}">
+    <appender-ref ref="console"/>
+    <appender-ref ref="logfile"/>
+    <appender-ref ref="metrics"/>
+  </root>
+
+</included>

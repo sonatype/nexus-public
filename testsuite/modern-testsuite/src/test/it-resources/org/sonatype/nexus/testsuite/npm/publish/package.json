@@ -1,0 +1,25 @@
+{
+  "name": "${name}",
+  "version": "${version}",
+  "description": "Test Project 1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository" :{ 
+    "type" : "git",
+    "url" : "http://github.com/npm/npm.git"
+  },
+  "dependencies" : {
+    "commonjs" : "0.0.1"
+  },
+  "publishConfig" : {
+    "registry" : "${privateRegistryUrl}"
+  },
+  "keywords": [
+    "test1"
+  ],
+  "private" : false,
+  "author": "cstamas",
+  "license": "ISC"
+}

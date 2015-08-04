@@ -1,0 +1,34 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.proxy.events;
+
+import org.sonatype.nexus.proxy.item.StorageItem;
+import org.sonatype.nexus.proxy.repository.Repository;
+
+/**
+ * The event fired on item deletion when a collection is about to be deleted. When a collection is deleted, a
+ * "recursive dive" is done to notify listeners for recursive deletions about to happen as part of a deletion of a
+ * collection item. All delete events are fired before actual deletion is made, hence, the items carried by these
+ * events
+ * are still present and even it's content is reachable (if any).
+ *
+ * @author cstamas
+ * @since 2.1
+ */
+public class RepositoryItemEventDeleteItem
+    extends RepositoryItemEventDelete
+{
+  public RepositoryItemEventDeleteItem(final Repository repository, final StorageItem item) {
+    super(repository, item);
+  }
+}

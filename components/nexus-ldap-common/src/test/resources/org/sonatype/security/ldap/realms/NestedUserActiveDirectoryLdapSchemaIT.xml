@@ -1,0 +1,30 @@
+<plexus>
+	<components>
+		
+		<component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfiguration</role>
+	      <role-hint>default</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.DefaultLdapConfiguration</implementation>
+	      <isolated-realm>false</isolated-realm>
+	      <requirements>
+	        <requirement>
+	          <role>org.sonatype.security.ldap.realms.persist.ConfigurationValidator</role>
+	          <role-hint>default</role-hint>
+	          <field-name>validator</field-name>
+	        </requirement>
+	        
+	        <requirement>
+	          <role>org.sonatype.security.ldap.realms.persist.PasswordHelper</role>
+	          <role-hint>default</role-hint>
+	          <field-name>passwordHelper</field-name>
+	        </requirement>
+	        
+	      </requirements>
+	      <configuration>
+	        <configuration-file>${test-path}-ldap.xml</configuration-file>
+	      </configuration>
+	    </component>
+
+		
+	</components>
+</plexus>

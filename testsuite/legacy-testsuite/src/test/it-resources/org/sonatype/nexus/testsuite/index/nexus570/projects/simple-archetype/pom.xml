@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus570</groupId>
+  <artifactId>simple-archetype</artifactId>
+  <version>3.0.1</version>
+  <packaging>maven-archetype</packaging>
+  <distributionManagement>
+    <repository>
+      <id>nexus-test-harness-repo</id>
+      <url>${nexus-base-url}content/repositories/nexus-test-harness-repo</url>
+    </repository>
+  </distributionManagement>
+</project>

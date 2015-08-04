@@ -1,0 +1,37 @@
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<plexus>
+  <components>
+
+    <component>
+      <role>org.apache.shiro.mgt.RealmSecurityManager</role>
+      <role-hint>default</role-hint>
+      <implementation>org.sonatype.security.web.WebRealmSecurityManager</implementation>
+      <isolated-realm>false</isolated-realm>
+      <requirements>
+        <requirement>
+          <role>org.sonatype.plexus.components.ehcache.PlexusEhCacheWrapper</role>
+          <role-hint>default</role-hint>
+          <field-name>cacheWrapper</field-name>
+        </requirement>
+        <requirement>
+          <role>org.apache.shiro.authz.permission.RolePermissionResolver</role>
+          <field-name>rolePermissionResolverMap</field-name>
+        </requirement>
+      </requirements>
+    </component>
+
+  </components>
+</plexus>

@@ -1,0 +1,33 @@
+<file>
+  <generation>4</generation>
+  <path>/junit/junit/3.8.1/junit-3.8.1.jar</path>
+  <readable>true</readable>
+  <writable>true</writable>
+  <repositoryId>central</repositoryId>
+  <created>1122889368000</created>
+  <modified>1122889368000</modified>
+  <storedLocally>1321635242346</storedLocally>
+  <lastTouched>1321635242346</lastTouched>
+  <lastRequested>1321635334960</lastRequested>
+  <expired>false</expired>
+  <remoteUrl>http://repo1.maven.org/maven2/junit/junit/3.8.1/junit-3.8.1.jar</remoteUrl>
+  <attributes>
+    <entry>
+      <string>digest.sha1</string>
+      <string>99129f16442844f6a4a11ae22fbbee40b14d774f</string>
+    </entry>
+    <entry>
+      <string>request.address</string>
+      <string>127.0.0.1</string>
+    </entry>
+    <entry>
+      <string>request.user</string>
+      <string>anonymous</string>
+    </entry>
+    <entry>
+      <string>digest.md5</string>
+      <string>1f40fb782a4f2cf78f161d32670f7a3a</string>
+    </entry>
+  </attributes>
+  <length>121070</length>
+</file>

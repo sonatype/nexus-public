@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus387.exclusive</groupId>
+  <artifactId>exclusive</artifactId>
+  <name></name>
+  <version>1.0.0</version>
+  <description></description>
+  <distributionManagement>
+    <repository>
+      <id>repo3</id>
+      <name>Releases</name>
+      <url>${nexus-base-url}content/repositories/repo3</url>
+    </repository>
+  </distributionManagement>
+</project>

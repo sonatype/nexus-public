@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<groupId>org.sonatype.nexus</groupId>
+	<artifactId>nexus-indexer</artifactId>
+	<version>1.0-beta-3-SNAPSHOT</version>
+	<versioning>
+		<snapshot>
+			<timestamp>20090210.090218</timestamp>
+			<buildNumber>375</buildNumber>
+		</snapshot>
+		<lastUpdated>20090213123211</lastUpdated>
+	</versioning>
+</metadata>

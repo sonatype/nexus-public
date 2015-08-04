@@ -1,0 +1,74 @@
+{
+    "_attachments": {},
+    "_id": "commonjs",
+    "_rev": "8-55bb3e20c202955803b3a99ce88b0f93",
+    "description": "CommonJS standard library.",
+    "dist-tags": {
+        "latest": "0.0.2"
+    },
+    "maintainers": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "gozala"
+        }
+    ],
+    "name": "commonjs",
+    "readme": "",
+    "readmeFilename": "",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/commonjs/commonjs-node.git"
+    },
+    "versions": {
+        "0.0.2": {
+            "_id": "commonjs@0.0.2",
+            "_nodeSupported": true,
+            "_nodeVersion": "v0.3.1-pre",
+            "_npmVersion": "0.2.7-2",
+            "bugs": {
+                "web": "http://github.com/commonjs/commonjs-node/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "system": ">=0.0.1",
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS standard library.",
+            "directories": {
+                "lib": "./lib",
+                "test": "./test"
+            },
+            "dist": {
+                "shasum": "65c531dcff6565ca7c95ddfc96622b89cc0294d5",
+                "tarball": "http://registry.npmjs.org/commonjs/-/commonjs-0.0.2.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103"
+            },
+            "homepage": "http://commonjs.org/",
+            "keywords": [
+                "commonjs"
+            ],
+            "licenses": [
+                {
+                    "type": "ASL2"
+                }
+            ],
+            "name": "commonjs",
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/commonjs/commonjs-node.git"
+            },
+            "scripts": {
+                "test": "node test/all.js"
+            },
+            "version": "0.0.2"
+        }
+    }
+}

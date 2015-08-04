@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus970</groupId>
+  <artifactId>artifact</artifactId>
+  <version>1.0.0</version>
+  <distributionManagement>
+    <repository>
+      <id>nexus970-overwrote</id>
+      <url>${nexus-base-url}content/repositories/nexus970-overwrote</url>
+    </repository>
+  </distributionManagement>
+</project>

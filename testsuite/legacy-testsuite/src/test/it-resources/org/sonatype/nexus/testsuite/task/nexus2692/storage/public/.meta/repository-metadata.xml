@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>@rootUrl@/content/groups/public</url>
+  <id>public</id>
+  <name>Public Repositories</name>
+  <layout>maven2</layout>
+  <policy>mixed</policy>
+  <memberRepositories>
+    <memberRepository>
+      <id>releases</id>
+      <name>Releases</name>
+      <policy>release</policy>
+      <url>@rootUrl@/content/repositories/releases</url>
+    </memberRepository>
+    <memberRepository>
+      <id>snapshots</id>
+      <name>Snapshots</name>
+      <policy>snapshot</policy>
+      <url>@rootUrl@/content/repositories/snapshots</url>
+    </memberRepository>
+    <memberRepository>
+      <id>thirdparty</id>
+      <name>3rd party</name>
+      <policy>release</policy>
+      <url>@rootUrl@/content/repositories/thirdparty</url>
+    </memberRepository>
+    <memberRepository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <policy>release</policy>
+      <url>@rootUrl@/content/repositories/central</url>
+    </memberRepository>
+  </memberRepositories>
+</repository-metadata>

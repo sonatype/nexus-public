@@ -1,0 +1,17 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>plexus</groupId>
+    <artifactId>plexus-root</artifactId>
+    <version>1.0.3</version>
+  </parent>
+  <groupId>plexus</groupId>
+  <artifactId>plexus-containers</artifactId>
+  <packaging>pom</packaging>
+  <name>Parent Plexus Container POM</name>
+  <version>1.0.2</version>
+  <modules>
+    <module>plexus-container-artifact</module>
+    <module>plexus-container-default</module>
+  </modules>
+</project>

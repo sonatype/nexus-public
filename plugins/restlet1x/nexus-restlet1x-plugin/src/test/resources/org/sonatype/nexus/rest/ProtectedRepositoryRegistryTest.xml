@@ -1,0 +1,17 @@
+<plexus>
+  <components>
+
+    <component>
+        <role>org.apache.shiro.realm.Realm</role>
+        <implementation>org.sonatype.nexus.proxy.security.PlexusConfiguredRealm</implementation>
+        <configuration>
+          <userPrivilageMap>
+            <repo1user>nexus:target:*:repo1:*,nexus:view:repository:repo1</repo1user>
+            <repo1userNoView>nexus:target:*:repo1:*</repo1userNoView>
+            <repoall>nexus:target:*:*:*,nexus:view:repository:*</repoall>
+          </userPrivilageMap>
+        </configuration>
+    </component>
+
+  </components>
+</plexus>

@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2014 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>rubygems</groupId>
+  <artifactId>my</artifactId>
+  <version>0.1.0</version>
+  <packaging>gem</packaging>
+  <name>example</name>
+  <developers>
+    <developer>
+      <name>example person</name>
+      <email>mail@example.com</email>
+    </developer>
+  </developers>
+  <properties>
+    <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+    <jruby.plugins.version>1.0.4</jruby.plugins.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <extensions>
+      <extension>
+        <groupId>de.saumya.mojo</groupId>
+        <artifactId>gem-extension</artifactId>
+        <version>${jruby.plugins.version}</version>
+      </extension>
+    </extensions>
+    <directory>${basedir}/pkg</directory>
+    <plugins>
+      <plugin>
+        <groupId>de.saumya.mojo</groupId>
+        <artifactId>gem-maven-plugin</artifactId>
+        <version>${jruby.plugins.version}</version>
+        <configuration>
+          <gemspec>my-0.1.0.gemspec</gemspec>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

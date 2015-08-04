@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<security>
+  <version>2.0.5</version>
+  <users>
+    <user>
+      <id>admin</id>
+      <firstName>Administrator</firstName>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>changeme@yourcompany.com</email>
+    </user>
+    <user>
+      <id>deployment</id>
+      <firstName>Deployment</firstName>
+      <lastName>User</lastName>
+      <password>b2a0e378437817cebdf753d7dff3dd75483af9e0</password>
+      <status>active</status>
+      <email>changeme1@yourcompany.com</email>
+    </user>
+    <user>
+      <id>anonymous</id>
+      <firstName>Nexus</firstName>
+      <lastName>Anonynmous User</lastName>
+      <password>0a92fab3230134cca6eadd9898325b9b2ae67998</password>
+      <status>active</status>
+      <email>changeme2@yourcompany.com</email>
+    </user>
+  </users>
+  <roles>
+    <role>
+      <id>deployment-customized</id>
+      <name>Nexus Deployment Role (Customized)</name>
+      <description>Deployment role for Nexus</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>T1</privilege>
+        <privilege>T2</privilege>
+        <privilege>T3</privilege>
+        <privilege>T4</privilege>
+        <privilege>T5</privilege>
+        <privilege>T6</privilege>
+        <privilege>T7</privilege>
+        <privilege>T8</privilege>
+        <privilege>64</privilege>
+        <privilege>2</privilege>
+      </privileges>
+      <roles>
+        <role>anonymous-customized</role>
+      </roles>
+    </role>
+    <role>
+      <id>anonymous-customized</id>
+      <name>Nexus Anonymous Role (Customized)</name>
+      <description>Anonymous role for Nexus</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>1</privilege>
+        <privilege>6</privilege>
+        <privilege>14</privilege>
+        <privilege>17</privilege>
+        <privilege>19</privilege>
+        <privilege>44</privilege>
+        <privilege>54</privilege>
+        <privilege>55</privilege>
+        <privilege>56</privilege>
+        <privilege>57</privilege>
+        <privilege>58</privilege>
+        <privilege>64</privilege>
+        <privilege>T1</privilege>
+        <privilege>T2</privilege>
+        <privilege>T3</privilege>
+      </privileges>
+    </role>
+    <role>
+      <id>developer-customized</id>
+      <name>Nexus Developer Role (Customized)</name>
+      <description>Developer role for Nexus</description>
+      <sessionTimeout>30</sessionTimeout>
+      <privileges>
+        <privilege>2</privilege>
+        <privilege>64</privilege>
+      </privileges>
+      <roles>
+        <role>anonymous-customized</role>
+        <role>deployment-customized</role>
+      </roles>
+    </role>
+  </roles>
+  <userRoleMappings>
+    <userRoleMapping>
+      <userId>admin</userId>
+      <source>default</source>
+      <roles>
+        <role>admin</role>
+      </roles>
+    </userRoleMapping>
+    <userRoleMapping>
+      <userId>deployment</userId>
+      <source>default</source>
+      <roles>
+        <role>deployment-customized</role>
+      </roles>
+    </userRoleMapping>
+    <userRoleMapping>
+      <userId>anonymous</userId>
+      <source>default</source>
+      <roles>
+        <role>anonymous-customized</role>
+      </roles>
+    </userRoleMapping>
+  </userRoleMappings>
+</security>

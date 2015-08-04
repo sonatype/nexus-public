@@ -1,0 +1,5 @@
+<project>
+	<groupId>com.mycom</groupId>
+	<artifactId>${pom.parent.artifactId}</artifactId>
+	<version>1.0-SNAPSHOT</version>
+</project>

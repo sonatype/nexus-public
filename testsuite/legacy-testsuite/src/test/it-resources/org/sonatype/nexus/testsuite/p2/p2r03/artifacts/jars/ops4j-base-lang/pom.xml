@@ -1,0 +1,56 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.ops4j</groupId>
+    <artifactId>base</artifactId>
+    <version>1.2.3</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.ops4j.base</groupId>
+  <artifactId>ops4j-base-lang</artifactId>
+  <version>1.2.3</version>
+
+  <name>OPS4J Base - Lang</name>
+  <description>
+    OPS4J Base - Utilities/Extensions related to java.lang.
+  </description>
+
+  <properties>
+    <bundle.symbolicName>org.ops4j.base.lang</bundle.symbolicName>
+    <bundle.namespace>org.ops4j.lang</bundle.namespace>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <distributionManagement>
+    <repository>
+      <id>nexus-test-harness-repo</id>
+      <url>${nexus-base-url}content/repositories/p2r03</url>
+    </repository>
+  </distributionManagement>
+
+</project>

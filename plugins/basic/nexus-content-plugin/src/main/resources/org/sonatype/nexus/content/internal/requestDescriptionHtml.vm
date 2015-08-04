@@ -1,0 +1,149 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+<html>
+<head>
+  <title>Description of request processing of $req.requestPath</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <link rel="icon" type="image/png" href="$nexusRoot/favicon.png">
+  <!--[if IE]>
+  <link rel="SHORTCUT ICON" href="$nexusRoot/favicon.ico"/>
+  <![endif]-->
+
+  <link rel="stylesheet" href="$nexusRoot/static/css/Sonatype-content.css?${nexusVersion}"
+        type="text/css" media="screen"
+        title="no title" charset="utf-8">
+
+#macro(table $entries)
+  #if($entries.empty)
+    <p>No entries</p>
+  #else
+    <table border="1" cellpadding="10">
+      <thead>
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+      </thead>
+      <tbody>
+        #foreach ($entry in $entries)
+        <tr>
+          <td>$entry.key</td>
+          <td>$entry.value</td>
+        </tr>
+        #end
+      </tbody>
+    </table>
+  #end
+#end
+
+#macro(list $items)
+  <ul>
+    #foreach ($item in $items)
+      <li>$item</li>
+    #end
+  </ul>
+#end
+
+#macro(renderReasoning $reasoning)
+  <ul>
+    <li>$reasoning.repositoryId : $reasoning.reason<br/>
+      #foreach ($member in $reasoning.members)
+        #renderReasoning($member)
+      #end
+    </li>
+  </ul>
+#end
+
+</head>
+<body>
+<h1>Describe of $req.requestPath</h1>
+
+<p>
+  This page describes the processing of a request made by external client,
+  using information from the request, retrieved item (or exception if not item was retrieved)
+  and some intermittent processing states.
+</p>
+
+<h3>Processing time</h3>
+
+<p>$req.requestContext.get("org.sonatype.nexus.content.internal.ContentServlet.stopwatch")</p>
+
+<h3>Request Context</h3>
+
+#table($req.requestContext.flatten().entrySet())
+
+<h3>Response Outcome</h3>
+
+<p>
+  #if($item)
+    FOUND (Item found and retrieved)
+    #if($compositeSources)
+      <br/>Composed from following sources:
+      #list($compositeSources)
+    #end
+  #elseif ($exception)
+    NOT FOUND (Item not found, core threw exception)
+  #end
+</p>
+
+<h3>Processed repositories (IDs)</h3>
+
+#list($req.processedRepositories)
+
+#if($req.appliedMappings)
+  <h3>Applied Routings</h3>
+  #table($req.appliedMappings.entrySet())
+#end
+
+#if($item)
+  <h2>Retrieved Item UID</h2>
+
+  <p>
+    #if($item.repositoryItemUid)
+      $item.repositoryItemUid
+    #else
+      No UID (item is virtual).
+    #end
+  </p>
+
+  <h3>Retrieved Item Type</h3>
+
+  <p>
+    $item.getClass().name
+  </p>
+
+  <h3>Retrieved Item Context</h3>
+
+  #table($itemContext.entrySet())
+
+  <h3>Retrieved Item Attributes</h3>
+
+  #table($itemAttributes.entrySet())
+#end
+
+#if($exception)
+  <h2>Exception</h2>
+  <h3>Type</h3>
+  <p>$exception.getClass().name</p>
+  <h3>Message</h3>
+  <p>$exception.message</p>
+#end
+
+#if($reasoning)
+  <h2>Exception reasoning</h2>
+  <p>#renderReasoning($reasoning)</p>
+#end
+
+</body>
+</html>

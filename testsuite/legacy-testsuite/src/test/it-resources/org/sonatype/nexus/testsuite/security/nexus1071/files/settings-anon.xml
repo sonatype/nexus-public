@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/settings/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/setrings/1.0.0
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+
+
+  <localRepository>${project.build.directory}/maven_repo</localRepository>
+
+  <mirrors>
+    <mirror>
+      <!--This is used to direct the public snapshots repo in the profile below over to a different nexus group -->
+      <id>nexus-public-snapshots</id>
+      <mirrorOf>public-snapshots</mirrorOf>
+      <url>${nexus-base-url}content/groups/public-snapshots</url>
+    </mirror>
+    <mirror>
+      <!--This sends everything else to /public -->
+      <id>nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>${nexus-base-url}content/groups/public</url>
+    </mirror>
+  </mirrors>
+  <profiles>
+    <profile>
+      <id>development</id>
+      <!--Central is included by default and we must either turn it off, or fix it for our purposes. Lets fix it by turning on snapshots so that internal snaps will be found. Do
+     this for repo and pluginRepo -->
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+    <profile>
+      <!--this profile will allow snapshots to be searched when activated-->
+      <id>public-snapshots</id>
+      <repositories>
+        <repository>
+          <id>public-snapshots</id>
+          <url>http://public-snapshots</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>public-snapshots</id>
+          <url>http://public-snapshots</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>development</activeProfile>
+  </activeProfiles>
+</settings>
+

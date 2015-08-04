@@ -1,0 +1,8 @@
+<ivy-module version="2.0">
+  <info organisation="org.apache" module="hello-ivy" />
+  <dependencies>
+    <dependency org="nexus4218" name="md-test" rev="0.1-SNAPSHOT">
+      <artifact name="md-test" type="txt" />
+    </dependency>
+  </dependencies>
+</ivy-module>

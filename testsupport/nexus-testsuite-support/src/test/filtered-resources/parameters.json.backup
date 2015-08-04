@@ -1,0 +1,13 @@
+[
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.1" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.2" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.3" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.4" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.5" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.0.6" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.1" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.1.1" ],
+    [ "org.sonatype.nexus:nexus-oss-webapp:zip:bundle:2.1.2" ],
+    [ "org.sonatype.nexus.assemblies:nexus-bundle-template:zip:bundle:${project.version}" ]
+]

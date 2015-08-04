@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>http://repository.apache.org/snapshots/</url>
+  <id>apache-snapshots</id>
+  <name>Apache Snapshots</name>
+  <layout>maven2</layout>
+  <policy>snapshot</policy>
+  <localUrl>@rootUrl@/content/repositories/apache-snapshots</localUrl>
+</repository-metadata>

@@ -1,0 +1,1698 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+
+<!-- Default nexus security configuration -->
+<!-- used as default config source -->
+<security>
+    <version>2.0.2</version>
+    <roles>
+        <role>
+            <id>admin</id>
+            <name>Nexus Administrator Role</name>
+            <description>Administration role for Nexus</description>
+            <sessionTimeout>30</sessionTimeout>
+            <privileges>
+                <privilege>1000</privilege>
+            </privileges>
+            <roles />
+        </role>
+        <role>
+            <id>deployment</id>
+            <name>Nexus Deployment Role</name>
+            <description>Deployment role for Nexus</description>
+            <sessionTimeout>60</sessionTimeout>
+            <roles>
+                <role>anonymous</role>
+                <role>ui-basic</role>
+            </roles>
+        </role>
+        <role>
+            <id>anonymous</id>
+            <name>Nexus Anonymous Role</name>
+            <description>Anonymous role for Nexus</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>1</privilege>
+                <privilege>54</privilege>
+                <privilege>57</privilege>
+                <privilege>58</privilege>
+                <privilege>70</privilege>
+                <privilege>74</privilege>
+            </privileges>
+            <roles>
+                <role>ui-repo-browser</role>
+                <role>ui-search</role>
+                <role>ui-system-feeds</role>
+            </roles>
+        </role>
+        <role>
+            <id>developer</id>
+            <name>Nexus Developer Role</name>
+            <description>Developer role for Nexus</description>
+            <sessionTimeout>30</sessionTimeout>
+            <privileges />
+            <roles>
+                <role>ui-basic</role>
+                <role>deployment</role>
+            </roles>
+        </role>
+        <role>
+            <id>repo-all-read</id>
+            <name>Repo: All Repositories (Read)</name>
+            <description>Gives access to read ALL content of ALL repositories in Nexus.</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>T1</privilege>
+                <privilege>T2</privilege>
+                <privilege>repository-all</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>repo-all-full</id>
+            <name>Repo: All Repositories (Full Control)</name>
+            <description>Gives access to create/read/update/delete ALL content of ALL repositories in Nexus.</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>T1</privilege>
+                <privilege>T2</privilege>
+                <privilege>T3</privilege>
+                <privilege>T4</privilege>
+                <privilege>T5</privilege>
+                <privilege>T6</privilege>
+                <privilege>T7</privilege>
+                <privilege>T8</privilege>
+                <privilege>repository-all</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-search</id>
+            <name>UI: Search</name>
+            <description>Gives access to the Search screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>17</privilege>
+                <privilege>19</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-repo-browser</id>
+            <name>UI: Repository Browser</name>
+            <description>Gives access to the Repository Browser screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6</privilege>
+                <privilege>14</privilege>
+                <privilege>55</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-system-feeds</id>
+            <name>UI: System Feeds</name>
+            <description>Gives access to the System Feeds screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>44</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-logs-config-files</id>
+            <name>UI: Logs and Config Files</name>
+            <description>Gives access to the Logs and Config Files screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>42</privilege>
+                <privilege>43</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-server-admin</id>
+            <name>UI: Server Administration</name>
+            <description>Gives access to the Server Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>3</privilege>
+                <privilege>4</privilege>
+                <privilege>73</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-repository-admin</id>
+            <name>UI: Repository Administration</name>
+            <description>Gives access to the Repository Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>5</privilege>
+                <privilege>6</privilege>
+                <privilege>7</privilege>
+                <privilege>8</privilege>
+                <privilege>10</privilege>
+                <privilege>78</privilege>
+                <privilege>79</privilege>
+                <privilege>81</privilege>
+                <privilege>82</privilege>
+            </privileges>
+            <roles>
+            	<role>ui-repo-browser</role>
+            </roles>
+        </role>
+        <role>
+            <id>ui-group-admin</id>
+            <name>UI: Group Administration</name>
+            <description>Gives access to the Group Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6</privilege>
+                <privilege>13</privilege>
+                <privilege>14</privilege>
+                <privilege>15</privilege>
+                <privilege>16</privilege>
+            </privileges>
+            <roles>
+            	<role>ui-repo-browser</role>
+            </roles>            
+        </role>
+        <role>
+            <id>ui-routing-admin</id>
+            <name>UI: Routing Administration</name>
+            <description>Gives access to the Routing Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6</privilege>
+                <privilege>14</privilege>
+                <privilege>22</privilege>
+                <privilege>23</privilege>
+                <privilege>24</privilege>
+                <privilege>25</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-scheduled-tasks-admin</id>
+            <name>UI: Scheduled Task Administration</name>
+            <description>Gives access to the Scheduled Task Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6</privilege>
+                <privilege>14</privilege>
+                <privilege>26</privilege>
+                <privilege>27</privilege>
+                <privilege>28</privilege>
+                <privilege>29</privilege>
+                <privilege>69</privilege>
+                <privilege>71</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-repository-targets-admin</id>
+            <name>UI: Repository Target Administration</name>
+            <description>Gives access to the Repository Target Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>45</privilege>
+                <privilege>46</privilege>
+                <privilege>47</privilege>
+                <privilege>48</privilege>
+                <privilege>70</privilege>
+                <privilege>74</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-users-admin</id>
+            <name>UI: User Administration</name>
+            <description>Gives access to the User Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>35</privilege>
+                <privilege>38</privilege>
+                <privilege>39</privilege>
+                <privilege>40</privilege>
+                <privilege>41</privilege>
+                <privilege>72</privilege>
+                <privilege>75</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-roles-admin</id>
+            <name>UI: Role Administration</name>
+            <description>Gives access to the Role Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>31</privilege>
+                <privilege>34</privilege>
+                <privilege>35</privilege>
+                <privilege>36</privilege>
+                <privilege>37</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-privileges-admin</id>
+            <name>UI: Privilege Administration</name>
+            <description>Gives access to the Privilege Administration screen in Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6</privilege>
+                <privilege>14</privilege>
+                <privilege>30</privilege>
+                <privilege>31</privilege>
+                <privilege>32</privilege>
+                <privilege>33</privilege>
+                <privilege>46</privilege>
+                <privilege>80</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>ui-basic</id>
+            <name>UI: Base UI Privileges</name>
+            <description>Generic privileges for users in the Nexus UI</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>1</privilege>
+                <privilege>2</privilege>
+                <privilege>64</privilege>
+            </privileges>
+        </role>
+    </roles>
+    
+    <privileges>
+        <privilege>
+            <id>T1</id>
+            <type>target</type>
+            <name>All M2 Repositories - (read)</name>
+            <description>Give permission to read any content in any Maven 2 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>1</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T2</id>
+            <type>target</type>
+            <name>All M1 Repositories - (read)</name>
+            <description>Give permission to read any content in any Maven 1 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>2</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T3</id>
+            <type>target</type>
+            <name>All M2 Repositories - (update)</name>
+            <description>Give permission to update any content in any Maven 2 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>1</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T4</id>
+            <type>target</type>
+            <name>All M1 Repositories - (update)</name>
+            <description>Give permission to update any content in any Maven 1 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>2</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T5</id>
+            <type>target</type>
+            <name>All M2 Repositories - (create)</name>
+            <description>Give permission to create any content in any Maven 2 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>1</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T6</id>
+            <type>target</type>
+            <name>All M1 Repositories - (create)</name>
+            <description>Give permission to create any content in any Maven 1 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>2</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T7</id>
+            <type>target</type>
+            <name>All M2 Repositories - (delete)</name>
+            <description>Give permission to delete any content in any Maven 2 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>1</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>T8</id>
+            <type>target</type>
+            <name>All M1 Repositories - (delete)</name>
+            <description>Give permission to delete any content in any Maven 1 type repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>repositoryTargetId</key>
+                    <value>2</value>
+                </property>
+                <property>
+                    <key>repositoryId</key>
+                    <value></value>
+                </property>
+                <property>
+                    <key>repositoryGroupId</key>
+                    <value></value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>1000</id>
+            <type>method</type>
+            <name>Administrator privilege (ALL)</name>
+            <description>Give permission to everything available in nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>*</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:*</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>1</id>
+            <type>method</type>
+            <name>Status - (read)</name>
+            <description>Give permission to query the nexus server for it's status.  This privilege is required by the anonymous user so that the UI can retrieve anonymous permissions on startup.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:status</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>2</id>
+            <type>method</type>
+            <name>Login to UI</name>
+            <description>Give permission to allow a user to login to nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:authentication</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>3</id>
+            <type>method</type>
+            <name>Server Settings - (read)</name>
+            <description>Give permission to read the nexus server settings.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:settings</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>4</id>
+            <type>method</type>
+            <name>Server Settings - (update,read)</name>
+            <description>Give permission to update,read the nexus server settings.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:settings</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>5</id>
+            <type>method</type>
+            <name>Repositories - (create,read)</name>
+            <description>Give permission to create,read new repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repositories</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>6</id>
+            <type>method</type>
+            <name>Repositories - (read)</name>
+            <description>Give permission to read existing repository configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repositories</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>7</id>
+            <type>method</type>
+            <name>Repositories - (update,read)</name>
+            <description>Give permission to update,read existing repository configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repositories</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>8</id>
+            <type>method</type>
+            <name>Repositories - (delete,read)</name>
+            <description>Give permission to delete,read existing repositories.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repositories</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>9</id>
+            <type>method</type>
+            <name>Repository Templates - (create,read)</name>
+            <description>Give permission to create,read new repository templates.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repotemplates</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>10</id>
+            <type>method</type>
+            <name>Repository Templates - (read)</name>
+            <description>Give permission to read existing repository template configuration.  This privilege is required to add a new Repository in the UI, as the default values are retrieved from the template on the server.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repotemplates</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>11</id>
+            <type>method</type>
+            <name>Repository Templates - (update,read)</name>
+            <description>Give permission to update,read existing repository template configuration.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repotemplates</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>12</id>
+            <type>method</type>
+            <name>Repository Templates - (delete,read)</name>
+            <description>Give permission to delete,read existing repository templates.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repotemplates</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>13</id>
+            <type>method</type>
+            <name>Repository Groups - (create,read)</name>
+            <description>Give permission to create,read new repository groups.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repogroups</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>14</id>
+            <type>method</type>
+            <name>Repository Groups - (read)</name>
+            <description>Give permission to read existing repository group configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repogroups</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>15</id>
+            <type>method</type>
+            <name>Repository Groups - (update,read)</name>
+            <description>Give permission to update,read existing repository group configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repogroups</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>16</id>
+            <type>method</type>
+            <name>Repository Groups - (delete,read)</name>
+            <description>Give permission to delete,read existing repository groups.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repogroups</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>17</id>
+            <type>method</type>
+            <name>Search Repositories</name>
+            <description>Give permission to perform searches of repository content.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:index</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>18</id>
+            <type>method</type>
+            <name>Reindex</name>
+            <description>Give permission to Reindex repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:index</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>19</id>
+            <type>method</type>
+            <name>Checksum Search</name>
+            <description>Give permission to perform checksum type searches of repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:identify</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>20</id>
+            <type>method</type>
+            <name>Rebuild Repository Attributes</name>
+            <description>Give permission to rebuild the attributes of repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:attributes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>21</id>
+            <type>method</type>
+            <name>Clear Repository Cache</name>
+            <description>Give permission to clear the content of a repositories not found cache.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:cache</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>22</id>
+            <type>method</type>
+            <name>Repository Routes - (create,read)</name>
+            <description>Give permission to create,read repository routes.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:routes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>23</id>
+            <type>method</type>
+            <name>Repository Routes - (read)</name>
+            <description>Give permission to read existing repository route configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:routes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>24</id>
+            <type>method</type>
+            <name>Repository Routes - (update,read)</name>
+            <description>Give permission to update,read existing repository route configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:routes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>25</id>
+            <type>method</type>
+            <name>Repository Routes - (delete,read)</name>
+            <description>Give permission to delete,read existing repository routes.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:routes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>26</id>
+            <type>method</type>
+            <name>Scheduled Tasks - (create,read)</name>
+            <description>Give permission to create,read scheduled tasks.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasks</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>27</id>
+            <type>method</type>
+            <name>Scheduled Tasks - (read)</name>
+            <description>Give permission to read existing scheduled task configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasks</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>28</id>
+            <type>method</type>
+            <name>Scheduled Tasks - (update,read)</name>
+            <description>Give permission to update,read existing scheduled task configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasks</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>29</id>
+            <type>method</type>
+            <name>Scheduled Tasks - (delete,read)</name>
+            <description>Give permission to delete,read existing scheduled tasks.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasks</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>30</id>
+            <type>method</type>
+            <name>User Privileges - (create,read)</name>
+            <description>Give permission to create,read privileges.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>31</id>
+            <type>method</type>
+            <name>User Privileges - (read)</name>
+            <description>Give permission to read existing privilege configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>32</id>
+            <type>method</type>
+            <name>User Privileges - (update,read)</name>
+            <description>Give permission to update,read existing privilege configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>33</id>
+            <type>method</type>
+            <name>User Privileges - (delete,read)</name>
+            <description>Give permission to delete,read existing privileges.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>34</id>
+            <type>method</type>
+            <name>User Roles - (create,read)</name>
+            <description>Give permission to create,read user roles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>35</id>
+            <type>method</type>
+            <name>User Roles - (read)</name>
+            <description>Give permission to read existing user role configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>36</id>
+            <type>method</type>
+            <name>User Roles - (update,read)</name>
+            <description>Give permission to update,read existing user role configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>37</id>
+            <type>method</type>
+            <name>User Roles - (delete,read)</name>
+            <description>Give permission to delete,read existing user roles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>38</id>
+            <type>method</type>
+            <name>Users - (create,read)</name>
+            <description>Give permission to create,read users.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>39</id>
+            <type>method</type>
+            <name>Users - (read)</name>
+            <description>Give permission to read existing user configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>40</id>
+            <type>method</type>
+            <name>Users - (update,read)</name>
+            <description>Give permission to update,read existing user configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>41</id>
+            <type>method</type>
+            <name>Users - (delete,read)</name>
+            <description>Give permission to delete,read existing users.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>42</id>
+            <type>method</type>
+            <name>Logs - (read)</name>
+            <description>Give permission to retrieve the nexus log files.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:logs</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>43</id>
+            <type>method</type>
+            <name>Configuration File - (read)</name>
+            <description>Give permission to retrieve the nexus.xml configuration file.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:configuration</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>44</id>
+            <type>method</type>
+            <name>RSS Feeds - (read)</name>
+            <description>Give permission to view the different RSS feeds.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:feeds</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>45</id>
+            <type>method</type>
+            <name>Repository Targets - (create,read)</name>
+            <description>Give permission to create,read repository targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:targets</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>46</id>
+            <type>method</type>
+            <name>Repository Targets - (read)</name>
+            <description>Give permission to read existing repository target configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:targets</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>47</id>
+            <type>method</type>
+            <name>Repository Targets - (update,read)</name>
+            <description>Give permission to update,read existing repository target configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:targets</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>48</id>
+            <type>method</type>
+            <name>Repository Targets - (delete,read)</name>
+            <description>Give permission to delete,read existing repository targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:targets</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>49</id>
+            <type>method</type>
+            <name>Server Status - (update,read)</name>
+            <description>Give permission to update,read the status of the nexus server.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:status</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>50</id>
+            <type>method</type>
+            <name>Wastebasket - (read)</name>
+            <description>Give permission to read the contents of the nexus trash.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:wastebasket</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>51</id>
+            <type>method</type>
+            <name>Wastebasket - (delete,read)</name>
+            <description>Give permission to delete,read the contents of the nexus trash.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:wastebasket</value>
+                </property>
+            </properties>
+        </privilege>        
+        <privilege>
+            <id>54</id>
+            <type>method</type>
+            <name>Artifact Download</name>
+            <description>Give permission to download artifacts (using /artifact service, not the /content url).  The extents of this privilege are related to the allowed targets..  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:artifact</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>55</id>
+            <type>method</type>
+            <name>Read Repository Status</name>
+            <description>Give permission to retrieve the status of a repository.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repostatus</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>57</id>
+            <type>method</type>
+            <name>User Forgot Password - (create,read)</name>
+            <description>Give permission to request that a password be generated an emailed to a certain user.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:usersforgotpw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>58</id>
+            <type>method</type>
+            <name>User Forgot User Id - (create,read)</name>
+            <description>Give permission to request that a username be emailed to a certain email address.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:usersforgotid</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>59</id>
+            <type>method</type>
+            <name>User Reset Password - (delete,read)</name>
+            <description>Give permission to reset any user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:usersreset</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>64</id>
+            <type>method</type>
+            <name>User Change Password - (create,read)</name>
+            <description>Give permission to change a user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:userschangepw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>65</id>
+            <type>method</type>
+            <name>Artifact Upload</name>
+            <description>Give permission to upload artifacts (using /artifact service, not the /content service).  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:artifact</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>66</id>
+            <type>method</type>
+            <name>Nexus Remote Control</name>
+            <description>Give permission to remotely control nexus server (start, stop, etc.).  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:command</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>67</id>
+            <type>method</type>
+            <name>Read Repository Metadata</name>
+            <description>Give permission to read the repository metadata.  Note that this privilege is not currently invoked by the Nexus UI.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:repometa</value>
+                </property>
+            </properties>
+        </privilege>
+              <privilege>
+            <id>68</id>
+            <type>method</type>
+            <name>Scheduled Tasks - (run)</name>
+            <description>Give permission to run existing scheduled tasks manually.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasksrun</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>69</id>
+            <type>method</type>
+            <name>Scheduled Task Types - (read)</name>
+            <description>Give permission to retrieve list of support task types available in nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:tasktypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+			<id>70</id>
+            <type>method</type>
+			<name>Repository Content Classes Component - (read)</name>
+			<description>Give permission to retrieve the list of repository content classes supported by nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:componentscontentclasses</value>
+                </property>
+            </properties>
+		</privilege>
+        <privilege>
+			<id>71</id>
+            <type>method</type>
+			<name>Scheduled Task Types Component - (read)</name>
+            <description>Give permission to retrieve list of support task types available in nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:componentscheduletypes</value>
+                </property>
+            </properties>
+		</privilege>
+		<privilege>
+            <id>72</id>
+            <type>method</type>
+            <name>User Set Password - (create,read)</name>
+            <description>Give permission to set a user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:userssetpw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>73</id>
+            <type>method</type>
+            <name>Realm Types Component - (read)</name>
+            <description>Give permission to retrieve list of support realms available in nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:componentrealmtypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>74</id>
+            <type>method</type>
+            <name>Repository Types - (read)</name>
+            <description>Give permission to retrieve the list of repository types supported by nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:componentsrepotypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>75</id>
+            <type>method</type>
+            <name>User Locator Types Component - (read)</name>
+            <description>Give permission to retrieve the list of User Locator types supported by nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:componentsuserlocatortypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>76</id>
+            <type>method</type>
+            <name>Rebuild Maven Metadata</name>
+            <description>Give permission to rebuild the maven metadata of repository content.  The extents of this privilege are related to the allowed targets.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:metadata</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+        	<id>77</id>
+        	<type>method</type>
+        	<name>Log Configuration - (read,update)</name>
+        	<description>Give permission to read and update log configuration</description>
+        	<properties>
+        		<property>
+        			<key>method</key>
+        			<value>read,update</value>
+        		</property>
+        		<property>
+        			<key>permission</key>
+        			<value>nexus:logconfig</value>
+        		</property>
+        	</properties>
+        </privilege>
+        <privilege>
+          <id>78</id>
+          <type>method</type>
+          <name>Repository Mirrors - (read)</name>
+          <description>Give permission to read repository mirror configuration</description>
+          <properties>
+            <property>
+              <key>method</key>
+              <value>read</value>
+            </property>
+            <property>
+              <key>permission</key>
+              <value>nexus:repositorymirrors</value>
+            </property>
+          </properties>
+        </privilege>
+        <privilege>
+          <id>79</id>
+          <type>method</type>
+          <name>Repository Mirrors - (create,read)</name>
+          <description>Give permission to create repository mirror configuration</description>
+          <properties>
+            <property>
+              <key>method</key>
+              <value>create,read</value>
+            </property>
+            <property>
+              <key>permission</key>
+              <value>nexus:repositorymirrors</value>
+            </property>
+          </properties>
+        </privilege>
+        <privilege>
+            <id>80</id>
+            <type>method</type>
+            <name>User Privilege Types - (read)</name>
+            <description>Give permission to read existing privilege types.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:privilegetypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+          <id>81</id>
+          <type>method</type>
+          <name>Repository Mirrors, Retrieve Predefined List - (read)</name>
+          <description>Give permission to retrieve predefined list of mirrors from the server</description>
+          <properties>
+            <property>
+              <key>method</key>
+              <value>read</value>
+            </property>
+            <property>
+              <key>permission</key>
+              <value>nexus:repositorypredefinedmirrors</value>
+            </property>
+          </properties>
+        </privilege>
+        <privilege>
+          <id>82</id>
+          <type>method</type>
+          <name>Repository Mirrors, Retrieve Mirror Status - (read)</name>
+          <description>Give permission to retrieve mirror status from the server</description>
+          <properties>
+            <property>
+              <key>method</key>
+              <value>read</value>
+            </property>
+            <property>
+              <key>permission</key>
+              <value>nexus:repositorymirrorsstatus</value>
+            </property>
+          </properties>
+        </privilege>
+    </privileges>
+</security>

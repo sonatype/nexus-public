@@ -1,0 +1,13 @@
+= always_verify_ssl_certificates
+
+Ruby's net/http is setup to never verify SSL certificates by default. Most ruby libraries do the same. That means that you're not verifying the identity of the server you're communicating with and are therefore exposed to man in the middle attacks. This gem monkey-patches net/http to force certificate verification and make turning it off impossible.
+
+All you need to do is require this gem and you'll get good security by default.
+
+  $ gem install always_verify_ssl_certificates
+
+  require "always_verify_ssl_certificates"
+
+== Copyright
+
+Copyright (c) 2010 James Golick. See LICENSE for details.

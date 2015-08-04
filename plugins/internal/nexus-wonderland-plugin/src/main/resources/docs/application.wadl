@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-wonderland-plugin">
+    <wadl:resource path="/service/siesta/wonderland/authenticate">
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Authenticate a specific user and generate a one-time-use authentication token.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:doc>
+            <![CDATA[User authentication details.]]>
+          </wadl:doc>
+          <wadl:representation mediaType="application/xml" element="ns0:authToken" xmlns:ns0="http://sonatype.org/xsd/nexus-wonderland-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:doc>
+            <![CDATA[Authentication ticket.]]>
+          </wadl:doc>
+          <wadl:representation mediaType="application/xml" element="ns0:authTicket" xmlns:ns0="http://sonatype.org/xsd/nexus-wonderland-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/wonderland/settings">
+      <wadl:method name="GET">
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

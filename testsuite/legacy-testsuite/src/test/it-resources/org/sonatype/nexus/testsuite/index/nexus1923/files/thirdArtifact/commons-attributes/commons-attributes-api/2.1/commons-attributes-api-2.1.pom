@@ -1,0 +1,18 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>commons-attributes</groupId>
+  <artifactId>commons-attributes-api</artifactId>
+  <version>2.1</version>
+  <dependencies>
+    <dependency>
+      <groupId>ant</groupId>
+      <artifactId>ant</artifactId>
+      <version>1.5</version>
+    </dependency>
+    <dependency>
+      <groupId>qdox</groupId>
+      <artifactId>qdox</artifactId>
+      <version>1.5</version>
+    </dependency>
+  </dependencies>
+</project>

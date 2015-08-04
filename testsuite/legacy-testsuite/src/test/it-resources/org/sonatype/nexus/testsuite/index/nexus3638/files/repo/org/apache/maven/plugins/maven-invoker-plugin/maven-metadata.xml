@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xsi:schemaLocation="http://maven.apache.org/METADATA/1.0.0 http://maven.apache.org/xsd/metadata-1.0.0.xsd" xmlns="http://maven.apache.org/METADATA/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-invoker-plugin</artifactId>
+  <version>1.6-SNAPSHOT</version>
+  <versioning>
+    <latest>1.6-SNAPSHOT</latest>
+    <versions>
+      <version>1.6-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20100922124315</lastUpdated>
+  </versioning>
+</metadata>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <properties>
+    <forgeTags>Parent POM</forgeTags>
+  </properties>
+
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.terracotta.forge</groupId>
+    <artifactId>forge-parent</artifactId>
+    <version>1.0.5</version>
+  </parent>
+
+  <packaging>pom</packaging>
+  <groupId>org.terracotta.forge</groupId>
+  <artifactId>archetype-parent</artifactId>
+  <version>1.0.1</version>
+  <name>archetypes parent</name>
+  <description>Terracotta Forge Applications and DSO Demos.</description>
+
+  <scm>
+    <connection>scm:svn:http://svn.terracotta.org/svn/forge/projects/archetype-parent/tags/release-1.0.1</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/forge/projects/archetype-parent/tags/release-1.0.1</developerConnection>
+    <url>http://svn.terracotta.org/svn/forge/projects/archetype-parent/tags/release-1.0.1</url>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>forge-site</id>
+      <name>Project Sites Server</name>
+      <url>scpexe://orgstage/export1/forge/projects/</url>
+    </site>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>  
+</project>

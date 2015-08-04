@@ -1,0 +1,12 @@
+<metadata>
+	<groupId>com.mycom</groupId>
+	<artifactId>proj4</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<versioning>
+		<snapshot>
+			<timestamp>20080923.191343</timestamp>
+			<buildNumber>1</buildNumber>
+		</snapshot>
+		<lastUpdated>20090226060812</lastUpdated>
+	</versioning>
+</metadata>

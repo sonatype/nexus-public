@@ -1,0 +1,218 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-parent</artifactId>
+        <version>2</version>
+    </parent>
+
+    <groupId>org.sonatype.nexus</groupId>
+    <artifactId>nexus-indexer</artifactId>
+    <version>1.0-beta-4-SNAPSHOT</version>
+    <name>Sonatype Nexus: Indexer</name>
+
+    <licenses>
+		<license>
+			<name>Eclipse Public License</name>
+			<url>http://www.eclipse.org/org/documents/epl-v10.html</url>
+		</license>
+	</licenses>
+    <developers>
+		<developer>
+			<id>cstamas</id>
+			<name>Tamas Cservenak</name>
+			<email>cstamas@sonatype.com</email>
+			<organization>Sonatype</organization>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>2</timezone>
+		</developer>
+		<developer>
+			<id>brianf</id>
+			<name>Brian Fox</name>
+			<email>brian@sonatype.com</email>
+			<organization>Sonatype</organization>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>eu</id>
+			<name>Eugene Kuleshov</name>
+			<email>eugene@sonatype.com</email>
+			<organization>Sonatype</organization>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+     </developers>
+     
+    <properties>
+		<maven.version>2.1-SONATYPE-653485</maven.version>
+        <maven.artifact.version>3.0-SONATYPE-653272</maven.artifact.version>
+	</properties>
+     
+    <dependencies>
+
+        <!-- Plexus -->
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-container-default</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-digest</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-cli</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>${maven.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.artifact</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>${maven.artifact.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.archetype</groupId>
+            <artifactId>archetype-common</artifactId>
+            <version>2.0-alpha-1</version>
+        </dependency>
+
+        <!-- Wagon -->
+        <dependency>
+            <groupId>org.apache.maven.wagon</groupId>
+            <artifactId>wagon-provider-api</artifactId>
+            <version>1.0-beta-2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.wagon</groupId>
+            <artifactId>wagon-http-lightweight</artifactId>
+            <version>1.0-beta-2</version>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>3.8.2</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                  <execution>
+                    <id>create-cli-jar</id>
+                    <goals>
+                      <goal>attached</goal>
+                    </goals>
+                    <phase>package</phase>
+                    <configuration>
+                    <descriptors>
+                        <descriptor>
+							src/main/assembly/nx-indexer-cli-assembly.xml
+                        </descriptor>
+                    </descriptors>
+                    <archive>
+                        <manifest>
+                            <mainClass>
+								org.sonatype.nexus.index.cli.NexusIndexerCli
+                            </mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                  </execution>
+                </executions>
+            </plugin>
+
+            <!-- 1.4 jar -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>retrotranslator-maven-plugin</artifactId>
+                <version>1.0-alpha-3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>translate-project</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>jdk14</classifier>
+                            <attach>true</attach>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <!-- Retrotranslator itself _or_ this M2 plugin dies
+						if cannot find org.apache.commons.logging.LogFactory
+						on classpath. SLF4J and it's placebo commons-logging
+						is not enough. -->
+                    <dependency>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                        <version>1.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkMode>never</forkMode>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>          
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

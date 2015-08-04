@@ -1,0 +1,990 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus</groupId>
+    <artifactId>nexus-parent</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.sonatype.nexus.plugins</groupId>
+  <artifactId>nexus-plugins</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <!-- enunciate configuration -->
+    <enunciate.version>1.26.2</enunciate.version>
+    <copyright.year>2013</copyright.year>
+
+    <!-- nexus-plugin-bundle configuration -->
+    <pluginSiteUrl>http://links.sonatype.com/products/nexus/oss/home</pluginSiteUrl>
+
+    <!-- yuicompressor defaults; debug friendly, see 'optimize' profile -->
+    <maven.yuicompressor.jswarn>true</maven.yuicompressor.jswarn>
+    <maven.yuicompressor.nocompress>true</maven.yuicompressor.nocompress>
+    <maven.yuicompressor.nomunge>true</maven.yuicompressor.nomunge>
+    <maven.yuicompressor.disableOptimizations>true</maven.yuicompressor.disableOptimizations>
+    <maven.yuicompressor.linebreakpos>0<!-- preserve linebreaks --></maven.yuicompressor.linebreakpos>
+  </properties>
+
+  <modules>
+    <module>basic</module>
+    <module>capabilities</module>
+    <module>indexer</module>
+    <module>internal</module>
+    <module>maven</module>
+    <module>npm</module>
+    <module>osgi</module>
+    <module>p2</module>
+    <module>restlet1x</module>
+    <module>rubygem</module>
+    <module>security</module>
+    <module>yum</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- IMPORTS -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.buildsupport</groupId>
+        <artifactId>nexus-buildsupport-all</artifactId>
+        <type>pom</type>
+        <version>2.11.4-SNAPSHOT</version>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- INTERNAL -->
+
+      <!--
+      NOTE: Defining DM entries for Nexus plugin types 'nexus-plugin' and 'jar' w/o using '${nexus-plugin.type}'
+      NOTE: Some tooling (like IDEA) can not properly handle property definition in <type> element.
+      NOTE: References in <dependency> sections (not DM) should continue to use '${nexus-plugin.type}'.
+      -->
+
+      <!-- capabilities -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-model</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-testsuite-helper</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-capabilities-testsuite-helper</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- logging -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-logging-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-logging-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- content -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-content-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-content-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- webresources -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-webresources-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-webresources-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- crypto -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-crypto-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-crypto-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- groovy -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-groovy-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-groovy-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- plexusplugin -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-plexusplugin-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-plexusplugin-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- h2 -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-h2-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-h2-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- indexer -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-indexer-lucene-model</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-indexer-lucene-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-indexer-lucene-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-indexer-lucene-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- internal -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-groovyremote-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-groovyremote-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-groovyremote-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- kazuki -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-kazuki-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-kazuki-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+      
+      <!-- kenai -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-kenai-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-kenai-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- ldap -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ldap-realm-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ldap-realm-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ldap-realm-plugin</artifactId>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- rutauth -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-rutauth-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-rutauth-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-rutauth-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- lvo -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-lvo-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-lvo-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- maven -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-archetype-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-archetype-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-maven-bridge-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-maven-bridge-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- npm -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-npm-repository-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- obr -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-obr-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-obr-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-obr-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-obr-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- p2 -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-bridge-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-bridge-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-bridge-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-repository-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-repository-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-p2-repository-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- plugin-console -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-plugin-console-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-plugin-console-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- restlet -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet-bridge</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet1x-model</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet1x-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet1x-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet1x-testsupport-plugin</artifactId>
+        <classifier>bundle</classifier>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restlet1x-testsupport-plugin</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- rubygems -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ruby-client</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ruby-tools</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ruby-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ruby-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- rrb -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-rrb-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-rrb-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- siesta -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-siesta-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-siesta-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- site -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-site-repository-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-site-repository-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-site-repository-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-site-repository-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- atlas -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-atlas-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-atlas-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- timeline -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-timeline-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-timeline-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- ui -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ui-extjs3-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-ui-extjs3-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <!-- unpack -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-unpack-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-unpack-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-unpack-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- yum -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-yum-repository-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-yum-repository-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-yum-repository-client</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-yum-repository-plugin</artifactId>
+        <version>${nexus.version}</version>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+      </dependency>
+
+      <!-- wonderland -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-wonderland-model</artifactId>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-wonderland-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-wonderland-plugin</artifactId>
+        <type>jar</type>
+        <version>2.11.4-SNAPSHOT</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <!--
+        Support for Nexus plugins which provide a UI.
+        -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>yuicompressor-maven-plugin</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <!--
+            FIXME: Sort this out, jslint is *very helpful*
+            yuicompressor warns when code is not in a shape that's optimized for minifying.
+            ATM this only pollutes the log (~9400 warnings)
+            -->
+            <jswarn>false</jswarn>
+            <nominify>${maven.yuicompressor.nocompress}</nominify>
+            <nomunge>${maven.yuicompressor.nomunge}</nomunge>
+            <disableOptimizations>${maven.yuicompressor.disableOptimizations}</disableOptimizations>
+            <linebreakpos>${maven.yuicompressor.linebreakpos}</linebreakpos>
+            <sourceDirectory>${project.build.sourceDirectory}/../resources/static</sourceDirectory>
+            <jslintOptions>
+              <white>true</white>
+              <sloppy>true</sloppy>
+            </jslintOptions>
+          </configuration>
+          <executions>
+            <execution>
+              <id>js</id>
+              <goals>
+                <goal>aggregate</goal>
+              </goals>
+              <configuration>
+                <output>${project.build.outputDirectory}/static/js/${project.artifactId}-all.js</output>
+                <sourceDirectory>${project.build.sourceDirectory}/../resources/static/js</sourceDirectory>
+              </configuration>
+            </execution>
+            <execution>
+              <id>css</id>
+              <goals>
+                <goal>aggregate-css</goal>
+              </goals>
+              <configuration>
+                <output>${project.build.outputDirectory}/static/css/${project.artifactId}-all.css</output>
+                <sourceDirectory>${project.build.sourceDirectory}/../resources/static/css</sourceDirectory>
+                <required>false</required>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <!--
+    Optimize javascript & css files, for use on production/release builds.
+    -->
+    <profile>
+      <id>optimize</id>
+      <properties>
+        <!--
+        'munge' means obfuscating the code by replacing variable names with short one-letter names. This makes
+        understanding reported UI errors harder and the size increase is only 4%, so let's turn this off for now.
+        -->
+        <maven.yuicompressor.nomunge>true</maven.yuicompressor.nomunge>
+        <maven.yuicompressor.nocompress>false</maven.yuicompressor.nocompress>
+        <maven.yuicompressor.disableOptimizations>false</maven.yuicompressor.disableOptimizations>
+        <maven.yuicompressor.linebreakpos>-1<!-- do not preserve linebreaks --></maven.yuicompressor.linebreakpos>
+      </properties>
+    </profile>
+
+    <!--
+    Generates Nexus plugin REST documentation, which is included in plugin bundles.
+    Enunciate is *only* used to generate documentation presently.
+    -->
+    <profile>
+      <id>has-enunciate-xml</id>
+      <activation>
+        <file>
+          <exists>enunciate.xml</exists>
+        </file>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.codehaus.enunciate</groupId>
+              <artifactId>maven-enunciate-slim-plugin</artifactId>
+              <version>${enunciate.version}</version>
+              <dependencies>
+                <dependency>
+                  <groupId>org.codehaus.enunciate</groupId>
+                  <artifactId>enunciate-docs</artifactId>
+                  <version>${enunciate.version}</version>
+                </dependency>
+                <!--
+                enunciate-xml module is needed to properly handle 'defaultRestSubcontext' configuration,
+                which is used to generate the mount point location in documentation.
+                when this dependency is included the module appears to be automatically enabled.
+                -->
+                <dependency>
+                  <groupId>org.codehaus.enunciate</groupId>
+                  <artifactId>enunciate-xml</artifactId>
+                  <version>${enunciate.version}</version>
+                </dependency>
+              </dependencies>
+              <executions>
+                <execution>
+                  <phase>generate-resources</phase>
+                  <goals>
+                    <goal>docs</goal>
+                  </goals>
+                  <configuration>
+                    <configFile>enunciate.xml</configFile>
+                    <docsDir>${basedir}/src/main/resources/docs</docsDir>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>enunciate</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.enunciate</groupId>
+            <artifactId>maven-enunciate-slim-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>m2e</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.codehaus.enunciate</groupId>
+                        <artifactId>maven-enunciate-slim-plugin</artifactId>
+                        <versionRange>[1.26.2,)</versionRange>
+                        <goals>
+                          <goal>docs</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

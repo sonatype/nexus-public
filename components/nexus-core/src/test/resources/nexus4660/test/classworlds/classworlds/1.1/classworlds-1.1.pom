@@ -1,0 +1,33 @@
+<file>
+  <generation>4</generation>
+  <path>/classworlds/classworlds/1.1/classworlds-1.1.pom</path>
+  <readable>true</readable>
+  <writable>true</writable>
+  <repositoryId>central</repositoryId>
+  <created>1137040016000</created>
+  <modified>1137040016000</modified>
+  <storedLocally>1321635260175</storedLocally>
+  <lastTouched>1321635260175</lastTouched>
+  <lastRequested>1321635336172</lastRequested>
+  <expired>false</expired>
+  <remoteUrl>http://repo1.maven.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.pom</remoteUrl>
+  <attributes>
+    <entry>
+      <string>digest.sha1</string>
+      <string>4703c4199028094698c222c17afea6dcd9f04999</string>
+    </entry>
+    <entry>
+      <string>request.address</string>
+      <string>127.0.0.1</string>
+    </entry>
+    <entry>
+      <string>request.user</string>
+      <string>anonymous</string>
+    </entry>
+    <entry>
+      <string>digest.md5</string>
+      <string>bcb441b387300ccd611489c24a90f079</string>
+    </entry>
+  </attributes>
+  <length>3324</length>
+</file>

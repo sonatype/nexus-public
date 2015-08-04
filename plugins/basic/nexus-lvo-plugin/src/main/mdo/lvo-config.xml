@@ -1,0 +1,141 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xmlns="http://modello.codehaus.org/MODELLO/1.4.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://modello.codehaus.org/MODELLO/1.4.0 http://modello.codehaus.org/xsd/modello-1.4.0.xsd"
+       xsd.namespace="http://www.sonatype.org/xsd/nexus-lvo-plugin-1.0.0" xsd.targetNamespace="http://www.sonatype.org/xsd/nexus-lvo-plugin-1.0.0">
+
+  <id>lvo</id>
+  <name>NexusLvoPluginConfiguration</name>
+
+  <description>
+        <![CDATA[
+        <p>Nexus LVO Plugin Configuration.</p>
+        ]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.plugins.lvo.config.model</value>
+    </default>
+  </defaults>
+
+  <versionDefinition>
+    <type>field</type>
+    <value>version</value>
+  </versionDefinition>
+
+  <classes>
+    <class rootElement="true" xml.tagName="lvoConfiguration">
+      <name>Configuration</name>
+      <version>2.8.0+</version>
+      <description>The root element of Nexus LVO Plugin configuration.</description>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>2.8.0+</version>
+          <description>The version of the persisted model.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>lvoKeys</name>
+          <version>2.8.0+</version>
+          <description>A list of LVO keys.</description>
+          <required>false</required>
+          <association>
+            <type>CLvoKey</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
+          <name>enabled</name>
+          <version>2.8.0+</version>
+          <description>Enable the LVO check</description>
+          <required>true</required>
+          <type>boolean</type>
+          <defaultValue>true</defaultValue>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>2.8.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.8.0";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CLvoKey</name>
+      <version>2.8.0+</version>
+      <description>An key that is published for LVO query.</description>
+      <fields>
+        <field>
+          <name>key</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>strategy</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>repositoryId</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>remoteUrl</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The URL of remote target.</description>
+        </field>
+        <field>
+          <name>localPath</name>
+          <version>2.8.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The path of local content target.</description>
+        </field>
+      </fields>
+    </class>
+
+  </classes>
+</model>

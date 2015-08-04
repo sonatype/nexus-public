@@ -1,0 +1,124 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>activeio</groupId>
+  <artifactId>activeio</artifactId>
+  <name>ActiveIO</name>
+  <version>2.1</version>
+  <description></description>
+  <url>http://activeio.org/</url>
+  <mailingLists>
+    <mailingList>
+      <name>activeio dev</name>
+      <subscribe>dev-subscribe@activeio.codehaus.org</subscribe>
+      <unsubscribe>dev-unsubscribe@activeio.codehaus.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <name>activeio users</name>
+      <subscribe>user-subscribe@activeio.codehaus.org</subscribe>
+      <unsubscribe>user-unsubscribe@activeio.codehaus.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <name>activeio svn messages</name>
+      <subscribe>scm-subscribe@activeio.codehaus.org</subscribe>
+      <unsubscribe>scm-unsubscribe@activeio.codehaus.org</unsubscribe>
+    </mailingList>
+  </mailingLists>
+  <developers>
+    <developer>
+      <id>chirino</id>
+      <name>Hiram Chirino</name>
+      <email>hiram@hiramchirino.com</email>
+      <organization></organization>
+      <roles>
+        <role>Founder</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>adc</id>
+      <name>Alan D. Cabrera</name>
+      <email>adc@toolazydogs.com</email>
+      <organization></organization>
+      <roles>
+        <role>Founder</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>dblevins</id>
+      <name>David Blevins</name>
+      <email>dblevins@gluecode.com</email>
+      <organization></organization>
+      <roles>
+        <role>Founder</role>
+      </roles>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:svn:https://svn.codehaus.org/activeio/trunk/activeio</connection>
+    <developerConnection>scm:svn:svn+ssh://svn.activeio.org/home/projects/activeio/scm/trunk/activeio</developerConnection>
+    <url>http://svn.activeio.org/viewcvs.cgi/activeio/</url>
+  </scm>
+  <organization>
+    <name>The ActiveIO Project</name>
+    <url>http://activeio.org</url>
+  </organization>
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <testSourceDirectory>src/test</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test</directory>
+        <includes>
+          <include>**/*.properties</include>
+          <include>**/*.xml</include>
+        </includes>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>backport-util-concurrent</groupId>
+      <artifactId>backport-util-concurrent</artifactId>
+      <version>2.0_01_pd</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.0.4</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.8</version>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>default</id>
+      <name>Default Repository</name>
+      <url>dist.codehaus.org//dist</url>
+    </repository>
+    <site>
+      <id>default</id>
+      <name>Default Site</name>
+      <url>scp://www.activeio.org//home/projects/activeio/public_html/maven</url>
+    </site>
+  </distributionManagement>
+</project>

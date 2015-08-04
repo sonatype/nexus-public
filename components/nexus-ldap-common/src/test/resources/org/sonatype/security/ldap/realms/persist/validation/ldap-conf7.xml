@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><ldapConfiguration>
+  <connectionInfo>
+    <!-- <searchBase>o=sonatype</searchBase>  --> <!-- MISSING -->
+    <systemUsername>uid=admin,ou=system</systemUsername>
+    <!-- <systemPassword>CMw7ArkDsKp4yvV0M1yl</systemPassword>  --> <!-- MISSING -->
+    <authScheme>simple</authScheme>
+    <protocol>ldap</protocol>
+    <host>localhost</host>
+    <port>12345</port>
+  </connectionInfo>
+  <userAndGroupConfig>
+    
+    <ldapGroupsAsRoles>true</ldapGroupsAsRoles>
+    <userMemberOfAttribute>memberOf</userMemberOfAttribute>
+    <groupMemberFormat>uid=${username},ou=people,o=sonatype</groupMemberFormat>
+    <groupObjectClass>groupOfUniqueNames</groupObjectClass>
+    <!-- <groupBaseDn>ou=groups</groupBaseDn> -->
+    <groupIdAttribute>cn</groupIdAttribute>
+    <groupMemberAttribute>uniqueMember</groupMemberAttribute>
+    <userObjectClass>inetOrgPerson</userObjectClass>
+    <!-- <userBaseDn>ou=people</userBaseDn>  --> <!-- MISSING, not required -->
+    <!-- <userIdAttribute>uid</userIdAttribute>  --> <!-- MISSING -->
+    <userPasswordAttribute>userPassword</userPasswordAttribute>
+    <userRealNameAttribute>cn</userRealNameAttribute>
+    <emailAddressAttribute>mail</emailAddressAttribute>
+    <!-- <preferredPasswordEncoding>clear</preferredPasswordEncoding>  --> <!-- MISSING -->
+    <!-- <userSubtree>false</userSubtree>  --> <!-- MISSING -->
+    
+  </userAndGroupConfig>
+  <!--<userRoleMappings>
+    <userRoleMapping>
+      <userId>cstamas</userId>
+      <roles>
+        <role>anonymous</role>
+        <role>developer</role>
+      </roles>
+    </userRoleMapping>
+    <userRoleMapping>
+      <userId>brianf</userId>
+      <roles>
+        <role>admin</role>
+      </roles>
+    </userRoleMapping>
+  </userRoleMappings>-->
+    
+</ldapConfiguration>

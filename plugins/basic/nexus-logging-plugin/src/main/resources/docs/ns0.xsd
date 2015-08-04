@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" targetNamespace="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="logger" type="ns0:logger"/>
+  <xs:element name="marker" type="ns0:marker"/>
+  <xs:simpleType name="level">
+    <xs:annotation>
+      <xs:documentation>
+        <![CDATA[<p>Java class for level.
+<p>The following schema fragment specifies the expected content contained within this class.
+<p>
+<pre>
+&lt;simpleType name="level">
+&lt;restriction base="{http://www.w3.org/2001/XMLSchema}string">
+&lt;enumeration value="DEFAULT"/>
+&lt;enumeration value="TRACE"/>
+&lt;enumeration value="DEBUG"/>
+&lt;enumeration value="INFO"/>
+&lt;enumeration value="WARN"/>
+&lt;enumeration value="ERROR"/>
+&lt;enumeration value="OFF"/>
+&lt;/restriction>
+&lt;/simpleType>
+</pre>]]>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="DEFAULT"/>
+      <xs:enumeration value="TRACE"/>
+      <xs:enumeration value="DEBUG"/>
+      <xs:enumeration value="INFO"/>
+      <xs:enumeration value="WARN"/>
+      <xs:enumeration value="ERROR"/>
+      <xs:enumeration value="OFF"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="logger">
+    <xs:annotation>
+      <xs:documentation>
+        <![CDATA[<p>Java class for logger complex type.
+<p>The following schema fragment specifies the expected content contained within this class.
+<pre>
+&lt;complexType name="logger">
+&lt;complexContent>
+&lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+&lt;sequence>
+&lt;element name="name" type="{http://www.w3.org/2001/XMLSchema}string"/>
+&lt;element name="level" type="{http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0}level"/>
+&lt;/sequence>
+&lt;/restriction>
+&lt;/complexContent>
+&lt;/complexType>
+</pre>]]>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="1"/>
+      <xs:element name="level" type="ns0:level" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="marker">
+    <xs:annotation>
+      <xs:documentation>
+        <![CDATA[<p>Java class for marker complex type.
+<p>The following schema fragment specifies the expected content contained within this class.
+<pre>
+&lt;complexType name="marker">
+&lt;complexContent>
+&lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+&lt;sequence>
+&lt;element name="message" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+&lt;/sequence>
+&lt;/restriction>
+&lt;/complexContent>
+&lt;/complexType>
+</pre>]]>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="message" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -1,0 +1,1387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="artifact-resolution" type="artifactResolveResourceResponse"/>
+  <xs:element name="configs-list" type="configurationsListResourceResponse"/>
+  <xs:element name="global-settings-list" type="globalConfigurationListResourceResponse"/>
+  <xs:element name="global-settings" type="globalConfigurationResourceResponse"/>
+  <xs:element name="mirror-list-request" type="mirrorResourceListRequest"/>
+  <xs:element name="mirror-list-response" type="mirrorResourceListResponse"/>
+  <xs:element name="nfc-info" type="NFCResourceResponse"/>
+  <xs:element name="repositoryTypes" type="nexusRepositoryTypeListResourceResponse"/>
+  <xs:element name="components-list" type="plexusComponentListResourceResponse"/>
+  <xs:element name="privilege-request" type="privilegeResourceRequest"/>
+  <xs:element name="repo-content-classes-list" type="repositoryContentClassListResourceResponse"/>
+  <xs:element name="repo-group-list" type="repositoryGroupListResourceResponse"/>
+  <xs:element name="repo-group" type="repositoryGroupResourceResponse"/>
+  <xs:element name="repositories" type="repositoryListResourceResponse"/>
+  <xs:element name="repository-meta-data" type="repositoryMetaResourceResponse"/>
+  <xs:element name="repository" type="repositoryResourceResponse"/>
+  <xs:element name="repo-routes-list" type="repositoryRouteListResourceResponse"/>
+  <xs:element name="repo-route" type="repositoryRouteResourceResponse"/>
+  <xs:element name="repository-status-list" type="repositoryStatusListResourceResponse"/>
+  <xs:element name="repository-status" type="repositoryStatusResourceResponse"/>
+  <xs:element name="repo-targets-list" type="repositoryTargetListResourceResponse"/>
+  <xs:element name="repo-target" type="repositoryTargetResourceResponse"/>
+  <xs:element name="routing-config-request" type="routingConfigMessageWrapper"/>
+  <xs:element name="routing-status-request" type="routingStatusMessageWrapper"/>
+  <xs:element name="schedules-list" type="scheduledServiceListResourceResponse"/>
+  <xs:element name="scheduled-task" type="scheduledServiceResourceResponse"/>
+  <xs:element name="schedule-service-status" type="scheduledServiceResourceStatusResponse"/>
+  <xs:element name="schedule-types" type="scheduledServiceTypeResourceResponse"/>
+  <xs:element name="smtp-settings-request" type="smtpSettingsResourceRequest"/>
+  <xs:element name="status" type="statusResourceResponse"/>
+  <xs:element name="user-account-request" type="userAccountRequestResponseWrapper"/>
+  <xs:element name="wastebasket" type="wastebasketResourceResponse"/>
+  <xs:element name="assigned-privileges-list" type="assignedPrivilegeListResourceResponse"/>
+  <xs:element name="authentication-login" type="authenticationLoginResourceResponse"/>
+  <xs:element name="external-role-mapping-list" type="externalRoleMappingListResourceResponse"/>
+  <xs:element name="external-role-mapping" type="externalRoleMappingResourceResponse"/>
+  <xs:element name="sec-components-list" type="plexusComponentListResourceResponse"/>
+  <xs:element name="plexus-roles" type="plexusRoleListResourceResponse"/>
+  <xs:element name="plexus-user-list" type="plexusUserListResourceResponse"/>
+  <xs:element name="plexus-user" type="plexusUserResourceResponse"/>
+  <xs:element name="user-search" type="plexusUserSearchCriteriaResourceRequest"/>
+  <xs:element name="privilege-list-response" type="privilegeListResourceResponse"/>
+  <xs:element name="privilege-status-response" type="privilegeStatusResourceResponse"/>
+  <xs:element name="privilege-type-response" type="privilegeTypeResourceResponse"/>
+  <xs:element name="roles-privs-list-filter" type="roleAndPrivilegeListFilterResourceRequest"/>
+  <xs:element name="roles-list" type="roleListResourceResponse"/>
+  <xs:element name="role-request" type="roleResourceRequest"/>
+  <xs:element name="role-response" type="roleResourceResponse"/>
+  <xs:element name="role-tree-list" type="roleTreeResourceResponse"/>
+  <xs:element name="user-changepw" type="userChangePasswordRequest"/>
+  <xs:element name="user-forgotpw" type="userForgotPasswordRequest"/>
+  <xs:element name="users-list" type="userListResourceResponse"/>
+  <xs:element name="user-request" type="userResourceRequest"/>
+  <xs:element name="user-response" type="userResourceResponse"/>
+  <xs:element name="user-to-role" type="userToRoleResourceRequest"/>
+  <xs:complexType name="artifact-resolve-resource">
+    <xs:sequence>
+      <xs:element name="extension" type="xs:string" minOccurs="0"/>
+      <xs:element name="sha1" type="xs:string" minOccurs="0"/>
+      <xs:element name="fileName" type="xs:string" minOccurs="0"/>
+      <xs:element name="snapshot" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="classifier" type="xs:string" minOccurs="0"/>
+      <xs:element name="snapshotBuildNumber" type="xs:long" minOccurs="1"/>
+      <xs:element name="presentLocally" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="repositoryPath" type="xs:string" minOccurs="0"/>
+      <xs:element name="artifactId" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="snapshotTimeStamp" type="xs:long" minOccurs="1"/>
+      <xs:element name="baseVersion" type="xs:string" minOccurs="0"/>
+      <xs:element name="version" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="artifactResolveResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="artifact-resolve-resource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="authentication-settings">
+    <xs:sequence>
+      <xs:element name="ntlmDomain" type="xs:string" minOccurs="0"/>
+      <xs:element name="ntlmHost" type="xs:string" minOccurs="0"/>
+      <xs:element name="password" type="xs:string" minOccurs="0"/>
+      <xs:element name="username" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="configs-list-item">
+    <xs:sequence>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="configurationsListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="configs-list-item" type="configs-list-item" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="form-field">
+    <xs:sequence>
+      <xs:element name="regexValidation" type="xs:string" minOccurs="0"/>
+      <xs:element name="storePath" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="initialValue" type="xs:string" minOccurs="0"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+      <xs:element name="idMapping" type="xs:string" minOccurs="0"/>
+      <xs:element name="required" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="helpText" type="xs:string" minOccurs="0"/>
+      <xs:element name="storeRoot" type="xs:string" minOccurs="0"/>
+      <xs:element name="nameMapping" type="xs:string" minOccurs="0"/>
+      <xs:element name="label" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="global-configuration-list-item">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="globalConfigurationListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="global-settings-list-item" type="global-configuration-list-item" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="global-settings-item">
+    <xs:sequence>
+      <xs:element name="securityAnonymousAccessEnabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="securityAnonymousUsername" type="xs:string" minOccurs="0"/>
+      <xs:element name="systemNotificationSettings" type="system-notification-settings" minOccurs="0"/>
+      <xs:element name="securityRealms" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="securityRealmItem" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="globalConnectionSettings" type="remote-connection-settings" minOccurs="0"/>
+      <xs:element name="smtpSettings" type="smtp-settings" minOccurs="0"/>
+      <xs:element name="remoteProxySettings" type="remote-proxy-settings" minOccurs="0"/>
+      <xs:element name="globalRestApiSettings" type="rest-api-settings" minOccurs="0"/>
+      <xs:element name="securityAnonymousPassword" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="globalConfigurationResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="global-settings-item" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="mirror-resource">
+    <xs:sequence>
+      <xs:element name="url" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="mirrorResourceListRequest">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="mirrorResource" type="mirror-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="mirrorResourceListResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="mirrorResource" type="mirror-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="nfc-repository-resource">
+    <xs:sequence>
+      <xs:element name="nfcPaths" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="path" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="repositoryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="nfcStats" type="nfc-stats" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nfc-resource">
+    <xs:sequence>
+      <xs:element name="nfcContents" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="nfc-repo-info" type="nfc-repository-resource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="NFCResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="nfc-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="nfc-stats">
+    <xs:sequence>
+      <xs:element name="size" type="xs:long" minOccurs="1"/>
+      <xs:element name="misses" type="xs:long" minOccurs="1"/>
+      <xs:element name="hits" type="xs:long" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nexus-authentication-client-permissions">
+    <xs:complexContent>
+      <xs:extension base="authenticationClientPermissions"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="nexus-repository-type-list-resource">
+    <xs:sequence>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="provider" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+      <xs:element name="providerRole" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nexusRepositoryTypeListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="repositoryType" type="nexus-repository-type-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="nexusResponse"/>
+  <xs:complexType name="plexus-component-list-resource">
+    <xs:sequence>
+      <xs:element name="roleHint" type="xs:string" minOccurs="0"/>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusComponentListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="component" type="plexus-component-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilege">
+    <xs:sequence>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryTargetId" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositoryGroupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="methods" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="method" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeResourceRequest">
+    <xs:sequence>
+      <xs:element name="data" type="privilege" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="remote-connection-settings">
+    <xs:sequence>
+      <xs:element name="connectionTimeout" type="xs:int" minOccurs="1"/>
+      <xs:element name="queryString" type="xs:string" minOccurs="0"/>
+      <xs:element name="retrievalRetryCount" type="xs:int" minOccurs="1"/>
+      <xs:element name="userAgentString" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="remote-http-proxy-settings">
+    <xs:sequence>
+      <xs:element name="proxyHostname" type="xs:string" minOccurs="0"/>
+      <xs:element name="proxyPort" type="xs:int" minOccurs="1"/>
+      <xs:element name="authentication" type="authentication-settings" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="remote-proxy-settings">
+    <xs:sequence>
+      <xs:element name="httpProxySettings" type="remote-http-proxy-settings" minOccurs="0"/>
+      <xs:element name="nonProxyHosts" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="httpsProxySettings" type="remote-http-proxy-settings" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="base-repository">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+      <xs:element name="providerRole" type="xs:string" minOccurs="0"/>
+      <xs:element name="exposed" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="provider" type="xs:string" minOccurs="0"/>
+      <xs:element name="contentResourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repository-content-class-list-resource">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupable" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="contentClass" type="xs:string" minOccurs="0"/>
+      <xs:element name="compatibleTypes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="compatibleType" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryContentClassListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repo-content-classes-list-item" type="repository-content-class-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-dependent-status">
+    <xs:sequence>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="localStatus" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repository-group-list-resource">
+    <xs:sequence>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="exposed" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="userManaged" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="contentResourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryGroupListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repo-group-list-item" type="repository-group-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-group-member-repository">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repository-group-resource">
+    <xs:complexContent>
+      <xs:extension base="base-repository">
+        <xs:sequence>
+          <xs:element name="repositories" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repo-group-member" type="repository-group-member-repository" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repositoryGroupResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="repository-group-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repositories-item">
+    <xs:sequence>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="exposed" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="contentResourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="userManaged" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="providerRole" type="xs:string" minOccurs="0"/>
+      <xs:element name="provider" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoPolicy" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+      <xs:element name="remoteUri" type="xs:string" minOccurs="0"/>
+      <xs:element name="effectiveLocalStorageUrl" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repositories-item" type="repositories-item" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-meta-resource">
+    <xs:sequence>
+      <xs:element name="remoteStorageErrorsCount" type="xs:int" minOccurs="1"/>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+      <xs:element name="fileCountInRepository" type="xs:long" minOccurs="1"/>
+      <xs:element name="sizeOnDisk" type="xs:long" minOccurs="1"/>
+      <xs:element name="freeSpaceOnDisk" type="xs:long" minOccurs="1"/>
+      <xs:element name="localStorageErrorsCount" type="xs:int" minOccurs="1"/>
+      <xs:element name="notFoundCacheSize" type="xs:long" minOccurs="1"/>
+      <xs:element name="notFoundCacheHits" type="xs:long" minOccurs="1"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="groups" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="string" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="notFoundCacheMisses" type="xs:long" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryMetaResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="repository-meta-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repositoryResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="base-repository" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-route-list-resource">
+    <xs:sequence>
+      <xs:element name="pattern" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositories" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="repo-routes-member" type="repository-route-member-repo" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="groupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="ruleType" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryRouteListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repo-routes-list-item" type="repository-route-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-route-member-repo">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repository-route-resource">
+    <xs:sequence>
+      <xs:element name="pattern" type="xs:string" minOccurs="0"/>
+      <xs:element name="repositories" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="repository" type="repository-route-member-repo" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="groupId" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="ruleType" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryRouteResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="repository-route-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-status-list-item">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="status" type="repository-status" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoPolicy" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryStatusListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repository-status-list-item" type="repository-status-list-item" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-status">
+    <xs:sequence>
+      <xs:element name="proxyMode" type="xs:string" minOccurs="0"/>
+      <xs:element name="remoteStatus" type="xs:string" minOccurs="0"/>
+      <xs:element name="localStatus" type="xs:string" minOccurs="0"/>
+      <xs:element name="repoType" type="xs:string" minOccurs="0"/>
+      <xs:element name="dependentRepos" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="dependentRepoItem" type="repository-dependent-status" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="format" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryStatusResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="repository-status" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-target-list-resource">
+    <xs:complexContent>
+      <xs:extension base="repository-target-resource"/>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repositoryTargetListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="repo-targets-list-item" type="repository-target-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="repository-target-resource">
+    <xs:sequence>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="contentClass" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="patterns" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="pattern" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="repositoryTargetResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="repository-target-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="rest-api-settings">
+    <xs:sequence>
+      <xs:element name="uiTimeout" type="xs:int" minOccurs="1"/>
+      <xs:element name="baseUrl" type="xs:string" minOccurs="0"/>
+      <xs:element name="forceBaseUrl" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="configMessage">
+    <xs:sequence>
+      <xs:element name="discoveryEnabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="discoveryIntervalHours" type="xs:int" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="routingConfigMessageWrapper">
+    <xs:sequence>
+      <xs:element name="data" type="configMessage" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="discovery">
+    <xs:sequence>
+      <xs:element name="discoveryIntervalHours" type="xs:int" minOccurs="1"/>
+      <xs:element name="discoveryLastRunTimestamp" type="xs:long" minOccurs="1"/>
+      <xs:element name="discoveryLastMessage" type="xs:string" minOccurs="0"/>
+      <xs:element name="discoveryLastStatus" type="xs:int" minOccurs="1"/>
+      <xs:element name="discoveryLastStrategy" type="xs:string" minOccurs="0"/>
+      <xs:element name="discoveryEnabled" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="statusMessage">
+    <xs:sequence>
+      <xs:element name="publishedUrl" type="xs:string" minOccurs="0"/>
+      <xs:element name="publishedTimestamp" type="xs:long" minOccurs="1"/>
+      <xs:element name="publishedStatus" type="xs:int" minOccurs="1"/>
+      <xs:element name="publishedMessage" type="xs:string" minOccurs="0"/>
+      <xs:element name="discovery" type="discovery" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="routingStatusMessageWrapper">
+    <xs:sequence>
+      <xs:element name="data" type="statusMessage" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduled-service-base-resource">
+    <xs:sequence>
+      <xs:element name="alertEmail" type="xs:string" minOccurs="0"/>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="properties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="scheduled-task-property" type="scheduled-service-property-resource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="typeId" type="xs:string" minOccurs="0"/>
+      <xs:element name="schedule" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduled-service-list-resource">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="createdInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="lastRunTime" type="xs:string" minOccurs="0"/>
+      <xs:element name="typeId" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastRunResult" type="xs:string" minOccurs="0"/>
+      <xs:element name="created" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastRunTimeInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="nextRunTime" type="xs:string" minOccurs="0"/>
+      <xs:element name="readableStatus" type="xs:string" minOccurs="0"/>
+      <xs:element name="status" type="xs:string" minOccurs="0"/>
+      <xs:element name="schedule" type="xs:string" minOccurs="0"/>
+      <xs:element name="nextRunTimeInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="typeName" type="xs:string" minOccurs="0"/>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduledServiceListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="schedules-list-item" type="scheduled-service-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="scheduled-service-property-resource">
+    <xs:sequence>
+      <xs:element name="value" type="xs:string" minOccurs="0"/>
+      <xs:element name="key" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduledServiceResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="scheduled-service-base-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="scheduled-service-resource-status">
+    <xs:sequence>
+      <xs:element name="readableStatus" type="xs:string" minOccurs="0"/>
+      <xs:element name="nextRunTime" type="xs:string" minOccurs="0"/>
+      <xs:element name="created" type="xs:string" minOccurs="0"/>
+      <xs:element name="nextRunTimeInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="status" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastRunTimeInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="createdInMillis" type="xs:long" minOccurs="0"/>
+      <xs:element name="lastRunResult" type="xs:string" minOccurs="0"/>
+      <xs:element name="resource" type="scheduled-service-base-resource" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastRunTime" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduledServiceResourceStatusResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="scheduled-service-resource-status" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="scheduled-service-type-resource">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="form-fields" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="form-field" type="form-field" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="scheduledServiceTypeResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="schedule-type" type="scheduled-service-type-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="smtp-settings">
+    <xs:sequence>
+      <xs:element name="host" type="xs:string" minOccurs="0"/>
+      <xs:element name="systemEmailAddress" type="xs:string" minOccurs="0"/>
+      <xs:element name="sslEnabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="port" type="xs:int" minOccurs="1"/>
+      <xs:element name="username" type="xs:string" minOccurs="0"/>
+      <xs:element name="password" type="xs:string" minOccurs="0"/>
+      <xs:element name="tlsEnabled" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="smtp-settings-resource">
+    <xs:sequence>
+      <xs:element name="testEmail" type="xs:string" minOccurs="0"/>
+      <xs:element name="port" type="xs:int" minOccurs="1"/>
+      <xs:element name="sslEnabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="username" type="xs:string" minOccurs="0"/>
+      <xs:element name="host" type="xs:string" minOccurs="0"/>
+      <xs:element name="systemEmailAddress" type="xs:string" minOccurs="0"/>
+      <xs:element name="tlsEnabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="password" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="smtpSettingsResourceRequest">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="smtp-settings-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="status-configuration-validation-response">
+    <xs:sequence>
+      <xs:element name="validationErrors" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="error" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="modified" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="valid" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="validationWarnings" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="warning" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="status-resource">
+    <xs:sequence>
+      <xs:element name="apiVersion" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastConfigChange" type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="configurationUpgraded" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="formattedAppName" type="xs:string" minOccurs="0"/>
+      <xs:element name="editionLong" type="xs:string" minOccurs="0"/>
+      <xs:element name="initializedAt" type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="trialLicense" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="startedAt" type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="editionShort" type="xs:string" minOccurs="0"/>
+      <xs:element name="errorCause" type="xs:string" minOccurs="0"/>
+      <xs:element name="appName" type="xs:string" minOccurs="0"/>
+      <xs:element name="licenseExpired" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="operationMode" type="xs:string" minOccurs="0"/>
+      <xs:element name="firstStart" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="instanceUpgraded" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="clientPermissions" type="nexus-authentication-client-permissions" minOccurs="0"/>
+      <xs:element name="purchaseURL" type="xs:string" minOccurs="0"/>
+      <xs:element name="configurationValidationResponse" type="status-configuration-validation-response" minOccurs="0"/>
+      <xs:element name="attributionsURL" type="xs:string" minOccurs="0"/>
+      <xs:element name="licenseInstalled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="baseUrl" type="xs:string" minOccurs="0"/>
+      <xs:element name="userLicenseURL" type="xs:string" minOccurs="0"/>
+      <xs:element name="version" type="xs:string" minOccurs="0"/>
+      <xs:element name="state" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="statusResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="status-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="system-notification-settings">
+    <xs:sequence>
+      <xs:element name="roles" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="emailAddresses" type="xs:string" minOccurs="0"/>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userAccount">
+    <xs:sequence>
+      <xs:element name="email" type="xs:string" minOccurs="0"/>
+      <xs:element name="firstName" type="xs:string" minOccurs="0"/>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastName" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userAccountRequestResponseWrapper">
+    <xs:sequence>
+      <xs:element name="data" type="userAccount" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="wastebasket-resource">
+    <xs:sequence>
+      <xs:element name="size" type="xs:long" minOccurs="1"/>
+      <xs:element name="itemCount" type="xs:long" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="wastebasketResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" type="wastebasket-resource" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="assignedPrivilegeListResource">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="parents" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="parent" type="parentNode" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="assignedPrivilegeListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="assigned-privileges-list" type="assignedPrivilegeListResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="authenticationClientPermissions">
+    <xs:sequence>
+      <xs:element name="permissions" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="permission" type="clientPermission" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="loggedInUsername" type="xs:string" minOccurs="0"/>
+      <xs:element name="loggedIn" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="loggedInUserSource" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="authenticationLoginResource">
+    <xs:sequence>
+      <xs:element name="clientPermissions" type="authenticationClientPermissions" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="authenticationLoginResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="authenticationLoginResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="clientPermission">
+    <xs:sequence>
+      <xs:element name="value" type="xs:int" minOccurs="1"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="externalRoleMappingListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="mapping" type="mapping" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="mapping">
+    <xs:sequence>
+      <xs:element name="mappedRoles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plexus-role" type="plexus-role" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="defaultRole" type="plexus-role" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="externalRoleMappingResourceResponse">
+    <xs:sequence>
+      <xs:element name="mapping" type="mapping" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="parentNode">
+    <xs:sequence>
+      <xs:element name="parents" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="parent" type="parentNode" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="component">
+    <xs:sequence>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="roleHint" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusComponentListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="component" type="component" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusRoleListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plexus-role" type="plexus-role" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexus-role">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="source" type="xs:string" minOccurs="0"/>
+      <xs:element name="roleId" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusUserListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plexus-user" type="plexusUserResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusUserResource">
+    <xs:sequence>
+      <xs:element name="email" type="xs:string" minOccurs="0"/>
+      <xs:element name="lastName" type="xs:string" minOccurs="0"/>
+      <xs:element name="firstName" type="xs:string" minOccurs="0"/>
+      <xs:element name="roles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="plexus-role" type="plexus-role" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="source" type="xs:string" minOccurs="0"/>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="status" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusUserResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="plexusUserResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusUserSearchCriteriaResource">
+    <xs:sequence>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="effectiveUsers" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="plexusUserSearchCriteriaResourceRequest">
+    <xs:sequence>
+      <xs:element name="data" type="plexusUserSearchCriteriaResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="privilege-item" type="privilegeStatusResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeProperty">
+    <xs:sequence>
+      <xs:element name="value" type="xs:string" minOccurs="0"/>
+      <xs:element name="key" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeStatusResource">
+    <xs:sequence>
+      <xs:element name="properties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="privilege-property" type="privilegeProperty" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="userManaged" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeStatusResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="privilegeStatusResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeTypePropertyResource">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+      <xs:element name="helpText" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeTypeResource">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="properties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="privilege-type-property" type="privilegeTypePropertyResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="privilegeTypeResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="privilege-type" type="privilegeTypeResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleAndPrivilegeListFilterResource">
+    <xs:sequence>
+      <xs:element name="onlySelected" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="hiddenPrivilegeIds" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="hiddenPrivilegeId" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="noPrivileges" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="noExternalRoles" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="selctedPrivilegeIds" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="selectedPrivilegeId" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="noRoles" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="selctedRoleIds" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="selectedRoleId" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="hiddenRoleIds" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="hiddenRoleId" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleAndPrivilegeListFilterResourceRequest">
+    <xs:sequence>
+      <xs:element name="role-priv-list-filter" type="roleAndPrivilegeListFilterResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="roles-list-item" type="roleResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleResource">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="sessionTimeout" type="xs:int" minOccurs="1"/>
+      <xs:element name="roles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="role" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="privileges" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="userManaged" type="xs:boolean" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleResourceRequest">
+    <xs:sequence>
+      <xs:element name="data" type="roleResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="roleResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleTreeResource">
+    <xs:sequence>
+      <xs:element name="children" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="child" type="roleTreeResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="roleTreeResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="assigned-privileges-list" type="roleTreeResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userChangePasswordRequest">
+    <xs:sequence>
+      <xs:element name="data" type="userChangePasswordResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userChangePasswordResource">
+    <xs:sequence>
+      <xs:element name="oldPassword" type="xs:string" minOccurs="0"/>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="newPassword" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userForgotPasswordRequest">
+    <xs:sequence>
+      <xs:element name="data" type="userForgotPasswordResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userForgotPasswordResource">
+    <xs:sequence>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="email" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userListResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="users-list-item" type="userResource" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userResource">
+    <xs:sequence>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="email" type="xs:string" minOccurs="0"/>
+      <xs:element name="status" type="xs:string" minOccurs="0"/>
+      <xs:element name="firstName" type="xs:string" minOccurs="0"/>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="roles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="role" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="lastName" type="xs:string" minOccurs="0"/>
+      <xs:element name="password" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userResourceRequest">
+    <xs:sequence>
+      <xs:element name="data" type="userResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userResourceResponse">
+    <xs:sequence>
+      <xs:element name="data" type="userResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userToRoleResource">
+    <xs:sequence>
+      <xs:element name="source" type="xs:string" minOccurs="0"/>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="roles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="role" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="userToRoleResourceRequest">
+    <xs:sequence>
+      <xs:element name="data" type="userToRoleResource" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

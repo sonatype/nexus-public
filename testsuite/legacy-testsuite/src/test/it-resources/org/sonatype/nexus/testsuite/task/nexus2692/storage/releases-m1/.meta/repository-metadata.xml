@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>@rootUrl@/content/repositories/releases-m1</url>
+  <id>releases-m1</id>
+  <name>Releases M1 shadow</name>
+  <layout>maven1</layout>
+  <policy>release</policy>
+</repository-metadata>

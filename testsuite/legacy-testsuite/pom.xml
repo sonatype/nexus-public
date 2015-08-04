@@ -1,0 +1,406 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.testsuite</groupId>
+    <artifactId>nexus-testsuite</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-legacy-testsuite</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+
+  <properties>
+    <!--
+    Testsuite auto-sharding support.
+    -->
+    <testsuite.basedir>${project.basedir}/..</testsuite.basedir>
+
+    <cargo.version>1.4.5</cargo.version>
+  </properties>
+
+  <dependencies>
+
+    <!-- The IT Launcher -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-harness-launcher</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit-dep</artifactId>
+        </exclusion>
+        <exclusion>
+          <!-- conflict with ant 1.7.1 from cargo tests -->
+          <groupId>ant</groupId>
+          <artifactId>ant</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Deps needed by some ITs (they use classes from these below) -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-oss-edition</artifactId>
+    </dependency>
+
+    <!-- NEXUS-2862 (url realm?) -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-security-realms</artifactId>
+    </dependency>
+
+    <!-- NEXUS-2490 -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-lvo-plugin</artifactId>
+    </dependency>
+
+    <!-- NEXUS-2810 references this -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-plugin-console-plugin</artifactId>
+    </dependency>
+
+    <!-- NEXUS-639 (Timeline) -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-timeline-plugin</artifactId>
+    </dependency>
+
+    <!-- NEXUS-156 (RRB perms) -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-rrb-plugin</artifactId>
+    </dependency>
+
+    <!-- NEXUS-3947 ArchetypeCatalog -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-archetype-plugin</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-archiver</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.http-testing-harness</groupId>
+      <artifactId>server-provider</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.http-testing-harness</groupId>
+      <artifactId>junit-runner</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-ldap-realm-plugin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.plexus</groupId>
+      <artifactId>plexus-ldap-testsuite</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+      <version>1.48</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-p2-repository-plugin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-capabilities-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- nexus3860/* (cargo) tests -->
+    <dependency>
+      <groupId>org.codehaus.cargo</groupId>
+      <artifactId>cargo-core-api-generic</artifactId>
+      <version>${cargo.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- Omit these dependencies due to enforce rules banning them -->
+        <exclusion>
+          <groupId>xml-apis</groupId>
+          <artifactId>xml-apis</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.cargo</groupId>
+      <artifactId>cargo-core-container-tomcat</artifactId>
+      <version>${cargo.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.cargo</groupId>
+      <artifactId>cargo-core-container-jetty</artifactId>
+      <version>${cargo.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>testsuite-genshards</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default</id>
+                <phase>process-test-sources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <properties>
+                    <autoshard.mode>normal</autoshard.mode>
+                    <autoshard.count>10</autoshard.count>
+
+                    <!--
+                    Exclude some slow tests for execution is slow shard.
+                    -->
+                    <autoshard.excludes>**/nexus3860/**</autoshard.excludes>
+                    <!-- cargo-based tests -->
+                  </properties>
+                </configuration>
+              </execution>
+
+              <!--
+              Generate special shard for slowly running tests.
+              -->
+              <execution>
+                <id>slow</id>
+                <phase>process-test-sources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <properties>
+                    <autoshard.mode>custom</autoshard.mode>
+                    <autoshard.shardId>slow</autoshard.shardId>
+                    <autoshard.includes>**/nexus3860/**/*IT.java</autoshard.includes>
+
+                    <!--
+                    HACK: gmaven executions leak project.properties, force reconfiguration to avoid using excludes from default execution.
+                    -->
+                    <autoshard.excludes>ignore</autoshard.excludes>
+                  </properties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>it</id>
+      <activation>
+        <property>
+          <name>it</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <configuration>
+              <localRepositoryPath>${project.build.directory}/maven/fake-repo</localRepositoryPath>
+              <extraArtifacts>
+                <xml>org.apache.maven.plugins:maven-clean-plugin:2.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-compiler-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-compiler-plugin:2.0.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-compiler-plugin:2.3.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-dependency-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-deploy-plugin:2.3:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-deploy-plugin:2.4:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-deploy-plugin:2.5:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-install-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-install-plugin:2.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-install-plugin:2.3.1:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-jar-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-jar-plugin:2.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-jar-plugin:2.3.1:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-resources-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-resources-plugin:2.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-resources-plugin:2.3:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-resources-plugin:2.4:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-resources-plugin:2.4.3:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-surefire-plugin:2.0:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-surefire-plugin:2.4.2:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-surefire-plugin:2.4.3:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-surefire-plugin:2.5:maven-plugin</xml>
+                <xml>org.apache.maven.plugins:maven-surefire-plugin:2.7.2:maven-plugin</xml>
+                <xml>org.apache.maven.surefire:surefire-junit3:2.7.2</xml>
+                <!-- nexus4218 -->
+                <xml>org.apache.maven:apache-maven:3.0.3:tar.gz:bin</xml>
+                <xml>org.apache.maven:apache-maven:2.0.6:tar.gz:bin</xml>
+                <xml>org.apache.ivy:apache-ivy:2.2.0:tar.gz:bin</xml>
+                <!-- p2 -->
+                <xml>org.sonatype.maven.plugins:maven-p2-bridge-plugin:1.1.6</xml>
+                <xml>org.sonatype.p2.bridge:org.sonatype.p2.bridge.impl:1.1.6</xml>
+              </extraArtifacts>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>install</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>unpack</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <!-- Required for nexus3860/* (cargo) tests -->
+                    <artifactItem>
+                      <groupId>org.sonatype.nexus</groupId>
+                      <artifactId>nexus-webapp</artifactId>
+                      <type>war</type>
+                      <outputDirectory>${project.build.directory}/nexus/webapp</outputDirectory>
+                    </artifactItem>
+                    <!--
+                    Versions here must be kept in sync with nexus3860/* (cargo) tests.
+                    Including/excluding only the bits needed for the container tests to function, keep out all other ancillary crud.
+
+                    The Tomcat distributions referenced are not actually available in central, but are in the third-party repository on RSO:
+                    https://repository.sonatype.org/content/repositories/third-party/org/apache/tomcat/apache-tomcat/
+                    -->
+                    <artifactItem>
+                      <groupId>org.apache.tomcat</groupId>
+                      <artifactId>apache-tomcat</artifactId>
+                      <version>6.0.37</version>
+                      <type>zip</type>
+                      <outputDirectory>${project.build.directory}/containers</outputDirectory>
+                      <includes>*/bin/**,*/conf/**,*/lib/**,*/webapps/*manager/**</includes>
+                    </artifactItem>
+                    <artifactItem>
+                      <groupId>org.apache.tomcat</groupId>
+                      <artifactId>apache-tomcat</artifactId>
+                      <version>7.0.47</version>
+                      <type>zip</type>
+                      <outputDirectory>${project.build.directory}/containers</outputDirectory>
+                      <includes>*/bin/**,*/conf/**,*/lib/**,*/webapps/*manager/**</includes>
+                    </artifactItem>
+                    <artifactItem>
+                      <groupId>org.eclipse.jetty</groupId>
+                      <artifactId>jetty-distribution</artifactId>
+                      <version>8.1.14.v20131031</version>
+                      <type>zip</type>
+                      <outputDirectory>${project.build.directory}/containers</outputDirectory>
+                      <includes>*/start*,*/bin/**,*/etc/**,*/lib/**</includes>
+                    </artifactItem>
+                    <artifactItem>
+                      <groupId>org.eclipse.jetty</groupId>
+                      <artifactId>jetty-distribution</artifactId>
+                      <version>7.6.14.v20131031</version>
+                      <type>zip</type>
+                      <outputDirectory>${project.build.directory}/containers</outputDirectory>
+                      <includes>*/start*,*/bin/**,*/etc/**,*/lib/**</includes>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.sonatype.nexus</groupId>
+            <artifactId>nexus-test-environment-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>setup-environment</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <setupMaven>true</setupMaven>
+              <nexusBundleArtifact>
+                <groupId>${it.nexus.bundle.groupId}</groupId>
+                <artifactId>${it.nexus.bundle.artifactId}</artifactId>
+                <version>${it.nexus.bundle.version}</version>
+                <type>zip</type>
+                <classifier>bundle</classifier>
+              </nexusBundleArtifact>
+              <nexusPluginsArtifacts>
+                <plugin>
+                  <groupId>org.sonatype.nexus</groupId>
+                  <artifactId>nexus-it-helper-plugin</artifactId>
+                  <classifier>bundle</classifier>
+                  <type>zip</type>
+                </plugin>
+                <plugin>
+                  <groupId>org.sonatype.nexus.plugins</groupId>
+                  <artifactId>nexus-p2-repository-plugin</artifactId>
+                  <classifier>bundle</classifier>
+                  <type>zip</type>
+                  <version>${nexus.version}</version>
+                </plugin>
+              </nexusPluginsArtifacts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

@@ -1,0 +1,13 @@
+<security-configuration>
+  <version>2.0.3</version>
+  <enabled>true</enabled>
+  <anonymousAccessEnabled>false</anonymousAccessEnabled>
+  <anonymousUsername>anonymous-user</anonymousUsername>
+  <anonymousPassword>anonymous-pass</anonymousPassword>
+  <realms>
+      <realm>LdapAuthenticatingRealm</realm>
+      <realm>XmlAuthenticatingRealm</realm>
+      <realm>XmlAuthorizingRealm</realm>
+  </realms>
+  
+</security-configuration>

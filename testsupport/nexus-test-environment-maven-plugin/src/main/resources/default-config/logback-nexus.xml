@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<included>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--See also http://logback.qos.ch/manual/appenders.html#RollingFileAppender-->
+    <File>${project.build.directory}/logs/${test-id}/nexus.log</File>
+    <Append>true</Append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5p [%thread] - %c - %m%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <maxIndex>12</maxIndex>
+      <FileNamePattern>${project.build.directory}/logs/${test-id}/nexus.log.%i</FileNamePattern>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>10MB</MaxFileSize>
+    </triggeringPolicy>
+  </appender>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <encoder>
+      <pattern>NEXUS: %d{HH:mm:ss.SSS} %level [%thread%X{DC}] %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.eclipse.jetty.webapp.WebAppClassLoader" level="INFO"/>
+  <logger name="eu.medsea.mimeutil.MimeUtil2" level="INFO"/>
+
+  <!--
+  FILE and CONSOLE appenders are both enabled here on purpose.
+  The CONSOLE appender is used to allow TEST and NEXUS logs to be interleaved in the test exception output for better correlation of test logs to server logs.
+  The FILE appender is enabled, as some tests (and NX functionality ie. service/local/logs) expect the logs files to exist.
+  -->
+
+  <root level="${it.nexus.log.level:-INFO}">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+
+</included>

@@ -1,0 +1,221 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Nexus Core API (Restlet 1.x Plugin) REST API</title>
+
+  <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS: implied media="all" -->
+  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/prettify.css">
+
+  <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
+  <script src="js/libs/modernizr-1.7.min.js"></script>
+
+</head>
+
+<body class="home">
+
+  <div class="container">
+    <header>
+      <div id="header" class="column first last span-20">
+        <div id="site-name" class="column span-18 append-1 prepend-1 first last"><a href="index.html">Nexus Core API (Restlet 1.x Plugin) REST API</a></div>
+        <div id="primary" class="column span-18 append-1 prepend-1 first last">
+          <ul class="navigation">
+            <li id="nav-rest"><a href="rest.html">REST</a></li>
+            <li id="nav-data"><a href="model.html">Data Model</a></li>
+          </ul>
+        </div>
+        <div>
+          <ul class="xbreadcrumbs" id="breadcrumbs">
+            <li>
+              <a href="index.html" class="home">Home</a> &gt;
+            </li>
+            <li>
+              <a href="rest.html">REST</a> &gt;
+              <ul>
+                <li><a href="model.html">Data Model</a></li>
+                <li><a href="rest.html">REST</a></li>
+              </ul>
+            </li>
+            <li class="current">
+              <a href="path__repo_targets.html">/repo_targets</a>
+              <ul>
+                <li><a href="path__authentication_logout.html">/authentication/logout</a></li>
+                <li><a href="path__repositories_-repositoryId-_status.html">/repositories/{repositoryId}/status</a></li>
+                <li><a href="path__authentication_login.html">/authentication/login</a></li>
+                <li><a href="path__user_account_-accountId-.html">/user_account/{accountId}</a></li>
+                <li><a href="path__global_settings_-configName-.html">/global_settings/{configName}</a></li>
+                <li><a href="path__repositories_-repositoryId-_routing_config.html">/repositories/{repositoryId}/routing/config</a></li>
+                <li><a href="path__privileges_-privilegeId-.html">/privileges/{privilegeId}</a></li>
+                <li><a href="path__users_-userId-.html">/users/{userId}</a></li>
+                <li><a href="path__user_search_-userSource-.html">/user_search/{userSource}</a></li>
+                <li><a href="path__status.html">/status</a></li>
+                <li><a href="path__repositories_-repositoryId-_meta.html">/repositories/{repositoryId}/meta</a></li>
+                <li><a href="path__components_userLocators.html">/components/userLocators</a></li>
+                <li><a href="path__configs.html">/configs</a></li>
+                <li><a href="path__components_realm_types.html">/components/realm_types</a></li>
+                <li><a href="path__global_settings.html">/global_settings</a></li>
+                <li><a href="path__users_setpw.html">/users_setpw</a></li>
+                <li><a href="path__users_reset_-userId-.html">/users_reset/{userId}</a></li>
+                <li><a href="path__schedule_types.html">/schedule_types</a></li>
+                <li><a href="path__rest_api_settings.html">/rest_api_settings</a></li>
+                <li><a href="path__repositories_-repositoryId-.html">/repositories/{repositoryId}</a></li>
+                <li><a href="path__components_repo_types.html">/components/repo_types</a></li>
+                <li><a href="path__plexus_users_-userSource-.html">/plexus_users/{userSource}</a></li>
+                <li><a href="path__components_schedule_types.html">/components/schedule_types</a></li>
+                <li><a href="path__users_forgotpw.html">/users_forgotpw</a></li>
+                <li><a href="path__rolesAndPrivs.html">/rolesAndPrivs</a></li>
+                <li><a href="path__all_repositories.html">/all_repositories</a></li>
+                <li><a href="path__users_changepw.html">/users_changepw</a></li>
+                <li><a href="path__artifact_maven_redirect.html">/artifact/maven/redirect</a></li>
+                <li><a href="path__repository_predefined_mirrors_-repositoryId-.html">/repository_predefined_mirrors/{repositoryId}</a></li>
+                <li><a href="path__attributes_-domain-_-target-_content.html">/attributes/{domain}/{target}/content</a></li>
+                <li><a href="path__users_forgotid_-email-.html">/users_forgotid/{email}</a></li>
+                <li><a href="path__repositories.html">/repositories</a></li>
+                <li><a href="path__users.html">/users</a></li>
+                <li><a href="path__repo_groups_-groupId-.html">/repo_groups/{groupId}</a></li>
+                <li><a href="path__data_cache_-domain-_-target-_content.html">/data_cache/{domain}/{target}/content</a></li>
+                <li><a href="path__repo_routes_-routeId-.html">/repo_routes/{routeId}</a></li>
+                <li><a href="path__templates_repositories_-repositoryId-.html">/templates/repositories/{repositoryId}</a></li>
+                <li><a href="path__templates_repositories.html">/templates/repositories</a></li>
+                <li><a href="path__external_role_map_-sourceId-_-roleId-.html">/external_role_map/{sourceId}/{roleId}</a></li>
+                <li><a href="path__privileges_target.html">/privileges_target</a></li>
+                <li><a href="path__repository_statuses.html">/repository_statuses</a></li>
+                <li><a href="path__repository_mirrors_-repositoryId-.html">/repository_mirrors/{repositoryId}</a></li>
+                <li><a href="path__wastebasket.html">/wastebasket</a></li>
+                <li><a href="path__metadata_-domain-_-target-_content.html">/metadata/{domain}/{target}/content</a></li>
+                <li><a href="path__assigned_privileges_-userId-.html">/assigned_privileges/{userId}</a></li>
+                <li><a href="path__repo_targets_-repoTargetId-.html">/repo_targets/{repoTargetId}</a></li>
+                <li><a href="path__repo_targets.html">/repo_targets</a></li>
+                <li><a href="path__user_search_-userSource-_-userId-.html">/user_search/{userSource}/{userId}</a></li>
+                <li><a href="path__privilege_types.html">/privilege_types</a></li>
+                <li><a href="path__attributes.html">/attributes</a></li>
+                <li><a href="path__plexus_user_-userSource-_-userId-.html">/plexus_user/{userSource}/{userId}</a></li>
+                <li><a href="path__schedule_run_-scheduledServiceId-.html">/schedule_run/{scheduledServiceId}</a></li>
+                <li><a href="path__roles_-roleId-.html">/roles/{roleId}</a></li>
+                <li><a href="path__external_role_map_-sourceId-.html">/external_role_map/{sourceId}</a></li>
+                <li><a href="path__roles.html">/roles</a></li>
+                <li><a href="path__plexus_user_-userId-.html">/plexus_user/{userId}</a></li>
+                <li><a href="path__configs_-configName-.html">/configs/{configName}</a></li>
+                <li><a href="path__user_to_roles_-sourceId-_-userId-.html">/user_to_roles/{sourceId}/{userId}</a></li>
+                <li><a href="path__artifact_maven_resolve.html">/artifact/maven/resolve</a></li>
+                <li><a href="path__artifact_maven_content.html">/artifact/maven/content</a></li>
+                <li><a href="path__plexus_roles_-sourceId-.html">/plexus_roles/{sourceId}</a></li>
+                <li><a href="path__repositories_-repositoryId-_routing.html">/repositories/{repositoryId}/routing</a></li>
+                <li><a href="path__components_repo_content_classes.html">/components/repo_content_classes</a></li>
+                <li><a href="path__role_tree_-userId-.html">/role_tree/{userId}</a></li>
+                <li><a href="path__check_smtp_settings.html">/check_smtp_settings</a></li>
+                <li><a href="path__schedules.html">/schedules</a></li>
+                <li><a href="path__privileges.html">/privileges</a></li>
+                <li><a href="path__repo_groups.html">/repo_groups</a></li>
+                <li><a href="path__schedules_-scheduledServiceId-.html">/schedules/{scheduledServiceId}</a></li>
+                <li><a href="path__repo_routes.html">/repo_routes</a></li>
+                <li><a href="path__artifact_maven.html">/artifact/maven</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+    <div id="main" class="column first last span-20">
+      <h1>/repo_targets</h1>
+      <p class="note">Mount Point: <a href="./service/local/repo_targets">/service/local/repo_targets</a></p>
+      <a name="GET"></a>
+      <h2>GET</h2>
+      <p>
+            Get the list of configuration repository targets.
+          </p>
+      <h3>Response Body</h3>
+      <table>
+        <tr>
+          <td align="right">element:</td>
+          <td><a href="el_ns0_repo-targets-list.html">repo-targets-list</a></td>
+        </tr>
+        <tr>
+          <td align="right">media types:</td>
+          <td>application/xml<br/>application/json</td>
+        </tr>
+      </table>
+      <p>(no documentation provided)</p>
+      <a name="POST"></a>
+      <h2>POST</h2>
+      <p>
+            Add a new repository target to nexus.
+          </p>
+      <h3>Request Body</h3>
+      <table>
+        <tr>
+          <td align="right">element:</td>
+          <td><a href="el_ns0_repo-target.html">repo-target</a></td>
+        </tr>
+        <tr>
+          <td align="right">media types:</td>
+          <td>application/xml<br/>application/json</td>
+        </tr>
+      </table>
+      <p>(no documentation provided)</p>
+      <h3>Response Body</h3>
+      <table>
+        <tr>
+          <td align="right">element:</td>
+          <td><a href="el_ns0_repo-target.html">repo-target</a></td>
+        </tr>
+        <tr>
+          <td align="right">media types:</td>
+          <td>application/xml<br/>application/json</td>
+        </tr>
+      </table>
+      <p>(no documentation provided)</p>
+
+      <div class="clear" />
+    </div>
+    <footer>
+      <div id="footer">
+        Copyright &copy; <script type="text/javascript" language="javascript">d = new Date;document.write(d.getFullYear());</script> <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Sonatype, Inc. 2013</span><br/>
+        Generated by <a href="http://enunciate.codehaus.org">Enunciate</a>.
+      </div>
+    </footer>
+  </div> <!--! end of #container -->
+
+  <!-- JavaScript at the bottom for fast page loading -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if necessary -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script>
+  <script>window.jQuery || document.write("<script src='js/libs/jquery-1.5.1.min.js'>\x3C/script>")</script>
+
+  <!--manage the navigation menu-->
+  <script src="js/libs/xbreadcrumbs.js"></script>
+  <script>
+    $(function() {
+      $('#breadcrumbs').xBreadcrumbs();
+    });
+  </script>
+
+
+  <!-- prettify code blocks. see http://code.google.com/p/google-code-prettify/ -->
+  <script src="js/libs/prettify/prettify.js"></script>
+  <script>
+    $(function() {
+      prettyPrint();
+    });
+  </script>
+
+  <!--[if lt IE 7 ]>
+    <script src="js/libs/dd_belatedpng.js"></script>
+    <script>DD_belatedPNG.fix("img, .png_bg"); // Fix any <img> or .png_bg bg-images. Also, please read goo.gl/mZiyb </script>
+  <![endif]-->
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<plexus>
+	<components>
+		
+		<component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf1</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf1.xml</config-file>
+	        <number-of-errors>0</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+	    
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf2</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf2.xml</config-file>
+	        <number-of-errors>3</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+	    
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf3</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf3.xml</config-file>
+	        <number-of-errors>3</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+
+		<component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf4</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf4.xml</config-file>
+	        <number-of-errors>0</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component> 
+	    
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf5</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf5.xml</config-file>
+	        <number-of-errors>0</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+	    
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf6</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf6.xml</config-file>
+	        <number-of-errors>3</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf7</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf7.xml</config-file>
+	        <number-of-errors>3</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+	    
+	    <component>
+	      <role>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</role>
+	      <role-hint>conf8</role-hint>
+	      <implementation>org.sonatype.security.ldap.realms.persist.LdapConfigrationValidatorTestBean</implementation>
+	      <isolated-realm>false</isolated-realm>
+
+	      <configuration>
+	        <config-file>${test-path}/ldap-conf8.xml</config-file>
+	        <number-of-errors>0</number-of-errors>
+	        <number-of-warnings>0</number-of-warnings>
+	      </configuration>
+	    </component>
+
+		
+	</components>
+</plexus>

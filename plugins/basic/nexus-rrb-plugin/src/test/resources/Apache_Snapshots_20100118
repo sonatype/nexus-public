@@ -1,0 +1,149 @@
+<html>
+  <head>
+    <title>Index of /content/groups/snapshots/</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="http://repository.apache.org/style/Sonatype-content.css?1.4.1" type="text/css" media="screen" title="no title" charset="utf-8">
+  </head>
+  <body>
+    <h1>Index of /content/groups/snapshots/</h1>
+    <table cellspacing="10">
+      <tr>
+        <th align="left">Name</th>
+        <th>Last Modified</th>
+        <th>Size</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>
+          <a href="../">Parent Directory</a>
+        </td>
+      </tr>
+                  <tr>
+            <td>
+                              <a href="README">README</a>
+                          </td>
+            <td>
+              Tue Aug 05 02:34:39 GMT+00:00 2008
+            </td>
+            <td align="right">
+                              1791
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href="README.txt">README.txt</a>
+                          </td>
+            <td>
+              Tue Aug 05 02:34:39 GMT+00:00 2008
+            </td>
+            <td align="right">
+                              1791
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href=".index/">.index/</a>
+                          </td>
+            <td>
+              Fri Nov 06 01:17:23 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href=".meta/">.meta/</a>
+                          </td>
+            <td>
+              Fri Jan 08 20:08:10 GMT+00:00 2010
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href=".p2/">.p2/</a>
+                          </td>
+            <td>
+              Sun May 31 23:28:06 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href="com/">com/</a>
+                          </td>
+            <td>
+              Thu Mar 26 20:00:13 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href="commons-email/">commons-email/</a>
+                          </td>
+            <td>
+              Thu Mar 26 23:32:04 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href="org/">org/</a>
+                          </td>
+            <td>
+              Wed Mar 25 18:31:09 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+                  <tr>
+            <td>
+                              <a href="org.apache.felix/">org.apache.felix/</a>
+                          </td>
+            <td>
+              Sat Apr 04 05:32:57 GMT+00:00 2009
+            </td>
+            <td align="right">
+                              &nbsp;
+                          </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+            </table>
+  </body>
+</html>

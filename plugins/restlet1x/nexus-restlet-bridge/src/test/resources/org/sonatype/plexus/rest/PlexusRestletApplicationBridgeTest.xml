@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!-- 
+
+    Copyright (c) 2007-2012 Sonatype, Inc. All rights reserved.
+    
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+    
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<plexus>
+  <components>
+    <component>
+      <role>org.restlet.Application</role>
+      <role-hint>test</role-hint>
+      <implementation>org.sonatype.plexus.rest.TestApplication</implementation>
+      <requirements>
+        <requirement>
+          <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+          <field-name>plexusResources</field-name>
+        </requirement>
+        <requirement>
+          <role>org.codehaus.plexus.PlexusContainer</role>
+          <field-name>plexusContainer</field-name>
+        </requirement>
+      </requirements>
+    </component>
+    <component>
+      <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+      <role-hint>tokenA</role-hint>
+      <implementation>org.sonatype.plexus.rest.SimplePlexusResource</implementation>
+      <configuration>
+        <token>tokenA</token>
+      </configuration>
+    </component>
+    <component>
+      <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+      <role-hint>tokenB</role-hint>
+      <implementation>org.sonatype.plexus.rest.SimplePlexusResource</implementation>
+      <configuration>
+        <token>tokenB</token>
+      </configuration>
+    </component>
+    <component>
+      <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+      <role-hint>tokenC</role-hint>
+      <implementation>org.sonatype.plexus.rest.ResponseCustomizerPlexusResource</implementation>
+      <configuration>
+        <token>tokenC</token>
+      </configuration>
+    </component>
+  </components>
+</plexus>

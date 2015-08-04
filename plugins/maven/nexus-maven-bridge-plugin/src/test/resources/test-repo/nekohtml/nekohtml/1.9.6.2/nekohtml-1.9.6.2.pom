@@ -1,0 +1,25 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nekohtml</groupId>
+  <artifactId>nekohtml</artifactId>
+  <name>Neko HTML</name>
+  <version>1.9.6.2</version>
+  <url>http://nekohtml.sourceforge.net/</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>http://nekohtml.svn.sourceforge.net/viewvc/nekohtml/</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.8.1</version>
+    </dependency>
+  </dependencies>
+</project>

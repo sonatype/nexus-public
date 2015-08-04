@@ -1,0 +1,68 @@
+<plexus>
+  <components>
+    <component>
+      <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+      <role-hint>ComponentPlexusResource</role-hint>
+      <implementation>org.sonatype.nexus.rest.component.SimpleComponentPlexusResource
+      </implementation>
+      <requirements>
+        <requirement>
+          <role>org.codehaus.plexus.PlexusContainer</role>
+          <role-hint>default</role-hint>
+          <field-name>container</field-name>
+        </requirement>
+      </requirements>
+      <configuration></configuration>
+    </component>
+
+
+    <component>
+      <role>TEST_EMPTY</role>
+      <description></description>
+      <role-hint></role-hint>
+      <implementation>
+        java.lang.Object
+			</implementation>
+      <configuration></configuration>
+    </component>
+
+    <component>
+      <role>TEST_NULL</role>
+      <implementation>
+        java.lang.Object
+			</implementation>
+      <configuration></configuration>
+    </component>
+
+    <component>
+      <role>TEST_ROLE</role>
+      <description>Test Description.</description>
+      <role-hint>test-hint</role-hint>
+      <implementation>
+        java.lang.Object
+			</implementation>
+      <configuration></configuration>
+    </component>
+
+    <component>
+      <role>MULTI_TEST</role>
+      <description>Description-1</description>
+      <role-hint>hint-1</role-hint>
+      <implementation>
+        java.lang.Object
+			</implementation>
+      <configuration></configuration>
+    </component>
+
+    <component>
+      <role>MULTI_TEST</role>
+      <description>Description-2</description>
+      <role-hint>hint-2</role-hint>
+      <implementation>
+        java.lang.Object
+			</implementation>
+      <configuration></configuration>
+    </component>
+
+  </components>
+</plexus>

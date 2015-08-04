@@ -1,0 +1,1442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xmlns="http://modello.codehaus.org/MODELLO/1.4.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://modello.codehaus.org/MODELLO/1.4.0 http://modello.codehaus.org/xsd/modello-1.4.0.xsd">
+
+  <id>nexus</id>
+  <name>NexusConfiguration</name>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.configuration.model</value>
+    </default>
+  </defaults>
+
+  <versionDefinition>
+    <type>field</type>
+    <value>version</value>
+  </versionDefinition>
+
+  <classes>
+    <!-- ROOT -->
+    <class rootElement="true" xml.tagName="nexusConfiguration">
+      <name>Configuration</name>
+      <version>1.4.0+</version>
+      <interfaces>
+        <interface>org.sonatype.configuration.Configuration</interface>
+      </interfaces>
+      <description>The root element of Nexus configuration.</description>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>1.4.0+</version>
+          <description>
+            The version of the persisted model. Should be equal to the version in Nexus that consumes this
+            configuration.
+          </description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>nexusVersion</name>
+          <version>1.10.0+</version>
+          <description>The Nexus version. Should be equal to the version of Nexus that stored this configuration.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>globalConnectionSettings</name>
+          <version>1.4.0+</version>
+          <description>
+            The global connection settings are settings applied across Nexus. These can be overridden by
+            per-repository connection
+            settings.</description>
+          <association>
+            <type>CRemoteConnectionSettings</type>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>globalHttpProxySettings</name>
+          <version>1.4.0/2.2.0</version>
+          <description>
+            The global HTTP Proxy settings are settings applied across Nexus. These can be overridden by
+            per-repository HTTP Proxy
+            settings.</description>
+          <association>
+            <type>CRemoteHttpProxySettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>remoteProxySettings</name>
+          <version>2.5.0+</version>
+          <description>The global Remote Proxy settings are settings applied across Nexus.</description>
+          <association>
+            <type>CRemoteProxySettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>restApi</name>
+          <version>1.4.0+</version>
+          <description>The Nexus REST settings.</description>
+          <association>
+            <type>CRestApiSettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>httpProxy</name>
+          <version>1.4.0+</version>
+          <description>The Nexus HTTP Proxy settings.</description>
+          <association>
+            <type>CHttpProxySettings</type>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>routing</name>
+          <version>1.4.0+</version>
+          <description>The routing settings alters the way Nexus routers will do they work.</description>
+          <association>
+            <type>CRouting</type>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>repositories</name>
+          <version>1.4.0+</version>
+          <description>The list of defined repositories within Nexus.</description>
+          <association>
+            <type>CRepository</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>repositoryGrouping</name>
+          <version>1.4.0+</version>
+          <description>The repository grouping within Nexus.</description>
+          <association>
+            <type>CRepositoryGrouping</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>remoteNexusInstances</name>
+          <version>1.4.0+</version>
+          <description>The known remote nexus instances.</description>
+          <association>
+            <type>CRemoteNexusInstance</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>repositoryTargets</name>
+          <version>1.4.0+</version>
+          <description>The repository targets.</description>
+          <association>
+            <type>CRepositoryTarget</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>tasks</name>
+          <version>1.4.0+</version>
+          <description>Currently defined tasks</description>
+          <association>
+            <type>CScheduledTask</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>smtpConfiguration</name>
+          <version>1.4.0+</version>
+          <description>SMTP Parameters</description>
+          <association>
+            <type>CSmtpConfiguration</type>
+          </association>
+          <required>true</required>
+        </field>
+        <!--
+        Removed in 2.7
+        -->
+        <field>
+          <name>errorReporting</name>
+          <version>1.4.0/2.5.0</version>
+          <description>Error Reporting Parameters</description>
+          <association>
+            <type>CErrorReporting</type>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>plugins</name>
+          <version>1.4.0+</version>
+          <description>Plugins and their configuration</description>
+          <association>
+            <type>CPlugin</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>notification</name>
+          <version>1.4.1+</version>
+          <description>Notification targets</description>
+          <association>
+            <type>CNotification</type>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.1</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.1";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.2</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.2";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.3</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.3";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.4</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.4";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.5</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.5";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.4.6</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.4.6";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.10.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.10.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.0.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.2.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.2.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.5.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.5.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.7.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.7.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.8.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.8.0";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CRemoteConnectionSettings</name>
+      <version>1.4.0+</version>
+      <description>The connections settings defines common connection properties, like retries count and timeouts.</description>
+      <fields>
+        <field>
+          <name>connectionTimeout</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>HTTP connection timeout in miliseconds.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>retrievalRetryCount</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>The count of HTTP request retries in case of failures.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>queryString</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Query string to be appended to remote URL.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>userAgentCustomizationString</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>A user-agent customization to send in HTTP requests, if needed.</description>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRemoteProxySettings</name>
+      <version>2.5.0+</version>
+      <description>The HTTP Proxy defines proxies used to access the internet.</description>
+      <fields>
+        <field>
+          <name>httpProxySettings</name>
+          <version>2.5.0+</version>
+          <description>The global HTTP Proxy settings are settings applied across Nexus.</description>
+          <association>
+            <type>CRemoteHttpProxySettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>httpsProxySettings</name>
+          <version>2.5.0+</version>
+          <description>The global HTTPS Proxy settings are settings applied across Nexus.</description>
+          <association>
+            <type>CRemoteHttpProxySettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>nonProxyHosts</name>
+          <version>2.5.0+</version>
+          <description>
+            List of addresses that can ignore the proxy settings.</description>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRemoteHttpProxySettings</name>
+      <version>1.4.0+</version>
+      <description>The HTTP Proxy defines proxies used to access the internet.</description>
+      <fields>
+        <field>
+          <name>blockInheritance</name>
+          <version>1.4.0/2.2.0</version>
+          <type>boolean</type>
+          <description>Set to true if you want to block inheritance.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>proxyHostname</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>THe hostname of HTTP proxy.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>proxyPort</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>The port of the HTTP proxy.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>authentication</name>
+          <version>1.4.0+</version>
+          <association>
+            <type>CRemoteAuthentication</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>nonProxyHosts</name>
+          <version>1.4.1/2.2.0</version>
+          <description>
+            List of addresses that can ignore the proxy settings.</description>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRemoteAuthentication</name>
+      <version>1.4.0+</version>
+      <description>
+        Remote authentication tokens used in remote authentications against HTTP Proxies and/or protected remote
+        repositories.
+      </description>
+      <fields>
+        <field>
+          <name>username</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The username to authenticate with.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>password</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The password to authenticate with.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>ntlmHost</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The host that is origin of NTLM authentication.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>ntlmDomain</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The NTLM domain to auth against.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>trustStore</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The path of the trustStore to use in remote authentication (server).</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>trustStorePassword</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The passphrase of the trustStore.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>keyStore</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The path of the keyStore to use in remote authentication (client).</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>keyStorePassword</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The passphrase of the keyStore.</description>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRestApiSettings</name>
+      <version>1.4.0+</version>
+      <description>The REST API Settings.</description>
+      <fields>
+        <field>
+          <name>baseUrl</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>
+            The base URL against to build absolute URLs in REST responses, RSS feeds, mails, etc.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>forceBaseUrl</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            Should the base URL be used always in case of response or try to build response against incoming
+            request.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>uiTimeout</name>
+          <version>1.4.3+</version>
+          <type>int</type>
+          <description>HTTP connection timeout in miliseconds.</description>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CHttpProxySettings</name>
+      <version>1.4.0+</version>
+      <description>The Nexus HTTP Proxy Server Settings.</description>
+      <fields>
+        <field>
+          <name>enabled</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Is the service enabled?</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>port</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>The port of the HTTP Proxy</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>proxyPolicy</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The policy of proxy (strict, passThru).</description>
+          <required>true</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0+</version>
+          <code><![CDATA[
+    public static final String PROXY_POLICY_STRICT = "strict"; // serve only what Nexus has
+
+    public static final String PROXY_POLICY_PASS_THRU = "passThru"; // let reqs go outbound if needed
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CRouting</name>
+      <version>1.4.0+</version>
+      <description>Nexus routing settings.</description>
+      <fields>
+        <field>
+          <name>resolveLinks</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Should routers follow/resolve links?</description>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRepository</name>
+      <version>1.4.0+</version>
+      <description>The Nexus repository model.</description>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Repository ID. It should uniquely identify this repository across Nexus.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Human readable Repository name.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>providerRole</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The type of repository.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>providerHint</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The implementation of repository.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>pathPrefix</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Path prefix, used by router, to form the URL where this repository will be published.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>localStatus</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The local status of repository.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>notFoundCacheActive</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, NFC will be used. If false, no miss caching will happen.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>notFoundCacheTTL</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>
+            NotFoundCache, the neg-cache records time to live in minutes. How long will misses be cached.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>userManaged</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, repository is user managed, and it is allowed to be edited/dropped by users.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>exposed</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, repository is exposed at content.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>browseable</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, repository is browseable on UI/DAV. With any value repository will still properly serve
+            Maven clients.
+          </description>
+          <required>true</required>
+        </field>
+        <!--
+          <field> <name>allowWrite</name> <version>1.4.0+</version>
+          <type>boolean</type> <description> If true, repository will
+          deny any kind of deployment (write) request. Caching will
+          still work. </description> <required>true</required> </field>
+        -->
+        <field>
+          <name>writePolicy</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The policy of the repositories write capability, i.e. (ALLOW_WRITE, ALLOW_WRITE_ONCE, READ_ONLY).</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>indexable</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, repository will get indexed. If false, the files and artifacts from repository will NOT
+            be indexed (no index will be maintained for this repository).
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>searchable</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>
+            If true, repository will be searchable. If false, the files and artifacts from repository will NOT
+            appear on Nexus index, thus will be not searcheable.
+          </description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>localStorage</name>
+          <version>1.4.0+</version>
+          <description>
+            The local storage definition of repository.
+          </description>
+          <association>
+            <type>CLocalStorage</type>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>remoteStorage</name>
+          <version>1.4.0+</version>
+          <description>
+            The remote storage definition of repository.
+          </description>
+          <association>
+            <type>CRemoteStorage</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>mirrors</name>
+          <version>1.4.0+</version>
+          <description>
+            Repository mirrors to publish downstream.
+          </description>
+          <association>
+            <type>CMirror</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>externalConfiguration</name>
+          <version>1.4.0+</version>
+          <type>DOM</type>
+          <required>false</required>
+          <description>Repository implementation's own configuration</description>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0+</version>
+          <code><![CDATA[
+    /* A field that "carries" the Configuration modelVersion with object */
+    public final String modelVersion = Configuration.MODEL_VERSION;
+    
+    /* A field to store the default local storage URL */
+    public transient String defaultLocalStorageUrl;
+
+    /* A field to store actual external configuration implementation */
+    public transient Object externalConfigurationImple;
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CLocalStorage</name>
+      <version>1.4.0+</version>
+      <description>
+        The local storage definition. If defined, the repository will have own instance of local storage instead
+        to use shared
+        one.
+      </description>
+      <fields>
+        <field>
+          <name>provider</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The provider of the local storage.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The URL of the local storage.</description>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRemoteStorage</name>
+      <version>1.0.0+</version>
+      <description>
+        The remote storage definition. If URL is only defined, the repository will share one shared remote
+        storage instance. If
+        any other properties are defined, the repository will own a private repository
+        store instance.
+      </description>
+      <fields>
+        <field>
+          <name>provider</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The provider of the remote storage.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The URL of the remote storage. Mandatory.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>authentication</name>
+          <version>1.4.0+</version>
+          <description>
+            The remote authentication, if needed to authenticate on remote repository.
+          </description>
+          <association>
+            <type>CRemoteAuthentication</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>connectionSettings</name>
+          <version>1.4.0+</version>
+          <description>
+            The specific connection settings to use when connecting to this repository.
+          </description>
+          <association>
+            <type>CRemoteConnectionSettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>inheritHttpProxySettings</name>
+          <version>1.4.0/2.2.0</version>
+          <type>boolean</type>
+          <description>Should this remote storage inherit the global settings? If true, it will inherit, if false, the proxy defined or none will be used.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>httpProxySettings</name>
+          <version>1.4.0/2.2.0</version>
+          <description>
+            The specific HTTP Proxy settings to use when connecting to this repository.
+          </description>
+          <association>
+            <type>CRemoteHttpProxySettings</type>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>mirrors</name>
+          <version>1.4.0/2.5.0</version>
+          <description>
+            Repository mirrors configuration for upstream (to use for retrieving stuff).
+          </description>
+          <association>
+            <type>CMirror</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CMirror</name>
+      <version>1.4.0+</version>
+      <description>
+        Mirror config
+      </description>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>mirror id</description>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>mirror url</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRepositoryGrouping</name>
+      <version>1.4.0+</version>
+      <description>Repository grouping definitions.</description>
+      <fields>
+        <field>
+          <name>pathMappings</name>
+          <version>1.4.0+</version>
+          <association>
+            <type>CPathMappingItem</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>
+            Path mapping, that directs grouping router where to search and/or avoid full-group search.
+          </description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CPathMappingItem</name>
+      <version>1.4.0+</version>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>routeType</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>routePatterns</name>
+          <version>1.4.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+        <field>
+          <name>repositories</name>
+          <version>1.4.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0+</version>
+          <code><![CDATA[
+    public static final String EXCLUSION_RULE_TYPE = "exclusive";
+
+    public static final String INCLUSION_RULE_TYPE = "inclusive";
+    
+    public static final String BLOCKING_RULE_TYPE = "blocking";
+
+    public static final String ALL_GROUPS = "*";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CRemoteNexusInstance</name>
+      <version>1.4.0+</version>
+      <description>The known remote Nexus instances.</description>
+      <fields>
+        <field>
+          <name>alias</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The alias of remote Nexus</description>
+        </field>
+        <field>
+          <name>instanceUrl</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL of remote Nexus context root.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CRepositoryTarget</name>
+      <version>1.4.0+</version>
+      <description>A repository target.</description>
+      <fields>
+        <field>
+          <name>id</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <description>The ID of target.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>name</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <description>The name of the Target.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>contentClass</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <description>The repository contentClass this Target is applicable.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>patterns</name>
+          <version>1.4.0+</version>
+          <description>The patterns that comprises this target.</description>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CScheduledTask</name>
+      <description>A scheduled task</description>
+      <version>1.4.0+</version>
+      <fields>
+        <field>
+          <name>id</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The id of the task</description>
+        </field>
+        <field>
+          <name>name</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The name of the task</description>
+        </field>
+        <field>
+          <name>enabled</name>
+          <type>boolean</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The flag determining if the task should run</description>
+        </field>
+        <field>
+          <name>type</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The type of the task</description>
+        </field>
+        <field>
+          <name>status</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The current status of the task</description>
+        </field>
+        <field>
+          <name>lastRun</name>
+          <type>long</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The date the task last ran</description>
+        </field>
+        <field>
+          <name>nextRun</name>
+          <type>long</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The date the task will run next</description>
+        </field>
+        <field>
+          <name>schedule</name>
+          <association>
+            <type>CScheduleConfig</type>
+          </association>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The schedule that controls the time this task is run</description>
+        </field>
+        <field>
+          <name>properties</name>
+          <version>1.4.0+</version>
+          <description>Properties to configure the task</description>
+          <required>false</required>
+          <association>
+            <type>CProps</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CProps</name>
+      <version>1.4.0+</version>
+      <description>Properties-like generic key-value map.</description>
+      <fields>
+        <field>
+          <name>key</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Property key.</description>
+        </field>
+        <field>
+          <name>value</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Property value.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CScheduleConfig</name>
+      <version>1.4.0+</version>
+      <description>A schedule configuration.</description>
+      <fields>
+        <field>
+          <name>type</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The type of the schedule</description>
+        </field>
+        <field>
+          <name>startDate</name>
+          <type>long</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The schedule that controls the time this task is run</description>
+        </field>
+        <field>
+          <name>endDate</name>
+          <type>long</type>
+          <version>1.4.0+</version>
+          <required>true</required>
+          <description>The schedule that controls the time this task is run</description>
+        </field>
+        <field>
+          <name>daysOfWeek</name>
+          <version>1.4.0+</version>
+          <description>Days of the week to run</description>
+          <required>true</required>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
+          <name>daysOfMonth</name>
+          <version>1.4.0+</version>
+          <description>Days of the month to run</description>
+          <required>true</required>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
+          <name>cronCommand</name>
+          <type>String</type>
+          <version>1.4.0+</version>
+          <description>cron scheduling configuration command</description>
+          <required>true</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0+</version>
+          <code><![CDATA[
+    public static final String TYPE_MANUAL = "manual";
+
+    public static final String TYPE_RUN_NOW = "runNow";
+
+    public static final String TYPE_ONCE = "once";
+    
+    public static final String TYPE_HOURLY = "hourly";
+    
+    public static final String TYPE_DAILY = "daily";
+    
+    public static final String TYPE_WEEKLY = "weekly";
+    
+    public static final String TYPE_MONTHLY = "monthly";
+    
+    public static final String TYPE_ADVANCED = "advanced";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CSmtpConfiguration</name>
+      <version>1.4.0+</version>
+      <description>The SMTP Settings.</description>
+      <fields>
+        <field>
+          <name>hostname</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>The hostname of the smtp server.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>port</name>
+          <version>1.4.0+</version>
+          <type>int</type>
+          <description>The port of the smtp server.</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>sslEnabled</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Enable SSL.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>tlsEnabled</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Enable TLS.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>username</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Username to access smtp server.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>password</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Password to access smtp server.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>debugMode</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Enable SMTP debug mode.</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>systemEmailAddress</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Email addresses that Nexus will use to send emails from.</description>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+    <!--
+    Removed in 2.7
+    -->
+    <class>
+      <name>CErrorReporting</name>
+      <version>1.4.0/2.5.0</version>
+      <description>Configuration for automatic error reporting</description>
+      <fields>
+        <field>
+          <name>enabled</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>Flag that determines if automatic error reporting will be enabled</description>
+          <required>true</required>
+        </field>
+        <field>
+          <name>jiraUrl</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>URL of the jira server to report problems to</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>jiraProject</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Name of the jira project</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>jiraUsername</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Username of an account in the jira server</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>jiraPassword</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <description>Password of an account in the jira server</description>
+          <required>false</required>
+        </field>
+        <field>
+          <name>useGlobalProxy</name>
+          <version>1.4.0+</version>
+          <type>boolean</type>
+          <description>whether to use the global proxy config for requests sent to jira</description>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CPlugin</name>
+      <version>1.4.0+</version>
+      <description>Plugin and it's configuration.</description>
+      <fields>
+        <field>
+          <name>type</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The plugin Role</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The plugin Hint</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The plugin Hint</description>
+        </field>
+        <field>
+          <name>status</name>
+          <version>1.4.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Plugin status</description>
+        </field>
+        <field>
+          <name>externalConfiguration</name>
+          <version>1.4.0+</version>
+          <type>DOM</type>
+          <required>false</required>
+          <description>Plugin configuration</description>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.4.0+</version>
+          <code><![CDATA[
+    public static final String STATUS_ACTIVE = "active";
+
+    public static final String STATUS_INACTIVE = "inactive";
+
+    public static final String STATUS_BROKEN = "broken";
+
+    /* A field to store actual external configuration implementation */
+    public transient org.sonatype.nexus.configuration.ExternalConfiguration externalConfigurationImple;
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>CNotification</name>
+      <version>1.4.1+</version>
+      <description>Notification (global settings).</description>
+      <fields>
+        <field>
+          <name>enabled</name>
+          <version>1.4.1+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Is target notification enabled? (if false, no notification will be sent)</description>
+        </field>
+        <field>
+          <name>notificationTargets</name>
+          <version>1.4.1+</version>
+          <description>Notification targets.</description>
+          <required>true</required>
+          <association>
+            <type>CNotificationTarget</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>CNotificationTarget</name>
+      <version>1.4.1+</version>
+      <description>Notification target (target level settings).</description>
+      <fields>
+        <field>
+          <name>targetId</name>
+          <version>1.4.1+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The ID of the target.</description>
+        </field>
+        <field>
+          <name>targetRoles</name>
+          <version>1.4.1+</version>
+          <description>Security Roles that are member of this notification group.</description>
+          <required>false</required>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
+          <name>targetUsers</name>
+          <version>1.4.1+</version>
+          <description>Security Users that are member of this notification group.</description>
+          <required>false</required>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
+          <name>targetExternals</name>
+          <version>1.4.1+</version>
+          <description>External targets (not belonging to any user from Nexus) that are member of this notification group.</description>
+          <required>false</required>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+      </fields>
+    </class>
+
+  </classes>
+</model>

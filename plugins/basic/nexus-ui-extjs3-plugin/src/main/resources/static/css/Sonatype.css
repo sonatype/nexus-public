@@ -1,0 +1,574 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+/*
+body {
+    font: normal 12px verdana,arial,tahoma;
+}
+
+html, body {
+    margin:0;
+    padding:0;
+    border:0 none;
+    overflow:hidden;
+    height:100%;
+    width:100%;
+}
+*/
+
+body {
+    font-family: "Trebuchet MS", verdana, lucida, arial, helvetica, sans-serif;
+}
+
+#header {
+    font-family: verdana, "Trebuchet MS", lucida, arial, helvetica, sans-serif;
+    background-color: black;
+    background-image: url("../../static/images/header_bg.gif");
+    background-repeat: repeat-x;
+    height: 64px; /* needs to match the height of the background image */
+}
+
+#logo {
+    color: white;
+    font-size: 9px;
+    position: absolute;
+    top: 22px;
+    right: 10px;
+}
+
+#logo a {
+    color: #ff9900;
+}
+
+a:link, a:visited, a:hover, a:active {
+    color: #336699;
+}
+
+#header div.right-side {
+    font-size: 13px;
+    display: block;
+    text-align: right;
+    color: white; /* login name color */
+    padding: 5px;
+}
+
+.head-link {
+    color: #FFCC00;
+}
+
+#head-link-r {
+    cursor: pointer;
+    text-align: right;
+    padding-right: 5px;
+}
+
+.head-link-logged-in {
+    background: url("../../static/images/icons/btn-arrow-headlink.gif") no-repeat scroll 88% -30% transparent;
+    padding-left: 10px;
+    padding-right: 20px !important;
+}
+
+.profile-menu-visible {
+    background-color: #444444;
+}
+
+.user-profile-menu {
+    background-color: black;
+    background-image: none;
+    border-color: #444444;
+}
+
+.user-profile-menu a.x-menu-item {
+    color: #FFCC00;
+    background-color: black;
+}
+
+.user-profile-menu .x-menu-item img {
+    background: black;
+    border: none;
+}
+
+.user-profile-menu .x-menu-item-active {
+    margin: 0px 0px !important;
+    border: solid 1px #444444;
+    background-color: black;
+    background-image: none;
+}
+
+.user-profile-dynamic-content {
+    border: 1px solid #B5B8C8;
+    /* padding == fieldset offset */
+    padding: 21px;
+    /* adjust for hidden tab bar */
+    padding-top: 10px;
+}
+
+#user-profile-summary-form .x-panel-footer {
+    background: none white;
+}
+
+#header div.left-side {
+    float: left;
+    display: block;
+}
+
+#config-text, #log-text {
+    font-family: "Trebuchet MS", verdana, lucida, arial, helvetica, sans-serif;
+}
+
+/* background color */
+.x-border-layout-ct {
+    background: black;
+}
+
+.little-padding {
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Sonatype Icons */
+button.st-icon-refresh {
+    background-image: url(../../static/images/icons/arrow_refresh.png);
+}
+
+/* Ext theme overrides */
+.x-form-invalid,textarea.x-form-invalid{ /* make three browsers consistent */
+  background:#fee;
+  border:1px solid #dd7870;
+}
+
+.ext-safari .x-form-invalid{ /* @note could remove from source */ 
+  background:#fee;
+  border:1px solid #dd7870;
+}
+
+.x-form-focus,textarea.x-form-focus{
+  outline: auto 0px -webkit-focus-ring-color; /* add Safari focus ring override, so consistent across browsers */
+}
+
+.loading-indicator{
+  font-size:11px;
+    background-image:url(../../static/ext-3.4.1.1/resources/images/default/grid/loading.gif);
+    background-repeat:no-repeat;
+    background-position:3px center;
+    padding-left:22px;
+    line-height:16px;
+    margin:3px;
+}
+
+/* correct safari fieldset toggle icons */
+.ext-safari .x-fieldset legend .x-tool-toggle, .ext-safari .x-fieldset legend input {
+    margin-top: 1px;
+}
+
+/* Custom form label classes */
+.required-field .x-tip-ml {
+    /* reduce left offset w/ icon in there */
+    padding-left: 2px;
+}
+
+.required-field .x-tip-body {
+    padding-left: 16px;
+    background: transparent url(../../static/images/icons/bullet_star.png) no-repeat scroll left;
+}
+
+.required-field .x-form-item-label {
+    background: transparent url(../../static/images/icons/bullet_star.png) no-repeat right;
+}
+
+.required-field .x-panel-header-text {
+    padding-right: 16px;
+    background: transparent url(../../static/images/icons/bullet_star.png) no-repeat scroll right;
+}
+
+.form-label-helpmark {
+    margin-left: 2px;
+    vertical-align: middle;
+    opacity: 0.25;
+}
+.form-label-helpmark:hover {
+    opacity: 0.5;
+}
+
+.form-label-helpmark-combo {
+    /* large margin needed to place helpmark next to combobox - the box is position:absolute, and helpmark was covered by dropdown arrow */
+    margin-left: 19px;
+    height: 16px;
+    width: 16px;
+    vertical-align: middle;
+    opacity: 0.25;
+}
+.form-label-helpmark-combo:hover {
+    opacity: 0.5;
+}
+
+.form-label-helpmark-check {
+    margin-left: 5px;
+    height: 16px;
+    width: 16px;
+    vertical-align: middle;
+    opacity: 0.25;
+}
+.form-label-helpmark-check:hover {
+    opacity: 0.5;
+}
+
+.form-label-helpmark-textarea {
+    margin-left: 2px;
+    vertical-align: top;
+    opacity: 0.25;
+}
+.form-label-helpmark-textarea:hover {
+    opacity: 0.5;
+}
+
+.form-label-after-field {
+    padding-left: 3px;
+    vertical-align: -1px;
+}
+
+/* left server sub-panels */
+#st-server-tab-panel .st-server-panel .st-server-sub-container {
+    padding: 2px 4px 2px 4px;
+}
+
+#st-server-tab-panel .st-server-panel .x-panel-body.x-panel-body-noheader.x-panel-body-noborder {
+    background-color: #F9F9F9;
+}
+
+.search-all-tbar {
+
+}
+
+#st-server-tab-panel ul.group-links a {
+    text-decoration: none;
+    font-size: 13px;
+    color: #15428B;
+    padding: 2px;
+}
+
+#st-server-tab-panel ul.group-links a:hover {
+    text-decoration: none;
+    color: #15428B;
+}
+
+#st-server-tab-panel ul.group-links a:visited {
+    text-decoration: none;
+    color: #15428B;
+}
+
+/* Search results */
+#search-result-grid .x-grid3-row-body {
+    margin: 0px 5px 0px 5px;
+    padding: 1px 5px 3px 0;
+}
+
+#search-result-grid input.copy-pom-dep {
+    width: 500px;
+    font-size: 11px;
+    color: #444; /*dark grey*/
+}
+
+/* RSS Grid */
+#topic-grid .x-grid3-td-title b {
+    font-family: tahoma, verdana;
+    display: block;
+    color: #333;
+}
+
+#topic-grid .x-grid3-td-title b i {
+    font-weight: normal;
+    font-style: normal;
+    color: #000;
+}
+
+#topic-grid .x-grid3-td-title .topic {
+    padding-left: 5px;
+}
+
+#topic-grid .x-grid3-td-title .x-grid3-cell-inner {
+    white-space: normal;
+}
+
+#topic-grid .x-grid3-td-title a {
+    color: #385F95;
+    text-decoration: none;
+}
+
+#topic-grid .x-grid3-td-title a:hover {
+    text-decoration: underline;
+}
+
+#topic-grid .x-grid3-row-body p {
+    margin: 2px 10px 4px 10px !important;
+    color: #555;
+}
+
+/* Grid Panel style overrides */
+.x-grid-panel a {
+    color: #1E4176;
+}
+
+.x-grid-panel a:link {
+    color: #1E4176;
+    text-decoration: none;
+}
+
+.x-grid-panel a:visited {
+    color: #1E4176;
+    text-decoration: none;
+}
+
+.x-grid-panel a:hover {
+    text-decoration: underline;
+    color: #15428b;
+}
+
+.x-form-field-wrap .x-form-folder-trigger {
+    background-image: url(../../static/images/icons/folder-trigger.png);
+    cursor: pointer;
+}
+
+.ext-ie .x-fieldset {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.x-date-middle {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    width: 130px; /* FF3 */
+}
+
+.x-tree-node-expanded .x-tree-node-nexus-icon {
+    background-image: url(../../static/images/icons/folder-open-nexus.png);
+}
+
+.x-tree-node-leaf .x-tree-node-nexus-icon {
+    background-image: url(../../static/images/icons/leaf-nexus.png);
+}
+
+.x-tree-node-collapsed .x-tree-node-nexus-icon {
+    background-image: url(../../static/images/icons/folder-nexus.png);
+}
+
+.x-tree-node-collapsed .x-tree-node-nexus-icon, .x-tree-node-expanded .x-tree-node-nexus-icon, .x-tree-node-leaf .x-tree-node-nexus-icon {
+    border: 0 none;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+    width: 16px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.ext-ie .x-tree-node-indent img, .ext-ie .x-tree-node-nexus-icon, .ext-ie .x-tree-ec-icon {
+    vertical-align: middle !important;
+}
+
+.ext-mb-input {
+    padding: 1px 3px;
+    background: #fff url(../../static/ext-3.4.1.1/resources/images/default/form/text-bg.gif) repeat-x 0 0;
+    border: 1px solid #B5B8C8;
+}
+
+.ext-mb-input {
+    height: 22px;
+    line-height: 18px;
+    vertical-align: middle;
+}
+
+.ext-ie .ext-mb-input {
+    margin: -1px 0;
+    height: 22px;
+    line-height: 18px;
+}
+
+.ext-strict .ext-mb-input {
+    height: 18px;
+}
+
+.ext-safari .ext-mb-input {
+    height: 20px;
+    padding: 0 3px;
+}
+
+.ext-gecko .ext-mb-input {
+    padding-top: 2px;
+    padding-bottom: 0;
+}
+
+.ext-strict .ext-safari .x-small-editor .x-form-text {
+    height: 18px !important;
+}
+
+.ext-safari .x-form-field-wrap .x-form-trigger {
+    position: static;
+    top: auto;
+    vertical-align: top;
+}
+
+.x-statusbar-warning {
+    color: #EE0000;
+    font-weight: normal;
+    background: transparent url(../../static/ext-3.4.1.1/resources/images/default/shared/warning.gif) no-repeat 3px 3px;
+}
+
+.x-statusbar .x-status-text {
+    padding: 0 4px 0 25px;
+}
+
+.x-toolbar-warning {
+    background: transparent url(../../static/ext-3.4.1.1/resources/images/default/shared/warning.gif) no-repeat scroll 0 2px;
+    color: #EE0000;
+    padding: 2px 2px 2px 18px;
+    font-weight: normal;
+}
+
+.x-toolbar-warning-box {
+    border-color: #a9bfd3;
+    border-style: solid;
+    border-width: 0 0 1px 0;
+    display: block;
+    padding: 2px;
+    background: #d0def0 url(../../static/ext-3.4.1.1/resources/images/gray/toolbar/bg.gif) repeat-x top left;
+    position: relative;
+    zoom: 1;
+}
+
+.x-form-empty-field {
+    color: darkblue;
+}
+
+/* disabled cell in a grid */
+.disable-cell {
+    background-color: lightgrey !important;
+}
+
+.x-layout-split {
+    background-color: #ECECEC;
+}
+
+.x-layout-split-north .x-layout-mini {
+    left: 48%;
+    height: 5px;
+    width: 35px;
+    background-image: url(../../static/images/icons/mini-top.gif);
+}
+
+.x-layout-split-south .x-layout-mini {
+    left: 48%;
+    height: 5px;
+    width: 35px;
+    background-image: url(../../static/images/icons/mini-bottom.gif);
+}
+
+.x-layout-split-west .x-layout-mini {
+    top: 48%;
+    background-image: url(../../static/images/icons/mini-left.gif);
+}
+
+.x-layout-split-east .x-layout-mini {
+    top: 48%;
+    background-image: url(../../static/images/icons/mini-right.gif);
+}
+
+.x-layout-cmini-north .x-layout-mini {
+    left: 48%;
+    height: 5px;
+    width: 35px;
+    background-image: url(../../static/images/icons/mini-bottom.gif);
+}
+
+.x-layout-cmini-south .x-layout-mini {
+    left: 48%;
+    height: 5px;
+    width: 35px;
+    background-image: url(../../static/images/icons/mini-top.gif);
+}
+
+.x-layout-cmini-west .x-layout-mini {
+    top: 48%;
+    background-image: url(../../static/images/icons/mini-right.gif);
+}
+
+.x-layout-cmini-east .x-layout-mini {
+    top: 48%;
+    background-image: url(../../static/images/icons/mini-left.gif);
+}
+
+.roleRow {
+    background: url(../../static/ext-3.4.1.1/resources/images/default/tree/folder.gif) left no-repeat;
+}
+
+.privilegeRow {
+    background: url(../../static/ext-3.4.1.1/resources/images/default/tree/leaf.gif) left no-repeat;
+}
+
+.placeholder {
+    width: 18px;
+    height: 0px;
+}
+
+.st-server-panel .x-panel-collapsed .x-panel-bwrap {
+    display: none;
+}
+
+/*
+ * The combo box arrow is position:absolute, so afterText would overlap without the additional padding.
+ */
+.x-form-arrow-trigger + .form-label-after-field {
+    padding-left: 20px;
+}
+
+/*
+ * xtheme-gray.css background color for windows is too much in contrast with borders.
+ */
+body.x-body-masked .x-window-plain .x-window-mc {
+    background-color: #F2F1F0 !important;
+}
+
+/* Nexus.messages */
+
+.nx-msg .x-box-mc {
+    font-size: 14px;
+}
+
+#nx-msg-div {
+    position: absolute;
+    left: 35%;
+    top: 10px;
+    width: 250px;
+    z-index: 20000;
+}
+
+/* Ext.LinkButton */
+
+.x-linkbtn-wrap {}
+.x-linkbtn-left {}
+.x-linkbtn-center {}
+.x-linkbtn-text {}
+.x-linkbtn-wright {}
+
+/*
+ * Text in linkbutton should be centered.
+ */
+.x-linkbtn-mc {
+    text-align: center;
+}
+
+/* Remove x from search box on IE 10 */
+.nx-searchbox::-ms-clear {
+  width : 0;
+  height: 0;
+}

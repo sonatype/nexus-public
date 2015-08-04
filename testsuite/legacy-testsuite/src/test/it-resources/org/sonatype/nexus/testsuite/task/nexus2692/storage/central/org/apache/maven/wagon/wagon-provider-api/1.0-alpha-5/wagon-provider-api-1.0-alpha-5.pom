@@ -1,0 +1,141 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.maven.wagon</groupId>
+  <artifactId>wagon-provider-api</artifactId>
+  <name>Maven Wagon API</name>
+  <version>1.0-alpha-5</version>
+  <description>Tools to manage artifacts and deployment</description>
+  <ciManagement>
+    <system>wagon-dev@maven.apache.org</system>
+    <notifiers>
+      <notifier>
+        <address>wagon-dev@maven.apache.org</address>
+      </notifier>
+    </notifiers>
+  </ciManagement>
+  <inceptionYear>2003</inceptionYear>
+  <mailingLists>
+    <mailingList>
+      <name>Maven Wagon User List</name>
+      <subscribe>wagon-users-subscribe@maven.apache.org</subscribe>
+      <unsubscribe>wagon-users-unsubscribe@maven.apache.org</unsubscribe>
+      <archive>http://nagoya.apache.org/eyebrowse/SummarizeList?listName=wagon-users@maven.apache.org</archive>
+    </mailingList>
+    <mailingList>
+      <name>Maven Wagon Developer List</name>
+      <subscribe>wagon-dev-subscribe@maven.apache.org</subscribe>
+      <unsubscribe>wagon-dev-unsubscribe@maven.apache.org</unsubscribe>
+      <archive>http://nagoya.apache.org/eyebrowse/SummarizeList?listName=wagon-dev@maven.apache.org</archive>
+    </mailingList>
+  </mailingLists>
+  <developers>
+    <developer>
+      <id>michal</id>
+      <name>Michal Maczka</name>
+      <email>michal@codehaus.com</email>
+      <organization>Codehaus</organization>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>brett</id>
+      <name>Brett Porter</name>
+      <email>brett@apache.org</email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>+10</timezone>
+    </developer>
+    <developer>
+      <id>jvanzyl</id>
+      <name>Jason van Zyl</name>
+      <email>jason@maven.org</email>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/maven/wagon/trunk/wagon-provider-api</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/wagon/trunk/wagon-provider-api</developerConnection>
+    <url>http://svn.apache.org/viewcvs.cgi/maven/wagon/wagon-provider-api</url>
+  </scm>
+  <organization>
+    <name>Apache Software Foundation</name>
+    <url>http://www.apache.org/</url>
+  </organization>
+  <build>
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
+    <outputDirectory>target/classes</outputDirectory>
+    <testOutputDirectory>target/test-classes</testOutputDirectory>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <directory>target</directory>
+  </build>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>http://repo1.maven.org/maven2</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Maven Plugin Repository</name>
+      <url>http://repo1.maven.org/maven2</url>
+    </pluginRepository>
+  </pluginRepositories>
+  <dependencies>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>1.0.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <reporting>
+    <outputDirectory>target/site</outputDirectory>
+  </reporting>
+  <distributionManagement>
+    <repository>
+      <id>repo1</id>
+      <url>scp://beaver.codehaus.org/home/projects/maven/repository-staging/to-ibiblio/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>snapshots</id>
+      <url>scp://beaver.codehaus.org/home/projects/maven/repository-staging/snapshots/maven2</url>
+    </snapshotRepository>
+    <status>deployed</status>
+  </distributionManagement>
+</project>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><ldapConfiguration>
+  <connectionInfo>
+    <searchBase>o=sonatype</searchBase>
+    <systemUsername>admin</systemUsername>
+    <systemPassword>CMw7ArkDsKp4yvV0M1yl</systemPassword>
+    <authScheme>DIGEST-MD5</authScheme>
+    <protocol>ldap</protocol>
+    <host>localhost</host>
+    <port>${port}</port>
+    <realm>localhost</realm>
+  </connectionInfo>
+  <userAndGroupConfig>
+    
+    <groupMemberFormat>uid=${username},ou=people,o=sonatype</groupMemberFormat>
+    <groupObjectClass>groupOfUniqueNames</groupObjectClass>
+    <groupBaseDn>ou=groups</groupBaseDn>
+    <groupIdAttribute>cn</groupIdAttribute>
+    <groupMemberAttribute>uniqueMember</groupMemberAttribute>
+    <userObjectClass>inetOrgPerson</userObjectClass>
+    <userBaseDn>ou=people</userBaseDn>
+    <userIdAttribute>uid</userIdAttribute>
+    <userPasswordAttribute>userPassword</userPasswordAttribute>
+    <userRealNameAttribute>cn</userRealNameAttribute>
+    <emailAddressAttribute>mail</emailAddressAttribute>
+    <!-- <websiteAttribute>labeledUri</websiteAttribute>
+    <websiteUriLabel>Web Site</websiteUriLabel>
+    <isWebsiteAttributeLabelUri>true</isWebsiteAttributeLabelUri> -->
+    <preferredPasswordEncoding>clear</preferredPasswordEncoding>
+    <userSubtree>false</userSubtree>
+    <ldapGroupsAsRoles>true</ldapGroupsAsRoles>
+    
+  </userAndGroupConfig>
+    
+</ldapConfiguration>

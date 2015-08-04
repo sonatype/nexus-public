@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus1332</groupId>
+  <artifactId>artifact-interp-${target}</artifactId>
+  <name/>
+  <version>${myVersion}</version>
+  <description/>
+  
+  <properties>
+	<target>main</target>
+	<myVersion>14.0.0-SNAPSHOT</myVersion>
+  </properties>
+
+    <distributionManagement>
+  	<repository>
+  		<id>test-releases</id>
+  		<name>Releases</name>
+  		<url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
+  	</repository>
+  </distributionManagement>
+  
+</project>

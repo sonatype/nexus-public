@@ -1,0 +1,74 @@
+dn: o=sonatype
+objectClass: top
+objectClass: organization
+o: sonatype
+
+dn: ou=people,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: people
+description: Contains entries which describe persons
+
+dn: ou=people2,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: people2
+description: Contains entries which describe persons
+
+dn: cn=cstamas,ou=people2,o=sonatype
+objectclass: inetOrgPerson
+objectClass: organizationalPerson
+cn: cstamas
+sn: Tamas Cservenak
+uid: cstamas
+userpassword: cstamas123
+mail: cstamas@sonatype.com
+description: This is Tamas
+businesscategory: cn=public,ou=groups,o=sonatype
+businesscategory: cn=snapshots,ou=groups,o=sonatype
+
+dn: cn=brianf,ou=people,o=sonatype
+objectclass: inetOrgPerson
+objectClass: organizationalPerson
+cn: brianf
+sn: Brian Fox
+uid: brianf
+userpassword: brianf123
+mail: brianf@sonatype.com
+description: This is Brian
+businesscategory: cn=public,ou=groups,o=sonatype
+businesscategory: cn=releases,ou=groups,o=sonatype
+
+dn: cn=jvanzyl,ou=people2,o=sonatype
+objectclass: inetOrgPerson
+objectClass: organizationalPerson
+cn: jvanzyl
+sn: Jason Van Zyl
+uid: jvanzyl
+userpassword: jvanzyl123
+mail: jvanzyl@sonatype.com
+description: This is Jason
+businesscategory: cn=public,ou=groups,o=sonatype
+businesscategory: cn=releases,ou=groups,o=sonatype
+businesscategory: cn=snapshots,ou=groups,o=sonatype
+
+dn: ou=groups,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+description: Contains entries which describe groups
+
+dn: cn=public,ou=groups,o=sonatype
+objectClass: organizationalRole
+cn: public
+description: Public group
+
+dn: cn=releases,ou=groups,o=sonatype
+objectClass: organizationalRole
+cn: releases
+description: Releases group
+
+dn: cn=snapshots,ou=groups,o=sonatype
+objectClass: organizationalRole
+cn: snapshots
+description: Snapshots group

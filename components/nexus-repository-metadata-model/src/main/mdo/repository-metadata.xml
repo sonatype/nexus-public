@@ -1,0 +1,233 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xsd.namespace="http://www.sonatype.com/xsd/nexus-repository-metadata-1.0.0"
+       xsd.targetNamespace="http://www.sonatype.com/xsd/nexus-repository-metadata-1.0.0">
+
+  <id>repository-metadata</id>
+
+  <name>RepositoryMetadata</name>
+
+  <description>
+    <![CDATA[
+    	<p>Repository Metadata Model.</p>
+    	]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.repository.metadata.model</value>
+    </default>
+  </defaults>
+
+  <classes>
+
+    <!-- ROOT -->
+    <class rootElement="true" xml.tagName="repository-metadata">
+      <name>RepositoryMetadata</name>
+      <version>1.0.0+</version>
+      <description>The root element of Repository Metadata.</description>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <description>The version of the persisted model.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.0.0+</version>
+          <description>The repository "canonical url".</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <description>The repository recommended ID.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <description>The repository recommended name.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>layout</name>
+          <version>1.0.0+</version>
+          <description>The repository "layout".</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>policy</name>
+          <version>1.0.0+</version>
+          <description>The repository "policy".</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>localUrl</name>
+          <version>1.0.0+</version>
+          <description>The repository "local url".</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>publicKey</name>
+          <version>1.0.0+</version>
+          <description>The repository public key.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>repositoryMaintainerEmail</name>
+          <version>1.0.0+</version>
+          <description>The email of the repository maintainer.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>lastContentChange</name>
+          <version>1.0.0+</version>
+          <description>Simple UTC timestamp of last content change in Repository. MRM/IDEs may use this value to
+            flush their caches.
+          </description>
+          <type>long</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>contentChangeInterval</name>
+          <version>1.0.0+</version>
+          <description>A typical period of content change in repository, if any. In minutes. For example: the period
+            when sync tools are
+            run. MRM/IDEs may use this value to tweak their cache TTLs.
+          </description>
+          <type>int</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>mirrorListSource</name>
+          <version>1.0.0+</version>
+          <description>The dynamic source of repository mirror list (formed based on request).</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>mirrors</name>
+          <version>1.0.0+</version>
+          <description>The static list of repository mirrors.</description>
+          <association>
+            <type>RepositoryMirrorMetadata</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+        <field>
+          <name>memberRepositories</name>
+          <version>1.0.0+</version>
+          <description>The list of repositories participating in this group.</description>
+          <association>
+            <type>RepositoryMemberMetadata</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.0.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.0.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.0.0+</version>
+          <code><![CDATA[
+    public static final String LAYOUT_MAVEN2 = "maven2";
+    public static final String LAYOUT_MAVEN1 = "maven1";
+
+    public static final String POLICY_RELEASE = "release";
+    public static final String POLICY_SNAPSHOT = "snapshot";
+    public static final String POLICY_MIXED = "mixed";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>RepositoryMirrorMetadata</name>
+      <version>1.0.0+</version>
+      <description>The Mirrors metadata element.</description>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <description>The mirror 'id'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.0.0+</version>
+          <description>The mirror 'url'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryMemberMetadata</name>
+      <version>1.0.0+</version>
+      <description>The member repostory metadata element.</description>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <description>The repository 'id'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <description>The repository 'name'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>policy</name>
+          <version>1.0.0+</version>
+          <description>The repository 'policy'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.0.0+</version>
+          <description>The repository 'canonical url'.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+      </fields>
+    </class>
+
+  </classes>
+</model>

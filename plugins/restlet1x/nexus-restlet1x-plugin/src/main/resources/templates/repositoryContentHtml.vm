@@ -1,0 +1,68 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+<html>
+  <head>
+    <title>Index of $request.resourceRef.path</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <link rel="icon" type="image/png" href="$nexusRoot/favicon.png"><!-- Major Browsers -->
+    <!--[if IE]><link rel="SHORTCUT ICON" href="$nexusRoot/favicon.ico"/><![endif]--><!-- Internet Explorer-->
+
+    <link rel="stylesheet" href="$nexusRoot/static/css/Sonatype-content.css?$nexusVersion" type="text/css" media="screen" title="no title" charset="utf-8">
+  </head>
+  <body>
+    <h1>Index of $request.resourceRef.path</h1>
+    <table cellspacing="10">
+      <tr>
+        <th align="left">Name</th>
+        <th>Last Modified</th>
+        <th>Size</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>
+          <a href="../">Parent Directory</a>
+        </td>
+      </tr>
+        #foreach( $listItem in $listItems )
+          <tr>
+            <td>
+              #if( $listItem.resourceURI.endsWith( '/' ) )
+                #set( $uriLength = $listItem.resourceURI.length() - 2 )
+                #set( $startIndex = $listItem.resourceURI.lastIndexOf( '/', $uriLength ) + 1 )
+                #set( $linkName = $listItem.resourceURI.substring( $startIndex ) )
+                <a href="$listItem.resourceURI">$linkName</a>
+              #else
+                #set( $startIndex = $listItem.resourceURI.lastIndexOf( '/' ) + 1 )
+                #set( $linkName = $listItem.resourceURI.substring( $startIndex ) )
+                <a href="$listItem.resourceURI">$linkName</a>
+              #end
+            </td>
+            <td>
+              $listItem.lastModified
+            </td>
+            <td align="right">
+              #if( $listItem.sizeOnDisk == -1 )
+                &nbsp;
+              #else
+                $listItem.sizeOnDisk
+              #end
+            </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+        #end
+    </table>
+  </body>
+</html>

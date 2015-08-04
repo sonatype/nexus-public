@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" targetNamespace="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="capabilityStatus" type="ns0:capabilityStatus"/>
+  <xs:element name="capability" type="ns0:capability"/>
+  <xs:complexType name="capabilityStatus">
+    <xs:sequence>
+      <xs:element name="capability" type="ns0:capability" minOccurs="1"/>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="active" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="error" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="typeName" type="xs:string" minOccurs="1"/>
+      <xs:element name="stateDescription" type="xs:string" minOccurs="0"/>
+      <xs:element name="status" type="xs:string" minOccurs="0"/>
+      <xs:element name="tags" type="ns0:tag" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="capability">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" minOccurs="0"/>
+      <xs:element name="notes" type="xs:string" minOccurs="0"/>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="typeId" type="xs:string" minOccurs="1"/>
+      <xs:element name="properties" type="ns0:property" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="property">
+    <xs:sequence>
+      <xs:element name="key" type="xs:string" minOccurs="1"/>
+      <xs:element name="value" type="xs:string" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="tag">
+    <xs:sequence>
+      <xs:element name="key" type="xs:string" minOccurs="1"/>
+      <xs:element name="value" type="xs:string" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

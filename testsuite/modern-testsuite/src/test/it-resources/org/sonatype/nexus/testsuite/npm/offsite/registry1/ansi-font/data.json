@@ -1,0 +1,148 @@
+{
+    "_attachments": {},
+    "_etag": "\"DW1ZZ6XOIDO8IOAC9ELSWYJI7\"",
+    "_id": "ansi-font",
+    "_rev": "5-0ec8fcf4f309241548d675d4571fdb5f",
+    "author": {
+        "email": "rfobic@gmail.com",
+        "name": "Irakli Gozalishvili",
+        "url": "http://jeditoolkit.com"
+    },
+    "description": "ANSI font styling utils",
+    "dist-tags": {
+        "latest": "0.0.2"
+    },
+    "maintainers": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "gozala"
+        }
+    ],
+    "name": "ansi-font",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/Gozala/ansi-font.git",
+        "web": "https://github.com/Gozala/ansi-font"
+    },
+    "time": {
+        "0.0.1": "2011-07-10T11:25:42.421Z",
+        "0.0.2": "2011-11-14T23:03:49.703Z",
+        "created": "2011-07-10T11:25:41.460Z",
+        "modified": "2011-11-14T23:03:49.703Z"
+    },
+    "versions": {
+        "0.0.1": {
+            "_defaultsLoaded": true,
+            "_engineSupported": true,
+            "_id": "ansi-font@0.0.1",
+            "_nodeVersion": "v0.4.9",
+            "_npmJsonOpts": {
+                "contributors": false,
+                "file": "/Users/gozala/.npm/ansi-font/0.0.1/package/package.json",
+                "serverjs": false,
+                "wscript": false
+            },
+            "_npmVersion": "1.0.15",
+            "author": {
+                "email": "rfobic@gmail.com",
+                "name": "Irakli Gozalishvili",
+                "url": "http://jeditoolkit.com"
+            },
+            "bugs": {
+                "url": "http://github.com/Gozala/ansi-font/issues/"
+            },
+            "dependencies": {},
+            "description": "ANSI font styling utils",
+            "devDependencies": {},
+            "directories": {},
+            "dist": {
+                "shasum": "5867692cd12b0062dbb23c987f0a8f5ed43003e1",
+                "tarball": "${npmRegistryUrl}/ansi-font/-/ansi-font-0.0.1.tgz"
+            },
+            "engines": {
+                "node": ">=0.4.x"
+            },
+            "homepage": "https://github.com/Gozala/ansi-font",
+            "id": "ansi-font",
+            "keywords": [
+                "ANSI",
+                "font",
+                "style",
+                "colors"
+            ],
+            "licenses": [
+                {
+                    "type": "MIT",
+                    "url": "http://jeditoolkit.com/LICENSE"
+                }
+            ],
+            "main": "./index.js",
+            "name": "ansi-font",
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/ansi-font.git",
+                "web": "https://github.com/Gozala/ansi-font"
+            },
+            "scripts": {},
+            "version": "0.0.1"
+        },
+        "0.0.2": {
+            "_defaultsLoaded": true,
+            "_engineSupported": true,
+            "_id": "ansi-font@0.0.2",
+            "_nodeVersion": "v0.5.9",
+            "_npmUser": {
+                "email": "rfobic@gmail.com",
+                "name": "gozala"
+            },
+            "_npmVersion": "1.0.101",
+            "author": {
+                "email": "rfobic@gmail.com",
+                "name": "Irakli Gozalishvili",
+                "url": "http://jeditoolkit.com"
+            },
+            "bugs": {
+                "url": "http://github.com/Gozala/ansi-font/issues/"
+            },
+            "dependencies": {},
+            "description": "ANSI font styling utils",
+            "devDependencies": {},
+            "directories": {},
+            "dist": {
+                "shasum": "890301bd5841462fd39c0b7709afd1f525143331",
+                "tarball": "${npmRegistryUrl}/ansi-font/-/ansi-font-0.0.2.tgz"
+            },
+            "engines": {
+                "node": ">=0.4.x"
+            },
+            "homepage": "https://github.com/Gozala/ansi-font",
+            "id": "ansi-font",
+            "keywords": [
+                "ANSI",
+                "font",
+                "style",
+                "colors"
+            ],
+            "licenses": [
+                {
+                    "type": "MIT",
+                    "url": "http://jeditoolkit.com/LICENSE"
+                }
+            ],
+            "main": "./index.js",
+            "maintainers": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "gozala"
+                }
+            ],
+            "name": "ansi-font",
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/ansi-font.git",
+                "web": "https://github.com/Gozala/ansi-font"
+            },
+            "version": "0.0.2"
+        }
+    }
+}

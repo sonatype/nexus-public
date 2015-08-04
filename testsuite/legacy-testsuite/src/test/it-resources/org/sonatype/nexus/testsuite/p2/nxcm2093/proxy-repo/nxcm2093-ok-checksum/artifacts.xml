@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<?artifactRepository class='org.eclipse.equinox.internal.p2.artifact.repository.simple.SimpleArtifactRepository' version='1.0.0'?><repository name="Galileo Nexus Proxy" type="org.eclipse.equinox.p2.artifact.repository.simpleRepository" version="1">
+  <mappings size="5">
+    <rule output="${repoUrl}/plugins/${id}_${version}.jar.pack.gz" filter="(&amp; (classifier=osgi.bundle) (format=packed))" />
+    <rule output="${repoUrl}/plugins/${id}_${version}.jar" filter="(&amp; (classifier=osgi.bundle))" />
+    <rule output="${repoUrl}/binary/${id}_${version}" filter="(&amp; (classifier=binary))" />
+    <rule output="${repoUrl}/features/${id}_${version}.jar.pack.gz" filter="(&amp; (classifier=org.eclipse.update.feature) (format=packed))" />
+    <rule output="${repoUrl}/features/${id}_${version}.jar" filter="(&amp; (classifier=org.eclipse.update.feature))" />
+  </mappings>
+  <artifacts size="4">
+    <artifact id="org.mortbay.jetty.util" classifier="osgi.bundle" version="6.1.15.v200905182336">
+      <properties size="3">
+        <property name="artifact.size" value="186357" />
+        <property name="download.size" value="186357" />
+        <property name="download.md5" value="499b073781f5a046c3557cb6a78f76c8" />
+      </properties>
+    </artifact>
+    <artifact id="org.mortbay.jetty.util" classifier="osgi.bundle" version="6.1.15.v200905182336">
+      <processing size="1">
+        <step id="org.eclipse.equinox.p2.processing.Pack200Unpacker" required="true" />
+      </processing>
+      <properties size="3">
+        <property name="artifact.size" value="74745" />
+        <property name="download.size" value="74745" />
+        <property name="format" value="packed" />
+        <property name="download.md5" value="9ee5c9e42f1d9600734a390f4793d064" />
+      </properties>
+    </artifact>
+    <artifact id="javax.servlet" classifier="osgi.bundle" version="2.5.0.v200806031605">
+      <properties size="3">
+        <property name="artifact.size" value="117853" />
+        <property name="download.size" value="117853" />
+        <property name="download.md5" value="d7b7443f5699d4f9f643efced0010766" />
+      </properties>
+    </artifact>
+    <artifact id="javax.servlet" classifier="osgi.bundle" version="2.5.0.v200806031605">
+      <processing size="1">
+        <step id="org.eclipse.equinox.p2.processing.Pack200Unpacker" required="true" />
+      </processing>
+      <properties size="3">
+        <property name="artifact.size" value="74032" />
+        <property name="download.size" value="74032" />
+        <property name="format" value="packed" />
+        <property name="download.md5" value="a7b3295c1323e8958302c91c6e239896" />
+      </properties>
+    </artifact>
+  </artifacts>
+  <properties size="3">
+    <property name="p2.compressed" value="false" />
+    <property name="p2.timestamp" value="1275051707169" />
+    <property name="publishPackFilesAsSiblings" value="true" />
+  </properties>
+</repository>

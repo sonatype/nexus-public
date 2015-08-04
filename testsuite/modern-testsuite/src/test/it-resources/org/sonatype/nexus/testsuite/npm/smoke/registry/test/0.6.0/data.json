@@ -1,0 +1,87 @@
+{
+    "_id": "test@0.6.0",
+    "_npmUser": {
+        "email": "rfobic@gmail.com",
+        "name": "gozala"
+    },
+    "_npmVersion": "1.1.65",
+    "author": {
+        "email": "rfobic@gmail.com",
+        "name": "Irakli Gozalishvili",
+        "url": "http://jeditoolkit.com"
+    },
+    "bugs": {
+        "url": "http://github.com/Gozala/test-commonjs/issues/"
+    },
+    "contributors": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "Irakli Gozalishvili",
+            "url": "http://jeditoolkit.com"
+        },
+        {
+            "email": "kris@cixar.com",
+            "name": "Kris Kowal",
+            "url": "http://github.com/kriskowal/"
+        },
+        {
+            "name": "Zach Carter"
+        },
+        {
+            "name": "Felix Geisend\u00f6rfer"
+        },
+        {
+            "name": "Karl Guertin"
+        },
+        {
+            "name": "Ash Berlin"
+        },
+        {
+            "name": "Francois Lafortune"
+        }
+    ],
+    "dependencies": {
+        "ansi-font": "0.0.2"
+    },
+    "description": "(Un)CommonJS test runner.",
+    "devDependencies": {
+        "phantomify": "~0.x.0"
+    },
+    "directories": {},
+    "dist": {
+        "shasum": "5986ac445ec17754322512d104ba32c8a63e938e",
+        "tarball": "${npmRegistryUrl}/test/-/test-0.6.0.tgz"
+    },
+    "homepage": "https://github.com/Gozala/test-commonjs/",
+    "keywords": [
+        "test",
+        "commonjs",
+        "uncommonjs",
+        "unit"
+    ],
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "https://github.com/Gozala/test-commonjs/License.md"
+        }
+    ],
+    "main": "./test.js",
+    "maintainers": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "gozala"
+        }
+    ],
+    "name": "test",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Gozala/test-commonjs.git",
+        "web": "https//github.com/Gozala/test-commonjs"
+    },
+    "scripts": {
+        "test": "npm run test-node && npm run test-browser",
+        "test-browser": "node ./node_modules/phantomify/bin/cmd.js ./test/index.js",
+        "test-node": "node ./test/index.js"
+    },
+    "version": "0.6.0"
+}

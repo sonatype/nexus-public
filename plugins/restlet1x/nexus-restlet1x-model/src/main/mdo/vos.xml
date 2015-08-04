@@ -1,0 +1,4397 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model>
+
+  <id>vos</id>
+
+  <name>Nexus REST VOs</name>
+
+  <description>
+		<![CDATA[
+    	<p>Nexus Value Objects used in REST API</p>
+    	]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.rest.model</value>
+    </default>
+  </defaults>
+
+  <classes>
+
+    <!-- Root class for all responses -->
+    <class>
+      <name>NexusResponse</name>
+      <version>1.0.0+</version>
+      <fields></fields>
+    </class>
+
+    <!-- Reused stuff on many resources -->
+    <class>
+      <name>AuthenticationSettings</name>
+      <version>1.0.0+</version>
+      <description>Remote authentication tokens used in remote authentications against HTTP Proxies and/or protected remote repositories.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "authentication-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>username</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>A username to be used in authentication.</description>
+        </field>
+        <field>
+          <name>password</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>A password to be used in authentication.</description>
+        </field>
+        <field>
+          <name>ntlmHost</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The Windows NT Lan Manager to use for authentication.</description>
+        </field>
+        <field>
+          <name>ntlmDomain</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The Windows NT Lan Manager Domain to use for authentication.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RemoteConnectionSettings</name>
+      <version>1.0.0+</version>
+      <description>
+        The connections settings defines common connection properties, like retries count and timeouts.
+      </description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "remote-connection-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>connectionTimeout</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>Connection timeout in milliseconds.</description>
+        </field>
+        <field>
+          <name>retrievalRetryCount</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The retry count before remote connection is declared unsuccesful.</description>
+        </field>
+        <field>
+          <name>queryString</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Query string that is appended to remote requests.</description>
+        </field>
+        <field>
+          <name>userAgentString</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User agent string that is used to customize Nexus user agent string user for remote HTTP requests.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>SystemNotificationSettings</name>
+      <version>1.0.0+</version>
+      <description>
+        The notification settings tell nexus who to notify when certain events occur (such as a proxy repository being auto-blocked).
+      </description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "system-notification-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>enabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to enable notifications.</description>
+        </field>
+        <field>
+          <name>emailAddresses</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Comma seperated list of email addresses to notify.</description>
+        </field>
+        <field>
+          <name>roles</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>List of role ids, users assigned to these roles will be notified by email as well.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>SmtpSettings</name>
+      <version>1.0.0+</version>
+      <description>The connections settings for an smtp server.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "smtp-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>host</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The smtp host.</description>
+        </field>
+        <field>
+          <name>port</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The smtp port.</description>
+        </field>
+        <field>
+          <name>username</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The smtp server username.</description>
+        </field>
+        <field>
+          <name>password</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The smtp server password.</description>
+        </field>
+        <field>
+          <name>systemEmailAddress</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The email address that emails will be sent from.</description>
+        </field>
+        <field>
+          <name>sslEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to use ssl.</description>
+        </field>
+        <field>
+          <name>tlsEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to use tls.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RemoteProxySettingsDTO</name>
+      <version>1.0.0+</version>
+      <description>The Remote Proxy defines proxies used to access the internet.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "remote-proxy-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>httpProxySettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RemoteHttpProxySettingsDTO</type>
+          </association>
+          <required>false</required>
+          <description>HTTP proxy settings.</description>
+        </field>
+        <field>
+          <name>httpsProxySettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RemoteHttpProxySettingsDTO</type>
+          </association>
+          <required>false</required>
+          <description>HTTPS proxy settings.</description>
+        </field>
+        <field>
+          <name>nonProxyHosts</name>
+          <version>1.0.0+</version>
+          <description>
+            List of addresses that can ignore the proxy settings.</description>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RemoteHttpProxySettingsDTO</name>
+      <version>1.0.0+</version>
+      <description>The HTTP Proxy defines proxies used to access the internet.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "remote-http-proxy-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>proxyHostname</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The proxy hostname.</description>
+        </field>
+        <field>
+          <name>proxyPort</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The proxy port.</description>
+        </field>
+        <field>
+          <name>authentication</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>AuthenticationSettings</type>
+          </association>
+          <required>false</required>
+          <description>Authentication used to connect with proxy server.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Global Configuration Resource -->
+    <class>
+      <name>GlobalConfigurationListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "global-settings-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "global-settings-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <description>REST Response object for a global configuration list request, contains the typical 'data' parameter, which is a list of the global configuration items requested.</description>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>GlobalConfigurationListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of global configuration items.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "global-settings-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>GlobalConfigurationListResource</name>
+      <version>1.0.0+</version>
+      <description>An item that contains details about a global configuration item, including the url required to retrieve the configuration details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "global-configuration-list-item" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The url that can be GET requested to retrieve the details of the global configuration.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the global configuration.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>GlobalConfigurationResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a global configuration request, contains the typical 'data' parameter, which is the global configuration item requested.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "global-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "global-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>GlobalConfigurationResource</type>
+          </association>
+          <required>true</required>
+          <description>The global configuration details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>GlobalConfigurationResource</name>
+      <version>1.0.0+</version>
+      <description>List of all global configuration items in Nexus.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "global-settings-item" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>securityAnonymousAccessEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that, if true, will allow anonymous access while security is enabled.</description>
+        </field>
+        <field>
+          <name>securityAnonymousUsername</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The username to use for anonymous access (so that roles/privileges can be applied to the anonymous access users).</description>
+        </field>
+        <field>
+          <name>securityAnonymousPassword</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The password to use for anonymous access.</description>
+        </field>
+        <field>
+          <name>securityRealms</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of security realms that are enabled for Nexus, note that order IS important.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "securityRealms" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "securityRealmItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>globalConnectionSettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RemoteConnectionSettings</type>
+          </association>
+          <required>true</required>
+          <description>Global remote connection settings.</description>
+        </field>
+        <field>
+          <name>systemNotificationSettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>SystemNotificationSettings</type>
+          </association>
+          <required>true</required>
+          <description>System notification settings.</description>
+        </field>
+        <field>
+          <name>smtpSettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>SmtpSettings</type>
+          </association>
+          <required>true</required>
+          <description>SMTP settings for email notifications that Nexus generates.</description>
+        </field>
+        <field>
+          <name>remoteProxySettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RemoteProxySettingsDTO</type>
+          </association>
+          <required>false</required>
+          <description>Remote Proxy Settings.</description>
+        </field>
+        <field>
+          <name>globalRestApiSettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RestApiSettings</type>
+          </association>
+          <required>false</required>
+          <description>Rest API configuration parameters.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Repository Status List Resource -->
+    <class>
+      <name>RepositoryStatusListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository status list request, contains the typical 'data' parameter, which is the list of repository status objects.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repository-status-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repository-status-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryStatusListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository status objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repository-status-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryStatusListResource</name>
+      <version>1.0.0+</version>
+      <description>Some general details and status of the repostiory.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-status-list-item" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URI that can be used to manage the repository</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of repository.</description>
+        </field>
+        <field>
+          <name>repoPolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository policy.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository format.</description>
+        </field>
+        <field>
+          <name>status</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryStatusResource</type>
+          </association>
+          <required>true</required>
+          <description>The repository status object</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Repository Resource -->
+    <class>
+      <name>RepositoryListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository list request, contains the typical 'data' parameter, which is the list of repository objects.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repositories" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repositories" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repositories-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryListResource</name>
+      <version>1.0.0+</version>
+      <description>Repository general details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repositories-item" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>URI used to manage the repository.</description>
+        </field>
+        <field>
+          <name>contentResourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>URI used to access repository over /content URL (as maven would do for example).</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of the repository.</description>
+        </field>
+        <field>
+          <name>repoPolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The policy of the repository.</description>
+        </field>
+        <field>
+          <name>provider</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository provider.</description>
+        </field>
+        <field>
+          <name>providerRole</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The role of the repository (classname).</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The format of the repository.</description>
+        </field>
+        <field>
+          <name>userManaged</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the repository is manageable by the user.</description>
+        </field>
+        <field>
+          <name>exposed</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <defaultValue>true</defaultValue>
+          <description>Flag that states if the repository is exposed over the content url.</description>
+        </field>
+        <field>
+          <name>effectiveLocalStorageUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL where the repository storage is on server.</description>
+        </field>
+        <field>
+          <name>remoteUri</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The remote URI of the repository.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository request, contains the typical 'data' parameter, which is the repository object.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryBaseResource</type>
+          </association>
+          <required>true</required>
+          <description>The repository object.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryBaseResource</name>
+      <version>1.0.0+</version>
+      <description>The repository base object, this could be extended by a new object if new fields are required.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "base-repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>contentResourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL to access the content resource of the repository.</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository.</description>
+        </field>
+        <field>
+          <name>provider</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The provider of the repository (i.e. maven, p2, obr, etc.).</description>
+        </field>
+        <field>
+          <name>providerRole</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The role of the repository (i.e. Repository, GroupRepository, etc.).</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The format of the repository.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of the repository.</description>
+        </field>
+        <field>
+          <name>exposed</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states whether the repository should be available over the content resource.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryResource</name>
+      <superClass>RepositoryBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>Hosted or Proxy repository parameters, extending the base resource.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "hosted-repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>writePolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Write policy on the repository, allows for no write, write once, overwrite, etc.</description>
+        </field>
+        <field>
+          <name>browseable</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the repository is browseable.</description>
+        </field>
+        <field>
+          <name>indexable</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the repository is indexable.</description>
+        </field>
+        <field>
+          <name>notFoundCacheTTL</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>How long requests should remain in the NFC before checking for existance again.</description>
+        </field>
+        <field>
+          <name>repoPolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository policy (release, snapshot).</description>
+        </field>
+        <field>
+          <name>checksumPolicy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository checksum policy (ignore checksum errors, dont download if checksum errors, etc.).</description>
+        </field>
+        <field>
+          <name>downloadRemoteIndexes</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the proxy repository should download indexes from remote repository.</description>
+        </field>
+        <field>
+          <name>overrideLocalStorageUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User defined storage directory on server (which is not the default).</description>
+        </field>
+        <field>
+          <name>defaultLocalStorageUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The default storage directory on the server.</description>
+        </field>
+        <field>
+          <name>remoteStorage</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryResourceRemoteStorage</type>
+          </association>
+          <required>false</required>
+          <description>The remote storage details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryShadowResource</name>
+      <superClass>RepositoryBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>Shadow (or Virtual) repository parameters, extending the base resource.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "shadow-repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <!-- Shadow specific -->
+        <field>
+          <name>shadowOf</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository that this virtual repository is shadowing.</description>
+        </field>
+        <field>
+          <name>syncAtStartup</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that determines if the virtual repository should sync its content with master on startup.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryProxyResource</name>
+      <superClass>RepositoryResource</superClass>
+      <version>1.0.0+</version>
+      <description>Proxy repository parameters, extending the repository resource.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "proxy-repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <!-- Proxy specific -->
+        <field>
+          <name>fileTypeValidation</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Check the remote file content to see if it is valid. (e.g. not html error page) handy when you cannot enable strict checksum.</description>
+        </field>
+        <field>
+          <name>artifactMaxAge</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The max age of artifacts before we will check remote again for updates (in milliseconds, -1 for never).</description>
+        </field>
+        <field>
+          <name>metadataMaxAge</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The max age of metadata before we will check remote again for updated (in milliseconds, -1 for never).</description>
+        </field>
+        <field>
+          <name>itemMaxAge</name>
+          <version>1.0.0+</version>
+          <type>Integer</type>
+          <required>false</required>
+          <description>The max age of items (not artifact not metadata) before we will check remote again for updated (in minutes, -1 for never).</description>
+        </field>
+        <field>
+          <name>autoBlockActive</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <defaultValue>true</defaultValue>
+          <description>Flag that determines is the proxy repository "Auto block" feature active for this repository.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryResourceRemoteStorage</name>
+      <version>1.0.0+</version>
+      <description>Remote storage details for the proxy repository.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-remote-storage" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>remoteStorageUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The remote URL that this repository is proxying.</description>
+        </field>
+        <field>
+          <name>authentication</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>AuthenticationSettings</type>
+          </association>
+          <required>false</required>
+          <description>The authentication details of the remote connection.</description>
+        </field>
+        <field>
+          <name>connectionSettings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RemoteConnectionSettings</type>
+          </association>
+          <required>false</required>
+          <description>The connection settings for the remote connection.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryStatusResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository status request, contains the typical 'data' parameter, which is the repository status objects.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repository-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repository-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryStatusResource</type>
+          </association>
+          <required>true</required>
+          <description>Repository status details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryStatusResource</name>
+      <version>1.0.0+</version>
+      <description>Repository status parameters.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of the repository.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The format of the repository.</description>
+        </field>
+        <field>
+          <name>localStatus</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The local status of the repository (user blocked for example).</description>
+        </field>
+        <field>
+          <name>remoteStatus</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The remote status of the repository (unreachable for example).</description>
+        </field>
+        <field>
+          <name>proxyMode</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The repository proxy mode (allow, blocked, etc.).</description>
+        </field>
+        <field>
+          <name>dependentRepos</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryDependentStatusResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>The lsit of repositories that shadow this repository.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "dependentRepos" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "dependentRepoItem" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>RepositoryDependentStatusResource</name>
+      <version>1.0.0+</version>
+      <description>Details of a repository that shadow another repository.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-dependent-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The shadow repository id.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The shadow repository type.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The shadow repository format.</description>
+        </field>
+        <field>
+          <name>localStatus</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The shadow repository local status.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryMetaResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository metadata request, contains the typical 'data' parameter, which is the repository metadata object.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repository-meta-data" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repository-meta-data" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryMetaResource</type>
+          </association>
+          <required>true</required>
+          <description>The repository metadata parameters.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryMetaResource</name>
+      <version>1.0.0+</version>
+      <description>Details about the repository.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-meta-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>repoType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository type.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository format.</description>
+        </field>
+        <field>
+          <name>sizeOnDisk</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The size on disk the repository consumes.</description>
+        </field>
+        <field>
+          <name>freeSpaceOnDisk</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The size available on disk where the repository is located.</description>
+        </field>
+        <field>
+          <name>fileCountInRepository</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of files held in the repository.</description>
+        </field>
+        <field>
+          <name>notFoundCacheSize</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of requested paths that are currently in the not found cache.</description>
+        </field>
+        <field>
+          <name>notFoundCacheHits</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of checks against the not found cache that have succeeded (and thus saved a remote check).</description>
+        </field>
+        <field>
+          <name>notFoundCacheMisses</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of checks against the not found cache that have failed (and thus required a remote check).</description>
+        </field>
+        <field>
+          <name>localStorageErrorsCount</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The number of errors reported by local storage.</description>
+        </field>
+        <field>
+          <name>remoteStorageErrorsCount</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The number of errors reported by remote storage.</description>
+        </field>
+        <field>
+          <name>groups</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository groups that this repository is contained in.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "groups" )</annotation>
+            <!-- FIXME: alias not set correctly -->
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "string" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+    <!-- RepositoryGroup Resource -->
+    <class>
+      <name>RepositoryGroupListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository group list request, contains the typical 'data' parameter, which is the list of repository group objects.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-group-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-group-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryGroupListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository group objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-group-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryGroupListResource</name>
+      <version>1.0.0+</version>
+      <description>The basic set of details of a repository group.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-group-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>URL used to manage the repository group.</description>
+        </field>
+        <field>
+          <name>contentResourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>URL used to manage content of the repository group.</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository group.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository group.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The format of the repository group.</description>
+        </field>
+        <field>
+          <name>exposed</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the repository group is available over the content resource.</description>
+        </field>
+        <field>
+          <name>userManaged</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the repository is manageable by the user.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryGroupResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository group request, contains the typical 'data' parameter, which is the repository group object.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-group" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-group" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryGroupResource</type>
+          </association>
+          <required>true</required>
+          <description>The repository group object.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryGroupResource</name>
+      <superClass>RepositoryBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>The set of items that define the repository group (extends repository base resource).</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-group-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositories</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryGroupMemberRepository</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repositories that this repository group contains (order IS important).</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "repositories" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-group-member" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryGroupMemberRepository</name>
+      <version>1.0.0+</version>
+      <description>A repository that is contained within a group.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-group-member-repository" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository name.</description>
+        </field>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL used to manage the repository.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- RepositoryRoute Resource -->
+    <class>
+      <name>RepositoryRouteListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository route list request, contains the typical 'data' parameter, which is the list of repository route objects.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-routes-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-routes-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryRouteListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository route objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-routes-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryRouteListResource</name>
+      <version>1.0.0+</version>
+      <description>A repository route basic set of details, for display in lists (full details can be retrieved using the resourceURI).</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-route-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL used to manage this repository route.</description>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The group this route is attached to.</description>
+        </field>
+        <field>
+          <name>ruleType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of rule (inclusive, exclusive, etc.).</description>
+        </field>
+        <field>
+          <name>pattern</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The pattern associated to this route.</description>
+        </field>
+        <field>
+          <name>repositories</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryRouteMemberRepository</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The list of repositories in the associated group, that will be applied to route (or excluded based upon ruleType).</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "repositories" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-routes-member" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryRouteResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository route request, contains the typical 'data' parameter, which is the repository route object.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-route" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-route" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryRouteResource</type>
+          </association>
+          <required>true</required>
+          <description>Repository Route details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryRouteResource</name>
+      <version>1.0.0+</version>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-route-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository route.</description>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The group id that the route is applied on.</description>
+        </field>
+        <field>
+          <name>ruleType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The rule type of the route (inclusive, exclusive, etc.).</description>
+        </field>
+        <field>
+          <name>pattern</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The regex pattern that will be matched to see if route is applied to request.</description>
+        </field>
+        <field>
+          <name>repositories</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryRouteMemberRepository</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The list of repositories in the group that will be included (or excluded depending on ruleType).</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "repositories" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repository" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.0.0+</version>
+          <code><![CDATA[
+    public static final String EXCLUSION_RULE_TYPE = "exclusive";
+
+    public static final String INCLUSION_RULE_TYPE = "inclusive";
+
+    public static final String BLOCKING_RULE_TYPE = "blocking";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class>
+      <name>RepositoryRouteMemberRepository</name>
+      <version>1.0.0+</version>
+      <description>Repository details in a repository route.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-route-member-repo" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository name.</description>
+        </field>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL that can be used to manage the repository.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Schedules -->
+    <class>
+      <name>ScheduledServiceListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a list of scheduled service items, contains the typical 'data' parameter, which is the list of scheduled services..</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "schedules-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "schedules-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServiceListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of scheduled services.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "schedules-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceListResource</name>
+      <version>1.0.0+</version>
+      <description>Scheduled service list item details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL that can be used to manage the scheduled service.</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the scheduled service.</description>
+        </field>
+        <field>
+          <name>enabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the service is enabled.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the scheduled service.</description>
+        </field>
+        <field>
+          <name>typeId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type id of the scheduled service.</description>
+        </field>
+        <field>
+          <name>typeName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type name of the scheduled service.</description>
+        </field>
+        <field>
+          <name>status</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The status of the scheduled service (running, broken, etc.).</description>
+        </field>
+        <field>
+          <name>readableStatus</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The status of the scheduled service (running, broken, etc.).</description>
+        </field>
+        <field>
+          <name>schedule</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of schedule the service is run on (monthly, daily, etc.).</description>
+        </field>
+        <field>
+          <name>nextRunTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The next time the scheduled service will run.</description>
+        </field>
+        <field>
+          <name>lastRunTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The last time the scheduled service ran.</description>
+        </field>
+        <field>
+          <name>lastRunResult</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The result of the last scheduled service run.</description>
+        </field>
+        <field>
+          <name>created</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The date the scheduled service was created.</description>
+        </field>
+        <field>
+          <name>nextRunTimeInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The next time the scheduled service will run (in milliseconds).</description>
+        </field>
+        <field>
+          <name>lastRunTimeInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The last time the scheduled service ran (in milliseconds).</description>
+        </field>
+        <field>
+          <name>createdInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The date the scheduled service was created (in milliseconds).</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceResourceStatusResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a scheduled service status request, contains the typical 'data' parameter, which is the scheduled service status.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "schedule-service-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "schedule-service-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServiceResourceStatus</type>
+          </association>
+          <required>true</required>
+          <description>The scheduled service status details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceResourceStatus</name>
+      <version>1.0.0+</version>
+      <description>Scheduled service status details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-resource-status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resource</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServiceBaseResource</type>
+          </association>
+          <required>true</required>
+          <description>The scheduled service configuration.</description>
+        </field>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL used to managed the scheduled service.</description>
+        </field>
+        <field>
+          <name>status</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The status of the scheduled service.</description>
+        </field>
+        <field>
+          <name>readableStatus</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The status of the scheduled service (running, broken, etc.).</description>
+        </field>
+        <field>
+          <name>nextRunTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The next time the scheduled service will run.</description>
+        </field>
+        <field>
+          <name>lastRunTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The last time the scheduled service ran.</description>
+        </field>
+        <field>
+          <name>lastRunResult</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The result of the last service run.</description>
+        </field>
+        <field>
+          <name>created</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The date the service was created.</description>
+        </field>
+        <field>
+          <name>nextRunTimeInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The next time the scheduled service will run (in milliseconds).</description>
+        </field>
+        <field>
+          <name>lastRunTimeInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The last time the scheduled service ran (in milliseconds).</description>
+        </field>
+        <field>
+          <name>createdInMillis</name>
+          <version>1.0.0+</version>
+          <type>Long</type>
+          <required>true</required>
+          <description>The date the scheduled service was created (in milliseconds).</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a scheduled service configuration request, contains the typical 'data' parameter, which is the scheduled service configuration.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "scheduled-task" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "scheduled-task" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServiceBaseResource</type>
+          </association>
+          <required>true</required>
+          <description>The scheduled service configuration.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceBaseResource</name>
+      <version>1.0.0+</version>
+      <description>The scheduled service configuration.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-base-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the service.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the service.</description>
+        </field>
+        <field>
+          <name>enabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the service is enabled.</description>
+        </field>
+        <field>
+          <name>typeId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type id of the service.</description>
+        </field>
+        <field>
+          <name>alertEmail</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The email to send notifications to if the service fails.</description>
+        </field>
+        <field>
+          <name>schedule</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The schedule the service is run on.</description>
+        </field>
+        <field>
+          <name>properties</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServicePropertyResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>A list of configuration properties for the service.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "properties" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "scheduled-task-property" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServicePropertyResource</name>
+      <version>1.0.0+</version>
+      <description>A configuration property for a scheduled service.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-property-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>key</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the property.</description>
+        </field>
+        <field>
+          <name>value</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The value of the property.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceOnceResource</name>
+      <superClass>ScheduledServiceBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run only once.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-once-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>startDate</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The date to start running the service.</description>
+        </field>
+        <field>
+          <name>startTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The time to start running the service.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceHourlyResource</name>
+      <superClass>ScheduledServiceBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run hourly.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-hourly-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>startDate</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The date to start running the service.</description>
+        </field>
+        <field>
+          <name>startTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The time to start running the service.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceDailyResource</name>
+      <superClass>ScheduledServiceBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run daily.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-daily-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>startDate</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The date to start running the service.</description>
+        </field>
+        <field>
+          <name>recurringTime</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The time of the day to run the service.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceWeeklyResource</name>
+      <superClass>ScheduledServiceDailyResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run weekly.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-daily-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>recurringDay</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The list of days that the service will be run.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "recurringDay" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "day" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceMonthlyResource</name>
+      <superClass>ScheduledServiceWeeklyResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run monthly.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-monthly-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+    </class>
+
+    <class>
+      <name>ScheduledServiceAdvancedResource</name>
+      <superClass>ScheduledServiceBaseResource</superClass>
+      <version>1.0.0+</version>
+      <description>A service that is run on a cron schedule.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-advanced-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>cronCommand</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>A cron schedule string.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceTypeResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a scheduled service type list request, contains the typical 'data' parameter, which is the scheduled service type details.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "schedule-types" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "schedule-types" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ScheduledServiceTypeResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of scheduled service types.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "schedule-type" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ScheduledServiceTypeResource</name>
+      <version>1.0.0+</version>
+      <description>Scheduled service type, which you can create a scheduled task against.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "scheduled-service-type-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the service type.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the service type.</description>
+        </field>
+        <field>
+          <name>formFields</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>FormFieldResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of task form fields that configure the task.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "form-fields" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "form-field" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Content -->
+    <class>
+      <name>ContentListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a content resource request, contains the typical 'data' parameter, which is a list of the content items requested.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "content" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "content" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ContentListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of ContentListResource objects, each of which represents a single item in the repository.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "content-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ContentListResource</name>
+      <version>1.0.0+</version>
+      <description>A Content Item definition, including all data needed to properly access the item, and understand the item.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "content-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URI that can be used to directly access this item in the future.</description>
+        </field>
+        <field>
+          <name>relativePath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The relative path in relation to the root of the repository.</description>
+        </field>
+        <field>
+          <name>text</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>A name of the content item.</description>
+        </field>
+        <field>
+          <name>description</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>A (possibly longer) description of the content item.</description>
+        </field>
+        <field>
+          <name>leaf</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states whether the content item is a file item (if true), otherwise it is a folder item, and can use the resourceURI to retrieve the contained content.</description>
+        </field>
+        <field>
+          <name>lastModified</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+          <required>false</required>
+          <description>Timestamp the item was last modified.</description>
+        </field>
+        <field>
+          <name>sizeOnDisk</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>false</required>
+          <description>Size of the item on the disk.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- ContentDescribe -->
+    <class>
+      <name>ContentListDescribeResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a content resource request, contains the typical 'data' parameter, which is a list of the content items requested.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "contentDescribe" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "contentDescribe" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ContentListDescribeResource</type>
+          </association>
+          <required>true</required>
+          <description>List of describe items, that will contain useful information about the retrieved data.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ContentListDescribeResource</name>
+      <version>1.0.0+</version>
+      <description>Details about the requested item, that should be useful in finding how the item was retrieved.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "content-list-describe-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>requestUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The original request url used to access the resource.</description>
+        </field>
+        <field>
+          <name>processingTimeMillis</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of milliseconds that passed while retrieving the item.</description>
+        </field>
+        <field>
+          <name>request</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ContentListDescribeRequestResource</type>
+          </association>
+          <required>true</required>
+          <description>A set of request parameters for the item.</description>
+        </field>
+        <field>
+          <name>response</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ContentListDescribeResponseResource</type>
+          </association>
+          <required>true</required>
+          <description>A set of response parameters for the item.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ContentListDescribeRequestResource</name>
+      <description>A set of request parameters that were used to retrieve the item.</description>
+      <version>1.0.0+</version>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "content-list-describe-request-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>requestUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The request url that initially generated this request.</description>
+        </field>
+        <field>
+          <name>requestPath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The path on the server that was requested.</description>
+        </field>
+        <field>
+          <name>requestContext</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>A list of String objects that were in the Restlet request context.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "requestContext" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "requestContextItem" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>ContentListDescribeResponseResource</name>
+      <description>A set of response parameters that were sent back with response.</description>
+      <version>1.0.0+</version>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "content-list-describe-response-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>responseType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>States the type of item that was returned (or NONE if not found).</description>
+        </field>
+        <field>
+          <name>responseActualClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The classname of the returned item.</description>
+        </field>
+        <field>
+          <name>responsePath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The path of the item in the repository.</description>
+        </field>
+        <field>
+          <name>responseUid</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>A string that uniquely defines this item in the system (or 'virtual' if this is an item from a virtual repository).</description>
+        </field>
+        <field>
+          <name>originatingRepositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository this item was retrieved from (or null if this is an item from a virtual repository).</description>
+        </field>
+        <field>
+          <name>originatingRepositoryName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository this item was retrieved from (or null if this is an item from a virtual repository).</description>
+        </field>
+        <field>
+          <name>originatingRepositoryMainFacet</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The main facet (Repository implementation) of the repository this item was retrieved from (or null if this is an item from a virtual repository).</description>
+        </field>
+        <field>
+          <name>processedRepositoriesList</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repositories that were processed while retrieving this item (in case item was retrieved via a group url, for example, would list all repositories in the group scanned until item was found).</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "processedRepositoriesList" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "processedRepositoriesListItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>appliedMappings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of mappings applied while retrieving this item.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "appliedMappings" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "appliedMappingItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>properties</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of extra properties containing more information.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "properties" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "propertyItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>attributes</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of attributes stored on disk for the item.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "attributes" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "attributeItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>sources</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>If this is a composite item, the list of sources that this item was generated from.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "sources" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "sourceItem" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>notFoundReasoning</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NotFoundReasoning</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>Tree of reasons why something was not found.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "notFoundReasoning" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "notFoundReasoningItem" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NotFoundReasoning</name>
+      <version>1.0.0+</version>
+      <description>REST Response object for reasoning why something is not found.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "content-list-describe-response-resource-not-found" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>throwableType</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>reasonMessage</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>notFoundReasoning</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NotFoundReasoning</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>If this is a composite item, the list of sources that this item was generated from.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "notFoundReasoning" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "notFoundReasoningItem" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Configurations -->
+    <class>
+      <name>ConfigurationsListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a list of Nexus configuration objects, contains the typical 'data' parameter, which is a list of the configuration items.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "configs-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "configs-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ConfigurationsListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of Nexus configuration objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "configs-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ConfigurationsListResource</name>
+      <version>1.0.0+</version>
+      <description>A Nexus configuration item, and the url needed to retrieve the configuration details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "configs-list-item" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The url that can be accessed to retrieve details about the configuration.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the configuration item.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Feeds -->
+    <class>
+      <name>FeedListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a list of Nexus feed items, contains the typical 'data' parameter, which is a list of the feed items.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "feeds-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "feeds-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>FeedListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of feeds available from Nexus.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "feeds-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>FeedListResource</name>
+      <version>1.0.0+</version>
+      <description>Details about an RSS Feed that Nexus supplies.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "feed-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL that must be used to retrieve the feed data.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the feed.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Authentication -->
+    <class>
+      <name>NexusAuthenticationClientPermissions</name>
+      <version>1.0.0+</version>
+      <superClass>org.sonatype.security.rest.model.AuthenticationClientPermissions</superClass>
+      <description>Permissions that are granted to the user.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nexus-authentication-client-permissions" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+    </class>
+
+    <!-- NFCs -->
+    <class>
+      <name>NFCResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for an NFC resource item, contains the typical 'data' parameter, which is the NFC resource item.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "nfc-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "nfc-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NFCResource</type>
+          </association>
+          <required>true</required>
+          <description>An object which contains the contents of the NFC.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NFCResource</name>
+      <version>1.0.0+</version>
+      <description>Contains a list of items stored in the NFC.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nfc-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>nfcContents</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NFCRepositoryResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of NFC repository items.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "nfcContents" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "nfc-repo-info" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NFCRepositoryResource</name>
+      <version>1.0.0+</version>
+      <description>Details about NFC usage for a repository.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nfc-repository-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository id that the nfc details are for.</description>
+        </field>
+        <field>
+          <name>nfcStats</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NFCStats</type>
+          </association>
+          <required>true</required>
+          <description>NFC statistics.</description>
+        </field>
+        <field>
+          <name>nfcPaths</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>List of paths in the NFC.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "nfcPaths" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "path" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NFCStats</name>
+      <version>1.0.0+</version>
+      <description>NFC Statistics.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nfc-stats" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>size</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of paths stored in the NFC.</description>
+        </field>
+        <field>
+          <name>hits</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of checks against this NFC that have found matches.</description>
+        </field>
+        <field>
+          <name>misses</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of checks against this NFC that have not found matches.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Status -->
+    <class>
+      <name>StatusResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for the nexus status, contains the typical 'data' parameter, which is the nexus status.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "status" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>StatusResource</type>
+          </association>
+          <required>true</required>
+          <description>Nexus status details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>StatusResource</name>
+      <version>1.0.0+</version>
+      <description>Nexus status details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "status-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>appName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The application name.</description>
+        </field>
+        <field>
+          <name>formattedAppName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The formatted application name (html formatting).</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the nexus instance.</description>
+        </field>
+        <field>
+          <name>apiVersion</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the core nexus instance.</description>
+        </field>
+        <field>
+          <name>editionLong</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The long version of the nexus edition (i.e. Open Source or Professional).</description>
+        </field>
+        <field>
+          <name>editionShort</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The short version of the nexus edition (i.e. OSS or PRO).</description>
+        </field>
+        <field>
+          <name>attributionsURL</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The attributions page URL.</description>
+        </field>
+        <field>
+          <name>purchaseURL</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL of where to buy the product.</description>
+        </field>
+        <field>
+          <name>userLicenseURL</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL of where the End User License Agreement can be found.</description>
+        </field>
+        <field>
+          <name>state</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The state of the nexus instance.</description>
+        </field>
+        <field>
+          <name>operationMode</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The operation mode of the nexus instance.</description>
+        </field>
+        <field>
+          <name>initializedAt</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+          <required>true</required>
+          <description>The date the instance was first initialized.</description>
+        </field>
+        <field>
+          <name>startedAt</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+          <required>true</required>
+          <description>The date the instance was last started.</description>
+        </field>
+        <field>
+          <name>lastConfigChange</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+          <required>true</required>
+          <description>The last time the nexus configuration was updated.</description>
+        </field>
+        <field>
+          <name>firstStart</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if this is the first time nexus was started.</description>
+        </field>
+        <field>
+          <name>instanceUpgraded</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the nexus instance has been upgraded.</description>
+        </field>
+        <field>
+          <name>configurationUpgraded</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the nexus configuration has been upgraded.</description>
+        </field>
+        <field>
+          <name>configurationValidationResponse</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>StatusConfigurationValidationResponse</type>
+          </association>
+          <required>false</required>
+          <description>Configuration validation status.</description>
+        </field>
+        <field>
+          <name>errorCause</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Errors occuring during nexus startup.</description>
+        </field>
+        <field>
+          <name>clientPermissions</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusAuthenticationClientPermissions</type>
+          </association>
+          <required>true</required>
+          <description>Permissions that are available to the current user.</description>
+        </field>
+        <field>
+          <name>baseUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The base url of the nexus instance.</description>
+        </field>
+        <field>
+          <name>licenseInstalled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if currently there is a license installed.</description>
+        </field>
+        <field>
+          <name>licenseExpired</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if current installed license is expired.</description>
+        </field>
+        <field>
+          <name>trialLicense</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if current installed license is a trial license.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>StatusConfigurationValidationResponse</name>
+      <version>1.0.0+</version>
+      <description>Configuration validation status.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "status-configuration-validation-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>valid</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if the nexus configuration is valid.</description>
+        </field>
+        <field>
+          <name>modified</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if nexus had to modify the nexus configuration.</description>
+        </field>
+        <field>
+          <name>validationErrors</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>List of configuration validation errors.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "validationErrors" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "error" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>validationWarnings</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>false</required>
+          <description>List of configuration validation warnings.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "validationWarnings" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "warning" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Wastebasket -->
+    <class>
+      <name>WastebasketResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for the nexus wastebasket info, contains the typical 'data' parameter, which is the nexus wastebasket info.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "wastebasket" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "wastebasket" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>WastebasketResource</type>
+          </association>
+          <required>true</required>
+          <description>The wastebasket information.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>WastebasketResource</name>
+      <version>1.0.0+</version>
+      <description>Details about the nexus wastebasket.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "wastebasket-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>size</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The size of the contents in the wastebasket.</description>
+        </field>
+        <field>
+          <name>itemCount</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The number of items in the wastebasket.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Repository Targets -->
+    <class>
+      <name>RepositoryTargetListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a list of repository targets, contains the typical 'data' parameter, which is the list of repository targets.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-targets-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-targets-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryTargetListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The list of repository targets.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-targets-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryTargetListResource</name>
+      <version>1.0.0+</version>
+      <superClass>RepositoryTargetResource</superClass>
+      <description>The repository target list details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-target-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+    </class>
+
+    <class>
+      <name>RepositoryTargetResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a repository target, contains the typical 'data' parameter, which is the repository target.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-target" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-target" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryTargetResource</type>
+          </association>
+          <required>true</required>
+          <description>The repository target details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryTargetResource</name>
+      <version>1.0.0+</version>
+      <description>The repository target configuration.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-target-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>resourceURI</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The URL used to manage the repository target.</description>
+        </field>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the repository target.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the repository target.</description>
+        </field>
+        <field>
+          <name>contentClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The content class of the repository target.</description>
+        </field>
+        <field>
+          <name>patterns</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The list of regular expression patterns associated with the repository target.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "patterns" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "pattern" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Repository ContentClasses -->
+    <class>
+      <name>RepositoryContentClassListResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a list of repository content classes, contains the typical 'data' parameter, which is the repository content class list.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repo-content-classes-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repo-content-classes-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RepositoryContentClassListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository content classes.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repo-content-classes-list-item" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RepositoryContentClassListResource</name>
+      <version>1.0.0+</version>
+      <description>Repository content class definition.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "repository-content-class-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>contentClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The content class.</description>
+        </field>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the content class.</description>
+        </field>
+        <field>
+          <name>groupable</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag stating if this content class can be placed in group.</description>
+        </field>
+        <field>
+          <name>compatibleTypes</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The other content classes this content class is compatible with.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "compatibleTypes" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "compatibleType" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <!-- Plexus components -->
+    <class>
+      <name>PlexusComponentListResource</name>
+      <version>1.0.0+</version>
+      <description>Plexus component details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "plexus-component-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>roleHint</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The plexus role hint of the component.</description>
+        </field>
+        <field>
+          <name>description</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The plexus description of the component.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>PlexusComponentListResourceResponse</name>
+      <version>1.0.0+</version>
+      <description>REST Response object for a list of plexus components, contains the typical 'data' parameter, which is the plexus components.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "components-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "components-list" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>PlexusComponentListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of plexus components.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "component" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusRepositoryTypeListResource</name>
+      <version>1.0.0+</version>
+      <description>Repository type definition.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "nexus-repository-type-list-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>provider</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository provider.</description>
+        </field>
+        <field>
+          <name>providerRole</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository provider role.</description>
+        </field>
+        <field>
+          <name>format</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository format.</description>
+        </field>
+        <field>
+          <name>description</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The repository type description.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>NexusRepositoryTypeListResourceResponse</name>
+      <version>1.0.0+</version>
+      <description>REST Response object for a list of repository types, contains the typical 'data' parameter, which is the repository types.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "repositoryTypes" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "repositoryTypes" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>NexusRepositoryTypeListResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of repository types.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "repositoryType" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>MirrorResourceListResponse</name>
+      <superClass>NexusResponse</superClass>
+      <version>1.0.0+</version>
+      <description>REST Response object for a list of mirrors associated with a repository, contains the typical 'data' parameter, which is the list of mirrors.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "mirror-list-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "mirror-list-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>MirrorResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <description>The list of mirrors for a repository.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "mirrorResource" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>MirrorResourceListRequest</name>
+      <superClass>NexusResponse</superClass>
+      <version>1.0.0+</version>
+      <description>REST Request object to persist list of mirrors associated with a repository, contains the typical 'data' parameter, which is the list of mirrors.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "mirror-list-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "mirror-list-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>MirrorResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <description>List of mirrors</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "mirrorResource" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>MirrorStatusResourceListResponse</name>
+      <superClass>NexusResponse</superClass>
+      <version>1.0.0+</version>
+      <description>REST Response object for a list of mirror statuses associated with a repository, contains the typical 'data' parameter, which is the list of mirrors statuses.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "mirror-status-list-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "mirror-status-list-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>MirrorStatusResource</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <description>List of mirror status objects.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "data" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "mirrorResource" )</annotation>
+          </annotations>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>MirrorResource</name>
+      <version>1.0.0+</version>
+      <description>Repository mirror configuration.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "mirror-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <description>The id of the repository mirror.</description>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <description>The url of the repository mirror.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>MirrorStatusResource</name>
+      <superClass>MirrorResource</superClass>
+      <version>1.0.0+</version>
+      <description>Repository mirror status.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "mirror-status-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>status</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <description>The status of the mirror.</description>
+        </field>
+      </fields>
+    </class>
+
+
+    <class>
+      <name>SmtpSettingsResourceRequest</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Request object for validating the nexus smtp settings, contains the typical 'data' parameter, which is the nexus stmp configuration.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "smtp-settings-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "smtp-settings-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>SmtpSettingsResource</type>
+          </association>
+          <required>true</required>
+          <description>The nexus smtp configuration</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>SmtpSettingsResource</name>
+      <version>1.0.0+</version>
+      <description>The smtp settings request</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "smtp-settings-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>testEmail</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Test email address to send a validation mail to.</description>
+        </field>
+        <field>
+          <name>host</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The smtp host.</description>
+        </field>
+        <field>
+          <name>port</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The smtp port.</description>
+        </field>
+        <field>
+          <name>username</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The smtp username.</description>
+        </field>
+        <field>
+          <name>password</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The smtp password.</description>
+        </field>
+        <field>
+          <name>systemEmailAddress</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The email address that nexus will send emails from.</description>
+        </field>
+        <field>
+          <name>sslEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to use SSL.</description>
+        </field>
+        <field>
+          <name>tlsEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to use TLS.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RestApiResourceResponse</name>
+      <version>1.0.0+</version>
+      <superClass>NexusResponse</superClass>
+      <description>REST Response object for a rest api settings request, contains the typical 'data' parameter, which is the rest settings requested.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "rest-api-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "rest-api-response" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RestApiSettings</type>
+          </association>
+          <required>true</required>
+          <description>The rest api configuration settings.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>RestApiSettings</name>
+      <version>1.0.0+</version>
+      <description>The rest api configuration settings.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "rest-api-settings" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>forceBaseUrl</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>false</required>
+          <description>Flag that states whether to forcefully set the baseUrl defined in rest responses.</description>
+        </field>
+        <field>
+          <name>baseUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The baseUrl of the nexus server.</description>
+        </field>
+        <field>
+          <name>uiTimeout</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>UI timeout in milliseconds.</description>
+        </field>
+      </fields>
+    </class>
+
+    <!-- /artifact/maven/resolve -->
+    <class>
+      <name>ArtifactResolveResource</name>
+      <version>1.0.0+</version>
+      <description>A resource which contains full maven details of the requested artifact.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "artifact-resolve-resource" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>presentLocally</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>True if item is present in local storage.</description>
+        </field>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The groupId of the requested artifact.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifactId of the requested artifact.</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the requested artifact.</description>
+        </field>
+        <field>
+          <name>baseVersion</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The base version of the requested artifact.</description>
+        </field>
+        <field>
+          <name>classifier</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The classifier of the requested artifact.</description>
+        </field>
+        <field>
+          <name>extension</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The file extension of the requested artifact.</description>
+        </field>
+        <field>
+          <name>snapshot</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Flag that states if requested artifact is a snapshot.</description>
+        </field>
+        <field>
+          <name>snapshotBuildNumber</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The build number of the snapshot version of the requested artifact.</description>
+        </field>
+        <field>
+          <name>snapshotTimeStamp</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The timestamp portion of the snapshot version of the requested artifact.</description>
+        </field>
+        <field>
+          <name>fileName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The filename of the requested artifact.</description>
+        </field>
+        <field>
+          <name>sha1</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The sha1 hash of the requested artifact.</description>
+        </field>
+        <field>
+          <name>repositoryPath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The path in the repository of the requested artifact.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ArtifactResolveResourceResponse</name>
+      <version>1.0.0+</version>
+      <description>REST Response object received after requesting an artifact resolve, contains the typical 'data' parameter, which is the artifact resolve details.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "artifact-resolution" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "artifact-resolution" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>ArtifactResolveResource</type>
+          </association>
+          <required>true</required>
+          <description>The artifact details requested.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>ArtifactCoordinate</name>
+      <version>1.0.0+</version>
+      <description>Uniquely identifies a maven artifact. This is returned by the artifact upload request.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "artifact-coordinate" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The group id of the artifact.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The artifact id of the artifact.</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The version of the artifact.</description>
+        </field>
+        <field>
+          <name>packaging</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The packaging type of the artifact.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>PrivilegeResourceRequest</name>
+      <version>1.0.0+</version>
+      <description>REST response object to persist a privilege.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "privilege-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "privilege-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>PrivilegeResource</type>
+          </association>
+          <required>true</required>
+          <description>Privilege details.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>PrivilegeResource</name>
+      <version>1.0.0+</version>
+      <description>Privilege details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "privilege" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the privilege.</description>
+        </field>
+        <field>
+          <name>type</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of the privilege.</description>
+        </field>
+        <field>
+          <name>description</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The description of the privilege.</description>
+        </field>
+        <field>
+          <name>method</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>The type of the privilege.</description>
+          <annotations>
+            <annotation>@javax.xml.bind.annotation.XmlElementWrapper( name = "methods" )</annotation>
+            <annotation>@javax.xml.bind.annotation.XmlElement( name = "method" )</annotation>
+          </annotations>
+        </field>
+        <field>
+          <name>repositoryTargetId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Target id for the privilege.</description>
+        </field>
+        <field>
+          <name>repositoryId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Repository id of the privilege.</description>
+        </field>
+        <field>
+          <name>repositoryGroupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Group id of the privilege.</description>
+        </field>
+      </fields>
+    </class>
+    <!-- Purposefully no PrivilegeApplicationResource as that type of resource cannot be created -->
+
+    <class>
+      <name>Maven2ArtifactInfoResourceRespose</name>
+      <version>1.0.0+</version>
+      <description>REST Response object for maven 2 artifact info view.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "maven2-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "maven2-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>Maven2ArtifactInfoResource</type>
+          </association>
+          <required>true</required>
+          <description>Maven 2 info.</description>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>Maven2ArtifactInfoResource</name>
+      <version>1.0.0+</version>
+      <description>Maven 2 Artifact Information.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "maven2-info" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>groupId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven Group Id.</description>
+        </field>
+        <field>
+          <name>artifactId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven artifact Id.</description>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven version.</description>
+        </field>
+        <field>
+          <name>baseVersion</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven base version, i.e. the -SNAPSHOT version for snapshots.</description>
+        </field>
+        <field>
+          <name>classifier</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven classifier.</description>
+        </field>
+        <field>
+          <name>extension</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven extention.</description>
+        </field>
+        <field>
+          <name>dependencyXmlChunk</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Maven dependency XML to be included in a pom file.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>FormFieldResource</name>
+      <version>1.0.0+</version>
+      <description>Form Field definition.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "form-field" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>id</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The id of the field.</description>
+        </field>
+        <field>
+          <name>type</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The type of the field.</description>
+        </field>
+        <field>
+          <name>label</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The label of the field.</description>
+        </field>
+        <field>
+          <name>helpText</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The help text of the field.</description>
+        </field>
+        <field>
+          <name>required</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>flag that states if the field is required.</description>
+        </field>
+        <field>
+          <name>regexValidation</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>regex validation that will validate the field.</description>
+        </field>
+        <field>
+          <name>initialValue</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Initial value of the field.</description>
+        </field>
+        <field>
+          <name>storePath</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>storeRoot</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>idMapping</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>nameMapping</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>UserAccount</name>
+      <version>1.0.0+</version>
+      <description>User account details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "userAccount" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>userId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The user id.</description>
+        </field>
+        <field>
+          <name>firstName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the user.</description>
+        </field>
+        <field>
+          <name>lastName</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The name of the user.</description>
+        </field>
+        <field>
+          <name>email</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The email address of the user.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>UserAccountRequestResponseWrapper</name>
+      <version>1.0.0+</version>
+      <description>REST request object to retrieve a user account.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "user-account-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "user-account-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>UserAccount</type>
+          </association>
+          <required>true</required>
+          <description>The requested user account.</description>
+        </field>
+      </fields>
+    </class>
+ 
+    <class>
+      <name>RoutingConfigMessage</name>
+      <version>1.0.0+</version>
+      <description>Routing Discovery Configuration.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "configMessage" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>discoveryEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>The discovery is enabled or not.</description>
+        </field>
+        <field>
+          <name>discoveryIntervalHours</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The discovery interval in hours.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>RoutingConfigMessageWrapper</name>
+      <version>1.0.0+</version>
+      <description>REST request object to retrieve Routing Discovery Configuration.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "routing-config-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "routing-config-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RoutingConfigMessage</type>
+          </association>
+          <required>true</required>
+          <description>The requested Routing config.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>RoutingDiscoveryStatusMessage</name>
+      <version>1.0.0+</version>
+      <description>Routing Discovery Status details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "discovery" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>discoveryEnabled</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>The discovery is enabled or not.</description>
+        </field>
+        <field>
+          <name>discoveryIntervalHours</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>Update interval in hours.</description>
+        </field>
+        <field>
+          <name>discoveryLastStatus</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The last discovery status, was it successful (1) or not (-1), or still running (0).</description>
+        </field>
+        <field>
+          <name>discoveryLastStrategy</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The strategy used (once finished).</description>
+        </field>
+        <field>
+          <name>discoveryLastMessage</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The message of discovery (strategy dependant, once finished).</description>
+        </field>
+        <field>
+          <name>discoveryLastRunTimestamp</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>When discovery last run, timestamp (in millis) or -1 if not yet finished.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>RoutingStatusMessage</name>
+      <version>1.0.0+</version>
+      <description>Routing Status details.</description>
+      <annotations>
+        <annotation>@javax.xml.bind.annotation.XmlType( name = "statusMessage" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>publishedStatus</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+          <required>true</required>
+          <description>The publishing status, was it published (1), or not (-1) or not processed or still processing (0).</description>
+        </field>
+        <field>
+          <name>publishedMessage</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The publishing accompanying message.</description>
+        </field>
+        <field>
+          <name>publishedTimestamp</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+          <required>true</required>
+          <description>The timestamp of last publishing (in millis) or -1 if not published.</description>
+        </field>
+        <field>
+          <name>publishedUrl</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>The URL of the published prefix file or null if not published.</description>
+        </field>
+        <field>
+          <name>discovery</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RoutingDiscoveryStatusMessage</type>
+          </association>
+          <required>true</required>
+          <description>Filled for proxy repositories, null for everything else.</description>
+        </field>
+      </fields>
+    </class>
+    <class>
+      <name>RoutingStatusMessageWrapper</name>
+      <version>1.0.0+</version>
+      <description>REST request object to retrieve Routing status.</description>
+      <annotations>
+        <annotation>@com.thoughtworks.xstream.annotations.XStreamAlias( value = "routing-status-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlRootElement( name = "routing-status-request" )</annotation>
+        <annotation>@javax.xml.bind.annotation.XmlAccessorType(javax.xml.bind.annotation.XmlAccessType.FIELD)</annotation>
+      </annotations>
+      <fields>
+        <field>
+          <name>data</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>RoutingStatusMessage</type>
+          </association>
+          <required>true</required>
+          <description>The requested routing status.</description>
+        </field>
+      </fields>
+    </class>
+
+  </classes>
+</model>

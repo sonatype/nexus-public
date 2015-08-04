@@ -1,0 +1,64 @@
+/*
+This file is part of Ext JS 3.4
+
+Copyright (c) 2011-2013 Sencha Inc
+
+Contact:  http://www.sencha.com/contact
+
+Commercial Usage
+Licensees holding valid commercial licenses may use this file in accordance with the Commercial
+Software License Agreement provided with the Software or, alternatively, in accordance with the
+terms contained in a written agreement between you and Sencha.
+
+If you are unsure which license is appropriate for your use, please contact the sales department
+at http://www.sencha.com/contact.
+
+Build date: 2013-04-03 15:07:25
+*/
+.x-border-layout-ct {
+    background-color:#f0f0f0;
+}
+
+.x-accordion-hd {
+	color:#222;
+    font-weight:normal;
+    background-image: url(../images/gray/panel/light-hd.gif);
+}
+
+.x-layout-collapsed{
+    background-color:#dfdfdf;
+	border-color:#d0d0d0;
+}
+
+.x-layout-collapsed-over{
+    background-color:#e7e7e7;
+}
+
+.x-layout-split-west .x-layout-mini {
+    background-image:url(../images/default/layout/mini-left.gif);
+}
+.x-layout-split-east .x-layout-mini {
+    background-image:url(../images/default/layout/mini-right.gif);
+}
+.x-layout-split-north .x-layout-mini {
+    background-image:url(../images/default/layout/mini-top.gif);
+}
+.x-layout-split-south .x-layout-mini {
+    background-image:url(../images/default/layout/mini-bottom.gif);
+}
+
+.x-layout-cmini-west .x-layout-mini {
+    background-image:url(../images/default/layout/mini-right.gif);
+}
+
+.x-layout-cmini-east .x-layout-mini {
+    background-image:url(../images/default/layout/mini-left.gif);
+}
+
+.x-layout-cmini-north .x-layout-mini {
+    background-image:url(../images/default/layout/mini-bottom.gif);
+}
+
+.x-layout-cmini-south .x-layout-mini {
+    background-image:url(../images/default/layout/mini-top.gif);
+}

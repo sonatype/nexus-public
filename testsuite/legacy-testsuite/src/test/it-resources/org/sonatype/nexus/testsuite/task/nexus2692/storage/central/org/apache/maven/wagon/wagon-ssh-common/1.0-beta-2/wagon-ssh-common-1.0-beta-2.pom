@@ -1,0 +1,28 @@
+<?xml version="1.0"?><project>
+  <parent>
+    <artifactId>wagon-providers</artifactId>
+    <groupId>org.apache.maven.wagon</groupId>
+    <version>1.0-beta-2</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>wagon-ssh-common</artifactId>
+  <name>Maven Wagon SSH Common Library</name>
+  <version>1.0-beta-2</version>
+  <issueManagement>
+    <system>jira</system>
+    <url>http://jira.codehaus.org/browse/WAGONSSH</url>
+  </issueManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-interactivity-api</artifactId>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+    <status>deployed</status>
+  </distributionManagement>
+</project>

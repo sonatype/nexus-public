@@ -1,0 +1,13 @@
+dn: uid=jcoder,ou=People,dc=example,dc=com
+objectClass: posixAccount
+objectClass: inetOrgPerson
+uid: jcoder
+uidNumber: 201
+gidNumber: 3001
+mail: jcoder@example.com
+homeDirectory: /home/jcoder
+cn: Joe Coder
+sn: Coder
+givenName: Joe
+userPassword: jcoder123
+

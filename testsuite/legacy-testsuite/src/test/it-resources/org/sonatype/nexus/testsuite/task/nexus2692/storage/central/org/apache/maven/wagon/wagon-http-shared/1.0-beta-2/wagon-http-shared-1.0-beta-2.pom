@@ -1,0 +1,26 @@
+<?xml version="1.0"?><project>
+  <parent>
+    <artifactId>wagon-providers</artifactId>
+    <groupId>org.apache.maven.wagon</groupId>
+    <version>1.0-beta-2</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>wagon-http-shared</artifactId>
+  <name>Maven Wagon HTTP Shared Library</name>
+  <version>1.0-beta-2</version>
+  <description>Shared Library for the wagon-http, and wagon-http-lightweight wagon providers.</description>
+  <issueManagement>
+    <system>jira</system>
+    <url>http://jira.codehaus.org/browse/WAGONHTTP</url>
+  </issueManagement>
+  <dependencies>
+    <dependency>
+      <groupId>jtidy</groupId>
+      <artifactId>jtidy</artifactId>
+      <version>4aug2000r7-dev</version>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+    <status>deployed</status>
+  </distributionManagement>
+</project>

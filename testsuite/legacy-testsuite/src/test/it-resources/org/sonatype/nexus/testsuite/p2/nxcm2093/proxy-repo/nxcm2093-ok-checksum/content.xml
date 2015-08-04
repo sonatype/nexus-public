@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<?metadataRepository class='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1.0.0'?><repository name="Galileo Nexus Proxy" type="org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository" version="1">
+  <units size="2">
+    <unit id="org.mortbay.jetty.util" singleton="false" version="6.1.15.v200905182336">
+      <update id="org.mortbay.jetty.util" range="[0.0.0,6.1.15.v200905182336)" severity="0" />
+      <properties size="4">
+        <property name="org.eclipse.equinox.p2.name" value="Jetty Utilities" />
+        <property name="org.eclipse.equinox.p2.description" value="Utility classes for Jetty" />
+        <property name="org.eclipse.equinox.p2.provider" value="Mort Bay Consulting" />
+        <property name="org.eclipse.equinox.p2.doc.url" value="http://jetty.mortbay.org" />
+      </properties>
+      <provides size="9">
+        <provided name="org.mortbay.jetty.util" version="6.1.15.v200905182336" namespace="org.eclipse.equinox.p2.iu" />
+        <provided name="org.mortbay.jetty.util" version="6.1.15.v200905182336" namespace="osgi.bundle" />
+        <provided name="org.mortbay.util" version="6.1.15" namespace="java.package" />
+        <provided name="org.mortbay.log" version="6.1.15" namespace="java.package" />
+        <provided name="org.mortbay.component" version="6.1.15" namespace="java.package" />
+        <provided name="org.mortbay.thread" version="6.1.15" namespace="java.package" />
+        <provided name="org.mortbay.servlet" version="6.1.15" namespace="java.package" />
+        <provided name="org.mortbay.util.ajax" version="6.1.15" namespace="java.package" />
+        <provided name="bundle" version="1.0.0" namespace="org.eclipse.equinox.p2.eclipse.type" />
+      </provides>
+      <requires size="3">
+        <required range="0.0.0" name="javax.servlet" namespace="java.package" />
+        <required range="1.3.0" greedy="false" optional="true" name="org.slf4j" namespace="java.package" />
+        <required range="0.0.0" name="javax.servlet.http" namespace="java.package" />
+      </requires>
+      <artifacts size="1">
+        <artifact id="org.mortbay.jetty.util" classifier="osgi.bundle" version="6.1.15.v200905182336" />
+      </artifacts>
+      <touchpoint id="org.eclipse.equinox.p2.osgi" version="1.0.0" />
+      <touchpointData size="1">
+        <instructions size="1">
+          <instruction key="manifest">Bundle-DocURL: http://jetty.mortbay.org
+Bundle-Version: 6.1.15.v200905182336
+Export-Package: org.mortbay.util;uses:="org.mortbay.log,org.mortbay.thread";version="6.1.15",org.mortbay.log;uses:="org.mortbay.util,org.slf4j";version="6.1.15",org.mortbay.component;uses:="org.mortbay.util,org.mortbay.log";version="6.1.15",org.mortbay.thread;uses:="org.mortbay.log,org.mortbay.component";version="6.1.15",org.mortbay.servlet;uses:="org.mortbay.log,org.mortbay.util,javax.servlet.http,javax.servlet,org.mortbay.util.ajax";version="6.1.15",org.mortbay.util.ajax;uses:="org.mortbay.log,org.mortbay.util,javax.servlet.http,javax.servlet";version="6.1.15"
+Created-By: 1.5.0_16 (Apple Inc.)
+Bundle-Name: Jetty Utilities
+package: org.mortbay
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+implementation-version: 6.1.15
+Manifest-Version: 1.0
+Build-Jdk: 1.5.0_16
+Bundle-Vendor: Mort Bay Consulting
+Tool: Bnd-0.0.238
+Bundle-Description: Utility classes for Jetty
+Built-By: jesse
+Archiver-Version: Plexus Archiver
+Bnd-LastModified: 1236264972685
+mode: development
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.mortbay.jetty.util
+url: http://jetty.mortbay.org/project/jetty-util
+Import-Package: javax.servlet,javax.servlet.http,org.slf4j;resolution:=optional;version="1.3"
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0
+Ignore-Package: org.mortbay.log,org.mortbay.util,org.mortbay.component,org.mortbay.thread,org.mortbay.servlet,org.mortbay.util.ajax</instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+    <unit id="javax.servlet" singleton="false" version="2.5.0.v200806031605">
+      <update id="javax.servlet" range="[0.0.0,2.5.0.v200806031605)" severity="0" />
+      <properties size="5">
+        <property name="df_LT.bundleName" value="Servlet API Bundle" />
+        <property name="df_LT.bundleProvider" value="Eclipse.org" />
+        <property name="org.eclipse.equinox.p2.name" value="%bundleName" />
+        <property name="org.eclipse.equinox.p2.provider" value="%bundleProvider" />
+        <property name="org.eclipse.equinox.p2.bundle.localization" value="plugin" />
+      </properties>
+      <provides size="7">
+        <provided name="javax.servlet" version="2.5.0.v200806031605" namespace="org.eclipse.equinox.p2.iu" />
+        <provided name="javax.servlet" version="2.5.0.v200806031605" namespace="osgi.bundle" />
+        <provided name="javax.servlet" version="2.5.0" namespace="java.package" />
+        <provided name="javax.servlet.http" version="2.5.0" namespace="java.package" />
+        <provided name="javax.servlet.resources" version="2.5.0" namespace="java.package" />
+        <provided name="bundle" version="1.0.0" namespace="org.eclipse.equinox.p2.eclipse.type" />
+        <provided name="df_LT" version="1.0.0" namespace="org.eclipse.equinox.p2.localization" />
+      </provides>
+      <artifacts size="1">
+        <artifact id="javax.servlet" classifier="osgi.bundle" version="2.5.0.v200806031605" />
+      </artifacts>
+      <touchpoint id="org.eclipse.equinox.p2.osgi" version="1.0.0" />
+      <touchpointData size="1">
+        <instructions size="1">
+          <instruction key="manifest">Manifest-Version: 1.0
+Bundle-Vendor: %bundleProvider
+Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,J2SE-1.4
+Bundle-Name: %bundleName
+Export-Package: javax.servlet;version="2.5",javax.servlet.http;version="2.5",javax.servlet.resources;version="2.5"
+Bundle-Version: 2.5.0.v200806031605
+Bundle-ManifestVersion: 2
+Bundle-Localization: plugin
+Bundle-SymbolicName: javax.servlet</instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+  </units>
+  <properties size="2">
+    <property name="p2.compressed" value="false" />
+    <property name="p2.timestamp" value="1249591407895" />
+  </properties>
+</repository>

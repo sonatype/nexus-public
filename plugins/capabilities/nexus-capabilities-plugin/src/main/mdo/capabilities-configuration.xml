@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xmlns="http://modello.codehaus.org/MODELLO/1.4.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://modello.codehaus.org/MODELLO/1.4.0 http://modello.codehaus.org/xsd/modello-1.4.0.xsd"
+       xsd.namespace="http://www.sonatype.com/xsd/nexus-capabilities-configuration-2.0.0"
+       xsd.targetNamespace="http://www.sonatype.com/xsd/nexus-capabilities-configuration-2.0.0">
+
+  <id>capabilities-configuration</id>
+  <name>NexusCapabilitiesConfiguration</name>
+
+  <description>
+    <![CDATA[
+        <p>Nexus Capabilities Configuration.</p>
+        ]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.plugins.capabilities.internal.config.persistence</value>
+    </default>
+  </defaults>
+
+  <versionDefinition>
+    <type>field</type>
+    <value>version</value>
+  </versionDefinition>
+
+  <classes>
+    <!-- ROOT -->
+    <class rootElement="true" xml.tagName="capabilitiesConfiguration" java.clone="deep">
+      <name>Configuration</name>
+      <version>1.0.0+</version>
+      <interfaces>
+        <interface>org.sonatype.configuration.Configuration</interface>
+      </interfaces>
+      <description>The root element of Nexus configuration.</description>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <description>
+            The version of the persisted model.
+          </description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>capabilities</name>
+          <version>1.0.0+</version>
+          <description>Currently defined capabilities</description>
+          <association>
+            <type>CCapability</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.0.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.0.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.0.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.0";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class java.clone="deep">
+      <name>CCapability</name>
+      <description>A defined capability</description>
+      <version>1.0.0+</version>
+      <fields>
+        <field>
+          <name>version</name>
+          <type>int</type>
+          <version>2.0.0+</version>
+          <required>true</required>
+          <description>The version of capability properties</description>
+        </field>
+        <field>
+          <name>id</name>
+          <type>String</type>
+          <version>1.0.0+</version>
+          <required>true</required>
+          <description>The id of the capability</description>
+        </field>
+        <field>
+          <name>notes</name>
+          <type>String</type>
+          <version>2.0.0+</version>
+          <required>true</required>
+          <description>Optional (user) notes about capability</description>
+        </field>
+        <field>
+          <name>enabled</name>
+          <type>boolean</type>
+          <version>2.0.0+</version>
+          <required>true</required>
+          <defaultValue>true</defaultValue>
+          <description>The flag determining if the capability is enabled</description>
+        </field>
+        <field>
+          <name>typeId</name>
+          <type>String</type>
+          <version>1.0.0+</version>
+          <required>true</required>
+          <description>The type id of the capability</description>
+        </field>
+        <field>
+          <name>properties</name>
+          <version>1.0.0+</version>
+          <description>Properties to configure the capability</description>
+          <required>false</required>
+          <association>
+            <type>CCapabilityProperty</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+      </fields>
+    </class>
+
+    <class java.clone="deep">
+      <name>CCapabilityProperty</name>
+      <version>1.0.0+</version>
+      <description>Properties-like generic key-value map.</description>
+      <fields>
+        <field>
+          <name>key</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <identifier>true</identifier>
+          <description>Property key.</description>
+        </field>
+        <field>
+          <name>value</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <identifier>true</identifier>
+          <description>Property value.</description>
+        </field>
+      </fields>
+    </class>
+
+  </classes>
+
+</model>

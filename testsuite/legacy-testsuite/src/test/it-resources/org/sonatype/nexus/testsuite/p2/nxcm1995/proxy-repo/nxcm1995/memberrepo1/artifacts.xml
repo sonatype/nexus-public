@@ -1,0 +1,284 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<?artifactRepository version='1.1.0'?>
+<repository name='nxcm1995-memberrepo1' type='org.eclipse.equinox.p2.artifact.repository.simpleRepository' version='1'>
+  <properties size='2'>
+    <property name='p2.timestamp' value='1260296204916'/>
+    <property name='p2.compressed' value='true'/>
+  </properties>
+  <mappings size='3'>
+    <rule filter='(&amp; (classifier=osgi.bundle))' output='${repoUrl}/plugins/${id}_${version}.jar'/>
+    <rule filter='(&amp; (classifier=binary))' output='${repoUrl}/binary/${id}_${version}'/>
+    <rule filter='(&amp; (classifier=org.eclipse.update.feature))' output='${repoUrl}/features/${id}_${version}.jar'/>
+  </mappings>
+  <artifacts size='38'>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.multisdk' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='39615'/>
+        <property name='download.size' value='39615'/>
+        <property name='download.md5' value='a0e9032eead71f5b373c55dcac4713ea'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.antlr' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='452141'/>
+        <property name='download.size' value='452141'/>
+        <property name='download.md5' value='e5104c80a9a931316eac3eb2644a33b5'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.webservices' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='348825'/>
+        <property name='download.size' value='348825'/>
+        <property name='download.md5' value='160bbaf185924c22048f4a2665d80066'/>
+      </properties>
+    </artifact>
+    <artifact classifier='org.eclipse.update.feature' id='com.adobe.flexbuilder.feature.core' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='29026'/>
+        <property name='download.contentType' value='application/zip'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.utils.osnative.win' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='2561'/>
+        <property name='download.size' value='2561'/>
+        <property name='download.md5' value='9868555f645b3944c150bce6f4272a7f'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.designview' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='2650367'/>
+        <property name='download.size' value='2650367'/>
+        <property name='download.md5' value='eb60bd02239000c4069a3c240b1753f5'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.project' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='412485'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.ajaxbridge' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='119115'/>
+        <property name='download.size' value='119115'/>
+        <property name='download.md5' value='75637786c59381bc5c6cacaa324dc4a2'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.actionscript' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='330231'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.exportimport' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='191967'/>
+        <property name='download.size' value='191967'/>
+        <property name='download.md5' value='7c2967d9042121a4dfde298c68cae3d1'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.datatools.derived' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='756383'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.help' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='58863229'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.feature.core.brand' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='16217'/>
+        <property name='download.size' value='16217'/>
+        <property name='download.md5' value='984f9fd2a4808e800cd2528038dc9eb7'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.debug.e33' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='4595'/>
+        <property name='download.size' value='4595'/>
+        <property name='download.md5' value='b0adedcbd760325988b01e546bf34664'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.codemodel' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='1177648'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.tengine' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='490608'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.crimson' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='199474'/>
+        <property name='download.size' value='199474'/>
+        <property name='download.md5' value='880de6f45d580e0a5c533d4ab4cf94bb'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.help.api' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='989847'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.mxml' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='715670'/>
+        <property name='download.size' value='715670'/>
+        <property name='download.md5' value='8b96e0de3b1b7254f4264b14b4c31102'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.debug' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='169524'/>
+        <property name='download.size' value='169524'/>
+        <property name='download.md5' value='c13dcce00a761b0d7c2b18e41e7cd617'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flash.profiler' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='1514949'/>
+        <property name='download.size' value='1514949'/>
+        <property name='download.md5' value='1fd57b724b16b29ec9c81c2d87ad7487'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.axis2' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='3540717'/>
+        <property name='download.size' value='3540717'/>
+        <property name='download.md5' value='853725839cd2965638e4408d8844b74a'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.apollo' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='53784'/>
+        <property name='download.size' value='53784'/>
+        <property name='download.md5' value='de3a041cf23a714f503304ff32c184c9'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.css' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='210022'/>
+        <property name='download.size' value='210022'/>
+        <property name='download.md5' value='cc7718e8574ac4cb2bb9cf46e98288d5'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.mxmlmodel' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='965464'/>
+        <property name='download.size' value='965464'/>
+        <property name='download.md5' value='114522917564c9d3e6c11944f6886628'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.extflashplayer' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='1797038'/>
+        <property name='download.size' value='1797038'/>
+        <property name='download.md5' value='f1b6a1077d17a654acfca491624d737c'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.dbwizard' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='283050'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.utils.osnative' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='69785'/>
+        <property name='download.size' value='69785'/>
+        <property name='download.md5' value='733f18c04878643083cc62c6f49b68be'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.common' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='1885077'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.ui' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='3697388'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.debug.e32' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='5833'/>
+        <property name='download.size' value='5833'/>
+        <property name='download.md5' value='de35090aadab797e44b186e65dfb23ab'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.flex' version='3.0.214193'>
+      <properties size='2'>
+        <property name='artifact.size' value='4096'/>
+        <property name='download.size' value='19079530'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.apollo.ui' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='31047'/>
+        <property name='download.size' value='31047'/>
+        <property name='download.md5' value='ae0b52ccd0193e522b89d91fc9e0aafa'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.importartwork' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='146098'/>
+        <property name='download.size' value='146098'/>
+        <property name='download.md5' value='a4ce501f203547b256de7b4807f278ca'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.debug.ui' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='108782'/>
+        <property name='download.size' value='108782'/>
+        <property name='download.md5' value='d95aad2d7cf59224c851ff10a67cfa47'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.common.e34' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='6846'/>
+        <property name='download.size' value='6846'/>
+        <property name='download.md5' value='af974af0329e6ea80556330122313517'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.debug.ui.actions' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='3592'/>
+        <property name='download.size' value='3592'/>
+        <property name='download.md5' value='85f46ef393197cd559bf30b7e2d0e1b2'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='com.adobe.flexbuilder.editors.derived' version='3.0.214193'>
+      <properties size='3'>
+        <property name='artifact.size' value='217366'/>
+        <property name='download.size' value='217366'/>
+        <property name='download.md5' value='b459dd9a309e7adce1bbc232d89d2f9d'/>
+      </properties>
+    </artifact>
+  </artifacts>
+</repository>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>http://snapshots.repository.codehaus.org/</url>
+  <id>codehaus-snapshots</id>
+  <name>Codehaus Snapshots</name>
+  <layout>maven2</layout>
+  <policy>snapshot</policy>
+  <localUrl>@rootUrl@/content/repositories/codehaus-snapshots</localUrl>
+</repository-metadata>

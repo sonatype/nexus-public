@@ -1,0 +1,196 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus</groupId>
+    <artifactId>nexus-testsupport</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <!--
+  TODO: Rename to nexus-legacy-testharness, or something to indicate this is only for _legacy_ tests.
+  -->
+  <artifactId>nexus-test-harness-launcher</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+
+  <dependencies>
+    <!--
+    NOTE: Code from this module are used via reflection, but must not be on the classpath.
+    -->
+    <!--<dependency>-->
+      <!--<groupId>org.sonatype.nexus</groupId>-->
+      <!--<artifactId>nexus-bootstrap</artifactId>-->
+    <!--</dependency>-->
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-repository-metadata</artifactId>
+    </dependency>
+
+    <!-- MailUtil et al -->
+    <dependency>
+      <groupId>com.icegreen</groupId>
+      <artifactId>greenmail</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-common</artifactId>
+    </dependency>
+
+    <!-- Starting up Jetty "fake remote" -->
+    <dependency>
+      <groupId>org.sonatype.plexus</groupId>
+      <artifactId>plexus-jetty-testsuite</artifactId>
+    </dependency>
+
+    <!-- We use Wagon to deploy WagonUtil etc -->
+    <dependency>
+      <groupId>org.apache.maven.wagon</groupId>
+      <artifactId>wagon-http-lightweight</artifactId>
+    </dependency>
+
+    <!-- MavenDeployer and AbstractMavenNexusIT -->
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-verifier</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>rome</groupId>
+      <artifactId>rome</artifactId>
+      <version>0.9</version>
+    </dependency>
+
+    <!-- XPP, is left out since we _import_ (yuck) deeps and loose transitive deeps! -->
+    <dependency>
+      <groupId>xpp3</groupId>
+      <artifactId>xpp3_min</artifactId>
+    </dependency>
+
+    <!-- NexusRestClient uses some "illegal" Sun JDK classes, need to mark them -->
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!--
+    FIXME: nexus-test-environment-maven-plugin insists on this entry being here.
+    -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>apache-maven</artifactId>
+      <version>2.2.1</version>
+      <type>tar.gz</type>
+      <classifier>bin</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-container-default</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-nop</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-jdk14</artifactId>
+        </exclusion>
+        <exclusion>
+          <artifactId>wagon-http</artifactId>
+          <groupId>org.apache.maven.wagon</groupId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.maven</groupId>
+          <artifactId>maven-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.maven</groupId>
+          <artifactId>maven-toolchain</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.maven</groupId>
+          <artifactId>maven-compat</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-it-helper-plugin</artifactId>
+      <classifier>bundle</classifier>
+      <type>zip</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.sisu.goodies</groupId>
+      <artifactId>goodies-prefs</artifactId>
+    </dependency>
+
+    <!-- Code used by clients. Note: despite it's groupID, this is NOT a plugin -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restlet-bridge</artifactId>
+      <version>${nexus.version}</version>
+    </dependency>
+
+    <!-- Model code used by clients -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restlet1x-model</artifactId>
+      <version>${nexus.version}</version>
+    </dependency>
+
+    <!--
+    FIXME: Should not depend on a plugin here! This is needed for TasksNexusRestClient via XStreamFactory.
+    Needed for models and one DTO that cannot be easily moved out from a plugin (into models).
+    -->
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-indexer-lucene-plugin</artifactId>
+      <version>${nexus.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>

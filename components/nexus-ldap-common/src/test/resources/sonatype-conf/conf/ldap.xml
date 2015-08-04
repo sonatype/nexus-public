@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><ldapConfiguration>
+  <connectionInfo>
+    <searchBase>dc=sonatype,dc=com</searchBase>
+    <!--<systemUsername>uid=admin,ou=system</systemUsername>
+     <systemPassword>secret</systemPassword> -->
+    <authScheme>none</authScheme>
+    <protocol>ldaps</protocol>
+    <host>ldap.sonatype.com</host>
+    <port>636</port>
+  </connectionInfo>
+  <userAndGroupConfig>
+    
+    <groupMemberFormat>${username}</groupMemberFormat>
+    <groupObjectClass>posixGroup</groupObjectClass>
+    <groupBaseDn>ou=Group</groupBaseDn>
+    <groupIdAttribute>cn</groupIdAttribute>
+    <groupMemberAttribute>memberUid</groupMemberAttribute>
+    <userObjectClass>inetOrgPerson</userObjectClass>
+    <userBaseDn>ou=People</userBaseDn>
+    <userIdAttribute>uid</userIdAttribute>
+    <!-- <userPasswordAttribute>userPassword</userPasswordAttribute> -->
+    <userRealNameAttribute>cn</userRealNameAttribute>
+    <emailAddressAttribute>mail</emailAddressAttribute>
+    <!-- <websiteAttribute>labeledUri</websiteAttribute>
+    <websiteUriLabel>Web Site</websiteUriLabel>
+    <isWebsiteAttributeLabelUri>true</isWebsiteAttributeLabelUri> -->
+    <preferredPasswordEncoding>crypt</preferredPasswordEncoding>
+    
+  </userAndGroupConfig>
+    
+</ldapConfiguration>

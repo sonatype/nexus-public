@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <mirrors>
+    <mirror>
+      <id>mirror1</id>
+      <url>http://localhost:12345/repo-mirror</url>
+    </mirror>
+    <mirror>
+      <id>mirror2</id>
+      <url>http://localhost:12345/void</url>
+    </mirror>
+  </mirrors>
+</repository-metadata>

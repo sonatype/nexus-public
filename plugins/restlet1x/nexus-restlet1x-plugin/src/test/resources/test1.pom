@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<!-- the version of maven's project object model -->
+	<modelVersion>4.0.0</modelVersion>
+	<!-- Parent POM -->
+	<parent>
+		<groupId>test-group</groupId>
+		<artifactId>nexus</artifactId>
+		<version>1.0</version>
+	</parent>
+
+	<!-- a unique name for this project -->
+	<artifactId>test-artifact</artifactId>
+
+
+	<!-- a short but descriptive name for the project -->
+	<name>Nexus (Rest API)</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.sonatype.nexus</groupId>
+			<artifactId>nexus-app</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.sonatype.nexus</groupId>
+			<artifactId>nexus-rest-model</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.sonatype.nexus</groupId>
+			<artifactId>nexus-configuration</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.sonatype.nexus</groupId>
+			<artifactId>nexus-proxy</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.sonatype.nexus</groupId>
+			<artifactId>nexus-indexer</artifactId>
+		</dependency>        
+		<dependency>
+			<groupId>org.codehaus.plexus</groupId>
+			<artifactId>plexus-container-default</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.sonatype.plexus</groupId>
+			<artifactId>plexus-jetty6</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.sonatype.plexus</groupId>
+			<artifactId>plexus-restlet-bridge</artifactId>
+		</dependency>
+	</dependencies>
+</project>

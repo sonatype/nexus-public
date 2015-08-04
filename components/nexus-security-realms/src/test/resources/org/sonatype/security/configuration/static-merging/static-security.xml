@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<security>
+    <version>2.0.0</version>
+    <privileges>      
+      <privilege>
+        <id>4-test</id>
+        <name>4-test</name>
+        <type>method</type>
+        <properties>
+          <property>
+            <key>method</key>
+            <value>read</value>
+          </property>
+          <property>
+            <key>permission</key>
+            <value>/some/path4/</value>
+          </property>
+        </properties>
+      </privilege>
+      <privilege>
+        <id>5-test</id>
+        <name>5-test</name>
+        <type>method</type>
+        <properties>
+          <property>
+            <key>method</key>
+            <value>read</value>
+          </property>
+          <property>
+            <key>permission</key>
+            <value>/some/path5/</value>
+          </property>
+        </properties>
+      </privilege>
+      <privilege>
+        <id>6-test</id>
+        <name>6-test</name>
+        <type>method</type>
+        <properties>
+          <property>
+            <key>method</key>
+            <value>read</value>
+          </property>
+          <property>
+            <key>permission</key>
+            <value>/some/path6/</value>
+          </property>
+        </properties>
+      </privilege>      
+    </privileges>
+    <roles>
+       <role>
+            <id>anon</id>
+            <roles>
+              <role>other</role>
+            </roles>
+            <privileges>
+                <privilege>4-test</privilege>
+            </privileges>
+        </role>
+        <role>
+            <id>other</id>
+            <name>Other Role</name>
+            <description>Other Role Description</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>6-test</privilege>
+            </privileges>
+            <roles />
+        </role>
+    </roles>
+</security>

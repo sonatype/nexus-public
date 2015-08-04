@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: com.sonatype.nexus.p2.its.bundle3
+Bundle-SymbolicName: com.sonatype.nexus.p2.its.bundle3;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Require-Bundle: com.sonatype.nexus.p2.its.bundle;bundle-version="1.0.0"

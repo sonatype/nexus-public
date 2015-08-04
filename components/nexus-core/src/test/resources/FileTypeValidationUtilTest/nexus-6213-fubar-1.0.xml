@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+	<title>Eclipse downloads - file unavailable</title><meta name="author" content="Denis Roy" />
+	<meta property="og:description" content="Eclipse is probably best known as a Java IDE, but it is more: it is an IDE framework, a tools framework, an open source project, a community, an eco-system, and a foundation." />
+<meta property="og:image" content="https://www.eclipse.org/eclipse.org-common/themes/Nova/images/eclipse.png" />
+	<meta name="keywords" content="" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/yui/2.6.0/build/reset-fonts-grids/reset-fonts-grids.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/yui/2.6.0/build/menu/assets/skins/sam/menu.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/reset.css" media="screen"/>
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/layout.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/header.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/footer.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/visual.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/print.css" media="print" />
+	<!--[if lte IE 7]> 	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/ie_style.css" media="screen"/> <![endif]-->
+	<!--[if IE 6]> 	<link rel="stylesheet" type="text/css" href="/eclipse.org-common/themes/Nova/css/ie6_style.css" media="screen"/> <![endif]-->
+	<!-- Dependencies -->
+	<!-- Source File -->
+</head>
+<body>
+	<div id="novaWrapper">		<div id="clearHeader">
+			<div id="logo">
+					<a href="http://www.eclipse.org/">
+		<img src="/eclipse.org-common/themes/Nova/images/eclipse.png" alt="Eclipse.org"/>
+	</a>
+
+			</div>
+<div id="otherSites"><div id="sites"><ul id="sitesUL">
+<li><a href='//marketplace.eclipse.org'><img alt="Eclipse Marketplace" src="//dev.eclipse.org/custom_icons/marketplace.png"/>&nbsp;<span>Eclipse Marketplace</span></a></li>
+<li><a href='//www.youtube.com/user/EclipseFdn' target="_blank"><img alt="Eclipse YouTube Channel" src="//dev.eclipse.org/custom_icons/audio-input-microphone-bw.png"/>&nbsp;<span>Eclipse YouTube Channel</span></a></li>
+<li><a href='https://bugs.eclipse.org/bugs/'><img alt="Bugzilla" src="//dev.eclipse.org/custom_icons/system-search-bw.png"/>&nbsp;<span>Bugzilla</span></a></li>
+<li><a href='//www.eclipse.org/forums/'><img alt="Forums" src="//dev.eclipse.org/large_icons/apps/internet-group-chat.png"/>&nbsp;<span>Eclipse Forums</span></a></li>
+<li><a href='//www.planeteclipse.org/'><img alt="Planet Eclipse" src="//dev.eclipse.org/large_icons/devices/audio-card.png"/>&nbsp;<span>Planet Eclipse</span></a></li>
+<li><a href='//wiki.eclipse.org/'><img alt="Eclipse Wiki" src="//dev.eclipse.org/custom_icons/accessories-text-editor-bw.png"/>&nbsp;<span>Eclipse Wiki</span></a></li>
+<li><a href='https://portal.eclipse.org'><img alt="MyFoundation Portal" src="//dev.eclipse.org/custom_icons/preferences-system-network-proxy-bw.png"/><span>My Foundation Portal</span></a></li>
+</ul></div></div></div><div id="header">
+	<div id="menu"><ul>		<li><a href="/" target="_self">Home</a></li>
+			<li><a href="/downloads/" target="_self">Downloads</a></li>
+			<li><a href="/users/" target="_self">Users</a></li>
+			<li><a href="/membership/" target="_self">Members</a></li>
+			<li><a href="/committers/" target="_self">Committers</a></li>
+			<li><a href="/resources/" target="_self">Resources</a></li>
+			<li><a href="/projects/" target="_self">Projects</a></li>
+			<li><a href="/org/" target="_self">About Us</a></li>
+	</ul></div>
+	<div id="search">
+		<form action="//www.google.com/cse" id="searchbox_017941334893793413703:sqfrdtd112s">
+		<fieldset><input type="hidden" name="cx" value="017941334893793413703:sqfrdtd112s" />
+		<input id="searchBox" type="text" name="q" size="25" />
+		<input id="searchButton" type="submit" name="sa" value="Search" />
+		</fieldset></form>
+		<script type="text/javascript" src="//www.google.com/coop/cse/brand?form=searchbox_017941334893793413703%3Asqfrdtd112s&amp;lang=en"></script>
+	</div>
+</div>
+		<div id="novaContent" class="faux"><br id="faux-br" style="clear:both;height:1em;"/>
+		<div id="leftcol">
+<ul id="leftnav">
+<li class="separator"><a class="separator" href="/downloads/">Downloads Home<img src="/eclipse.org-common/themes/Nova/images/separator.png" alt="navigation image"/></a></li><li><a href="http://wiki.eclipse.org/Git" target="_self">Source code</a></li><li><a href="/downloads/packages/" target="_self">More Packages</a></li></ul>	<style> form { display:inline; }</style>
+		<br/><br/>
+		<div style="padding-left:10px;">
+		<h3>Give Back to Eclipse</h3>
+		<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+			<input type="hidden" name="cmd" value="_s-xclick">
+			<input type="hidden" name="hosted_button_id" value="7577704">
+			<input type="image" src="http://www.eclipse.org/friends/images/donate5.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+			<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+		</form>
+		<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+			<input type="hidden" name="cmd" value="_s-xclick">
+			<input type="hidden" name="hosted_button_id" value="11342083">
+			<input type="image" src="http://www.eclipse.org/friends/images/donate15.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+			<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+		</form>
+		<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+			<input type="hidden" name="cmd" value="_s-xclick">
+			<input type="hidden" name="hosted_button_id" value="11342063">
+			<input type="image" src="http://www.eclipse.org/friends/images/donate25.png" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+			<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+		</form>
+		<br/>
+		<a href="/donate/">Donate $35 or more and Become a Friend of Eclipse!</a>
+		<img src="http://www.eclipse.org/friends/images/donateHeader.png"/>		
+		<p style="padding:5px 0px;font-size:10px;color:#888">The Eclipse Foundation is a not-for-profit organization, not a charitable organization, so we are unable to provide charitable tax receipts.<br>Amounts shown are in US dollars.</p>
+		</div>
+	</div><div id="maincontent">
+	<div id="midcolumn">
+		<h1>Eclipse downloads - file unavailable</h1>
+		<p>
+			<b><font size "+2">The selected file is invalid, or it is no longer available for download.</font></b>
+        	<br /><br />
+        	This happens when the file is part of a nightly or development build. If so, please return to the project's home page and download a newer version.
+        	<br />
+        	<br /><a href="javascript:history.go(-1)">Go back.</a>
+		</p>
+	</div>
+</div>		<script type="text/javascript">
+
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-910670-2']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
+		</script>		<br style="clear:both;height:1em;"/>&nbsp;
+		</div> 		<div id="clearFooter"></div>
+		<div id="footer">
+			<ul id="footernav">
+<li><a href="/">Home</a></li>
+<li><a href="/legal/privacy.php">Privacy Policy</a></li>
+<li><a href="/legal/termsofuse.php">Terms of Use</a></li>
+<li><a href="/legal/copyright.php">Copyright Agent</a></li>
+<li><a href="/legal/">Legal</a></li>
+<li><a href="/org/foundation/contact.php">Contact Us</a></li></ul>
+			<span id="copyright">Copyright &copy; 2014 The Eclipse Foundation. All Rights Reserved.</span>
+		</div>
+	</div> </body></html>

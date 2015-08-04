@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<xsd:schema
+    targetNamespace="http://sonatype.org/xsd/nexus-wonderland-plugin/rest/1.0"
+    version="1.0"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:model="http://sonatype.org/xsd/nexus-wonderland-plugin/rest/1.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+    jaxb:version="2.1"
+    xsi:schemaLocation="
+            http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_0.xsd
+            http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd">
+
+  <!-- authToken -->
+
+  <!-- FIXME: Find a better name for this -->
+
+  <xsd:complexType name="authToken">
+    <xsd:sequence>
+      <xsd:element name="u" type="xsd:string"/>
+      <xsd:element name="p" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="authToken" type="model:authToken"/>
+
+  <!-- authTicket -->
+
+  <xsd:complexType name="authTicket">
+    <xsd:sequence>
+      <xsd:element name="t" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="authTicket" type="model:authTicket"/>
+
+  <!-- server properties -->
+
+  <xsd:complexType name="property">
+    <xsd:sequence>
+      <xsd:element name="key" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+      <xsd:element name="value" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="property" type="model:property"/>
+
+</xsd:schema>

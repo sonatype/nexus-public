@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component-set>
+  <components>
+    <component>
+      <role>org.sonatype.plexus.rest.ReferenceFactory</role>
+      <role-hint>default</role-hint>
+      <implementation>org.sonatype.plexus.rest.DefaultReferenceFactory</implementation>
+      <isolated-realm>false</isolated-realm>
+    </component>
+    <component>
+      <role>com.sonatype.license.feature.LicenseFeatureVerifier</role>
+      <role-hint>default</role-hint>
+      <implementation>com.sonatype.nexus.MockLicenseFeatureVerifier</implementation>
+      <isolated-realm>false</isolated-realm>
+    </component>
+  </components>
+</component-set>
+    

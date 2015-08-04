@@ -1,0 +1,10 @@
+<metadata>
+	<plugins>
+		<plugin>
+			<name>Plugin P1</name>
+			<prefix>p1</prefix>
+			<artifactId>maven-p1-plugin</artifactId>
+		</plugin>
+		<!-- missed maven-p2-plugin -->	
+	</plugins>
+</metadata>

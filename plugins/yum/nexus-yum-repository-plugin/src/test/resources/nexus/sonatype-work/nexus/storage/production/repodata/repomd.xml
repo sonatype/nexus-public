@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<repomd xmlns="http://linux.duke.edu/metadata/repo">
+  <data type="other_db">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/other.sqlite.bz2"/>
+    <checksum type="sha">5930ebf9f48abcd83a8a74d1561043cee7b17eac</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">dc4f8ee2ef98306d7e7b6a1fe38abdc1029b53be</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="other">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/other.xml.gz"/>
+    <checksum type="sha">8c2044f26ce77839ee2ed04eca151239e2ebe139</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">fc4b89762213d5a438ea4adae0504a1a4e519f83</open-checksum>
+  </data>
+  <data type="filelists_db">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/filelists.sqlite.bz2"/>
+    <checksum type="sha">852621e75b2c52927a9a58a98189a1122cc826f9</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">5c93f5868c0fe3d62ec1c684c7495e8ca4b35253</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="filelists">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/filelists.xml.gz"/>
+    <checksum type="sha">6116d170b5dd8c37b3dd670c0ade1983a5d48e58</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">912059e29e0617564728c88e7626322a445b245a</open-checksum>
+  </data>
+  <data type="primary_db">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/primary.sqlite.bz2"/>
+    <checksum type="sha">c27d8844d4a0a187a893b18d4522af39b6b7e01b</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">923f2ea1a0dc5d324d99e6b8c30b78ff14644bc4</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="primary">
+    <location xml:base="http://localhost:8080/nexus/content/repositories/production" href="repodata/primary.xml.gz"/>
+    <checksum type="sha">3d8b8f48cacd6da9c0304f4653ccafefca427cec</checksum>
+    <timestamp>1318584977</timestamp>
+    <open-checksum type="sha">4e4c579698de0fcf7a080b3ded52672681df3232</open-checksum>
+  </data>
+</repomd>

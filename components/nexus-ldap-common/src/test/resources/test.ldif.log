@@ -1,0 +1,22 @@
+version: 1
+
+#!RESULT ERROR
+#!CONNECTION ldap://localhost:10389
+#!DATE 2008-11-05T10:47:02.892
+#!ERROR [LDAP: error code 65 - OBJECT_CLASS_VIOLATION: failed for     Add Request : ClientEntry     dn: 0.9.2342.19200300.100.1.1=joe,2.5.4.11=users,2.5.4.11=system     objectclass: inetOrgPerson     objectclass: organizationalPerson     objectclass: person     objectclass: groupOfUniqueNames     objectclass: top     sn: Pentaho     cn: joe     businesscategory: cn=ceo,ou=roles,ou=system     businesscategory: cn=Admin,ou=roles,ou=system     uid: joe     userpassword: '0x70 0x61 0x73 0x73 0x77 0x6F 0x72 0x64 '     mail: joe.pentaho@pentaho.org     uniquemember: cn=ceo,ou=roles     uniquemember: cn=Admin,ou=roles : Entry 0.9.2342.19200300.100.1.1=joe,2.5.4.11=users,2.5.4.11=system contains more than one STRUCTURAL ObjectClass: [<2.16.840.1.113730.3.2.2, inetOrgPerson>, <2.5.6.17, groupOfUniqueNames>]]
+dn: uid=joe,ou=users,ou=system
+mail: joe.pentaho@pentaho.org
+uniquemember: cn=ceo,ou=roles
+uniquemember: cn=Admin,ou=roles
+objectclass: inetOrgPerson
+objectclass: organizationalPerson
+objectclass: person
+objectclass: groupOfUniqueNames
+objectclass: top
+uid: joe
+cn: joe
+businesscategory: cn=ceo,ou=roles,ou=system
+businesscategory: cn=Admin,ou=roles,ou=system
+userpassword:: cGFzc3dvcmQ=
+sn: Pentaho
+

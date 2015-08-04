@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>@rootUrl@/content/repositories/snapshots</url>
+  <id>snapshots</id>
+  <name>Snapshots</name>
+  <layout>maven2</layout>
+  <policy>snapshot</policy>
+</repository-metadata>

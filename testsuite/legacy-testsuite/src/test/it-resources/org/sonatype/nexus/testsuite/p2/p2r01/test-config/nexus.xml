@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nexusConfiguration>
+  <version>2.7.0</version>
+  <httpProxy>
+    <port>56240</port>
+    <proxyPolicy>strict</proxyPolicy>
+  </httpProxy>
+  <repositories>
+    <repository>
+      <id>p2r01</id>
+      <name>p2r01</name>
+      <providerRole>org.sonatype.nexus.proxy.repository.Repository</providerRole>
+      <providerHint>maven2</providerHint>
+      <localStatus>IN_SERVICE</localStatus>
+      <notFoundCacheTTL>1440</notFoundCacheTTL>
+      <userManaged>true</userManaged>
+      <exposed>true</exposed>
+      <browseable>true</browseable>
+      <writePolicy>ALLOW_WRITE</writePolicy>
+      <indexable>true</indexable>
+      <searchable>true</searchable>
+      <localStorage>
+        <provider>file</provider>
+      </localStorage>
+      <externalConfiguration>
+        <proxyMode>ALLOW</proxyMode>
+        <artifactMaxAge>1440</artifactMaxAge>
+        <itemMaxAge>1440</itemMaxAge>
+        <cleanseRepositoryMetadata>false</cleanseRepositoryMetadata>
+        <downloadRemoteIndex>false</downloadRemoteIndex>
+        <checksumPolicy>WARN</checksumPolicy>
+        <repositoryPolicy>release</repositoryPolicy>
+      </externalConfiguration>
+    </repository>
+  </repositories>
+  <smtpConfiguration>
+    <hostname>localhost</hostname>
+    <port>56242</port>
+    <username>smtp-username</username>
+    <password>{MoIfU6sxEXcHC6oQN0eLuLDQwvjBO4fvoW0gTSRo2go=}</password>
+    <systemEmailAddress>system@nexus.org</systemEmailAddress>
+  </smtpConfiguration>
+  <notification />
+</nexusConfiguration>

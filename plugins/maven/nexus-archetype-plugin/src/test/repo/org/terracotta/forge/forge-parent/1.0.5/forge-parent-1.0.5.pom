@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <properties>
+    <forgeTags>Parent POM</forgeTags>
+  </properties>
+
+  <modelVersion>4.0.0</modelVersion>
+  <organization>
+    <name>Terracotta, Inc.</name>
+    <url>http://www.terracotta.org/</url>
+  </organization>
+
+  <groupId>org.terracotta.forge</groupId>
+  <artifactId>forge-parent</artifactId>
+  <version>1.0.5</version>
+  <packaging>pom</packaging>
+
+  <name>forge-parent</name>
+  <description>Parent POM for Terracotta Forge projects</description>
+  <url>http://forge.terracotta.org/</url>
+
+  <scm>
+    <connection>scm:svn:http://svn.terracotta.org/svn/forge/projects/forge-parent/tags/release-1.0.5</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/forge/projects/forge-parent/tags/release-1.0.5</developerConnection>
+    <url>http://svn.terracotta.org/svn/forge/projects/forge-parent/tags/release-1.0.5</url>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>forge-artifacts</id>
+      <name>Project Artifacts Repository</name>
+      <url>scpexe://kong/export1/maven2</url>
+    </repository>
+    <site>
+      <id>forge-site</id>
+      <name>Project Sites Server</name>
+      <url>scpexe://orgstage/export1/forge/projects/</url>
+    </site>
+  </distributionManagement>
+
+  <issueManagement>
+    <system>JIRA</system>
+    <url>https://jira.terracotta.org/jira/browse/FORGE/component/${artifactId}</url>
+  </issueManagement>
+
+  <mailingLists>
+    <mailingList>
+      <name>Forge Dev List</name>
+      <subscribe>tc-forge-dev-subscribe@terracotta.org</subscribe>
+      <unsubscribe>tc-forge-dev-unsubscribe@terracotta.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <name>Forge User List</name>
+      <subscribe>tc-forge-user-subscribe@terracotta.org</subscribe>
+      <unsubscribe>tc-forge-user-unsubscribe@terracotta.org</unsubscribe>
+    </mailingList>
+    <mailingList>
+      <name>Forge Announce List</name>
+      <subscribe>tc-forge-announce-subscribe@terracotta.org</subscribe>
+      <unsubscribe>tc-forge-announce-unsubscribe@terracotta.org</unsubscribe>
+    </mailingList>
+  </mailingLists>
+
+  <licenses>
+    <license>
+      <name>Terracotta Public License</name>
+      <url>http://www.terracotta.org/license.txt</url>
+    </license>
+  </licenses>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report> 
+              <report>dependencies</report>
+              <report>issue-tracking</report>
+              <report>mailing-list</report>
+              <report>scm</report>
+              <report>license</report>
+              <report>project-team</report>
+              <!-- report>cim</report -->
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <aggregate>true</aggregate>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jxr-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.9</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh-external</artifactId>
+        <version>1.0-alpha-6</version>
+      </extension>
+    </extensions>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>2.0-beta-6</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>terracotta-repository</id>
+      <url>http://www.terracotta.org/download/reflector/maven2</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>  
+</project>

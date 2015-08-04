@@ -1,0 +1,26 @@
+<file>
+  <length>1794</length>
+  <mimeType>application/java-archive</mimeType>
+  <generation>4</generation>
+  <path>/nexus603/artifact/1.0-SNAPSHOT/artifact-1.0-20080820.184024-1.jar</path>
+  <readable>true</readable>
+  <writable>true</writable>
+  <repositoryId>tasks-snapshot-repo</repositoryId>
+  <created>1219257624000</created>
+  <modified>1219257624000</modified>
+  <storedLocally>1219257625533</storedLocally>
+  <lastTouched>1219257625533</lastTouched>
+  <lastRequested>1219257629533</lastRequested>
+  <expired>true</expired>
+  <remoteUrl>http://localhost:8090/remote/tasks-snapshot-repo/nexus603/artifact/1.0-SNAPSHOT/artifact-1.0-20080820.184024-1.jar</remoteUrl>
+  <attributes>
+    <entry>
+      <string>digest.md5</string>
+      <string>a48eaf371bf8f613ebd876b18255dc2b</string>
+    </entry>
+    <entry>
+      <string>digest.sha1</string>
+      <string>2e4213cd44e95dd306a74ba002ed1fa1282f0a51</string>
+    </entry>
+  </attributes>
+</file>

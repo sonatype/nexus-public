@@ -1,0 +1,31 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>jtidy</groupId>
+  <artifactId>jtidy</artifactId>
+  <version>4aug2000r7-dev</version>
+  <name>JTidy</name>
+  <url>http://jtidy.sourceforge.net</url>
+  <description>JTidy is a Java port of HTML Tidy, a HTML syntax checker and pretty printer. Like its non-Java cousin, JTidy can be used as a tool for cleaning up malformed and faulty HTML. In addition, JTidy provides a DOM parser for real-world HTML.</description>
+
+  <organization>
+    <name>JTidy</name>
+    <url>http://jtidy.sf.net</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>Java HTML Tidy License</name>
+      <url>http://svn.sourceforge.net/viewvc/*checkout*/jtidy/trunk/jtidy/LICENSE.txt?revision=95</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:svn:https://svn.sourceforge.net/svnroot/jtidy/trunk/jtidy/</connection>
+    <developerConnection>scm:svn:https://svn.sourceforge.net/svnroot/jtidy/trunk/jtidy/</developerConnection>
+    <url>http://svn.sourceforge.net/viewcvs.cgi/jtidy/trunk/jtidy/</url>
+  </scm>
+
+</project>

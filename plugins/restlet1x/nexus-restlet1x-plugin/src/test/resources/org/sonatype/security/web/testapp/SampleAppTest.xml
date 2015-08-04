@@ -1,0 +1,107 @@
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<plexus>
+
+	
+  <components>
+
+    <component>
+      <role>org.apache.shiro.mgt.RealmSecurityManager</role>
+      <role-hint>default</role-hint>
+      <implementation>org.sonatype.security.web.WebRealmSecurityManager</implementation>
+      <isolated-realm>false</isolated-realm>
+      <requirements>
+        <requirement>
+          <role>org.sonatype.plexus.components.ehcache.PlexusEhCacheWrapper</role>
+          <role-hint>default</role-hint>
+          <field-name>cacheWrapper</field-name>
+        </requirement>
+        <requirement>
+          <role>org.apache.shiro.authz.permission.RolePermissionResolver</role>
+          <field-name>rolePermissionResolverMap</field-name>
+        </requirement>
+        <requirement>
+          <role>org.codehaus.plexus.logging.Logger</role>
+          <role-hint>default</role-hint>
+          <field-name>logger</field-name>
+        </requirement>
+      </requirements>
+    </component>
+
+    <component>
+      <role>org.sonatype.jettytestsuite.ServletServer</role>
+      <implementation>org.sonatype.jettytestsuite.ServletServer</implementation>
+      <configuration>
+        <port>12345</port>
+        <webappContexts>
+          <webappContext>
+            <name>sample</name>
+            <servletInfos>
+              <servletInfo>
+                <mapping>/*</mapping>
+                <servletClass>org.sonatype.plexus.rest.PlexusServerServlet</servletClass>
+                <name>sample</name>
+                <initOrder>1</initOrder>
+                <parameters>
+								
+                  <property>
+                    <!-- A stupid hack to avoid OneServletServerPerWebapp limitation, see PlexusServerServlet#getInitParameter -->
+                    <name>plexus.discoverResources</name>
+                    <value>true</value>
+                  </property>
+                  <property>
+                    <!-- A stupid hack to avoid OneServletServerPerWebapp limitation, see PlexusServerServlet#getInitParameter -->
+                    <name>sample.roleHint</name>
+                    <value>secureApplication</value>
+                  </property>
+								
+                </parameters>
+              </servletInfo>
+            </servletInfos>
+            <servletFilterInfos>
+              <servletFilterInfo>
+                <mapping>/*</mapping>
+                <filterClass>org.sonatype.security.web.ShiroSecurityFilter</filterClass>
+                <parameters>
+                  <property>
+                    <name>config</name>
+                    <value>
+				[filters]
+				authcBasic = org.apache.shiro.web.filter.authc.BasicHttpAuthenticationFilter
+				authcBasic.applicationName = Sample Application
+				#authcBasic.fakeAuthScheme = true
+				
+				perms = org.apache.shiro.web.filter.authz.HttpMethodPermissionFilter
+				
+				logout = org.sonatype.security.web.filter.authc.LogoutAuthenticationFilter
+				
+                    </value>
+                  </property>
+                </parameters>
+              </servletFilterInfo>
+            </servletFilterInfos>
+          </webappContext>
+        </webappContexts>
+        <eventListenerInfos>
+          <eventListenerInfo>
+            <!-- ThreadLocal hack for using the same Plexus Container as the tests are running on  -->
+            <clazz>org.sonatype.security.web.testapp.HackedPlexusContainerContextListener</clazz>
+            <!--<clazz>org.sonatype.plexus.rest.NexusBootstrap</clazz>-->
+          </eventListenerInfo>
+        </eventListenerInfos>
+      </configuration>
+    </component>
+  </components>
+</plexus>

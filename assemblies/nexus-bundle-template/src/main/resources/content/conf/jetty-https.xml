@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+
+<!-- =============================================================== -->
+<!-- Configure a secure HTTPS connector                              -->
+<!-- =============================================================== -->
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+
+  <!--
+  ==== HTTPS ====
+  Set the following inside nexus.properties:
+  application-port-ssl: the port to listen for https connections
+  -->
+  <Call name="addConnector">
+    <Arg>
+      <New id="HTTPSConnector" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedSslSelectChannelConnector">
+        <Arg>
+          <New class="org.eclipse.jetty.util.ssl.SslContextFactory">
+            <Set name="keyStore">./conf/ssl/keystore.jks</Set>
+            <Set name="trustStore">./conf/ssl/keystore.jks</Set>
+            <Set name="keyStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
+            <Set name="keyManagerPassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
+            <Set name="trustStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
+            <Set name="excludeProtocols">
+              <Array type="java.lang.String">
+                <Item>SSL</Item>
+                <Item>SSLv2</Item>
+                <Item>SSLv2Hello</Item>
+                <Item>SSLv3</Item>
+              </Array>
+            </Set>
+          </New>
+        </Arg>
+        <Set name="host"><Property name="application-host"/></Set>
+        <Set name="port"><Property name="application-port-ssl"/></Set>
+        <Set name="forwarded">true</Set>
+      </New>
+    </Arg>
+  </Call>
+
+</Configure>

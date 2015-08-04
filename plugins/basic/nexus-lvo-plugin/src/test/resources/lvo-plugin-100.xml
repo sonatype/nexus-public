@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lvoConfiguration>
+  <version>1.0.0</version>
+  <lvoKeys>
+    <lvoKey>
+      <key>nexus-oss</key>
+      <strategy>http-get-properties</strategy>
+      <remoteUrl>http://www.sonatype.com/products/nexus/product-versions.properties</remoteUrl>
+    </lvoKey>
+    <lvoKey>
+      <key>nexus-pro</key>
+      <strategy>http-get-properties</strategy>
+      <remoteUrl>http://www.sonatype.com/products/nexus/product-versions.properties</remoteUrl>
+    </lvoKey>
+  </lvoKeys>
+</lvoConfiguration>

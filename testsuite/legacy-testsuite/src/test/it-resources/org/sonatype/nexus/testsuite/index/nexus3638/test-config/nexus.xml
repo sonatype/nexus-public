@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nexusConfiguration>
+  <version>2.7.0</version>
+  <globalConnectionSettings>
+    <connectionTimeout>10000</connectionTimeout>
+    <retrievalRetryCount>3</retrievalRetryCount>
+    <queryString></queryString>
+  </globalConnectionSettings>
+  <restApi>
+    <baseUrl>http://localhost:${nexus-application-port}/nexus</baseUrl>
+    <uiTimeout>60000</uiTimeout>
+  </restApi>
+  <httpProxy>
+    <port>${nexus-proxy-port}</port>
+    <proxyPolicy>strict</proxyPolicy>
+  </httpProxy>
+  <routing>
+    <resolveLinks>true</resolveLinks>
+  </routing>
+  <repositories>
+    <repository>
+      <id>nexus3638</id>
+      <name>nexus3638</name>
+      <providerRole>org.sonatype.nexus.proxy.repository.Repository</providerRole>
+      <providerHint>maven2</providerHint>
+      <localStatus>IN_SERVICE</localStatus>
+      <notFoundCacheActive>true</notFoundCacheActive>
+      <notFoundCacheTTL>1440</notFoundCacheTTL>
+      <userManaged>true</userManaged>
+      <exposed>true</exposed>
+      <browseable>true</browseable>
+      <writePolicy>READ_ONLY</writePolicy>
+      <indexable>true</indexable>
+      <searchable>true</searchable>
+      <remoteStorage>
+        <url>http://localhost:${webproxy-server-port}/nexus3638</url>
+      </remoteStorage>
+      <externalConfiguration>
+        <proxyMode>ALLOW</proxyMode>
+        <artifactMaxAge>1440</artifactMaxAge>
+        <itemMaxAge>1440</itemMaxAge>
+        <cleanseRepositoryMetadata>false</cleanseRepositoryMetadata>
+        <downloadRemoteIndex>false</downloadRemoteIndex>
+        <checksumPolicy>WARN</checksumPolicy>
+        <repositoryPolicy>snapshot</repositoryPolicy>
+      </externalConfiguration>
+    </repository>
+  </repositories>
+  <repositoryGrouping />
+  <smtpConfiguration>
+    <hostname>localhost</hostname>
+    <port>${email-server-port}</port>
+    <username>smtp-username</username>
+    <password>smtp-password</password>
+    <systemEmailAddress>system@nexus.org</systemEmailAddress>
+  </smtpConfiguration>
+  <notification />
+</nexusConfiguration>

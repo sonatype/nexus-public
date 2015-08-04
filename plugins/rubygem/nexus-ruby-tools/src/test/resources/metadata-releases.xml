@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2014 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<metadata>
+  <groupId>rubygems</groupId>
+  <artifactId>nokogiri</artifactId>
+  <versioning>
+    <versions>
+      <version>1.0.0</version>
+      <version>1.0.1</version>
+      <version>1.0.2</version>
+      <version>1.0.3</version>
+      <version>1.0.4</version>
+      <version>1.0.5</version>
+      <version>1.0.6</version>
+      <version>1.0.7</version>
+      <version>1.1.0</version>
+      <version>1.1.1</version>
+      <version>1.2.0</version>
+      <version>1.2.1</version>
+      <version>1.2.2</version>
+      <version>1.2.3</version>
+      <version>1.3.0</version>
+      <version>1.3.1</version>
+      <version>1.3.2</version>
+      <version>1.3.3</version>
+      <version>1.4.0</version>
+      <version>1.4.1</version>
+      <version>1.4.2</version>
+      <version>1.4.3</version>
+      <version>1.4.3.1</version>
+      <version>1.4.4</version>
+      <version>1.4.4.2</version>
+      <version>1.4.5</version>
+      <version>1.4.6</version>
+      <version>1.4.7</version>
+      <version>1.5.0</version>
+      <version>1.5.1</version>
+      <version>1.5.2</version>
+      <version>1.5.3</version>
+      <version>1.5.4</version>
+      <version>1.5.5</version>
+      <version>1.5.6</version>
+      <version>1.5.7</version>
+      <version>1.5.8</version>
+      <version>1.5.9</version>
+      <version>1.5.10</version>
+      <version>1.5.11</version>
+      <version>1.6.0</version>
+      <version>1.6.1</version>
+    </versions>
+    <lastUpdated>20140416150033</lastUpdated>
+  </versioning>
+</metadata>

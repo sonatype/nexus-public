@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<assembly>
+  <id>bundle</id>
+
+  <formats>
+    <format>zip</format>
+  </formats>
+
+  <baseDirectory>/</baseDirectory>
+
+  <files>
+    <file>
+      <source>${project.build.directory}/dependency/org.sonatype.p2.bridge.api/META-INF/MANIFEST.MF</source>
+      <outputDirectory>${project.artifactId}-${project.version}/p2-runtime/bridge</outputDirectory>
+      <destName>org.sonatype.p2.bridge.api.manifest</destName>
+    </file>
+    <file>
+      <source>${project.build.directory}/dependency/org.sonatype.p2.bridge.model/META-INF/MANIFEST.MF</source>
+      <outputDirectory>${project.artifactId}-${project.version}/p2-runtime/bridge</outputDirectory>
+      <destName>org.sonatype.p2.bridge.model.manifest</destName>
+    </file>
+    <file>
+      <source>${project.build.directory}/dependency/p2-runtime.zip</source>
+      <outputDirectory>${project.artifactId}-${project.version}/p2-runtime</outputDirectory>
+      <destName>eclipse.zip</destName>
+    </file>
+  </files>
+  <fileSets>
+    <fileSet>
+      <directory>${project.build.directory}/dependency/bundles</directory>
+      <outputDirectory>${project.artifactId}-${project.version}/p2-runtime/bundles</outputDirectory>
+    </fileSet>
+  </fileSets>
+</assembly>

@@ -1,0 +1,12 @@
+    <plexus>
+    <components>
+    
+     <component>
+      <role>org.sonatype.jsecurity.locators.users.PlexusUserLocator</role>
+      <implementation>org.sonatype.nexus.rest.users.MockPlexusUserLocator</implementation>
+      <role-hint>MockPlexusUserLocator</role-hint>
+      <isolated-realm>false</isolated-realm>
+    </component>
+    
+  </components>
+</plexus>

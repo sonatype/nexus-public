@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus383</groupId>
+  <artifactId>know-artifact-1</artifactId>
+  <name></name>
+  <version>1.0.0</version>
+  <description></description>
+  <distributionManagement>
+    <repository>
+      <id>nexus-test-harness-repo</id>
+      <url>${nexus-base-url}content/repositories/nexus-test-harness-repo</url>
+    </repository>
+  </distributionManagement>
+</project>

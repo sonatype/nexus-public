@@ -1,0 +1,6 @@
+<ivysettings>
+  <settings defaultResolver="public" />
+  <resolvers>
+    <ibiblio name="public" m2compatible="true" root="${nexus-base-url}content/groups/public" />
+  </resolvers>
+</ivysettings>

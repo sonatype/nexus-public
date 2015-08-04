@@ -1,0 +1,341 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xmlns="http://modello.codehaus.org/MODELLO/1.4.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://modello.codehaus.org/MODELLO/1.4.0 http://modello.codehaus.org/xsd/modello-1.4.0.xsd"
+       xsd.namespace="http://www.sonatype.com/xsd/ldap-configuration-1.0.1"
+       xsd.targetNamespace="http://www.sonatype.com/xsd/ldap-configuration-1.0.1">
+
+  <id>ldap</id>
+
+  <name>LdapConfiguration</name>
+
+  <description>
+    <![CDATA[
+        <p>LDAP Configuration.</p>
+        ]]>
+  </description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.security.ldap.realms.persist.model</value>
+    </default>
+  </defaults>
+
+  <versionDefinition>
+    <type>field</type>
+    <value>version</value>
+  </versionDefinition>
+
+  <classes>
+    <class rootElement="true" xml.tagName="ldapConfiguration" java.clone="deep">
+      <name>Configuration</name>
+      <version>1.0.0+</version>
+      <description>The root element of LDAP configuration.</description>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <description>
+            The version of the persisted model.
+          </description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>connectionInfo</name>
+          <version>1.0.0+</version>
+          <description>LDAP Connection Information.</description>
+          <association>
+            <type>CConnectionInfo</type>
+          </association>
+          <required>true</required>
+        </field>
+
+        <field>
+          <name>userAndGroupConfig</name>
+          <version>1.0.0+</version>
+          <description>The user and group mapping configuration mapping.</description>
+          <association>
+            <type>CUserAndGroupAuthConfiguration</type>
+          </association>
+          <required>true</required>
+        </field>
+
+        <field>
+          <name>userRoleMappings</name>
+          <version>1.0.0+</version>
+          <description>The mapping between users and roles if LDAP groups are not used.</description>
+          <association>
+            <type>CUserRoleMapping</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+        </field>
+
+      </fields>
+      <codeSegments>
+        <codeSegment>
+          <version>1.0.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.0.0";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>1.0.1</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "1.0.1";
+]]></code>
+        </codeSegment>
+        <codeSegment>
+          <version>2.8.0</version>
+          <code><![CDATA[
+    public static final String MODEL_VERSION = "2.8.0";
+]]></code>
+        </codeSegment>
+      </codeSegments>
+    </class>
+
+    <class java.clone="deep">
+      <name>CConnectionInfo</name>
+      <version>1.0.0+</version>
+      <description>LDAP Connection Information.</description>
+      <fields>
+        <field>
+          <name>searchBase</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Search Base. Base DN for the connection.</description>
+        </field>
+        <field>
+          <name>systemUsername</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>System User. The username of user with access to the LDAP server.</description>
+        </field>
+        <field>
+          <name>systemPassword</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>false</required>
+          <description>System Password. The password for the System User.</description>
+        </field>
+        <field>
+          <name>authScheme</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Authentication Scheme. Method used for authentication: none, simple, etc.</description>
+        </field>
+        <field>
+          <name>protocol</name>
+          <version>1.0.0+</version>
+          <description>Protocol. The protocol used in the ldap URL: ldap, ldaps.</description>
+          <required>true</required>
+          <type>String</type>
+        </field>
+        <field>
+          <name>host</name>
+          <version>1.0.0+</version>
+          <description>Host. The host name of the LDAP server.</description>
+          <required>true</required>
+          <type>String</type>
+        </field>
+        <field>
+          <name>port</name>
+          <version>1.0.0+</version>
+          <description>Port. The port of the LDAP Server.</description>
+          <required>true</required>
+          <type>int</type>
+        </field>
+        <field>
+          <name>realm</name>
+          <version>1.0.0+</version>
+          <description>SASL Realm. The authentication realm.</description>
+          <required>false</required>
+          <type>String</type>
+        </field>
+      </fields>
+    </class>
+
+    <class java.clone="deep">
+      <name>CUserAndGroupAuthConfiguration</name>
+      <version>1.0.0+</version>
+      <description>The user and group mapping configuration mapping.</description>
+      <fields>
+        <field>
+          <name>emailAddressAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Email Address Attribute. The attribute that stores the users email address.</description>
+        </field>
+        <field>
+          <name>ldapGroupsAsRoles</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Use LDAP groups as roles. True if LDAP groups should be used as roles.</description>
+        </field>
+        <field>
+          <name>groupBaseDn</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Group Base DN. The base DN that defines Groups.</description>
+        </field>
+        <field>
+          <name>groupIdAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Group Id Attribute. The ID attribute for the Group.</description>
+        </field>
+        <field>
+          <name>groupMemberAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Group Member Attribute, An attribute that defines the a user is a member of the group.
+          </description>
+        </field>
+        <field>
+          <name>groupMemberFormat</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Group Member Format. The format that the user info is stored in the groupMappingsAttribute. Such
+            as ${username}, or uid=${username},ou=people,o=yourBiz. ${username} will be replaced with the username.
+          </description>
+        </field>
+        <field>
+          <name>groupObjectClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Group Object Class. The Object class used for groups.</description>
+        </field>
+        <field>
+          <name>userPasswordAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User Password Attribute. The attribute that stores the users password.</description>
+        </field>
+        <field>
+          <name>preferredPasswordEncoding</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>TODO: Remove Field (no longer used) &lt;BR/&gt;Preferred Password Encoding. The encoding scheme
+            used for user passwords: plain, crypt, ect
+          </description>
+        </field>
+        <field>
+          <name>userIdAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User Id Attribute. THe attribute of the userId field.</description>
+        </field>
+        <field>
+          <name>userObjectClass</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User Object Class. The object class used for users.</description>
+        </field>
+        <field>
+          <name>userBaseDn</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User Base DN. The base DN for the users.</description>
+        </field>
+        <field>
+          <name>userRealNameAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User Real Name Attribute. The attribute that defines the users real name.</description>
+        </field>
+
+        <field>
+          <name>userSubtree</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Users are Stored in a subtree of the userBaseDn.</description>
+        </field>
+
+        <field>
+          <name>groupSubtree</name>
+          <version>1.0.0+</version>
+          <type>boolean</type>
+          <required>true</required>
+          <description>Groups are Stored in a subtree of the groupBaseDn.</description>
+        </field>
+
+        <field>
+          <name>userMemberOfAttribute</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Groups are generally one of two types in LDAP systems - static or dynamic. A static group
+            maintains its own membership list. A dynamic group records its membership on a user entry. If dynamic groups
+            this should be set to the attribute used to store the group string in the user object.
+          </description>
+        </field>
+
+        <field>
+          <name>ldapFilter</name>
+          <version>1.0.1+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>Filter to limit user search to user with specific attribute.</description>
+        </field>
+
+      </fields>
+    </class>
+
+    <class java.clone="deep">
+      <name>CUserRoleMapping</name>
+      <version>1.0.0+</version>
+      <description>Defines the mapping between users and roles, if LDAP groups are not used.</description>
+      <fields>
+        <field>
+          <name>userId</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>User ID. The id of the user.</description>
+        </field>
+        <field>
+          <name>roles</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+          <required>true</required>
+          <description>List of the users roles.</description>
+        </field>
+      </fields>
+    </class>
+  </classes>
+</model>

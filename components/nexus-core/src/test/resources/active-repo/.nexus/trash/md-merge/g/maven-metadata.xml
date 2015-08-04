@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xsi:schemaLocation="http://maven.apache.org/METADATA/1.0.0 http://maven.apache.org/xsd/metadata-1.0.0.xsd" xmlns="http://maven.apache.org/METADATA/1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<plugins>
+		<plugin>
+			<name>Maven Core Integration Test Plugin</name>
+			<prefix>core-it</prefix>
+			<artifactId>maven-core-it-plugin</artifactId>
+		</plugin>	
+		<plugin>
+			<name>Maven Site plugin</name>
+			<prefix>site</prefix>
+			<artifactId>maven-site-plugin</artifactId>
+		</plugin>
+	</plugins>
+
+</metadata>

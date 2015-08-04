@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<metadata> 
+  <plugins> 
+    <plugin> 
+      <name>Maven ACR Plugin</name> 
+      <prefix>acr</prefix> 
+      <artifactId>maven-acr-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Ant Plugin</name> 
+      <prefix>ant</prefix> 
+      <artifactId>maven-ant-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven ANTLR Plugin</name> 
+      <prefix>antlr</prefix> 
+      <artifactId>maven-antlr-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven AntRun Plugin</name> 
+      <prefix>antrun</prefix> 
+      <artifactId>maven-antrun-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Archetype Plugin</name> 
+      <prefix>archetype</prefix> 
+      <artifactId>maven-archetype-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Assembly Plugin</name> 
+      <prefix>assembly</prefix> 
+      <artifactId>maven-assembly-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Changelog Plug-in</name> 
+      <prefix>changelog</prefix> 
+      <artifactId>maven-changelog-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Changelog Plugin</name> 
+      <prefix>changelog</prefix> 
+      <artifactId>maven-changelog-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Changes Report Plugin</name> 
+      <prefix>changes</prefix> 
+      <artifactId>maven-changes-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Checkstyle Plugin</name> 
+      <prefix>checkstyle</prefix> 
+      <artifactId>maven-checkstyle-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Clean Plugin</name> 
+      <prefix>clean</prefix> 
+      <artifactId>maven-clean-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Clover Plugin</name> 
+      <prefix>clover</prefix> 
+      <artifactId>maven-clover-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Compiler Plugin</name> 
+      <prefix>compiler</prefix> 
+      <artifactId>maven-compiler-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Continuum Plugin</name> 
+      <prefix>continuum</prefix> 
+      <artifactId>maven-continuum-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Core Integration Test Plugin</name> 
+      <prefix>core-it</prefix> 
+      <artifactId>maven-core-it-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Dependency Plugin</name> 
+      <prefix>dependency</prefix> 
+      <artifactId>maven-dependency-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Deploy Plugin</name> 
+      <prefix>deploy</prefix> 
+      <artifactId>maven-deploy-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven DOAP Plugin</name> 
+      <prefix>doap</prefix> 
+      <artifactId>maven-doap-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Documentation Checker Plugin</name> 
+      <prefix>docck</prefix> 
+      <artifactId>maven-docck-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Ear plugin</name> 
+      <prefix>ear</prefix> 
+      <artifactId>maven-ear-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven EAR Plugin</name> 
+      <prefix>ear</prefix> 
+      <artifactId>maven-ear-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Eclipse Plugin</name> 
+      <prefix>eclipse</prefix> 
+      <artifactId>maven-eclipse-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven EJB Plugin</name> 
+      <prefix>ejb</prefix> 
+      <artifactId>maven-ejb-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Enforcer Plugin</name> 
+      <prefix>enforcer</prefix> 
+      <artifactId>maven-enforcer-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Failsafe Plugin</name> 
+      <prefix>failsafe</prefix> 
+      <artifactId>maven-failsafe-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>maven-gpg-plugin Maven Mojo</name> 
+      <prefix>gpg</prefix> 
+      <artifactId>maven-gpg-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven GPG Plugin</name> 
+      <prefix>gpg</prefix> 
+      <artifactId>maven-gpg-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Help Plugin</name> 
+      <prefix>help</prefix> 
+      <artifactId>maven-help-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven IDEA Plugin</name> 
+      <prefix>idea</prefix> 
+      <artifactId>maven-idea-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Install Plugin</name> 
+      <prefix>install</prefix> 
+      <artifactId>maven-install-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Invoker Plugin</name> 
+      <prefix>invoker</prefix> 
+      <artifactId>maven-invoker-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven JAR Plugin</name> 
+      <prefix>jar</prefix> 
+      <artifactId>maven-jar-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Jar Plugin</name> 
+      <prefix>jar</prefix> 
+      <artifactId>maven-jar-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Jarsigner Plugin</name> 
+      <prefix>jarsigner</prefix> 
+      <artifactId>maven-jarsigner-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Javadoc Plugin</name> 
+      <prefix>javadoc</prefix> 
+      <artifactId>maven-javadoc-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven JXR Plugin</name> 
+      <prefix>jxr</prefix> 
+      <artifactId>maven-jxr-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Linkcheck Plugin</name> 
+      <prefix>linkcheck</prefix> 
+      <artifactId>maven-linkcheck-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven 1.x Plugin</name> 
+      <prefix>maven-one-plugin</prefix> 
+      <artifactId>maven-one-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven One Plugin</name> 
+      <prefix>maven-one-plugin</prefix> 
+      <artifactId>maven-one-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>maven-patch-plugin Maven Mojo</name> 
+      <prefix>patch</prefix> 
+      <artifactId>maven-patch-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Patch Plugin</name> 
+      <prefix>patch</prefix> 
+      <artifactId>maven-patch-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven PDF Plugin</name> 
+      <prefix>pdf</prefix> 
+      <artifactId>maven-pdf-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Plugin Plugin</name> 
+      <prefix>plugin</prefix> 
+      <artifactId>maven-plugin-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven PLUGIN Plugin</name> 
+      <prefix>plugin</prefix> 
+      <artifactId>maven-plugin-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven PMD Plugin</name> 
+      <prefix>pmd</prefix> 
+      <artifactId>maven-pmd-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Project Info Reports Plugin</name> 
+      <prefix>project-info-reports</prefix> 
+      <artifactId>maven-project-info-reports-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Project-Help Plugin</name> 
+      <prefix>projecthelp</prefix> 
+      <artifactId>maven-projecthelp-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Rar plugin</name> 
+      <prefix>rar</prefix> 
+      <artifactId>maven-rar-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Reactor Plugin</name> 
+      <prefix>reactor</prefix> 
+      <artifactId>maven-reactor-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Release plugin</name> 
+      <prefix>release</prefix> 
+      <artifactId>maven-release-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Release Plugin</name> 
+      <prefix>release</prefix> 
+      <artifactId>maven-release-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Remote Resources Plugin</name> 
+      <prefix>remote-resources</prefix> 
+      <artifactId>maven-remote-resources-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Repository Plugin</name> 
+      <prefix>repository</prefix> 
+      <artifactId>maven-repository-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Resources Plugin</name> 
+      <prefix>resources</prefix> 
+      <artifactId>maven-resources-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven SCM Plugin</name> 
+      <prefix>scm</prefix> 
+      <artifactId>maven-scm-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>maven-shade-plugin</name> 
+      <prefix>shade</prefix> 
+      <artifactId>maven-shade-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Shade Plugin</name> 
+      <prefix>shade</prefix> 
+      <artifactId>maven-shade-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Site Plugin</name> 
+      <prefix>site</prefix> 
+      <artifactId>maven-site-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Site plugin</name> 
+      <prefix>site</prefix> 
+      <artifactId>maven-site-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Site Plugin 3</name> 
+      <prefix>site</prefix> 
+      <artifactId>maven-site-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Source Plugin</name> 
+      <prefix>source</prefix> 
+      <artifactId>maven-source-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Source Plug-In</name> 
+      <prefix>source</prefix> 
+      <artifactId>maven-source-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Stage Plugin</name> 
+      <prefix>stage</prefix> 
+      <artifactId>maven-stage-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Surefire Plugin</name> 
+      <prefix>surefire</prefix> 
+      <artifactId>maven-surefire-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Surefire Report Plugin</name> 
+      <prefix>surefire-report</prefix> 
+      <artifactId>maven-surefire-report-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Toolchains Plugin</name> 
+      <prefix>toolchains</prefix> 
+      <artifactId>maven-toolchains-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven Verifier Plugin</name> 
+      <prefix>verifier</prefix> 
+      <artifactId>maven-verifier-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven WAR Plugin</name> 
+      <prefix>war</prefix> 
+      <artifactId>maven-war-plugin</artifactId> 
+    </plugin> 
+    <plugin> 
+      <name>Maven War Plugin</name> 
+      <prefix>war</prefix> 
+      <artifactId>maven-war-plugin</artifactId> 
+    </plugin> 
+  </plugins> 
+</metadata> 

@@ -1,0 +1,50 @@
+{
+    "_id": "commonjs@0.0.1",
+    "_nodeSupported": true,
+    "_nodeVersion": "v0.3.1-pre",
+    "_npmVersion": "0.2.7-2",
+    "bugs": {
+        "web": "http://github.com/Gozala/commonjs-node/issues/"
+    },
+    "contributors": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "Irakli Gozalishvili",
+            "url": "http://jeditoolkit.com"
+        }
+    ],
+    "dependencies": {
+        "system": ">=0.0.1",
+        "test": ">=0.0.5"
+    },
+    "description": "CommonJS standard library.",
+    "directories": {
+        "lib": "./lib",
+        "test": "./test"
+    },
+    "dist": {
+        "shasum": "65c531dcff6565ca7c95ddfc96622b89cc0294d5",
+        "tarball": "http://registry.npmjs.org/commonjs/-/commonjs-0.0.1.tgz"
+    },
+    "engines": {
+        "node": ">=0.1.103"
+    },
+    "homepage": "http://commonjs.org/",
+    "keywords": [
+        "commonjs"
+    ],
+    "licenses": [
+        {
+            "type": "MIT"
+        }
+    ],
+    "name": "commonjs",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/Gozala/commonjs-node.git"
+    },
+    "scripts": {
+        "test": "node test/all.js"
+    },
+    "version": "0.0.1"
+}

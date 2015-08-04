@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.distribution.core</groupId>
+  <artifactId>core</artifactId>
+  <versioning>
+    <latest>2.3.0.5-SNAPSHOT</latest>
+    <release></release>
+    <versions>
+      <version>2.3.0.2-SNAPSHOT</version>
+      <version>2.3.0.3-SNAPSHOT</version>
+      <version>2.3.0.4-SNAPSHOT</version>
+      <version>2.3.0.5-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20091124120836</lastUpdated>
+  </versioning>
+</metadata>

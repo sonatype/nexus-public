@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repomd xmlns="http://linux.duke.edu/metadata/repo" xmlns:rpm="http://linux.duke.edu/metadata/rpm">
+ <revision>1412590295</revision>
+<data type="filelists">
+  <checksum type="sha256">65c50c1ef47ef655afa4fe89a77d8c7e8744f243ecfe73c370706544818d15f8</checksum>
+  <open-checksum type="sha256">1b5143a0214d9e4370563a4d1312a81c8ee775d50849a6c47b38e4daedecbe4b</open-checksum>
+  <location href="repodata/65c50c1ef47ef655afa4fe89a77d8c7e8744f243ecfe73c370706544818d15f8-filelists.xml.gz"/>
+  <timestamp>1412590295</timestamp>
+  <size>372</size>
+  <open-size>798</open-size>
+</data>
+<data type="filelists_db">
+  <location xml:base="http://foobar.de/" href="repodata/filelists.sqlite.bz2"/>
+  <checksum type="sha1">29b660cec0cfca52189862b6d8217fa696ac50b6</checksum>
+  <timestamp>1330537351</timestamp>
+  <size>1495</size>
+  <open-size>7168</open-size>
+  <open-checksum type="sha1">cfcfae27b7ecaf2ddf33209d05d66bff3c721a1a</open-checksum>
+  <database_version>10</database_version>
+</data>
+<data type="primary">
+  <checksum type="sha256">57a84398efb9478dd2fc2d23467b55479939ff3a48f21d0beacd0b5849713f48</checksum>
+  <open-checksum type="sha256">5cf49fbb5c74b6086cb4de864899dd31a04f3f786ca475eebb5245c7169ae2c1</open-checksum>
+  <location href="repodata/57a84398efb9478dd2fc2d23467b55479939ff3a48f21d0beacd0b5849713f48-primary.xml.gz"/>
+  <timestamp>1412590295</timestamp>
+  <size>844</size>
+  <open-size>3119</open-size>
+</data>
+<data type="primary_db">
+  <location xml:base="http://foobar.de/" href="repodata/primary.sqlite.bz2"/>
+  <checksum type="sha1">eb4addb28407d85f7d9c6845ffdcfe2a80fb3f62</checksum>
+  <timestamp>1330537351</timestamp>
+  <size>2729</size>
+  <open-size>26624</open-size>
+  <open-checksum type="sha1">08f4317e788610b77d2651ae7b69d324fd80c22f</open-checksum>
+  <database_version>10</database_version>
+</data>
+<data type="other">
+  <checksum type="sha256">15085c54ab76fb62d59408c94e380a7f0e55bfc7f6e532c91105041022cd6ec8</checksum>
+  <open-checksum type="sha256">977eb6a7b97a41201b1cde187e21ef5caf1e5f537125c17bea4a00b0926cce82</open-checksum>
+  <location href="repodata/15085c54ab76fb62d59408c94e380a7f0e55bfc7f6e532c91105041022cd6ec8-other.xml.gz"/>
+  <timestamp>1412590295</timestamp>
+  <size>347</size>
+  <open-size>626</open-size>
+</data>
+<data type="other_db">
+  <location xml:base="http://foobar.de/" href="repodata/other.sqlite.bz2"/>
+  <checksum type="sha1">e7eca98287b407a55151df2535d0bc03a2d5b3bc</checksum>
+  <timestamp>1330537351</timestamp>
+  <size>1461</size>
+  <open-size>6144</open-size>
+  <open-checksum type="sha1">341a14466bbe4e7687b0a93d36c183edf568c4f1</open-checksum>
+  <database_version>10</database_version>
+</data>
+</repomd>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/settings/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/setrings/1.0.0
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <mirrors>
+    <mirror>
+      <id>fake-central</id>
+      <mirrorOf>central</mirrorOf>
+      <url>${nexus-base-url}content/repositories/fake-central</url>
+    </mirror>
+  </mirrors>
+
+  <servers>
+    <server>
+      <id>nexus-test-harness-repo</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+    <server>
+      <id>nexus-test-harness-repo2</id>
+      <username>test-user</username>
+      <password>admin123</password>
+    </server>
+    <server>
+      <id>nexus-test-harness-release-repo</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+  </servers>
+
+  <localRepository>${project.build.directory}/maven_repo</localRepository>
+
+  <profiles>
+    <profile>
+      <id>nexus</id>
+      <repositories>
+	    <repository>
+	      <id>nexus-test-harness-repo</id>
+	      <url>${nexus-base-url}content/repositories/nexus-test-harness-repo</url>
+          <releases><enabled>true</enabled></releases>
+	    </repository>
+	    <repository>
+	      <id>nexus-test-harness-repo2</id>
+	      <url>${nexus-base-url}content/repositories/nexus-test-harness-repo2</url>
+          <releases><enabled>true</enabled></releases>
+	    </repository>
+	    <repository>
+	      <id>nexus-test-harness-release-repo</id>
+	      <url>${nexus-base-url}content/repositories/nexus-test-harness-release-repo</url>
+          <releases><enabled>true</enabled></releases>
+	    </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>nexus</activeProfile>
+  </activeProfiles>
+
+</settings>

@@ -1,0 +1,3 @@
+[
+    [ "org.sonatype.nexus.assemblies:nexus-bundle-template:zip:bundle:${project.version}" ]
+]

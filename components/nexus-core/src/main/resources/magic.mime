@@ -1,0 +1,13 @@
+# PKzip format
+0		string			PK\003\004		application/zip
+
+# PKzip format 1
+0		string	MZ
+>30		string	Copyright\ 1989-1990\ PKWARE\ Inc.	application/zip
+
+# PKzip format 2
+0		string	MZ
+>30		string	PKLITE\ Copr.	application/zip
+
+# Bzip2
+0		string BZh	application/x-bzip

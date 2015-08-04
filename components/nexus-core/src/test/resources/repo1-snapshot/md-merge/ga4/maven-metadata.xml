@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <groupId>xxx.distribution.core</groupId>
+    <artifactId>core</artifactId>
+    <versioning>
+        <latest>2.3.0.0.5-SNAPSHOT</latest>
+        <release></release>
+        <versions>
+            <version>2.3.0.0.1-SNAPSHOT</version>
+            <version>2.3.0.0.2-SNAPSHOT</version>
+            <version>2.3.0.0.3-SNAPSHOT</version>
+            <version>2.3.0.0.4-SNAPSHOT</version>
+            <version>2.3.0.0.5-SNAPSHOT</version>
+        </versions>
+        <lastUpdated>20091119113313</lastUpdated>
+    </versioning>
+</metadata>

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<security>
+	<version>2.0.4</version>
+	<users>
+		<user>
+			<id>admin</id>
+			<firstName>Administrator</firstName>
+			<!-- admin123 -->
+			<password>
+				f865b53623b121fd34ee5426c792e5c33af8c227
+			</password>
+			<status>active</status>
+			<email>changeme@yourcompany.com</email>
+
+		</user>
+		<user>
+			<id>test-user</id>
+      <firstName>Test</firstName>
+			<lastName>User</lastName>
+			<!-- deployment123 -->
+			<password>
+				b2a0e378437817cebdf753d7dff3dd75483af9e0
+			</password>
+			<status>active</status>
+			<email>changeme1@yourcompany.com</email>
+
+		</user>
+		<user>
+			<id>anonymous</id>
+      <firstName>Anonynmous</firstName>
+      <lastName>User</lastName>
+			<!-- anonymous -->
+			<password>
+				0a92fab3230134cca6eadd9898325b9b2ae67998
+			</password>
+			<status>active</status>
+			<email>changeme2@yourcompany.com</email>
+
+		</user>
+	</users>
+
+	<roles>
+		<role>
+			<id>role1</id>
+			<name>RoleOne</name>
+			<description>Role One</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>1</privilege>
+				<privilege>2</privilege>
+			</privileges>
+		</role>
+		<role>
+			<id>role2</id>
+			<name>RoleTwo</name>
+			<description>Role Two</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>3</privilege>
+				<privilege>4</privilege>
+			</privileges>
+		</role>
+		<role>
+			<id>role3</id>
+			<name>RoleThree</name>
+			<description>Role Three</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>1</privilege>
+				<privilege>4</privilege>
+			</privileges>
+		</role>
+	</roles>
+
+
+	<privileges>
+		<privilege>
+			<id>1</id>
+			<name>1</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>/some/path/</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>2</id>
+			<name>2</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>/some/path/</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>3</id>
+			<name>3</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>/some/path/</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>4</id>
+			<name>4</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>/some/path/</value>
+				</property>
+			</properties>
+		</privilege>
+	</privileges>
+
+	<userRoleMappings>
+		<userRoleMapping>
+			<userId>other-user</userId>
+			<source>default</source>
+			<roles>
+				<role>role2</role>
+				<role>role3</role>
+			</roles>
+
+		</userRoleMapping>
+
+
+		<userRoleMapping>
+			<userId>admin</userId>
+			<source>default</source>
+			<roles>
+				<role>role1</role>
+			</roles>
+
+		</userRoleMapping>
+
+
+		<userRoleMapping>
+			<userId>test-user</userId>
+			<source>default</source>
+			<roles>
+				<role>role1</role>
+				<role>role2</role>
+			</roles>
+
+		</userRoleMapping>
+
+		<userRoleMapping>
+			<userId>anonymous</userId>
+			<source>default</source>
+			<roles>
+				<role>role2</role>
+			</roles>
+
+		</userRoleMapping>
+	</userRoleMappings>
+</security>

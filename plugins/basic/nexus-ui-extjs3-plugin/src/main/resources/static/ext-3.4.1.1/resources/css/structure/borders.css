@@ -1,0 +1,65 @@
+/*
+This file is part of Ext JS 3.4
+
+Copyright (c) 2011-2013 Sencha Inc
+
+Contact:  http://www.sencha.com/contact
+
+Commercial Usage
+Licensees holding valid commercial licenses may use this file in accordance with the Commercial
+Software License Agreement provided with the Software or, alternatively, in accordance with the
+terms contained in a written agreement between you and Sencha.
+
+If you are unsure which license is appropriate for your use, please contact the sales department
+at http://www.sencha.com/contact.
+
+Build date: 2013-04-03 15:07:25
+*/
+.x-panel-noborder .x-panel-body-noborder {
+    border-width:0;
+}
+
+.x-panel-noborder .x-panel-header-noborder {
+    border-width:0 0 1px;
+    border-style:solid;
+}
+
+.x-panel-noborder .x-panel-tbar-noborder .x-toolbar {
+    border-width:0 0 1px;
+    border-style:solid;
+}
+
+.x-panel-noborder .x-panel-bbar-noborder .x-toolbar {
+    border-width:1px 0 0 0;
+    border-style:solid;
+}
+
+.x-window-noborder .x-window-mc {
+    border-width:0;
+}
+
+.x-window-plain .x-window-body-noborder {
+    border-width:0;
+}
+
+.x-tab-panel-noborder .x-tab-panel-body-noborder {
+	border-width:0;
+}
+
+.x-tab-panel-noborder .x-tab-panel-header-noborder {
+    border-width: 0 0 1px 0;
+}
+
+.x-tab-panel-noborder .x-tab-panel-footer-noborder {
+    border-width: 1px 0 0 0;
+}
+
+.x-tab-panel-bbar-noborder .x-toolbar {
+    border-width: 1px 0 0 0;
+    border-style:solid;
+}
+
+.x-tab-panel-tbar-noborder .x-toolbar {
+    border-width:0 0 1px;
+    border-style:solid;
+}

@@ -1,0 +1,13 @@
+GEM
+  specs:
+    always_verify_ssl_certificates (0.3.0)
+    nexus (0.1.0)
+      always_verify_ssl_certificates (~> 0.3.0)
+    zip (2.0.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  nexus (< 0.2.0)
+  zip

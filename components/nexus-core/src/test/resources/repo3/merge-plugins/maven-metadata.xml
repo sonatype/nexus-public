@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>	<plugins>		<plugin>			<name>Plugin C</name>			<prefix>pluginc</prefix>			<artifactId>maven-pluginc-plugin</artifactId>		</plugin>		<plugin>			<name>Plugin D</name>			<prefix>plugind</prefix>			<artifactId>maven-plugind-plugin</artifactId>		</plugin>	</plugins></metadata>

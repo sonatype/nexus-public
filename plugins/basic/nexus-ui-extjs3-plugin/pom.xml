@@ -1,0 +1,136 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins-basic</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-ui-extjs3-plugin</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>nexus-plugin</packaging>
+
+  <properties>
+    <pluginName>Nexus ExtJS3 UI</pluginName>
+    <pluginDescription>Provides a Nexus user interface based on ExtJS3.</pluginDescription>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-plugin-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-webresources-plugin</artifactId>
+      <type>${nexus-plugin.type}</type>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-plugin-bundle-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>yuicompressor-maven-plugin</artifactId>
+        <executions>
+          <!-- override default js/css aggregation is inherited from parent to exclude NX -->
+          <execution>
+            <id>js</id>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+            <configuration>
+              <excludes>
+                <exclude>js/NX/**/*.js</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+
+          <!-- prerequisite libraries -->
+          <execution>
+            <id>js-lib</id>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+            <configuration>
+              <output>${project.build.outputDirectory}/static/js/sonatype-lib.js</output>
+              <sourceDirectory>src/main/js-lib</sourceDirectory>
+              <includes>
+                <!-- some order required here -->
+                <include>string.js</include>
+                <include>require-*.js</include>
+                <include>requirejs-css-plugin-*.js</include>
+                <include>up-and-down.js</include>
+              </includes>
+            </configuration>
+          </execution>
+
+          <!-- Class/module definition library -->
+          <execution>
+            <id>js-nx</id>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+            <configuration>
+              <output>${project.build.outputDirectory}/static/js/nx-all.js</output>
+              <includes>
+                <include>js/NX/**/*.js</include>
+              </includes>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>jslint</id>
+            <goals>
+              <goal>jslint</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>src/main/resources/static</sourceDirectory>
+              <!-- do not fail the build, new version of jslint used by sonatype yuicompress plugin is too thorough -->
+              <fail>false</fail>
+              <jslintOptions>
+                <white>true</white>
+                <!-- true, if sloppy whitespace is tolerated -->
+                <sloppy>true</sloppy>
+                <!-- true, if the 'use strict'; pragma is optional -->
+              </jslintOptions>
+              <includes>
+                <include>js/nexus/**/*.js</include>
+                <include>js/ext/**/*.js</include>
+              </includes>
+              <excludes>
+                <!-- do not check third party extensions -->
+                <exclude>js/ext/ux/**/*.js</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.testsuite</groupId>
+    <artifactId>nexus-testsuite</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-modern-testsuite</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+
+  <properties>
+    <!--
+    Testsuite auto-sharding support.
+    -->
+    <testsuite.basedir>${project.basedir}/..</testsuite.basedir>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!--
+      HACK: ruby tests need this in DM to resolve and download this required gem.
+      -->
+      <dependency>
+        <groupId>rubygems</groupId>
+        <artifactId>nexus</artifactId>
+        <version>1.2.1</version>
+        <type>gem</type>
+      </dependency>
+      <dependency>
+        <groupId>rubygems</groupId>
+        <artifactId>bundler</artifactId>
+        <version>1.7.3</version>
+        <type>gem</type>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-testsuite-support</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-client-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-capabilities-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-obr-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-yum-repository-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-site-repository-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.http-testing-harness</groupId>
+      <artifactId>server-provider</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-ruby-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-ruby-tools</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-verifier</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-npm-repository-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerId>groovy-eclipse-compiler</compilerId>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>testsuite-genshards</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.gmaven</groupId>
+            <artifactId>gmaven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default</id>
+                <phase>process-test-sources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <properties>
+                    <autoshard.mode>normal</autoshard.mode>
+                    <autoshard.count>1</autoshard.count>
+
+                    <!--
+                    Yum tests must be run in yum shard.
+                    -->
+                    <autoshard.excludes>**/yum/**</autoshard.excludes>
+                  </properties>
+                </configuration>
+              </execution>
+
+              <!--
+              Generate special shard for execution with a linux that has createrepo/mergerepo.
+              -->
+              <execution>
+                <id>yum</id>
+                <phase>process-test-sources</phase>
+                <goals>
+                  <goal>execute</goal>
+                </goals>
+                <configuration>
+                  <properties>
+                    <autoshard.mode>custom</autoshard.mode>
+                    <autoshard.shardId>yum</autoshard.shardId>
+                    <autoshard.includes>**/yum/**/*IT.java</autoshard.includes>
+
+                    <!--
+                    HACK: gmaven executions leak project.properties, force reconfiguration to avoid using excludes from default execution.
+                    -->
+                    <autoshard.excludes>ignore</autoshard.excludes>
+                  </properties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>it</id>
+      <activation>
+        <property>
+          <name>it</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <!--
+          Additional configuration required for integration-tests
+          -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>unpack</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>org.apache.maven</groupId>
+                      <artifactId>apache-maven</artifactId>
+                      <version>3.0.4</version>
+                      <classifier>bin</classifier>
+                      <type>zip</type>
+                    </artifactItem>
+                    <artifactItem>
+                      <groupId>org.apache.felix</groupId>
+                      <artifactId>org.apache.felix.main.distribution</artifactId>
+                      <classifier>project</classifier>
+                      <type>tar.gz</type>
+                      <version>3.2.2</version>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>maven-fake-repo</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>install</goal>
+                </goals>
+                <configuration>
+                  <localRepositoryPath>${project.build.directory}/apache-maven-local-repository</localRepositoryPath>
+                  <extraArtifacts>
+                    <xml>org.apache.maven.plugins:maven-clean-plugin:2.4.1:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-resources-plugin:2.5:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-compiler-plugin:2.3.2:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-surefire-plugin:2.10:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-jar-plugin:2.3.2:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-install-plugin:2.3.1:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-deploy-plugin:2.5:maven-plugin</xml>
+                    <xml>org.sonatype.plugins:maven-upload-plugin:0.0.1:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-project-info-reports-plugin:2.5.1:maven-plugin</xml>
+                    <xml>org.apache.maven.plugins:maven-site-plugin:3.1:maven-plugin</xml>
+                    <xml>org.apache.maven.surefire:surefire-junit3:2.10</xml>
+                    <xml>org.codehaus.plexus:plexus-utils:1.5.1</xml>
+                    <xml>org.apache.maven.skins:maven-default-skin:1.0</xml>
+                    <xml>org.apache.maven.wagon:wagon-webdav-jackrabbit:2.2</xml>
+                    <xml>org.slf4j:slf4j-api:1.6.1</xml>
+                    <xml>org.apache.felix:maven-bundle-plugin:2.3.7:maven-plugin</xml>
+                    <xml>org.osgi:org.osgi.core:4.0.1</xml>
+                    <xml>org.osgi:org.osgi.compendium:4.0.1</xml>
+                    <xml>javax.servlet:servlet-api:2.3</xml>
+                  </extraArtifacts>
+                </configuration>
+              </execution>
+              <execution>
+                <id>obr-fake-hosted</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>install</goal>
+                </goals>
+                <configuration>
+                  <localRepositoryPath>${project.build.directory}/felix-local-repository</localRepositoryPath>
+                  <extraArtifacts>
+                    <xml>org.apache.felix:org.apache.felix.webconsole:3.0.0</xml>
+                    <xml>org.apache.felix:org.osgi.compendium:1.4.0</xml>
+                    <xml>org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0</xml>
+                    <xml>org.apache.portals:portlet-api_2.0_spec:1.0</xml>
+                    <xml>org.jacoco:org.jacoco.report:0.6.2.201302030002</xml>
+                  </extraArtifacts>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

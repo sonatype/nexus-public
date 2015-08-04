@@ -1,0 +1,11 @@
+<security-configuration>
+  <version>2.0.3</version>
+  <enabled>true</enabled>
+  <anonymousAccessEnabled>true</anonymousAccessEnabled>
+  <anonymousUsername>anonymous</anonymousUsername>
+  <anonymousPassword>anonymous</anonymousPassword>
+  <realms>
+    <realm>default</realm>
+  </realms>
+  
+</security-configuration>

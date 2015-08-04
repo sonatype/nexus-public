@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<security>
+  <version>2.0.1</version>
+  <users>
+    <user>
+      <id>admin</id>
+      <name>Administrator</name>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>changeme@yourcompany.com</email>
+      <roles>
+        <role>admin</role>
+      </roles>
+    </user>
+    <user>
+      <id>deployment</id>
+      <name>Deployment User</name>
+      <password>b2a0e378437817cebdf753d7dff3dd75483af9e0</password>
+      <status>active</status>
+      <email>changeme1@yourcompany.com</email>
+      <roles>
+        <role>deployment</role>
+        <role>repo-all-full</role>
+        <!-- FIXME role note found <role>11b99a138b6</role> -->
+      </roles>
+    </user>
+    <user>
+      <id>anonymous</id>
+      <name>Nexus Anonynmous User</name>
+      <password>0a92fab3230134cca6eadd9898325b9b2ae67998</password>
+      <status>active</status>
+      <email>changeme2@yourcompany.com</email>
+      <roles>
+        <role>anonymous</role>
+        <role>repo-all-read</role>
+      </roles>
+    </user>
+    
+    <user>
+      <id>test-user-1</id>
+      <name>Test User 1</name>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>changeme2@yourcompany.com</email>
+      <roles>
+        <role>anonymous</role>
+      </roles>
+    </user>    
+
+    <user>
+      <id>test-user</id>
+      <name>Test User</name>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>nexus-dev2@sonatype.org</email>
+      <roles>
+        <role>anonymous</role>
+      </roles>
+    </user>
+
+  </users>
+  <roles>
+    <role>
+      <id>role1</id>
+      <name>RoleOne</name>
+      <description>Role One</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>1</privilege>
+        <privilege>2</privilege>
+      </privileges>
+    </role>
+    <role>
+      <id>role2</id>
+      <name>RoleTwo</name>
+      <description>Role Two</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>3</privilege>
+        <privilege>4</privilege>
+      </privileges>
+    </role>
+  </roles>
+</security>

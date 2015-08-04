@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+
+<!-- =============================================================== -->
+<!-- Expose JMX MBeans and access from a remote host                 -->
+<!-- =============================================================== -->
+
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+
+  <!--
+  ==== JMX USAGE ====
+  Set the following inside nexus.properties:
+  jmx-host: the remote host name, commonly the IP address, to remotely access Nexus using JMX from another host (default: 0.0.0.0)
+  jmx-port: the port to remotely access Nexus over JMX (default: 1099)
+  -->
+
+  <!-- explicitly setting rmi server hostname as IP address here can help avoid network routing issues -->
+  <!-- http://docs.oracle.com/javase/7/docs/technotes/guides/management/faq.html#linux1 -->
+  <Call name="setProperty" class="java.lang.System">
+    <Arg>java.rmi.server.hostname</Arg>
+    <Arg>
+      <Property name="jmx-host" default="0.0.0.0"/>
+    </Arg>
+  </Call>
+
+  <!-- WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING -->
+  <!-- defaulting convenience over security; exposing JMX to any remote host without ssl or authentication -->
+  <!-- http://docs.oracle.com/javase/7/docs/technotes/guides/jmx/ -->
+  <Call name="setProperty" class="java.lang.System">
+    <Arg>com.sun.management.jmxremote.ssl</Arg>
+    <Arg>
+      <SystemProperty name="com.sun.management.jmxremote.ssl" default="false"/>
+    </Arg>
+  </Call>
+  <Call name="setProperty" class="java.lang.System">
+    <Arg>com.sun.management.jmxremote.authenticate</Arg>
+    <Arg>
+      <SystemProperty name="com.sun.management.jmxremote.authenticate" default="false"/>
+    </Arg>
+  </Call>
+
+  <!-- =========================================================== -->
+  <!-- Initialize an mbean server                                  -->
+  <!-- =========================================================== -->
+  <Call id="MBeanServer" class="java.lang.management.ManagementFactory" name="getPlatformMBeanServer" />
+
+  <!-- =========================================================== -->
+  <!-- Initialize the Jetty MBean container                        -->
+  <!-- =========================================================== -->
+  <New id="MBeanContainer" class="org.eclipse.jetty.jmx.MBeanContainer">
+    <Arg>
+      <Ref id="MBeanServer" />
+    </Arg>
+    <Call name="start"/>
+  </New>
+
+  <!-- Add to the Server to listen for object events -->
+  <Get id="Container" name="container">
+    <Call name="addEventListener">
+      <Arg>
+        <Ref id="MBeanContainer" />
+      </Arg>
+    </Call>
+  </Get>
+
+  <!-- Add to the Server as a managed lifecycle -->
+  <Call name="addBean">
+    <Arg>
+      <Ref id="MBeanContainer"/>
+    </Arg>
+    <Arg type="boolean">true</Arg>
+  </Call>
+
+  <!-- Logging is initialized prior to the MBeanContainer, so it is necessary to register the logger manually -->
+  <Ref id="MBeanContainer">
+    <Call name="addBean">
+      <Arg>
+        <New class="org.eclipse.jetty.util.log.Log"/>
+      </Arg>
+    </Call>
+  </Ref>
+
+  <!-- create the RMIRegistry -->
+  <Call name="createRegistry" class="java.rmi.registry.LocateRegistry">
+    <Arg type="java.lang.Integer"><Property name="jmx-port" default="1099" /></Arg>
+    <Call name="sleep" class="java.lang.Thread">
+      <Arg type="java.lang.Integer">1000</Arg>
+    </Call>
+  </Call>
+
+  <!-- create the RMI connector -->
+  <New id="ConnectorServer" class="org.eclipse.jetty.jmx.ConnectorServer">
+    <Arg>
+      <New class="javax.management.remote.JMXServiceURL">
+        <Arg type="java.lang.String">rmi</Arg>
+        <Arg type="java.lang.String"><Property name="jmx-host" default="0.0.0.0"/></Arg>
+        <Arg type="java.lang.Integer"><Property name="jmx-port" default="1099"/></Arg>
+        <Arg type="java.lang.String">/jndi/rmi://<Property name="jmx-host" default="0.0.0.0"/>:<Property name="jmx-port" default="1099"/>/jmxrmi</Arg>
+      </New>
+    </Arg>
+    <Arg>org.eclipse.jetty:name=rmiconnectorserver</Arg>
+    <Call name="start"/>
+  </New>
+
+</Configure>

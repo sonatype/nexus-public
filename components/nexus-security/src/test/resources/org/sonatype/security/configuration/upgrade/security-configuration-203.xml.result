@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<security-configuration>
+  <version>2.0.8</version>
+  <anonymousAccessEnabled>true</anonymousAccessEnabled>
+  <anonymousUsername>anonymous-user</anonymousUsername>
+  <anonymousPassword>anonymous-pass</anonymousPassword>
+  <realms>
+    <realm>MyRealmHint1</realm>
+    <realm>MyRealmHint2</realm>
+  </realms>
+  <hashIterations>1024</hashIterations>
+</security-configuration>

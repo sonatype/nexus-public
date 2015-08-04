@@ -1,0 +1,146 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+/**
+ * Nexus.masterdetail
+ * =========================================
+ */
+
+.nx-masterdetail-EmptySelection .x-panel-body {
+  margin-top: 30px;
+  padding: 10px 10px 10px 10px;
+
+  font: bold 13px arial, tahoma, verdana, helvetica;
+  text-align: center;
+}
+
+.nx-masterdetail-EmptySelection-text {
+  padding-top: 20px;
+}
+
+/**
+ * Nexus.capabilities.CapabilitiesView
+ * =========================================
+ */
+
+.nx-capabilities-CapabilitiesView,
+.nx-capabilities-CapabilitiesView .x-form-item,
+.nx-capabilities-CapabilitiesView .x-form-field,
+.nx-capabilities-CreateCapabilityWindow,
+.nx-capabilities-CreateCapabilityWindow .x-form-item,
+.nx-capabilities-CreateCapabilityWindow .x-form-field {
+  font: normal 11px arial, tahoma, verdana, helvetica;
+}
+
+.nx-capabilities-CapabilitiesView .x-fieldset,
+.nx-capabilities-CreateCapabilityWindow .x-fieldset {
+  border-width: 1px 0 0 0;
+}
+
+.nx-capabilities-CapabilitySettings .x-form,
+.nx-capabilities-CreateCapabilityWindow .x-form {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.nx-capabilities-CapabilitySettings .x-form-item-label,
+.nx-capabilities-CreateCapabilityWindow .x-form-item-label {
+  font-weight: bold;
+}
+
+.nx-capabilities-CapabilityAbout .x-panel-body,
+.nx-capabilities-CapabilityStatus .x-panel-body {
+  padding: 10px 10px 10px 10px;
+}
+
+/**
+ * Nexus.capabilities.CapabilitySummary
+ * =========================================
+ */
+
+.nx-capabilities-CapabilitySummary-body {
+  padding: 10px;
+}
+
+.nx-capabilities-CapabilitySummary .x-fieldset {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.nx-capabilities-CapabilitySummary-properties-entry td {
+  padding-bottom: 4px;
+}
+
+.nx-capabilities-CapabilitySummary-properties-name {
+  font-weight: bold;
+}
+
+.nx-capabilities-CapabilitySummary-properties-value {
+  padding-left: 20px;
+}
+
+.nx-capabilities-CapabilitySummary-status {
+  height: 70px;
+  width: 70px;
+  float: right;
+  background-color: #efefef;
+  padding: 5px;
+  margin: 10px;
+
+  border: solid 1px #d3d3d3;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  box-shadow: 3px 3px 10px #888888;
+}
+
+.nx-capabilities-CapabilitySummary-status-icon img {
+  height: 32px;
+  width: 32px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 10px;
+}
+
+.nx-capabilities-CapabilitySummary-status-label {
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  padding-top: 5px;
+}
+
+.nx-capabilities-CapabilitySummary-message {
+  padding-top: 10px;
+}
+
+.nx-capabilities-CapabilitySummary-message img {
+  vertical-align: bottom;
+  padding-right: 5px;
+}
+
+.nx-capabilities-CapabilitySummary-message div {
+  padding: 8px;
+
+  background-color: #FFF8F7;
+  border: solid 1px #D04437;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+/**
+ * Nexus.capabilities.CapabilityGrid
+ * =========================================
+ */
+
+.nx-capabilities-CapabilityGrid .red-flag {
+  border: solid 1px #D04437;
+}

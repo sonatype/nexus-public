@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<xsd:schema
+    targetNamespace="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"
+    version="1.0"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:model="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+    jaxb:version="2.1"
+    xsi:schemaLocation="
+            http://java.sun.com/xml/ns/jaxb http://java.sun.com/xml/ns/jaxb/bindingschema_2_0.xsd
+            http://www.w3.org/2001/XMLSchema http://www.w3.org/2001/XMLSchema.xsd">
+
+  <xsd:complexType name="capability">
+    <xsd:sequence>
+      <xsd:element name="id" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="notes" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="enabled" type="xsd:boolean"/>
+      <xsd:element name="typeId" type="xsd:string"/>
+      <xsd:element name="properties" type="model:property" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="capabilityStatus">
+    <xsd:sequence>
+      <xsd:element name="capability" type="model:capability"/>
+      <xsd:element name="description" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="active" type="xsd:boolean"/>
+      <xsd:element name="error" type="xsd:boolean"/>
+      <xsd:element name="typeName" type="xsd:string"/>
+      <xsd:element name="stateDescription" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="status" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="tags" type="model:tag" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="property">
+    <xsd:sequence>
+      <xsd:element name="key" type="xsd:string"/>
+      <xsd:element name="value" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="capabilityType">
+    <xsd:sequence>
+      <xsd:element name="id" type="xsd:string"/>
+      <xsd:element name="name" type="xsd:string"/>
+      <xsd:element name="about" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="formFields" type="model:formField" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="formField">
+    <xsd:sequence>
+      <xsd:element name="id" type="xsd:string"/>
+      <xsd:element name="type" type="xsd:string"/>
+      <xsd:element name="label" type="xsd:string"/>
+      <xsd:element name="helpText" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="required" type="xsd:boolean"/>
+      <xsd:element name="regexValidation" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="initialValue" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="storePath" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="storeRoot" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="idMapping" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="nameMapping" type="xsd:string" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="selectableEntry">
+    <xsd:sequence>
+      <xsd:element name="id" type="xsd:string"/>
+      <xsd:element name="name" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:complexType name="tag">
+    <xsd:sequence>
+      <xsd:element name="key" type="xsd:string"/>
+      <xsd:element name="value" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name="capability" type="model:capability"/>
+  <xsd:element name="capabilityStatus" type="model:capabilityStatus"/>
+  <xsd:element name="capabilityType" type="model:capabilityType"/>
+  <xsd:element name="selectableEntry" type="model:selectableEntry"/>
+
+</xsd:schema>

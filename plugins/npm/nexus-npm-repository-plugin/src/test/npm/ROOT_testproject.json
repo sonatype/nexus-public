@@ -1,0 +1,53 @@
+{
+	"_id": "testproject",
+	"name": "testproject",
+	"description": "Test Project",
+	"dist-tags": {
+		"latest": "0.0.0"
+	},
+	"versions": {
+		"0.0.0": {
+			"name": "testproject",
+			"version": "0.0.0",
+			"description": "Test Project",
+			"main": "index.js",
+			"scripts": {
+				"test": "echo \"Error: no test specified\" && exit 1"
+			},
+			"keywords": ["test"],
+			"author": {
+				"name": "cstamas"
+			},
+			"license": "ISC",
+			"readme": "ERROR: No README data found!",
+			"_id": "testproject@0.0.0",
+			"_shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+			"_from": ".",
+			"_npmVersion": "1.4.9",
+			"_npmUser": {
+				"name": "deployment",
+				"email": "tamas@cservenak.net"
+			},
+			"maintainers": [{
+				"name": "deployment",
+				"email": "tamas@cservenak.net"
+			}],
+			"dist": {
+				"shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+				"tarball": "http://localhost:8081/nexus/content/npm/npmhosted/testproject/-/testproject-0.0.0.tgz"
+			}
+		}
+	},
+	"readme": "ERROR: No README data found!",
+	"maintainers": [{
+		"name": "deployment",
+		"email": "tamas@cservenak.net"
+	}],
+	"_attachments": {
+		"testproject-0.0.0.tgz": {
+			"content_type": "application/octet-stream",
+			"data": "H4sIAAAAAAAAA+2SwU4DIRCG97xPMeHQk6mzdKVJr8aDNxO9WQ+EHS2tCwSo1pi+u7A0pgdvNmma7MdhYH7mZwg4qTbyja5didN1sKY6MYgo2hZynIubISIv60yLHKqGz8RcCNEgr7CZIU85PHUjf7ENUfrUyn99yl3gN14I3zUAM7IntgAWKUTn7ZpUZFdZ+CAftDVZw2kaJdtRUF67eFCeUhU8HJf1Ug+KNh3t0pcq2VIUkpAPhXJc3kZqZWHJ7ry3fgHGQhYgOFL6VVO3ZDCZAO10hIalyv3gtqGvT+u7bPd8ZJemL4Mut3FlfbZX6YV7eWjiXSsyYbjt/eMtq/f1uV9gZGRk5Dz8ADl5cGsACAAA",
+			"length": 276
+		}
+	}
+}

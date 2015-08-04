@@ -1,0 +1,5 @@
+<project>
+	<groupId>com</groupId>
+	<artifactId>mycom1</artifactId>
+	<version>1.0</version>
+	<packaging>pom</packaging></project>

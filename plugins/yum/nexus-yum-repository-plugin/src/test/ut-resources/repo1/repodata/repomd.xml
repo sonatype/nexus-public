@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<repomd xmlns="http://linux.duke.edu/metadata/repo">
+  <revision>1330537351</revision>
+  <data type="other_db">
+    <location xml:base="http://foobar.de/" href="repodata/other.sqlite.bz2"/>
+    <checksum type="sha1">e7eca98287b407a55151df2535d0bc03a2d5b3bc</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>1461</size>
+    <open-size>6144</open-size>
+    <open-checksum type="sha1">341a14466bbe4e7687b0a93d36c183edf568c4f1</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="other">
+    <checksum type="sha1">6cd6aea8407a6984d6cb840f6ee65a08bc6f979e</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>802</size>
+    <open-size>2953</open-size>
+    <open-checksum type="sha1">613716907fbf2cba7cae55d41c2278edba05db3f</open-checksum>
+    <location xml:base="http://foobar.de/" href="repodata/other.xml.gz"/>
+  </data>
+  <data type="filelists_db">
+    <location xml:base="http://foobar.de/" href="repodata/filelists.sqlite.bz2"/>
+    <checksum type="sha1">29b660cec0cfca52189862b6d8217fa696ac50b6</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>1495</size>
+    <open-size>7168</open-size>
+    <open-checksum type="sha1">cfcfae27b7ecaf2ddf33209d05d66bff3c721a1a</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="filelists">
+    <checksum type="sha1">dbb3083f56dedd24ca05e8e1a5dfdcc562dc646c</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>808</size>
+    <open-size>2957</open-size>
+    <open-checksum type="sha1">6710d5dd9d17ad07acdd2e49f3d131da176b51bf</open-checksum>
+    <location xml:base="http://foobar.de/" href="repodata/filelists.xml.gz"/>
+  </data>
+  <data type="primary_db">
+    <location xml:base="http://foobar.de/" href="repodata/primary.sqlite.bz2"/>
+    <checksum type="sha1">eb4addb28407d85f7d9c6845ffdcfe2a80fb3f62</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>2729</size>
+    <open-size>26624</open-size>
+    <open-checksum type="sha1">08f4317e788610b77d2651ae7b69d324fd80c22f</open-checksum>
+    <database_version>10</database_version>
+  </data>
+  <data type="primary">
+    <checksum type="sha1">edfb947331baaf59e729101875e8870858a36980</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>1313</size>
+    <open-size>16330</open-size>
+    <open-checksum type="sha1">481c2e5460b68a9a1eaa0634409cab3e99a81ee3</open-checksum>
+    <location xml:base="http://foobar.de/" href="repodata/primary.xml.gz"/>
+  </data>
+</repomd>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<security>
+  <version>2.0.2</version>
+  <roles>
+    <role>
+      <id>p2-all-read</id>
+      <name>Repo: All P2 Repositories (Read)</name>
+      <description>Gives access to read ALL content of ALL P2 Repositories in Nexus.</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>p2-read</privilege>
+      </privileges>
+      <roles>
+        <role>p2-all-view</role>
+      </roles>
+    </role>
+    <role>
+      <id>p2-all-full</id>
+      <name>Repo: All P2 Repositories (Full Control)</name>
+      <description>Gives access to create/read/update/delete ALL content of ALL P2 Repositories in Nexus.</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>p2-create</privilege>
+        <privilege>p2-read</privilege>
+        <privilege>p2-update</privilege>
+        <privilege>p2-delete</privilege>
+      </privileges>
+      <roles>
+        <role>p2-all-view</role>
+      </roles>
+    </role>
+  </roles>
+  <privileges>
+    <privilege>
+      <id>p2-create</id>
+      <name>All P2 Repositories - (create)</name>
+      <description>Give permission to create any content in any P2 repository.</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>create,read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>p2</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value></value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>p2-read</id>
+      <name>All P2 Repositories - (read)</name>
+      <description>Give permission to read any content in any P2 Repository.</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>p2</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value></value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>p2-update</id>
+      <name>All P2 Repositories - (update)</name>
+      <description>Give permission to update any content in any P2 Repository.</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>update,read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>p2</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value></value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>p2-delete</id>
+      <name>All P2 Repositories - (delete)</name>
+      <description>Give permission to delete any content in any P2 Repository.</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>delete,read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>p2</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value></value>
+        </property>
+      </properties>
+    </privilege>
+  </privileges>
+</security>

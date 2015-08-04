@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-capabilities-plugin">
+    <wadl:resource path="/service/siesta/capabilities">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve a list of capabilities currently configured in nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="$type" style="query"/>
+          <wadl:param name="$enabled" style="query"/>
+          <wadl:param name="$active" style="query"/>
+          <wadl:param name="$includeNotExposed" style="query"/>
+          <wadl:param name="$p" style="query"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new capability.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="ns0:capability" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capabilityStatus" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve a list of capability types available.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="$includeNotExposed" style="query"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/{id}">
+      <wadl:param name="id" style="template"/>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the details of a capability.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capability" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update the configuration of an existing capability.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="ns0:capability" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capabilityStatus" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing capability.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/stores/repositories">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns repositories filtered based on query parameters.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="allReposEntry" style="query"/>
+          <wadl:param name="regardlessViewPermissions" style="query"/>
+          <wadl:param name="facet" style="query"/>
+          <wadl:param name="contentClass" style="query"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/{id}/disable">
+      <wadl:param name="id" style="template"/>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Enable an existing capability.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capabilityStatus" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/{id}/enable">
+      <wadl:param name="id" style="template"/>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Enable an existing capability.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capabilityStatus" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/{id}/status">
+      <wadl:param name="id" style="template"/>
+      <wadl:method name="GET">
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:capabilityStatus" xmlns:ns0="http://sonatype.org/xsd/nexus-capabilities-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/capabilities/stores/provider/{name}">
+      <wadl:param name="name" style="template"/>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Delegates retrieval of SelectableEntryXO to the named SelectableEntryProvider.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

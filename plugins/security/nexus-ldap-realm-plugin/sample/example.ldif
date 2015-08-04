@@ -1,0 +1,134 @@
+#########
+# Import this file into openldap via the comand line using:
+# ldapadd -D 'cn=admin, ou=people, dc=example, dc=com' -x -f example.ldif -w secret
+# 
+# I needed to add the schema:
+# include     /private/etc/openldap/schema/inetorgperson.schema
+# include     /private/etc/openldap/schema/nis.schema
+# 
+# Also my suffix and rootdn:
+# suffix		"dc=example,dc=com"
+# rootdn		"cn=admin,ou=People,dc=example,dc=com"
+# 
+#########
+dn: dc=example,dc=com
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: example
+
+
+##########
+# People #
+##########
+dn: ou=People,dc=example,dc=com
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+
+dn: cn=admin,ou=People,dc=example,dc=com
+objectclass: organizationalRole
+cn: admin
+
+dn: uid=jcoder,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+uid: jcoder
+uidNumber: 201
+gidNumber: 3001
+mail: jcoder@example.com
+homeDirectory: /home/jcoder
+cn: Joe Coder
+sn: Coder
+givenName: Joe
+userPassword: jcoder123
+
+dn: uid=sdev,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+uid: sdev
+uidNumber: 202
+gidNumber: 3001
+mail: sdev@example.com
+homeDirectory: /home/sdev
+cn: Senior Dev
+sn: Dev
+givenName: Senior
+userPassword: sdev123
+
+dn: uid=rusername,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+uid: rusername
+uidNumber: 203
+gidNumber: 3001
+mail: rusername@example.com
+homeDirectory: /home/rusername
+cn: Random Username
+sn: Username
+givenName: Random
+userPassword: rusername123
+
+dn: uid=ctractor,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+uid: ctractor
+uidNumber: 204
+gidNumber: 3001
+mail: ctractorr@example.com
+homeDirectory: /home/ctractor
+cn: Con Tractor
+sn: Tractor
+givenName: Con
+userPassword: ctractor123
+
+##########
+# Groups #
+##########
+dn: ou=Groups,dc=example,dc=com
+ou: Groups
+objectClass: top
+objectClass: organizationalUnit
+
+dn: cn=nexus-admin,ou=Groups,dc=example,dc=com
+cn: nexus-admin
+objectClass: top
+objectClass: posixGroup
+gidNumber: 101
+description: Nexus Administrators
+memberUid: sdev
+
+dn: cn=developers,ou=Groups,dc=example,dc=com
+cn: developers
+objectClass: top
+objectClass: posixGroup
+gidNumber: 102
+description: Developers
+memberUid: jcoder
+memberUid: sdev
+memberUid: ctractor
+
+dn: cn=nexus-deploy,ou=Groups,dc=example,dc=com
+cn: nexus-deploy
+objectClass: top
+objectClass: posixGroup
+gidNumber: 103
+description: Nexus Deployment Users
+memberUid: jcoder
+memberUid: sdev
+
+dn: cn=users,ou=Groups,dc=example,dc=com
+cn: users
+objectClass: top
+objectClass: posixGroup
+gidNumber: 104
+description: All Users
+memberUid: jcoder
+memberUid: sdev
+memberUid: rusername
+memberUid: ctractor

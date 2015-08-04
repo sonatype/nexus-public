@@ -1,0 +1,13 @@
+Peter's case
+
+/ (/)
+  g1 (/g1)
+    a1 (/g1/a1)*
+    a2 (/g1/a2)*
+    a3 (/g1/a3)*
+
+
+Maven MD recreate would run against paths:
+/g1/a1
+/g1/a2
+/g1/a3

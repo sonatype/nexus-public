@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<?metadataRepository class='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1.0.0'?>
+<repository name='memberrepo1 Content' type='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1'>
+  <properties size='2'>
+    <property name='p2.compressed' value='false'/>
+    <property name='p2.timestamp' value='1226685725924'/>
+  </properties>
+  <units size='1'>
+    <unit id='com.sonatype.nexus.p2.its.bundle3' version='1.0.0'>
+      <update id='com.sonatype.nexus.p2.its.bundle3' range='[0.0.0,1.0.0)' severity='0'/>
+      <properties size='1'>
+        <property name='org.eclipse.equinox.p2.name' value='com.sonatype.nexus.p2.its.bundle3'/>
+      </properties>
+      <provides size='3'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='com.sonatype.nexus.p2.its.bundle3' version='1.0.0'/>
+        <provided namespace='osgi.bundle' name='com.sonatype.nexus.p2.its.bundle3' version='1.0.0'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+      </provides>
+      <requires size='1'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='com.sonatype.nexus.p2.its.bundle' range='[1.0.0,1.0.0]'/>
+      </requires>
+      <artifacts size='1'>
+        <artifact classifier='osgi.bundle' id='com.sonatype.nexus.p2.its.bundle3' version='1.0.0'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='1'>
+          <instruction key='manifest'>
+            Bundle-ManifestVersion: 2&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Bundle-Name: com.sonatype.nexus.p2.its.bundle3&#xA;Archiver-Version: Plexus Archiver&#xA;Build-Jdk: 1.6.0_10&#xA;Implementation-Version: 1.0.0&#xA;MavenArtifact-BaseVersion: 1.0.0&#xA;Created-By: Apache Maven&#xA;Implementation-Title: com.sonatype.nexus.p2.its.bundle3&#xA;Manifest-Version: 1.0&#xA;Bundle-Version: 1.0.0&#xA;Extension-Name: com.sonatype.nexus.p2.its.bundle3&#xA;Built-By: igor&#xA;Bundle-SymbolicName: com.sonatype.nexus.p2.its.bundle3;singleton:=true&#xA;MavenArtifact-GroupId: com.sonatype.nexus.plugin.p2&#xA;
+          </instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+  </units>
+</repository>

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!-- defines the basic roles and privileges for user/role/privilege CRUDS, also forgot password, etc -->
+<security>
+    <version>2.0.2</version>
+    
+    <privileges>
+    <privilege>
+        <id>1001</id>
+        <type>method</type>
+        <name>Security administrator privilege (ALL)</name>
+        <description>Give permission to everything security related.</description>
+        <properties>
+            <property>
+                <key>method</key>
+                <value>*</value>
+            </property>
+            <property>
+                <key>permission</key>
+                <value>security:*</value>
+            </property>
+        </properties>
+    </privilege>
+    <privilege>
+            <id>30</id>
+            <type>method</type>
+            <name>User Privileges - (create,read)</name>
+            <description>Give permission to create,read privileges.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>31</id>
+            <type>method</type>
+            <name>User Privileges - (read)</name>
+            <description>Give permission to read existing privilege configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>32</id>
+            <type>method</type>
+            <name>User Privileges - (update,read)</name>
+            <description>Give permission to update,read existing privilege configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>33</id>
+            <type>method</type>
+            <name>User Privileges - (delete,read)</name>
+            <description>Give permission to delete,read existing privileges.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:privileges</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>34</id>
+            <type>method</type>
+            <name>User Roles - (create,read)</name>
+            <description>Give permission to create,read user roles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>35</id>
+            <type>method</type>
+            <name>User Roles - (read)</name>
+            <description>Give permission to read existing user role configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>36</id>
+            <type>method</type>
+            <name>User Roles - (update,read)</name>
+            <description>Give permission to update,read existing user role configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>37</id>
+            <type>method</type>
+            <name>User Roles - (delete,read)</name>
+            <description>Give permission to delete,read existing user roles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:roles</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>38</id>
+            <type>method</type>
+            <name>Users - (create,read)</name>
+            <description>Give permission to create,read users.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>39</id>
+            <type>method</type>
+            <name>Users - (read)</name>
+            <description>Give permission to read existing user configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>40</id>
+            <type>method</type>
+            <name>Users - (update,read)</name>
+            <description>Give permission to update,read existing user configuration.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>41</id>
+            <type>method</type>
+            <name>Users - (delete,read)</name>
+            <description>Give permission to delete,read existing users.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:users</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>57</id>
+            <type>method</type>
+            <name>User Forgot Password - (create,read)</name>
+            <description>Give permission to request that a password be generated an emailed to a certain user.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:usersforgotpw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>58</id>
+            <type>method</type>
+            <name>User Forgot User Id - (create,read)</name>
+            <description>Give permission to request that a username be emailed to a certain email address.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:usersforgotid</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>59</id>
+            <type>method</type>
+            <name>User Reset Password - (delete,read)</name>
+            <description>Give permission to reset any user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:usersreset</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>64</id>
+            <type>method</type>
+            <name>User Change Password - (create,read)</name>
+            <description>Give permission to change a user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:userschangepw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>72</id>
+            <type>method</type>
+            <name>User Set Password - (create,read)</name>
+            <description>Give permission to set a user's password.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:userssetpw</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>75</id>
+            <type>method</type>
+            <name>User Locator Types Component - (read)</name>
+            <description>Give permission to retrieve the list of User Locator types supported by nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:componentsuserlocatortypes</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>80</id>
+            <type>method</type>
+            <name>User Privilege Types - (read)</name>
+            <description>Give permission to read existing privilege types.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>security:privilegetypes</value>
+                </property>
+            </properties>
+        </privilege>
+    
+    </privileges>
+    
+</security>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<security>
+	<version>2.0.0</version>
+
+	<roles>
+	
+	  <role>
+      <id>anon</id>
+      <name>Test Anon Role</name>
+      <description>Test Anon Role Description</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>priv1</privilege>
+      </privileges>
+      <roles>
+        <role>role2</role>
+      </roles>
+    </role>
+    <role>
+      <id>other</id>
+      <privileges>
+        <privilege>priv2</privilege>
+      </privileges>
+      <roles>
+        <role>role2</role>
+      </roles>
+    </role>
+    
+	
+		<role>
+			<id>role1</id>
+			<name>role1</name>
+			<description>role1</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>priv1</privilege>
+			</privileges>
+			<roles>
+				<role>role2</role>
+			</roles>
+		</role>
+		<role>
+			<id>role2</id>
+			<name>role2</name>
+			<description>role2</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>priv1</privilege>
+				<privilege>priv2</privilege>
+			</privileges>
+			<roles>
+				<role>role3</role>
+				<role>role4</role>
+				<role>role5</role>
+			</roles>
+		</role>
+		<role>
+			<id>role3</id>
+			<name>role3</name>
+			<description>role3</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>priv1</privilege>
+				<privilege>priv2</privilege>
+				<privilege>priv3</privilege>
+			</privileges>
+			<roles>
+				<role>role4</role>
+				<role>role5</role>
+			</roles>
+		</role>
+		<role>
+			<id>role4</id>
+			<name>role4</name>
+			<description>role4</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>priv1</privilege>
+				<privilege>priv2</privilege>
+				<privilege>priv3</privilege>
+				<privilege>priv4</privilege>
+			</privileges>
+		</role>
+		<role>
+			<id>role5</id>
+			<name>role5</name>
+			<description>role5</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>priv3</privilege>
+				<privilege>priv4</privilege>
+				<privilege>priv5</privilege>
+			</privileges>
+		</role>
+	</roles>
+
+	<privileges>
+		<privilege>
+			<id>priv1</id>
+			<name>priv1</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>priv1-ONE</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>priv2</id>
+			<name>priv2</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>priv2-TWO</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>priv3</id>
+			<name>priv3</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>priv3-THREE</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>priv4</id>
+			<name>priv4</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>priv4-FOUR</value>
+				</property>
+			</properties>
+		</privilege>
+		<privilege>
+			<id>priv5</id>
+			<name>priv5</name>
+			<type>method</type>
+			<properties>
+				<property>
+					<key>method</key>
+					<value>read</value>
+				</property>
+				<property>
+					<key>permission</key>
+					<value>priv5-FIVE</value>
+				</property>
+			</properties>
+		</privilege>
+	</privileges>
+</security>

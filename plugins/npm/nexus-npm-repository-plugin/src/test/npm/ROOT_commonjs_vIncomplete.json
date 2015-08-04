@@ -1,0 +1,25 @@
+{
+    "_attachments": {},
+    "_id": "commonjs",
+    "_rev": "8-55bb3e20c202955803b3a99ce88b0f93",
+    "description": "CommonJS standard library.",
+    "dist-tags": {
+        "latest": "0.0.3"
+    },
+    "maintainers": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "gozala"
+        }
+    ],
+    "name": "commonjs",
+    "readme": "",
+    "readmeFilename": "",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/Gozala/commonjs-node.git"
+    },
+    "versions": {
+        "0.0.3": "latest"
+    }
+}

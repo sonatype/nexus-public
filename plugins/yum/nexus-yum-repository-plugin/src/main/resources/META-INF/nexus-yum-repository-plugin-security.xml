@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!-- Default nexus security configuration -->
+<!-- used as default config source -->
+<security>
+  <version>2.0.1</version>
+  <roles>
+    <role>
+      <id>nexus-yum-user</id>
+      <name>Nexus Yum Reader</name>
+      <description>Gives access to read versioned yum repositories</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>yum-repository-read</privilege>
+      </privileges>
+    </role>
+    <role>
+      <id>nexus-yum-admin</id>
+      <name>Nexus Yum Admin</name>
+      <description>Gives access to read versioned yum repositories and administrate version aliases</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>yum-repository-read</privilege>
+        <privilege>yum-alias-read</privilege>
+        <privilege>yum-alias-create-read</privilege>
+      </privileges>
+    </role>
+  </roles>
+  <privileges>
+    <privilege>
+      <id>yum-repository-read</id>
+      <type>method</type>
+      <name>Yum Versioned Repositories - (read)</name>
+      <description>Give permission to read versioned repositories.</description>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>read</value>
+        </property>
+        <property>
+          <key>permission</key>
+          <value>nexus:yumVersionedRepositories</value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>yum-alias-read</id>
+      <type>method</type>
+      <name>Yum Alias - (read)</name>
+      <description>Give permission to read yum version aliases.</description>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>read</value>
+        </property>
+        <property>
+          <key>permission</key>
+          <value>nexus:yumAlias</value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>yum-alias-create-read</id>
+      <type>method</type>
+      <name>Yum Alias - (update,read)</name>
+      <description>Give permission to create,update and read yum version aliases.</description>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>create,update,read</value>
+        </property>
+        <property>
+          <key>permission</key>
+          <value>nexus:yumAlias</value>
+        </property>
+      </properties>
+    </privilege>
+  </privileges>
+</security>

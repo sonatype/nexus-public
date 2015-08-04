@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins-p2</artifactId>
+    <version>2.11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-p2-bridge-plugin</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>nexus-plugin</packaging>
+
+  <properties>
+    <pluginName>Nexus P2 Bridge Plugin</pluginName>
+    <pluginDescription>Bridge between Nexus and P2 Eclipse Runtime.</pluginDescription>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-plugin-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.p2.bridge</groupId>
+      <artifactId>eclipse-bridge</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.p2.bridge</groupId>
+      <artifactId>org.sonatype.p2.bridge.api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-plugin-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.sonatype.p2.bridge</groupId>
+                  <artifactId>org.sonatype.p2.bridge.api</artifactId>
+                  <outputDirectory>${project.build.directory}/dependency/org.sonatype.p2.bridge.api</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.sonatype.p2.bridge</groupId>
+                  <artifactId>org.sonatype.p2.bridge.model</artifactId>
+                  <outputDirectory>${project.build.directory}/dependency/org.sonatype.p2.bridge.model</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.sonatype.p2.bridge</groupId>
+                  <artifactId>org.sonatype.p2.bridge.impl</artifactId>
+                  <outputDirectory>${project.build.directory}/dependency/bundles</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.eclipse.tycho</groupId>
+                  <artifactId>org.eclipse.tycho.noopsecurity</artifactId>
+                  <outputDirectory>${project.build.directory}/dependency/bundles</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy-strip-version</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.sonatype.p2.bridge</groupId>
+                  <artifactId>p2-runtime</artifactId>
+                  <type>zip</type>
+                  <outputDirectory>${project.build.directory}/dependency</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>org.sonatype.p2.bridge:org.sonatype.p2.bridge.api</include>
+                  <include>org.sonatype.p2.bridge:org.sonatype.p2.bridge.model</include>
+                </includes>
+              </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/sisu/javax.inject.Named</resource>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-plugin-bundle-maven-plugin</artifactId>
+        <configuration>
+          <assemblyDescriptor>${project.basedir}/src/main/assemble/bundle.xml</assemblyDescriptor>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

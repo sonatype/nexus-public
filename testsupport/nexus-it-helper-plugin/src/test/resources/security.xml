@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<security>
+  <version>2.0.4</version>
+
+  
+  <userRoleMappings>  
+    <userRoleMapping>
+      <userId>admin-simple</userId>
+      <source>Simple</source>
+      <roles>
+        <role>admin</role>
+      </roles>
+    </userRoleMapping>
+    <userRoleMapping>
+      <userId>deployment-simple</userId>
+      <source>Simple</source>
+      <roles>
+        <role>deployment</role>
+        <role>repo-all-full</role>
+      </roles>
+    </userRoleMapping>
+    <userRoleMapping>
+      <userId>anonymous-simple</userId>
+      <source>Simple</source>
+      <roles>
+        <role>anonymous</role>
+        <role>repo-all-read</role>
+      </roles>
+    </userRoleMapping>
+  </userRoleMappings>
+</security>

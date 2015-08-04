@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-ldap-realm-plugin">
+    <wadl:resource path="/service/local/ldap/conn_info">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the current (in-effect) LDAP connection info.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="connectionInfo"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Sets the LDAP connection info and makes them in-effect.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="connectionInfo"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="connectionInfo"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/ldap/test_auth">
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Validates connection info and performs a connection test with it. The response's HTTP Status code in case of
+success is 204 Success No Content. In case of failure, 400 Bad request.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="connectionInfoTest"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/ldap/test_user_conf">
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Validates and performs test connection using the supplied user and group mapping. Returns a list of resulting
+mapping.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="userAndGroupConfigTest"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="userList"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/ldap/user_group_conf">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the user and groups mapping that are currently in-effect.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="userAndGroupConfig"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Updates the user and group mapping and makes it in-effect.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="userAndGroupConfig"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="userAndGroupConfig"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

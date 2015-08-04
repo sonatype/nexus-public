@@ -1,0 +1,6 @@
+<project>
+	<groupId>com.mycom.group3</groupId>
+	<artifactId>maven-d1-plugin</artifactId>
+	<packaging>maven-plugin</packaging>
+	<name>Plugin A1</name>
+	<version>1.0</version></project>

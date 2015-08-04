@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-logging-plugin">
+    <wadl:resource path="/service/siesta/logging/log">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Downloads a part of nexus.log (specified by fromByte/bytesCount) or full nexus.log (if fromByte/bytesCount are
+null).]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="fromByte" style="query">
+            <wadl:doc>
+              <![CDATA[starting position]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="bytesCount" style="query">
+            <wadl:doc>
+              <![CDATA[number of bytes]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:doc>
+            <![CDATA[part or full nexus.log]]>
+          </wadl:doc>
+          <wadl:representation mediaType="text/plain"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/logging/loggers">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns a list of configured loggers (never null).]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Sets the level of a logger.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:doc>
+            <![CDATA[logger name/level (cannot be null)]]>
+          </wadl:doc>
+          <wadl:representation mediaType="application/xml" element="ns0:logger" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:logger" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Resets all loggers to their default levels.]]>
+        </wadl:doc>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/logging/log/mark">
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Logs a message at INFO level.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:doc>
+            <![CDATA[message to be logger (cannot be null/empty)]]>
+          </wadl:doc>
+          <wadl:representation mediaType="application/xml" element="ns0:marker" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/siesta/logging/loggers/{name}">
+      <wadl:param name="name" style="template">
+        <wadl:doc>
+          <![CDATA[logger name]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Sets the level of a logger.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:doc>
+            <![CDATA[logger name/level (cannot be null)]]>
+          </wadl:doc>
+          <wadl:representation mediaType="application/xml" element="ns0:logger" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="ns0:logger" xmlns:ns0="http://sonatype.org/xsd/nexus-logging-plugin/rest/1.0"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Un-sets the level of a logger.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

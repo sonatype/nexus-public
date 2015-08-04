@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>@rootUrl@/content/repositories/releases</url>
+  <id>releases</id>
+  <name>Releases</name>
+  <layout>maven2</layout>
+  <policy>release</policy>
+</repository-metadata>

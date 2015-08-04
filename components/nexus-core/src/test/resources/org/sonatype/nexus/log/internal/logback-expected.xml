@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+    DO NOT EDIT - This file includes user customised loggers and is automatically generated.
+-->
+
+<included>
+  <logger name="foo" level="ERROR"/>
+  <logger name="bar" level="INFO"/>
+</included>

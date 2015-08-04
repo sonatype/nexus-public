@@ -1,0 +1,27 @@
+<project>
+  <parent>
+    <artifactId>plexus-root</artifactId>
+    <groupId>plexus</groupId>
+    <version>1.0.3</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>plexus</groupId>
+  <artifactId>plexus-utils</artifactId>
+  <name>Plexus Common Utilities</name>
+  <version>1.0.2</version>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude implementation="java.lang.String">org/codehaus/plexus/util/FileBasedTestCase.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <distributionManagement>
+    <status>deployed</status>
+  </distributionManagement>
+</project>

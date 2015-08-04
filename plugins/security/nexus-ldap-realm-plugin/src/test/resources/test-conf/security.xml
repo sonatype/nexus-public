@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Default nexus security configuration -->
+<!-- used as default config source -->
+<security>
+	<version>2.0.2</version>
+	<users>
+		<user>
+			<id>admin</id>
+			<name>Administrator</name>
+			<!-- admin123 -->
+			<password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+			<status>active</status>
+			<email>changeme@yourcompany.com</email>
+		</user>
+		<user>
+			<id>deployment</id>
+			<name>Deployment User</name>
+			<!-- deployment123 -->
+			<password>b2a0e378437817cebdf753d7dff3dd75483af9e0</password>
+			<status>active</status>
+			<email>changeme1@yourcompany.com</email>
+		</user>
+		<user>
+			<id>test-user</id>
+			<name>Test User</name>
+			<!-- deployment123 -->
+			<password>b2a0e378437817cebdf753d7dff3dd75483af9e0</password>
+			<status>active</status>
+			<email>changeme1@yourcompany2.com</email>
+		</user>
+		<user>
+			<id>anonymous</id>
+			<name>Nexus Anonynmous User</name>
+			<!-- anonymous -->
+			<password>0a92fab3230134cca6eadd9898325b9b2ae67998</password>
+			<status>active</status>
+			<email>changeme2@yourcompany.com</email>
+		</user>
+	</users>
+
+	<userRoleMappings>
+		<userRoleMapping>
+			<userId>deployment</userId>
+			<source>default</source>
+			<roles>
+				<role>nx-deployment</role>
+                <role>repo-all-full</role>
+			</roles>
+		</userRoleMapping>
+		<userRoleMapping>
+			<userId>admin</userId>
+			<source>default</source>
+			<roles>
+				<role>nx-admin</role>
+			</roles>
+		</userRoleMapping>
+		<userRoleMapping>
+			<userId>test-user</userId>
+			<source>default</source>
+			<roles>
+				<role>nx-deployment</role>
+                <role>repo-all-full</role>
+				<role>anonymous</role>
+			</roles>
+		</userRoleMapping>
+		<userRoleMapping>
+			<userId>anonymous</userId>
+			<source>default</source>
+			<roles>
+				<role>anonymous</role>
+                <role>repo-all-read</role>
+			</roles>
+		</userRoleMapping>
+		<userRoleMapping>
+			<userId>cstamas</userId>
+			<source>LDAP</source>
+			<roles>
+				<role>anonymous</role>
+				<role>nx-developer</role>
+			</roles>
+		</userRoleMapping>
+		<userRoleMapping>
+			<userId>brianf</userId>
+			<source>LDAP</source>
+			<roles>
+				<role>nx-admin</role>
+			</roles>
+		</userRoleMapping>
+	</userRoleMappings>
+</security>

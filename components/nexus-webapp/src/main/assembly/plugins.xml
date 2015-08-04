@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+
+  <id>plugins</id>
+
+  <formats>
+    <format>dir</format>
+  </formats>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <dependencySets>
+    <dependencySet>
+      <!--
+      Legacy Nexus plugin bundles
+      -->
+      <outputDirectory>/WEB-INF/plugin-repository</outputDirectory>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useStrictFiltering>true</useStrictFiltering>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <scope>provided</scope>
+      <unpack>true</unpack>
+      <includes>
+        <include>*:nexus-content-plugin</include>
+        <include>*:nexus-webresources-plugin</include>
+        <include>*:nexus-crypto-plugin</include>
+        <include>*:nexus-groovy-plugin</include>
+        <include>*:nexus-h2-plugin</include>
+        <include>*:nexus-kazuki-plugin</include>
+        <include>*:nexus-restlet1x-plugin</include>
+        <include>*:nexus-siesta-plugin</include>
+        <include>*:nexus-logging-plugin</include>
+        <include>*:nexus-lvo-plugin</include>
+        <include>*:nexus-plugin-console-plugin</include>
+        <include>*:nexus-ldap-realm-plugin</include>
+        <include>*:nexus-rrb-plugin</include>
+        <include>*:nexus-indexer-lucene-plugin</include>
+        <include>*:nexus-timeline-plugin</include>
+        <include>*:nexus-archetype-plugin</include>
+        <include>*:nexus-maven-bridge-plugin</include>
+        <include>*:nexus-ui-extjs3-plugin</include>
+        <include>*:nexus-capabilities-plugin</include>
+        <include>*:nexus-atlas-plugin</include>
+        <include>*:nexus-wonderland-plugin</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <!--
+      Pure OSGi bundles
+      -->
+      <outputDirectory>/WEB-INF/bundles</outputDirectory>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useStrictFiltering>true</useStrictFiltering>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <scope>provided</scope>
+      <unpack>false</unpack>
+      <includes>
+        <include>*:bcprov*</include>
+      </includes>
+    </dependencySet>
+  </dependencySets>
+
+</assembly>

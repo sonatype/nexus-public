@@ -1,0 +1,66 @@
+dn: o=sonatype
+objectClass: top
+objectClass: organization
+o: sonatype
+
+dn: ou=people,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: people
+description: Contains entries which describe persons
+
+dn: cn=cstamas,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: cstamas
+sn: Tamas Cservenak
+uid: cstamas
+userpassword: cstamas123
+mail: cstamas@sonatype.com
+description: This is Tamas
+description: nexus
+
+dn: cn=Fox\, Brian,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: Fox, Brian
+sn: Brian Fox
+uid: Fox, Brian
+userpassword: brianf123
+mail: brianf@sonatype.com
+description: This is Brian
+
+dn: cn=jvanzyl,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: jvanzyl
+sn: Jason Van Zyl
+uid: jvanzyl
+userpassword: jvanzyl123
+mail: jvanzyl@sonatype.com
+description: This is Jason
+
+dn: ou=groups,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+description: Contains entries which describe groups
+
+dn: cn=public,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: public
+uniqueMember: cn=cstamas,ou=people,o=sonatype
+uniqueMember: cn=Fox\, Brian,ou=people,o=sonatype
+uniqueMember: cn=jvanzyl,ou=people,o=sonatype
+description: Public group
+
+dn: cn=releases,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: releases
+uniqueMember: cn=jvanzyl,ou=people,o=sonatype
+uniqueMember: cn=Fox\, Brian,ou=people,o=sonatype
+description: Releases group
+
+dn: cn=snapshots,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: snapshots
+uniqueMember: cn=jvanzyl,ou=people,o=sonatype
+uniqueMember: cn=cstamas,ou=people,o=sonatype
+description: Snapshots group

@@ -1,0 +1,125 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model>
+
+  <id>model</id>
+  <name>Nexus Plugin Console Plugin Models</name>
+  <description>Nexus Plugin Console Plugin Models</description>
+
+  <defaults>
+    <default>
+      <key>package</key>
+      <value>org.sonatype.nexus.plugins.plugin.console.model</value>
+    </default>
+  </defaults>
+
+  <classes>
+    <class>
+      <name>PluginInfo</name>
+      <version>1.0.0+</version>
+      <description>Plugin Information</description>
+      <fields>
+        <field>
+          <name>name</name>
+          <version>1.0.0+</version>
+          <description>The name of the plugin.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <description>The version of the plugin.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>description</name>
+          <version>1.0.0+</version>
+          <description>The description of the plugin.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>status</name>
+          <version>1.0.0+</version>
+          <description>The status of the plugin.</description>
+          <type>String</type>
+          <required>true</required>
+        </field>
+        <field>
+          <name>failureReason</name>
+          <version>1.0.0+</version>
+          <description>If a plugin is failed to be activated, the reason for it.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>scmVersion</name>
+          <version>1.0.0+</version>
+          <description>The scm last changed version of the plugin.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>scmTimestamp</name>
+          <version>1.0.0+</version>
+          <description>The scm last changed timestamp of the plugin.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>site</name>
+          <version>1.0.0+</version>
+          <description>The site of the plugin.</description>
+          <type>String</type>
+          <required>false</required>
+        </field>
+        <field>
+          <name>documentation</name>
+          <version>1.0.0+</version>
+          <description>Enunciate documentation.</description>
+          <association>
+            <type>DocumentationLink</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+      </fields>
+    </class>
+
+    <class>
+      <name>DocumentationLink</name>
+      <version>1.0.0+</version>
+      <description>REST resource information.</description>
+      <fields>
+        <field>
+          <name>label</name>
+          <version>1.0.0+</version>
+          <description>The link label.</description>
+          <type>String</type>
+          <resource>true</resource>
+        </field>
+        <field>
+          <name>url</name>
+          <version>1.0.0+</version>
+          <description>The link URL.</description>
+          <type>String</type>
+          <resource>true</resource>
+        </field>
+      </fields>
+    </class>
+  </classes>
+
+</model>

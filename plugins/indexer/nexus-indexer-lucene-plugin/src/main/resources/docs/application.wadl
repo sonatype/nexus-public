@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-indexer-lucene-plugin">
+    <wadl:resource path="/service/local/data_incremental_index">
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Incremental reindex all repositories in nexus.]]>
+        </wadl:doc>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_index">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[<em>This resource is deprecated, please use SearchNGIndexPlexusResource resource on path  instead!</em>
+Search against all repositories using provided parameters. Note there are a few different types of searches you
+can perform. If you provide the 'q' query parameter, a keyword search will be performed. If you provide the 'g,
+a, v, p or c' query parameters, a maven coordinate search will be performed. If you provide the 'cn' query
+parameter, a classname search will be performed. If you provide the 'sha1' query parameter, a checksum search
+will be performed.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="q" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a keyword search (g, a, v, p, c, cn, sha1 params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[group id to perform a maven search against (can be combined with a, v, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[artifact id to perform a maven search against (can be combined with g, v, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[version to perform a maven search against (can be combined with g, a, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="p" style="query">
+            <wadl:doc>
+              <![CDATA[packaging type to perform a maven search against (can be combined with g, a, v & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="c" style="query">
+            <wadl:doc>
+              <![CDATA[classifier to perform a maven search against (can be combined with g, a, v & p params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="cn" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a classname search (g, a, v, p, c params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="sha1" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a checksum search (g, a, v, p, c, cn params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="from" style="query">
+            <wadl:doc>
+              <![CDATA[result index to start retrieving results from.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="count" style="query">
+            <wadl:doc>
+              <![CDATA[number of results to have returned to you.]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="*/*" element="search-results"/>
+          <wadl:representation mediaType="application/xml" element="search-results"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/lucene/search">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Search against all repositories using provided parameters. Note there are a few different types of searches you
+can perform. If you provide the 'q' query parameter, a keyword search will be performed. If you provide the 'g,
+a, v, p or c' query parameters, a maven coordinate search will be performed. If you provide the 'cn' query
+parameter, a classname search will be performed. If you provide the 'sha1' query parameter, a checksum search
+will be performed.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="q" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a keyword search (g, a, v, p, c, cn, sha1 params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[group id to perform a maven search against (can be combined with a, v, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[artifact id to perform a maven search against (can be combined with g, v, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[version to perform a maven search against (can be combined with g, a, p & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="p" style="query">
+            <wadl:doc>
+              <![CDATA[packaging type to perform a maven search against (can be combined with g, a, v & c params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="c" style="query">
+            <wadl:doc>
+              <![CDATA[classifier to perform a maven search against (can be combined with g, a, v & p params as well).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="cn" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a classname search (g, a, v, p, c params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="sha1" style="query">
+            <wadl:doc>
+              <![CDATA[provide this param for a checksum search (g, a, v, p, c, cn params will be ignored).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="from" style="query">
+            <wadl:doc>
+              <![CDATA[result index to start retrieving results from.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="count" style="query">
+            <wadl:doc>
+              <![CDATA[number of results to have returned to you.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="repositoryId" style="query">
+            <wadl:doc>
+              <![CDATA[The repositoryId to which repository search should be narrowed. Omit if search should be global.]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="*/*" element="searchNGResponse"/>
+          <wadl:representation mediaType="application/xml" element="searchNGResponse"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_incremental_index/{domain}/{target}">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Perform an incremental reindex against the provided repository or group. Note that
+appended to the end of the url should be the path that you want to index.  i.e.
+/data_incremental_index/repositories/myRepo/org/blah will index everything under the org/blah directory.
+Leaving blank will simply index whole domain content.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_index/{domain}/{target}">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Perform an full reindex against the provided repository or group. Note that
+appended to the end of the url should be the path that you want to index.  i.e.
+/data_index/repositories/myRepo/org/blah will index everything under the org/blah directory.  Leaving blank
+will simply index whole domain content.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/identify/{algorithm}/{hash}">
+      <wadl:param name="algorithm" style="template">
+        <wadl:doc>
+          <![CDATA[The hash algorithm (i.e. md5 or sha1).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="hash" style="template">
+        <wadl:doc>
+          <![CDATA[The hash string to compare.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve artifact details using a hash value.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_groups/{groupId}/index_content">
+      <wadl:param name="groupId" style="template">
+        <wadl:doc>
+          <![CDATA[The group id to retrieve index content from.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the index content from the specified group at the specified path.
+Note that appended to the end of the url should be the path that you want to retrieve index content for.
+i.e. /content/org/blah will retrieve the content of the index at that node.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}/index_content">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to retrieve the index content for.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the index content from the specified repository. at the specified path (path is appended to the end of the
+uri).]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_incremental_index/{domain}/{target}/content">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Perform an incremental reindex against the provided repository or group. Note that
+appended to the end of the url should be the path that you want to index.  i.e.
+/content/org/blah will index everything under the org/blah directory.  Leaving blank
+will simply index whole domain content.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_index/{domain}/{target}/content">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Perform an full reindex against the provided repository or group. Note that
+appended to the end of the url should be the path that you want to index.  i.e.
+/content/org/blah will index everything under the org/blah directory.  Leaving blank
+will simply index whole domain content.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

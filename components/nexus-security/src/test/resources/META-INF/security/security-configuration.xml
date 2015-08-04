@@ -1,0 +1,14 @@
+<security-configuration>
+  <version>2.0.8</version>
+  <anonymousAccessEnabled>false</anonymousAccessEnabled>
+  <anonymousUsername>anonymous-user</anonymousUsername>
+  <anonymousPassword>anonymous-pass</anonymousPassword>
+  <realms>
+    <realm>MockRealmA</realm>
+    <realm>ExceptionThrowingMockRealm</realm>
+    <realm>MockRealmB</realm>
+    <realm>FakeRealm1</realm>
+    <realm>FakeRealm2</realm>
+  </realms>
+  <hashIterations>1024</hashIterations>
+</security-configuration>

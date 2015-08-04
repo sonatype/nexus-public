@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="connectionInfo" type="ldapConnectionInfoResponse"/>
+  <xs:element name="userAndGroupConfig" type="ldapUserAndGroupConfigurationResponse"/>
+  <xs:element name="userList" type="ldapUserListResponse"/>
+  <xs:element name="connectionInfoTest" type="ldapAuthenticationTestRequest"/>
+  <xs:element name="userAndGroupConfigTest" type="ldapUserAndGroupConfigTestRequest"/>
+  <xs:complexType name="ldapConnectionInfoDTO">
+    <xs:sequence>
+      <xs:element name="searchBase" type="xs:string" minOccurs="0"/>
+      <xs:element name="systemUsername" type="xs:string" minOccurs="0"/>
+      <xs:element name="systemPassword" type="xs:string" minOccurs="0"/>
+      <xs:element name="authScheme" type="xs:string" minOccurs="0"/>
+      <xs:element name="protocol" type="xs:string" minOccurs="0"/>
+      <xs:element name="host" type="xs:string" minOccurs="0"/>
+      <xs:element name="port" type="xs:int" minOccurs="1"/>
+      <xs:element name="realm" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapConnectionInfoResponse">
+    <xs:sequence>
+      <xs:element name="data" type="ldapConnectionInfoDTO" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapUserAndGroupConfigurationDTO">
+    <xs:sequence>
+      <xs:element name="emailAddressAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupBaseDn" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupIdAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupMemberAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupMemberFormat" type="xs:string" minOccurs="0"/>
+      <xs:element name="groupObjectClass" type="xs:string" minOccurs="0"/>
+      <xs:element name="userPasswordAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="userIdAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="userObjectClass" type="xs:string" minOccurs="0"/>
+      <xs:element name="userBaseDn" type="xs:string" minOccurs="0"/>
+      <xs:element name="userRealNameAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="ldapGroupsAsRoles" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="userSubtree" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="groupSubtree" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="userMemberOfAttribute" type="xs:string" minOccurs="0"/>
+      <xs:element name="ldapFilter" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapUserAndGroupConfigurationResponse">
+    <xs:sequence>
+      <xs:element name="data" type="ldapUserAndGroupConfigurationDTO" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapUserListResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="user" type="user" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="user">
+    <xs:sequence>
+      <xs:element name="userId" type="xs:string" minOccurs="0"/>
+      <xs:element name="roles" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="email" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapAuthenticationTestRequest">
+    <xs:sequence>
+      <xs:element name="data" type="ldapConnectionInfoDTO" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapUserAndGroupConfigTestRequest">
+    <xs:sequence>
+      <xs:element name="data" type="ldapUserAndGroupConfigTestRequestDTO" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ldapUserAndGroupConfigTestRequestDTO">
+    <xs:complexContent>
+      <xs:extension base="ldapUserAndGroupConfigurationDTO">
+        <xs:sequence>
+          <xs:element name="searchBase" type="xs:string" minOccurs="0"/>
+          <xs:element name="systemUsername" type="xs:string" minOccurs="0"/>
+          <xs:element name="systemPassword" type="xs:string" minOccurs="0"/>
+          <xs:element name="authScheme" type="xs:string" minOccurs="0"/>
+          <xs:element name="protocol" type="xs:string" minOccurs="0"/>
+          <xs:element name="host" type="xs:string" minOccurs="0"/>
+          <xs:element name="port" type="xs:int" minOccurs="1"/>
+          <xs:element name="realm" type="xs:string" minOccurs="0"/>
+          <xs:element name="userLimitCount" type="xs:int" minOccurs="1"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

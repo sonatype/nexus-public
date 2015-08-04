@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+	<!-- Default nexus security configuration -->
+	<!-- used as default config source -->
+<security>
+	<version>2.0.1</version>
+	<roles>
+		<role>
+			<id>ui-capabilities-admin</id>
+			<name>UI: Capabilities Administration</name>
+			<description>Gives access to Capabilities Administration screen in Nexus UI</description>
+			<sessionTimeout>60</sessionTimeout>
+			<privileges>
+				<privilege>6</privilege>
+				<privilege>14</privilege>
+				<privilege>capabilities-create-read</privilege>
+				<privilege>capabilities-read</privilege>
+				<privilege>capabilities-update-read</privilege>
+				<privilege>capabilities-delete-read</privilege>
+				<privilege>capability-types-read</privilege>
+			</privileges>
+		</role>
+	</roles>
+	<privileges>
+        <privilege>
+            <id>capabilities-create-read</id>
+            <type>method</type>
+            <name>Capabilities - (create,read)</name>
+            <description>Give permission to create,read capability configurations.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:capabilities</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>capabilities-read</id>
+            <type>method</type>
+            <name>Capabilities - (read)</name>
+            <description>Give permission to read existing configured capabilities.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:capabilities</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>capabilities-update-read</id>
+            <type>method</type>
+            <name>Capabilities - (update,read)</name>
+            <description>Give permission to update,read existing configured capabilities.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:capabilities</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>capabilities-delete-read</id>
+            <type>method</type>
+            <name>Capabilities - (delete,read)</name>
+            <description>Give permission to delete,read existing configured capabilities.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:capabilities</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>capability-types-read</id>
+            <type>method</type>
+            <name>Capability Types - (read)</name>
+            <description>Give permission to retrieve list of support capability types available in nexus.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:capabilityTypes</value>
+                </property>
+            </properties>
+        </privilege>
+	</privileges>
+</security>

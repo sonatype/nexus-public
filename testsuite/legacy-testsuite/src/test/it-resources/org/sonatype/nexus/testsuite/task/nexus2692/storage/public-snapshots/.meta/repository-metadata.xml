@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repository-metadata>
+  <version>1.0.0</version>
+  <url>@rootUrl@/content/groups/public-snapshots</url>
+  <id>public-snapshots</id>
+  <name>Public Snapshot Repositories</name>
+  <layout>maven2</layout>
+  <policy>mixed</policy>
+  <memberRepositories>
+    <memberRepository>
+      <id>apache-snapshots</id>
+      <name>Apache Snapshots</name>
+      <policy>snapshot</policy>
+      <url>@rootUrl@/content/repositories/apache-snapshots</url>
+    </memberRepository>
+    <memberRepository>
+      <id>codehaus-snapshots</id>
+      <name>Codehaus Snapshots</name>
+      <policy>snapshot</policy>
+      <url>@rootUrl@/content/repositories/codehaus-snapshots</url>
+    </memberRepository>
+  </memberRepositories>
+</repository-metadata>

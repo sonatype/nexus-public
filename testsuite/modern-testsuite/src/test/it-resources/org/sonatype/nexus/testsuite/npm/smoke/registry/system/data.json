@@ -1,0 +1,420 @@
+{
+    "_attachments": {},
+    "_etag": "\"1GOWF82LORWLVD2I8CJYSJ5GX\"",
+    "_id": "system",
+    "_rev": "20-f6c05b2a3b18f6733ec69ff08781c95d",
+    "description": "CommonJS System/1.0 for nodejs",
+    "dist-tags": {
+        "latest": "0.1.0"
+    },
+    "maintainers": [
+        {
+            "email": "rfobic@gmail.com",
+            "name": "gozala"
+        }
+    ],
+    "name": "system",
+    "readme": "",
+    "readmeFilename": "",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/Gozala/system-commonjs.git"
+    },
+    "time": {
+        "0.0.1": "2011-02-02T13:24:34.770Z",
+        "0.0.2": "2011-02-02T13:24:34.770Z",
+        "0.0.3": "2011-02-02T13:24:34.770Z",
+        "0.0.4": "2011-02-02T13:24:34.770Z",
+        "0.0.5": "2011-02-02T13:24:34.770Z",
+        "0.0.6": "2011-02-16T23:54:56.220Z",
+        "0.1.0": "2011-02-24T16:19:36.503Z",
+        "created": "2011-02-02T13:24:34.770Z",
+        "modified": "2011-02-24T16:19:36.503Z"
+    },
+    "versions": {
+        "0.0.1": {
+            "_id": "system@0.0.1",
+            "_nodeSupported": true,
+            "_nodeVersion": "v0.3.1-pre",
+            "_npmVersion": "0.2.7-2",
+            "bugs": {
+                "web": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "9077dbcc700129d9a2005da52731e1da4911ba59",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.1.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103"
+            },
+            "homepage": "http://github.com/Gozala/system-commonjs/",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MIT"
+                }
+            ],
+            "main": "./system",
+            "name": "system",
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.1"
+        },
+        "0.0.2": {
+            "_id": "system@0.0.2",
+            "_nodeSupported": true,
+            "_nodeVersion": "v0.3.1-pre",
+            "_npmVersion": "0.2.7-2",
+            "bugs": {
+                "web": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "6624c5fe966e4005e0917857e918223530d9eac9",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.2.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103"
+            },
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MIT"
+                }
+            ],
+            "main": "./system",
+            "name": "system",
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.2"
+        },
+        "0.0.3": {
+            "_id": "system@0.0.3",
+            "_nodeSupported": true,
+            "_nodeVersion": "v0.3.1-pre",
+            "_npmVersion": "0.2.7-2",
+            "bugs": {
+                "web": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "4ae60c7c0ff547bf5de0d523739e0ec67468cb3c",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.3.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103",
+                "teleport": ">=0.2.0"
+            },
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MPL 1.1/LGPL 2.1/GPL 2.0",
+                    "url": "http://www.mozilla.org/MPL/"
+                }
+            ],
+            "main": "engines/node/system",
+            "name": "system",
+            "overlay": {
+                "node": {
+                    "main": "engines/node/system"
+                },
+                "teleport": {
+                    "main": "engines/teleport/system"
+                }
+            },
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.3"
+        },
+        "0.0.4": {
+            "_id": "system@0.0.4",
+            "_nodeSupported": true,
+            "_nodeVersion": "v0.3.1-pre",
+            "_npmVersion": "0.2.7-2",
+            "bugs": {
+                "web": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "c6360f4a24eb5f2da6ab77acfa1c00e4eb5e6e09",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.4.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103",
+                "teleport": ">=0.2.0"
+            },
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MPL 1.1/LGPL 2.1/GPL 2.0",
+                    "url": "http://www.mozilla.org/MPL/"
+                }
+            ],
+            "main": "engines/node/system",
+            "name": "system",
+            "overlay": {
+                "node": {
+                    "main": "engines/node/system"
+                },
+                "teleport": {
+                    "main": "engines/teleport/system"
+                }
+            },
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.4"
+        },
+        "0.0.5": {
+            "_defaultsLoaded": true,
+            "_engineSupported": true,
+            "_id": "system@0.0.5",
+            "_nodeVersion": "v0.3.5",
+            "_npmVersion": "0.2.16",
+            "bugs": {
+                "url": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "05ee384f98b59eda3fbe01e320427ea2d30207fb",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.5.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103",
+                "teleport": ">=0.2.0"
+            },
+            "files": [
+                ""
+            ],
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MPL 1.1/LGPL 2.1/GPL 2.0",
+                    "url": "http://www.mozilla.org/MPL/"
+                }
+            ],
+            "main": "engines/node/system",
+            "name": "system",
+            "overlay": {
+                "node": {
+                    "main": "engines/node/system"
+                },
+                "teleport": {
+                    "main": "engines/teleport/system"
+                }
+            },
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.5"
+        },
+        "0.0.6": {
+            "_defaultsLoaded": true,
+            "_engineSupported": true,
+            "_id": "system@0.0.6",
+            "_nodeVersion": "v0.4.0",
+            "_npmVersion": "0.2.18",
+            "bugs": {
+                "url": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "d3af99420b288b4b7cb263f254cb92456af290aa",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.0.6.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103",
+                "teleport": ">=0.2.0"
+            },
+            "files": [
+                ""
+            ],
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MPL 1.1/LGPL 2.1/GPL 2.0",
+                    "url": "http://www.mozilla.org/MPL/"
+                }
+            ],
+            "main": "engines/node/system",
+            "name": "system",
+            "overlay": {
+                "node": {
+                    "main": "engines/node/system"
+                },
+                "teleport": {
+                    "main": "engines/teleport/system"
+                }
+            },
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.0.6"
+        },
+        "0.1.0": {
+            "_defaultsLoaded": true,
+            "_engineSupported": true,
+            "_id": "system@0.1.0",
+            "_nodeVersion": "v0.4.1",
+            "_npmVersion": "0.3.7",
+            "bugs": {
+                "url": "http://github.com/Gozala/system-commonjs/issues/"
+            },
+            "contributors": [
+                {
+                    "email": "rfobic@gmail.com",
+                    "name": "Irakli Gozalishvili",
+                    "url": "http://jeditoolkit.com"
+                }
+            ],
+            "dependencies": {
+                "test": ">=0.0.5"
+            },
+            "description": "CommonJS System/1.0 for nodejs",
+            "directories": {},
+            "dist": {
+                "shasum": "8bb2b9af10b1c6c75f40a6d016a98bf0250fd1ad",
+                "tarball": "${npmRegistryUrl}/system/-/system-0.1.0.tgz"
+            },
+            "engines": {
+                "node": ">=0.1.103",
+                "teleport": ">=0.2.0"
+            },
+            "files": [
+                ""
+            ],
+            "homepage": "http://wiki.commonjs.org/wiki/System",
+            "keywords": [
+                "node",
+                "commonjs",
+                "system"
+            ],
+            "licenses": [
+                {
+                    "type": "MPL 1.1/LGPL 2.1/GPL 2.0",
+                    "url": "http://www.mozilla.org/MPL/"
+                }
+            ],
+            "main": "engines/node/system",
+            "name": "system",
+            "overlay": {
+                "node": {
+                    "main": "engines/node/system"
+                },
+                "teleport": {
+                    "main": "engines/teleport/system"
+                }
+            },
+            "repository": {
+                "type": "git",
+                "url": "git://github.com/Gozala/system-commonjs.git"
+            },
+            "version": "0.1.0"
+        }
+    }
+}

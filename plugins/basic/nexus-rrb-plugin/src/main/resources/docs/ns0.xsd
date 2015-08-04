@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="rrbresponse" type="mavenRepositoryReaderResponse"/>
+  <xs:complexType name="mavenRepositoryReaderResponse">
+    <xs:sequence>
+      <xs:element name="data" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="node" type="node" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="node">
+    <xs:sequence>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="text" type="xs:string" minOccurs="0"/>
+      <xs:element name="relativePath" type="xs:string" minOccurs="0"/>
+      <xs:element name="leaf" type="xs:boolean" minOccurs="1"/>
+      <xs:element name="lastModified" type="xs:string" minOccurs="0"/>
+      <xs:element name="sizeOnDisk" type="xs:int" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

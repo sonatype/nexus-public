@@ -1,0 +1,1513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wadl:application xmlns:wadl="http://wadl.dev.java.net/2009/02" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <wadl:doc xmlns:enunciate="http://enunciate.codehaus.org/" enunciate:generatedBy="Enunciate-1.26.1"/>
+  <wadl:grammars>
+    <wadl:include href="ns0.xsd"/>
+  </wadl:grammars>
+  <wadl:resources base="http://localhost:8080/nexus-restlet1x-plugin">
+    <wadl:resource path="/service/local/all_repositories">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the list of all repositories in nexus, regardless if user or nexus managed.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repositories"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/attributes">
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Rebuild all attributes in the system.]]>
+        </wadl:doc>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/check_smtp_settings">
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Validate smtp settings, send a test email using the configuration.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="smtp-settings-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/configs">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of configuration files in Nexus.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="configs-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/global_settings">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of global configuration objects in nexus.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="global-settings-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/privilege_types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of privilege types.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="privilege-type-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/privileges">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of security privileges.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="privilege-list-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/privileges_target">
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new set of target privileges against a repository (or group) in nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="privilege-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="privilege-list-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_groups">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of repository groups defined in nexus.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-group-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new repository group to nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-group"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-group"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_routes">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of repository routes.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-routes-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new repository route.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-route"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-route"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_targets">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of configuration repository targets.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-targets-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new repository target to nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-target"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-target"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of user managed repositories.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repositories"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new repository to nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repository_statuses">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of all repository statuses. The remote statuses in case of Proxy repositories are cached (to avoid
+network flooding). You can force the remote status recheck by adding the "forceCheck" query parameter, but be
+aware, that this one inbound REST Request will induce as many Nexus outbound requests as many proxy repositories
+you have defined.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="forceCheck" style="query">
+            <wadl:doc>
+              <![CDATA[If true, will force a remote check of status (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository-status-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/rest_api_settings">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Validate smtp settings, send a test email using the configuration.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="*/*"/>
+          <wadl:representation mediaType="application/xml"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/roles">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of security roles.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="roles-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Creates a new security role.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="role-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="role-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/rolesAndPrivs">
+      <wadl:method name="POST">
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="roles-privs-list-filter"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="roles-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/schedule_types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of scheduled service types available in nexus. And all of the configuration parameters available
+for
+each type.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="schedule-types"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/schedules">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve a list of scheduled tasks currently configured in nexus.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="schedules-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Add a new scheduled service to nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="scheduled-task"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="schedule-service-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/status">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the status of the Nexus server.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="perms" style="query">
+            <wadl:doc>
+              <![CDATA[If query parameter with this name present (without or with any value, does not matter, it is only checked for presence), this resource will emit the user permissions too.]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of users.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="users-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Creates a user.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users_changepw">
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Changes a user's password.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-changepw"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users_forgotpw">
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Reset a user's password.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-forgotpw"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users_setpw">
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Changes a user's password.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-changepw"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/wastebasket">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get details about the contents of the wastebasket.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="wastebasket"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Empty the wastebasket.]]>
+        </wadl:doc>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/artifact/maven">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns POM model in a serialized form (it is NOT consumable by Maven, the returned content is not XML
+representation of Maven POM!) for provided GAV coordinates.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[Group id of the pom (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[Artifact id of the pom (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[Version of the artifact (Required) Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="r" style="query">
+            <wadl:doc>
+              <![CDATA[Repository to retrieve the pom from (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/assigned_privileges/{userId}">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of privileges assigned to the user.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="assigned-privileges-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/authentication/login">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Login to the application, will return a set of permissions available to the specified user.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="authentication-login"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/authentication/logout">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Logout of the application, doesn't actually do anything, a Filter is expected to logout the user.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/components/realm_types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of security realms available for use in nexus (authentication and authorization).]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="components-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/components/repo_content_classes">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the list of content classes availabe in nexus.  Plugins can contribute to this list.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-content-classes-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/components/repo_types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the list of repository types available in Nexus.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="repoType" style="query">
+            <wadl:doc>
+              <![CDATA[The type of repository to retrieve providers for. (valid values are 'hosted', 'proxy', 'shadow' and 'group').]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repositoryTypes"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/components/schedule_types">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the list of scheduled task type plexus components.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="components-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/components/userLocators">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves a list of User Managers.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="sec-components-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/configs/{configName}">
+      <wadl:param name="configKey" style="template">
+        <wadl:doc>
+          <![CDATA[The configuration key for which we want to get the configuration.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the requested Nexus configuration. The keys for various configurations should be discovered by querying
+
+the "/configs" resource first. This resource emits the raw configuration file used by Nexus as response body.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="text/xml"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/external_role_map/{sourceId}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of external role mappings.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="external-role-mapping-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/global_settings/{configName}">
+      <wadl:param name="configName" style="template">
+        <wadl:doc>
+          <![CDATA[The name of the config (as returned by the global configuration list resource) to get.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the specified global configuration (i.e. current or default)]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="global-settings"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update the global configuration.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="global-settings"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/plexus_roles/{sourceId}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of security roles.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-roles"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/plexus_user/{userId}">
+      <wadl:param name="userId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves user information.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/plexus_users/{userSource}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of users.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/privileges/{privilegeId}">
+      <wadl:param name="privilegeId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the privilege.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the details of a security privilege.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="privilege-status-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Removes a security privilege.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_groups/{groupId}">
+      <wadl:param name="groupId" style="template">
+        <wadl:doc>
+          <![CDATA[The group id to retrieve details for.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the details of an existing repository group.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-group"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update details of an existing repository group.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-group"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-group"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing repository group.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_routes/{routeId}">
+      <wadl:param name="routeId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository route to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the details of a repository route.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-route"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update an existing repository route.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-route"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-route"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing repository route.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repo_targets/{repoTargetId}">
+      <wadl:param name="repoTargetId" style="template">
+        <wadl:doc>
+          <![CDATA[Repository target to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the details of a repository target.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-target"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update the configuration of an existing repository target.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repo-target"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repo-target"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing repository target.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the configuration of an existing repository.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update an existing repository in nexus with new configuration.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing repository from nexus.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repository_mirrors/{repositoryId}">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to retrieve the assigned mirrors for.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the list of mirrors for the selected repository.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="mirror-list-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Update the list of mirrors for a repository.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="mirror-list-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="mirror-list-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repository_predefined_mirrors/{repositoryId}">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to retrieve the predefined mirrors for.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the predefined list of mirrors for a repository (as defined in the repository metadata).  These
+mirrors may NOT be enabled, simply listed as available.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="*/*" element="mirror-list-response"/>
+          <wadl:representation mediaType="application/xml" element="mirror-list-response"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/role_tree/{userId}">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of privileges assigned to the user.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="role-tree-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/roles/{roleId}">
+      <wadl:param name="roleId" style="template">
+        <wadl:doc>
+          <![CDATA[Id of the role.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the request security role.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="role-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Updates and returns a security role.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="role-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="roles-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Removes a security role.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/schedule_run/{scheduledServiceId}">
+      <wadl:param name="scheduledServiceId" style="template">
+        <wadl:doc>
+          <![CDATA[The scheduled task to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Run the specified scheduled task right now. Will then be rescheduled upon completion for normal run.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="schedule-service-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Cancel the execution of an existing scheduled task.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/schedules/{scheduledServiceId}">
+      <wadl:param name="scheduledServiceId" style="template">
+        <wadl:doc>
+          <![CDATA[The scheduled task to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Get the details of an existing scheduled task.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="scheduled-task"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update the configuration of an existing scheduled task.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="scheduled-task"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="schedule-service-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Delete an existing scheduled task.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/templates/repositories">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve a list of repository templates in nexus.  Some default configurations for common repository types.]]>
+        </wadl:doc>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repositories"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/user_account/{accountId}">
+      <wadl:param name="accountId" style="template"/>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the account information for given accountId.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-account-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Updates account information for given accountId.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-account-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-account-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/user_search/{userSource}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Returns a list of users that match the search criteria.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-search"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns a list of all the users managed by this a source.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users/{userId}">
+      <wadl:param name="userId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves a user's information.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Updates a user's information.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-response"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Removes a user.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users_forgotid/{email}">
+      <wadl:param name="email" style="template">
+        <wadl:doc>
+          <![CDATA[The email address of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="POST">
+        <wadl:doc>
+          <![CDATA[Email user his/her user Id.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/users_reset/{userId}">
+      <wadl:param name="userId" style="template">
+        <wadl:doc>
+          <![CDATA[The id of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Reset a user's password.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/artifact/maven/content">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the content of the requested artifact. The HTTP client accessing this resource has to obey the content
+disposition headers in HTTP response, where the real name of the artifact (but not the path!) is set, if name of
+the artifact file is needed.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[Group id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[Artifact id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[Version of the artifact (Required) Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="r" style="query">
+            <wadl:doc>
+              <![CDATA[Repository that the artifact is contained in (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="p" style="query">
+            <wadl:doc>
+              <![CDATA[Packaging type of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="c" style="query">
+            <wadl:doc>
+              <![CDATA[Classifier of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="e" style="query">
+            <wadl:doc>
+              <![CDATA[Extension of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="*/*"/>
+          <wadl:representation mediaType="application/xml"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/artifact/maven/redirect">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Emits HTTP redirects (or Not found) to the location of the requested artifact.
+
+<p>
+This resource never returns any content, only <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.8">HTTP
+RFC -
+10.3.8 307 Temporary Redirect</a> or <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.4.5">
+HTTP RFC - 10.4.5 404 Not Found</a>. The HTTP client accessing this resource has to follow the redirection to
+get
+to the content of the artifact.
+<p>
+Prior versions of this resource may have responded with an inappropriate <a
+href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.2">HTTP RFC - 10.3.2 301 Moved Permanently
+</a>instead of 307 Temporary Redirect.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[Group id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[Artifact id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[Version of the artifact (Required) Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="r" style="query">
+            <wadl:doc>
+              <![CDATA[Repository that the artifact is contained in (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="p" style="query">
+            <wadl:doc>
+              <![CDATA[Packaging type of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="c" style="query">
+            <wadl:doc>
+              <![CDATA[Classifier of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="e" style="query">
+            <wadl:doc>
+              <![CDATA[Extension of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="*/*"/>
+          <wadl:representation mediaType="application/xml"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/artifact/maven/resolve">
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Resolve an artifact identified by GAV coordinates given, and retrieve a set of details about that artifact.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:param name="g" style="query">
+            <wadl:doc>
+              <![CDATA[Group id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="a" style="query">
+            <wadl:doc>
+              <![CDATA[Artifact id of the artifact (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="v" style="query">
+            <wadl:doc>
+              <![CDATA[Version of the artifact (Required) Supports resolving of "LATEST", "RELEASE" and snapshot versions ("1.0-SNAPSHOT") too.]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="r" style="query">
+            <wadl:doc>
+              <![CDATA[Repository that the artifact is contained in (Required).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="p" style="query">
+            <wadl:doc>
+              <![CDATA[Packaging type of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="c" style="query">
+            <wadl:doc>
+              <![CDATA[Classifier of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+          <wadl:param name="e" style="query">
+            <wadl:doc>
+              <![CDATA[Extension of the artifact (Optional).]]>
+            </wadl:doc>
+          </wadl:param>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="artifact-resolution"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/external_role_map/{sourceId}/{roleId}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="roleId" style="template"/>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves the list of external role mappings.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="external-role-mapping"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/plexus_user/{userSource}/{userId}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieves user information.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}/meta">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to retrieve the metadata for.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve metadata of an existing repository.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository-meta-data"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}/routing">
+      <wadl:param name="repositoryId" style="template"/>
+      <wadl:method name="GET">
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="routing-status-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Force updates prefix list for given repository. If invoked for non-Maven repository, or a Maven Group
+repository,
+response is Bad Request.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}/status">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the local and remote status of the requested repository.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Update the local status of the requested repositories.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="repository-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository-status"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/templates/repositories/{repositoryId}">
+      <wadl:param name="repositoryId" style="template">
+        <wadl:doc>
+          <![CDATA[The repository template to access.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the repository configuration stored in the specified template.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="repository"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/user_search/{userSource}/{userId}">
+      <wadl:param name="userId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns a list of users in which the source and partial user id matches the parameters.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="plexus-user-list"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/user_to_roles/{sourceId}/{userId}">
+      <wadl:param name="sourceId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the source. A source specifies where the users/roles came from, for example the source Id of 'LDAP' identifies the users/roles as coming from an LDAP source.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="userId" style="template">
+        <wadl:doc>
+          <![CDATA[The Id of the user.]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Sets a users roles.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="application/xml" element="user-to-role"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:request>
+      </wadl:method>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Gets a users roles.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="user-to-role"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Removes all roles from a user.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/attributes/{domain}/{target}/content">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Rebuild all attributes in the specified domain (repository or group).]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/data_cache/{domain}/{target}/content">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Retrieve the contents of the Not Found Cache at the specified domain (repository or group). Note that
+appended to the end of the url should be the path that you want cache cleared from.  i.e.
+/content/org/blah will clear cache of everything under the org/blah directory.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="nfc-info"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Expire the cache of the selected domain (repository or group).  This includes expiring the cache of items in a
+proxy repository
+so the remote will be rechecked on next access, along with clearning the Not Found Cache.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/metadata/{domain}/{target}/content">
+      <wadl:param name="domain" style="template">
+        <wadl:doc>
+          <![CDATA[The domain that will be used, valid options are 'repositories' or 'repo_groups' (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:param name="target" style="template">
+        <wadl:doc>
+          <![CDATA[The unique id in the domain to use (i.e. repository or group id) (Required).]]>
+        </wadl:doc>
+      </wadl:param>
+      <wadl:method name="DELETE">
+        <wadl:doc>
+          <![CDATA[Rebuild maven metadata for the supplied repository or group. Note that
+appended to the end of the url should be the path that you want to rebuild.  i.e.
+/content/org/blah will rebuild maven metadata under the org/blah directory.  Leaving blank
+will simply rebuild maven metadata for the whole domain content.]]>
+        </wadl:doc>
+        <wadl:request/>
+      </wadl:method>
+    </wadl:resource>
+    <wadl:resource path="/service/local/repositories/{repositoryId}/routing/config">
+      <wadl:param name="repositoryId" style="template"/>
+      <wadl:method name="GET">
+        <wadl:doc>
+          <![CDATA[Returns the current autorouting configuration for given repository.]]>
+        </wadl:doc>
+        <wadl:request/>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="routing-config-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+      <wadl:method name="PUT">
+        <wadl:doc>
+          <![CDATA[Sets the autorouting configuration for given repository.]]>
+        </wadl:doc>
+        <wadl:request>
+          <wadl:representation mediaType="*/*" element="routing-config-request"/>
+          <wadl:representation mediaType="application/xml" element="routing-config-request"/>
+        </wadl:request>
+        <wadl:response>
+          <wadl:representation mediaType="application/xml" element="routing-config-request"/>
+          <wadl:representation mediaType="application/json"/>
+        </wadl:response>
+      </wadl:method>
+    </wadl:resource>
+  </wadl:resources>
+</wadl:application>

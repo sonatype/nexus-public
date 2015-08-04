@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nexus4218</groupId>
+  <artifactId>test</artifactId>
+  <version>1</version>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>nexus4218</groupId>
+      <artifactId>md-test</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <type>txt</type>
+    </dependency>
+    <dependency>
+      <groupId>nexus4218</groupId>
+      <artifactId>md-test</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <type>txt</type>
+      <classifier>r1</classifier>
+    </dependency>
+    <dependency>
+      <groupId>nexus4218</groupId>
+      <artifactId>md-test</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <type>txt</type>
+      <classifier>r2</classifier>
+    </dependency>
+    <dependency>
+      <groupId>nexus4218</groupId>
+      <artifactId>md-test</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <type>txt</type>
+      <classifier>r3</classifier>
+    </dependency>
+  </dependencies>
+</project>

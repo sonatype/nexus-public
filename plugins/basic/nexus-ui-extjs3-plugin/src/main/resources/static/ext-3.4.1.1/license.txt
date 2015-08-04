@@ -1,0 +1,24 @@
+Ext JS 3.4 - JavaScript Library
+Copyright (c) 2006-2013, Sencha Inc.
+All rights reserved.
+licensing@sencha.com
+
+http://www.sencha.com/license
+
+
+Commercial License
+------------------------------------------------------------------------------------------
+This version of Ext JS is licensed commercially. 
+This is the appropriate option if you are creating proprietary applications and you are 
+not prepared to distribute and share the source code of your application under the 
+GPL v3 license. Please visit http://www.sencha.com/license for more details.
+
+
+Open Source Licensing
+------------------------------------------------------------------------------------------
+Open Source Licensing is available for an alternate download of Ext JS.
+For more details, please visit: http://www.sencha.com/license.
+
+--
+
+This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT OF THIRD-PARTY INTELLECTUAL PROPERTY RIGHTS.

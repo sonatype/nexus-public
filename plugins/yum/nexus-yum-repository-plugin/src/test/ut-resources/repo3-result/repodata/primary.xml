@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2">
+<package type="rpm">
+  <name>test-artifact</name>
+  <arch>noarch</arch>
+  <version epoch="0" rel="1" ver="1.2.3"/>
+  <checksum pkgid="YES" type="sha256">db3d77eb01fa4595b00f6f6f1e8ceebfcd8d204869bb7d5f272069f3539144fe</checksum>
+  <summary>Test artifact</summary>
+  <description>Test artifact</description>
+  <packager/>
+  <url/>
+  <time build="1401228594" file="1412258216"/>
+  <size archive="372" installed="0" package="1704"/>
+<location href="test/test-artifact/1.2.3-1.noarch/test-artifact-1.2.3-1.noarch.rpm"/>
+  <format>
+    <rpm:license>Testing</rpm:license>
+    <rpm:vendor/>
+    <rpm:group>Testing</rpm:group>
+    <rpm:buildhost>localhost</rpm:buildhost>
+    <rpm:sourcerpm>test-artifact-1.2.3-1.src.rpm</rpm:sourcerpm>
+    <rpm:header-range end="1600" start="280"/>
+    <rpm:provides>
+      <rpm:entry epoch="0" flags="EQ" name="test-artifact" rel="1" ver="1.2.3"/>
+    </rpm:provides>
+  </format>
+</package>
+<package type="rpm">
+  <name>foo-bar</name>
+  <arch>noarch</arch>
+  <version epoch="0" rel="1" ver="5.1.2"/>
+  <checksum pkgid="YES" type="sha256">6434495d746261070a261e1d1156de2a1dcf0c222c35a7b60011a11a258f01dd</checksum>
+  <summary>Foo bar</summary>
+  <description>Foo bar</description>
+  <packager/>
+  <url/>
+  <time build="1401228594" file="1412258133"/>
+  <size archive="372" installed="0" package="1672"/>
+<location href="test/foo-bar/5.1.2-1.noarch/foo-bar-5.1.2-1.noarch.rpm"/>
+  <format>
+    <rpm:license>Testing</rpm:license>
+    <rpm:vendor/>
+    <rpm:group>Testing</rpm:group>
+    <rpm:buildhost>localhost</rpm:buildhost>
+    <rpm:sourcerpm>foo-bar-5.1.2-1.src.rpm</rpm:sourcerpm>
+    <rpm:header-range end="1568" start="280"/>
+    <rpm:provides>
+      <rpm:entry epoch="0" flags="EQ" name="foo-bar" rel="1" ver="5.1.2"/>
+    </rpm:provides>
+  </format>
+</package>
+</metadata>

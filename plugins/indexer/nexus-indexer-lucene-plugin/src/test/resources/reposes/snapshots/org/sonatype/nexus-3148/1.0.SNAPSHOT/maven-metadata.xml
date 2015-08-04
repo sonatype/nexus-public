@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xsi:schemaLocation="http://maven.apache.org/METADATA/1.0.0 http://maven.apache.org/xsd/metadata-1.0.0.xsd" xmlns="http://maven.apache.org/METADATA/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <groupId>org.sonatype</groupId>
+  <artifactId>nexus-3148</artifactId>
+  <version>1.0.SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20100111.065026</timestamp>
+      <buildNumber>2</buildNumber>
+    </snapshot>
+    <lastUpdated>20100111065026</lastUpdated>
+  </versioning>
+</metadata>

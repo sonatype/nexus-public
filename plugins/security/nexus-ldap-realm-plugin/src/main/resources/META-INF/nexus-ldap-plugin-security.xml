@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!-- Default nexus ldap configuration -->
+<!-- used as default config source -->
+<security>
+    <version>2.0.1</version>
+    <roles>
+        <role>
+            <id>ui-ldap-admin</id>
+            <name>UI: LDAP Administrator</name>
+            <description>Gives access to configure the LDAP server used for authentication.</description>
+            <sessionTimeout>60</sessionTimeout>
+            <privileges>
+                <privilege>ldap-conn-update</privilege>
+                <privilege>ldap-conn-read</privilege>
+                <privilege>ldap-user-group-conf-update</privilege>
+                <privilege>ldap-user-group-conf-read</privilege>
+                <privilege>ldap-user-role-map-create</privilege>
+                <privilege>ldap-user-role-map-read</privilege>
+                <privilege>ldap-user-role-map-update</privilege>
+                <privilege>ldap-user-role-map-delete</privilege>
+                <privilege>ldap-test-auth-conf</privilege>
+                <privilege>ldap-test-user-group-conf</privilege>
+            </privileges>
+            <roles>
+            	<role>ui-server-admin</role>
+            </roles>	
+        </role>
+    </roles>
+   
+    <privileges>
+    
+    	<privilege>
+            <id>ldap-conn-update</id>
+            <type>method</type>
+            <name>LDAP Connection Information (update,read)</name>
+            <description>Give permission to update LDAP connection information.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapconninfo</value>
+                </property>
+            </properties>
+        </privilege>
+        
+        <privilege>
+            <id>ldap-conn-read</id>
+            <type>method</type>
+            <name>LDAP Connection Information (read)</name>
+            <description>Give permission to read LDAP connection information.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapconninfo</value>
+                </property>
+            </properties>
+        </privilege>
+
+    	<privilege>
+            <id>ldap-user-group-conf-update</id>
+            <type>method</type>
+            <name>LDAP User and Group Configuration Mapping. (update,read)</name>
+            <description>Give permission to update LDAP User and Group Configuration Mapping.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapusergroupconf</value>
+                </property>
+            </properties>
+        </privilege>
+        
+        <privilege>
+            <id>ldap-user-group-conf-read</id>
+            <type>method</type>
+            <name>LDAP User and Group Configuration Mapping. (read)</name>
+            <description>Give permission to read LDAP User and Group Configuration Mapping.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapusergroupconf</value>
+                </property>
+            </properties>
+        </privilege>
+
+        <privilege>
+            <id>ldap-user-role-map-create</id>
+            <type>method</type>
+            <name>LDAP User Role Mapping (create,read)</name>
+            <description>Give permission to create new LDAP User Role Mappings profiles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>create</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapuserrolemap</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>ldap-user-role-map-read</id>
+            <type>method</type>
+            <name>LDAP User Role Mapping (read)</name>
+            <description>Give permission to read LDAP User Role Mappings profiles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapuserrolemap</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>ldap-user-role-map-update</id>
+            <type>method</type>
+            <name>LDAP User Role Mapping (update,read)</name>
+            <description>Give permission to update new LDAP User Role Mappings profiles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapuserrolemap</value>
+                </property>
+            </properties>
+        </privilege>
+        <privilege>
+            <id>ldap-user-role-map-delete</id>
+            <type>method</type>
+            <name>LDAP User Role Mapping (delete,read)</name>
+            <description>Give permission to delete LDAP User Role Mappings profiles.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>delete,read</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldapuserrolemap</value>
+                </property>
+            </properties>
+        </privilege>
+        
+        
+        <privilege>
+            <id>ldap-test-auth-conf</id>
+            <type>method</type>
+            <name>LDAP Connection Information Test</name>
+            <description>Give permission to test the LDAP connection information.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldaptestauth</value>
+                </property>
+            </properties>
+        </privilege>
+        
+        <privilege>
+            <id>ldap-test-user-group-conf</id>
+            <type>method</type>
+            <name>LDAP User and Group Configuration Mapping Test</name>
+            <description>Give permission to test LDAP User and Group Configuration Mapping.</description>
+            <properties>
+                <property>
+                    <key>method</key>
+                    <value>update</value>
+                </property>
+                <property>
+                    <key>permission</key>
+                    <value>nexus:ldaptestuserconf</value>
+                </property>
+            </properties>
+        </privilege>
+        
+    </privileges>
+</security>

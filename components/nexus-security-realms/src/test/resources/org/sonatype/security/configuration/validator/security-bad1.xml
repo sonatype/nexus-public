@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2007-2013 Sonatype, Inc. All rights reserved.
+
+    This program is licensed to you under the Apache License Version 2.0,
+    and you may not use this file except in compliance with the Apache License Version 2.0.
+    You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the Apache License Version 2.0 is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+-->
+<!-- This config will cause 13 validation errors -->
+<!-- This config will cause 0 validation warnings -->
+
+<security>
+	<version>2.0.4</version>
+	<privileges>      
+      <privilege>
+        <id>1</id>
+        <name>priv</name>
+        <type>method</type>
+        <properties>
+          <property>
+            <key>method</key>
+            <value>read</value>
+          </property>
+          <property>
+            <key>permission</key>
+            <value>/some/path/</value>
+          </property>
+        </properties>
+      </privilege>      
+    </privileges>	
+	<roles>
+	  <role>
+	    <id>id</id>
+	    <name>name</name>
+	    <sessionTimeout>50</sessionTimeout>
+	    <privileges>
+	      <privilege>1</privilege>
+	    </privileges>
+	  </role>
+	</roles>
+	<users>		
+	
+		<!-- no id -->
+	    <!-- no name -->
+	    <!-- no email address -->
+	    <!-- invalid role id -->
+	    <!-- no password -->
+	    <!-- invalid status -->
+		<user>      
+            <id></id>
+        </user>
+	
+
+        <!-- invalid status -->
+        <!-- no roles -->
+        <user>      
+            <id>ausernostatus</id>
+            <password>fjsf8j4r3</password>
+            <firstName>Alex</firstName>
+            <lastName>User</lastName>
+            <email>auser@auser.com</email>
+        </user>
+        <!-- no roles -->
+        <!-- duplicate email -->
+		<user>		
+			<id>auser</id>
+			<password>fjsf8j4r3</password>
+      <firstName>Alex</firstName>
+      <lastName>User</lastName>
+			<email>auser@auser.com</email>
+			<status>active</status>
+		</user>
+		
+		<!-- Duplicate user id -->
+		<!-- duplicate email -->
+		<user>
+            <id>auser</id>
+            <password>fjsf8j4r3</password>
+            <firstName>Alex</firstName>
+            <lastName>User</lastName>
+            <email>auser@auser.com</email>
+            <status>active</status>
+        </user>   
+        <user>
+            <id>buser</id>
+            <password>fjsf8j4r3</password>
+            <firstName>Alex</firstName>
+            <lastName>User</lastName>
+            <email>unique@auser.com</email>
+            <status>active</status>
+        </user>     
+	</users>
+	
+	<userRoleMappings>
+		<!-- missing user id -->
+		<!-- missing source -->
+		<!-- invalid role id -->
+		<userRoleMapping>
+
+			<roles>
+				<role>id1</role>
+			</roles>
+		</userRoleMapping>
+		
+		<!-- missing user id -->
+		<!-- invalid role id -->
+		<userRoleMapping>
+
+			    <source>default</source>
+			<roles>
+				<role>id1</role>
+			</roles>
+		</userRoleMapping>
+
+		<userRoleMapping>
+			<userId>buser</userId>
+			    <source>default</source>
+			<roles>
+				<role>id</role>
+			</roles>
+		</userRoleMapping>
+	</userRoleMappings>
+
+</security>

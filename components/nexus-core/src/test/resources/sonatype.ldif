@@ -1,0 +1,69 @@
+dn: ou=people,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: people
+description: Contains entries which describe persons
+
+dn: cn=cstamas,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: cstamas
+sn: Tamas Cservenak
+uid: cstamas
+userpassword: {CRYPT}$1$E9JXUpms$Y659jpwsOmkSMzMpyeGR90
+mail: cstamas@sonatype.com
+description: This is Tamas
+
+dn: cn=brianf,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: brianf
+sn: Brian Fox
+uid: brianf
+userpassword: {CRYPT}$1$zvAGcqOF$MuA4v.UseunTFTL/XgWUL.
+mail: brianf@sonatype.com
+description: This is Brian
+
+dn: cn=jvanzyl,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: jvanzyl
+sn: Jason Van Zyl
+uid: jvanzyl
+userpassword: {CRYPT}$1$uBcx4GsE$WsEqBkJzXNJevT01v7Th./
+mail: jvanzyl@sonatype.com
+description: This is Jason
+
+dn: cn=jdcasey,ou=people,o=sonatype
+objectclass: inetOrgPerson
+cn: jdcasey
+sn: John Casey
+uid: jdcasey
+userpassword: {CRYPT}$1$uBcx4GsE$WsEqBkJzXNJevT01v7Th./
+mail: jdcasey@sonatype.com
+description: This is John, but have identical pwd with Jason
+
+dn: ou=groups,o=sonatype
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+description: Contains entries which describe groups
+
+dn: cn=repoconsumer,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: repoconsumer
+uniqueMember: uid=cstamas,ou=people,o=sonatype 
+uniqueMember: uid=brianf,ou=people,o=sonatype 
+uniqueMember: uid=jvanzyl,ou=people,o=sonatype 
+description: Public group
+
+dn: cn=repomaintainer,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: repomaintainer
+uniqueMember: uid=jvanzyl,ou=people,o=sonatype 
+uniqueMember: uid=brianf,ou=people,o=sonatype 
+description: Releases group
+
+dn: cn=developer,ou=groups,o=sonatype
+objectClass: groupOfUniqueNames
+cn: developer
+uniqueMember: uid=jvanzyl,ou=people,o=sonatype 
+uniqueMember: uid=cstamas,ou=people,o=sonatype 
+description: Snapshots group

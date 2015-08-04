@@ -1,0 +1,5 @@
+[
+    [ "org.sonatype.nexus.assemblies:nexus-bundle-template:zip:bundle:${project.version}" ],
+    [ "org.sonatype.nexus.assemblies:nexus-bundle-template:zip:bundle" ],
+    [ "org.sonatype.nexus.assemblies:nexus-bundle-template:zip:bundle:${project.dm.version}" ]
+]

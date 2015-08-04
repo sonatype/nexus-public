@@ -1,0 +1,30 @@
+<plexus>
+	<components>
+
+		<component>
+	      <role>org.sonatype.plexus.rest.resource.PlexusResource</role>
+	      <role-hint>TestUIPermissionCalculatingPlexusResource</role-hint>
+	      <implementation>org.sonatype.nexus.rest.authentication.TestUIPermissionCalculatingPlexusResource</implementation>
+	      <isolated-realm>false</isolated-realm>
+	      <requirements>
+	        <requirement>
+	          <role>org.sonatype.nexus.jsecurity.NexusSecurity</role>
+	          <role-hint>default</role-hint>
+	          <field-name>nexusSecurity</field-name>
+	        </requirement>
+	        <requirement>
+	          <role>org.sonatype.nexus.Nexus</role>
+	          <role-hint>default</role-hint>
+	          <field-name>nexus</field-name>
+	        </requirement>
+	        <requirement>
+	          <role>org.sonatype.nexus.proxy.access.NexusItemAuthorizer</role>
+	          <role-hint>default</role-hint>
+	          <field-name>nexusItemAuthorizer</field-name>
+	        </requirement>
+	      </requirements>
+	    </component>
+
+
+	</components>
+</plexus>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<security>
+  <version>2.0.1</version>
+  <users>
+    <user>
+      <id>admin</id>
+      <name>Administrator</name>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>changeme@yourcompany.com</email>
+      <roles>
+        <role>admin</role>
+      </roles>
+    </user>
+    <user>
+      <id>anonymous</id>
+      <name>Nexus Anonynmous User</name>
+      <password>0a92fab3230134cca6eadd9898325b9b2ae67998</password>
+      <status>active</status>
+      <email>changeme2@yourcompany.com</email>
+      <roles>
+        <role>anonymous</role>
+        <role>10ff9859f0304c8c</role>
+      </roles>
+    </user>
+    <user>
+      <id>test-user</id>
+      <name>Test User</name>
+      <password>f865b53623b121fd34ee5426c792e5c33af8c227</password>
+      <status>active</status>
+      <email>nexus-dev2@sonatype.org</email>
+      <roles>
+        <role>anonymous</role>
+      </roles>
+    </user>
+    <user>
+      <id>deployment</id>
+      <name>Deployment User</name>
+      <password>b2a0e378437817cebdf753d7dff3dd75483af9e0</password>
+      <status>active</status>
+      <email>changeme1@yourcompany.com</email>
+      <roles>
+        <role>deployment</role>
+        <role>10ff9896b092fbc8</role>
+      </roles>
+    </user>
+  </users>
+  <roles>
+    <role>
+      <id>10ff9859f0304c8c</id>
+      <name>Read Public Repos Role</name>
+      <description>Read Public Repos Role</description>
+      <sessionTimeout>30</sessionTimeout>
+      <privileges>
+        <privilege>10ff9835f9dddc82</privilege>
+        <privilege>10ff983b8ee245da</privilege>
+      </privileges>
+    </role>
+    <role>
+      <id>10ff986eee2a4930</id>
+      <name>Update MetaData</name>
+      <description>Update MetaData</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>10ff98441735cbb8</privilege>
+      </privileges>
+    </role>
+    <role>
+      <id>10ff9896b092fbc8</id>
+      <name>Repos: All Repos (Read, Deploy, Delete)</name>
+      <description>Access to all Repos, but cannot redeploy</description>
+      <sessionTimeout>60</sessionTimeout>
+      <privileges>
+        <privilege>T5</privilege>
+        <privilege>T7</privilege>
+        <privilege>T1</privilege>
+        <privilege>10ff98441735cbb8</privilege>
+      </privileges>
+    </role>
+  </roles>
+  <privileges>
+    <privilege>
+      <id>10ff9835f9dddc82</id>
+      <name>Public Repos - (read)</name>
+      <description>Public Repos</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>1</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value>public</value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>10ff983b8ee245da</id>
+      <name>Public Snapshot Repos - (read)</name>
+      <description>Public Snapshot Repos</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>1</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value>public-snapshots</value>
+        </property>
+      </properties>
+    </privilege>
+    <privilege>
+      <id>10ff98441735cbb8</id>
+      <name>MetaData - (update)</name>
+      <description>MetaData</description>
+      <type>target</type>
+      <properties>
+        <property>
+          <key>method</key>
+          <value>update,read</value>
+        </property>
+        <property>
+          <key>repositoryTargetId</key>
+          <value>4</value>
+        </property>
+        <property>
+          <key>repositoryId</key>
+          <value></value>
+        </property>
+        <property>
+          <key>repositoryGroupId</key>
+          <value></value>
+        </property>
+      </properties>
+    </privilege>
+  </privileges>
+</security>

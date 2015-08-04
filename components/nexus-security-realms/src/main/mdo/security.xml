@@ -1,0 +1,409 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<model xsd.namespace="http://www.sonatype.com/xsd/security-model-2.0.3"
+    xsd.targetNamespace="http://www.sonatype.com/xsd/security-model-2.0.3">
+
+    <id>security</id>
+
+    <name>SecurityConfiguration</name>
+
+    <description>
+        <![CDATA[
+        <p>XML Based Security Configuration.</p>
+        ]]>
+    </description>
+
+    <defaults>
+        <default>
+            <key>package</key>
+            <value>org.sonatype.security.model</value>
+        </default>
+    </defaults>
+
+    <classes>
+
+        <!-- ROOT -->
+        <class rootElement="true" xml.tagName="security" java.clone="deep">
+            <name>Configuration</name>
+            <interfaces>
+              <interface>org.sonatype.configuration.Configuration</interface>
+            </interfaces>
+            <version>2.0.0+</version>
+            <description>The root element of Security configuration.</description>
+            <fields>
+                <field>
+                    <name>version</name>
+                    <version>2.0.0+</version>
+                    <description>
+                        The version of the security persisted model.
+                    </description>
+                    <type>String</type>
+                    <required>true</required>
+                </field>
+                <field>
+                    <name>users</name>
+                    <version>2.0.0+</version>
+                    <description>List of users that are defined to have access to the system.</description>
+                    <association>
+                        <type>CUser</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+                <field>
+                    <name>roles</name>
+                    <version>2.0.0+</version>
+                    <description>List of roles that Users can be associated to.  A roles is simply a container that hold privileges, and other roles.</description>
+                    <association>
+                        <type>CRole</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+                <field>
+                    <name>privileges</name>
+                    <version>2.0.0+</version>
+                    <description>
+                        List of privileges that can be put in a role.
+                    </description>
+                    <association>
+                        <type>CPrivilege</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+
+                <!--  ALSO NEW STUFF, TODO, upgrade -->
+                <field>
+                    <name>userRoleMappings</name>
+                    <version>2.0.2+</version>
+                    <description>
+                        List of User.
+                    </description>
+                    <association>
+                        <type>CUserRoleMapping</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+
+            </fields>
+            <codeSegments>
+                <codeSegment>
+                    <version>2.0.0</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.0";
+]]></code>
+                </codeSegment>
+                <codeSegment>
+                    <version>2.0.1</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.1";
+]]></code>
+                </codeSegment>
+                <codeSegment>
+                    <version>2.0.2</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.2";
+]]></code>
+                </codeSegment>
+                <codeSegment>
+                    <version>2.0.3</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.3";
+]]></code>
+                </codeSegment>
+                <codeSegment>
+                    <version>2.0.4</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.4";
+]]></code>
+                </codeSegment>
+                <codeSegment>
+                    <version>2.0.5</version>
+                    <code><![CDATA[
+    public static final String MODEL_VERSION = "2.0.5";
+]]></code>
+                </codeSegment>
+            </codeSegments>
+        </class>
+
+        <!-- Users -->
+        <class java.clone="deep">
+            <name>CUser</name>
+            <version>2.0.0+</version>
+            <description>A User is a security object, where, based upon its role, will have certain privileged access to the system</description>
+            <fields>
+                <field>
+                    <name>id</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The userId that will be used to gain access to the system</description>
+                </field>
+                <field>
+                    <name>name</name>
+                    <version>2.0.0/2.0.3</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Users real life name.</description>
+                </field>
+                <field>
+                    <name>firstName</name>
+                    <version>2.0.4+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Users first name.</description>
+                </field>
+                <field>
+                    <name>lastName</name>
+                    <version>2.0.4+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Users last name.</description>
+                </field>
+                <field>
+                    <name>password</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Users password, note this is just the hash of the password, not the actual password.</description>
+                </field>
+                <field>
+                    <name>status</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The current status of this user, active/locked/disabled</description>
+                </field>
+                <field>
+                    <name>email</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The user's email address.</description>
+                </field>
+                <field>
+                    <name>roles</name>
+                    <version>2.0.0/2.0.1</version>
+                    <description>
+                        List of role ids that will define this user.
+                    </description>
+                    <association>
+                        <type>String</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+            </fields>
+            <codeSegments>
+                <codeSegment>
+                    <version>2.0.0+</version>
+                    <code><![CDATA[
+    public static final String STATUS_DISABLED = "disabled";
+
+    public static final String STATUS_ACTIVE = "active";
+
+    //Not currently supported
+    //public static final String STATUS_LOCKED = "locked";
+
+    //public static final String STATUS_EXPIRED = "expired";
+]]></code>
+                </codeSegment>
+            </codeSegments>
+        </class>
+
+        <!-- Roles -->
+        <class java.clone="deep">
+            <name>CRole</name>
+            <version>2.0.0+</version>
+            <description>A Role is a bucket for privileges, can also contain other roles.</description>
+            <fields>
+                <field>
+                    <name>id</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The ID used to reference this role</description>
+                </field>
+                <field>
+                    <name>name</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>A descriptive name for the role.</description>
+                </field>
+                <field>
+                    <name>description</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>false</required>
+                    <description>An explanation of the use of the role.</description>
+                </field>
+                <field>
+                    <name>sessionTimeout</name>
+                    <version>2.0.0+</version>
+                    <type>int</type>
+                    <required>true</required>
+                    <description>The number of minutes to wait before the session timeouts because of inactivity.</description>
+                </field>
+                <field>
+                    <name>privileges</name>
+                    <version>2.0.0+</version>
+                    <description>
+                        List of privilege ids that will define this role.
+                    </description>
+                    <association>
+                        <type>String</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+                <field>
+                    <name>roles</name>
+                    <version>2.0.0+</version>
+                    <description>
+                        List of role ids, whose contents, will also define this role.
+                    </description>
+                    <association>
+                        <type>String</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                </field>
+                <field>
+                    <name>readOnly</name>
+                    <version>2.0.4+</version>
+                    <type>boolean</type>
+                    <required>false</required>
+                    <description>Marks if this role is editable.</description>
+                </field>
+            </fields>
+        </class>
+
+        <!-- Privileges -->
+        <class java.clone="deep">
+            <name>CPrivilege</name>
+            <version>2.0.0+</version>
+            <description>Base privilege class contains items common to all types of privileges.</description>
+            <fields>
+                <field>
+                    <name>id</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The ID used to reference this privilege</description>
+                </field>
+                <field>
+                    <name>name</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>A descriptive name for the privilege.</description>
+                </field>
+                <field>
+                    <name>description</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>A description of the privilege.</description>
+                </field>
+                <field>
+                    <name>type</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>The type of privilege.</description>
+                </field>
+                <field>
+                    <name>properties</name>
+                    <version>2.0.0+</version>
+                    <association>
+                        <type>CProperty</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>false</required>
+                    <description>Properties assigned to this privilege, used to define a permission</description>
+                </field>
+                <field>
+                    <name>readOnly</name>
+                    <version>2.0.4+</version>
+                    <type>boolean</type>
+                    <required>false</required>
+                    <description>Marks if this privilege is editable.</description>
+                </field>
+            </fields>
+        </class>
+
+        <!-- Properties -->
+        <class java.clone="deep">
+            <name>CProperty</name>
+            <version>2.0.0+</version>
+            <description>A simple key value pair</description>
+            <fields>
+                <field>
+                    <name>key</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Unique key used as identifier</description>
+                </field>
+                <field>
+                    <name>value</name>
+                    <version>2.0.0+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>Value associated to the key</description>
+                </field>
+            </fields>
+        </class>
+
+
+
+        <!-- MY NEW STUFF TODO: talk to max, about upgrade -->
+
+		<class java.clone="deep">
+            <name>CUserRoleMapping</name>
+            <version>2.0.2+</version>
+            <description>Defines the mapping between users and roles, if LDAP groups are not used.</description>
+            <fields>
+                <field>
+                    <name>userId</name>
+                    <version>2.0.2+</version>
+                    <type>String</type>
+                    <required>true</required>
+                    <description>User ID.  The id of the user.</description>
+                </field>
+                <field>
+                    <name>source</name>
+                    <version>2.0.2+</version>
+                    <type>String</type>
+                    <required>false</required>
+                    <description>The source or realm id, of the user.  For example an CROWD realm might have a source id of CROWD.</description>
+                </field>
+                 <field>
+                    <name>roles</name>
+                    <version>2.0.2+</version>
+                    <association>
+                        <type>String</type>
+                        <multiplicity>*</multiplicity>
+                    </association>
+                    <required>true</required>
+                    <description>List of the users roles.</description>
+                </field>
+            </fields>
+        </class>
+    </classes>
+</model>

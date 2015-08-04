@@ -1,0 +1,13 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>log4j</groupId>
+  <artifactId>log4j</artifactId>
+  <version>1.2.13</version>
+  <packaging>jar</packaging>
+  <name>Log4j</name>
+  <url>http://logging.apache.org/log4j/docs/</url>
+  <description>Log4j</description>
+  <scm>
+    <url>http://svn.apache.org/viewcvs.cgi/logging/log4j/tags/v1_2_13/</url>
+  </scm>
+</project>

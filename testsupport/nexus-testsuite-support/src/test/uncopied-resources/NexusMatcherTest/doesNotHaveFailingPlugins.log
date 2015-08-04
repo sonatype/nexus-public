@@ -1,0 +1,16 @@
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.2-SNAPSHOT
+
+-------------------------------------------------
+2012-08-24 14:14:37 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Activating locally installed plugins...
+2012-08-24 14:14:37 INFO  [y-main-thread-1] - org.sonatype.sisu.velocity.Velocity - Creating default instance of VelocityEngine
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.timeline.DefaultNexusTimeline - Initializing Nexus Timeline...
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.timeline.DefaultNexusTimeline - Starting Nexus Timeline...
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins:nexus-indexer-lucene-plugin:2.2-SNAPSHOT" was successful.
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins:nexus-plugin-console-plugin:2.2-SNAPSHOT" was successful.
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins:nexus-core-documentation-plugin:2.2-SNAPSHOT" was successful.
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins.ldap:nexus-ldap-realm-plugin:2.2-SNAPSHOT" was successful.
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins:nexus-archetype-plugin:2.2-SNAPSHOT" was successful.
+2012-08-24 14:14:38 INFO  [y-main-thread-1] - org.sonatype.nexus.DefaultNexus - Plugin manager request "ACTIVATE" on plugin "org.sonatype.nexus.plugins:nexus-timeline-plugin:2.2-SNAPSHOT" was successful.
+

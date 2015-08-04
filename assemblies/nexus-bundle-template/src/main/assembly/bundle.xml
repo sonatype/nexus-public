@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+
+  <id>bundle</id>
+
+  <formats>
+    <format>zip</format>
+  </formats>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <fileSets>
+    <fileSet>
+      <directory>src/main/resources/content</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <excludes>
+        <exclude>**/sonatype-work/**</exclude>
+        <exclude>**/nexus</exclude>
+        <exclude>**/*.bat</exclude>
+        <exclude>**/wrapper*</exclude>
+        <exclude>**/.placeholder</exclude>
+      </excludes>
+    </fileSet>
+
+    <!-- chmod +x all JSW wrapper bits -->
+    <fileSet>
+      <directory>src/main/resources/content</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <fileMode>0755</fileMode>
+      <directoryMode>0755</directoryMode>
+      <includes>
+        <include>**/wrapper*</include>
+      </includes>
+    </fileSet>
+
+    <!-- chmod +x unix scripts -->
+    <fileSet>
+      <directory>src/main/resources/content</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <fileMode>0755</fileMode>
+      <directoryMode>0755</directoryMode>
+      <lineEnding>unix</lineEnding>
+      <includes>
+        <include>**/nexus</include>
+      </includes>
+    </fileSet>
+
+    <!-- batch files -->
+    <fileSet>
+      <directory>src/main/resources/content</directory>
+      <outputDirectory>${project.build.finalName}</outputDirectory>
+      <fileMode>0755</fileMode>
+      <directoryMode>0755</directoryMode>
+      <lineEnding>dos</lineEnding>
+      <includes>
+        <include>**/*.bat</include>
+      </includes>
+    </fileSet>
+
+    <!-- sonatype-work directory -->
+    <fileSet>
+      <directory>src/main/resources/sonatype-work</directory>
+      <outputDirectory>sonatype-work</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <excludes>
+        <exclude>**/.placeholder</exclude>
+      </excludes>
+    </fileSet>
+  </fileSets>
+
+  <dependencySets>
+    <!--
+    FIXME: Rename nexus/ -> webapp/
+    -->
+    <dependencySet>
+      <outputDirectory>${project.build.finalName}/nexus</outputDirectory>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useStrictFiltering>true</useStrictFiltering>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <scope>provided</scope>
+      <includes>
+        <include>org.sonatype.nexus:nexus-webapp:war</include>
+      </includes>
+      <unpack>true</unpack>
+      <unpackOptions>
+        <!--
+        Exclude content for plain-WAR support, which is provided in lib/*
+        -->
+        <excludes>
+          <exclude>META-INF/**</exclude>
+          <exclude>WEB-INF/lib/slf4j-api*.jar</exclude>
+          <exclude>WEB-INF/lib/jul-to-slf4j*.jar</exclude>
+          <exclude>WEB-INF/lib/nexus-bootstrap*.jar</exclude>
+          <exclude>WEB-INF/lib/logback-core*.jar</exclude>
+          <exclude>WEB-INF/lib/logback-classic*.jar</exclude>
+          <exclude>WEB-INF/lib/logback-access*.jar</exclude>
+          <exclude>WEB-INF/lib/metrics-core*.jar</exclude>
+          <exclude>WEB-INF/lib/metrics-logback*.jar</exclude>
+          <exclude>WEB-INF/classes/logback.xml</exclude>
+          <exclude>WEB-INF/classes/logback-access.xml</exclude>
+        </excludes>
+      </unpackOptions>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>${project.build.finalName}/lib</outputDirectory>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useStrictFiltering>true</useStrictFiltering>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
+      <scope>provided</scope>
+      <excludes>
+        <exclude>org.sonatype.nexus:nexus-webapp</exclude>
+      </excludes>
+    </dependencySet>
+  </dependencySets>
+
+</assembly>

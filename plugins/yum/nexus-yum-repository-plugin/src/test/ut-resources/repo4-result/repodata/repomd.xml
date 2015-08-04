@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><repomd xmlns="http://linux.duke.edu/metadata/repo">
+  <revision>1330537351</revision>
+  
+  <data type="other">
+    <checksum type="sha1">6cd6aea8407a6984d6cb840f6ee65a08bc6f979e</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>802</size>
+    <open-size>2953</open-size>
+    <open-checksum type="sha1">613716907fbf2cba7cae55d41c2278edba05db3f</open-checksum>
+    <location href="repodata/other.xml.gz" xml:base="http://foobar.de/"/>
+  </data>
+  
+  <data type="filelists">
+    <checksum type="sha1">dbb3083f56dedd24ca05e8e1a5dfdcc562dc646c</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>808</size>
+    <open-size>2957</open-size>
+    <open-checksum type="sha1">6710d5dd9d17ad07acdd2e49f3d131da176b51bf</open-checksum>
+    <location href="repodata/filelists.xml.gz" xml:base="http://foobar.de/"/>
+  </data>
+  
+  <data type="primary">
+    <checksum type="sha1">edfb947331baaf59e729101875e8870858a36980</checksum>
+    <timestamp>1330537351</timestamp>
+    <size>1313</size>
+    <open-size>16330</open-size>
+    <open-checksum type="sha1">481c2e5460b68a9a1eaa0634409cab3e99a81ee3</open-checksum>
+    <location href="repodata/primary.xml.gz" xml:base="http://foobar.de/"/>
+  </data>
+</repomd>

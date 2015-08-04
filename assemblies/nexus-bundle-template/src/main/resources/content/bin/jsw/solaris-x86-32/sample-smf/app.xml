@@ -1,0 +1,78 @@
+<?xml version='1.0' ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE service_bundle SYSTEM '/usr/share/lib/xml/dtd/service_bundle.dtd.1'>
+<!--
+	Service Manifest for Nexus
+-->
+
+<service_bundle type='manifest' name='SUNWapchr:nexus' >
+	<service name='network/http' type='service' version='1'>
+		<instance name='nexus' enabled='false'>
+
+			<dependency name='loopback'  grouping='require_all'
+			restart_on='error' type='service'>
+				<service_fmri value='svc:/network/loopback:default' />
+			</dependency>
+			<dependency name='physical'  grouping='optional_all'
+			restart_on='error' type='service'>
+				<service_fmri value='svc:/network/physical:default' />
+			</dependency>
+
+			<dependency name='localfs'  grouping='require_all'
+			restart_on='error' type='service'>
+				<service_fmri value='svc:/system/filesystem/local:default' />
+			</dependency>
+
+		<!--
+			These privileges allow the service to run as user nexus/group
+			nexus from the beginning.  The net_privaddr privilege allows
+			the start method to run with the ability bind to privileged
+			ports (in this case, we only care about 80 and 443).  However,
+			if one is logged in as 'www', one does not have this privilege.
+		-->
+			<exec_method name='start' type='method'
+			exec='/export/home/nexus/nexus-professional/current/bin/jsw/solaris-x86-32/nexus start'
+			timeout_seconds='60'>
+				<method_context>
+					<method_credential user='nexus' group='nexus'
+					privileges='basic,!proc_session,!proc_info,!file_link_any,net_privaddr' />
+				</method_context>
+			</exec_method>
+
+			<exec_method name='stop' type='method'
+			exec='/export/home/nexus/nexus-professional/current/bin/jsw/solaris-x86-32/nexus stop'
+			timeout_seconds='60'>
+				<method_context />
+			</exec_method>
+
+			<exec_method name='refresh' type='method'
+			exec='/export/home/nexus/nexus-professional/current/bin/jsw/solaris-x86-32/nexus restart'
+			timeout_seconds='60'>
+				<method_context />
+			</exec_method>
+
+     </instance>       
+<stability value='Evolving' />
+<template>
+	<common_name>
+		<loctext xml:lang='C'>Sonatype Nexus Maven Repository Manager </loctext>
+	</common_name>
+	<documentation>
+		<doc_link name='sonatype.org' uri='http://nexus.sonatype.org' />
+	</documentation>
+</template>
+</service>
+</service_bundle>

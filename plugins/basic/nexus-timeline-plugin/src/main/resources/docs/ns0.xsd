@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="feeds-list" type="feedListResourceResponse"/>
+  <xs:complexType name="feed-list-resource">
+    <xs:sequence>
+      <xs:element name="resourceURI" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="feedListResourceResponse">
+    <xs:complexContent>
+      <xs:extension base="nexusResponse">
+        <xs:sequence>
+          <xs:element name="data" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="feeds-list-item" type="feed-list-resource" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="nexusResponse"/>
+</xs:schema>

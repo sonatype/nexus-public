@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xsi:schemaLocation="http://maven.apache.org/METADATA/1.0.0 http://maven.apache.org/xsd/metadata-1.0.0.xsd" xmlns="http://maven.apache.org/METADATA/1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<plugins>
+		<plugin>
+			<name>Maven Surefire Report Plugin</name>
+			<prefix>surefire-report</prefix>
+			<artifactId>maven-surefire-report-plugin</artifactId>
+		</plugin>
+		<plugin>
+			<name>Maven Resources Plugin</name>
+			<prefix>resources</prefix>
+			<artifactId>maven-resources-plugin</artifactId>
+		</plugin>
+	</plugins>
+</metadata>
