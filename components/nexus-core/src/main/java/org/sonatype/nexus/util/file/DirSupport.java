@@ -354,6 +354,9 @@ public final class DirSupport
    * "from" is a directory, a recursive copy happens of the whole subtree with "from" directory as root. Caller may
    * alter behaviour of Copy operation using copy options, as seen on {@link Files#copy(Path, Path, CopyOption...)}.
    * The passed in filter can leave out a directory and it's complete subtree from operation.
+   *
+   * @throws IllegalArgumentException if 'from' is a parent directory of the 'to' path, unless an excludeFilter is
+   *                                  provided
    */
   public static void copy(final Path from, final Path to, final @Nullable Predicate<Path> excludeFilter)
       throws IOException
@@ -361,6 +364,8 @@ public final class DirSupport
     validateDirectoryOrFile(from);
     checkNotNull(to);
     if (Files.isDirectory(from)) {
+      // Avoiding recursion: unless there's an exclude filter, the 'to' dir must not be inside the 'from' dir
+      checkArgument(!isParentOf(from, to) || excludeFilter != null);
       Files.walkFileTree(from, DEFAULT_FILE_VISIT_OPTIONS, Integer.MAX_VALUE,
           new CopyVisitor(from, to, excludeFilter));
     }
@@ -406,8 +411,8 @@ public final class DirSupport
   }
 
   /**
-   * Perform a pseudo-move of existing directory (empty or not, does not matter) between different FileStores (volume or
-   * partition) using {@link #copyDeleteMove(Path, Path, Predicate)} method.
+   * Perform a pseudo-move of existing directory (empty or not, does not matter) between different FileStores (volume
+   * or partition) using {@link #copyDeleteMove(Path, Path, Predicate)} method.
    */
   private static void crossFileStoreMove(final Path from, final Path to) throws IOException {
     copyDeleteMove(from, to, null);
@@ -427,7 +432,8 @@ public final class DirSupport
       if (toExistingParent != null) {
         final FileStore toStore = Files.getFileStore(toExistingParent);
         return fromStore.equals(toStore);
-      } else {
+      }
+      else {
         log.warn("No ultimate parent path found for '{}'", to, new RuntimeException("marker")); // record the stack trace?
         return false; // no ultimate parent? be on safe side
       }
@@ -448,7 +454,8 @@ public final class DirSupport
   {
     if (areOnSameFileStore(from, to)) {
       sameFileStoreMove(from, to);
-    } else {
+    }
+    else {
       crossFileStoreMove(from, to);
     }
   }
@@ -522,6 +529,13 @@ public final class DirSupport
   }
 
   // Validation
+
+  /**
+   * Determine if one path is a child of another.
+   */
+  private static boolean isParentOf(Path possibleParent, Path possibleChild) {
+    return possibleChild.startsWith(possibleParent);
+  }
 
   /**
    * Enforce all passed in paths are non-null and is existing directory.

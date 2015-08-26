@@ -1,0 +1,840 @@
+2015-08-20 14:15:49,490-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.proxy.events.NexusStoppedEvent@1b290417' fired
+2015-08-20 14:15:49,496-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Unregistered handler 'org.sonatype.nexus.web.internal.FilterChainInstaller@52a9d52d'
+2015-08-20 14:15:49,589-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:49,589-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:49,590-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.web.internal.FilterChainInstaller@2152b37c'
+2015-08-20 14:15:49,593-0400 DEBUG [main]  org.sonatype.security.configuration.source.StaticSecurityConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,593-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:49,594-0400 DEBUG [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Saving configuration: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:49,594-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:49,594-0400 DEBUG [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,595-0400 DEBUG [main]  org.sonatype.security.realms.tools.DefaultConcurrentConfigurationManager - Lock timeout: 60 seconds
+2015-08-20 14:15:49,595-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.security.realms.XmlRolePermissionResolver@6f6da9aa'
+2015-08-20 14:15:49,596-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:49,596-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationFactory - Configuring ehcache from URL: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:49,596-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationFactory - Configuring ehcache from InputStream
+2015-08-20 14:15:49,598-0400 DEBUG [main]  net.sf.ehcache.util.PropertyUtil - propertiesString is null.
+2015-08-20 14:15:49,598-0400 DEBUG [main]  net.sf.ehcache.CacheManager - No disk store path defined. Skipping disk store path conflict test.
+2015-08-20 14:15:49,598-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationHelper - No CacheManagerEventListenerFactory class specified. Skipping...
+2015-08-20 14:15:49,599-0400 DEBUG [main]  net.sf.ehcache.Cache - No BootstrapCacheLoaderFactory class specified. Skipping...
+2015-08-20 14:15:49,600-0400 DEBUG [main]  net.sf.ehcache.Cache - CacheWriter factory not configured. Skipping...
+2015-08-20 14:15:49,600-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationHelper - No CacheExceptionHandlerFactory class specified. Skipping...
+2015-08-20 14:15:49,600-0400 DEBUG [main]  net.sf.ehcache.Cache - No BootstrapCacheLoaderFactory class specified. Skipping...
+2015-08-20 14:15:49,600-0400 DEBUG [main]  net.sf.ehcache.Cache - CacheWriter factory not configured. Skipping...
+2015-08-20 14:15:49,600-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationHelper - No CacheExceptionHandlerFactory class specified. Skipping...
+2015-08-20 14:15:49,601-0400 DEBUG [main]  net.sf.ehcache.store.MemoryStore - Initialized net.sf.ehcache.store.NotifyingMemoryStore for nx-repository-path-cache
+2015-08-20 14:15:49,601-0400 DEBUG [main]  net.sf.ehcache.Cache - Initialised cache: nx-repository-path-cache
+2015-08-20 14:15:49,601-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationHelper - CacheDecoratorFactory not configured. Skipping for 'nx-repository-path-cache'.
+2015-08-20 14:15:49,601-0400 DEBUG [main]  net.sf.ehcache.config.ConfigurationHelper - CacheDecoratorFactory not configured for defaultCache. Skipping for 'nx-repository-path-cache'.
+2015-08-20 14:15:49,601-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.proxy.cache.EhCacheCacheManager@3335fc96'
+2015-08-20 14:15:49,602-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:49,602-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.security.DefaultSecuritySystem@2aa69362'
+2015-08-20 14:15:49,602-0400 DEBUG [main]  org.sonatype.nexus.configuration.application.ApplicationDirectoriesImpl - Install dir not available
+2015-08-20 14:15:49,603-0400 DEBUG [main]  org.sonatype.nexus.configuration.application.ApplicationDirectoriesImpl - Work dir: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work
+2015-08-20 14:15:49,603-0400 DEBUG [main]  org.sonatype.nexus.configuration.application.ApplicationDirectoriesImpl - Temp dir: /tmp/NX-INT-BLD
+2015-08-20 14:15:49,603-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager@59a4ee4e'
+2015-08-20 14:15:49,603-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.events.EventSubscriberHost@68588ce3'
+2015-08-20 14:15:49,603-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:49,603-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:49,605-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,605-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:49,612-0400 DEBUG [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Saving configuration: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work/conf/nexus.xml
+2015-08-20 14:15:49,612-0400 DEBUG [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Loading Nexus configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work/conf/nexus.xml
+2015-08-20 14:15:49,613-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,645-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:49,646-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.configuration.application.DefaultGlobalRemoteConnectionSettings@3f8c04aa'
+2015-08-20 14:15:49,648-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.configuration.application.DefaultGlobalRemoteProxySettings@1199ecec'
+2015-08-20 14:15:49,649-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationPrepareForLoadEvent@3a445205' fired
+2015-08-20 14:15:49,645-0400 INFO  [Finalizer]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Shutting down
+2015-08-20 14:15:49,654-0400 DEBUG [Finalizer]  net.sf.ehcache.CacheManager - CacheManager already shutdown
+2015-08-20 14:15:49,654-0400 DEBUG [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,659-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationPrepareForSaveEvent@1fde8cf1' fired
+2015-08-20 14:15:49,659-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,659-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationCommitEvent@7122175' fired
+2015-08-20 14:15:49,660-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationChangeEvent@6ebb8b8f' fired
+2015-08-20 14:15:49,660-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationLoadEvent@58c64be0' fired
+2015-08-20 14:15:49,660-0400 DEBUG [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,660-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationPrepareForSaveEvent@3394ed0d' fired
+2015-08-20 14:15:49,661-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,662-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationCommitEvent@251b7b83' fired
+2015-08-20 14:15:49,662-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationChangeEvent@174e7b5c' fired
+2015-08-20 14:15:49,668-0400 DEBUG [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Saving configuration: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--637900887003150139/nexus-work/conf/nexus.xml
+2015-08-20 14:15:49,669-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Event 'org.sonatype.nexus.configuration.ConfigurationSaveEvent@a0204f0' fired
+2015-08-20 14:15:49,672-0400 WARN  [main]  org.sonatype.nexus.log.internal.LogbackLogManager - Problem registering MBean for: org.sonatype.nexus.log.internal.LogbackLogManager
+javax.management.InstanceAlreadyExistsException: org.sonatype.nexus.log:name=LogManager
+	at com.sun.jmx.mbeanserver.Repository.addMBean(Repository.java:437) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerWithRepository(DefaultMBeanServerInterceptor.java:1898) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerDynamicMBean(DefaultMBeanServerInterceptor.java:966) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerObject(DefaultMBeanServerInterceptor.java:900) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerMBean(DefaultMBeanServerInterceptor.java:324) ~[na:1.8.0_45]
+	at com.sun.jmx.mbeanserver.JmxMBeanServer.registerMBean(JmxMBeanServer.java:522) ~[na:1.8.0_45]
+	at org.sonatype.nexus.log.internal.LogbackLogManager.<init>(LogbackLogManager.java:143) ~[classes/:na]
+	at org.sonatype.nexus.log.internal.LogbackLogManager$$FastClassByGuice$$872a5077.newInstance(<generated>) [sisu-guice-3.1.10.jar:na]
+	at com.google.inject.internal.cglib.reflect.$FastConstructor.newInstance(FastConstructor.java:40) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.DefaultConstructionProxyFactory$1.newInstance(DefaultConstructionProxyFactory.java:61) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:108) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.access$000(ConstructorInjector.java:32) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector$1.call(ConstructorInjector.java:92) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProvisionListenerStackCallback$Provision.provision(ProvisionListenerStackCallback.java:113) [sisu-guice-3.1.10.jar:3.1.10]
+	at org.eclipse.sisu.bean.BeanScheduler$Activator.onProvision(BeanScheduler.java:176) [org.eclipse.sisu.inject-0.2.0.jar:na]
+	at com.google.inject.internal.ProvisionListenerStackCallback$Provision.provision(ProvisionListenerStackCallback.java:122) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProvisionListenerStackCallback.provision(ProvisionListenerStackCallback.java:68) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:90) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:279) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProviderToInternalFactoryAdapter$1.call(ProviderToInternalFactoryAdapter.java:46) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl.callInContext(InjectorImpl.java:1057) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProviderToInternalFactoryAdapter.get(ProviderToInternalFactoryAdapter.java:40) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.Scopes$1$1.get(Scopes.java:59) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InternalFactoryToProviderAdapter.get(InternalFactoryToProviderAdapter.java:41) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.FactoryProxy.get(FactoryProxy.java:56) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl$2$1.call(InjectorImpl.java:1000) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl.callInContext(InjectorImpl.java:1050) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl$2.get(InjectorImpl.java:996) [sisu-guice-3.1.10.jar:3.1.10]
+	at org.eclipse.sisu.inject.LazyBeanEntry.getValue(LazyBeanEntry.java:82) [org.eclipse.sisu.inject-0.2.0.jar:na]
+	at org.eclipse.sisu.plexus.LazyPlexusBean.getValue(LazyPlexusBean.java:51) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:262) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:254) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:248) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.sonatype.nexus.test.PlexusTestCaseSupport.lookup(PlexusTestCaseSupport.java:248) [nexus-test-common-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at org.sonatype.nexus.log.internal.LogbackLogManagerTest.setUp(LogbackLogManagerTest.java:50) [test-classes/:na]
+	at org.sonatype.nexus.test.PlexusTestCaseSupport.setUpJunit(PlexusTestCaseSupport.java:315) [nexus-test-common-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at sun.reflect.GeneratedMethodAccessor30.invoke(Unknown Source) ~[na:na]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:1.8.0_45]
+	at java.lang.reflect.Method.invoke(Method.java:497) ~[na:1.8.0_45]
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47) [junit-4.11.jar:na]
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12) [junit-4.11.jar:na]
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44) [junit-4.11.jar:na]
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:24) [junit-4.11.jar:na]
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271) [junit-4.11.jar:na]
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70) [junit-4.11.jar:na]
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309) [junit-4.11.jar:na]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.execute(JUnit4Provider.java:264) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeTestSet(JUnit4Provider.java:153) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.invoke(JUnit4Provider.java:124) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.invokeProviderInSameClassLoader(ForkedBooter.java:200) [surefire-booter-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:153) [surefire-booter-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:103) [surefire-booter-2.16.jar:2.16]
+2015-08-20 14:15:49,672-0400 DEBUG [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Registered handler 'org.sonatype.nexus.log.internal.LogbackLogManager@1842bc11'
+2015-08-20 14:15:49,674-0400 DEBUG [main]  org.sonatype.nexus.log.internal.LogbackLogManager - Nexus logger context listener installed
+2015-08-20 14:15:49,674-0400 DEBUG [main]  org.sonatype.nexus.log.internal.LogbackLogManager - Reconfiguring: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-659299005029573444/nexus-work/conf/logback.xml
+2015-08-20 14:15:49,791-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:49,791-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:49,793-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:49,794-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--504049686322193624/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:49,795-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:49,798-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:49,799-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:49,799-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:49,800-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,800-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:49,805-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:49,808-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:49,811-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,811-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:49,818-0400 WARN  [main]  org.sonatype.nexus.log.internal.LogbackLogManager - Problem registering MBean for: org.sonatype.nexus.log.internal.LogbackLogManager
+javax.management.InstanceAlreadyExistsException: org.sonatype.nexus.log:name=LogManager
+	at com.sun.jmx.mbeanserver.Repository.addMBean(Repository.java:437) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerWithRepository(DefaultMBeanServerInterceptor.java:1898) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerDynamicMBean(DefaultMBeanServerInterceptor.java:966) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerObject(DefaultMBeanServerInterceptor.java:900) ~[na:1.8.0_45]
+	at com.sun.jmx.interceptor.DefaultMBeanServerInterceptor.registerMBean(DefaultMBeanServerInterceptor.java:324) ~[na:1.8.0_45]
+	at com.sun.jmx.mbeanserver.JmxMBeanServer.registerMBean(JmxMBeanServer.java:522) ~[na:1.8.0_45]
+	at org.sonatype.nexus.log.internal.LogbackLogManager.<init>(LogbackLogManager.java:143) ~[classes/:na]
+	at org.sonatype.nexus.log.internal.LogbackLogManager$$FastClassByGuice$$872a5077.newInstance(<generated>) [sisu-guice-3.1.10.jar:na]
+	at com.google.inject.internal.cglib.reflect.$FastConstructor.newInstance(FastConstructor.java:40) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.DefaultConstructionProxyFactory$1.newInstance(DefaultConstructionProxyFactory.java:61) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:108) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.access$000(ConstructorInjector.java:32) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector$1.call(ConstructorInjector.java:92) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProvisionListenerStackCallback$Provision.provision(ProvisionListenerStackCallback.java:113) [sisu-guice-3.1.10.jar:3.1.10]
+	at org.eclipse.sisu.bean.BeanScheduler$Activator.onProvision(BeanScheduler.java:176) [org.eclipse.sisu.inject-0.2.0.jar:na]
+	at com.google.inject.internal.ProvisionListenerStackCallback$Provision.provision(ProvisionListenerStackCallback.java:122) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProvisionListenerStackCallback.provision(ProvisionListenerStackCallback.java:68) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:90) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:279) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProviderToInternalFactoryAdapter$1.call(ProviderToInternalFactoryAdapter.java:46) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl.callInContext(InjectorImpl.java:1057) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.ProviderToInternalFactoryAdapter.get(ProviderToInternalFactoryAdapter.java:40) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.Scopes$1$1.get(Scopes.java:59) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InternalFactoryToProviderAdapter.get(InternalFactoryToProviderAdapter.java:41) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.FactoryProxy.get(FactoryProxy.java:56) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl$2$1.call(InjectorImpl.java:1000) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl.callInContext(InjectorImpl.java:1050) [sisu-guice-3.1.10.jar:3.1.10]
+	at com.google.inject.internal.InjectorImpl$2.get(InjectorImpl.java:996) [sisu-guice-3.1.10.jar:3.1.10]
+	at org.eclipse.sisu.inject.LazyBeanEntry.getValue(LazyBeanEntry.java:82) [org.eclipse.sisu.inject-0.2.0.jar:na]
+	at org.eclipse.sisu.plexus.LazyPlexusBean.getValue(LazyPlexusBean.java:51) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:262) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:254) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.codehaus.plexus.DefaultPlexusContainer.lookup(DefaultPlexusContainer.java:248) [org.eclipse.sisu.plexus-0.2.0.jar:na]
+	at org.sonatype.nexus.test.PlexusTestCaseSupport.lookup(PlexusTestCaseSupport.java:248) [nexus-test-common-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at org.sonatype.nexus.log.internal.LogbackLogManagerTest.setUp(LogbackLogManagerTest.java:50) [test-classes/:na]
+	at org.sonatype.nexus.test.PlexusTestCaseSupport.setUpJunit(PlexusTestCaseSupport.java:315) [nexus-test-common-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at sun.reflect.GeneratedMethodAccessor30.invoke(Unknown Source) ~[na:na]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:1.8.0_45]
+	at java.lang.reflect.Method.invoke(Method.java:497) ~[na:1.8.0_45]
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47) [junit-4.11.jar:na]
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12) [junit-4.11.jar:na]
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44) [junit-4.11.jar:na]
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:24) [junit-4.11.jar:na]
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271) [junit-4.11.jar:na]
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70) [junit-4.11.jar:na]
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229) [junit-4.11.jar:na]
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309) [junit-4.11.jar:na]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.execute(JUnit4Provider.java:264) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeTestSet(JUnit4Provider.java:153) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.junit4.JUnit4Provider.invoke(JUnit4Provider.java:124) [surefire-junit4-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.invokeProviderInSameClassLoader(ForkedBooter.java:200) [surefire-booter-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:153) [surefire-booter-2.16.jar:2.16]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:103) [surefire-booter-2.16.jar:2.16]
+2015-08-20 14:15:49,897-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST writeLogbackXml STARTING
+2015-08-20 14:15:49,900-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST writeLogbackXml SUCCEEDED
+2015-08-20 14:15:49,900-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST writeLogbackXml FINISHED
+2015-08-20 14:15:49,901-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST readLogbackXml STARTING
+2015-08-20 14:15:49,904-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST readLogbackXml SUCCEEDED
+2015-08-20 14:15:49,904-0400 INFO  [main]  org.sonatype.nexus.log.internal.LogbackOverridesTest - TEST readLogbackXml FINISHED
+2015-08-20 14:15:49,906-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenPartOfAGroup STARTING
+2015-08-20 14:15:49,912-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest$2 - Removing old SNAPSHOT deployments from foo-group repository.
+2015-08-20 14:15:49,913-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenPartOfAGroup SUCCEEDED
+2015-08-20 14:15:49,913-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenPartOfAGroup FINISHED
+2015-08-20 14:15:49,913-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenProcessingAllRepositories STARTING
+2015-08-20 14:15:49,914-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest$3 - Removing old SNAPSHOT deployments from all repositories.
+2015-08-20 14:15:49,915-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenProcessingAllRepositories SUCCEEDED
+2015-08-20 14:15:49,915-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldSkipProxyRepositoriesWhenProcessingAllRepositories FINISHED
+2015-08-20 14:15:49,915-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldFailWhenProxyRepositories STARTING
+2015-08-20 14:15:49,916-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest$1 - Removing old SNAPSHOT deployments from foo-proxy repository.
+2015-08-20 14:15:49,917-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldFailWhenProxyRepositories SUCCEEDED
+2015-08-20 14:15:49,917-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemoverTest - TEST shouldFailWhenProxyRepositories FINISHED
+2015-08-20 14:15:49,927-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[0] STARTING
+2015-08-20 14:15:49,935-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,936-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[0] SUCCEEDED
+2015-08-20 14:15:49,936-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[0] FINISHED
+2015-08-20 14:15:49,936-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[0] STARTING
+2015-08-20 14:15:49,937-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,938-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[0] SUCCEEDED
+2015-08-20 14:15:49,938-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[0] FINISHED
+2015-08-20 14:15:49,938-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[0] STARTING
+2015-08-20 14:15:49,939-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,939-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[0] SUCCEEDED
+2015-08-20 14:15:49,940-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[0] FINISHED
+2015-08-20 14:15:49,940-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[0] STARTING
+2015-08-20 14:15:49,941-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,941-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[0] SUCCEEDED
+2015-08-20 14:15:49,941-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[0] FINISHED
+2015-08-20 14:15:49,941-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[0] STARTING
+2015-08-20 14:15:49,942-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,943-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[0] SUCCEEDED
+2015-08-20 14:15:49,943-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[0] FINISHED
+2015-08-20 14:15:49,943-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[0] STARTING
+2015-08-20 14:15:49,944-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,944-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[0] SUCCEEDED
+2015-08-20 14:15:49,944-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[0] FINISHED
+2015-08-20 14:15:49,945-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[0] STARTING
+2015-08-20 14:15:49,945-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,945-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[0] SUCCEEDED
+2015-08-20 14:15:49,946-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[0] FINISHED
+2015-08-20 14:15:49,946-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[0] STARTING
+2015-08-20 14:15:49,947-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,947-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[0] SUCCEEDED
+2015-08-20 14:15:49,947-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[0] FINISHED
+2015-08-20 14:15:49,948-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[1] STARTING
+2015-08-20 14:15:49,949-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,949-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[1] SUCCEEDED
+2015-08-20 14:15:49,949-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST testOnEmptyRepo[1] FINISHED
+2015-08-20 14:15:49,950-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[1] STARTING
+2015-08-20 14:15:49,950-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,951-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[1] SUCCEEDED
+2015-08-20 14:15:49,951-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnOutOfServiceRepositories[1] FINISHED
+2015-08-20 14:15:49,951-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[1] STARTING
+2015-08-20 14:15:49,952-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,952-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[1] SUCCEEDED
+2015-08-20 14:15:49,953-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnSnapshotRepositories[1] FINISHED
+2015-08-20 14:15:49,953-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[1] STARTING
+2015-08-20 14:15:49,954-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,954-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[1] SUCCEEDED
+2015-08-20 14:15:49,954-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMissingTarget[1] FINISHED
+2015-08-20 14:15:49,954-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[1] STARTING
+2015-08-20 14:15:49,955-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,955-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[1] SUCCEEDED
+2015-08-20 14:15:49,956-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnMixedRepositories[1] FINISHED
+2015-08-20 14:15:49,956-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[1] STARTING
+2015-08-20 14:15:49,957-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,957-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[1] SUCCEEDED
+2015-08-20 14:15:49,957-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnProxyRepositories[1] FINISHED
+2015-08-20 14:15:49,958-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[1] STARTING
+2015-08-20 14:15:49,958-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,958-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[1] SUCCEEDED
+2015-08-20 14:15:49,959-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnNonMaven2Repositories[1] FINISHED
+2015-08-20 14:15:49,959-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[1] STARTING
+2015-08-20 14:15:49,960-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemover - Removing older releases from repository: foo
+2015-08-20 14:15:49,960-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[1] SUCCEEDED
+2015-08-20 14:15:49,961-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultReleaseRemoverTest - TEST shouldFailOnGroupRepositories[1] FINISHED
+2015-08-20 14:15:49,992-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:49,993-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:49,994-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:49,995-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--44659150220543117/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:49,996-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:49,999-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:50,000-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:50,000-0400 INFO  [main]  org.sonatype.nexus.NxApplication - 
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.11.5-SNAPSHOT
+
+-------------------------------------------------
+2015-08-20 14:15:50,000-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Activating locally installed plugins...
+2015-08-20 14:15:50,001-0400 WARN  [main]  org.sonatype.nexus.plugins.repository.SystemNexusPluginRepository - Missing system plugins folder: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--44659150220543117/nexus-app/plugin-repository
+2015-08-20 14:15:50,001-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Starting
+2015-08-20 14:15:50,002-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:50,004-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:50,004-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:50,012-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:50,019-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:50,027-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:50,028-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--44659150220543117/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:50,028-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:50,029-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:50,029-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:50,030-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:50,031-0400 INFO  [main]  org.sonatype.nexus.proxy.attributes.DefaultLSAttributeStorage - Default FS AttributeStorage in place, using JacksonJSON marshaller.
+2015-08-20 14:15:50,033-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Started (connectionPoolMaxSize 200, connectionPoolSize 20, connectionPoolIdleTime 30000 ms, connectionPoolTimeout 30000 ms, keepAliveMaxDuration 30000 ms)
+2015-08-20 14:15:50,037-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central" [id=central][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:50,040-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Apache Snapshots" [id=apache-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:50,043-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Codehaus Snapshots" [id=codehaus-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:50,045-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Releases" [id=releases][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:50,049-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Snapshots" [id=snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:50,053-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "3rd party" [id=thirdparty][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:50,056-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central M1 shadow" [id=central-m1][contentClass=Maven1][mainFacet=org.sonatype.nexus.proxy.maven.MavenShadowRepository]
+2015-08-20 14:15:50,061-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Public Repositories" [id=public][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.repository.GroupRepository]
+2015-08-20 14:15:50,061-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Initializing Scheduler...
+2015-08-20 14:15:50,061-0400 INFO  [main]  org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager - 0 task(s) to load.
+2015-08-20 14:15:50,062-0400 INFO  [main]  org.sonatype.nexus.NxApplication - This is 1st start of new Nexus instance.
+2015-08-20 14:15:50,062-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Nexus Work Directory : /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--44659150220543117/nexus-work
+2015-08-20 14:15:50,062-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Started Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:50,168-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Apache Snapshots]...
+2015-08-20 14:15:50,184-0400 INFO  [esh-982-thread-1] *UNKNOWN org.sonatype.nexus.events.RepositoryConfigurationUpdatedEventInspector - The Remote URL of repository "Apache Snapshots" (id=apache-snapshots) has been changed, expiring its caches.
+2015-08-20 14:15:50,685-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) started :: Expiring caches for repository Apache Snapshots from path null and below.
+2015-08-20 14:15:50,686-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) finished :: Expiring caches for repository Apache Snapshots from path null and below. (started 2015-08-20T14:15:50-04:00, runtime 0:00:00.001)
+2015-08-20 14:15:50,687-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:51,246-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) started :: Rebuilding maven metadata of repository Snapshots from path /org/sonatype and below.
+2015-08-20 14:15:51,247-0400 INFO  [pxpool-298-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: started.
+2015-08-20 14:15:51,247-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Recreating Maven2 metadata in hosted repository M2Repository(id=snapshots) from path='/org/sonatype'
+2015-08-20 14:15:51,626-0400 INFO  [pxpool-298-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: finished: Done
+2015-08-20 14:15:51,627-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) finished :: Rebuilding maven metadata of repository Snapshots from path /org/sonatype and below. (started 2015-08-20T14:15:51-04:00, runtime 0:00:00.381)
+2015-08-20 14:15:51,627-0400 INFO  [pxpool-298-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:51,669-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Uptime: 3 minutes, 21 seconds and 706 milliseconds
+2015-08-20 14:15:51,670-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Shutting down Scheduler...
+2015-08-20 14:15:51,671-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Stopped
+2015-08-20 14:15:51,671-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Stopping
+2015-08-20 14:15:51,672-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Stopped Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:51,775-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:51,775-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:51,778-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:51,779-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2913287104724169468/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:51,780-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:51,783-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:51,784-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:51,785-0400 INFO  [main]  org.sonatype.nexus.NxApplication - 
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.11.5-SNAPSHOT
+
+-------------------------------------------------
+2015-08-20 14:15:51,785-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Activating locally installed plugins...
+2015-08-20 14:15:51,785-0400 WARN  [main]  org.sonatype.nexus.plugins.repository.SystemNexusPluginRepository - Missing system plugins folder: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2913287104724169468/nexus-app/plugin-repository
+2015-08-20 14:15:51,785-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Starting
+2015-08-20 14:15:51,787-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:51,788-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:51,788-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:51,796-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:51,800-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:51,808-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:51,808-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2913287104724169468/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:51,809-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:51,809-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:51,809-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:51,809-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:51,811-0400 INFO  [main]  org.sonatype.nexus.proxy.attributes.DefaultLSAttributeStorage - Default FS AttributeStorage in place, using JacksonJSON marshaller.
+2015-08-20 14:15:51,812-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Started (connectionPoolMaxSize 200, connectionPoolSize 20, connectionPoolIdleTime 30000 ms, connectionPoolTimeout 30000 ms, keepAliveMaxDuration 30000 ms)
+2015-08-20 14:15:51,814-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central" [id=central][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:51,816-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Apache Snapshots" [id=apache-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:51,818-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Codehaus Snapshots" [id=codehaus-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:51,820-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Releases" [id=releases][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:51,822-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Snapshots" [id=snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:51,824-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "3rd party" [id=thirdparty][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:51,826-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central M1 shadow" [id=central-m1][contentClass=Maven1][mainFacet=org.sonatype.nexus.proxy.maven.MavenShadowRepository]
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Public Repositories" [id=public][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.repository.GroupRepository]
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Initializing Scheduler...
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager - 0 task(s) to load.
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.nexus.NxApplication - This is 1st start of new Nexus instance.
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Nexus Work Directory : /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2913287104724169468/nexus-work
+2015-08-20 14:15:51,829-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Started Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:51,912-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Apache Snapshots]...
+2015-08-20 14:15:51,928-0400 INFO  [esh-986-thread-1] *UNKNOWN org.sonatype.nexus.events.RepositoryConfigurationUpdatedEventInspector - The Remote URL of repository "Apache Snapshots" (id=apache-snapshots) has been changed, expiring its caches.
+2015-08-20 14:15:52,429-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) started :: Expiring caches for repository Apache Snapshots from path null and below.
+2015-08-20 14:15:52,430-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) finished :: Expiring caches for repository Apache Snapshots from path null and below. (started 2015-08-20T14:15:52-04:00, runtime 0:00:00.000)
+2015-08-20 14:15:52,432-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:52,975-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) started :: Rebuilding maven metadata of repository Snapshots from path null and below.
+2015-08-20 14:15:52,976-0400 INFO  [pxpool-299-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: started.
+2015-08-20 14:15:52,976-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Recreating Maven2 metadata in hosted repository M2Repository(id=snapshots) from path='/'
+2015-08-20 14:15:53,045-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+2015-08-20 14:15:53,046-0400 WARN  [pxpool-299-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Error occurred while processing item '/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar'.
+java.io.IOException: org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException: Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.putStorageItem(DefaultMetadataHelper.java:172) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.store(DefaultMetadataHelper.java:65) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.AbstractMetadataHelper.rebuildChecksum(AbstractMetadataHelper.java:330) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.AbstractMetadataHelper.processFile(AbstractMetadataHelper.java:112) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.RecreateMavenMetadataWalkerProcessor.processItem(RecreateMavenMetadataWalkerProcessor.java:85) ~[classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.processItem(DefaultWalker.java:292) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkItem(DefaultWalker.java:244) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:200) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walk(DefaultWalker.java:89) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.doRecreateMavenMetadata(AbstractMavenRepository.java:220) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.recreateMavenMetadata(AbstractMavenRepository.java:211) [classes/:na]
+	at org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask.doRun(RebuildMavenMetadataTask.java:80) [classes/:na]
+	at org.sonatype.nexus.scheduling.AbstractNexusTask.call(AbstractNexusTask.java:163) [classes/:na]
+	at org.sonatype.scheduling.DefaultScheduledTask.call(DefaultScheduledTask.java:418) [nexus-scheduler-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at org.sonatype.nexus.threads.MDCAwareCallable.call(MDCAwareCallable.java:44) [classes/:na]
+	at org.apache.shiro.subject.support.SubjectCallable.doCall(SubjectCallable.java:90) [shiro-core-1.2.3.jar:1.2.3]
+	at org.apache.shiro.subject.support.SubjectCallable.call(SubjectCallable.java:83) [shiro-core-1.2.3.jar:1.2.3]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266) [na:1.8.0_45]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180) [na:1.8.0_45]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293) [na:1.8.0_45]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_45]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_45]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_45]
+Caused by: org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException: Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.storeItem(AbstractMavenRepository.java:477) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.putStorageItem(DefaultMetadataHelper.java:166) ~[classes/:na]
+	... 27 common frames omitted
+2015-08-20 14:15:53,391-0400 INFO  [pxpool-299-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: finished: Done
+2015-08-20 14:15:53,392-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) finished :: Rebuilding maven metadata of repository Snapshots from path null and below. (started 2015-08-20T14:15:52-04:00, runtime 0:00:00.416)
+2015-08-20 14:15:53,392-0400 INFO  [pxpool-299-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:53,400-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Uptime: 3 minutes, 23 seconds and 437 milliseconds
+2015-08-20 14:15:53,400-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Shutting down Scheduler...
+2015-08-20 14:15:53,401-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Stopped
+2015-08-20 14:15:53,401-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Stopping
+2015-08-20 14:15:53,402-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Stopped Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:53,536-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:53,536-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:53,539-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:53,540-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--5701835674346507735/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:53,542-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:53,545-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:53,546-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:53,546-0400 INFO  [main]  org.sonatype.nexus.NxApplication - 
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.11.5-SNAPSHOT
+
+-------------------------------------------------
+2015-08-20 14:15:53,546-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Activating locally installed plugins...
+2015-08-20 14:15:53,546-0400 WARN  [main]  org.sonatype.nexus.plugins.repository.SystemNexusPluginRepository - Missing system plugins folder: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--5701835674346507735/nexus-app/plugin-repository
+2015-08-20 14:15:53,547-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Starting
+2015-08-20 14:15:53,548-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:53,550-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:53,550-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:53,558-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:53,564-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:53,572-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:53,573-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--5701835674346507735/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:53,574-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:53,594-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:53,594-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:53,595-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:53,597-0400 INFO  [main]  org.sonatype.nexus.proxy.attributes.DefaultLSAttributeStorage - Default FS AttributeStorage in place, using JacksonJSON marshaller.
+2015-08-20 14:15:53,598-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Started (connectionPoolMaxSize 200, connectionPoolSize 20, connectionPoolIdleTime 30000 ms, connectionPoolTimeout 30000 ms, keepAliveMaxDuration 30000 ms)
+2015-08-20 14:15:53,602-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central" [id=central][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:53,605-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Apache Snapshots" [id=apache-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:53,608-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Codehaus Snapshots" [id=codehaus-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:53,611-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Releases" [id=releases][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:53,614-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Snapshots" [id=snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:53,617-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "3rd party" [id=thirdparty][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:53,619-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central M1 shadow" [id=central-m1][contentClass=Maven1][mainFacet=org.sonatype.nexus.proxy.maven.MavenShadowRepository]
+2015-08-20 14:15:53,624-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Public Repositories" [id=public][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.repository.GroupRepository]
+2015-08-20 14:15:53,624-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Initializing Scheduler...
+2015-08-20 14:15:53,624-0400 INFO  [main]  org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager - 0 task(s) to load.
+2015-08-20 14:15:53,624-0400 INFO  [main]  org.sonatype.nexus.NxApplication - This is 1st start of new Nexus instance.
+2015-08-20 14:15:53,625-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Nexus Work Directory : /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--5701835674346507735/nexus-work
+2015-08-20 14:15:53,625-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Started Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:53,717-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Apache Snapshots]...
+2015-08-20 14:15:53,730-0400 INFO  [esh-990-thread-1] *UNKNOWN org.sonatype.nexus.events.RepositoryConfigurationUpdatedEventInspector - The Remote URL of repository "Apache Snapshots" (id=apache-snapshots) has been changed, expiring its caches.
+2015-08-20 14:15:54,230-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) started :: Expiring caches for repository Apache Snapshots from path null and below.
+2015-08-20 14:15:54,231-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) finished :: Expiring caches for repository Apache Snapshots from path null and below. (started 2015-08-20T14:15:54-04:00, runtime 0:00:00.000)
+2015-08-20 14:15:54,233-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:54,783-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) started :: Rebuilding maven metadata of repository Snapshots from path null and below.
+2015-08-20 14:15:54,783-0400 INFO  [pxpool-300-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: started.
+2015-08-20 14:15:54,783-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Recreating Maven2 metadata in hosted repository M2Repository(id=snapshots) from path='/'
+2015-08-20 14:15:54,797-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+2015-08-20 14:15:54,798-0400 WARN  [pxpool-300-thread-1] *TASK org.sonatype.nexus.proxy.maven.maven2.M2Repository - Error occurred while processing item '/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar'.
+java.io.IOException: org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException: Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.putStorageItem(DefaultMetadataHelper.java:172) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.store(DefaultMetadataHelper.java:65) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.AbstractMetadataHelper.rebuildChecksum(AbstractMetadataHelper.java:330) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.AbstractMetadataHelper.processFile(AbstractMetadataHelper.java:112) ~[classes/:na]
+	at org.sonatype.nexus.proxy.maven.RecreateMavenMetadataWalkerProcessor.processItem(RecreateMavenMetadataWalkerProcessor.java:85) ~[classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.processItem(DefaultWalker.java:292) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkItem(DefaultWalker.java:244) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:200) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walkRecursive(DefaultWalker.java:209) [classes/:na]
+	at org.sonatype.nexus.proxy.walker.DefaultWalker.walk(DefaultWalker.java:89) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.doRecreateMavenMetadata(AbstractMavenRepository.java:220) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.recreateMavenMetadata(AbstractMavenRepository.java:211) [classes/:na]
+	at org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask.doRun(RebuildMavenMetadataTask.java:80) [classes/:na]
+	at org.sonatype.nexus.scheduling.AbstractNexusTask.call(AbstractNexusTask.java:163) [classes/:na]
+	at org.sonatype.scheduling.DefaultScheduledTask.call(DefaultScheduledTask.java:418) [nexus-scheduler-2.11.5-SNAPSHOT.jar:2.11.5-SNAPSHOT]
+	at org.sonatype.nexus.threads.MDCAwareCallable.call(MDCAwareCallable.java:44) [classes/:na]
+	at org.apache.shiro.subject.support.SubjectCallable.doCall(SubjectCallable.java:90) [shiro-core-1.2.3.jar:1.2.3]
+	at org.apache.shiro.subject.support.SubjectCallable.call(SubjectCallable.java:83) [shiro-core-1.2.3.jar:1.2.3]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266) [na:1.8.0_45]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(ScheduledThreadPoolExecutor.java:180) [na:1.8.0_45]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:293) [na:1.8.0_45]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_45]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_45]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_45]
+Caused by: org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException: Storing of item snapshots:/org/myorg/very.very.long.project.id/1.0.0-SNAPSHOT/1.0.0-SNAPSHOT/very.very.long.project.id-1.0.0-20070807.081844-1.jar.md5 is forbidden by Maven Repository policy. Because snapshots is a SNAPSHOT repository
+	at org.sonatype.nexus.proxy.maven.AbstractMavenRepository.storeItem(AbstractMavenRepository.java:477) [classes/:na]
+	at org.sonatype.nexus.proxy.maven.metadata.DefaultMetadataHelper.putStorageItem(DefaultMetadataHelper.java:166) ~[classes/:na]
+	... 27 common frames omitted
+2015-08-20 14:15:55,106-0400 INFO  [pxpool-300-thread-1] *TASK RebuildMavenMetadataTask - Recreating Maven Metadata on "Snapshots" [id=snapshots]: finished: Done
+2015-08-20 14:15:55,106-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.maven.tasks.RebuildMavenMetadataTask - Scheduled task (RebuildMavenMetadataTask) finished :: Rebuilding maven metadata of repository Snapshots from path null and below. (started 2015-08-20T14:15:54-04:00, runtime 0:00:00.323)
+2015-08-20 14:15:55,106-0400 INFO  [pxpool-300-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:55,120-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Uptime: 3 minutes, 25 seconds and 157 milliseconds
+2015-08-20 14:15:55,120-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Shutting down Scheduler...
+2015-08-20 14:15:55,121-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Stopped
+2015-08-20 14:15:55,121-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Stopping
+2015-08-20 14:15:55,124-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Stopped Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:55,242-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:55,242-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:55,244-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:55,245-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--3077691175200877078/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:55,246-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:55,248-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:55,249-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:55,249-0400 INFO  [main]  org.sonatype.nexus.NxApplication - 
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.11.5-SNAPSHOT
+
+-------------------------------------------------
+2015-08-20 14:15:55,249-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Activating locally installed plugins...
+2015-08-20 14:15:55,249-0400 WARN  [main]  org.sonatype.nexus.plugins.repository.SystemNexusPluginRepository - Missing system plugins folder: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--3077691175200877078/nexus-app/plugin-repository
+2015-08-20 14:15:55,249-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Starting
+2015-08-20 14:15:55,250-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:55,251-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:55,251-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:55,256-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:55,259-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:55,264-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:55,265-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--3077691175200877078/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:55,265-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:55,265-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:55,265-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:55,265-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:55,267-0400 INFO  [main]  org.sonatype.nexus.proxy.attributes.DefaultLSAttributeStorage - Default FS AttributeStorage in place, using JacksonJSON marshaller.
+2015-08-20 14:15:55,268-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Started (connectionPoolMaxSize 200, connectionPoolSize 20, connectionPoolIdleTime 30000 ms, connectionPoolTimeout 30000 ms, keepAliveMaxDuration 30000 ms)
+2015-08-20 14:15:55,271-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central" [id=central][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:55,274-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Apache Snapshots" [id=apache-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:55,276-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Codehaus Snapshots" [id=codehaus-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:55,277-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Releases" [id=releases][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:55,279-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Snapshots" [id=snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:55,281-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "3rd party" [id=thirdparty][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:55,283-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central M1 shadow" [id=central-m1][contentClass=Maven1][mainFacet=org.sonatype.nexus.proxy.maven.MavenShadowRepository]
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Public Repositories" [id=public][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.repository.GroupRepository]
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Initializing Scheduler...
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager - 0 task(s) to load.
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.nexus.NxApplication - This is 1st start of new Nexus instance.
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Nexus Work Directory : /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--3077691175200877078/nexus-work
+2015-08-20 14:15:55,286-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Started Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:55,350-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Apache Snapshots]...
+2015-08-20 14:15:55,357-0400 INFO  [esh-994-thread-1] *UNKNOWN org.sonatype.nexus.events.RepositoryConfigurationUpdatedEventInspector - The Remote URL of repository "Apache Snapshots" (id=apache-snapshots) has been changed, expiring its caches.
+2015-08-20 14:15:55,857-0400 INFO  [pxpool-301-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) started :: Expiring caches for repository Apache Snapshots from path null and below.
+2015-08-20 14:15:55,858-0400 INFO  [pxpool-301-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) finished :: Expiring caches for repository Apache Snapshots from path null and below. (started 2015-08-20T14:15:55-04:00, runtime 0:00:00.000)
+2015-08-20 14:15:55,859-0400 INFO  [pxpool-301-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:55,912-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemover - Removing old SNAPSHOT deployments from snapshots repository.
+2015-08-20 14:15:56,122-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemover - deleted 10 snapshot builds containing 15 files on repository snapshots
+2015-08-20 14:15:56,123-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemover - rebuilding metadata for 7 paths on repository snapshots
+2015-08-20 14:15:56,124-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Uptime: 3 minutes, 26 seconds and 161 milliseconds
+2015-08-20 14:15:56,128-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Shutting down Scheduler...
+2015-08-20 14:15:56,129-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Stopped
+2015-08-20 14:15:56,129-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Stopping
+2015-08-20 14:15:56,130-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Stopped Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:56,261-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:56,261-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:56,264-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:56,265-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2010306890942481671/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:56,266-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:56,269-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:56,270-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:56,270-0400 INFO  [main]  org.sonatype.nexus.NxApplication - 
+-------------------------------------------------
+
+Initializing Sonatype Nexus 2.11.5-SNAPSHOT
+
+-------------------------------------------------
+2015-08-20 14:15:56,270-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Activating locally installed plugins...
+2015-08-20 14:15:56,270-0400 WARN  [main]  org.sonatype.nexus.plugins.repository.SystemNexusPluginRepository - Missing system plugins folder: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2010306890942481671/nexus-app/plugin-repository
+2015-08-20 14:15:56,271-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Starting
+2015-08-20 14:15:56,272-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Loading Nexus Configuration...
+2015-08-20 14:15:56,274-0400 INFO  [main]  org.sonatype.nexus.configuration.source.StaticConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:56,274-0400 WARN  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:56,281-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Configuration loaded successfully.
+2015-08-20 14:15:56,287-0400 INFO  [main]  org.sonatype.nexus.configuration.source.FileConfigurationSource - Nexus configuration validated successfully.
+2015-08-20 14:15:56,295-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration...
+2015-08-20 14:15:56,295-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2010306890942481671/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:56,296-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:56,296-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:56,297-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:56,297-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:56,299-0400 INFO  [main]  org.sonatype.nexus.proxy.attributes.DefaultLSAttributeStorage - Default FS AttributeStorage in place, using JacksonJSON marshaller.
+2015-08-20 14:15:56,300-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Started (connectionPoolMaxSize 200, connectionPoolSize 20, connectionPoolIdleTime 30000 ms, connectionPoolTimeout 30000 ms, keepAliveMaxDuration 30000 ms)
+2015-08-20 14:15:56,304-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central" [id=central][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:56,307-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Apache Snapshots" [id=apache-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:56,310-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Codehaus Snapshots" [id=codehaus-snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenProxyRepository]
+2015-08-20 14:15:56,313-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Releases" [id=releases][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:56,316-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Snapshots" [id=snapshots][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:56,319-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "3rd party" [id=thirdparty][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.maven.MavenHostedRepository]
+2015-08-20 14:15:56,341-0400 INFO  [Finalizer]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Shutting down
+2015-08-20 14:15:56,343-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Central M1 shadow" [id=central-m1][contentClass=Maven1][mainFacet=org.sonatype.nexus.proxy.maven.MavenShadowRepository]
+2015-08-20 14:15:56,348-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryRegistry - Added repository "Public Repositories" [id=public][contentClass=Maven2][mainFacet=org.sonatype.nexus.proxy.repository.GroupRepository]
+2015-08-20 14:15:56,348-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Initializing Scheduler...
+2015-08-20 14:15:56,348-0400 INFO  [main]  org.sonatype.nexus.scheduling.internal.DefaultTaskConfigManager - 0 task(s) to load.
+2015-08-20 14:15:56,349-0400 INFO  [main]  org.sonatype.nexus.NxApplication - This is 1st start of new Nexus instance.
+2015-08-20 14:15:56,349-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Nexus Work Directory : /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-2010306890942481671/nexus-work
+2015-08-20 14:15:56,349-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Started Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:56,426-0400 INFO  [main]  org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Apache Snapshots]...
+2015-08-20 14:15:56,433-0400 INFO  [esh-998-thread-1] *UNKNOWN org.sonatype.nexus.events.RepositoryConfigurationUpdatedEventInspector - The Remote URL of repository "Apache Snapshots" (id=apache-snapshots) has been changed, expiring its caches.
+2015-08-20 14:15:56,934-0400 INFO  [pxpool-302-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) started :: Expiring caches for repository Apache Snapshots from path null and below.
+2015-08-20 14:15:56,935-0400 INFO  [pxpool-302-thread-1] *TASK org.sonatype.nexus.tasks.ExpireCacheTask - Scheduled task (ExpireCacheTask) finished :: Expiring caches for repository Apache Snapshots from path null and below. (started 2015-08-20T14:15:56-04:00, runtime 0:00:00.001)
+2015-08-20 14:15:56,936-0400 INFO  [pxpool-302-thread-1] *TASK org.sonatype.nexus.configuration.application.DefaultNexusConfiguration - Applying Nexus Configuration due to changes in [Scheduled Tasks] made by *TASK...
+2015-08-20 14:15:56,988-0400 INFO  [main]  org.sonatype.nexus.maven.tasks.DefaultSnapshotRemover - Removing old SNAPSHOT deployments from snapshots repository.
+2015-08-20 14:15:56,989-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Uptime: 3 minutes, 27 seconds and 25 milliseconds
+2015-08-20 14:15:56,989-0400 INFO  [main]  org.sonatype.scheduling.DefaultScheduler - Shutting down Scheduler...
+2015-08-20 14:15:56,992-0400 INFO  [main]  org.sonatype.nexus.apachehttpclient.Hc4ProviderImpl - Stopped
+2015-08-20 14:15:56,993-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Stopping
+2015-08-20 14:15:56,995-0400 INFO  [main]  org.sonatype.nexus.NxApplication - Stopped Sonatype Nexus 2.11.5-SNAPSHOT
+2015-08-20 14:15:57,085-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,087-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,113-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,113-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,115-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,115-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,116-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,120-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,120-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,121-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,121-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,121-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,122-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,126-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,127-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,127-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,128-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,128-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,129-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,129-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,129-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,130-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security.xml
+2015-08-20 14:15:57,131-0400 WARN  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,131-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Trying to upgrade the configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security.xml
+2015-08-20 14:15:57,139-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.2) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security.xml
+2015-08-20 14:15:57,151-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.5 succesfully.
+2015-08-20 14:15:57,151-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Creating backup from the old file and saving the upgraded configuration.
+2015-08-20 14:15:57,152-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-1851668429126361347/nexus-work/conf/security.xml
+2015-08-20 14:15:57,219-0400 INFO  [main]  org.apache.shiro.nexus5727.FixedDefaultSessionManager - Global session timeout: 1800000 ms
+2015-08-20 14:15:57,219-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,220-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'shiro-activeSessionCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,220-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [shiro-activeSessionCache]
+2015-08-20 14:15:57,298-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,299-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,300-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,301-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-334688170490400926/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,302-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,304-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,305-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,305-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-334688170490400926/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,305-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,305-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-334688170490400926/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,306-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-334688170490400926/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,306-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,306-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,306-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,307-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-334688170490400926/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,307-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,307-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,308-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,308-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,387-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,387-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,390-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,391-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-610652987935734597/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,391-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,394-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,394-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,395-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-610652987935734597/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,395-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,395-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-610652987935734597/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,395-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-610652987935734597/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,395-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,396-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,396-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,396-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-610652987935734597/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,397-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,397-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,397-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,397-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,473-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,473-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,475-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,475-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,476-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,479-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,480-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,481-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,481-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,481-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,481-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,481-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,482-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,482-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,483-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,483-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,483-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,484-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,484-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,485-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'org.sonatype.nexus.security.UserPrincipalsHelperTest$TestRealm.authorizationCache.134' does not yet exist.  Creating now.
+2015-08-20 14:15:57,485-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [org.sonatype.nexus.security.UserPrincipalsHelperTest$TestRealm.authorizationCache.134]
+2015-08-20 14:15:57,486-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security.xml
+2015-08-20 14:15:57,486-0400 WARN  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,486-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Trying to upgrade the configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security.xml
+2015-08-20 14:15:57,487-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.2) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security.xml
+2015-08-20 14:15:57,487-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.5 succesfully.
+2015-08-20 14:15:57,487-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Creating backup from the old file and saving the upgraded configuration.
+2015-08-20 14:15:57,488-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-833738320972339690/nexus-work/conf/security.xml
+2015-08-20 14:15:57,489-0400 INFO  [main]  org.apache.shiro.nexus5727.FixedDefaultSessionManager - Global session timeout: 1800000 ms
+2015-08-20 14:15:57,490-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,490-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'shiro-activeSessionCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,490-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [shiro-activeSessionCache]
+2015-08-20 14:15:57,567-0400 INFO  [Finalizer]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Shutting down
+2015-08-20 14:15:57,567-0400 INFO  [Finalizer]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Shutting down
+2015-08-20 14:15:57,586-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,586-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,588-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,589-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-675099863451186662/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,590-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,593-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,593-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,594-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-675099863451186662/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,594-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,594-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-675099863451186662/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,595-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-675099863451186662/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,595-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,595-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,595-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,596-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-675099863451186662/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,596-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,597-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,597-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,597-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,672-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,673-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,674-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,675-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,676-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,679-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,680-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,681-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,681-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,681-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,681-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,681-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,682-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,682-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,683-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,683-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,684-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,684-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,684-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,685-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security.xml
+2015-08-20 14:15:57,685-0400 WARN  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,686-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Trying to upgrade the configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security.xml
+2015-08-20 14:15:57,686-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.2) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security.xml
+2015-08-20 14:15:57,686-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.5 succesfully.
+2015-08-20 14:15:57,687-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Creating backup from the old file and saving the upgraded configuration.
+2015-08-20 14:15:57,687-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home-979156908465052398/nexus-work/conf/security.xml
+2015-08-20 14:15:57,712-0400 INFO  [main]  org.apache.shiro.nexus5727.FixedDefaultSessionManager - Global session timeout: 1800000 ms
+2015-08-20 14:15:57,712-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,713-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'shiro-activeSessionCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,713-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [shiro-activeSessionCache]
+2015-08-20 14:15:57,792-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,792-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,794-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,795-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,795-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,798-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,798-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,799-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,799-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,799-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,799-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,800-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,800-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,800-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,801-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,801-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,801-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,802-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,802-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]
+2015-08-20 14:15:57,802-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'org.sonatype.nexus.security.UserPrincipalsHelperTest$TestRealm.authorizationCache.141' does not yet exist.  Creating now.
+2015-08-20 14:15:57,803-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [org.sonatype.nexus.security.UserPrincipalsHelperTest$TestRealm.authorizationCache.141]
+2015-08-20 14:15:57,803-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security.xml
+2015-08-20 14:15:57,803-0400 WARN  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,803-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Trying to upgrade the configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security.xml
+2015-08-20 14:15:57,804-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.2) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security.xml
+2015-08-20 14:15:57,804-0400 INFO  [main]  org.sonatype.security.model.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.5 succesfully.
+2015-08-20 14:15:57,804-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Creating backup from the old file and saving the upgraded configuration.
+2015-08-20 14:15:57,805-0400 INFO  [main]  org.sonatype.security.model.source.FileModelConfigurationSource - Loading security configuration from: /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--529560934087487383/nexus-work/conf/security.xml
+2015-08-20 14:15:57,805-0400 INFO  [main]  org.apache.shiro.nexus5727.FixedDefaultSessionManager - Global session timeout: 1800000 ms
+2015-08-20 14:15:57,806-0400 INFO  [main]  org.apache.shiro.session.mgt.AbstractValidatingSessionManager - Enabling session validation scheduler...
+2015-08-20 14:15:57,806-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'shiro-activeSessionCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,806-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [shiro-activeSessionCache]
+2015-08-20 14:15:57,898-0400 INFO  [main]  org.sonatype.sisu.goodies.eventbus.internal.DefaultEventBus - Using Reentrant Guava EventBus
+2015-08-20 14:15:57,898-0400 WARN  [main]  org.sonatype.nexus.events.DebugEventInspector - MBean already registered; replacing: org.sonatype.nexus.events:name=DebugEventInspector
+2015-08-20 14:15:57,901-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - No configuration file in place, copying the default one and continuing with it.
+2015-08-20 14:15:57,902-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--270120953103962289/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,903-0400 INFO  [main]  org.sonatype.sisu.ehcache.CacheManagerComponentImpl - Loading configuration from: file:/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/test-classes/ehcache.xml
+2015-08-20 14:15:57,906-0400 INFO  [main]  org.sonatype.nexus.proxy.registry.DefaultRepositoryTypeRegistry - Registered default repository types.
+2015-08-20 14:15:57,907-0400 INFO  [main]  org.sonatype.nexus.events.EventSubscriberHost - Initialized
+2015-08-20 14:15:57,907-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--270120953103962289/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,907-0400 WARN  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Security configuration file was not loaded, it has the wrong structure.
+2015-08-20 14:15:57,908-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Trying to upgrade the security configuration file /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--270120953103962289/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,908-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Upgrading old Security configuration file (version 2.0.4) from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--270120953103962289/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,908-0400 WARN  [main]  org.sonatype.security.configuration.upgrade.Upgrade205to207 - Security has been enabled. Disabled security is no longer supported
+2015-08-20 14:15:57,909-0400 INFO  [main]  org.sonatype.security.configuration.upgrade.DefaultSecurityConfigurationUpgrader - Security configuration file upgraded to current version 2.0.8 successfully
+2015-08-20 14:15:57,909-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Creating backup from the old file and saving the upgraded security configuration.
+2015-08-20 14:15:57,910-0400 INFO  [main]  org.sonatype.security.configuration.source.FileSecurityConfigurationSource - Loading Security configuration from /home/bamboo/bamboo-agent-home/xml-data/build-dir/NX-INT-BLD/components/nexus-core/target/plexus-home--270120953103962289/nexus-work/conf/security-configuration.xml
+2015-08-20 14:15:57,910-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthenticatingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,911-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthenticatingRealm.authorizationCache]
+2015-08-20 14:15:57,911-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Cache with name 'XmlAuthorizingRealm.authorizationCache' does not yet exist.  Creating now.
+2015-08-20 14:15:57,912-0400 INFO  [main]  org.apache.shiro.cache.ehcache.EhCacheManager - Added EhCache named [XmlAuthorizingRealm.authorizationCache]

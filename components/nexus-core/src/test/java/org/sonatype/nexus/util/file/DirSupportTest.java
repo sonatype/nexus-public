@@ -225,14 +225,8 @@ public class DirSupportTest
     DirSupport.move(root.toPath(), target);
   }
 
-  /**
-   * This is what happened when repo root was being deleted: endless cycle in as "manual" copy/move was
-   * performed (during copy), as it copied files "ahead" of itself, basically "rolling" files deeper
-   * and deeper. {@link FileSystemException} is thrown once file path length reaches OS limit. In case
-   * of repo local storage, the root was being moved under "/.nexus/trash".
-   */
-  @Test(expected = FileSystemException.class)
-  public void copyDeleteMoveToSubdirNullFilter() throws IOException {
+  @Test(expected = IllegalArgumentException.class)
+  public void copyingToChildDirDisallowedWithoutFilter() throws IOException {
     final Path target = root.toPath().resolve("dir2/dir21");
     DirSupport.copyDeleteMove(root.toPath(), target, null);
   }

@@ -88,33 +88,6 @@
       </externalConfiguration>
     </repository>
     <repository>
-      <id>codehaus-snapshots</id>
-      <name>Codehaus Snapshots</name>
-      <providerRole>org.sonatype.nexus.proxy.repository.Repository</providerRole>
-      <providerHint>maven2</providerHint>
-      <localStatus>IN_SERVICE</localStatus>
-      <notFoundCacheActive>true</notFoundCacheActive>
-      <notFoundCacheTTL>1440</notFoundCacheTTL>
-      <userManaged>true</userManaged>
-      <exposed>true</exposed>
-      <browseable>true</browseable>
-      <writePolicy>READ_ONLY</writePolicy>
-      <indexable>true</indexable>
-      <searchable>true</searchable>
-      <remoteStorage>
-        <url>https://nexus.codehaus.org/snapshots/</url>
-      </remoteStorage>
-      <externalConfiguration>
-        <proxyMode>ALLOW</proxyMode>
-        <artifactMaxAge>1440</artifactMaxAge>
-        <itemMaxAge>1440</itemMaxAge>
-        <cleanseRepositoryMetadata>false</cleanseRepositoryMetadata>
-        <downloadRemoteIndex>false</downloadRemoteIndex>
-        <checksumPolicy>WARN</checksumPolicy>
-        <repositoryPolicy>SNAPSHOT</repositoryPolicy>
-      </externalConfiguration>
-    </repository>
-    <repository>
       <id>releases</id>
       <name>Releases</name>
       <providerRole>org.sonatype.nexus.proxy.repository.Repository</providerRole>
