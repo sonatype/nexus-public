@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="osgi" class="org.ops4j.pax.logging.logback.appender.PaxAppenderDelegate"/>
+
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %X{userId} %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${karaf.data}/log/karaf.log</File>
+    <Append>true</Append>
+    <encoder>
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %X{userId} %c - %m%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${karaf.data}/log/karaf-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <logger name="org.eclipse.jetty.webapp" level="INFO"/>
+  <logger name="org.eclipse.jetty.webapp.StandardDescriptorProcessor" level="WARN"/>
+
+  <logger name="org.apache.aries" level="WARN"/>
+  <logger name="org.apache.felix" level="WARN"/>
+  <logger name="org.apache.karaf" level="WARN"/>
+
+  <root level="${root.level:-INFO}">
+    <appender-ref ref="osgi"/>
+    <appender-ref ref="console"/>
+    <appender-ref ref="logfile"/>
+  </root>
+</configuration>

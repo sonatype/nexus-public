@@ -1,0 +1,43 @@
+#!/bin/sh
+DIRNAME=`dirname "$0"`
+PROGNAME=`basename "$0"`
+
+usage() {
+    echo "${PROGNAME} { console | start | stop | restart | status }"
+    exit 1
+}
+
+if [ "x$1" = "x" ]; then
+    usage
+fi
+
+run() {
+    case "$1" in
+        'console')
+            shift
+            exec "${DIRNAME}/karaf" "$@"
+            ;;
+        'start')
+            shift
+            exec "${DIRNAME}/start" "$@"
+            ;;
+        'stop')
+            shift
+            exec "${DIRNAME}/stop" "$@"
+            ;;
+        'restart')
+            shift
+            "${DIRNAME}/stop" 2>/dev/null
+            exec "${DIRNAME}/start" "$@"
+            ;;
+        'status')
+            shift
+            exec "${DIRNAME}/status" "$@"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+}
+
+run "$@"

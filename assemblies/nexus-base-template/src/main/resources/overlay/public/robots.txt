@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /repository/
+Disallow: /service/
+Allow: /

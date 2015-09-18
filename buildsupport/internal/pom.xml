@@ -1,0 +1,174 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.buildsupport</groupId>
+    <artifactId>nexus-buildsupport</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-buildsupport-internal</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <sonatype-licensing.version>1.4.3</sonatype-licensing.version>
+    <clm.dto.model.version>1.5.0</clm.dto.model.version>
+    <insight-brain.version>1.12.0-04</insight-brain.version>
+    <insight-scanner.version>2.2.0</insight-scanner.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- licensing -->
+
+      <dependency>
+        <groupId>com.sonatype.licensing</groupId>
+        <artifactId>license-bundle</artifactId>
+        <version>${sonatype-licensing.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>aopalliance</groupId>
+            <artifactId>aopalliance</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.sonatype.sisu</groupId>
+            <artifactId>sisu-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>xmlpull</groupId>
+            <artifactId>xmlpull</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>xpp3</groupId>
+            <artifactId>xpp3_min</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.licensing</groupId>
+        <artifactId>license-creator</artifactId>
+        <version>${sonatype-licensing.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.licensing</groupId>
+        <artifactId>license-extension</artifactId>
+        <version>${sonatype-licensing.version}</version>
+      </dependency>
+
+      <!-- CLM/insight -->
+
+      <dependency>
+        <groupId>com.sonatype.clm</groupId>
+        <artifactId>com.sonatype.clm.dto.model</artifactId>
+        <version>${clm.dto.model.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>sonatype-clm-scanner</artifactId>
+        <version>1.11.1-01</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-scanner-core</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-scanner-model-io</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-mock-server</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>insight-rm-common</artifactId>
+        <version>${insight-brain.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>insight-brain-service</artifactId>
+        <version>${insight-brain.version}</version>
+        <exclusions>
+          <!--
+          Exclude banned dependencies pulled in via openjpa.
+          -->
+          <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.xml.stream</groupId>
+            <artifactId>stax-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sonatype.licensing</groupId>
+            <artifactId>license-bundle</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.sonatype.sisu</groupId>
+            <artifactId>sisu-inject-bean</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>insight-brain-service</artifactId>
+        <version>${insight-brain.version}</version>
+        <classifier>tests</classifier>
+        <exclusions>
+          <exclusion>
+            <groupId>com.sonatype.licensing</groupId>
+            <artifactId>license-bundle</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- analytics -->
+
+      <dependency>
+        <groupId>com.sonatype.analytics</groupId>
+        <artifactId>analytics-client</artifactId>
+        <version>1.1.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.analytics</groupId>
+        <artifactId>analytics-assembly</artifactId>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+        <version>1.1.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>

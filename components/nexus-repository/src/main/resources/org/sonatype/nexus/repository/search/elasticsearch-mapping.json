@@ -1,0 +1,77 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "case_insensitive_sort": {
+          "tokenizer": "keyword",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "component": {
+      "properties": {
+        "assets": {
+          "properties": {
+            "attributes": {
+              "properties": {
+                "checksum": {
+                  "properties": {
+                    "md5": {
+                      "type": "string",
+                      "index": "not_analyzed"
+                    },
+                    "sha1": {
+                      "type": "string",
+                      "index": "not_analyzed"
+                    }
+                  }
+                }
+              }
+            },
+            "content_type": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "last_updated": {
+              "type": "long"
+            }
+          }
+        },
+        "format": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "group": {
+          "type": "string",
+          "fields": {
+            "case_insensitive": {
+              "type": "string",
+              "analyzer": "case_insensitive_sort"
+            }
+          }
+        },
+        "name": {
+          "type": "string",
+          "fields": {
+            "case_insensitive": {
+              "type": "string",
+              "analyzer": "case_insensitive_sort"
+            }
+          }
+        },
+        "repository_name": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "version": {
+          "type": "string",
+          "index": "not_analyzed"
+        }
+      }
+    }
+  }
+}

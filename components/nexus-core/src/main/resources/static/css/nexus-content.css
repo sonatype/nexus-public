@@ -1,0 +1,161 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+body {
+  font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #dddddd;
+  margin: 0;
+  padding: 0;
+}
+
+.nexus-header {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 4px 4px 4px 16px;
+  font-weight: 100;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 32px;
+}
+
+.nexus-header a {
+  text-decoration: none;
+  color: #FFFFFF;
+}
+
+.nexus-header a:hover,
+.nexus-header a:focus {
+  color: #96CAEE;
+}
+
+.nexus-header a:active {
+  color: #0F4976;
+}
+
+.nexus-header img,
+.nexus-header span {
+  vertical-align: middle;
+}
+
+.nexus-header .name {
+  font-size: 20px;
+  padding-left: 3px;
+}
+
+.nexus-header .version {
+  font-size: 10px;
+  padding-left: 4px;
+  font-weight: bold;
+  display: inline-block;
+  padding-top: 6px;
+}
+
+.nexus-body {
+  padding: 0 20px 0 20px;
+  position: absolute;
+  left: 0;
+  top: 40px;
+  right: 0;
+  bottom: 0;
+  border-left: #cbcbcb 1px solid;
+  border-right: #cbcbcb 1px solid;
+  background-color: #f4f4f4;
+}
+
+.nexus-body img {
+  float: left;
+  margin-right: 10px;
+}
+
+.nexus-body .content-header {
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #dddddd;
+  z-index: 1;
+}
+
+.nexus-body .content-header .title {
+  font-size: 26px;
+}
+
+.nexus-body .content-header .description {
+  font-size: 13px;
+  padding-left: 6px;
+  font-weight: normal;
+}
+
+.nexus-body .content-body {
+  position: absolute;
+  top: 53px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 0 10px 0;
+  margin: 0 10px 0 10px;
+  overflow: auto;
+}
+
+.nexus-body .content-section {
+  font-size: 13px;
+  line-height: 20px;
+  background-color: #ffffff;
+  border: #dddddd solid 1px;
+  word-wrap: break-word;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/*
+ * Tabular data
+ */
+
+.content-section table {
+  font-size: 13px;
+  margin-top: 13px;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.content-section tbody tr:nth-child(odd) {
+  background-color: #FAFAFA;
+}
+
+.content-section th,
+.content-section td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 24px 5px 5px;
+  border-bottom: solid 1px #EDEDED;
+}
+
+/* Force the first column to have a fixed width */
+.content-section td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.content-section th:last-child,
+.content-section td:last-child {
+  padding-right: 5px;
+}
+
+.content-section th {
+  font-weight: normal;
+  font-style: italic;
+}

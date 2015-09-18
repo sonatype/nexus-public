@@ -1,0 +1,153 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+/**
+ * Font-awesome
+ */
+@import url('fonts/font-awesome-4.2.0/css/font-awesome.min.css');
+
+/**
+ * @class NX.view.header.Panel
+ */
+.nx-header-productname {
+  color: #FFFFFF;
+  font-family: 'Proxima Nova Thin', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 20px;
+}
+
+.nx-header-productversion {
+  color: #FFFFFF;
+  font-family: 'Proxima Nova Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 10px;
+
+  /* keep space between product name and version */
+  padding-left: 8px;
+}
+
+/**
+ * @namespace NX.view.info
+ */
+
+.nx-info {
+  overflow: auto;
+}
+
+.nx-info-entry td {
+  padding-bottom: 4px;
+  vertical-align: top;
+}
+
+.nx-info-entry-name {
+  padding-left: 0;
+  padding-right: 6px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.nx-info-entry-value {
+  padding-left: 0;
+  padding-right: 25px;
+}
+
+.nx-info-entry-value pre {
+  margin: 0;
+}
+
+.nx-red-marker td {
+  color: #D04437;
+}
+
+/**
+ * @namespace NX.view.drilldown
+ */
+
+.nx-masterdetail-warning {
+  padding-top: 10px;
+}
+
+.nx-masterdetail-warning img {
+  vertical-align: bottom;
+  padding-right: 5px;
+}
+
+.nx-masterdetail-warning div {
+  padding: 8px;
+
+  color: black;
+  background-color: #FFF8F7;
+  border: solid 1px #D04437;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+/**
+ * @class Ext.ux.form.ItemSelector
+ * @class NX.ext.form.field.ItemSelector
+ */
+
+.x-form-multiselect-body .x-boundlist .x-mask {
+  background: none;
+}
+
+.x-form-itemselector-body .x-form-item {
+  margin: 0;
+}
+
+/**
+ * @class NX.view.feature.Group
+ */
+
+.nx-feature-group {
+  margin-top: 16px;
+  margin-left: 16px;
+}
+
+.nx-feature-group .x-item-over {
+  border: 1px solid #C1C1C1;
+  background: #E8E8E8;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.nx-feature-group .x-item-selected {
+  border: 1px solid #909090;
+  background: #C6C6C6;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.nx-feature-group .item-wrap {
+  float: left;
+  width: 200px;
+  height: 42px;
+  margin: 5px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.nx-feature-group img {
+  height: 32px;
+  width: 32px;
+  margin-right: 5px;
+}
+
+/**
+ * Custom Ext.form.field.Trigger art.
+ */
+
+.nx-form-fa-minus-circle-trigger {
+  background-image: url(images/form/fa-minus-circle-trigger.png);
+}
+
+.nx-form-fa-times-circle-trigger {
+  background-image: url(images/form/fa-times-circle-trigger.png);
+}

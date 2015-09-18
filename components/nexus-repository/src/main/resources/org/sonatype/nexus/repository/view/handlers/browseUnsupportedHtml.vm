@@ -1,0 +1,55 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+<html>
+<head>
+  <title>Repository - Sonatype Nexus</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+  <link rel="icon" type="image/png" href="$nexusUrl/favicon.png?$urlSuffix">
+  <!--[if IE]>
+  <link rel="SHORTCUT ICON" href="$nexusUrl/favicon.ico?$urlSuffix"/>
+  <![endif]-->
+
+  <link rel="stylesheet" type="text/css" href="$nexusUrl/static/css/nexus-content.css?$urlSuffix"/>
+</head>
+<body>
+<div class="nexus-header">
+  <a href="$nexusUrl">
+    <img src="$nexusUrl/static/images/nexus.png?$urlSuffix"/>
+    <span class="name">Sonatype Nexus</span>
+  </a>
+  <span class="version">$nexusEdition $nexusVersion</span>
+</div>
+
+<div class="nexus-body">
+  <div class="content-header">
+    <img src="$nexusUrl/static/rapture/resources/icons/x32/database.png?$urlSuffix"/>
+    <span class="title">Repository</span>
+    <span class="description">${repository.name}</span>
+  </div>
+
+  <div class="content-body">
+    <div class="content-section">
+      <p>
+        This ${repository.format} ${repository.type} repository is not directly browseable at this URL.
+      </p>
+
+      <p>
+        Please use the <a href="$nexusUrl/#browse/browse/components:${repository.name}">component browser</a>
+        or <a href="$nexusUrl/#browse/browse/assets:${repository.name}">asset browser</a>
+        to inspect the contents of this repository.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.buildsupport</groupId>
+    <artifactId>public-parent</artifactId>
+    <version>8</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>org.sonatype.nexus</groupId>
+  <artifactId>nexus-parent</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>pom</packaging>
+
+  <version>3.0.0-SNAPSHOT</version>
+
+  <inceptionYear>2008</inceptionYear>
+  <url>http://nexus.sonatype.org/</url>
+
+  <licenses>
+    <license>
+      <name>Eclipse Public License</name>
+      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+    </license>
+  </licenses>
+
+  <issueManagement>
+    <system>Jira</system>
+    <url>http://issues.sonatype.org/browse/NEXUS</url>
+  </issueManagement>
+
+  <scm>
+    <connection>scm:git:git://github.com/sonatype/nexus-public.git</connection>
+    <developerConnection>scm:git:git@github.com:sonatype/nexus-public.git</developerConnection>
+    <url>https://github.com/sonatype/nexus-public</url>
+  </scm>
+
+  <repositories>
+    <repository>
+      <id>rso-public-grid</id>
+      <url>https://repository.sonatype.org/content/groups/sonatype-public-grid/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>rso-public-grid</id>
+      <url>https://repository.sonatype.org/content/groups/sonatype-public-grid/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <prerequisites>
+    <!-- Mostly meaningless, though site plugin uses this; Minimum version controlled by enforcer plugin -->
+    <maven>3.0.5</maven>
+  </prerequisites>
+
+  <properties>
+    <!--
+    Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
+    These values must always be constants; 'nexus.version' will get update automatically by set-version.
+    -->
+    <nexus.version>3.0.0-SNAPSHOT</nexus.version>
+
+    <!-- logging configuration used in logback config files to control test logging -->
+    <test.log.level>INFO</test.log.level>
+    <it.test.log.level>INFO</it.test.log.level>
+    <it.nexus.log.level>INFO</it.nexus.log.level>
+
+    <!--
+    Default compile support for Java7+
+    A few modules need to remain compatible with Java6 and must override and provide animal-sniffer configuration.
+    -->
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+    
+    <!--
+    Sonar configuration.
+    -->
+    <sonar.branch>3.0</sonar.branch>
+
+    <!--
+    Default optimization settings for optimized "prod" aggregate sources.
+    -->
+    <extjs.omit>true</extjs.omit>
+    <extjs.omit.debug>true</extjs.omit.debug>
+    <extjs.omit.assert>true</extjs.omit.assert>
+    <maven.yuicompressor.nomunge>false</maven.yuicompressor.nomunge>
+    <maven.yuicompressor.nominify>false</maven.yuicompressor.nominify>
+    <maven.yuicompressor.disableOptimizations>false</maven.yuicompressor.disableOptimizations>
+    <maven.yuicompressor.linebreakpos>-1</maven.yuicompressor.linebreakpos>
+  </properties>
+
+  <modules>
+    <!--
+    Include buildsupport first, order seems chaotic otherwise
+    -->
+    <module>buildsupport</module>
+
+    <module>assemblies</module>
+    <module>components</module>
+    <module>plugins</module>
+    <module>thirdparty-bundles</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- components -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>google-guava-eventbus</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-analytics-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-blobstore-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-blobstore-file</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-bootstrap</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-capability</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-commands</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-common</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-core</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-crypto</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-orient</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-cache</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-elasticsearch</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-email</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-extender</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-httpclient</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-jmx</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-scheduling</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-formfields</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-guice-servlet</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-mime</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-oss-edition</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-oss-edition</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-plugin-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-repository</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-rest</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-rest-client</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-rest-jackson2</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-security</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-servlet</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-ssl</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-supportzip-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-thread</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-transaction</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-validation</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-webresources-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>pax-logging-metrics</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>pax-logging-access</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <!-- testsupport -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-pax-exam</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-test-common</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <!-- assemblies -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>karaf-nexus-branding</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-base-edition</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-base-template</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-boot-feature</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+        <scope>runtime</scope>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <dependencies>
+            <!--
+            Keep versions in sync with buildsupport/groovy/pom.xml
+            -->
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-eclipse-compiler</artifactId>
+              <version>2.9.2-01</version>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-eclipse-batch</artifactId>
+              <version>2.4.3-01</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <!--
+              While these properties are the "default" compiler plugin ones,
+              we have them here explicitly for easier readability, as some
+              modules will override these properties to retain Java6 compatibility.
+            -->
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <!--
+            Configure support for Groovy compilation.
+            -->
+            <compilerId>groovy-eclipse-compiler</compilerId>
+          </configuration>
+        </plugin>
+
+        <!--
+        Turn off strict javadoc checks in Java8.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <additionalparam>-Xdoclint:none</additionalparam>
+          </configuration>
+        </plugin>
+
+        <!--
+        Additional configuration for release; enable additional profiles.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <configuration>
+            <releaseProfiles>release,optimize</releaseProfiles>
+          </configuration>
+        </plugin>
+
+        <!--
+        Basic unit-test environment configuration.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <forkMode>once</forkMode>
+            <argLine>
+              -Xmx300m
+              -XX:MaxPermSize=192m
+              -XX:+HeapDumpOnOutOfMemoryError
+              -XX:HeapDumpPath=${project.build.directory}/surefire-reports
+            </argLine>
+            <excludes>
+              <exclude>**/Abstract*</exclude>
+              <exclude>**/*$*</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+
+        <!--
+        Basic integration-test environment configuration.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <configuration>
+            <forkMode>always</forkMode>
+            <argLine>
+              -Xmx300m
+              -XX:MaxPermSize=192m
+              -XX:+HeapDumpOnOutOfMemoryError
+              -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
+            </argLine>
+            <excludes>
+              <exclude>**/Abstract*</exclude>
+              <exclude>**/*$*</exclude>
+              <!--TODO remove this line once CI is ready for Ui testing (has web drivers installed)-->
+              <exclude>**/rapture/*</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <configuration>
+            <signature>
+              <groupId>org.codehaus.mojo.signature</groupId>
+              <artifactId>java17</artifactId>
+              <version>1.0</version>
+            </signature>
+          </configuration>
+          <dependencies>
+            <!-- TODO: MANIMALSNIFFER-51, fixed in 1.14 but found some NPE so still on 1.13 for now -->
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm-all</artifactId>
+              <version>5.0.3</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+
+        <!--
+        For maven-plugins which still need Plexus descriptors.
+        -->
+        <plugin>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-metadata</artifactId>
+          <version>1.5.5</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.thoughtworks.qdox</groupId>
+              <artifactId>qdox</artifactId>
+              <version>1.12</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>generate-metadata</goal>
+                <goal>generate-test-metadata</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.gmaven</groupId>
+          <artifactId>gmaven-plugin</artifactId>
+          <version>1.5</version>
+          <configuration>
+            <providerSelection>2.0</providerSelection>
+          </configuration>
+        </plugin>
+
+        <!--
+        Generate sisu index metadata.
+        -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>sisu-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <goals>
+                <goal>main-index</goal>
+                <goal>test-index</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!--
+        Generate basic OSGi metadata.
+        -->
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>2.4.0</version>
+          <extensions>true</extensions>
+          <configuration>
+            <instructions>
+              <!-- relax range to account for guava versioning -->
+              <_consumer-policy>$(version;==)</_consumer-policy>
+              <!-- include all content in the output directory -->
+              <Include-Resource>
+                /=${project.build.outputDirectory},{maven-resources}
+              </Include-Resource>
+              <!-- clear default to avoid spurious !* warnings -->
+              <Private-Package/>
+            </instructions>
+          </configuration>
+        </plugin>
+
+        <!--
+        Generate Karaf feature XML.
+        -->
+        <plugin>
+          <groupId>org.apache.karaf.tooling</groupId>
+          <artifactId>karaf-maven-plugin</artifactId>
+          <version>3.0.4</version>
+          <extensions>true</extensions>
+          <configuration>
+            <excludedArtifactIds>
+              <!--
+              Covered by platform/other bundles
+              -->
+              <id>org.osgi.core</id>
+              <id>org.osgi.compendium</id>
+              <id>org.eclipse.osgi</id>
+              <id>activation</id>
+              <id>javax.annotation</id>
+              <id>javax.annotation-api</id>
+              <id>jboss-annotations-api_1.1_spec</id>
+              <id>javax.inject</id>
+              <id>aopalliance</id>
+              <id>javax.ws.rs</id>
+              <id>jsr250-api</id>
+              <id>jsr305</id>
+              <id>slf4j-api</id>
+              <id>jul-to-slf4j</id>
+              <id>jcl-over-slf4j</id>
+              <id>log4j-over-slf4j</id>
+              <id>logback-core</id>
+              <id>logback-classic</id>
+              <id>pax-logging-api</id>
+              <!--
+              Need special wrapping/fragments
+              -->
+              <id>javax.el</id>
+              <id>validation-api</id>
+              <id>paranamer</id>
+              <id>httpcore</id>
+              <id>httpclient</id>
+            </excludedArtifactIds>
+          </configuration>
+        </plugin>
+
+        <!--
+        Generate Pax-Exam test-dependency XML.
+        -->
+        <plugin>
+          <groupId>org.apache.servicemix.tooling</groupId>
+          <artifactId>depends-maven-plugin</artifactId>
+          <version>1.2</version>
+          <executions>
+            <execution>
+              <id>generate-depends-file</id>
+              <goals>
+                <goal>generate-depends-file</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.sonatype.nexus.buildsupport</groupId>
+          <artifactId>extjs-maven-plugin</artifactId>
+          <version>3.0.0-SNAPSHOT</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>aggregate-js</goal>
+              </goals>
+              <configuration>
+                <sourceDirectory>${project.basedir}/src/main/resources/static/rapture</sourceDirectory>
+                <outputFile>${project.build.outputDirectory}/static/rapture/${project.artifactId}-debug.js</outputFile>
+                <omitFlags>
+                  <debug>${extjs.omit.debug}</debug>
+                  <assert>${extjs.omit.assert}</assert>
+                </omitFlags>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>yuicompressor-maven-plugin</artifactId>
+          <version>1.1.0</version>
+          <configuration>
+            <jswarn>false</jswarn>
+          </configuration>
+          <executions>
+            <execution>
+              <id>plugin-js</id>
+              <goals>
+                <goal>aggregate-js</goal>
+              </goals>
+              <configuration>
+                <output>${project.build.outputDirectory}/static/rapture/${project.artifactId}-prod.js</output>
+                <sourceDirectory>${project.build.outputDirectory}/static/rapture</sourceDirectory>
+                <includes>
+                  <include>${project.artifactId}-debug.js</include>
+                </includes>
+              </configuration>
+            </execution>
+            <execution>
+              <id>plugin-css</id>
+              <goals>
+                <goal>aggregate-css</goal>
+              </goals>
+              <configuration>
+                <output>${project.build.outputDirectory}/static/rapture/resources/${project.artifactId}-prod.css</output>
+                <sourceDirectory>${project.basedir}/src/main/resources/static/rapture/resources</sourceDirectory>
+                <includes>
+                  <include>${project.artifactId}-debug.css</include>
+                </includes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!--
+        Use headers.sh script.
+        -->
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <configuration>
+            <excludes combine.children="append">
+              <!--
+              Exclude zion configuration.
+              -->
+              <exclude>.zion/**</exclude>
+              <exclude>variables.properties</exclude>
+
+              <!--
+              Exclude top-level helper scripts.
+              -->
+              <exclude>*.sh</exclude>
+              <exclude>*.bat</exclude>
+
+              <!--
+              Exclude maven-wrapper configuration.
+              -->
+              <exclude>.mvn/**</exclude>
+
+              <!--
+              Exclude optional private bits.
+              -->
+              <exclude>private/**</exclude>
+
+              <!--
+              Exclude assembly overlay files
+              -->
+              <exclude>assemblies/**/src/main/resources/overlay/**</exclude>
+
+              <!--
+              Exclude (most) test resource files, many of these need specific content w/o headers.
+              -->
+              <exclude>**/src/test/resources/**</exclude>
+              <exclude>**/src/test/filtered-resources/**</exclude>
+              <exclude>**/src/test/it-resources/**</exclude>
+
+              <!--
+              Exclude third-party resources.
+              -->
+              <exclude>**/nexus-rapture-baseapp/src/main/resources/**</exclude>
+              <exclude>**/nexus-rapture-baseapp/src/main/baseapp/**</exclude>
+              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/Ext/ux/**</exclude>
+              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/Ext/patch/**</exclude>
+              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/resources/fonts/**</exclude>
+
+              <!--
+              Excludes for specific classes which have compatible, yet different licences.
+              -->
+              <exclude>**/nexus-extdirect-plugin/**/com/softwarementors/**</exclude>
+              <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-environment</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <fail>true</fail>
+              <rules>
+                <!--
+                Require Maven 3.0.4+
+                -->
+                <requireMavenVersion>
+                  <version>[3.0.4,)</version>
+                </requireMavenVersion>
+
+                <!--
+                Require Java 7+
+                -->
+                <requireJavaVersion>
+                  <version>[1.7,)</version>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>enforce-dependencies</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <fail>true</fail>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <!--
+                    Velocity 1.4 is banned, org.apache.velocity:velocity should be used instead.
+                    -->
+                    <exclude>velocity:velocity</exclude>
+                    <exclude>velocity:velocity-dep</exclude>
+
+                    <!--
+                    SISU Velocity is banned
+                    -->
+                    <exclude>org.sonatype.sisu:sisu-velocity</exclude>
+
+                    <!--
+                    Conflicts with slf4j.
+                    -->
+                    <exclude>commons-logging:*</exclude>
+
+                    <!--
+                    Security hazard: osvdb-58760
+                    -->
+                    <exclude>commons-vfs:commons-vfs</exclude>
+
+                    <!--
+                    Ban beanutils pre-1.9 which includes embedded commons-collections.
+                    -->
+                    <exclude>commons-beanutils:commons-beanutils:(,1.9]</exclude>
+                    <!--
+                    Ban older commons-beanutils-core use 1.9 simple module instead.
+                    -->
+                    <exclude>commons-beanutils:commons-beanutils-core</exclude>
+
+                    <!--
+                    Security hazard: osvdb-68314
+                    -->
+                    <exclude>xmlrpc:*</exclude>
+
+                    <!--
+                    Require use of sisu plexus integration.
+                    -->
+                    <exclude>*:plexus-container-default</exclude>
+                    <exclude>*:plexus-component-api</exclude>
+
+                    <!--
+                    Ban old versions of apache shiro.
+                    -->
+                    <exclude>*:jsecurity</exclude>
+
+                    <!--
+                    Ban old aether so we can require compatible version (see includes).
+                    -->
+                    <exclude>org.sonatype.aether:*:1.8</exclude>
+
+                    <!--
+                    Ban apis which are part of Java 6.
+                    -->
+                    <!--<exclude>*:activation</exclude>-->
+                    <!--<exclude>*:stax-api</exclude>-->
+                    <!--<exclude>*:jaxb-api</exclude>-->
+                    <!--<exclude>*:xml-apis</exclude>-->
+
+                    <!--
+                    Ban junit which includes old, or improper hamcrest.
+                    -->
+                    <exclude>junit:junit:(,4.10]</exclude>
+                    <exclude>junit:junit-dep</exclude>
+
+                    <!--
+                    Ban old servlet apis.
+                    -->
+                    <exclude>javax.servlet:servlet-api</exclude>
+                    <exclude>org.mortbay.jetty:servlet-api</exclude>
+                    <exclude>org.mortbay.jetty:servlet-api-2.5</exclude>
+
+                    <!--
+                    Ban uber mockito.
+                    -->
+                    <exclude>org.mockito:mockito-all</exclude>
+
+                    <!--
+                    Ban hamcrest so we can require compatible version (see includes).
+                    -->
+                    <exclude>org.hamcrest:*</exclude>
+
+                    <!--
+                    Ban uber hamcrest.
+                    -->
+                    <exclude>org.hamcrest:hamcrest-all:*</exclude>
+
+                    <!--
+                    Ban old plexus components.
+                    -->
+                    <exclude>org.sonatype.spice:plexus-ehcache</exclude>
+
+                    <!--
+                    Ban old litmus.
+                    -->
+                    <exclude>org.sonatype.sisu.litmus:litmus-testsupport:(,1.3]</exclude>
+
+                    <!--
+                    Ban log4j.
+                    -->
+                    <exclude>log4j:*</exclude>
+
+                    <!--
+                    Ban old bouncycastle.
+                    -->
+                    <exclude>org.bouncycastle:*-jdk14:*</exclude>
+                    <exclude>org.bouncycastle:*-jdk15:*</exclude>
+                    <exclude>bouncycastle:*-jdk14:*</exclude>
+                    <exclude>bouncycastle:*-jdk15:*</exclude>
+
+                    <!--
+                    Ban snappy-java as there are lingering issues on OSGi when restarting.
+                    -->
+                    <exclude>org.xerial.snappy:snappy-java:*</exclude>
+                  </excludes>
+
+                  <!--
+                  Exceptions to excludes.
+                  -->
+                  <includes>
+                    <!--
+                    Allow aether 1.8.1+
+                    -->
+                    <include>org.sonatype.aether:*:1.8.1</include>
+
+                    <!--
+                    Allow hamcrest 1.3
+                    -->
+                    <include>org.hamcrest:*:1.3</include>
+                  </includes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build-identity</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+            <configuration>
+              <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+              <buildNumberPropertyName>build.revision</buildNumberPropertyName>
+              <scmBranchPropertyName>build.branch</scmBranchPropertyName>
+
+              <!-- separate from build.timestamp, which uses a less precise format defined in buildsupport parent -->
+              <timestampPropertyName>build.when</timestampPropertyName>
+              <timestampFormat>{0,date,yyyy-MM-dd-HHmm-ssS}</timestampFormat>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!--
+    Includes building of private modules when the sources are present.
+    -->
+    <profile>
+      <id>include-private</id>
+      <activation>
+        <file>
+          <exists>private/pom.xml</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>private</module>
+      </modules>
+    </profile>
+
+    <!--
+    Enable running of integration-tests.
+    -->
+    <profile>
+      <id>it</id>
+      <activation>
+        <property>
+          <name>it</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+    Enable verbose logging for unit tests; defaults to DEBUG.
+    -->
+    <profile>
+      <id>test.debug</id>
+      <activation>
+        <property>
+          <name>test.debug</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <test.log.level>DEBUG</test.log.level>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <systemPropertyVariables>
+                  <test.log.level>${test.log.level}</test.log.level>
+                </systemPropertyVariables>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
+    <!--
+    Enable verbose logging for integration tests; defaults to DEBUG.
+    -->
+    <profile>
+      <id>it.debug</id>
+      <activation>
+        <property>
+          <name>it.debug</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <test.log.level>DEBUG</test.log.level>
+        <it.test.log.level>DEBUG</it.test.log.level>
+        <it.nexus.log.level>DEBUG</it.nexus.log.level>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-failsafe-plugin</artifactId>
+              <configuration>
+                <systemPropertyVariables>
+                  <test.log.level>${test.log.level}</test.log.level>
+                  <it.test.log.level>${it.test.log.level}</it.test.log.level>
+                  <it.nexus.log.level>${it.nexus.log.level}</it.nexus.log.level>
+                </systemPropertyVariables>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
+    <!--
+    Enable animal-sniffer to verify JDK compatibility.
+    -->
+    <profile>
+      <id>animal-sniffer</id>
+      <activation>
+        <property>
+          <name>sniff</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+    Disable optimization for "prod" aggregate sources.
+    -->
+    <profile>
+      <id>disable-optimize</id>
+      <properties>
+        <extjs.omit>false</extjs.omit>
+        <maven.yuicompressor.nominify>true</maven.yuicompressor.nominify>
+        <maven.yuicompressor.nomunge>true</maven.yuicompressor.nomunge>
+        <maven.yuicompressor.disableOptimizations>true</maven.yuicompressor.disableOptimizations>
+        <maven.yuicompressor.linebreakpos>0</maven.yuicompressor.linebreakpos>
+      </properties>
+    </profile>
+
+    <!--
+    Execute jslint on javascript sources.
+    -->
+    <profile>
+      <id>jslint</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>yuicompressor-maven-plugin</artifactId>
+            <configuration>
+              <sourceDirectory>${project.basedir}/src/main/resources/static/rapture</sourceDirectory>
+              <jslintOptions>
+                <!-- ignore whitespace rules -->
+                <white>true</white>
+                <!-- do not require 'use strict' -->
+                <sloppy>true</sloppy>
+                <!-- allow to do comments -->
+                <todo>true</todo>
+                <!-- allow subscript notation -->
+                <sub>true</sub>
+              </jslintOptions>
+            </configuration>
+            <executions>
+              <execution>
+                <id>plugin-jslint</id>
+                <goals>
+                  <goal>jslint</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+    Support for loading projects in Eclipse.
+    -->
+    <profile>
+      <id>m2e</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <versionRange>[2.5.1,)</versionRange>
+                        <goals>
+                          <goal>copy</goal>
+                          <goal>unpack</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-plugin-plugin</artifactId>
+                        <versionRange>[3.2,)</versionRange>
+                        <goals>
+                          <goal>descriptor</goal>
+                          <goal>helpmojo</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <versionRange>[1.7,)</versionRange>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.karaf.tooling</groupId>
+                        <artifactId>karaf-maven-plugin</artifactId>
+                        <versionRange>[3.0.0,)</versionRange>
+                        <goals>
+                          <goal>features-generate-descriptor</goal>
+                          <goal>install-kars</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>gmaven-plugin</artifactId>
+                        <versionRange>[1.5,)</versionRange>
+                        <goals>
+                          <goal>execute</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.servicemix.tooling</groupId>
+                        <artifactId>depends-maven-plugin</artifactId>
+                        <versionRange>[1.2,)</versionRange>
+                        <goals>
+                          <goal>generate-depends-file</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <execute/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.sonatype.nexus.buildsupport</groupId>
+                        <artifactId>extjs-maven-plugin</artifactId>
+                        <versionRange>[3.0.0-SNAPSHOT,)</versionRange>
+                        <goals>
+                          <goal>aggregate-js</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <execute/>
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

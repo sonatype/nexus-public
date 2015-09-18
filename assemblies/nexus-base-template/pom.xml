@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonatype.nexus.assemblies</groupId>
+    <artifactId>nexus-assemblies</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-base-template</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>karaf-assembly</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonatype.nexus.assemblies</groupId>
+      <artifactId>karaf-nexus-branding</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!--
+    Karaf features
+    -->
+    <dependency>
+      <groupId>org.apache.karaf.features</groupId>
+      <artifactId>framework</artifactId>
+      <type>kar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.karaf.features</groupId>
+      <artifactId>standard</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!--
+    Nexus features
+    -->
+    <dependency>
+      <groupId>org.sonatype.nexus.assemblies</groupId>
+      <artifactId>nexus-boot-feature</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.assemblies</groupId>
+      <artifactId>nexus-base-edition</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-oss-edition</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!--
+    Nexus Plugin features
+    -->
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-quartz-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-siesta-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-ssl-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-rapture-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-extdirect-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-coreui-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-httpbridge</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-maven</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-raw</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!--
+    HACK: expose orientdb distribution to extract studio.zip plugin
+    -->
+    <dependency>
+      <groupId>com.orientechnologies</groupId>
+      <artifactId>orientdb-community</artifactId>
+      <classifier>distribution</classifier>
+      <type>zip</type>
+      <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>mvn-coordinates</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                project.artifactMap.each{k,v->
+                  // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
+                  project.properties['mvn:'+v.artifactId]='mvn\:'+v.groupId+'/'+v.artifactId+'/'+v.baseVersion
+                }
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>configure-assembly</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <!-- overlay customizations -->
+                <copy todir="${project.build.directory}/assembly" overwrite="true">
+                  <fileset dir="${project.basedir}/src/main/resources/overlay"/>
+                </copy>
+
+                <!-- install some custom lib/ jar -->
+                <copy file="${javax.annotation:javax.annotation-api:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${com.google.code.findbugs:jsr305:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${org.sonatype.nexus.assemblies:karaf-nexus-branding:jar}"
+                      tofile="${project.build.directory}/assembly/lib/karaf-nexus-branding.jar"/>
+
+                <delete>
+                  <fileset dir="${project.build.directory}/assembly">
+                    <!-- delete some cruft which karaf includes by default -->
+                    <include name="**/README"/>
+                    <include name="etc/all.policy"/>
+                    <include name="etc/distribution.info"/>
+                    <include name="etc/equinox-debug.properties"/>
+                    <include name="etc/regions-config.xml"/>
+                    <include name="etc/org.apache.karaf.kar.cfg"/>
+                    <include name="etc/org.apache.karaf.features.obr.cfg"/>
+                    <include name="etc/org.apache.karaf.features.repos.cfg"/>
+                    <include name="etc/org.apache.karaf.command.acl.*.cfg"/>
+                    <include name="etc/jmx.acl.*.cfg"/>
+
+                    <!-- remove xercesImpl -->
+                    <include name="lib/endorsed/xercesImpl*.jar"/>
+                  </fileset>
+                </delete>
+
+                <!-- trim out various enterprise/deployment features we don't need at the moment -->
+                <replace file="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg">
+                  <replacefilter token=",mvn:org.apache.karaf.features/enterprise/3.0.4/xml/features"/>
+                  <replacefilter token=",mvn:org.ops4j.pax.web/pax-web-features/3.2.3/xml/features"/>
+                  <replacefilter token=",mvn:org.apache.karaf.features/spring/3.0.4/xml/features"/>
+                  <replacefilter token=",kar,ssh,management"/>
+                  <replacefilter token=",region"/>
+                </replace>
+
+                <replace file="${project.build.directory}/assembly/etc/startup.properties">
+                  <!-- swap pax-logging-service (log4j) with pax-logging-logback plus our metrics+access support -->
+                  <replacefilter token="${mvn:pax-logging-service}"
+                                 value="${mvn:metrics-core} = 8${line.separator}${mvn:metrics-logback} = 8${line.separator}${mvn:pax-logging-metrics} = 8${line.separator}${mvn:pax-logging-access} = 8${line.separator}${mvn:pax-logging-logback}"/>
+                </replace>
+
+                <!--
+                HACK: Include orientdb-studio plugin.
+                -->
+                <unzip src="${com.orientechnologies:orientdb-community:zip:distribution}"
+                       dest="${project.build.directory}/assembly/data/orient/plugins">
+                  <mergemapper to="studio.zip"/>
+                  <patternset>
+                    <include name="*/plugins/studio-*.zip"/>
+                  </patternset>
+                </unzip>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.karaf.tooling</groupId>
+        <artifactId>karaf-maven-plugin</artifactId>
+        <configuration>
+          <!-- disable archive generation, will use maven-assembly-plugin -->
+          <archiveTarGz>false</archiveTarGz>
+          <archiveZip>false</archiveZip>
+          <bootFeatures>
+            <feature>config</feature>
+            <feature>standard</feature>
+            <feature>package</feature>
+            <feature>nexus-boot-feature</feature>
+          </bootFeatures>
+          <installedFeatures>
+            <feature>management</feature>
+            <feature>nexus-oss-edition</feature>
+            <feature>nexus-quartz-plugin</feature>
+            <feature>nexus-siesta-plugin</feature>
+            <feature>nexus-ssl-plugin</feature>
+            <feature>nexus-rapture-plugin</feature>
+            <feature>nexus-extdirect-plugin</feature>
+            <feature>nexus-coreui-plugin</feature>
+            <feature>nexus-repository-httpbridge</feature>
+            <feature>nexus-repository-maven</feature>
+            <feature>nexus-repository-raw</feature>
+          </installedFeatures>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
+              <descriptors>
+                <descriptor>${project.basedir}/src/main/assembly/bundle.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
