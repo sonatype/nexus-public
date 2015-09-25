@@ -16,8 +16,8 @@
 
 ## Requirements
 
-* Apache Maven 3.0.4+
-* Java 7+
+* Apache Maven 3.3.3+
+* Java 8+
 * Network access to https://repository.sonatype.org/content/groups/sonatype-public-grid
 
 ## Building

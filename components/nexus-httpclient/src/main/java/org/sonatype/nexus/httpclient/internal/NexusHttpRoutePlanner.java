@@ -27,8 +27,6 @@ import org.apache.http.protocol.HttpContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// TODO: Should we instead be using ProxySelectorRoutePlanner and implement a custom ProxySelector instead?
-
 /**
  * An {@link HttpRoutePlanner} that uses different proxies / url scheme (http/https) and bypasses proxy for specific
  * hosts (non proxy hosts).
