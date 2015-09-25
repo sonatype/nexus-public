@@ -76,9 +76,9 @@ final class TransactionalWrapper
             log.trace("ROLLBACK {} : {}", tx, aspect.getStaticPart(), e);
           }
           tx.rollback();
-          if (instanceOf(e, spec.retryOn()) && tx.allowRetry()) {
+          if (instanceOf(e, spec.retryOn()) && tx.allowRetry(e)) {
             if (tracing) {
-              log.trace("RETRY {} : {}", tx, aspect.getStaticPart());
+              log.trace("RETRY {} : {}", tx, aspect.getStaticPart(), e);
             }
             continue;
           }

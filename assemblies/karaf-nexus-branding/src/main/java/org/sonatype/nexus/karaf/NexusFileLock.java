@@ -21,6 +21,7 @@ import org.osgi.framework.Version;
 
 /**
  * Nexus implementation of Karaf's {@link Lock} that exits this process if another process has the lock.
+ *
  * Also checks that the current JVM satisfies Nexus minimum version requirement. We do this here because
  * this is the earliest place we can intercept the Karaf launch process.
  * 

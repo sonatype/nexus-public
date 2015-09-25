@@ -13,29 +13,28 @@
 package org.sonatype.nexus.karaf;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
-import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.charset.Charset;
 
 /**
  * This is a copy of LockFile from nexus-bootstrap, adapted to run in the limited environment of Karaf's launcher.
- * 
- * File locker implementation, inspired by Eclipse Locker. It uses Java NIO {@link FileChannel#tryLock(long, long,
- * boolean)} method to perform locking. As a commodity function, it also writes to a file a payload, making problem
- * diagnosing a bit easier, as reading (ie. from console) of the lock file content might reveal useful information
- * about lock owner.
- * 
- * All the limitations mentioned for {@link FileLock} stands.
  *
  * @since 3.0
  */
 public class LockFile
 {
-  private static final byte[] DEFAULT_PAYLOAD = ManagementFactory.getRuntimeMXBean().getName().getBytes(
-      Charset.forName("UTF-8"));
+  private static final byte[] DEFAULT_PAYLOAD;
+
+  static {
+    try {
+      DEFAULT_PAYLOAD = ManagementFactory.getRuntimeMXBean().getName().getBytes("UTF-8");
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new Error(e);
+    }
+  }
 
   private final File lockFile;
 
@@ -71,14 +70,9 @@ public class LockFile
   }
 
   /**
-   * Returns the payload used by this instance.
-   */
-  public byte[] getPayload() {
-    return payload;
-  }
-
-  /**
-   * Performs locking. If returns {@code true}, locking was successful and caller holds the lock. Multiple invocations,
+   * Performs locking.
+   *
+   * If returns {@code true}, locking was successful and caller holds the lock. Multiple invocations,
    * after lock is acquired, does not have any effect, locking happens only once.
    */
   public synchronized boolean lock() {
@@ -111,40 +105,29 @@ public class LockFile
   }
 
   /**
-   * Releases the lock. Multiple invocations of this file are possible, release will happen only once.
+   * Releases the lock.
+   *
+   * Multiple invocations of this file are possible, release will happen only once.
    */
   public synchronized void release() {
-    close(fileLock);
-    fileLock = null;
-    close(randomAccessFile);
-    randomAccessFile = null;
-  }
-
-  /**
-   * Reads the contents of the lock file for confirmation purposes; only call this method when a lock has been
-   * obtained. Package-scoped as this is only used by tests.
-   */
-  byte[] readBytes() throws IOException {
-    if (randomAccessFile == null) {
-      throw new IllegalStateException("No lock obtained, cannot read file contents.");
-    }
-
-    byte[] buffer = new byte[(int) randomAccessFile.length()];
-    randomAccessFile.seek(0);
-    randomAccessFile.read(buffer, 0, buffer.length);
-    return buffer;
-  }
-
-  // ==
-
-  private static void close(AutoCloseable closeable) {
-    if (closeable != null) {
+    if (fileLock != null) {
       try {
-        closeable.close();
+        fileLock.close();
       }
       catch (Exception e) {
-        // muted
+        // ignore
       }
+      fileLock = null;
+    }
+
+    if (randomAccessFile != null) {
+      try {
+        randomAccessFile.close();
+      }
+      catch (Exception e) {
+        // ignore
+      }
+      randomAccessFile = null;
     }
   }
 }

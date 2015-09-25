@@ -32,6 +32,12 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-access</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>

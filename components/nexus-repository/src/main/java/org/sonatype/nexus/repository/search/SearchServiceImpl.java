@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.search;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -39,10 +40,14 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
+import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
+import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
 import org.elasticsearch.action.count.CountRequestBuilder;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -307,7 +312,21 @@ public class SearchServiceImpl
   private boolean validateQuery(QueryBuilder query) {
     checkNotNull(query);
     try {
-      if (!client.get().admin().indices().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
+      ValidateQueryResponse validateQueryResponse = client.get().admin().indices().prepareValidateQuery()
+          .setQuery(query).setExplain(true).execute().actionGet();
+      if (!validateQueryResponse.isValid()) {
+        if (log.isDebugEnabled()) {
+          Collection<String> explanations = Collections2.transform(validateQueryResponse.getQueryExplanation(),
+              new Function<QueryExplanation, String>()
+              {
+                @Nullable
+                @Override
+                public String apply(final QueryExplanation input) {
+                  return input.getExplanation() != null ? input.getExplanation() : input.getError();
+                }
+              });
+          log.debug("Invalid query explanation: {}", explanations);
+        }
         throw new IllegalArgumentException("Invalid query");
       }
     }

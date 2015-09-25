@@ -183,15 +183,21 @@ public class StorageTxImpl
     return ACTIVE.equals(stateGuard.getCurrent());
   }
 
+  /**
+   * Custom retry strategy that throws {@link RetryDeniedException} when retry limit is breached.
+   */
   @Override
-  public boolean allowRetry() {
+  public boolean allowRetry(final Exception cause) throws RetryDeniedException {
     if (retries < MAX_RETRIES) {
       retries++;
       log.debug("Retrying operation: {}/{}", retries, MAX_RETRIES);
       return true;
     }
-    log.warn("Reached max retries: {}/{}", retries, MAX_RETRIES);
-    return false;
+
+    String message = String.format("Reached max retries: %d/%d", retries, MAX_RETRIES);
+    log.warn(message);
+
+    throw new RetryDeniedException(message, cause);
   }
 
   @Override

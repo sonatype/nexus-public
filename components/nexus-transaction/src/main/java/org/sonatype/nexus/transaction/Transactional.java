@@ -38,6 +38,10 @@ public @interface Transactional
 
   /**
    * List of TX exceptions to swallow (and log).
+   *
+   * Only applies to exceptions that occur after the user method has returned,
+   * while the transaction is committed. If the commit exception is swallowed
+   * it's as if the user method was never intercepted.
    */
   Class<? extends Exception>[] swallow() default {};
 }

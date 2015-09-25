@@ -10,31 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.transaction;
+package org.sonatype.nexus.repository.storage;
 
 /**
- * Represents a restartable transaction that can allow zero or more retries.
+ * Thrown when a storage operation fails and is not allowed to retry.
  *
  * @since 3.0
  */
-public interface Transaction
-    extends AutoCloseable
+public class RetryDeniedException
+    extends RuntimeException
 {
-  void begin() throws Exception;
-
-  void commit() throws Exception;
-
-  void rollback() throws Exception;
-
-  boolean isActive();
-
-  /**
-   * @param cause The cause of this retry request
-   *
-   * @return {@code true} if we're allowed to try the work again, otherwise {@code false}<br>
-   *         (avoid always returning {@code true} unless you want infinite retries)
-   *
-   * @throws RuntimeException may be thrown to implicitly deny the retry
-   */
-  boolean allowRetry(Exception cause);
+  public RetryDeniedException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

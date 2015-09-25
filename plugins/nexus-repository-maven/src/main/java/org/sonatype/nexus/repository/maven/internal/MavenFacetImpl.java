@@ -372,9 +372,9 @@ public class MavenFacetImpl
     final Coordinates coordinates = mavenPath.getCoordinates();
 
     final ComponentQuery query = new Builder()
-        .where("group = ").param(coordinates.getGroupId())
-        .where(" and name = ").param(coordinates.getArtifactId())
-        .where(" and version = ").param(coordinates.getVersion())
+        .where("group").eq(coordinates.getGroupId())
+        .and("name").eq(coordinates.getArtifactId())
+        .and("version").eq(coordinates.getVersion())
         .build();
 
     final Iterable<Component> components = tx

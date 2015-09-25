@@ -73,6 +73,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchCriteria_Checksum_Group: 'Checksum',
     SearchDocker_Group: 'Docker Repositories',
     SearchMaven_Group: 'Maven Repositories',
+    SearchNpm_Group: 'npm Repositories',
     SearchNuget_Group: 'NuGet Repositories',
     SearchRaw_Group: 'Raw Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
@@ -89,6 +90,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchMaven_GroupID_FieldLabel: 'Group Id',
     SearchMaven_Classifier_FieldLabel: 'Classifier',
     SearchMaven_Version_FieldLabel: 'Version',
+    SearchNpm_Scope_FieldLabel: 'Scope',
+    SearchNpm_Name_FieldLabel: 'Name',
+    SearchNpm_Version_FieldLabel: 'Version',
     SearchNuget_ID_FieldLabel: 'ID',
     SearchNuget_Tags_FieldLabel: 'Tags',
     SearchRaw_Path_FieldLabel: 'Path',
@@ -123,6 +127,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Raw
     SearchRaw_Text: 'Raw',
     SearchRaw_Description: 'Search for components in Raw repositories',
+
+    // Browse -> Search -> npm
+    SearchNpm_Text: 'npm',
+    SearchNpm_Description: 'Search for components in npm repositories',
 
     // Browse -> Search -> Nuget
     SearchNuget_Text: 'NuGet',
@@ -227,7 +235,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositorySettingsForm_Type_HelpText: 'The type of repository (i.e. group, hosted, or proxy)',
     Repository_RepositorySettingsForm_Online_FieldLabel: 'Online',
     Repository_RepositorySettingsForm_Online_HelpText: 'If checked, the repository accepts incoming requests',
-    Repository_Facet_ProxyFacet_ArtifactAge_FieldLabel: 'Maximum artifact age',
+    Repository_Facet_ProxyFacet_ArtifactAge_FieldLabel: 'Maximum component age',
     Repository_Facet_ProxyFacet_ArtifactAge_HelpText: 'How long (in minutes) to cache artifacts before rechecking the remote repository. Release repositories should use -1.',
     Repository_Facet_HttpClientFacet_ConnectionRetries_FieldLabel: 'Connection retries',
     Repository_Facet_HttpClientFacet_ConnectionRetries_HelpText: 'How many times to try to connect before giving up',

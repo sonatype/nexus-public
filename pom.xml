@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>8</version>
+    <version>9-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -80,7 +80,7 @@
 
   <prerequisites>
     <!-- Mostly meaningless, though site plugin uses this; Minimum version controlled by enforcer plugin -->
-    <maven>3.0.5</maven>
+    <maven>3.3.3</maven>
   </prerequisites>
 
   <properties>
@@ -96,11 +96,10 @@
     <it.nexus.log.level>INFO</it.nexus.log.level>
 
     <!--
-    Default compile support for Java7+
-    A few modules need to remain compatible with Java6 and must override and provide animal-sniffer configuration.
+    Default compile support for Java8+
     -->
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
     
     <!--
     Sonar configuration.
@@ -485,7 +484,6 @@
             <forkMode>once</forkMode>
             <argLine>
               -Xmx300m
-              -XX:MaxPermSize=192m
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports
             </argLine>
@@ -506,15 +504,12 @@
             <forkMode>always</forkMode>
             <argLine>
               -Xmx300m
-              -XX:MaxPermSize=192m
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
             </argLine>
             <excludes>
               <exclude>**/Abstract*</exclude>
               <exclude>**/*$*</exclude>
-              <!--TODO remove this line once CI is ready for Ui testing (has web drivers installed)-->
-              <exclude>**/rapture/*</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -523,20 +518,15 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>animal-sniffer-maven-plugin</artifactId>
           <configuration>
+            <!--
+            TODO: Replace with signature from project after fixed: https://github.com/mojohaus/animal-sniffer/issues/1
+            -->
             <signature>
-              <groupId>org.codehaus.mojo.signature</groupId>
-              <artifactId>java17</artifactId>
+              <groupId>org.kaazing.mojo.signature</groupId>
+              <artifactId>java18</artifactId>
               <version>1.0</version>
             </signature>
           </configuration>
-          <dependencies>
-            <!-- TODO: MANIMALSNIFFER-51, fixed in 1.14 but found some NPE so still on 1.13 for now -->
-            <dependency>
-              <groupId>org.ow2.asm</groupId>
-              <artifactId>asm-all</artifactId>
-              <version>5.0.3</version>
-            </dependency>
-          </dependencies>
         </plugin>
 
         <!--
@@ -805,17 +795,17 @@
               <fail>true</fail>
               <rules>
                 <!--
-                Require Maven 3.0.4+
+                Require Maven 3.3.3+
                 -->
                 <requireMavenVersion>
-                  <version>[3.0.4,)</version>
+                  <version>[3.3.3,)</version>
                 </requireMavenVersion>
 
                 <!--
-                Require Java 7+
+                Require Java 8+
                 -->
                 <requireJavaVersion>
-                  <version>[1.7,)</version>
+                  <version>[1.8,)</version>
                 </requireJavaVersion>
               </rules>
             </configuration>

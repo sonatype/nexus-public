@@ -175,6 +175,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchNpm',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-npm');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchNuget',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');

@@ -12,15 +12,11 @@
  */
 package org.sonatype.nexus.orient;
 
-import org.sonatype.goodies.testsupport.group.Perf;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
-
-import org.junit.experimental.categories.Category;
 
 /**
  * Performance tests for {@link EncryptedRecordIdObfuscator}.
  */
-@Category(Perf.class)
 public class EncryptedRecordIdObfuscatorPerf
   extends RecordIdObfuscatorPerfSupport
 {

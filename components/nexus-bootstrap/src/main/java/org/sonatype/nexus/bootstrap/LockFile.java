@@ -25,10 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * File locker implementation, inspired by Eclipse Locker. It uses Java NIO {@link FileChannel#tryLock(long, long,
- * boolean)} method to perform locking. As a commodity function, it also writes to a file a payload, making problem
- * diagnosing a bit easier, as reading (ie. from console) of the lock file content might reveal useful information
- * about lock owner.
+ * File locker implementation, inspired by Eclipse Locker.
+ *
+ * It uses Java NIO {@link FileChannel#tryLock(long, long, boolean)} method to perform locking.
+ * As a commodity function, it also writes to a file a payload, making problem diagnosing a bit easier,
+ * as reading (ie. from console) of the lock file content might reveal useful information about lock owner.
+ *
  * All the limitations mentioned for {@link FileLock} stands.
  *
  * @since 2.7.0
@@ -37,8 +39,8 @@ public class LockFile
 {
   private static final Logger log = LoggerFactory.getLogger(LockFile.class);
 
-  private static final byte[] DEFAULT_PAYLOAD = ManagementFactory.getRuntimeMXBean().getName().getBytes(
-      Charset.forName("UTF-8"));
+  private static final byte[] DEFAULT_PAYLOAD =
+      ManagementFactory.getRuntimeMXBean().getName().getBytes(Charset.forName("UTF-8"));
 
   private final File lockFile;
 
@@ -81,7 +83,9 @@ public class LockFile
   }
 
   /**
-   * Performs locking. If returns {@code true}, locking was successful and caller holds the lock. Multiple invocations,
+   * Performs locking.
+   *
+   * If returns {@code true}, locking was successful and caller holds the lock. Multiple invocations,
    * after lock is acquired, does not have any effect, locking happens only once.
    */
   public synchronized boolean lock() {
@@ -112,7 +116,9 @@ public class LockFile
   }
 
   /**
-   * Releases the lock. Multiple invocations of this file are possible, release will happen only once.
+   * Releases the lock.
+   *
+   * Multiple invocations of this file are possible, release will happen only once.
    */
   public synchronized void release() {
     close(fileLock);
@@ -135,8 +141,6 @@ public class LockFile
     randomAccessFile.read(buffer, 0, buffer.length);
     return buffer;
   }
-
-  // ==
 
   private static void close(AutoCloseable closeable) {
     if (closeable != null) {

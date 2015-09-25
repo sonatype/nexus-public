@@ -14,9 +14,9 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Map;
 
-import org.sonatype.nexus.repository.storage.ComponentQuery;
 import org.sonatype.nexus.repository.storage.ComponentQuery.Builder;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,26 +25,29 @@ import static org.hamcrest.Matchers.is;
 
 public class ComponentQueryTest
 {
+  private Builder builder;
+  
+  @Before
+  public void setup() {
+    builder = new Builder();
+  }
+  
   @Test
   public void testHasWhere() {
-    final Builder b = new Builder();
+    assertThat(builder.hasWhere(), is(equalTo(false)));
 
-    assertThat(b.hasWhere(), is(equalTo(false)));
+    builder.where("   "); // this will get trimmed
+    assertThat(builder.hasWhere(), is(equalTo(false)));
 
-    b.where("   "); // this will get trimmed
-    assertThat(b.hasWhere(), is(equalTo(false)));
-
-    b.where("placebo");
-    assertThat(b.hasWhere(), is(equalTo(true)));
+    builder.where("placebo");
+    assertThat(builder.hasWhere(), is(equalTo(true)));
   }
 
   @Test
   public void testAnonymousParameter() {
-    final Builder b = new Builder();
+    builder.where("x = ").param("placebo");
 
-    b.where("x = ").param("placebo");
-
-    final ComponentQuery query = b.build();
+    final ComponentQuery query = builder.build();
 
     assertThat(query.getWhere(), is(equalTo("x = :p0")));
     final Map<String, Object> parameters = query.getParameters();
@@ -52,4 +55,30 @@ public class ComponentQueryTest
     assertThat(parameters.size(), is(equalTo(1)));
     assertThat((String) parameters.get("p0"), is(equalTo("placebo")));
   }
+  
+  @Test(expected = IllegalStateException.class)
+  public void testEqMissingWhere() {
+    builder.eq("any");  
+  }
+  
+  @Test
+  public void testEq() {
+    ComponentQuery query = builder.where("x").eq("placebo").build();
+    assertThat(query.getWhere(), is("x = :p0"));
+    
+    final Map<String, Object> parameters = query.getParameters();
+    assertThat(parameters.size(), is(equalTo(1)));
+    assertThat((String) parameters.get("p0"), is(equalTo("placebo")));
+  }
+  
+  @Test(expected = IllegalStateException.class)
+  public void testAndMissingWhere() {
+    builder.and("any");
+  }
+  
+  @Test
+  public void testAnd() {
+    assertThat(builder.where("x").and("y").build().getWhere(), is("x AND y"));
+  }
 }
+

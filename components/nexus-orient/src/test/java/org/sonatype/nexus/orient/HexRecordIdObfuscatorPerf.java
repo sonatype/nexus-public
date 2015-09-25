@@ -12,14 +12,9 @@
  */
 package org.sonatype.nexus.orient;
 
-import org.sonatype.goodies.testsupport.group.Perf;
-
-import org.junit.experimental.categories.Category;
-
 /**
  * Performance tests for {@link HexRecordIdObfuscator}.
  */
-@Category(Perf.class)
 public class HexRecordIdObfuscatorPerf
   extends RecordIdObfuscatorPerfSupport
 {

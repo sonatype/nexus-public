@@ -180,6 +180,7 @@ public abstract class ProxyFacetSupport
   /**
    * If we have the content cached locally already, return that - otherwise {@code null}.
    */
+  @Nullable
   protected abstract Content getCachedPayload(final Context context) throws IOException;
 
   /**

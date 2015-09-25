@@ -335,8 +335,7 @@ public abstract class NexusPaxExamSupport
     File logbackNexusXml = resolveBaseFile("target/test-classes/logback-nexus.xml");
 
     return composite(
-
-        vmOptions("-Xmx400m", "-XX:MaxPermSize=192m"), // taken from testsuite config
+        vmOptions("-Xmx400m"), // taken from testsuite config
 
         vmOptions("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
 

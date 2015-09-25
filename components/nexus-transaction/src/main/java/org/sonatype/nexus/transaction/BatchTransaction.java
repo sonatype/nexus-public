@@ -42,8 +42,8 @@ final class BatchTransaction
     return delegate.isActive();
   }
 
-  public boolean allowRetry() {
-    return delegate.allowRetry();
+  public boolean allowRetry(final Exception cause) {
+    return delegate.allowRetry(cause);
   }
 
   public void close() throws Exception {

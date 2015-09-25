@@ -15,10 +15,12 @@ package org.sonatype.nexus.repository.storage;
 import java.util.Collections;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Helper for constructing orientDB queries.
@@ -43,6 +45,22 @@ public class ComponentQuery
     public Builder where(String where) {
       this.where.append(where);
       return this;
+    }
+
+    /**
+     * Appends an equals expression for a parameterized value.
+     */
+    public Builder eq(Object value) {
+      checkNotNull(value);
+      checkState(hasWhere(), "Missing where statement");
+      return this.where(" = ").param(value);
+    }
+    
+    public Builder and(String value) {
+      checkNotNull(value);
+      checkState(hasWhere(), "Missing where statement");
+      
+      return where(" AND ").where(value);
     }
 
     public boolean hasWhere() {

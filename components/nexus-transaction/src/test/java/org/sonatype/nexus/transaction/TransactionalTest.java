@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -305,7 +306,7 @@ public class TransactionalTest
 
   @Test
   public void testRetrySuccessOnCheckedException() throws Exception {
-    when(tx.allowRetry()).thenReturn(true);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
     methods.retryOnCheckedException();
@@ -313,13 +314,13 @@ public class TransactionalTest
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
     order.verify(tx).close();
@@ -328,7 +329,7 @@ public class TransactionalTest
 
   @Test(expected = IOException.class)
   public void testRetryFailureOnCheckedException() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
     try {
@@ -338,10 +339,10 @@ public class TransactionalTest
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
     }
@@ -349,7 +350,7 @@ public class TransactionalTest
 
   @Test
   public void testRetrySuccessOnUncheckedException() throws Exception {
-    when(tx.allowRetry()).thenReturn(true);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
     methods.retryOnUncheckedException();
@@ -357,13 +358,13 @@ public class TransactionalTest
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
     order.verify(tx).close();
@@ -372,7 +373,7 @@ public class TransactionalTest
 
   @Test(expected = IllegalStateException.class)
   public void testRetryFailureOnUncheckedException() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
     try {
@@ -382,10 +383,10 @@ public class TransactionalTest
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IllegalStateException.class));
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IllegalStateException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
     }
@@ -393,7 +394,7 @@ public class TransactionalTest
 
   @Test
   public void testRetrySuccessOnExceptionCause() throws Exception {
-    when(tx.allowRetry()).thenReturn(true);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
     methods.retryOnExceptionCause();
@@ -401,13 +402,13 @@ public class TransactionalTest
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IllegalStateException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
     order.verify(tx).close();
@@ -416,7 +417,7 @@ public class TransactionalTest
 
   @Test(expected = IllegalStateException.class)
   public void testRetryFailureOnExceptionCause() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
     try {
@@ -426,10 +427,10 @@ public class TransactionalTest
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IllegalStateException.class));
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IllegalStateException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
     }
@@ -447,7 +448,7 @@ public class TransactionalTest
 
   @Test(expected = ConcurrentModificationException.class)
   public void testRetryOnCommitFailure() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
       throwCME = true;
@@ -459,11 +460,11 @@ public class TransactionalTest
       order.verify(tx).begin();
       order.verify(tx).commit();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(ConcurrentModificationException.class));
       order.verify(tx).begin();
       order.verify(tx).commit();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(ConcurrentModificationException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
     }
@@ -471,7 +472,7 @@ public class TransactionalTest
 
   @Test
   public void testSwallowCommitFailure() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
       throwCME = true;
@@ -490,7 +491,7 @@ public class TransactionalTest
 
   @Test(expected = IllegalStateException.class)
   public void testSwallowWontHideOriginalCause() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
       throwCME = true;

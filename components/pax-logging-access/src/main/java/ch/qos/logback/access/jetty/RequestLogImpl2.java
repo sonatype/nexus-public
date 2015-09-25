@@ -10,31 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.transaction;
+package ch.qos.logback.access.jetty;
+
+import org.eclipse.jetty.util.component.LifeCycle;
 
 /**
- * Represents a restartable transaction that can allow zero or more retries.
+ * Adapt Logback {@link RequestLogImpl} to Jetty {@link LifeCycle} for support of Jetty 9.3+.
  *
  * @since 3.0
  */
-public interface Transaction
-    extends AutoCloseable
+public class RequestLogImpl2
+  extends RequestLogImpl
+  implements LifeCycle
 {
-  void begin() throws Exception;
-
-  void commit() throws Exception;
-
-  void rollback() throws Exception;
-
-  boolean isActive();
-
-  /**
-   * @param cause The cause of this retry request
-   *
-   * @return {@code true} if we're allowed to try the work again, otherwise {@code false}<br>
-   *         (avoid always returning {@code true} unless you want infinite retries)
-   *
-   * @throws RuntimeException may be thrown to implicitly deny the retry
-   */
-  boolean allowRetry(Exception cause);
+  // FIXME: remove when http://jira.qos.ch/browse/LOGBACK-1052 is fixed and new logback is released
 }

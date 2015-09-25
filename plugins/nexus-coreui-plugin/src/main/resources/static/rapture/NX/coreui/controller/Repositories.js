@@ -49,6 +49,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.Maven2Proxy',
     'repository.recipe.Maven2Group',
     'repository.recipe.NpmHosted',
+    'repository.recipe.NpmProxy',
     'repository.recipe.NpmGroup',
     'repository.recipe.NugetHosted',
     'repository.recipe.NugetProxy',

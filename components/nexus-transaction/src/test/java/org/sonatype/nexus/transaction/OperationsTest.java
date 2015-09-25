@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -51,7 +52,7 @@ public class OperationsTest
 
   @Test(expected = IOException.class)
   public void testRetryFailureBeforeWrapping() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(1);
     try {
@@ -64,7 +65,7 @@ public class OperationsTest
 
   @Test
   public void testRetrySuccessAfterWrapping() throws Exception {
-    when(tx.allowRetry()).thenReturn(true);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
     Operations.transactional(new Operation<String, IOException>()
@@ -78,13 +79,13 @@ public class OperationsTest
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).rollback();
-    order.verify(tx).allowRetry();
+    order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
     order.verify(tx).close();
@@ -93,7 +94,7 @@ public class OperationsTest
 
   @Test(expected = IOException.class)
   public void testRetryFailureAfterWrapping() throws Exception {
-    when(tx.allowRetry()).thenReturn(true).thenReturn(false);
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
     try {
@@ -109,10 +110,10 @@ public class OperationsTest
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).begin();
       order.verify(tx).rollback();
-      order.verify(tx).allowRetry();
+      order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
     }

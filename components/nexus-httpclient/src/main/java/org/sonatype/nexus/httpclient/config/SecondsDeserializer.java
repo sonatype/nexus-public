@@ -28,15 +28,12 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 public class SecondsDeserializer
     extends StdDeserializer<Time>
 {
-
   public SecondsDeserializer() {
     super(Time.class);
   }
 
   @Override
-  public Time deserialize(final JsonParser parser, final DeserializationContext context)
-      throws IOException
-  {
-    return Time.seconds(parser.readValueAs(Integer.class));
+  public Time deserialize(final JsonParser parser, final DeserializationContext context) throws IOException {
+    return Time.seconds(parser.readValueAs(Long.class));
   }
 }

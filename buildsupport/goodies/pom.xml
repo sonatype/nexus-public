@@ -42,6 +42,12 @@
 
       <dependency>
         <groupId>org.sonatype.goodies</groupId>
+        <artifactId>goodies-httpfixture</artifactId>
+        <version>${goodies.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.goodies</groupId>
         <artifactId>goodies-i18n</artifactId>
         <version>${goodies.version}</version>
       </dependency>

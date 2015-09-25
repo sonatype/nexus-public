@@ -30,6 +30,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+/**
+ * Tests for {@link LockFile}.
+ */
 public class LockFileTest
     extends TestSupport
 {
