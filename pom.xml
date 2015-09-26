@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>7</version>
+    <version>9-SNAPSHOT</version>
   </parent>
 
   <groupId>org.sonatype.nexus</groupId>
@@ -811,6 +811,29 @@
                   </includes>
                 </bannedDependencies>
               </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build-identity</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+            <configuration>
+              <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+              <buildNumberPropertyName>build.revision</buildNumberPropertyName>
+              <scmBranchPropertyName>build.branch</scmBranchPropertyName>
+
+              <!-- separate from build.timestamp, which uses a less precise format defined in buildsupport parent -->
+              <timestampPropertyName>build.when</timestampPropertyName>
+              <timestampFormat>{0,date,yyyy-MM-dd-HHmm-ssS}</timestampFormat>
             </configuration>
           </execution>
         </executions>

@@ -54,7 +54,7 @@
   </repositories>
 
   <properties>
-    <orientdb.version>2.1.0</orientdb.version>
+    <orientdb.version>2.1.2</orientdb.version>
 
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
