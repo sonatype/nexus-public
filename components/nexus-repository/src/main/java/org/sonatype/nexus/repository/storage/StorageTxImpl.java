@@ -32,6 +32,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
 import org.sonatype.nexus.common.stateguard.Transitions;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
@@ -465,27 +466,44 @@ public class StorageTxImpl
                               final Supplier<InputStream> streamSupplier,
                               final Iterable<HashAlgorithm> hashAlgorithms,
                               @Nullable final Map<String, String> headers,
-                              @Nullable final String declaredContentType) throws IOException
+                              @Nullable final String declaredContentType,
+                              final boolean skipContentVerification) throws IOException
   {
     checkNotNull(blobName);
     checkNotNull(streamSupplier);
     checkNotNull(hashAlgorithms);
+    checkArgument(
+        !skipContentVerification || !Strings2.isBlank(declaredContentType),
+        "skipContentVerification set true but no declaredContentType provided"
+    );
 
     if (!writePolicy.checkCreateAllowed()) {
       throw new IllegalOperationException("Repository is read only: " + getBucket().getRepositoryName());
     }
 
-    final String contentType = determineContentType(streamSupplier, blobName, declaredContentType);
-
     ImmutableMap.Builder<String, String> storageHeaders = ImmutableMap.builder();
     storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
     storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
     storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
-    storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, contentType);
+    if (!skipContentVerification) {
+      storageHeaders.put(
+          BlobStore.CONTENT_TYPE_HEADER,
+          determineContentType(streamSupplier, blobName, declaredContentType)
+      );
+    }
+    else {
+      storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
+    }
     if (headers != null) {
       storageHeaders.putAll(headers);
     }
-    return blobTx.create(streamSupplier.get(), storageHeaders.build(), hashAlgorithms, contentType);
+    Map<String, String> storageHeadersMap = storageHeaders.build();
+    return blobTx.create(
+        streamSupplier.get(),
+        storageHeadersMap,
+        hashAlgorithms,
+        storageHeadersMap.get(BlobStore.CONTENT_TYPE_HEADER)
+    );
   }
 
   @Override
@@ -530,7 +548,8 @@ public class StorageTxImpl
                            final Supplier<InputStream> streamSupplier,
                            final Iterable<HashAlgorithm> hashAlgorithms,
                            @Nullable final Map<String, String> headers,
-                           @Nullable final String declaredContentType) throws IOException
+                           @Nullable final String declaredContentType,
+                           final boolean skipContentVerification) throws IOException
   {
     checkNotNull(asset);
 
@@ -542,7 +561,14 @@ public class StorageTxImpl
             "Repository does not allow updating assets: " + getBucket().getRepositoryName());
       }
     }
-    final AssetBlob assetBlob = createBlob(blobName, streamSupplier, hashAlgorithms, headers, declaredContentType);
+    final AssetBlob assetBlob = createBlob(
+        blobName,
+        streamSupplier,
+        hashAlgorithms,
+        headers,
+        declaredContentType,
+        skipContentVerification
+    );
     attachBlob(asset, assetBlob);
     return assetBlob;
   }
@@ -585,7 +611,8 @@ public class StorageTxImpl
   private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy) {
     checkNotNull(blobRef);
     if (effectiveWritePolicy != null && !effectiveWritePolicy.checkDeleteAllowed()) {
-      throw new IllegalOperationException("Repository does not allow deleting assets: " + getBucket().getRepositoryName());
+      throw new IllegalOperationException(
+          "Repository does not allow deleting assets: " + getBucket().getRepositoryName());
     }
     blobTx.delete(blobRef);
   }

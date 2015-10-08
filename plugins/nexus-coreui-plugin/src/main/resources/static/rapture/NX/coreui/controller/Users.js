@@ -85,7 +85,7 @@ Ext.define('NX.coreui.controller.Users', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:users:read');
+        return NX.Permissions.check('nexus:users:read') && NX.Permissions.check('nexus:roles:read');
       },
       weight: 30
     },

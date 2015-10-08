@@ -13,21 +13,16 @@
 package org.sonatype.nexus.bootstrap.osgi;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.sonatype.nexus.bootstrap.ConfigurationBuilder;
 import org.sonatype.nexus.bootstrap.ConfigurationHolder;
-import org.sonatype.nexus.bootstrap.EnvironmentVariables;
-import org.sonatype.nexus.bootstrap.LockFile;
+import org.sonatype.nexus.bootstrap.DirectoryHelper;
 
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
@@ -53,8 +48,6 @@ public class BootstrapListener
 {
   private static final Logger log = LoggerFactory.getLogger(BootstrapListener.class);
 
-  private LockFile lockFile;
-
   private ListenerTracker listenerTracker;
 
   private FilterTracker filterTracker;
@@ -65,48 +58,20 @@ public class BootstrapListener
     ServletContext servletContext = event.getServletContext();
 
     try {
-      // Use bootstrap configuration if it exists, else load it
       Map<String, String> properties = ConfigurationHolder.get();
-      if (properties != null) {
-        log.info("Using bootstrap launcher configuration");
-      }
-      else {
-        log.info("Loading configuration for WAR deployment");
-
-        String baseDir = (String) servletContext.getAttribute("nexus-base");
-        if (baseDir == null) {
-          baseDir = servletContext.getRealPath("/WEB-INF");
-        }
-
-        properties = new ConfigurationBuilder()
-            .defaults()
-            .set("nexus-base", new File(baseDir).getCanonicalPath())
-            .properties("/org.sonatype.nexus.cfg", true)
-            .custom(new EnvironmentVariables())
-            .override(System.getProperties())
-            .build();
-
-        System.getProperties().putAll(properties);
-        ConfigurationHolder.set(properties);
+      if (properties == null) {
+        throw new IllegalStateException("Missing bootstrap configuration properties");
       }
 
       // Ensure required properties exist
-      requireProperty(properties, "nexus-base");
-      requireProperty(properties, "nexus-work");
-      requireProperty(properties, "nexus-app");
-      requireProperty(properties, "application-conf");
+      requireProperty(properties, "karaf.base");
+      requireProperty(properties, "karaf.data");
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("org.sonatype.nexus.cfg", properties);
 
-      File workDir = new File(properties.get("nexus-work")).getCanonicalFile();
-      mkdir(workDir.toPath());
-
-      // lock the work directory
-      lockFile = new LockFile(new File(workDir, "nexus.lock"));
-      if (!lockFile.lock()) {
-        throw new IllegalStateException("Nexus work directory already in use: " + workDir);
-      }
+      File workDir = new File(properties.get("karaf.data")).getCanonicalFile();
+      DirectoryHelper.mkdir(workDir.toPath());
 
       // are we already running in OSGi or should we embed OSGi?
       Bundle containingBundle = FrameworkUtil.getBundle(getClass());
@@ -141,9 +106,11 @@ public class BootstrapListener
     log.info("Initialized");
   }
 
-  private static void installNexusEdition(final BundleContext ctx, final String editionName) throws Exception {
+  private static void installNexusEdition(final BundleContext ctx, @Nullable final String editionName)
+      throws Exception
+  {
     if (editionName != null && editionName.length() > 0) {
-      log.info("Installing {}", editionName);
+      log.info("Installing edition: {}", editionName);
 
       final ServiceTracker<?, FeaturesService> tracker = new ServiceTracker<>(ctx, FeaturesService.class, null);
       tracker.open();
@@ -169,20 +136,6 @@ public class BootstrapListener
     }
   }
 
-  private static void mkdir(final Path dir) throws IOException {
-    try {
-      Files.createDirectories(dir);
-    }
-    catch (FileAlreadyExistsException e) {
-      // this happens when last element of path exists, but is a symlink.
-      // A simple test with Files.isDirectory should be able to detect this
-      // case as by default, it follows symlinks.
-      if (!Files.isDirectory(dir)) {
-        throw e;
-      }
-    }
-  }
-
   public void contextDestroyed(final ServletContextEvent event) {
     log.info("Destroying");
 
@@ -194,11 +147,6 @@ public class BootstrapListener
     if (listenerTracker != null) {
       listenerTracker.close();
       listenerTracker = null;
-    }
-
-    if (lockFile != null) {
-      lockFile.release();
-      lockFile = null;
     }
 
     log.info("Destroyed");

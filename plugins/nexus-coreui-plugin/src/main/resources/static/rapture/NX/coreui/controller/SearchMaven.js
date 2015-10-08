@@ -91,7 +91,6 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         { id: 'attributes.maven2.artifactId' },
         { id: 'attributes.maven2.version' },
         { id: 'attributes.maven2.baseVersion' },
-        { id: 'version' },
         { id: 'assets.attributes.maven2.classifier'},
         { id: 'assets.attributes.maven2.extension' }
       ]

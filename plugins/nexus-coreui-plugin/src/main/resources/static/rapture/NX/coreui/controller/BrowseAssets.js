@@ -206,6 +206,15 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
   },
 
   /**
+   * @override
+   */
+  onNavigate: function() {
+    if (this.getFeature()) {
+      this.onBeforeRender();
+    }
+  },
+
+  /**
    * @private
    * Load stores based on the bookmarked URL
    */
@@ -232,8 +241,8 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
           me.reselect();
         });
       }
-      // Load the asset list view
-      else if (list_ids[0]) {
+      // Load the asset list view or repository list view
+      else {
         me.reselect();
       }
     });
@@ -302,6 +311,14 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
       // Set the appropriate breadcrumb icon
       this.setItemClass(2, container.iconCls);
     }
+  },
+
+  /**
+   * @override
+   */
+  loadView: function (index, animate, model) {
+    this.callParent(arguments);
+    this.loadStores();
   }
 
 });

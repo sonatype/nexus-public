@@ -253,14 +253,19 @@ public interface StorageTx
    * Creates a new Blob and updates the given asset with a reference to it, hash metadata, size, and content type.
    * The old blob, if any, will be deleted.
    *
-   * @param asset               the {@link Asset} that should reference newly created blob.
-   * @param blobName            blob name (must not be unique), but it will be used also in content validation. See
-   *                            {@link ContentValidator}.
-   * @param streamSupplier      the content being stored as a blob
-   * @param hashAlgorithms      {@link HashAlgorithm}s to be applied while streaming to blob store, will be set
-   *                            in {@link Asset} attributes.
-   * @param headers             optional, custom headers for blob, if any.
-   * @param declaredContentType optional, the declared MIME type of the blob. See {@link ContentValidator}.
+   * @param asset                   the {@link Asset} that should reference newly created blob.
+   * @param blobName                blob name (must not be unique), but it will be used also in content validation.
+   *                                See {@link ContentValidator}.
+   * @param streamSupplier          the content being stored as a blob
+   * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, will be set
+   *                                in {@link Asset} attributes.
+   * @param headers                 optional, custom headers for blob, if any.
+   * @param declaredContentType     optional, the declared MIME type of the blob. See {@link ContentValidator}.
+   * @param skipContentVerification if {@code false}, {@link ContentValidator} will be used to determine or verify
+   *                                the content type of content. If {@code true}, the {@code declaredContentType}
+   *                                will be used as-is and must be non-{@code null}. Use {@code true} in cases when
+   *                                content to be saved is known to be what it is declared to, ie. caller already
+   *                                parsed it or processed in any other way that proved it's format/type.
    * @return Attached instance of {@link AssetBlob} of the newly created blob. As side effect, passed in {@link Asset}
    * is modified too, but is unsaved. Caller must ensure {@link #saveAsset(Asset)} is invoked before this TX ends.
    */
@@ -269,19 +274,26 @@ public interface StorageTx
                     final Supplier<InputStream> streamSupplier,
                     Iterable<HashAlgorithm> hashAlgorithms,
                     @Nullable Map<String, String> headers,
-                    @Nullable String declaredContentType) throws IOException;
+                    @Nullable String declaredContentType,
+                    boolean skipContentVerification) throws IOException;
 
   /**
    * Creates a new Blob and returns its {@link AssetBlob}. Blobs created but not attached in a scope of a TX to any
    * asset are considered as "orphans", and they will be deleted from blob store at the end of a TX.
    *
-   * @param blobName            blob name (must not be unique), but it will be used also in content validation. See
-   *                            {@link ContentValidator}.
-   * @param streamSupplier      the content to be streamed into blob store.
-   * @param hashAlgorithms      {@link HashAlgorithm}s to be applied while streaming to blob store, returned in {@link
-   *                            AssetBlob}.
-   * @param headers             optional, custom headers for blob, if any.
-   * @param declaredContentType optional, the declared MIME type of the blob. See {@link ContentValidator}.
+   * @param blobName                blob name (must not be unique), but it will be used also in content validation. See
+   *                                {@link ContentValidator}.
+   * @param streamSupplier          the content to be streamed into blob store.
+   * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, returned in
+   *                                {@link
+   *                                AssetBlob}.
+   * @param headers                 optional, custom headers for blob, if any.
+   * @param declaredContentType     optional, the declared MIME type of the blob. See {@link ContentValidator}.
+   * @param skipContentVerification if {@code false}, {@link ContentValidator} will be used to determine or verify
+   *                                the content type of content. If {@code true}, the {@code declaredContentType}
+   *                                will be used as-is and must be non-{@code null}. Use {@code true} in cases when
+   *                                content to be saved is known to be what it is declared to, ie. caller already
+   *                                parsed it or processed in any other way that proved it's format/type.
    * @return Unattached instance of {@link AssetBlob} that should be attached to some {@link Asset} during this
    * transaction using {@link #attachBlob(Asset, AssetBlob)} method.
    */
@@ -289,7 +301,8 @@ public interface StorageTx
                        final Supplier<InputStream> streamSupplier,
                        Iterable<HashAlgorithm> hashAlgorithms,
                        @Nullable Map<String, String> headers,
-                       @Nullable String declaredContentType) throws IOException;
+                       @Nullable String declaredContentType,
+                       boolean skipContentVerification) throws IOException;
 
   /**
    * Attaches a Blob to asset and updates the given asset with a reference to it, hash metadata, size, and content

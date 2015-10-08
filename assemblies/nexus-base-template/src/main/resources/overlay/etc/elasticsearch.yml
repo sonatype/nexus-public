@@ -1,9 +1,9 @@
 cluster.name: nexus
 
 path:
-  data: ${nexus-work}/elasticsearch
-  logs: ${nexus-work}/log
-  work: ${nexus-work}/tmp/elasticsearch
+  data: ${karaf.data}/elasticsearch
+  logs: ${karaf.data}/log
+  work: ${java.io.tmpdir}/elasticsearch
 
 node.data: true
 node.master: true

@@ -26,10 +26,6 @@ rem Minimum memory for the JVM
 rem SET JAVA_MIN_MEM
 rem Maximum memory for the JVM
 rem SET JAVA_MAX_MEM
-rem Minimum perm memory for the JVM
-rem SET JAVA_PERM_MEM
-rem Maximum perm memory for the JVM
-rem SET JAVA_MAX_PERM_MEM
 rem Additional JVM options
 rem SET EXTRA_JAVA_OPTS
 rem Karaf home folder
@@ -47,6 +43,5 @@ rem SET KARAF_DEBUG
 
 SET JAVA_MIN_MEM=256M
 SET JAVA_MAX_MEM=768M
-SET JAVA_MAX_PERM_MEM=256M
 
 SET KARAF_OPTS=-Djava.net.preferIPv4Stack=true

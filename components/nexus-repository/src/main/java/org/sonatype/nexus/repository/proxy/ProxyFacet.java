@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 
 /**
- * A
+ * A format neutral proxy facet.
  *
  * @since 3.0
  */

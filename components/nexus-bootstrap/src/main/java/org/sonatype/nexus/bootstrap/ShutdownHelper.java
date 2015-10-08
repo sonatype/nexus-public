@@ -24,7 +24,7 @@ public class ShutdownHelper
 {
   private static final Logger log = LoggerFactory.getLogger(ShutdownHelper.class);
 
-  public static interface ShutdownDelegate
+  public interface ShutdownDelegate
   {
     void doExit(int code);
 

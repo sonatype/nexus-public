@@ -49,22 +49,18 @@ public class LauncherActivator
     framework = (Framework) bundleContext.getBundle(0);
     ShutdownHelper.setDelegate(this);
 
-    final String basePath = bundleContext.getProperty("nexus-base");
+    final String etcPath = bundleContext.getProperty("karaf.etc");
     final String args = bundleContext.getProperty("nexus-args");
 
     MDC.put("userId", SYSTEM_USERID);
-    launcher = new Launcher(basePath, null, null, args.split(","));
+    launcher = new Launcher(etcPath, args.split(","));
     launcher.startAsync(
-        new Runnable()
-        {
-          @Override
-          public void run() {
-            connectorConfigurationTracker = new ConnectorConfigurationTracker(
-                bundleContext,
-                launcher.getServer()
-            );
-            connectorConfigurationTracker.open();
-          }
+        () -> {
+          connectorConfigurationTracker = new ConnectorConfigurationTracker(
+              bundleContext,
+              launcher.getServer()
+          );
+          connectorConfigurationTracker.open();
         }
     );
 
@@ -107,11 +103,11 @@ public class LauncherActivator
       e.printStackTrace();
     }
     finally {
-      System.exit(code);
+      ShutdownHelper.exit(code);
     }
   }
 
   public void doHalt(int code) {
-    Runtime.getRuntime().halt(code);
+    ShutdownHelper.halt(code);
   }
 }

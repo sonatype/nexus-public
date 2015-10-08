@@ -65,7 +65,7 @@ public class TrustStoreImpl
   private volatile SSLContext sslcontext;
 
   @Inject
-  public TrustStoreImpl(final @Named(SSLConstants.ID_PREFIX) KeyStoreManager keyStoreManager) throws Exception {
+  public TrustStoreImpl(final @Named("ssl") KeyStoreManager keyStoreManager) throws Exception {
     this.keyStoreManager = checkNotNull(keyStoreManager);
     keyManagers = getSystemKeyManagers();
     trustManagers = getTrustManagers(keyStoreManager);

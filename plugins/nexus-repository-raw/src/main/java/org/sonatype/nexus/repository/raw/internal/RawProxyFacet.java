@@ -32,7 +32,7 @@ public class RawProxyFacet
     extends ProxyFacetSupport
 {
   @Override
-  protected Content getCachedPayload(final Context context) throws IOException {
+  protected Content getCachedContent(final Context context) throws IOException {
     final String path = componentPath(context);
     return content().get(path);
   }

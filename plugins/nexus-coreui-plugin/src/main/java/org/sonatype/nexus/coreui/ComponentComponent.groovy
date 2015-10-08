@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.coreui
 
-import javax.annotation.Nullable
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
-
+import com.google.common.collect.ImmutableList
+import com.softwarementors.extjs.djn.config.annotations.DirectAction
+import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import org.apache.shiro.authz.annotation.RequiresAuthentication
+import org.hibernate.validator.constraints.NotEmpty
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
 import org.sonatype.nexus.extdirect.DirectComponent
@@ -29,18 +29,14 @@ import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
-import org.sonatype.nexus.repository.storage.Asset
-import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.StorageFacet
-import org.sonatype.nexus.repository.storage.StorageTx
+import org.sonatype.nexus.repository.storage.*
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.validation.Validate
 
-import com.google.common.collect.ImmutableList
-import com.softwarementors.extjs.djn.config.annotations.DirectAction
-import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.shiro.authz.annotation.RequiresAuthentication
-import org.hibernate.validator.constraints.NotEmpty
+import javax.annotation.Nullable
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
 
 /**
  * Component {@link DirectComponent}.
@@ -138,10 +134,12 @@ class ComponentComponent
         ]
       }
 
+      def countComponents = storageTx.countComponents(whereClause, queryParams, repositories, null)
       List<ComponentXO> results = storageTx.findComponents(whereClause, queryParams, repositories, querySuffix)
           .collect(COMPONENT_CONVERTER.rcurry(repository.name))
+
       return new PagedResponse<ComponentXO>(
-          (results.size() < parameters.limit ? 0 : parameters.limit) + results.size() + parameters.start,
+          countComponents,
           results
       )
     }
@@ -256,11 +254,12 @@ class ComponentComponent
         ]
       }
 
+      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
       List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix)
           .collect(ASSET_CONVERTER.rcurry(null, repository.name))
 
       return new PagedResponse<AssetXO>(
-          (results.size() < parameters.limit ? 0 : parameters.limit) + results.size() + parameters.start,
+          countAssets,
           results
       )
     }
@@ -275,17 +274,26 @@ class ComponentComponent
   void deleteAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
     securityHelper.ensurePermitted(new RepositoryViewPermission(repository, BreadActions.DELETE))
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+
     try {
-      storageTx.begin();
-      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.getBucket())
-      log.info 'Deleting asset: {}', asset
-      storageTx.deleteAsset(asset)
-      storageTx.commit()
+      ComponentMaintenance componentMaintenance = repository.facet(ComponentMaintenance.class)
+      componentMaintenance.deleteAsset(new DetachedEntityId(assetId))
     }
-    finally {
-      storageTx.close()
+    catch (MissingFacetException e) {
+      // TODO: Move this direct use of DefaultComponentMaintenance facet to eliminate the missing facet check
+      StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+      try {
+        storageTx.begin();
+        Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.getBucket())
+        log.info 'Deleting asset: {}', asset
+        storageTx.deleteAsset(asset)
+        storageTx.commit()
+      }
+      finally {
+        storageTx.close()
+      }
     }
+
   }
 
   /**

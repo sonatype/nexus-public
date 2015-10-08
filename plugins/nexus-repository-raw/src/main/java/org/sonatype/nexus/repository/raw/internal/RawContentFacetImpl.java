@@ -127,8 +127,15 @@ public class RawContentFacetImpl
       contentAttributes = ((Content) payload).getAttributes();
     }
     Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
-    final AssetBlob assetBlob = tx
-        .setBlob(asset, path, streamSupplier, hashAlgorithms, null, payload.getContentType());
+    final AssetBlob assetBlob = tx.setBlob(
+        asset,
+        path,
+        streamSupplier,
+        hashAlgorithms,
+        null,
+        payload.getContentType(),
+        false
+    );
     asset.markAsAccessed();
     tx.saveAsset(asset);
 

@@ -92,6 +92,12 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
         width: 200
       }
     ]
-  }]
+  }],
+
+  plugins: {
+    ptype: 'bufferedrenderer',
+    trailingBufferZone: 20,
+    leadingBufferZone: 50
+  }
 
 });

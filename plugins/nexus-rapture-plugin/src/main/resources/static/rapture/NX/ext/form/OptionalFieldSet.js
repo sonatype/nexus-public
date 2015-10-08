@@ -97,6 +97,9 @@ Ext.define('NX.ext.form.OptionalFieldSet', {
       me.mon(component, 'change', function(field, value) {
         if (value && me.collapsed) {
           me.expand();
+          if (me.checkboxCmp) {
+            me.checkboxCmp.resetOriginalValue();
+          }
         }
       });
     }

@@ -103,7 +103,7 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKeyDetails', {
       ],
       buttonAlign: 'left',
       buttons: [
-        { text: 'Cancel', handler: function() {
+        { text: 'Close', handler: function() {
           this.up('window').close();
         }}
       ]

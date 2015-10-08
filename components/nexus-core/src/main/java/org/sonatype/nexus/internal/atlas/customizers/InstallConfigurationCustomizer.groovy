@@ -50,12 +50,12 @@ class InstallConfigurationCustomizer
   void customize(final SupportBundle supportBundle) {
     // helper to include a file
     def maybeIncludeFile = { File file, String prefix, Priority priority = DEFAULT ->
-      if (file.exists()) {
+      if (file.isFile()) {
         log.debug 'Including file: {}', file
         supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
       }
       else {
-        log.debug 'Skipping non-existent file: {}', file
+        log.warn 'Skipping: {}', file
       }
     }
 

@@ -27,7 +27,7 @@ import static org.sonatype.nexus.common.time.DateHelper.toDate;
 import static org.sonatype.nexus.common.time.DateHelper.toDateTime;
 
 /**
- * Maintains cache details for cached resources. {@link CacheController} relies on information provided by this
+ * Maintains cache details a cached resource. {@link CacheController} relies on information provided by this
  * class to implement "aging" and cache invalidation.
  *
  * @since 3.0

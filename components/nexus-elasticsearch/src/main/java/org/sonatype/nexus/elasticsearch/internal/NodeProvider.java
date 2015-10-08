@@ -80,7 +80,7 @@ public class NodeProvider
   }
 
   private Node create() throws Exception {
-    File file = new File(directories.getAppDirectory("etc"), "elasticsearch.yml");
+    File file = new File(directories.getInstallDirectory(), "etc/elasticsearch.yml");
     checkState(file.exists(), "Missing configuration: %s", file);
     URL url = file.toURI().toURL();
     log.info("Creating node with config: {}", url);

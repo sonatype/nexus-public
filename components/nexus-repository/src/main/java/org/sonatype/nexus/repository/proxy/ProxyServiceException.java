@@ -10,22 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.ssl.plugin.internal;
+package org.sonatype.nexus.repository.proxy;
+
+import javax.annotation.Nonnull;
+
+import org.apache.http.HttpResponse;
 
 /**
- * SSL constants.
+ * A format-neutral proxy service exception thrown in cases like proxy with misconfiguration or remote down.
  *
- * @since ssl 1.0
+ * @since 3.0
  */
-public class SSLConstants
+public class ProxyServiceException
+    extends RuntimeException
 {
-  /**
-   * Prefix for ID-like things.
-   */
-  public static final String ID_PREFIX = "ssl";
+  private final HttpResponse httpResponse;
+
+  public ProxyServiceException(final HttpResponse httpResponse) {
+    super(httpResponse.getStatusLine().toString());
+    this.httpResponse = httpResponse;
+  }
 
   /**
-   * Prefix for @Named configuration.
+   * Returns the {@link HttpResponse} but with a <b>consumed entity</b>, to be able to inspect response status and
+   * headers, if needed.
    */
-  public static final String CONFIG_PREFIX = "${" + ID_PREFIX;
+  @Nonnull
+  public HttpResponse getHttpResponse() {
+    return httpResponse;
+  }
 }

@@ -38,7 +38,9 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class LogbackOverrides
 {
-  private LogbackOverrides() {}
+  private LogbackOverrides() {
+    // empty
+  }
 
   /**
    * Reads loggers/levels from logback-overrides.xml.
@@ -95,9 +97,14 @@ public class LogbackOverrides
             out.println();
             out.println("<included>");
             for (Entry<String, LoggerLevel> entry : overrides.entrySet()) {
-              out.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue());
+              if ("ROOT".equals(entry.getKey())) {
+                out.format("  <property name='root.level' level='%s'/>%n", entry.getValue());
+              }
+              else {
+                out.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue());
+              }
             }
-            out.write("</included>");
+            out.println("</included>");
           }
         }
       });

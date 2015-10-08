@@ -22,6 +22,8 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.util.tracker.ServiceTracker;
 
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_INVOKER_DEFAULT;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_INVOKER_KEY;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_TIMEOUT_KEY;
 
@@ -35,26 +37,29 @@ public class DelayedProbeInvokerFactory
 {
   private final long examTimeout;
 
+  private final String examInvoker;
+
   private final ServiceTracker<?, ProbeInvokerFactory> probeFactoryTracker;
 
-  private final ServiceTracker<?, Injector> examInjectorTracker;
+  private final ServiceTracker<?, Injector> nexusInjectorTracker;
 
   public DelayedProbeInvokerFactory(final BundleContext context) {
     examTimeout = getExamTimeout(context);
+    examInvoker = getExamInvoker(context);
 
-    probeFactoryTracker = new ServiceTracker<>(context, junitInvokerFilter(), null);
-    examInjectorTracker = new ServiceTracker<>(context, nexusInjectorFilter(), null);
+    probeFactoryTracker = new ServiceTracker<>(context, probeInvokerFilter(), null);
+    nexusInjectorTracker = new ServiceTracker<>(context, nexusInjectorFilter(), null);
 
     probeFactoryTracker.open();
-    examInjectorTracker.open();
+    nexusInjectorTracker.open();
   }
 
   public ProbeInvoker createProbeInvoker(final Object context, final String expr) {
     try {
       // wait for Nexus to start and register its Pax-Exam injector
-      if (examInjectorTracker.waitForService(examTimeout) != null) {
+      if (nexusInjectorTracker.waitForService(examTimeout) != null) {
 
-        // use the original Pax-Exam JUnit factory to supply the testsuite invoker
+        // use the real Pax-Exam invoker factory to supply the testsuite invoker
         return probeFactoryTracker.getService().createProbeInvoker(context, expr);
       }
       throw new TestContainerException("Nexus failed to start after " + examTimeout + "ms");
@@ -68,32 +73,49 @@ public class DelayedProbeInvokerFactory
    * @return Timeout to apply when waiting for Nexus to start
    */
   private static int getExamTimeout(final BundleContext context) {
-    try {
-      return Integer.parseInt(context.getProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY));
+    final String value = context.getProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY);
+    if (value == null || value.trim().length() == 0) {
+      return NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
     }
-    catch (final Exception e) {
+    try {
+      return Integer.parseInt(value);
+    }
+    catch (final NumberFormatException e) {
       return NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
     }
   }
 
   /**
-   * @return Filter that matches the original JUnit Pax-Exam {@link ProbeInvokerFactory}
+   * @return Name of the real Pax-Exam {@link ProbeInvokerFactory}
    */
-  private static Filter junitInvokerFilter() {
-    try {
-      return FrameworkUtil.createFilter("(&(objectClass=" + ProbeInvokerFactory.class.getName() + ")(driver=junit))");
+  private static String getExamInvoker(final BundleContext context) {
+    final String value = context.getProperty(NEXUS_PAX_EXAM_INVOKER_KEY);
+    if (value == null || value.trim().length() == 0) {
+      return NEXUS_PAX_EXAM_INVOKER_DEFAULT;
     }
-    catch (final InvalidSyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
+    return value;
   }
 
   /**
-   * @return Filter that matches the nexus-specific Pax-Exam {@link Injector}
+   * @return LDAP filter that matches the real Pax-Exam {@link ProbeInvokerFactory}
    */
-  private static Filter nexusInjectorFilter() {
+  private Filter probeInvokerFilter() {
+    return filter("(&(objectClass=%s)(driver=%s))", ProbeInvokerFactory.class.getName(), examInvoker);
+  }
+
+  /**
+   * @return LDAP filter that matches the nexus-specific Pax-Exam {@link Injector}
+   */
+  private Filter nexusInjectorFilter() {
+    return filter("(&(objectClass=%s)(name=nexus))", Injector.class.getName());
+  }
+
+  /**
+   * @return LDAP filter created by formatting the given arguments
+   */
+  private static Filter filter(final String format, final Object... args) {
     try {
-      return FrameworkUtil.createFilter("(&(objectClass=" + Injector.class.getName() + ")(name=nexus))");
+      return FrameworkUtil.createFilter(String.format(format, args));
     }
     catch (final InvalidSyntaxException e) {
       throw new IllegalArgumentException(e);

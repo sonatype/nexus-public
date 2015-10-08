@@ -10,29 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.repository.storage;
 
-import java.io.InputStream;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Facet;
 
 /**
- * A component contract that wants to provide extra logging configuration, participate in configuration of logging in
- * Nexus.
+ * Exposes manual component maintenance operations.
+ *
+ * @since 3.0
  */
-public interface LogConfigurationParticipant
+@Facet.Exposed
+public interface ComponentMaintenance
+    extends Facet
 {
-  String getName();
-
-  InputStream getConfiguration();
-
-  /**
-   * Marker interface to be implemented by {@link LogConfigurationParticipant} instances that provide configurations
-   * which should not be tampered with, changed by users. These participant configurations will be written out
-   * (probably overwriting existing file) always, at every boot.
-   *
-   * @since 2.2
-   */
-  interface NonEditable
-  {
-    // empty
-  }
+    /**
+     * Deletes an asset from storage.
+     */
+    void deleteAsset(EntityId assetId);
 }

@@ -210,11 +210,6 @@
             </goals>
             <configuration>
               <target>
-                <!-- overlay customizations -->
-                <copy todir="${project.build.directory}/assembly" overwrite="true">
-                  <fileset dir="${project.basedir}/src/main/resources/overlay"/>
-                </copy>
-
                 <!-- install some custom lib/ jar -->
                 <copy file="${javax.annotation:javax.annotation-api:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
@@ -226,6 +221,7 @@
                 <delete>
                   <fileset dir="${project.build.directory}/assembly">
                     <!-- delete some cruft which karaf includes by default -->
+                    <include name="bin/*"/>
                     <include name="**/README"/>
                     <include name="etc/all.policy"/>
                     <include name="etc/distribution.info"/>
@@ -236,17 +232,24 @@
                     <include name="etc/org.apache.karaf.features.repos.cfg"/>
                     <include name="etc/org.apache.karaf.command.acl.*.cfg"/>
                     <include name="etc/jmx.acl.*.cfg"/>
+                    <include name="etc/org.ops4j.pax.logging.cfg"/>
 
-                    <!-- remove xercesImpl -->
-                    <include name="lib/endorsed/xercesImpl*.jar"/>
+                    <!-- remove xerces and xalan overrides -->
+                    <include name="lib/endorsed/*xerces*.jar"/>
+                    <include name="lib/endorsed/*xalan*.jar"/>
                   </fileset>
                 </delete>
 
+                <!-- overlay customizations -->
+                <copy todir="${project.build.directory}/assembly" overwrite="true">
+                  <fileset dir="${project.basedir}/src/main/resources/overlay"/>
+                </copy>
+
                 <!-- trim out various enterprise/deployment features we don't need at the moment -->
                 <replace file="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg">
-                  <replacefilter token=",mvn:org.apache.karaf.features/enterprise/3.0.4/xml/features"/>
-                  <replacefilter token=",mvn:org.ops4j.pax.web/pax-web-features/3.2.3/xml/features"/>
-                  <replacefilter token=",mvn:org.apache.karaf.features/spring/3.0.4/xml/features"/>
+                  <replacefilter token=",mvn:org.apache.karaf.features/enterprise/3.0.5/xml/features"/>
+                  <replacefilter token=",mvn:org.ops4j.pax.web/pax-web-features/3.2.6/xml/features"/>
+                  <replacefilter token=",mvn:org.apache.karaf.features/spring/3.0.5/xml/features"/>
                   <replacefilter token=",kar,ssh,management"/>
                   <replacefilter token=",region"/>
                 </replace>
@@ -288,6 +291,7 @@
           </bootFeatures>
           <installedFeatures>
             <feature>management</feature>
+            <feature>ssh</feature>
             <feature>nexus-oss-edition</feature>
             <feature>nexus-quartz-plugin</feature>
             <feature>nexus-siesta-plugin</feature>

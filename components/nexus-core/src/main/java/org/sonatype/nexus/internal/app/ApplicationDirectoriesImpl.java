@@ -40,32 +40,16 @@ public class ApplicationDirectoriesImpl
 {
   private final File installDir;
 
-  private final File appDir;
-
   private final File workDir;
 
   private final File tempDir;
 
-  // FIXME: Normalize properties used, deferring for now until we redesign installation layout and boot configuration
-  // FIXME: nexus-base -> nexus.install
-  // FIXME: nexus-work -> nexus.work
-
   @Inject
-  public ApplicationDirectoriesImpl(final @Named("${nexus-base}") @Nullable File installDir,
-                                    final @Named("${nexus-app}") File appDir,
-                                    final @Named("${nexus-work}") File workDir)
+  public ApplicationDirectoriesImpl(final @Named("${karaf.base}") File installDir,
+                                    final @Named("${karaf.data}") File workDir)
   {
-    if (installDir != null) {
-      this.installDir = resolve(installDir, false);
-      log.debug("Install dir: {}", this.installDir);
-    }
-    else {
-      this.installDir = null;
-      log.debug("Install dir not available");
-    }
-
-    this.appDir = resolve(appDir, false);
-    log.debug("App dir: {}", this.appDir);
+    this.installDir = resolve(installDir, false);
+    log.debug("Install dir: {}", this.installDir);
 
     this.workDir = resolve(workDir, true);
     log.debug("Work dir: {}", this.workDir);
@@ -93,18 +77,6 @@ public class ApplicationDirectoriesImpl
   }
 
   @Override
-  public File getAppDirectory() {
-    return appDir;
-  }
-
-  @Override
-  public File getAppDirectory(final String path) {
-    checkNotNull(path);
-    File dir = new File(appDir, path);
-    return resolve(dir, false);
-  }
-
-  @Override
   public File getWorkDirectory() {
     return workDir;
   }
@@ -121,6 +93,22 @@ public class ApplicationDirectoriesImpl
     return getWorkDirectory(path, true);
   }
 
+  private void mkdir(final File dir) {
+    if (dir.isDirectory()) {
+      // skip already exists
+      return;
+    }
+
+    try {
+      DirSupport.mkdir(dir.toPath());
+      log.debug("Created directory: {}", dir);
+    }
+    catch (Exception e) {
+      log.error("Failed to create directory: {}", dir);
+      throw Throwables.propagate(e);
+    }
+  }
+
   private File resolve(File dir, final boolean create) {
     checkNotNull(dir);
 
@@ -133,15 +121,8 @@ public class ApplicationDirectoriesImpl
       throw Throwables.propagate(e);
     }
 
-    if (create && !dir.isDirectory()) {
-      try {
-        DirSupport.mkdir(dir.toPath());
-        log.debug("Created directory: {}", dir);
-      }
-      catch (Exception e) {
-        log.error("Failed to create directory: {}", dir);
-        throw Throwables.propagate(e);
-      }
+    if (create) {
+      mkdir(dir);
     }
 
     return dir;

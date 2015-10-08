@@ -10,32 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.bootstrap.monitor.commands;
+package org.sonatype.nexus.bootstrap;
 
-import org.sonatype.nexus.bootstrap.ShutdownHelper;
-import org.sonatype.nexus.bootstrap.monitor.CommandMonitorThread;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
- * Command to forcibly halt the JVM (via {@link ShutdownHelper#halt(int)}).
+ * Helper to create directories.
  *
- * @since 2.2
+ * @since 3.0
  */
-public class HaltCommand
-    implements CommandMonitorThread.Command
+public class DirectoryHelper
 {
-
-  public static final String NAME = "HALT";
-
-  @Override
-  public String getId() {
-    return NAME;
+  public static void mkdir(final Path dir) throws IOException {
+    try {
+      Files.createDirectories(dir);
+    }
+    catch (FileAlreadyExistsException e) {
+      // this happens when last element of path exists, but is a symlink.
+      // A simple test with Files.isDirectory should be able to detect this
+      // case as by default, it follows symlinks.
+      if (!Files.isDirectory(dir)) {
+        throw new IOException("Failed to create directory: " + dir, e);
+      }
+    }
   }
-
-  @Override
-  public boolean execute() {
-    ShutdownHelper.halt(666);
-
-    throw new Error("Unreachable statement");
-  }
-
 }

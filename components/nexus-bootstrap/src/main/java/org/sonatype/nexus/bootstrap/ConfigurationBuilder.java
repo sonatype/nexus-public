@@ -111,7 +111,7 @@ public class ConfigurationBuilder
   /**
    * Provides customization of configuration.
    */
-  public static interface Customizer
+  public interface Customizer
   {
     void apply(ConfigurationBuilder builder) throws Exception;
   }
@@ -183,7 +183,9 @@ public class ConfigurationBuilder
     interpolate();
 
     // make some entries canonical
-    canonicalize("nexus-work");
+    canonicalize("karaf.base");
+    canonicalize("karaf.etc");
+    canonicalize("karaf.data");
 
     // return copy
     PropertyMap props = new PropertyMap(properties);

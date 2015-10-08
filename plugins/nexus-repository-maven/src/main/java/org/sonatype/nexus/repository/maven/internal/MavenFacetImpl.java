@@ -202,7 +202,8 @@ public class MavenFacetImpl
         streamSupplier,
         HashType.ALGORITHMS,
         null,
-        payload.getContentType()
+        payload.getContentType(),
+        false
     );
     AttributesMap contentAttributes = null;
     if (payload instanceof Content) {

@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
  */
 @Named
 @Singleton
-public class CoreLogConfigurationCustomizer
+public class LogConfigurationCustomizerImpl
     implements LogConfigurationCustomizer
 {
   @Override

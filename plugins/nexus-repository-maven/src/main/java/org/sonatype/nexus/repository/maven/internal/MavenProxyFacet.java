@@ -18,10 +18,11 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.InvalidContentException;
+import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -44,17 +45,30 @@ public class MavenProxyFacet
   }
 
   @Override
-  protected Content getCachedPayload(final Context context) throws IOException {
+  protected Content getCachedContent(final Context context) throws IOException {
     return mavenFacet.get(mavenPath(context));
   }
 
   @Override
-  protected Content store(final Context context, final Content payload) throws IOException, InvalidContentException {
-   return mavenFacet.put(mavenPath(context), payload);
+  protected CacheController getCacheController(@Nonnull final Context context) {
+    final MavenPath mavenPath = mavenPath(context);
+    if (mavenFacet.getMavenPathParser().isRepositoryMetadata(mavenPath)) {
+      return cacheControllerHolder.getMetadataCacheController();
+    }
+    else {
+      return cacheControllerHolder.getContentCacheController();
+    }
   }
 
   @Override
-  protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo) throws IOException {
+  protected Content store(final Context context, final Content payload) throws IOException, InvalidContentException {
+    return mavenFacet.put(mavenPath(context), payload);
+  }
+
+  @Override
+  protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
+      throws IOException
+  {
     mavenFacet.setCacheInfo(mavenPath(context), content, cacheInfo);
   }
 

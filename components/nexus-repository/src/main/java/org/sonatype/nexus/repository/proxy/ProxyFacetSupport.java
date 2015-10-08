@@ -71,10 +71,16 @@ public abstract class ProxyFacetSupport
     public URI remoteUrl;
 
     /**
-     * Artifact max-age minutes.
+     * Content max-age minutes.
      */
     @NotNull
     public Integer contentMaxAge = Time.hours(24).toMinutesI();
+
+    /**
+     * Metadata max-age minutes.
+     */
+    @NotNull
+    public Integer metadataMaxAge = Time.hours(24).toMinutesI();
 
     @Override
     public String toString() {
@@ -91,7 +97,7 @@ public abstract class ProxyFacetSupport
 
   private boolean remoteUrlChanged;
 
-  private CacheController cacheController;
+  protected CacheControllerHolder cacheControllerHolder;
 
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
@@ -102,7 +108,10 @@ public abstract class ProxyFacetSupport
   protected void doConfigure(final Configuration configuration) throws Exception {
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
 
-    cacheController = new CacheController(Time.minutes(config.contentMaxAge).toSecondsI(), null);
+    cacheControllerHolder = new CacheControllerHolder(
+        new CacheController(Time.minutes(config.contentMaxAge).toSecondsI(), null),
+        new CacheController(Time.minutes(config.metadataMaxAge).toSecondsI(), null)
+    );
 
     // normalize URL path to contain trailing slash
     if (!config.remoteUrl.getPath().endsWith("/")) {
@@ -154,16 +163,16 @@ public abstract class ProxyFacetSupport
   public Content get(final Context context) throws IOException {
     checkNotNull(context);
 
-    Content content = getCachedPayload(context);
+    final Content content = getCachedContent(context);
 
-    if (isStale(content)) {
+    if (isStale(context, content)) {
       try {
         final Content remote = fetch(context, content);
         if (remote != null) {
           return store(context, remote);
         }
       }
-      catch (IOException e) {
+      catch (ProxyServiceException | IOException e) {
         log.warn("Failed to fetch: {}", getUrl(context), e);
         throw e;
       }
@@ -174,14 +183,15 @@ public abstract class ProxyFacetSupport
   @Override
   public void invalidateProxyCaches() {
     log.info("Invalidating proxy caches of {}", getRepository().getName());
-    cacheController.invalidateCache();
+    cacheControllerHolder.invalidateCaches();
   }
 
   /**
-   * If we have the content cached locally already, return that - otherwise {@code null}.
+   * If we have the content cached locally already, return that along with applicable cache controller - otherwise
+   * {@code null}.
    */
   @Nullable
-  protected abstract Content getCachedPayload(final Context context) throws IOException;
+  protected abstract Content getCachedContent(final Context context) throws IOException;
 
   /**
    * Store a new Payload, freshly fetched from the remote URL. The Context indicates which component
@@ -218,7 +228,7 @@ public abstract class ProxyFacetSupport
     StatusLine status = response.getStatusLine();
     log.debug("Status: {}", status);
 
-    final CacheInfo cacheInfo = cacheController.current();
+    final CacheInfo cacheInfo = getCacheController(context).current();
 
     if (status.getStatusCode() == HttpStatus.SC_OK) {
       HttpEntity entity = response.getEntity();
@@ -231,13 +241,32 @@ public abstract class ProxyFacetSupport
       result.getAttributes().set(CacheInfo.class, cacheInfo);
       return result;
     }
-    if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-      checkState(stale != null, "Received 304 without conditional GET (bad server?) from %s", uri);
-      indicateVerified(context, stale, cacheInfo);
+
+    try {
+      if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        checkState(stale != null, "Received 304 without conditional GET (bad server?) from %s", uri);
+        indicateVerified(context, stale, cacheInfo);
+      }
+      mayThrowProxyServiceException(response);
     }
-    HttpClientUtils.closeQuietly(response);
+    finally {
+      HttpClientUtils.closeQuietly(response);
+    }
 
     return null;
+  }
+
+  /**
+   * May throw {@link ProxyServiceException} based on response statuses.
+   */
+  private void mayThrowProxyServiceException(final HttpResponse httpResponse) {
+    final StatusLine status = httpResponse.getStatusLine();
+    if (HttpStatus.SC_UNAUTHORIZED == status.getStatusCode()
+        || HttpStatus.SC_PAYMENT_REQUIRED == status.getStatusCode()
+        || HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED == status.getStatusCode()
+        || HttpStatus.SC_INTERNAL_SERVER_ERROR <= status.getStatusCode()) {
+      throw new ProxyServiceException(httpResponse);
+    }
   }
 
   /**
@@ -290,19 +319,29 @@ public abstract class ProxyFacetSupport
   /**
    * For whatever component/asset
    */
-  protected abstract void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo) throws IOException;
+  protected abstract void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
+      throws IOException;
 
   /**
    * Provide the URL of the content relative to the repository root.
    */
-  protected abstract String getUrl(final @Nonnull Context context);
+  protected abstract String getUrl(@Nonnull final Context context);
 
-  private boolean isStale(final Content content) throws IOException {
+
+  /**
+   * Get the appropriate cache controller for the type of content being requested. Must never return {@code null}.
+   */
+  @Nonnull
+  protected CacheController getCacheController(@Nonnull final Context context) {
+    return cacheControllerHolder.getContentCacheController();
+  }
+
+  private boolean isStale(final Context context, final Content content) {
     if (content == null) {
       // not in cache, consider it stale
       return true;
     }
     final CacheInfo cacheInfo = content.getAttributes().get(CacheInfo.class);
-    return cacheInfo == null || cacheController.isStale(cacheInfo);
+    return cacheInfo == null || getCacheController(context).isStale(cacheInfo);
   }
 }

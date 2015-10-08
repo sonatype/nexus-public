@@ -21,10 +21,10 @@
   </New>
 
   <New id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory">
-    <Set name="KeyStorePath"><Property name="nexus-base"/>/etc/ssl/keystore.jks</Set>
+    <Set name="KeyStorePath"><Property name="karaf.etc"/>/ssl/keystore.jks</Set>
     <Set name="KeyStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
     <Set name="KeyManagerPassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
-    <Set name="TrustStorePath"><Property name="nexus-base"/>/etc/ssl/keystore.jks</Set>
+    <Set name="TrustStorePath"><Property name="karaf.etc"/>/ssl/keystore.jks</Set>
     <Set name="TrustStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>
     <Set name="EndpointIdentificationAlgorithm"></Set>
     <Set name="NeedClientAuth"><Property name="jetty.ssl.needClientAuth" default="false"/></Set>

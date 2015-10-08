@@ -67,17 +67,28 @@ class MavenDefaultRepositoriesContributor
                 ]
             ]
         ),
-        new Configuration(repositoryName: DEFAULT_CENTRAL_REPO, recipeName: Maven2ProxyRecipe.NAME, online: true, attributes:
-            [
-                maven     : [
-                    versionPolicy              : VersionPolicy.RELEASE.toString()
+        new Configuration(repositoryName: DEFAULT_CENTRAL_REPO, recipeName: Maven2ProxyRecipe.NAME, online: true,
+            attributes: [
+                httpclient   : [
+                    connection: [
+                        blocked  : false,
+                        autoBlock: true
+                    ]
                 ],
-                proxy     : [
-                    remoteUrl     : 'https://repo1.maven.org/maven2/'
+                maven        : [
+                    versionPolicy: VersionPolicy.RELEASE.toString()
                 ],
-                storage: [
-                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                    writePolicy: WritePolicy.ALLOW.toString()
+                proxy        : [
+                    remoteUrl                  : 'https://repo1.maven.org/maven2/',
+                    contentMaxAge              : 1440,
+                    strictContentTypeValidation: true
+                ],
+                negativeCache: [
+                    enabled   : true,
+                    timeToLive: 1440
+                ],
+                storage      : [
+                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME
                 ]
             ]
         ),
@@ -90,8 +101,7 @@ class MavenDefaultRepositoriesContributor
                     memberNames: [DEFAULT_RELEASE_REPO, DEFAULT_SNAPSHOT_REPO, DEFAULT_CENTRAL_REPO]
                 ],
                 storage: [
-                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                    writePolicy: WritePolicy.ALLOW.toString()
+                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME
                 ]
             ]
         )

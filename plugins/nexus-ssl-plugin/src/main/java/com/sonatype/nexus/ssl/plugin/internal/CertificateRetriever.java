@@ -58,7 +58,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Singleton
 @Named
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public class CertificateRetriever
     extends ComponentSupport
 {

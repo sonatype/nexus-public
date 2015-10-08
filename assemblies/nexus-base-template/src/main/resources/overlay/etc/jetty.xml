@@ -9,8 +9,8 @@
   <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler">
     <Arg>
       <New id="NexusWebAppContext" class="org.eclipse.jetty.webapp.WebAppContext">
-        <Set name="descriptor"><Property name="nexus-base"/>/etc/nexus-web.xml</Set>
-        <Set name="resourceBase"><Property name="nexus-base"/>/public</Set>
+        <Set name="descriptor"><Property name="karaf.etc"/>/nexus-web.xml</Set>
+        <Set name="resourceBase"><Property name="karaf.base"/>/public</Set>
         <Set name="contextPath"><Property name="nexus-context-path"/></Set>
         <Set name="throwUnavailableOnStartupException">true</Set>
         <Set name="configurationClasses">

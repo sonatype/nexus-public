@@ -125,7 +125,7 @@ Ext.define('NX.controller.Drilldown', {
       component: componentListener,
       controller: {
         '#Bookmarking': {
-          navigate: me.reselect
+          navigate: me.onNavigate
         }
       }
     });
@@ -306,6 +306,15 @@ Ext.define('NX.controller.Drilldown', {
   },
 
   /**
+   * Reselect on user navigation.
+   *
+   * @protected
+   */
+  onNavigate: function () {
+    this.reselect();
+  },
+
+  /**
    * @public
    * @param {NX.Bookmark} bookmark to navigate to
    */
@@ -313,7 +322,7 @@ Ext.define('NX.controller.Drilldown', {
     var me = this,
         lists = Ext.ComponentQuery.query('nx-drilldown-master'),
         list_ids = bookmark.getSegments().slice(1),
-        index, list_ids, modelId, store;
+        index, modelId, store;
 
     // Don’t navigate if the feature view hasn’t loaded
     if (!me.getFeature || !me.getFeature()) {
@@ -390,10 +399,13 @@ Ext.define('NX.controller.Drilldown', {
     var me = this,
         lists = Ext.ComponentQuery.query('nx-drilldown-master');
 
-    lists[index].fireEvent('selection', lists[index], model);
-
     if (index + 1 !== me.currentIndex) {
       me.loadView(index + 1, false, model);
+    }
+    else {
+      lists[index].fireEvent('selection', lists[index], model);
+      me.onModelChanged(index, model);
+      me.refreshBreadcrumb();
     }
   },
 
@@ -717,6 +729,10 @@ Ext.define('NX.controller.Drilldown', {
 
       // Create the rest of the links
       for (var i = 1; i <= me.currentIndex && i < items.length; ++i) {
+        // do no create breadcrumb for items that do not have a name
+        if (!items[i].itemName) {
+          return;
+        }
         objs.push(
           // Separator
           {

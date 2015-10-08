@@ -18,32 +18,21 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.sonatype.nexus.ssl.plugin.internal.SSLConstants;
-
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfigurationSupport;
 
 /**
- * SSL plugin specific key store manager configuration.
+ * SSL plugin specific key-store manager configuration.
  *
  * @since ssl 1.0
  */
-@Named(SSLConstants.ID_PREFIX)
+@Named("ssl")
 @Singleton
 public class KeyStoreManagerConfigurationImpl
     extends KeyStoreManagerConfigurationSupport
 {
-
-  /**
-   * Name of directory containing private/trust key stores.
-   */
-  private static final String KEYSTORE_DIR_NAME = "keystore/ssl";
-
-  /**
-   * Sisu injected configuration prefix.
-   */
-  private static final String CPREFIX = SSLConstants.CONFIG_PREFIX + ".keyStoreManager";
+  private static final String CPREFIX = "${ssl.keyStoreManager";
 
   // Using terse names for password constants for a little more security by obscurity
 
@@ -67,7 +56,7 @@ public class KeyStoreManagerConfigurationImpl
       final @Named(CPREFIX + ".keyManagerAlgorithm:-DEFAULT}") String keyManagerAlgorithm,
       final @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") String trustManagerAlgorithm)
   {
-    setBaseDir(new File(directories.getWorkDirectory("etc"), KEYSTORE_DIR_NAME));
+    setBaseDir(new File(directories.getWorkDirectory("keystores"), "ssl"));
 
     setPrivateKeyStorePassword(PKSP);
     setTrustedKeyStorePassword(TKSP);
@@ -80,5 +69,4 @@ public class KeyStoreManagerConfigurationImpl
     setKeyManagerAlgorithm(keyManagerAlgorithm);
     setTrustManagerAlgorithm(trustManagerAlgorithm);
   }
-
 }

@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.app;
 
 import java.io.File;
 
-import javax.annotation.Nullable;
-
 /**
  * Provides access to application directories.
  *
@@ -27,34 +25,13 @@ public interface ApplicationDirectories
 
   /**
    * Installation directory.
-   *
-   * Null for WAR-based deployments.
    */
-  @Nullable
   File getInstallDirectory();
 
   /**
    * Temporary directory.
    */
   File getTemporaryDirectory();
-
-  // TODO: Add getTemporaryDirectory(String path) helper, seems to be common use so add helper
-
-  /**
-   * Application directory.
-   * 
-   * WEB-INF/ for WAR-based deployments.
-   * 
-   * @since 3.0
-   */
-  File getAppDirectory();
-
-  /**
-   * Application sub-directory.
-   * 
-   * @since 3.0
-   */
-  File getAppDirectory(String path);
 
   /**
    * Work directory.

@@ -61,7 +61,7 @@ public class EhCacheManagerProvider
     checkNotNull(directories);
 
     URI uri = null;
-    File file = new File(directories.getAppDirectory("etc"), CONFIG_FILE);
+    File file = new File(directories.getInstallDirectory(), "etc/" + CONFIG_FILE);
     if (file.exists()) {
       uri = file.toURI();
     }

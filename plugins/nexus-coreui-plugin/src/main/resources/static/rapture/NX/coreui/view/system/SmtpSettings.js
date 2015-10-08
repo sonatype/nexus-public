@@ -63,17 +63,6 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             allowExponential: false
           },
           {
-            xtype: 'nx-email',
-            name: 'fromAddress',
-            fieldLabel: NX.I18n.get('System_SmtpSettings_FromAddress_FieldLabel')
-          },
-          {
-            xtype: 'textfield',
-            name: 'subjectPrefix',
-            fieldLabel: NX.I18n.get('System_SmtpSettings_SubjectPrefix_FieldLabel'),
-            allowBlank: true
-          },
-          {
             xtype: 'textfield',
             name: 'username',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Username_FieldLabel'),
@@ -83,6 +72,17 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             xtype: 'nx-password',
             name: 'password',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Password_FieldLabel'),
+            allowBlank: true
+          },
+          {
+            xtype: 'nx-email',
+            name: 'fromAddress',
+            fieldLabel: NX.I18n.get('System_SmtpSettings_FromAddress_FieldLabel')
+          },
+          {
+            xtype: 'textfield',
+            name: 'subjectPrefix',
+            fieldLabel: NX.I18n.get('System_SmtpSettings_SubjectPrefix_FieldLabel'),
             allowBlank: true
           }
         ]

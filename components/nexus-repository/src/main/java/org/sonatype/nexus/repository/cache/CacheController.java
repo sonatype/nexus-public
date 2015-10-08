@@ -19,7 +19,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.joda.time.DateTime;
 
 /**
- * A support class which implements basic caching controller logic.
+ * A support class which implements basic cache-control logic.
  *
  * @since 3.0
  */

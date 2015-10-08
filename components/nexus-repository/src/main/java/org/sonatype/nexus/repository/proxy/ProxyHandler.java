@@ -51,6 +51,9 @@ public class ProxyHandler
       }
       return HttpResponses.notFound();
     }
+    catch (ProxyServiceException e) {
+      return HttpResponses.serviceUnavailable();
+    }
     catch (IOException e) {
       return HttpResponses.badGateway();
     }

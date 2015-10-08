@@ -16,24 +16,22 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.sonatype.nexus.ssl.plugin.internal.SSLConstants;
-
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
 
 /**
- * SSL plugin specific key store manager.
+ * SSL plugin specific key-store manager.
  *
  * @since ssl 1.0
  */
-@Named(SSLConstants.ID_PREFIX)
+@Named("ssl")
 @Singleton
 public class KeyStoreManagerImpl
     extends org.sonatype.nexus.ssl.KeyStoreManagerImpl
 {
   @Inject
   public KeyStoreManagerImpl(final CryptoHelper crypto,
-                             final @Named(SSLConstants.ID_PREFIX) KeyStoreManagerConfiguration config)
+                             final @Named("ssl") KeyStoreManagerConfiguration config)
   {
     super(crypto, config);
   }

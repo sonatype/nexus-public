@@ -22,7 +22,7 @@ Ext.define('NX.view.drilldown.Item', {
   extend: 'Ext.panel.Panel',
   alias: 'widget.nx-drilldown-item',
 
-  itemName: 'item',
+  itemName: null,
   itemClass: null,
   itemBookmark: null,
   cardIndex: 0,

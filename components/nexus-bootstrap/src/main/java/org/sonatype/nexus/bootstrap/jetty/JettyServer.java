@@ -112,17 +112,14 @@ public class JettyServer
 
     try {
       final AtomicReference<Throwable> exception = new AtomicReference<>();
-      AccessController.doPrivileged(new PrivilegedAction<Object>()
-      {
-        public Object run() {
-          try {
-            doStart(waitForServer, callback);
-          }
-          catch (Exception e) {
-            exception.set(e);
-          }
-          return null;
+      AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+        try {
+          doStart(waitForServer, callback);
         }
+        catch (Exception e) {
+          exception.set(e);
+        }
+        return null;
       });
 
       Throwable e = exception.get();
@@ -202,17 +199,14 @@ public class JettyServer
 
     try {
       final AtomicReference<Throwable> exception = new AtomicReference<>();
-      AccessController.doPrivileged(new PrivilegedAction<Object>()
-      {
-        public Object run() {
-          try {
-            doStop();
-          }
-          catch (Exception e) {
-            exception.set(e);
-          }
-          return null;
+      AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+        try {
+          doStop();
         }
+        catch (Exception e) {
+          exception.set(e);
+        }
+        return null;
       });
 
       Throwable e = exception.get();

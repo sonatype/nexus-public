@@ -30,7 +30,7 @@
   <properties>
     <osgi-spec.version>4.3.1</osgi-spec.version>
     <felix.version>4.4.0</felix.version>
-    <karaf.version>3.0.4</karaf.version>
+    <karaf.version>3.0.5</karaf.version>
   </properties>
 
   <dependencyManagement>

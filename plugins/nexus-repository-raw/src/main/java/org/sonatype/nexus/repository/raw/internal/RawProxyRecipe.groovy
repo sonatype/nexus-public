@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.raw.internal
 
+import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
+
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
@@ -78,6 +80,9 @@ class RawProxyRecipe
   Provider<StorageFacet> storageFacet
 
   @Inject
+  Provider<SingleAssetComponentMaintenance> componentMaintenance
+
+  @Inject
   Provider<SearchFacet> searchFacet
 
   @Inject
@@ -123,6 +128,7 @@ class RawProxyRecipe
     repository.attach(proxyFacet.get())
     repository.attach(rawContentFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get())
   }
 

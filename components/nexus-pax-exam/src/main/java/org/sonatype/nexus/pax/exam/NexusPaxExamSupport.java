@@ -24,9 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
@@ -93,6 +91,10 @@ public abstract class NexusPaxExamSupport
 
   public static final int NEXUS_PAX_EXAM_TIMEOUT_DEFAULT = 300000;
 
+  public static final String NEXUS_PAX_EXAM_INVOKER_KEY = "nexus.pax.exam.invoker";
+
+  public static final String NEXUS_PAX_EXAM_INVOKER_DEFAULT = "junit";
+
   public static final int NEXUS_TEST_START_LEVEL = 200;
 
   // -------------------------------------------------------------------------
@@ -148,13 +150,6 @@ public abstract class NexusPaxExamSupport
    */
   public File resolveTestFile(final String path) {
     return testData.resolveFile(path);
-  }
-
-  /**
-   * Resolves path against the Nexus application directory.
-   */
-  public File resolveAppFile(final String path) {
-    return new File(applicationDirectories.getAppDirectory(), path);
   }
 
   /**
@@ -222,30 +217,22 @@ public abstract class NexusPaxExamSupport
    * @return Function that returns {@code true} when there's a response from the URL; otherwise {@code false}
    */
   public static Callable<Boolean> responseFrom(final URL url) {
-    return new Callable<Boolean>()
-    {
-      public Boolean call() throws Exception {
-        HttpURLConnection conn = null;
-        try {
-          conn = (HttpURLConnection) url.openConnection();
-          if (conn instanceof HttpsURLConnection) {
-            // relax host and certificate checks as we just want to see if it's up
-            ((HttpsURLConnection) conn).setHostnameVerifier(new HostnameVerifier()
-            {
-              public boolean verify(String hostname, SSLSession session) {
-                return true;
-              }
-            });
-            URLUtils.prepareForSSL(conn);
-          }
-          conn.setRequestMethod("HEAD");
-          conn.connect();
-          return true;
+    return () -> {
+      HttpURLConnection conn = null;
+      try {
+        conn = (HttpURLConnection) url.openConnection();
+        if (conn instanceof HttpsURLConnection) {
+          // relax host and certificate checks as we just want to see if it's up
+          ((HttpsURLConnection) conn).setHostnameVerifier((hostname, session) -> true);
+          URLUtils.prepareForSSL(conn);
         }
-        finally {
-          if (conn != null) {
-            conn.disconnect();
-          }
+        conn.setRequestMethod("HEAD");
+        conn.connect();
+        return true;
+      }
+      finally {
+        if (conn != null) {
+          conn.disconnect();
         }
       }
     };
@@ -254,26 +241,16 @@ public abstract class NexusPaxExamSupport
   /**
    * @return Function that returns {@code true} when the event system is calm; otherwise {@code false}
    */
-  protected Callable<Boolean> calmPeriod() {
-    return new Callable<Boolean>()
-    {
-      public Boolean call() throws Exception {
-        return eventManager.isCalmPeriod();
-      }
-    };
+  public static Callable<Boolean> calmPeriod(EventManager eventManager) {
+    return eventManager::isCalmPeriod;
   }
 
   /**
    * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
    */
-  protected Callable<Boolean> tasksDone() {
+  public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler) {
     Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
-    return new Callable<Boolean>()
-    {
-      public Boolean call() throws Exception {
-        return taskScheduler.getRunningTaskCount() == 0;
-      }
-    };
+    return () -> taskScheduler.getRunningTaskCount() == 0;
   }
 
   // -------------------------------------------------------------------------
@@ -374,9 +351,9 @@ public abstract class NexusPaxExamSupport
             .instructions("Fragment-Host=org.ops4j.pax.tipi.hamcrest.core"),
 
         when(logbackProperties.canRead()).useOptions( //
-            replaceConfigurationFile("data/etc/logback.properties", logbackProperties)),
+            replaceConfigurationFile("data/logback/logback.properties", logbackProperties)),
         when(logbackNexusXml.canRead()).useOptions( //
-            replaceConfigurationFile("data/etc/logback-nexus.xml", logbackNexusXml)),
+            replaceConfigurationFile("data/logback/logback-nexus.xml", logbackNexusXml)),
 
         // randomize ports...
         editConfigurationFilePut("etc/org.sonatype.nexus.cfg", //
@@ -467,12 +444,12 @@ public abstract class NexusPaxExamSupport
   @Before
   public void startTestRecording() {
     // Pax-Exam guarantees unique test location, use that with index
-    testIndex.setDirectory(applicationDirectories.getAppDirectory());
+    testIndex.setDirectory(applicationDirectories.getInstallDirectory());
   }
 
   @After
   public void stopTestRecording() {
-    testIndex.recordAndCopyLink("karaf.log", resolveAppFile("data/log/karaf.log"));
+    testIndex.recordAndCopyLink("karaf.log", resolveWorkFile("log/karaf.log"));
     testIndex.recordAndCopyLink("nexus.log", resolveWorkFile("log/nexus.log"));
     testIndex.recordAndCopyLink("request.log", resolveWorkFile("log/request.log"));
 

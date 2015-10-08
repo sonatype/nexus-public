@@ -230,6 +230,15 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
   },
 
   /**
+   * @override
+   */
+  onNavigate: function() {
+    if (this.getFeature()) {
+      this.onBeforeRender();
+    }
+  },
+
+  /**
    * @private
    * Load stores based on the bookmarked URL
    */
@@ -271,8 +280,8 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
           me.reselect();
         });
       }
-      // Load the component list view
-      else if (list_ids[0]) {
+      // Load the component list view or repository list view
+      else {
         me.reselect();
       }
     });
@@ -328,6 +337,14 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
         store.clearFilter();
       }
     }
+  },
+
+  /**
+   * @override
+   */
+  loadView: function (index, animate, model) {
+    this.callParent(arguments);
+    this.loadStores();
   }
 
 });

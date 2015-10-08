@@ -8,7 +8,7 @@
         <New id="RequestLogHandler" class="org.eclipse.jetty.server.handler.RequestLogHandler">
           <Set name="requestLog">
             <New id="LogbackRequestLog" class="ch.qos.logback.access.jetty.RequestLogImpl2">
-              <Set name="fileName"><Property name="nexus-base"/>/etc/logback-access.xml</Set>
+              <Set name="fileName"><Property name="karaf.etc"/>/logback-access.xml</Set>
               <Set name="quiet">true</Set>
             </New>
           </Set>

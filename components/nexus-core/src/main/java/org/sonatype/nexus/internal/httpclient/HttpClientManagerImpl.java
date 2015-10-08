@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
-import java.io.IOException;
+import java.net.URI;
 import java.util.Map.Entry;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -38,12 +39,13 @@ import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.eventbus.Subscribe;
-import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.conn.routing.RouteInfo;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
@@ -69,6 +71,8 @@ public class HttpClientManagerImpl
 
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
 
+  private static final String CTX_REQ_URI = "request.uri";
+
   private final Logger outboundLog = LoggerFactory.getLogger(HTTPCLIENT_OUTBOUND_LOGGER_NAME);
 
   private final EventBus eventBus;
@@ -87,10 +91,10 @@ public class HttpClientManagerImpl
 
   @Inject
   public HttpClientManagerImpl(final EventBus eventBus,
-                               final HttpClientConfigurationStore store,
-                               @Named("initial") final Provider<HttpClientConfiguration> defaults,
-                               final SharedHttpClientConnectionManager sharedConnectionManager,
-                               final DefaultsCustomizer defaultsCustomizer)
+      final HttpClientConfigurationStore store,
+      @Named("initial") final Provider<HttpClientConfiguration> defaults,
+      final SharedHttpClientConnectionManager sharedConnectionManager,
+      final DefaultsCustomizer defaultsCustomizer)
   {
     this.eventBus = checkNotNull(eventBus);
 
@@ -236,53 +240,76 @@ public class HttpClientManagerImpl
     builder.setDefaultRequestConfig(plan.getRequest().build());
     builder.setDefaultCredentialsProvider(plan.getCredentials());
 
-    builder.addInterceptorFirst(new HttpRequestInterceptor()
-    {
-      @Override
-      public void process(final HttpRequest request, final HttpContext context)
-          throws HttpException, IOException
-      {
-        // add custom http-context attributes
-        for (Entry<String, Object> entry : plan.getAttributes().entrySet()) {
-          // only set context attribute if not already set, to allow per request overrides
-          if (context.getAttribute(entry.getKey()) == null) {
-            context.setAttribute(entry.getKey(), entry.getValue());
+    builder.addInterceptorFirst(
+        (HttpRequest request, HttpContext context) ->
+        {
+          // add custom http-context attributes
+          for (Entry<String, Object> entry : plan.getAttributes().entrySet()) {
+            // only set context attribute if not already set, to allow per request overrides
+            if (context.getAttribute(entry.getKey()) == null) {
+              context.setAttribute(entry.getKey(), entry.getValue());
+            }
+          }
+
+          // add custom http-request headers
+          for (Entry<String, String> entry : plan.getHeaders().entrySet()) {
+            request.addHeader(entry.getKey(), entry.getValue());
           }
         }
-
-        // add custom http-request headers
-        for (Entry<String, String> entry : plan.getHeaders().entrySet()) {
-          request.addHeader(entry.getKey(), entry.getValue());
+    );
+    builder.addInterceptorLast(
+        (HttpRequest httpRequest, HttpContext httpContext) ->
+        {
+          if (outboundLog.isDebugEnabled()) {
+            httpContext.setAttribute(CTX_REQ_STOPWATCH, Stopwatch.createStarted());
+            httpContext.setAttribute(CTX_REQ_URI, getRequestURI(httpContext));
+            outboundLog.debug("{} > {}", httpContext.getAttribute(CTX_REQ_URI), httpRequest.getRequestLine());
+          }
         }
-      }
-    });
-    builder.addInterceptorLast(new HttpRequestInterceptor()
-    {
-      @Override
-      public void process(final HttpRequest httpRequest, final HttpContext httpContext)
-          throws HttpException, IOException
-      {
-        if (outboundLog.isDebugEnabled()) {
-          httpContext.setAttribute(CTX_REQ_STOPWATCH, Stopwatch.createStarted());
-          HttpClientContext clientContext = HttpClientContext.adapt(httpContext);
-          outboundLog.debug("{} > {}", clientContext.getTargetHost(), httpRequest.getRequestLine());
+    );
+    builder.addInterceptorLast(
+        (HttpResponse httpResponse, HttpContext httpContext) ->
+        {
+          Stopwatch stopwatch = (Stopwatch) httpContext.getAttribute(CTX_REQ_STOPWATCH);
+          if (stopwatch != null) {
+            outboundLog.debug("{} < {} @ {}", httpContext.getAttribute(CTX_REQ_URI), httpResponse.getStatusLine(), stopwatch);
+          }
         }
-      }
-    });
-    builder.addInterceptorLast(new HttpResponseInterceptor()
-    {
-      @Override
-      public void process(final HttpResponse httpResponse, final HttpContext httpContext)
-          throws HttpException, IOException
-      {
-        Stopwatch stopwatch = (Stopwatch) httpContext.getAttribute(CTX_REQ_STOPWATCH);
-        if (stopwatch != null) {
-          HttpClientContext clientContext = HttpClientContext.adapt(httpContext);
-          outboundLog.debug("{} < {} @ {}", clientContext.getTargetHost(), httpResponse.getStatusLine(), stopwatch);
-        }
-      }
-    });
+    );
 
     return builder;
+  }
+
+  /**
+   * Creates absolute request URI with full path from passed in context, honoring proxy if in play.
+   */
+  @Nonnull
+  private URI getRequestURI(final HttpContext context) {
+    final HttpClientContext clientContext = HttpClientContext.adapt(context);
+    final HttpRequest httpRequest = clientContext.getRequest();
+    try {
+      URI uri;
+      if (httpRequest instanceof HttpUriRequest) {
+        uri = ((HttpUriRequest) httpRequest).getURI();
+      }
+      else {
+        uri = URI.create(httpRequest.getRequestLine().getUri());
+      }
+      final RouteInfo routeInfo = clientContext.getHttpRoute();
+      if (routeInfo != null) {
+        if (routeInfo.getHopCount() == 1 && uri.isAbsolute()) {
+          return uri;
+        }
+        HttpHost target = routeInfo.getHopTarget(0);
+        return URIUtils.resolve(URI.create(target.toURI()), uri);
+      }
+      else {
+        return uri;
+      }
+    }
+    catch (Exception e) {
+      log.warn("Could not create absolute request URI", e);
+      return URI.create(clientContext.getTargetHost().toURI());
+    }
   }
 }

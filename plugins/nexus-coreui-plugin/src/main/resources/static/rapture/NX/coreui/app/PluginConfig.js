@@ -111,7 +111,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     },
     { id: 'NX.coreui.controller.NuGetApiKey',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-nuget');
       }
     },
     {
@@ -171,7 +171,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchMaven',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-maven');
       }
     },
     {
@@ -183,13 +183,13 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchNuget',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-nuget');
       }
     },
     {
       id: 'NX.coreui.controller.SearchRaw',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-raw');
       }
     },
     {
