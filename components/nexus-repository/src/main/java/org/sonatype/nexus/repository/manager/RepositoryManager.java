@@ -36,4 +36,6 @@ public interface RepositoryManager
   Repository update(Configuration configuration) throws Exception;
 
   void delete(String name) throws Exception;
+
+  boolean isBlobstoreUsed(String blobStoreName);
 }

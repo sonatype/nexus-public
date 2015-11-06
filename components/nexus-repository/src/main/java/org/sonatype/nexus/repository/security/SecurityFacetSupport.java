@@ -76,6 +76,7 @@ public class SecurityFacetSupport
 
       case HttpMethods.POST:
       case HttpMethods.MKCOL:
+      case HttpMethods.PATCH:
         return BreadActions.ADD;
 
       case HttpMethods.PUT:

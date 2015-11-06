@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
+import java.io.File;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -50,10 +51,14 @@ public class LauncherActivator
     ShutdownHelper.setDelegate(this);
 
     final String etcPath = bundleContext.getProperty("karaf.etc");
-    final String args = bundleContext.getProperty("nexus-args");
+    if (etcPath == null) {
+      throw new IllegalArgumentException("Missing karaf.etc");
+    }
+
+    final File configFile = new File(etcPath, "org.sonatype.nexus.cfg").getCanonicalFile();
 
     MDC.put("userId", SYSTEM_USERID);
-    launcher = new Launcher(etcPath, args.split(","));
+    launcher = new Launcher(configFile);
     launcher.startAsync(
         () -> {
           connectorConfigurationTracker = new ConnectorConfigurationTracker(

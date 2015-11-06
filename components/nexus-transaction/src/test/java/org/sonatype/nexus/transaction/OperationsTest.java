@@ -22,7 +22,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -50,21 +54,26 @@ public class OperationsTest
     UnitOfWork.end();
   }
 
-  @Test(expected = IOException.class)
-  public void testRetryFailureBeforeWrapping() throws Exception {
-    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
+  @Test
+  public void testDefaultSpec() throws Exception {
 
-    methods.setCountdownToSuccess(1);
-    try {
-      methods.retryOnCheckedException();
-    }
-    finally {
-      verifyNoMoreInteractions(tx);
-    }
+    Operations.transactional(new Operation<String, RuntimeException>()
+    {
+      // implicit default @Transactional
+      public String call() {
+        return methods.nonTransactional();
+      }
+    });
+
+    InOrder order = inOrder(tx);
+    order.verify(tx).begin();
+    order.verify(tx).commit();
+    order.verify(tx).close();
+    verifyNoMoreInteractions(tx);
   }
 
   @Test
-  public void testRetrySuccessAfterWrapping() throws Exception {
+  public void testOperationRetrySuccess() throws Exception {
     when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
@@ -93,7 +102,7 @@ public class OperationsTest
   }
 
   @Test(expected = IOException.class)
-  public void testRetryFailureAfterWrapping() throws Exception {
+  public void testOperationRetryFailure() throws Exception {
     when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
@@ -116,6 +125,86 @@ public class OperationsTest
       order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).close();
       verifyNoMoreInteractions(tx);
+    }
+  }
+
+  @Test
+  public void testLambdaRetrySuccess() throws Exception {
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
+
+    methods.setCountdownToSuccess(3);
+    Operations.transactional().retryOn(IOException.class).call(() -> methods.retryOnCheckedException());
+
+    InOrder order = inOrder(tx);
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).commit();
+    order.verify(tx).close();
+    verifyNoMoreInteractions(tx);
+  }
+
+  @Test
+  public void testBatchModeDoesntLeakOutsideScope() {
+    final Transaction[] txHolder = new Transaction[2];
+
+    UnitOfWork.begin(() -> Mockito.mock(Transaction.class));
+    try {
+      UnitOfWork.beginBatch(() -> Mockito.mock(Transaction.class));
+      try {
+        Operations.transactional(new Operation<Void, RuntimeException>()
+        {
+          @Transactional
+          public Void call() {
+            txHolder[0] = UnitOfWork.currentTx();
+            return null;
+          }
+        });
+        Operations.transactional(new Operation<Void, RuntimeException>()
+        {
+          @Transactional
+          public Void call() {
+            txHolder[1] = UnitOfWork.currentTx();
+            return null;
+          }
+        });
+
+        // batched: transactions should be same
+        assertThat(txHolder[0], is(txHolder[1]));
+      }
+      finally {
+        UnitOfWork.end(); // ends inner-batch-work
+      }
+
+      Operations.transactional(new Operation<Void, RuntimeException>()
+      {
+        @Transactional
+        public Void call() {
+          txHolder[0] = UnitOfWork.currentTx();
+          return null;
+        }
+      });
+      Operations.transactional(new Operation<Void, RuntimeException>()
+      {
+        @Transactional
+        public Void call() {
+          txHolder[1] = UnitOfWork.currentTx();
+          return null;
+        }
+      });
+
+      // non-batched: transactions should differ
+      assertThat(txHolder[0], is(not(txHolder[1])));
+    }
+    finally {
+      UnitOfWork.end(); // ends outer-non-batch-work
     }
   }
 }

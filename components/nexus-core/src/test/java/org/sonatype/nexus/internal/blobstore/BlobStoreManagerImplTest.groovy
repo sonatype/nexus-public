@@ -99,19 +99,6 @@ class BlobStoreManagerImplTest
     BlobStoreConfiguration configuration = createConfig('test')
     BlobStore blobStore = mock(BlobStore)
     doReturn(blobStore).when(underTest).blobStore('test')
-    when(store.list()).thenReturn(Lists.newArrayList(configuration));
-    
-    underTest.delete(configuration)
-    
-    verify(blobStore).stop();
-    verify(store).delete(configuration);
-  }
-
-  @Test
-  void 'Can delete an existing BlobStore by name'() {
-    BlobStoreConfiguration configuration = createConfig('test')
-    BlobStore blobStore = mock(BlobStore)
-    doReturn(blobStore).when(underTest).blobStore('test')
     when(store.list()).thenReturn([configuration])
     when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
     

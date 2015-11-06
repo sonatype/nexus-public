@@ -76,6 +76,14 @@ Ext.define('NX.coreui.store.SearchCriteria', {
       }
     },
     {
+      id: 'assets.attributes.checksum.sha256',
+      group: NX.I18n.get('SearchCriteria_Checksum_Group'),
+      config: {
+        fieldLabel: NX.I18n.get('SearchCriteria_SHA256_FieldLabel'),
+        width: 250
+      }
+    },
+    {
       id: 'assets.attributes.checksum.sha512',
       group: NX.I18n.get('SearchCriteria_Checksum_Group'),
       config: {

@@ -37,9 +37,6 @@ import org.sonatype.nexus.repository.util.TypeTokens;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
-import org.sonatype.nexus.transaction.Operation;
-import org.sonatype.nexus.transaction.Operations;
-import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -57,6 +54,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * Maven 2 repository metadata updater.
@@ -111,34 +109,31 @@ public class MetadataUpdater
    */
   @VisibleForTesting
   void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
-    Operations.transactional(new Operation<Void, RuntimeException>()
-    {
-      @Transactional(retryOn = ONeedRetryException.class)
-      public Void call() {
+    try {
+      transactional().retryOn(ONeedRetryException.class).call(() -> {
         checkNotNull(mavenPath);
         checkNotNull(metadata);
-        try {
-          final Metadata oldMetadata = read(mavenPath);
-          if (oldMetadata == null) {
-            // old does not exists, just write it
-            write(mavenPath, toMetadata(metadata));
-          }
-          else {
-            final Metadata updated = metadataMerger.merge(
-                ImmutableList.of(
-                    new MetadataEnvelope(repository.getName() + ":" + mavenPath.getPath(), oldMetadata),
-                    new MetadataEnvelope("new:" + mavenPath.getPath(), toMetadata(metadata))
-                )
-            );
-            write(mavenPath, updated);
-          }
-          return null;
+
+        final Metadata oldMetadata = read(mavenPath);
+        if (oldMetadata == null) {
+          // old does not exists, just write it
+          write(mavenPath, toMetadata(metadata));
         }
-        catch (IOException e) {
-          throw Throwables.propagate(e);
+        else {
+          final Metadata updated = metadataMerger.merge(
+              ImmutableList.of(
+                  new MetadataEnvelope(repository.getName() + ":" + mavenPath.getPath(), oldMetadata),
+                  new MetadataEnvelope("new:" + mavenPath.getPath(), toMetadata(metadata))
+              )
+          );
+          write(mavenPath, updated);
         }
-      }
-    });
+        return null;
+      });
+    }
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

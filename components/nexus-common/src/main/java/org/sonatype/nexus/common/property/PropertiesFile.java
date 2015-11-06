@@ -10,10 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.log;
+package org.sonatype.nexus.common.property;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.sonatype.goodies.common.FileReplacer;
-import org.sonatype.goodies.common.FileReplacer.ContentWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 class PropertiesFile
-  extends Properties
+    extends Properties
 {
   private static final Logger log = LoggerFactory.getLogger(PropertiesFile.class);
 
@@ -55,12 +53,6 @@ class PropertiesFile
     log.debug("Storing: {}, file");
     FileReplacer replacer = new FileReplacer(file);
     replacer.setDeleteBackupFile(true);
-    replacer.replace(new ContentWriter()
-    {
-      @Override
-      public void write(final BufferedOutputStream output) throws IOException {
-        store(output, null);
-      }
-    });
+    replacer.replace(output -> store(output, null));
   }
 }

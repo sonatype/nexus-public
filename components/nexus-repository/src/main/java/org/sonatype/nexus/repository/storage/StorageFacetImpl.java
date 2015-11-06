@@ -177,7 +177,7 @@ public class StorageFacetImpl
     // TODO: Make this a soft delete and cleanup later so it doesn't block for large repos.
     try (StorageTx tx = openStorageTx(databaseInstanceProvider.get().acquire())) {
       tx.begin();
-      tx.deleteBucket(tx.getBucket());
+      tx.deleteBucket(tx.findBucket(getRepository()));
       tx.commit();
     }
   }

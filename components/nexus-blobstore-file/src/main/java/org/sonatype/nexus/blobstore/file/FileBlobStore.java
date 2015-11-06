@@ -62,9 +62,11 @@ public class FileBlobStore
 
   public static final String BLOB_CONTENT_SUFFIX = ".blob";
 
-  private static final String CONFIG_KEY = "file";
+  @VisibleForTesting
+  static final String CONFIG_KEY = "file";
 
-  private static final String PATH_KEY = "path";
+  @VisibleForTesting
+  static final String PATH_KEY = "path";
 
   private Path root;
 
@@ -299,15 +301,20 @@ public class FileBlobStore
   }
 
   @Override
-  public void init(final BlobStoreConfiguration configuration) throws IOException {
+  public void init(final BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
-    Path blobDir = Paths.get(String.valueOf(configuration.attributes(CONFIG_KEY).require(PATH_KEY)));
-    Path content = blobDir.resolve("content");
-    File metadataFile = blobDir.resolve("metadata").toFile();
-    DirSupport.mkdir(content);
-    DirSupport.mkdir(metadataFile);
-    this.root = content;
-    this.metadataStore = FileBlobMetadataStoreImpl.create(metadataFile);
+    Path blobDir = getConfiguredBlobDir();
+    try {
+      Path content = blobDir.resolve("content");
+      File metadataFile = blobDir.resolve("metadata").toFile();
+      DirSupport.mkdir(content);
+      DirSupport.mkdir(metadataFile);
+      this.root = content;
+      this.metadataStore = FileBlobMetadataStoreImpl.create(metadataFile);
+    }
+    catch (Exception e) {
+      throw new BlobStoreException(String.format("Unable to initialize blob store directory structure: %s", blobDir), e, null);
+    }
   }
 
   @Override
@@ -321,10 +328,6 @@ public class FileBlobStore
       // that it exists, and then discover that it doesn't, mid-operation
       throw new BlobStoreException("Blob has been deleted", blobId);
     }
-  }
-
-  private String getPath(final Map<String, Map<String, Object>> attributes) {
-    return (String) attributes.get("file").get("path");
   }
 
   public static Map<String, Map<String, Object>> attributes(final String path) {
@@ -341,6 +344,24 @@ public class FileBlobStore
     configuration.setType(FileBlobStore.TYPE);
     configuration.attributes(CONFIG_KEY).set(PATH_KEY, path);
     return configuration;
+  }
+
+  /**
+   * Recursively delete everything in the blob store's configured directory.
+   */
+  @Override
+  public void remove() {
+    try {
+      fileOperations.deleteDirectory(getConfiguredBlobDir());
+    }
+    catch (IOException e) {
+      throw new BlobStoreException(e, null);
+    }
+  }
+
+  private Path getConfiguredBlobDir()
+  {
+    return Paths.get(String.valueOf(blobStoreConfiguration.attributes(CONFIG_KEY).require(PATH_KEY)));
   }
 
   class FileBlob

@@ -54,8 +54,8 @@ public class DefaultComponentMaintenanceImpl
 
   @Transactional(retryOn = ONeedRetryException.class)
   protected void deleteAssetTx(final EntityId assetId) {
-    StorageTx tx = UnitOfWork.currentTransaction();
-    Asset asset = tx.findAsset(assetId, tx.getBucket());
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     if (asset == null) {
       return;
     }

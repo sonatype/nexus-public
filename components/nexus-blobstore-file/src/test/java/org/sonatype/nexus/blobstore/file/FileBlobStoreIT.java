@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Random;
 
@@ -23,7 +24,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobMetadataStoreImpl;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -52,25 +52,26 @@ public class FileBlobStoreIT
       BLOB_NAME_HEADER, "test/randomData.bin"
   );
 
-  private FileBlobMetadataStore metadataStore;
-
   private FileBlobStore underTest;
+
+  private Path blobStoreDirectory;
 
   @Before
   public void setUp() throws Exception {
-    Path root = util.createTempDir().toPath();
-    Path content = root.resolve("content");
-    Path metadata = root.resolve("metadata");
+    blobStoreDirectory = util.createTempDir().toPath();
 
-    this.metadataStore = FileBlobMetadataStoreImpl.create(metadata.toFile());
-    this.underTest = new FileBlobStore(content, new VolumeChapterLocationStrategy(), new SimpleFileOperations(),
-        metadataStore, new BlobStoreConfiguration());
+    final BlobStoreConfiguration config = new BlobStoreConfiguration();
+    config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
+    underTest = new FileBlobStore(new VolumeChapterLocationStrategy(), new SimpleFileOperations());
+    underTest.init(config);
     underTest.start();
   }
 
   @After
   public void tearDown() throws Exception {
-    underTest.stop();
+    if (underTest != null) {
+      underTest.stop();
+    }
   }
 
   @Test
@@ -138,5 +139,24 @@ public class FileBlobStoreIT
 
     final Blob newBlob = underTest.get(blob.getId());
     assertThat(newBlob, is(nullValue()));
+  }
+
+  @Test
+  public void blobstoreRemovalDeletesAllFiles() throws Exception {
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    new Random().nextBytes(content);
+
+    for (int i = 0; i < 100; i++) {
+      underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    }
+
+    assertThat(Files.exists(this.blobStoreDirectory), is(true));
+
+    underTest.stop();
+    underTest.remove();
+
+    assertThat(Files.exists(this.blobStoreDirectory), is(false));
+
+    underTest = null; // The store is stopped, no cleanup required
   }
 }

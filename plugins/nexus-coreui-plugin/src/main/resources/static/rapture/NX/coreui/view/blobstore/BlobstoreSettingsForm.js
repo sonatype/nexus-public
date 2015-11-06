@@ -41,6 +41,19 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
 
     me.items = [
       {
+        xtype: 'combo',
+        name: 'type',
+        itemId: 'type',
+        fieldLabel: NX.I18n.get('Blobstore_BlobstoreAdd_Type_FieldLabel'),
+        emptyText: NX.I18n.get('Blobstore_BlobstoreAdd_Type_EmptyText'),
+        editable: false,
+        store: 'BlobstoreType',
+        queryMode: 'local',
+        displayField: 'name',
+        valueField: 'id',
+        readOnly: true
+      },
+      {
         xtype: 'textfield',
         name: 'name',
         itemId: 'name',
@@ -48,15 +61,29 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         readOnly: true
       },
       {
-        xtype: 'textarea',
-        name: 'attributes',
-        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Attributes_FieldLabel'),
-        height: 300,
-        allowBlank: false,
-        cls: 'nx-monospace-field'
+        xtype: 'textfield',
+        name: 'path',
+        itemId: 'path',
+        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Path_FieldLabel'),
+        readOnly: true
       }
     ];
 
     me.callParent(arguments);
+
+    //map repository attributes raw map structure to/from a flattened representation
+    Ext.override(me.getForm(), {
+      getValues: function() {
+        var values = this.callParent(arguments);
+        values['attributes'] = Ext.JSON.encode({file:{path:values['path']}});
+        return values;
+      },
+
+      setValues: function(values) {
+        var attrs = Ext.JSON.decode(values['attributes']);
+        values['path'] = attrs['file']['path'];
+        this.callParent(arguments);
+      }
+    });
   }
 });

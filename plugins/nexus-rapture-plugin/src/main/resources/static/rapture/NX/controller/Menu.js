@@ -215,20 +215,7 @@ Ext.define('NX.controller.Menu', {
    * @private
    */
   onItemClick: function (panel, featureMenuModel) {
-    var me = this,
-        path = featureMenuModel.get('path');
-
-    me.currentSelectedPath = path;
-
-    //<if debug>
-    me.logInfo('Selected feature:', path);
-    //</if>
-
-    if (me.bookmarkingEnabled) {
-      me.bookmark(featureMenuModel);
-    }
-    me.selectFeature(me.getStore('Feature').getById(featureMenuModel.get('path')));
-    me.populateFeatureGroupStore(featureMenuModel);
+    this.selectMenuItem(featureMenuModel, true);
   },
 
   /**
@@ -238,23 +225,7 @@ Ext.define('NX.controller.Menu', {
    * @private
    */
   onSelection: function (panel, featureMenuModel) {
-    var me = this,
-      path = featureMenuModel.get('path');
-
-    if ((path !== me.currentSelectedPath) || featureMenuModel.get('group')) {
-      me.currentSelectedPath = path;
-      me.currentSelectedPath = path;
-
-      //<if debug>
-      me.logInfo('Selected feature:', path);
-      //</if>
-
-      if (me.bookmarkingEnabled) {
-        me.bookmark(featureMenuModel);
-      }
-      me.selectFeature(me.getStore('Feature').getById(featureMenuModel.get('path')));
-      me.populateFeatureGroupStore(featureMenuModel);
-    }
+    this.selectMenuItem(featureMenuModel, false);
   },
 
   /**
@@ -267,7 +238,6 @@ Ext.define('NX.controller.Menu', {
       path = featureMenuModel.get('path');
 
     if (reselect || path !== me.currentSelectedPath || featureMenuModel.get('group')) {
-      me.currentSelectedPath = path;
       me.currentSelectedPath = path;
 
       //<if debug>

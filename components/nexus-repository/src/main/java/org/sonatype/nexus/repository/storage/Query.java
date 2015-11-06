@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.storage;
 import java.util.Collections;
 import java.util.Map;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
@@ -27,8 +26,15 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.0
  */
-public class ComponentQuery
+public class Query
 {
+  /**
+   * Helper for creating query builder.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
   public static class Builder
   {
     private final StringBuilder where = new StringBuilder();
@@ -38,6 +44,10 @@ public class ComponentQuery
     private final StringBuilder suffix = new StringBuilder();
 
     private int parameterNumber;
+
+    private Builder() {
+      // nop
+    }
 
     /**
      * Appends to the 'where' clause.
@@ -55,12 +65,27 @@ public class ComponentQuery
       checkState(hasWhere(), "Missing where statement");
       return this.where(" = ").param(value);
     }
-    
+
     public Builder and(String value) {
       checkNotNull(value);
       checkState(hasWhere(), "Missing where statement");
-      
       return where(" AND ").where(value);
+    }
+
+    public Builder or(String value) {
+      checkNotNull(value);
+      checkState(hasWhere(), "Missing where statement");
+      return where(" OR ").where(value);
+    }
+
+    public Builder isNull() {
+      checkState(hasWhere(), "Missing where statement");
+      return where(" IS NULL ");
+    }
+
+    public Builder isNotNull() {
+      checkState(hasWhere(), "Missing where statement");
+      return where(" IS NOT NULL ");
     }
 
     public boolean hasWhere() {
@@ -86,9 +111,9 @@ public class ComponentQuery
       return this;
     }
 
-    public ComponentQuery build() {
+    public Query build() {
       final StringBuilder str = where;
-      return new ComponentQuery(clean(str), clean(suffix), Collections.unmodifiableMap(parameters)
+      return new Query(clean(str), clean(suffix), Collections.unmodifiableMap(parameters)
       );
     }
 
@@ -101,7 +126,7 @@ public class ComponentQuery
 
   private final Map<String, Object> parameters;
 
-  private ComponentQuery(final String where, final String suffix, final Map<String, Object> parameters) {
+  private Query(final String where, final String suffix, final Map<String, Object> parameters) {
     this.where = where;
     this.suffix = suffix;
     this.parameters = parameters;

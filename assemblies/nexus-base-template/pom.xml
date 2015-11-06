@@ -80,77 +80,9 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!--
-    Nexus Plugin features
-    -->
-
     <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-quartz-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-siesta-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-ssl-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-rapture-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-extdirect-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-coreui-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-httpbridge</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-maven</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-raw</artifactId>
+      <groupId>org.sonatype.nexus.assemblies</groupId>
+      <artifactId>nexus-core-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -215,6 +147,12 @@
                       todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${com.google.code.findbugs:jsr305:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${org.bouncycastle:bcprov-jdk15on:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${org.bouncycastle:bcpkix-jdk15on:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${org.bouncycastle:bcpg-jdk15on:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${org.sonatype.nexus.assemblies:karaf-nexus-branding:jar}"
                       tofile="${project.build.directory}/assembly/lib/karaf-nexus-branding.jar"/>
 
@@ -233,12 +171,14 @@
                     <include name="etc/org.apache.karaf.command.acl.*.cfg"/>
                     <include name="etc/jmx.acl.*.cfg"/>
                     <include name="etc/org.ops4j.pax.logging.cfg"/>
-
-                    <!-- remove xerces and xalan overrides -->
-                    <include name="lib/endorsed/*xerces*.jar"/>
-                    <include name="lib/endorsed/*xalan*.jar"/>
+                    <include name="etc/users.properties"/>
+                    <include name="etc/keys.properties"/>
                   </fileset>
                 </delete>
+
+                <!-- delete java.ext.dirs and java.endorsed.dirs -->
+                <delete dir="${project.build.directory}/assembly/lib/ext"/>
+                <delete dir="${project.build.directory}/assembly/lib/endorsed"/>
 
                 <!-- overlay customizations -->
                 <copy todir="${project.build.directory}/assembly" overwrite="true">
@@ -293,15 +233,7 @@
             <feature>management</feature>
             <feature>ssh</feature>
             <feature>nexus-oss-edition</feature>
-            <feature>nexus-quartz-plugin</feature>
-            <feature>nexus-siesta-plugin</feature>
-            <feature>nexus-ssl-plugin</feature>
-            <feature>nexus-rapture-plugin</feature>
-            <feature>nexus-extdirect-plugin</feature>
-            <feature>nexus-coreui-plugin</feature>
-            <feature>nexus-repository-httpbridge</feature>
-            <feature>nexus-repository-maven</feature>
-            <feature>nexus-repository-raw</feature>
+            <feature>nexus-core-feature</feature>
           </installedFeatures>
         </configuration>
       </plugin>

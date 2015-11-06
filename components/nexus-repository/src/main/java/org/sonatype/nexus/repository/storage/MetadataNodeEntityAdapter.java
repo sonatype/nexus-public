@@ -20,10 +20,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
-import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -33,7 +31,6 @@ import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -45,7 +42,6 @@ import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.StorageFacet.P_FORMAT;
 import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_UPDATED;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME;
 
 /**
  * {@link MetadataNode} entity-adapter.
@@ -68,9 +64,6 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     type.createProperty(P_FORMAT, OType.STRING).setMandatory(true).setNotNull(true);
     type.createProperty(P_LAST_UPDATED, OType.DATETIME);
     type.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP);
-
-    String indexName = new OIndexNameBuilder().type(getTypeName()).property(P_BUCKET).build();
-    type.createIndex(indexName, INDEX_TYPE.NOTUNIQUE, P_BUCKET);
   }
 
   @Override
@@ -134,10 +127,10 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
   Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
                             final @Nullable String whereClause,
                             final @Nullable Map<String, Object> parameters,
-                            final @Nullable Iterable<Repository> repositories,
+                            final @Nullable Iterable<Bucket> buckets,
                             final @Nullable String querySuffix)
   {
-    String query = buildQuery(false, whereClause, repositories, querySuffix);
+    String query = buildQuery(false, whereClause, buckets, querySuffix);
     log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
     Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
     return readEntities(docs);
@@ -146,10 +139,10 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
   long countByQuery(final ODatabaseDocumentTx db,
                     final @Nullable String whereClause,
                     final @Nullable Map<String, Object> parameters,
-                    final @Nullable Iterable<Repository> repositories,
+                    final @Nullable Iterable<Bucket> buckets,
                     final @Nullable String querySuffix)
   {
-    String query = buildQuery(true, whereClause, repositories, querySuffix);
+    String query = buildQuery(true, whereClause, buckets, querySuffix);
     log.debug("Counting {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
     List<ODocument> results = db.command(new OCommandSQL(query)).execute(parameters);
     return results.get(0).field("count");
@@ -157,7 +150,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
 
   private String buildQuery(final boolean isCount,
                             final @Nullable String whereClause,
-                            final @Nullable Iterable<Repository> repositories,
+                            final @Nullable Iterable<Bucket> buckets,
                             final @Nullable String querySuffix)
   {
     StringBuilder query = new StringBuilder();
@@ -170,13 +163,29 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
       query.append(" where (").append(whereClause).append(")");
     }
 
-    if (repositories != null) {
+    addBucketConstraints(whereClause, buckets, query);
+
+    if (querySuffix != null) {
+      query.append(" ").append(querySuffix);
+    }
+
+    return query.toString();
+  }
+
+  /**
+   * Constrain a query to certain buckets.
+   */
+  protected void addBucketConstraints(@Nullable final String whereClause,
+                                      @Nullable final Iterable<Bucket> buckets,
+                                      final StringBuilder query)
+  {
+    if (buckets != null) {
       List<String> bucketConstraints = Lists.newArrayList(
-          Iterables.transform(repositories, new Function<Repository, String>()
+          Iterables.transform(buckets, new Function<Bucket, String>()
           {
             @Override
-            public String apply(final Repository repository) {
-              return String.format("%s.%s = '%s'", P_BUCKET, P_REPOSITORY_NAME, repository.getName());
+            public String apply(final Bucket bucket) {
+              return String.format("%s=%s", P_BUCKET, bucketEntityAdapter.recordIdentity(bucket));
             }
           }).iterator());
       if (bucketConstraints.size() > 0) {
@@ -191,12 +200,6 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
         query.append(")");
       }
     }
-
-    if (querySuffix != null) {
-      query.append(" ").append(querySuffix);
-    }
-
-    return query.toString();
   }
 
   protected Iterable<T> readEntities(final Iterable<ODocument> documents) {

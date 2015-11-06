@@ -45,12 +45,12 @@ public class ExampleMethods
 
   @Transactional
   public void canSeeTransactionInsideTransactional() {
-    checkState(UnitOfWork.currentTransaction() != null);
+    checkState(UnitOfWork.currentTx() != null);
   }
 
   // should throw IllegalStateException
   public void cannotSeeTransactionOutsideTransactional() {
-    UnitOfWork.currentTransaction();
+    UnitOfWork.currentTx();
   }
 
   @Transactional

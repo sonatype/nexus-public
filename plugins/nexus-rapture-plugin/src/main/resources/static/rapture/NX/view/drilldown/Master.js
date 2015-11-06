@@ -35,7 +35,7 @@ Ext.define('NX.view.drilldown.Master', {
 
     // Refresh drilldown affordances on load, and when a column is added
     me.on('viewready', function(view) { view.refreshDrilldown(view.headerCt) });
-    me.headerCt.on('add', me.refreshDrilldown);
+    me.headerCt.on('columnschanged', me.refreshDrilldown);
   },
 
   loadStore: function() {
@@ -49,13 +49,28 @@ Ext.define('NX.view.drilldown.Master', {
    * @param ct The content header for the grid
    */
   refreshDrilldown: function(ct) {
-    var columns = ct.items.items.filter(function(e) { return e.cls && e.cls == 'nx-drilldown-affordance' });
+    var firstIdx,
+        columns = ct.items.items.filter(function(e, idx) {
+          if (e.cls && e.cls == 'nx-drilldown-affordance') {
+            if (!firstIdx) {
+              firstIdx = idx;
+            }
+            return true;
+          }
+          return false;
+        });
 
-    if (columns.length) {
-      return;
+    // skip adding affordance if the column already exists and is teh last one
+    if (columns.length === 1 && firstIdx + 1 === ct.items.items.length) {
+      return
     }
 
     this.suspendEvents(false);
+
+    // Remove drilldown affordance columns
+    columns.forEach(function(e) {
+      ct.remove(e);
+    });
 
     // Add a drilldown affordance to the end of the list
     ct.add(

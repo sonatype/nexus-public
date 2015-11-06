@@ -159,20 +159,6 @@ public class BlobStoreManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public void delete(BlobStoreConfiguration configuration) throws Exception {
-    checkNotNull(configuration);
-
-    log.debug("Deleting BlobStore: {}", configuration);
-    BlobStore blobStore = blobStore(configuration.getName());
-    blobStore.stop();
-    store.delete(configuration);
-    untrack(configuration.getName());
-
-    //TODO - event publishing
-  }
-
-  @Override
-  @Guarded(by = STARTED)
   public BlobStore get(final String name) {
     checkNotNull(name);
 
@@ -180,13 +166,17 @@ public class BlobStoreManagerImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
     BlobStore blobStore = blobStore(name);
+    log.debug("Deleting BlobStore: {}", name);
     blobStore.stop();
-    //TODO cleanup blobStore?
+    blobStore.remove();
     untrack(name);
     store.delete(blobStore.getBlobStoreConfiguration());
+
+    //TODO - event publishing
   }
 
   private BlobStore newBlobStore(final BlobStoreConfiguration blobStoreConfiguration) throws Exception {

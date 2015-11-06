@@ -20,10 +20,14 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 
@@ -50,7 +54,13 @@ class BlobStoreComponent
   AttributeConverter attributeConverter
 
   @Inject
-  Map<String, Provider<BlobStore>> blobstorePrototypes;
+  Map<String, Provider<BlobStore>> blobstorePrototypes
+
+  @Inject
+  ApplicationDirectories applicationDirectories
+
+  @Inject
+  RepositoryManager repositoryManager
 
   @DirectMethod
   List<BlobStoreXO> read() {
@@ -60,7 +70,7 @@ class BlobStoreComponent
   @DirectMethod
   List<ReferenceXO> readTypes() {
     blobstorePrototypes.collect { key, provider ->
-      new ReferenceXO(id: key, name: key) 
+      new ReferenceXO(id: key, name: key)
     }
   }
 
@@ -77,7 +87,15 @@ class BlobStoreComponent
   @RequiresAuthentication
   @Validate
   void remove(final @NotEmpty String name) {
+    if (repositoryManager.isBlobstoreUsed(name)) {
+      throw new BlobStoreException(String.format("Blob store (%s) is in use by at least one repository", name), null)
+    }
     blobStoreManager.delete(name)
+  }
+
+  @DirectMethod
+  PathSeparatorXO defaultWorkDirectory() {
+    return new PathSeparatorXO(path: applicationDirectories.getWorkDirectory('blobs'), fileSeparator: File.separator)
   }
 
   BlobStoreXO asBlobStore(final BlobStore blobStore) {
@@ -86,7 +104,8 @@ class BlobStoreComponent
         attributes: attributeConverter.asAttributes(blobStore.blobStoreConfiguration.attributes),
         blobCount: blobStore.metrics.blobCount,
         totalSize: blobStore.metrics.totalSize,
-        availableSpace: blobStore.metrics.availableSpace
+        availableSpace: blobStore.metrics.availableSpace,
+        inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name)
     )
   }
 }

@@ -15,6 +15,8 @@ package org.sonatype.nexus.transaction;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -65,40 +67,45 @@ public final class UnitOfWork
 {
   private static final ThreadLocal<UnitOfWork> SELF = new ThreadLocal<>();
 
-  private final Deque<Supplier<? extends Transaction>> workHistory = new ArrayDeque<>();
+  private final Deque<Supplier<? extends Transaction>> dbHistory = new ArrayDeque<>();
 
   private Transaction tx;
 
-  private boolean batch;
-
-  /**
-   * Begins a new unit-of-work which uses new transactions for transactional methods.
-   */
-  public static <T extends Transaction> void begin(final Supplier<T> work) {
-    _begin(work).batch = false;
+  private UnitOfWork() {
+    // internal use only
   }
 
   /**
-   * Begins a new unit-of-work which uses same transaction for transactional methods.
+   * Begins a unit-of-work which acquires a fresh transaction each time one is needed.
    */
-  public static <T extends Transaction> void beginBatch(final Supplier<T> work) {
-    _begin(work).batch = true;
+  public static void begin(final Supplier<? extends Transaction> db) {
+    checkNotNull(db);
+    createWork().doBegin(db);
   }
 
   /**
-   * Begins a new unit-of-work which uses same transaction for transactional methods.
+   * Begins a unit-of-work which only acquires a transaction when needed and then re-uses it (batch-mode).
+   */
+  public static void beginBatch(final Supplier<? extends Transaction> db) {
+    begin(Suppliers.compose(tx -> new BatchTransaction(tx), db));
+  }
+
+  /**
+   * Begins a unit-of-work which immediately acquires the given transaction and re-uses it (batch-mode).
    */
   public static void beginBatch(final Transaction tx) {
-    beginBatch(Suppliers.ofInstance(tx));
-    self().acquireTransaction();
+    begin(Suppliers.ofInstance(new BatchTransaction(tx)));
+    currentWork().acquireTransaction(null);
   }
 
   /**
    * @return current transaction
+   *
+   * @throws IllegalStateException if no transaction has been acquired for the current context
    */
   @SuppressWarnings("unchecked")
-  public static <T extends Transaction> T currentTransaction() {
-    Transaction tx = self().tx;
+  public static <T extends Transaction> T currentTx() {
+    Transaction tx = currentWork().tx;
     if (tx instanceof BatchTransaction) {
       tx = ((BatchTransaction) tx).delegate;
     }
@@ -127,12 +134,21 @@ public final class UnitOfWork
    * Ends the current unit-of-work.
    */
   public static void end() {
-    self()._end();
+    currentWork().doEnd();
   }
 
   // -------------------------------------------------------------------------
 
-  static UnitOfWork self() {
+  static UnitOfWork createWork() {
+    UnitOfWork self = SELF.get();
+    if (self == null) {
+      self = new UnitOfWork();
+      SELF.set(self);
+    }
+    return self;
+  }
+
+  static UnitOfWork currentWork() {
     final UnitOfWork self = SELF.get();
     checkState(self != null, "Unit of work has not been set");
     return self;
@@ -142,39 +158,38 @@ public final class UnitOfWork
     return tx != null && tx.isActive();
   }
 
-  Transaction acquireTransaction() {
+  /**
+   * Acquires transaction from given supplier; otherwise falls back to the current unit-of-work.
+   */
+  Transaction acquireTransaction(@Nullable final Supplier<? extends Transaction> customDb) {
     if (tx == null) {
-      tx = checkNotNull(workHistory.peek().get());
-      if (batch) {
-        tx = new BatchTransaction(tx);
+      Supplier<? extends Transaction> db = customDb;
+      if (db == null) {
+        db = dbHistory.peek();
+        checkState(db != null, "Unit of work has not been set");
       }
+      tx = checkNotNull(db.get());
     }
     return tx;
   }
 
   void releaseTransaction() {
-    if (!batch) {
+    if (!(tx instanceof BatchTransaction)) {
       tx = null;
+      if (dbHistory.isEmpty()) {
+        SELF.remove(); // avoid dangling thread-local
+      }
     }
   }
 
   // -------------------------------------------------------------------------
 
-  private static <T extends Transaction> UnitOfWork _begin(final Supplier<T> work) {
-    checkNotNull(work);
-    UnitOfWork self = SELF.get();
-    if (self == null) {
-      self = new UnitOfWork();
-      SELF.set(self);
-    }
-    else {
-      checkState(self.tx == null, "Transaction already in progress");
-    }
-    self.workHistory.push(work);
-    return self;
+  private void doBegin(final Supplier<? extends Transaction> db) {
+    checkState(tx == null, "Transaction already in progress");
+    dbHistory.push(db);
   }
 
-  private void _end() {
+  private void doEnd() {
     Throwable throwing = null;
     if (tx instanceof BatchTransaction) {
       checkState(!tx.isActive(), "Transaction still in progress");
@@ -191,9 +206,9 @@ public final class UnitOfWork
     else {
       checkState(tx == null, "Transaction still in progress");
     }
-    workHistory.pop();
-    if (workHistory.isEmpty()) {
-      SELF.remove();
+    dbHistory.pop();
+    if (dbHistory.isEmpty()) {
+      SELF.remove(); // avoid dangling thread-local
     }
     if (throwing != null) {
       Throwables.propagate(throwing);

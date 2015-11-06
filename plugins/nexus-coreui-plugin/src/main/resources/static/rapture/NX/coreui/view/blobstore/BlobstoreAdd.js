@@ -33,6 +33,14 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreAdd', {
   initComponent: function() {
     var me = this;
 
+    // cache the default work directory path
+    NX.direct.coreui_Blobstore.defaultWorkDirectory(function(response) {
+      if (Ext.isObject(response) && response.success) {
+        me.defaultWorkDirectory = response.data.path;
+        me.fileSeparator = response.data.fileSeparator;
+      }
+    });
+
     me.settingsForm = {
       xtype: 'nx-coreui-blobstore-settings-form',
       api: {
@@ -52,18 +60,29 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreAdd', {
 
     me.callParent();
 
-    me.down('#name').setReadOnly(false);
-    me.down('nx-settingsform').add(0, {
-      xtype: 'combo',
-      name: 'type',
-      itemId: 'type',
-      fieldLabel: NX.I18n.get('Blobstore_BlobstoreAdd_Type_FieldLabel'),
-      emptyText: NX.I18n.get('Blobstore_BlobstoreAdd_Type_EmptyText'),
-      editable: false,
-      store: 'BlobstoreType',
-      queryMode: 'local',
-      displayField: 'name',
-      valueField: 'id'
+    var typeCombo = me.down('#type');
+    typeCombo.setReadOnly(false);
+    typeCombo.on({
+      afterrender: function() {
+        var me = this;
+        me.setValue(me.getStore('BlobstoreType').first().data.id);
+      }
     });
+
+    var nameField = me.down('#name');
+    nameField.setReadOnly(false);
+    // onChange listener to pre-populate the path
+    nameField.on({
+      change: function(f, newName, oldName) {
+        var pathField = f.next('#path'),
+            wd = me.defaultWorkDirectory,
+            oldPath = wd + me.fileSeparator + oldName;
+        if (!pathField.getValue() || pathField.getValue() === oldPath) {
+          pathField.setValue(wd + me.fileSeparator + newName);
+        }
+      }
+    });
+
+    me.down('#path').setReadOnly(false);
   }
 });

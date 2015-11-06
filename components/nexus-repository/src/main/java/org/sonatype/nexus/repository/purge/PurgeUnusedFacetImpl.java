@@ -119,7 +119,7 @@ public class PurgeUnusedFacetImpl
         P_COMPONENT, P_LAST_ACCESSED, assetEntityAdapter.getTypeName(), P_BUCKET, P_COMPONENT, P_COMPONENT
     );
     Map<String, Object> sqlParams = new HashMap<>();
-    sqlParams.put("bucket", bucketEntityAdapter.recordIdentity(tx.getBucket()));
+    sqlParams.put("bucket", bucketEntityAdapter.recordIdentity(tx.findBucket(getRepository())));
     sqlParams.put("olderThan", olderThan);
 
     return Iterables.transform(tx.browse(sql, sqlParams), new Function<ODocument, Component>()
@@ -128,7 +128,7 @@ public class PurgeUnusedFacetImpl
       @Override
       public Component apply(final ODocument input) {
         ORID componentId = input.field(P_COMPONENT, ORID.class);
-        return tx.findComponent(new AttachedEntityId(componentEntityAdapter, componentId), tx.getBucket());
+        return tx.findComponent(new AttachedEntityId(componentEntityAdapter, componentId), tx.findBucket(getRepository()));
       }
     });
   }

@@ -21,7 +21,7 @@ import com.google.inject.matcher.Matchers;
  *
  * @since 3.0
  */
-public final class TransactionModule
+public class TransactionModule
     extends AbstractInterceptorModule
 {
   @Override

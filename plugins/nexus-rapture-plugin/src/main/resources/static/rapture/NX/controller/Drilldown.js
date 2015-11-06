@@ -24,7 +24,8 @@ Ext.define('NX.controller.Drilldown', {
     'NX.Dialogs',
     'NX.Bookmarks',
     'NX.view.drilldown.Drilldown',
-    'NX.view.drilldown.Item'
+    'NX.view.drilldown.Item',
+    'NX.State'
   ],
 
   views: [
@@ -626,7 +627,7 @@ Ext.define('NX.controller.Drilldown', {
 
         drilldown.animate({
           easing: 'easeInOut',
-          duration: 200,
+          duration: NX.State.getValue('animateDuration', 200),
           to: {
             x: left
           },

@@ -13,7 +13,7 @@
 
 -->
 <features>
-  <feature name="${project.artifactId}" description="Nexus base installation">
+  <feature name="${project.artifactId}">
     <!--
     Wrappers that require use of fragments
     -->

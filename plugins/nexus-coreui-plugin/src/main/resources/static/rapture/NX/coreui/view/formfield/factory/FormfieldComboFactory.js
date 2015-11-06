@@ -63,7 +63,14 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
         };
 
     if (formField.initialValue) {
-      itemConfig.value = formField.initialValue;
+      itemConfig.listeners = {
+        afterrender: function() {
+          var me = this;
+          if (!me.getValue()) {
+            me.setValue(formField.initialValue);
+          }
+        }
+      };
     }
     if (formField['storeApi']) {
       if (formField['storeFilters']) {

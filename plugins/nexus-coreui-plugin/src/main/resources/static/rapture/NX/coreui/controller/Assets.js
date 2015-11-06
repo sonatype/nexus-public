@@ -80,6 +80,8 @@ Ext.define('NX.coreui.controller.Assets', {
         }
       }
     });
+
+    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', { remote: true, autoLoad:true });
   },
 
   /**
@@ -182,15 +184,29 @@ Ext.define('NX.coreui.controller.Assets', {
   },
 
   /**
-   * Enable 'Delete' when user has 'delete' permission.
+   * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
    *
    * @protected
    */
-  bindDeleteAssetButton: function(button) {
-    var assetModel = this.getAssetContainer().assetModel;
+  bindDeleteAssetButton: function (button) {
+    var me = this, assetModel = me.getAssetContainer().assetModel,
+        repositoryName = assetModel.get('repositoryName'),
+        repositoryStore = me.repositoryStore;
+
+    //check for repositoryName in RepositoryStore and conditionally hide button for groups
+    var repository = repositoryStore.getAt(repositoryStore.find('name', repositoryName));
+    if (repository && repository.get('type') === 'group') {
+      //<if debug>
+      this.logDebug("Hiding asset delete button for group");
+      //</if>
+      button.hide();
+      return;
+    }
+
+    button.show();
     button.mon(
         NX.Conditions.isPermitted(
-            'nexus:repository-view:' + assetModel.get('format') + ':' + assetModel.get('repositoryName') + ':delete'
+            'nexus:repository-view:' + assetModel.get('format') + ':' + repositoryName + ':delete'
         ),
         {
           satisfied: button.enable,

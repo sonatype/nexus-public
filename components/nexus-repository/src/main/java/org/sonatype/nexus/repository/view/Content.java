@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.util.TypeTokens;
@@ -175,10 +176,10 @@ public class Content
    * @see #extractFromAsset(Asset, Iterable, AttributesMap)
    */
   @Nullable
-  public static Asset findAsset(final StorageTx tx, Content content) {
+  public static Asset findAsset(final StorageTx tx, final Bucket bucket, Content content) {
     final Asset contentAsset = content.getAttributes().require(Asset.class);
     if (EntityHelper.hasMetadata(contentAsset)) {
-      return tx.findAsset(EntityHelper.id(contentAsset), tx.getBucket());
+      return tx.findAsset(EntityHelper.id(contentAsset), bucket);
     }
     return null;
   }

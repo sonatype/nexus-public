@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>9-SNAPSHOT</version>
+    <version>9</version>
     <relativePath/>
   </parent>
 
@@ -116,6 +116,9 @@
     <maven.yuicompressor.nominify>false</maven.yuicompressor.nominify>
     <maven.yuicompressor.disableOptimizations>false</maven.yuicompressor.disableOptimizations>
     <maven.yuicompressor.linebreakpos>-1</maven.yuicompressor.linebreakpos>
+
+    <!-- including installers in the process significantly increases time required for staging -->
+    <staging.progressTimeout>60</staging.progressTimeout>
   </properties>
 
   <modules>
@@ -273,7 +276,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <dependency>
@@ -394,7 +396,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <dependency>
@@ -410,7 +411,14 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-core-feature</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
       </dependency>
 
     </dependencies>
@@ -625,6 +633,9 @@
               <id>logback-core</id>
               <id>logback-classic</id>
               <id>pax-logging-api</id>
+              <id>bcprov-jdk15on</id>
+              <id>bcpkix-jdk15on</id>
+              <id>bcpg-jdk15on</id>
               <!--
               Need special wrapping/fragments
               -->

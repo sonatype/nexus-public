@@ -96,7 +96,7 @@ public class KeyStoreManagerImplTest
     when(config.getFileNamesPrefix()).thenReturn(prefix);
     when(config.getKeyStoreType()).thenReturn("JKS");
     when(config.getKeyAlgorithm()).thenReturn("RSA");
-    when(config.getKeyAlgorithmSize()).thenReturn(512);
+    when(config.getKeyAlgorithmSize()).thenReturn(1024);
     when(config.getSignatureAlgorithm()).thenReturn("SHA1WITHRSA");
     when(config.getCertificateValidity()).thenReturn(Time.days(36500));
     when(config.getKeyManagerAlgorithm()).thenReturn(KeyManagerFactory.getDefaultAlgorithm());

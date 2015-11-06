@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.base.Supplier;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -29,19 +30,26 @@ final class TransactionInterceptor
     extends ComponentSupport
     implements MethodInterceptor
 {
+  @Override
   public Object invoke(final MethodInvocation mi) throws Throwable {
-    final UnitOfWork work = UnitOfWork.self();
-
-    if (work.isActive()) {
-      return mi.proceed();
-    }
 
     final Method method = mi.getMethod();
     final Transactional spec = method.getAnnotation(Transactional.class);
 
     log.trace("Invoking: {} -> {}", spec, method);
 
-    try (final Transaction tx = work.acquireTransaction()) {
+    final UnitOfWork work = UnitOfWork.createWork();
+
+    if (work.isActive()) {
+      return mi.proceed(); // nested transaction, no need to wrap
+    }
+
+    Supplier<? extends Transaction> txSupplier = null;
+    if (mi.getThis() instanceof TransactionalAware) {
+      txSupplier = ((TransactionalAware) mi.getThis()).txSupplier();
+    }
+
+    try (final Transaction tx = work.acquireTransaction(txSupplier)) {
       return new TransactionalWrapper(spec, mi).proceedWithTransaction(tx);
     }
     finally {

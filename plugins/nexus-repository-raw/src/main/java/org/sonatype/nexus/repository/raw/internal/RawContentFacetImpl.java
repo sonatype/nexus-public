@@ -73,7 +73,7 @@ public class RawContentFacetImpl
   @Override
   @Transactional(retryOn = IllegalStateException.class, swallow = ONeedRetryException.class)
   public Content get(final String path) {
-    StorageTx tx = UnitOfWork.currentTransaction();
+    StorageTx tx = UnitOfWork.currentTx();
 
     final Asset asset = findAsset(tx, path);
     if (asset == null) {
@@ -98,10 +98,10 @@ public class RawContentFacetImpl
   protected Content doPutContent(final String path, final Supplier<InputStream> streamSupplier, final Payload payload)
       throws IOException
   {
-    StorageTx tx = UnitOfWork.currentTransaction();
+    StorageTx tx = UnitOfWork.currentTx();
 
-    final Bucket bucket = tx.getBucket();
-    Component component = findComponent(tx, path);
+    final Bucket bucket = tx.findBucket(getRepository());
+    Component component = findComponent(tx, bucket, path);
     Asset asset;
     if (component == null) {
       // CREATE
@@ -167,9 +167,9 @@ public class RawContentFacetImpl
   @Override
   @Transactional
   public boolean delete(final String path) throws IOException {
-    StorageTx tx = UnitOfWork.currentTransaction();
+    StorageTx tx = UnitOfWork.currentTx();
 
-    final Component component = findComponent(tx, path);
+    final Component component = findComponent(tx, tx.findBucket(getRepository()), path);
     if (component == null) {
       return false;
     }
@@ -181,13 +181,14 @@ public class RawContentFacetImpl
   @Override
   @Transactional(retryOn = ONeedRetryException.class)
   public void setCacheInfo(final String path, final Content content, final CacheInfo cacheInfo) throws IOException {
-    StorageTx tx = UnitOfWork.currentTransaction();
+    StorageTx tx = UnitOfWork.currentTx();
+    Bucket bucket = tx.findBucket(getRepository());
 
     // by EntityId
-    Asset asset = Content.findAsset(tx, content);
+    Asset asset = Content.findAsset(tx, bucket, content);
     if (asset == null) {
       // by format coordinates
-      Component component = tx.findComponentWithProperty(P_PATH, path, tx.getBucket());
+      Component component = tx.findComponentWithProperty(P_PATH, path, bucket);
       if (component != null) {
         asset = tx.firstAsset(component);
       }
@@ -203,14 +204,14 @@ public class RawContentFacetImpl
   }
 
   // TODO: Consider a top-level indexed property (e.g. "locator") to make these common lookups fast
-  private Component findComponent(StorageTx tx, String path) {
+  private Component findComponent(StorageTx tx, Bucket bucket, String path) {
     String property = String.format("%s.%s.%s", P_ATTRIBUTES, RawFormat.NAME, P_PATH);
-    return tx.findComponentWithProperty(property, path, tx.getBucket());
+    return tx.findComponentWithProperty(property, path, bucket);
   }
 
   private Asset findAsset(StorageTx tx, String path) {
     String property = String.format("%s.%s.%s", P_ATTRIBUTES, RawFormat.NAME, P_PATH);
-    return tx.findAssetWithProperty(property, path, tx.getBucket());
+    return tx.findAssetWithProperty(property, path, tx.findBucket(getRepository()));
   }
 
   private Content toContent(final Asset asset, final Blob blob) {

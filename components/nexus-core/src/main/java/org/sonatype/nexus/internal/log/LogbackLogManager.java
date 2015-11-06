@@ -32,14 +32,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.app.NexusInitializedEvent;
-import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.io.LimitedInputStream;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
-import org.sonatype.nexus.common.log.LogConfigurationCustomizer.Configuration;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
+import org.sonatype.nexus.common.log.LoggerOverrides;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
@@ -48,7 +45,11 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
-import com.google.common.eventbus.Subscribe;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Key;
+import org.eclipse.sisu.BeanEntry;
+import org.eclipse.sisu.Mediator;
+import org.eclipse.sisu.inject.BeanLocator;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,56 +67,61 @@ public class LogbackLogManager
     extends StateGuardLifecycleSupport
     implements LogManager
 {
-  private final List<LogConfigurationCustomizer> customizers;
+  private final BeanLocator beanLocator;
 
-  private final EventBus eventBus;
+  private final Map<String, LoggerLevel> customizations;
 
-  private final Map<String, LoggerLevel> overrides;
-
-  private final Map<String, LoggerLevel> customisations;
-
-  private final File overridesFile;
+  private final LoggerOverrides overrides;
 
   @Inject
-  public LogbackLogManager(final ApplicationDirectories applicationDirectories,
-                           final List<LogConfigurationCustomizer> customizers,
-                           final EventBus eventBus)
+  public LogbackLogManager(final BeanLocator beanLocator,
+                           final LoggerOverrides overrides)
   {
-    checkNotNull(applicationDirectories);
-    this.customizers = checkNotNull(customizers);
-    this.eventBus = checkNotNull(eventBus);
-    this.overrides = new HashMap<>();
-    this.customisations = new HashMap<>();
+    this.beanLocator = checkNotNull(beanLocator);
+    this.overrides = checkNotNull(overrides);
+    this.customizations = new HashMap<>();
+  }
 
-    this.overridesFile = new File(applicationDirectories.getWorkDirectory("logback"), "logback-overrides.xml");
-    log.debug("Overrides file: {}", overridesFile);
+  /**
+   * Mediator to register customizers.
+   */
+  private static class CustomizerMediator
+    implements Mediator<Named, LogConfigurationCustomizer, LogbackLogManager>
+  {
+    @Override
+    public void add(final BeanEntry<Named, LogConfigurationCustomizer> entry, final LogbackLogManager watcher) {
+      watcher.registerCustomization(entry.getValue());
+    }
 
-    eventBus.register(this);
+    @Override
+    public void remove(final BeanEntry<Named, LogConfigurationCustomizer> entry, final LogbackLogManager watcher) {
+      // ignore
+    }
   }
 
   @Override
   protected void doStart() throws Exception {
     configure();
-  }
 
-  /**
-   * Re-configure after start to pick up customizations provided by plugins.
-   */
-  @Subscribe
-  @Guarded(by = STARTED)
-  public void on(final NexusInitializedEvent event) throws Exception {
-    configure();
+    // watch for LogConfigurationCustomizer components
+    beanLocator.watch(Key.get(LogConfigurationCustomizer.class, Named.class), new CustomizerMediator(), this);
   }
 
   private void configure() {
     log.info("Configuring");
-    applyCustomizers();
+
+    // sanity clear customizations
+    customizations.clear();
+
+    // load and apply overrides
+    overrides.load();
+    for (Entry<String, LoggerLevel> entry : overrides) {
+      setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue()));
+    }
   }
 
   @Override
   protected void doStop() throws Exception {
-    eventBus.unregister(this);
-
     // inform logback to shutdown
     loggerContext().stop();
   }
@@ -154,8 +160,9 @@ public class LogbackLogManager
   public InputStream getLogFileStream(final String fileName, final long from, final long count) throws IOException {
     log.debug("Retrieving log file: {}", fileName);
 
-    if (fileName.contains(File.pathSeparator)) {
-      log.warn("Nexus refuses to retrieve log files with path separators in its name.");
+    // checking for platform or normalized path-separator (on unix these are the same)
+    if (fileName.contains(File.pathSeparator) || fileName.contains("/")) {
+      log.warn("Nexus refuses to retrieve log files with path separators in its name");
       return null;
     }
 
@@ -186,6 +193,7 @@ public class LogbackLogManager
   public Map<String, LoggerLevel> getLoggers() {
     Map<String, LoggerLevel> loggers = new HashMap<>();
 
+    // add all loggers which are defined in context which have a level (ie. not inheriting from parent)
     LoggerContext ctx = loggerContext();
     for (ch.qos.logback.classic.Logger logger : ctx.getLoggerList()) {
       String name = logger.getName();
@@ -196,9 +204,18 @@ public class LogbackLogManager
       }
     }
 
-    for (Entry<String, LoggerLevel> entry : customisations.entrySet()) {
-      if (LoggerLevel.DEFAULT.equals(entry.getValue()) && !loggers.containsKey(entry.getKey())) {
-        loggers.put(entry.getKey(), getLoggerEffectiveLevel(entry.getKey()));
+    // add all customized loggers
+    for (Entry<String, LoggerLevel> entry : customizations.entrySet()) {
+      String name = entry.getKey();
+      LoggerLevel level = entry.getValue();
+
+      // skip if there is already a logger with a set level in context
+      if (!loggers.containsKey(name)) {
+        // resolve effective level of logger
+        if (LoggerLevel.DEFAULT == level) {
+          level = getLoggerEffectiveLevel(entry.getKey());
+        }
+        loggers.put(name, level);
       }
     }
 
@@ -210,17 +227,23 @@ public class LogbackLogManager
   public void resetLoggers() {
     log.debug("Resetting loggers");
 
-    for (Map.Entry<String, LoggerLevel> entry : overrides.entrySet()) {
+    // reset all overridden logger levels to null (inherit from parent)
+    for (Map.Entry<String, LoggerLevel> entry : overrides) {
       if (!Logger.ROOT_LOGGER_NAME.equals(entry.getKey())) {
         setLogbackLoggerLevel(entry.getKey(), null);
       }
     }
-    overrides.clear();
-    LogbackOverrides.write(overridesFile, overrides);
-    setLoggerLevel(Logger.ROOT_LOGGER_NAME, LoggerLevel.DEFAULT);
-    applyCustomisations();
 
-    log.debug("Loggers reset to their default levels");
+    // clear overrides cache and update persistence
+    overrides.reset();
+
+    // reset root level to default
+    setLoggerLevel(Logger.ROOT_LOGGER_NAME, LoggerLevel.DEFAULT);
+
+    // re-apply customizations
+    applyCustomizations();
+
+    log.debug("Loggers reset to default levels");
   }
 
   //
@@ -229,7 +252,7 @@ public class LogbackLogManager
 
   @Override
   @Guarded(by = STARTED)
-  public void setLoggerLevel(final String name, final @Nullable LoggerLevel level) {
+  public void setLoggerLevel(final String name, @Nullable final LoggerLevel level) {
     if (level == null) {
       unsetLoggerLevel(name);
       return;
@@ -239,31 +262,31 @@ public class LogbackLogManager
     LoggerLevel calculated = null;
 
     if (Logger.ROOT_LOGGER_NAME.equals(name)) {
-      calculated = LoggerLevel.DEFAULT.equals(level) ? LoggerLevel.INFO : level;
-      overrides.put(name, calculated);
+      calculated = (level == LoggerLevel.DEFAULT ? LoggerLevel.INFO : level);
+      overrides.set(name, calculated);
     }
     else {
       // else we customize the logger overrides configuration
-      if (LoggerLevel.DEFAULT.equals(level)) {
-        boolean customizedByUser = overrides.containsKey(name) && !customisations.containsKey(name);
+      if (level == LoggerLevel.DEFAULT) {
+        boolean customizedByUser = overrides.contains(name) && !customizations.containsKey(name);
         unsetLoggerLevel(name);
         if (customizedByUser) {
-          overrides.put(name, calculated = getLoggerEffectiveLevel(name));
-          LogbackOverrides.write(overridesFile, overrides);
+          overrides.set(name, calculated = getLoggerEffectiveLevel(name));
         }
         else {
-          LoggerLevel customizedLevel = customisations.get(name);
-          if (customizedLevel != null && !LoggerLevel.DEFAULT.equals(customizedLevel)) {
+          LoggerLevel customizedLevel = customizations.get(name);
+          if (customizedLevel != null && customizedLevel != LoggerLevel.DEFAULT) {
             calculated = customizedLevel;
           }
         }
       }
       else {
-        overrides.put(name, calculated = level);
+        overrides.set(name, calculated = level);
       }
     }
 
-    LogbackOverrides.write(overridesFile, overrides);
+    // update override persistence
+    overrides.save();
 
     if (calculated != null) {
       setLogbackLoggerLevel(name, LogbackLevels.convert(calculated));
@@ -276,10 +299,11 @@ public class LogbackLogManager
     log.debug("Unset logger level: {}", name);
 
     if (overrides.remove(name) != null) {
-      LogbackOverrides.write(overridesFile, overrides);
+      overrides.save();
     }
+
     if (Logger.ROOT_LOGGER_NAME.equals(name)) {
-      setLoggerLevel(name, LoggerLevel.DEFAULT);
+      setLogbackLoggerLevel(name, Level.INFO);
     }
     else {
       setLogbackLoggerLevel(name, null);
@@ -305,9 +329,10 @@ public class LogbackLogManager
   }
 
   /**
-   * Set named logback logger level.
+   * Helper to set a named logback logger level.
    */
-  private void setLogbackLoggerLevel(final String name, final Level level) {
+  private void setLogbackLoggerLevel(final String name, @Nullable final Level level) {
+    log.trace("Set logback logger level: {}={}", name, level);
     loggerContext().getLogger(name).setLevel(level);
   }
 
@@ -316,30 +341,32 @@ public class LogbackLogManager
   //
 
   /**
-   * Ask all configured {@link LogConfigurationCustomizer customiers} to register customisations.
+   * Register and apply customizations.
    */
-  private void applyCustomizers() {
-    Configuration config = new Configuration()
-    {
-      @Override
-      public void setLoggerLevel(final String name, final LoggerLevel level) {
-        customisations.put(checkNotNull(name), checkNotNull(level));
-      }
-    };
+  @VisibleForTesting
+  void registerCustomization(final LogConfigurationCustomizer customizer) {
+    log.debug("Registering customizations: {}", customizer);
 
-    customisations.clear();
-    for (LogConfigurationCustomizer customizer : customizers) {
-      log.debug("Applying customizer: {}", customizer);
-      customizer.customize(config);
-    }
+    customizer.customize((name, level) -> {
+      checkNotNull(name);
+      checkNotNull(level);
+      customizations.put(name, level);
+
+      // only apply customization if there is not an override, and the level is not DEFAULT
+      if (!overrides.contains(name) && level != LoggerLevel.DEFAULT) {
+        setLogbackLoggerLevel(name, LogbackLevels.convert(level));
+      }
+    });
   }
 
   /**
    * Apply all registered customizations.
    */
-  private void applyCustomisations() {
-    for (Entry<String, LoggerLevel> entry : customisations.entrySet()) {
-      if (!LoggerLevel.DEFAULT.equals(entry.getValue())) {
+  private void applyCustomizations() {
+    log.debug("Applying customizations");
+
+    for (Entry<String, LoggerLevel> entry : customizations.entrySet()) {
+      if (entry.getValue() != LoggerLevel.DEFAULT) {
         setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue()));
       }
     }
@@ -352,7 +379,8 @@ public class LogbackLogManager
   /**
    * Returns the current logger-context.
    */
-  private static LoggerContext loggerContext() {
+  @VisibleForTesting
+  static LoggerContext loggerContext() {
     ILoggerFactory factory = LoggerFactory.getILoggerFactory();
     if (factory instanceof LoggerContext) {
       return (LoggerContext) factory;

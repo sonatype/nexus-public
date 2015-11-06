@@ -66,7 +66,7 @@ public class Maven2GroupMetadataHandler
       // pass request through to proxies/nested-groups before checking our group cache
       Iterable<Repository> proxiesOrGroups = Iterables.filter(members, PROXY_OR_GROUP);
       if (proxiesOrGroups.iterator().hasNext()) {
-        passThroughResponses = getAll(context.getRequest(), proxiesOrGroups, dispatched);
+        passThroughResponses = getAll(context, proxiesOrGroups, dispatched);
       }
     }
 
@@ -80,7 +80,7 @@ public class Maven2GroupMetadataHandler
     if (!mavenPath.isHash()) {
 
       // this will fetch the remaining responses, thanks to the 'dispatched' tracking
-      Map<Repository, Response> remainingResponses = getAll(context.getRequest(), members, dispatched);
+      Map<Repository, Response> remainingResponses = getAll(context, members, dispatched);
 
       // merge the two sets of responses according to member order
       LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();

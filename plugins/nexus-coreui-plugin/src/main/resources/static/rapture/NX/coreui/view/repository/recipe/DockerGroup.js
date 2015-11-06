@@ -25,7 +25,8 @@ Ext.define('NX.coreui.view.repository.recipe.DockerGroup', {
     'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.GroupFacet',
-    'NX.coreui.view.repository.facet.DockerConnectorFacet'
+    'NX.coreui.view.repository.facet.DockerConnectorFacet',
+    'NX.coreui.view.repository.facet.DockerV1Facet'
   ],
 
   /**
@@ -36,8 +37,9 @@ Ext.define('NX.coreui.view.repository.recipe.DockerGroup', {
 
     me.items = [
       { xtype: 'nx-coreui-repository-docker-connector-facet'},
+      { xtype: 'nx-coreui-repository-docker-v1-facet'},
       { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'docker' }
+      { xtype: 'nx-coreui-repository-group-facet', format: 'docker' } 
     ];
 
     me.callParent(arguments);

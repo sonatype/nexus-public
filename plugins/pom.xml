@@ -70,7 +70,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <dependency>
@@ -94,7 +93,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- quartz -->
@@ -111,7 +109,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- rapture -->
@@ -134,7 +131,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <dependency>
@@ -158,7 +154,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- repository-maven -->
@@ -175,7 +170,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- repository-raw -->
@@ -192,7 +186,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- siesta -->
@@ -209,7 +202,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
       <!-- ssl -->
@@ -226,7 +218,6 @@
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
-        <scope>runtime</scope>
       </dependency>
 
     </dependencies>

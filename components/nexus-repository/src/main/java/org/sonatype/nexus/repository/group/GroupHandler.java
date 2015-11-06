@@ -92,18 +92,19 @@ public class GroupHandler
       throws Exception
   {
     final GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
-    return getFirst(context.getRequest(), groupFacet.members(), dispatched);
+    return getFirst(context, groupFacet.members(), dispatched);
   }
 
   /**
    * Returns the first OK response from member repositories or {@link HttpResponses#notFound()} if none of the members
    * responded with OK.
    */
-  protected Response getFirst(final @Nonnull Request request,
+  protected Response getFirst(final @Nonnull Context context,
                               final @Nonnull List<Repository> members,
                               final @Nonnull DispatchedRepositories dispatched)
       throws Exception
   {
+    final Request request = context.getRequest();
     for (Repository member : members) {
       log.trace("Trying member: {}", member);
       // track repositories we have dispatched to, prevent circular dispatch for nested groups
@@ -120,17 +121,18 @@ public class GroupHandler
         return response;
       }
     }
-    return notFoundResponse(request);
+    return notFoundResponse(context);
   }
 
   /**
    * Returns all responses from all members as a linked map, where order is group member order.
    */
-  protected LinkedHashMap<Repository, Response> getAll(final @Nonnull Request request,
+  protected LinkedHashMap<Repository, Response> getAll(final @Nonnull Context context,
                                                        final @Nonnull Iterable<Repository> members,
                                                        final @Nonnull DispatchedRepositories dispatched)
       throws Exception
   {
+    final Request request = context.getRequest();
     final LinkedHashMap<Repository, Response> responses = Maps.newLinkedHashMap();
     for (Repository member : members) {
       log.trace("Trying member: {}", member);
@@ -153,7 +155,7 @@ public class GroupHandler
   /**
    * Returns standard 404 with no message. Override for format specific messaging.
    */
-  protected Response notFoundResponse(final Request request) {
+  protected Response notFoundResponse(final Context context) {
     return HttpResponses.notFound();
   }
 }

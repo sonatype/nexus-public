@@ -161,8 +161,8 @@ public class StorageFacetImplIT
   @Test
   public void startWithEmptyAttributes() {
     try (StorageTx tx = beginTX()) {
-      Asset asset = tx.createAsset(tx.getBucket(), testFormat);
-      Component component = tx.createComponent(tx.getBucket(), testFormat);
+      Asset asset = tx.createAsset(tx.findBucket(testRepository1), testFormat);
+      Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat);
 
       NestedAttributesMap assetAttributes = asset.attributes();
       assertThat(assetAttributes, is(notNullValue()));
@@ -178,7 +178,7 @@ public class StorageFacetImplIT
   public void getAndSetAttributes() {
     EntityId docId;
     try (StorageTx tx = beginTX()) {
-      Asset asset = tx.createAsset(tx.getBucket(), testFormat);
+      Asset asset = tx.createAsset(tx.findBucket(testRepository1), testFormat);
       asset.name("asset");
       NestedAttributesMap map = asset.attributes();
 
@@ -196,7 +196,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      NestedAttributesMap map = tx.findAsset(docId, tx.getBucket()).attributes();
+      NestedAttributesMap map = tx.findAsset(docId, tx.findBucket(testRepository1)).attributes();
 
       assertThat(map.size(), is(2));
       assertThat(map.child("bag1").size(), is(1));
@@ -210,7 +210,7 @@ public class StorageFacetImplIT
   public void findAssets() throws Exception {
     // Setup: add an asset in both repositories
     try (StorageTx tx = beginTX()) {
-      Asset asset1 = tx.createAsset(tx.getBucket(), testFormat);
+      Asset asset1 = tx.createAsset(tx.findBucket(testRepository1), testFormat);
       asset1.name("asset1");
       asset1.size(42L);
       tx.saveAsset(asset1);
@@ -220,7 +220,7 @@ public class StorageFacetImplIT
     underTest.attach(testRepository2);
     underTest.init();
     try (StorageTx tx = beginTX()) {
-      Asset asset2 = tx.createAsset(tx.getBucket(), testFormat);
+      Asset asset2 = tx.createAsset(tx.findBucket(testRepository2), testFormat);
       asset2.name("asset2");
       asset2.size(42L);
       tx.saveAsset(asset2);
@@ -300,7 +300,7 @@ public class StorageFacetImplIT
     // Create a new asset with property "attributes" that's a map of maps (stored as an embeddedmap)
     EntityId docId;
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.createAsset(bucket, testFormat);
       asset.name("asset");
       asset.attributes().child("bag1").set("foo", "bar");
@@ -313,7 +313,7 @@ public class StorageFacetImplIT
     // Transaction 2:
     // Get the asset and make sure it contains what we expect
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.findAsset(docId, bucket);
       assert asset != null;
 
@@ -354,7 +354,7 @@ public class StorageFacetImplIT
 
     try (StorageTx tx = beginTX()) {
       // Verify initial state with browse
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
 
       checkSize(tx.browseBuckets(), 1);
       checkSize(tx.browseAssets(bucket), 0);
@@ -382,7 +382,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
 
       checkSize(tx.browseAssets(bucket), 2);
       checkSize(tx.browseComponents(bucket), 1);
@@ -422,7 +422,7 @@ public class StorageFacetImplIT
   @Test
   public void componentAssetLinksAreDurable() {
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       final Component component = tx.createComponent(bucket, testFormat).name("component");
       tx.saveComponent(component);
 
@@ -433,10 +433,10 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Asset asset = tx.findAssetWithProperty("name", "asset", tx.getBucket());
+      final Asset asset = tx.findAssetWithProperty("name", "asset", tx.findBucket(testRepository1));
       assertThat(asset, is(notNullValue()));
 
-      final Component component = tx.findComponent(asset.componentId(), tx.getBucket());
+      final Component component = tx.findComponent(asset.componentId(), tx.findBucket(testRepository1));
       assertThat(component, is(notNullValue()));
       assertThat(component.name(), is("component"));
 
@@ -470,7 +470,7 @@ public class StorageFacetImplIT
     final EntityId assetId;
     EntityVersion firstVersion;
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.createAsset(bucket, testFormat);
       asset.name("asset");
       tx.saveAsset(asset);
@@ -482,7 +482,7 @@ public class StorageFacetImplIT
     // test
     // 1. start a tx (mainTx) in the main thread
     try (StorageTx mainTx = beginTX()) {
-      Bucket bucket = mainTx.getBucket();
+      Bucket bucket = mainTx.findBucket(testRepository1);
       Asset asset = null;
 
       if (simulateConflict) {
@@ -497,7 +497,7 @@ public class StorageFacetImplIT
         @Override
         public void run() {
           try (StorageTx auxTx = beginTX()) {
-            Bucket bucket = auxTx.getBucket();
+            Bucket bucket = auxTx.findBucket(testRepository1);
             Asset asset = checkNotNull(auxTx.findAsset(assetId, bucket));
             asset.name("firstValue");
             auxTx.saveAsset(asset);
@@ -525,7 +525,7 @@ public class StorageFacetImplIT
 
     // not simulating a conflict; verify the expected state
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = checkNotNull(tx.findAsset(assetId, bucket));
 
       String name = asset.name();
@@ -570,7 +570,7 @@ public class StorageFacetImplIT
 
   private Component createComponent(final String group, final String name, final String version) throws Exception {
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Component component = tx.createComponent(bucket, testFormat)
           .group(group)
           .name(name)
@@ -583,7 +583,7 @@ public class StorageFacetImplIT
 
   private Asset createAsset(final Component component, final String name) throws Exception {
     try (StorageTx tx = beginTX()) {
-      Bucket bucket = tx.getBucket();
+      Bucket bucket = tx.findBucket(testRepository1);
       Asset asset;
       if (component != null) {
         asset = tx.createAsset(bucket, component);
@@ -627,8 +627,8 @@ public class StorageFacetImplIT
   public void repeatedAssetModificationsAreSaved() throws Exception {
     createComponent("testGroup", "testName", "testVersion");
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponentWithProperty("version", "testVersion", tx.getBucket());
-      final Asset asset = tx.createAsset(tx.getBucket(), component).name("asset");
+      final Component component = tx.findComponentWithProperty("version", "testVersion", tx.findBucket(testRepository1));
+      final Asset asset = tx.createAsset(tx.findBucket(testRepository1), component).name("asset");
 
       final NestedAttributesMap attributes = asset.formatAttributes();
       attributes.set("attribute1", "original");
@@ -644,7 +644,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponentWithProperty("version", "testVersion", tx.getBucket());
+      final Component component = tx.findComponentWithProperty("version", "testVersion", tx.findBucket(testRepository1));
       final Iterable<Asset> assets = tx.browseAssets(component);
       final Asset asset = assets.iterator().next();
 
@@ -656,7 +656,7 @@ public class StorageFacetImplIT
   @Test
   public void transactionsRollBackWhenRequired() throws Exception {
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.createComponent(tx.getBucket(), testFormat)
+      final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat)
           .group("myGroup")
           .version("0.9")
           .name("myComponent");
@@ -665,7 +665,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.getBucket());
+      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.findBucket(testRepository1));
       assertThat(component, is(nullValue()));
     }
   }
@@ -674,7 +674,7 @@ public class StorageFacetImplIT
   public void transactionsRollBackOnException() throws Exception {
     try {
       try (StorageTx tx = beginTX()) {
-        final Component component = tx.createComponent(tx.getBucket(), testFormat)
+        final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat)
             .group("myGroup")
             .version("0.9")
             .name("myComponent");
@@ -686,7 +686,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.getBucket());
+      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.findBucket(testRepository1));
       assertThat(component, is(nullValue()));
     }
   }
@@ -694,7 +694,7 @@ public class StorageFacetImplIT
   @Test
   public void transactionContentIsSaved() throws Exception {
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.createComponent(tx.getBucket(), testFormat)
+      final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat)
           .group("myGroup")
           .version("0.9")
           .name("myComponent");
@@ -703,8 +703,8 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Iterable<Component> components = tx.browseComponents(tx.getBucket());
-      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.getBucket());
+      final Iterable<Component> components = tx.browseComponents(tx.findBucket(testRepository1));
+      final Component component = tx.findComponentWithProperty("group", "myGroup", tx.findBucket(testRepository1));
       assertThat(component, is(notNullValue()));
       assertThat(component.group(), is("myGroup"));
     }
@@ -715,7 +715,7 @@ public class StorageFacetImplIT
     EntityId componentId;
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.createComponent(tx.getBucket(), testFormat).name("component");
+      final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat).name("component");
       tx.saveComponent(component);
 
       componentId = id(component);
@@ -724,7 +724,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponent(componentId, tx.getBucket());
+      final Component component = tx.findComponent(componentId, tx.findBucket(testRepository1));
       assertThat("component", component, is(notNullValue()));
       assertThat(component.name(), is("component"));
     }
@@ -736,11 +736,11 @@ public class StorageFacetImplIT
     EntityId assetId;
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.createComponent(tx.getBucket(), testFormat).name("component");
+      final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat).name("component");
       tx.saveComponent(component);
 
       // Implicitly reference the component's entity id
-      final Asset asset = tx.createAsset(tx.getBucket(), component).name("hello");
+      final Asset asset = tx.createAsset(tx.findBucket(testRepository1), component).name("hello");
       tx.saveAsset(asset);
 
       tx.commit();
@@ -749,11 +749,11 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponent(componentId, tx.getBucket());
+      final Component component = tx.findComponent(componentId, tx.findBucket(testRepository1));
       assertThat("component", component, is(notNullValue()));
       assertThat(component.name(), is("component"));
 
-      final Asset asset = tx.findAsset(assetId, tx.getBucket());
+      final Asset asset = tx.findAsset(assetId, tx.findBucket(testRepository1));
       assertThat("asset", asset, is(notNullValue()));
       assertThat(asset.name(), is("hello"));
     }
@@ -762,7 +762,7 @@ public class StorageFacetImplIT
   @Test
   public void dependentQueryFromUncommittedComponentDoesNotThrowException() throws Exception {
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.createComponent(tx.getBucket(), testFormat).name("component");
+      final Component component = tx.createComponent(tx.findBucket(testRepository1), testFormat).name("component");
       tx.saveComponent(component);
 
       // Correct use of attached entity ids prevent an exception being thrown by this line

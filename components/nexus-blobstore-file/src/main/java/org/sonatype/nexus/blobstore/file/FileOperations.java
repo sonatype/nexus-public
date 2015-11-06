@@ -59,4 +59,9 @@ public interface FileOperations
    * Returns true if the file existed before deletion, false otherwise.
    */
   boolean delete(Path path) throws IOException;
+
+  /**
+   * Recursively deletes all files and subdirectories, then the directory itself.
+   */
+  void deleteDirectory(Path directory) throws IOException;
 }

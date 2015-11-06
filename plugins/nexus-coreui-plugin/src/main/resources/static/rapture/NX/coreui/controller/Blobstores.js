@@ -119,6 +119,25 @@ Ext.define('NX.coreui.controller.Blobstores', {
   },
 
   /**
+   * @override
+   */
+  bindDeleteButton: function (button) {
+    button.mon(
+      NX.Conditions.and(
+        NX.Conditions.isPermitted(this.permission + ':delete'),
+        NX.Conditions.gridHasSelection('nx-coreui-blobstore-list', function(model) {
+          return !model.get('inUse');
+        })
+      ),
+      {
+        satisfied: button.enable,
+        unsatisfied: button.disable,
+        scope: button
+      }
+    );
+  },
+
+  /**
    * @private
    */
   showAddWindow: function() {

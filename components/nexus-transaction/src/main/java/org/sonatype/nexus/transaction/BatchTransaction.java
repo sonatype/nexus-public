@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.transaction;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * {@link Transaction} that stays open until the batch is complete.
  *
@@ -23,29 +25,35 @@ final class BatchTransaction
   final Transaction delegate;
 
   BatchTransaction(final Transaction delegate) {
-    this.delegate = delegate;
+    this.delegate = checkNotNull(delegate);
   }
 
+  @Override
   public void begin() throws Exception {
     delegate.begin();
   }
 
+  @Override
   public void commit() throws Exception {
     delegate.commit();
   }
 
+  @Override
   public void rollback() throws Exception {
     delegate.rollback();
   }
 
+  @Override
   public boolean isActive() {
     return delegate.isActive();
   }
 
+  @Override
   public boolean allowRetry(final Exception cause) {
     return delegate.allowRetry(cause);
   }
 
+  @Override
   public void close() throws Exception {
     // no-op
   }

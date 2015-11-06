@@ -28,7 +28,7 @@ class BlobStoreXO
 
   @NotEmpty
   String attributes
-  
+
   @Range
   long blobCount
 
@@ -37,4 +37,6 @@ class BlobStoreXO
 
   @Range
   long availableSpace
+
+  boolean inUse
 }

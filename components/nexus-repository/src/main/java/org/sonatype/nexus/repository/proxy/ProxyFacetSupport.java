@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.negativecache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -234,8 +233,7 @@ public abstract class ProxyFacetSupport
       HttpEntity entity = response.getEntity();
       log.debug("Entity: {}", entity);
 
-      Payload payload = new HttpEntityPayload(response, entity);
-      final Content result = new Content(payload);
+      final Content result = createContent(context, response);
       result.getAttributes().set(Content.CONTENT_LAST_MODIFIED, extractLastModified(request, response));
       result.getAttributes().set(Content.CONTENT_ETAG, extractETag(response));
       result.getAttributes().set(CacheInfo.class, cacheInfo);
@@ -254,6 +252,14 @@ public abstract class ProxyFacetSupport
     }
 
     return null;
+  }
+
+  /**
+   * Create {@link Content} out of HTTP response.
+   */
+  protected Content createContent(final Context context, final HttpResponse response)
+  {
+    return new Content(new HttpEntityPayload(response, response.getEntity()));
   }
 
   /**

@@ -20,6 +20,9 @@ import java.lang.annotation.Target;
 /**
  * Marks methods that require transactional behaviour.
  *
+ * Transactions are acquired from the component being intercepted if it implements
+ * {@link TransactionalAware}; otherwise falls back to current {@link UnitOfWork}.
+ *
  * @since 3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -40,8 +43,8 @@ public @interface Transactional
    * List of TX exceptions to swallow (and log).
    *
    * Only applies to exceptions that occur after the user method has returned,
-   * while the transaction is committed. If the commit exception is swallowed
-   * it's as if the user method was never intercepted.
+   * while the transaction is committed. Useful for "best-effort" or optional
+   * updates where it's safe to proceed even if the commit threw an exception.
    */
   Class<? extends Exception>[] swallow() default {};
 }

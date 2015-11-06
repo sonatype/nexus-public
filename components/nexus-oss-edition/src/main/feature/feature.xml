@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
 
     Sonatype Nexus (TM) Open Source Version
@@ -12,8 +13,8 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<features>
-  <feature name="${project.artifactId}" description="Nexus OSS edition">
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
+  <feature name="${project.artifactId}">
     <bundle>mvn:${project.groupId}/${project.artifactId}/${project.version}</bundle>
     <feature>nexus-base-edition</feature>
   </feature>

@@ -143,8 +143,7 @@ Ext.define('NX.coreui.controller.Roles', {
    * @private
    */
   showAddWindowMapping: function(menuItem) {
-    var me = this,
-      feature = me.getFeature();
+    var me = this;
 
     me.getStore('RoleBySource').load({
       params: {
@@ -153,7 +152,7 @@ Ext.define('NX.coreui.controller.Roles', {
     });
 
     // Show the first panel in the create wizard, and set the breadcrumb
-    feature.setItemName(1, NX.I18n.get('Roles_Create_Title'));
+    me.setItemName(1, NX.I18n.get('Roles_Create_Title'));
     me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-role-add', { source: menuItem.source }));
   },
 

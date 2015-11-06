@@ -363,8 +363,12 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
             "rmiRegistryPort", Integer.toString(portRegistry.reservePort())),
         editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
-            "rmiServerPort", Integer.toString(portRegistry.reservePort()))
+            "rmiServerPort", Integer.toString(portRegistry.reservePort())),
 
+        // KarafTestContainer currently won't start unless "lib/ext" directory exists.
+        // As a quick fix we copy a known file (pom.xml) into the directory to ensure
+        // its created after the distribution is unpacked, but before the test starts.
+        replaceConfigurationFile("lib/ext/.placeholder", resolveBaseFile("pom.xml"))
     );
   }
 
@@ -380,7 +384,7 @@ public abstract class NexusPaxExamSupport
    */
   public static Option withHttps(final File keystore) {
     return composite(
-        editConfigurationFileExtend("etc/custom.properties", "nexus-args", "${karaf.base}/etc/jetty-https.xml"),
+        editConfigurationFileExtend("etc/org.sonatype.nexus.cfg", "nexus-args", "${karaf.base}/etc/jetty-https.xml"),
         replaceConfigurationFile("etc/ssl/keystore.jks", keystore));
   }
 

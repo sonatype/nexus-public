@@ -78,12 +78,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchRaw_Group: 'Raw Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
+    SearchCriteria_SHA256_FieldLabel: 'SHA-256',
     SearchCriteria_SHA2_FieldLabel: 'SHA-512',
     SearchCriteria_Version_FieldLabel: 'Version',
     Search_TextSearchCriteria_Filter_EmptyText: 'Any',
     SearchDocker_Image_Name_FieldLabel: 'Image Name',
     SearchDocker_Image_Tag_FieldLabel: 'Image Tag',
     SearchDocker_LayerId_FieldLabel: 'Layer Id',
+    SearchDocker_ContentDigest_FieldLabel: 'Content Digest',
     SearchMaven_ArtifactID_FieldLabel: 'Artifact Id',
     SearchMaven_BaseVersion_FieldLabel: 'Base Version',
     SearchMaven_Extension_FieldLabel: 'Extension',
@@ -178,6 +180,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryFeature_InvalidateProxyCache_Button: 'Invalidate proxy cache',
     Repository_RepositoryFeature_InvalidateNegativeCache_Button: 'Invalidate negative cache',
     Repository_RepositorySettings_Title: 'Settings',
+    Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
+    Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
+    Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository.',
     Repository_Facet_DockerConnectorFacet_Title: 'Docker Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors are used for Docker clients to connect directly ' +
     'to Nexus hosted registries, and are not always required. Consult our <a href="{0}" target="_blank">documentation</a>' +
@@ -247,7 +252,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_StorageFacet_BlobStore_HelpText: 'Blobstore used to store asset contents',
     Repository_Facet_StorageFacet_BlobStore_EmptyText: 'Select a blobstore',
     Repository_Facet_StorageFacet_ContentTypeValidation_FieldLabel: 'Strict Content Type Validation',
-    Repository_Facet_StorageFacet_ContentTypeValidation_HelpText: 'Validate that all content uploaded to this repository is of a mime type appropriate for the repository format',
+    Repository_Facet_StorageFacet_ContentTypeValidation_HelpText: 'Validate that all content uploaded to this repository is of a MIME type appropriate for the repository format',
     Repository_Facet_NegativeCacheFacet_Enabled_FieldLabel: 'Not found cache enabled',
     Repository_Facet_NegativeCacheFacet_Enabled_HelpText: 'Cache responses for content not present in the proxied repository',
     Repository_Facet_NegativeCacheFacet_TTL_FieldLabel: 'Not found cache TTL',
@@ -283,7 +288,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreAdd_Type_FieldLabel: 'Type',
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',
     Blobstore_BlobstoreSettingsForm_Name_FieldLabel: 'Name',
-    Blobstore_BlobstoreSettingsForm_Attributes_FieldLabel: 'Attributes',
+    Blobstore_BlobstoreSettingsForm_Path_FieldLabel: 'Path',
 
     // Admin -> Security
     FeatureGroups_Security_Title: 'Security',

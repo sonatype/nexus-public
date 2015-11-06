@@ -41,8 +41,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.ComponentQuery;
-import org.sonatype.nexus.repository.storage.ComponentQuery.Builder;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -59,7 +58,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * A {@link MavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
@@ -157,9 +156,9 @@ public class MavenFacetImpl
   public Content get(final MavenPath path) throws IOException {
     log.debug("GET {} : {}", getRepository().getName(), path.getPath());
 
-    final StorageTx tx = UnitOfWork.currentTransaction();
+    final StorageTx tx = UnitOfWork.currentTx();
 
-    final Asset asset = findAsset(tx, tx.getBucket(), path);
+    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return null;
     }
@@ -195,7 +194,7 @@ public class MavenFacetImpl
                           final Supplier<InputStream> streamSupplier)
       throws IOException
   {
-    final StorageTx tx = UnitOfWork.currentTransaction();
+    final StorageTx tx = UnitOfWork.currentTx();
 
     final AssetBlob assetBlob = tx.createBlob(
         path.getPath(),
@@ -225,10 +224,11 @@ public class MavenFacetImpl
       throws IOException
   {
     final Coordinates coordinates = checkNotNull(path.getCoordinates());
+    final Bucket bucket = tx.findBucket(getRepository());
     Component component = findComponent(tx, path);
     if (component == null) {
       // Create and set top-level properties
-      component = tx.createComponent(tx.getBucket(), getRepository().getFormat())
+      component = tx.createComponent(bucket, getRepository().getFormat())
           .group(coordinates.getGroupId())
           .name(coordinates.getArtifactId())
           .version(coordinates.getVersion());
@@ -242,9 +242,9 @@ public class MavenFacetImpl
       tx.saveComponent(component);
     }
 
-    Asset asset = findAsset(tx, tx.getBucket(), path);
+    Asset asset = findAsset(tx, bucket, path);
     if (asset == null) {
-      asset = tx.createAsset(tx.getBucket(), component);
+      asset = tx.createAsset(bucket, component);
 
       asset.name(path.getPath());
       asset.formatAttributes().set(StorageFacet.P_PATH, path.getPath());
@@ -271,9 +271,10 @@ public class MavenFacetImpl
                         @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
-    Asset asset = findAsset(tx, tx.getBucket(), path);
+    final Bucket bucket = tx.findBucket(getRepository());
+    Asset asset = findAsset(tx, bucket, path);
     if (asset == null) {
-      asset = tx.createAsset(tx.getBucket(), getRepository().getFormat());
+      asset = tx.createAsset(bucket, getRepository().getFormat());
       asset.name(path.getPath());
       asset.formatAttributes().set(StorageFacet.P_PATH, path.getPath());
     }
@@ -298,7 +299,7 @@ public class MavenFacetImpl
   @Override
   @Transactional
   public boolean delete(final MavenPath... paths) throws IOException {
-    final StorageTx tx = UnitOfWork.currentTransaction();
+    final StorageTx tx = UnitOfWork.currentTx();
 
     boolean result = false;
     for (MavenPath path : paths) {
@@ -318,7 +319,7 @@ public class MavenFacetImpl
     if (component == null) {
       return false;
     }
-    final Asset asset = findAsset(tx, tx.getBucket(), path);
+    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return false;
     }
@@ -330,7 +331,7 @@ public class MavenFacetImpl
   }
 
   private boolean deleteFile(final MavenPath path, final StorageTx tx) {
-    final Asset asset = findAsset(tx, tx.getBucket(), path);
+    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return false;
     }
@@ -343,13 +344,14 @@ public class MavenFacetImpl
   public boolean setCacheInfo(final MavenPath path, final Content content, final CacheInfo cacheInfo)
       throws IOException
   {
-    final StorageTx tx = UnitOfWork.currentTransaction();
+    final StorageTx tx = UnitOfWork.currentTx();
+    final Bucket bucket = tx.findBucket(getRepository());
 
     // by EntityId
-    Asset asset = Content.findAsset(tx, content);
+    Asset asset = Content.findAsset(tx, bucket, content);
     if (asset == null) {
       // by format coordinates
-      asset = findAsset(tx, tx.getBucket(), path);
+      asset = findAsset(tx, bucket, path);
     }
     if (asset == null) {
       log.debug("Attempting to set cache info for non-existent maven asset {}", path.getPath());
@@ -371,15 +373,14 @@ public class MavenFacetImpl
                                   final MavenPath mavenPath)
   {
     final Coordinates coordinates = mavenPath.getCoordinates();
-
-    final ComponentQuery query = new Builder()
-        .where("group").eq(coordinates.getGroupId())
-        .and("name").eq(coordinates.getArtifactId())
-        .and("version").eq(coordinates.getVersion())
-        .build();
-
-    final Iterable<Component> components = tx
-        .findComponents(query.getWhere(), query.getParameters(), asList(getRepository()), null);
+    final Iterable<Component> components = tx.findComponents(
+        Query.builder()
+            .where(StorageFacet.P_GROUP).eq(coordinates.getGroupId())
+            .and(StorageFacet.P_NAME).eq(coordinates.getArtifactId())
+            .and(StorageFacet.P_VERSION).eq(coordinates.getVersion())
+            .build(),
+        singletonList(getRepository())
+    );
     if (components.iterator().hasNext()) {
       return components.iterator().next();
     }

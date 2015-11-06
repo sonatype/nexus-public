@@ -45,7 +45,7 @@ public class PurgeUnusedTaskDescriptor
         ).includingAnyOfFacets(PurgeUnusedFacet.class).includeAnEntryForAllRepositories(),
         new NumberTextFormField(
             LAST_USED_FIELD_ID,
-            "Last Used (days)",
+            "Last used in days",
             "Purge all components and assets that were last used before given number of days",
             FormField.MANDATORY
         )

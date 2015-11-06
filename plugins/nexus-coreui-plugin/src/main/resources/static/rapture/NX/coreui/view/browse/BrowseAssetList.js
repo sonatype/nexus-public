@@ -41,6 +41,10 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
     'background-color': '#F4F4F4'
   },
 
+  selModel: {
+    pruneRemoved: false
+  },
+
   viewConfig: {
     emptyText: NX.I18n.get('Browse_BrowseAssetList_EmptyText_View'),
     emptyTextFilter: NX.I18n.get('Browse_BrowseAssetList_EmptyText_Filter'),

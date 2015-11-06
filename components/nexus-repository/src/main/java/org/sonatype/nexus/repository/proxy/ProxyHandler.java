@@ -47,7 +47,7 @@ public class ProxyHandler
     try {
       Payload payload = proxyFacet(context).get(context);
       if (payload != null) {
-        return HttpResponses.ok(payload);
+        return buildPayloadResponse(context, payload);
       }
       return HttpResponses.notFound();
     }
@@ -57,6 +57,10 @@ public class ProxyHandler
     catch (IOException e) {
       return HttpResponses.badGateway();
     }
+  }
+
+  protected Response buildPayloadResponse(final Context context, final Payload payload) {
+    return HttpResponses.ok(payload);
   }
 
   private ProxyFacet proxyFacet(final Context context) {

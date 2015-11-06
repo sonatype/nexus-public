@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.io.DirSupport;
 
 import com.google.common.io.ByteStreams;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -80,6 +81,7 @@ public class SimpleFileOperations
   @Override
   public boolean delete(final Path path) throws IOException {
     checkNotNull(path);
+    checkArgument(!Files.isDirectory(path));
     boolean deleted = Files.deleteIfExists(path);
 
     // complain if request to delete file has failed
@@ -88,5 +90,14 @@ public class SimpleFileOperations
     }
 
     return deleted;
+  }
+
+  /**
+   * Removes the directory and all of its contents.
+   */
+  @Override
+  public void deleteDirectory(final Path directory) throws IOException {
+    DirSupport.emptyIfExists(directory);
+    Files.deleteIfExists(directory);
   }
 }

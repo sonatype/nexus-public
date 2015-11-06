@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,6 +40,7 @@ import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -153,18 +155,6 @@ public class StorageTxImpl
   }
 
   @Override
-  @Guarded(by = {OPEN, ACTIVE})
-  public ODatabaseDocumentTx getDb() {
-    return db;
-  }
-
-  @Override
-  @Guarded(by = {OPEN, ACTIVE})
-  public Iterable<ODocument> browse(final String selectSql, @Nullable final Map<String, Object> params) {
-    return OrientAsyncHelper.asyncIterable(db, selectSql, params);
-  }
-
-  @Override
   @Transitions(from = ACTIVE, to = OPEN, silent = true)
   public void commit() {
     db.commit();
@@ -213,15 +203,22 @@ public class StorageTxImpl
   }
 
   @Override
-  @Guarded(by = {OPEN, ACTIVE})
-  public Bucket getBucket() {
-    return bucket;
+  @Guarded(by = {ACTIVE})
+  public ODatabaseDocumentTx getDb() {
+    return db;
+  }
+
+  @Override
+  @Guarded(by = {ACTIVE})
+  public Iterable<ODocument> browse(final String selectSql, @Nullable final Map<String, Object> params) {
+    return OrientAsyncHelper.asyncIterable(db, selectSql, params);
   }
 
   @Nullable
   @Override
-  public Bucket findBucket(final String repositoryName) {
-    return bucketEntityAdapter.getByRepositoryName(db, repositoryName);
+  @Guarded(by = ACTIVE)
+  public Bucket findBucket(final Repository repository) {
+    return bucketOf(repository.getName());
   }
 
   @Override
@@ -243,6 +240,7 @@ public class StorageTxImpl
   }
 
   @Override
+  @Guarded(by = ACTIVE)
   public Asset firstAsset(final Component component) {
     return Iterables.getFirst(browseAssets(component), null);
   }
@@ -288,7 +286,13 @@ public class StorageTxImpl
                                     @Nullable Iterable<Repository> repositories,
                                     @Nullable String querySuffix)
   {
-    return assetEntityAdapter.browseByQuery(db, whereClause, parameters, repositories, querySuffix);
+    return assetEntityAdapter.browseByQuery(db, whereClause, parameters, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public Iterable<Asset> findAssets(final Query query, @Nullable final Iterable<Repository> repositories) {
+    return findAssets(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
   }
 
   @Override
@@ -298,7 +302,13 @@ public class StorageTxImpl
                           @Nullable Iterable<Repository> repositories,
                           @Nullable String querySuffix)
   {
-    return assetEntityAdapter.countByQuery(db, whereClause, parameters, repositories, querySuffix);
+    return assetEntityAdapter.countByQuery(db, whereClause, parameters, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public long countAssets(final Query query, @Nullable final Iterable<Repository> repositories) {
+    return countAssets(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
   }
 
   @Nullable
@@ -325,7 +335,13 @@ public class StorageTxImpl
                                             @Nullable Iterable<Repository> repositories,
                                             @Nullable String querySuffix)
   {
-    return componentEntityAdapter.browseByQuery(db, whereClause, parameters, repositories, querySuffix);
+    return componentEntityAdapter.browseByQuery(db, whereClause, parameters, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public Iterable<Component> findComponents(final Query query, @Nullable final Iterable<Repository> repositories) {
+    return findComponents(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
   }
 
   @Override
@@ -335,7 +351,19 @@ public class StorageTxImpl
                               @Nullable Iterable<Repository> repositories,
                               @Nullable String querySuffix)
   {
-    return componentEntityAdapter.countByQuery(db, whereClause, parameters, repositories, querySuffix);
+    return componentEntityAdapter.countByQuery(db, whereClause, parameters, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public long countComponents(final Query query, @Nullable final Iterable<Repository> repositories) {
+    return countComponents(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public List<String> getUniqueComponentNames(@Nullable final Iterable<Repository> repositories) {
+    return componentEntityAdapter.getUniqueComponentNames(db, bucketsOf(repositories));
   }
 
   @Override
@@ -377,6 +405,7 @@ public class StorageTxImpl
   }
 
   @Override
+  @Guarded(by = ACTIVE)
   public void saveComponent(final Component component) {
     if (EntityHelper.hasMetadata(component)) {
       componentEntityAdapter.edit(db, component);
@@ -387,6 +416,7 @@ public class StorageTxImpl
   }
 
   @Override
+  @Guarded(by = ACTIVE)
   public void saveAsset(final Asset asset) {
     if (EntityHelper.hasMetadata(asset)) {
       assetEntityAdapter.edit(db, asset);
@@ -402,7 +432,7 @@ public class StorageTxImpl
     deleteComponent(component, true);
   }
 
-  public void deleteComponent(final Component component, final boolean checkWritePolicy) {
+  private void deleteComponent(final Component component, final boolean checkWritePolicy) {
     checkNotNull(component);
 
     for (Asset asset : browseAssets(component)) {
@@ -428,6 +458,7 @@ public class StorageTxImpl
   }
 
   @Override
+  @Guarded(by = ACTIVE)
   public void deleteBucket(Bucket bucket) {
     checkNotNull(bucket);
 
@@ -478,7 +509,7 @@ public class StorageTxImpl
     );
 
     if (!writePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + getBucket().getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
     ImmutableMap.Builder<String, String> storageHeaders = ImmutableMap.builder();
@@ -516,7 +547,7 @@ public class StorageTxImpl
 
     final WritePolicy effectiveWritePolicy = writePolicySelector.select(asset, writePolicy);
     if (!effectiveWritePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + getBucket().getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
     // Delete old blob if necessary
@@ -524,7 +555,7 @@ public class StorageTxImpl
     if (oldBlobRef != null) {
       if (!effectiveWritePolicy.checkUpdateAllowed()) {
         throw new IllegalOperationException(
-            "Repository does not allow updating assets: " + getBucket().getRepositoryName());
+            "Repository does not allow updating assets: " + bucket.getRepositoryName());
       }
       deleteBlob(oldBlobRef, effectiveWritePolicy);
     }
@@ -543,6 +574,7 @@ public class StorageTxImpl
   }
 
   @Override
+  @Guarded(by = ACTIVE)
   public AssetBlob setBlob(final Asset asset,
                            final String blobName,
                            final Supplier<InputStream> streamSupplier,
@@ -558,7 +590,7 @@ public class StorageTxImpl
     if (oldBlobRef != null) {
       if (!writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
         throw new IllegalOperationException(
-            "Repository does not allow updating assets: " + getBucket().getRepositoryName());
+            "Repository does not allow updating assets: " + bucket.getRepositoryName());
       }
     }
     final AssetBlob assetBlob = createBlob(
@@ -612,8 +644,36 @@ public class StorageTxImpl
     checkNotNull(blobRef);
     if (effectiveWritePolicy != null && !effectiveWritePolicy.checkDeleteAllowed()) {
       throw new IllegalOperationException(
-          "Repository does not allow deleting assets: " + getBucket().getRepositoryName());
+          "Repository does not allow deleting assets: " + bucket.getRepositoryName());
     }
     blobTx.delete(blobRef);
+  }
+
+  /**
+   * Returns the {@link Bucket} associated with given repository.
+   */
+  @Nullable
+  private Bucket bucketOf(final String repositoryName) {
+    if (bucket.getRepositoryName().equals(repositoryName)) {
+      return bucket;
+    }
+    else {
+      return bucketEntityAdapter.getByRepositoryName(db, repositoryName);
+    }
+  }
+
+  /**
+   * Returns the {@link Bucket}s associated with the given repositories.
+   */
+  @Nullable
+  private Iterable<Bucket> bucketsOf(@Nullable final Iterable<Repository> repositories) {
+    if (repositories == null) {
+      return null;
+    }
+    ImmutableList.Builder<Bucket> bucketsBuilder = ImmutableList.builder();
+    for (Repository repository : repositories) {
+      bucketsBuilder.add(bucketOf(repository.getName()));
+    }
+    return bucketsBuilder.build();
   }
 }

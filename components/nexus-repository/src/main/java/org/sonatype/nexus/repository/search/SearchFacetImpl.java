@@ -78,8 +78,8 @@ public class SearchFacetImpl
 
   @Transactional
   protected void rebuildComponentIndex() {
-    final StorageTx tx = UnitOfWork.currentTransaction();
-    for (Component component : tx.browseComponents(tx.getBucket())) {
+    final StorageTx tx = UnitOfWork.currentTx();
+    for (Component component : tx.browseComponents(tx.findBucket(getRepository()))) {
       try {
         put(component, tx.browseAssets(component));
       }
@@ -95,8 +95,8 @@ public class SearchFacetImpl
   public void put(final EntityId componentId) {
     checkNotNull(componentId);
     Component component;
-    final StorageTx tx = UnitOfWork.currentTransaction();
-    component = tx.findComponent(componentId, tx.getBucket());
+    final StorageTx tx = UnitOfWork.currentTx();
+    component = tx.findComponent(componentId, tx.findBucket(getRepository()));
     if (component != null) {
       put(component, tx.browseAssets(component));
     }

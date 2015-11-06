@@ -52,8 +52,8 @@ public class SingleAssetComponentMaintenance
 
   @Transactional(retryOn = ONeedRetryException.class)
   protected void deleteAssetTx(final EntityId assetId) {
-    StorageTx tx = UnitOfWork.currentTransaction();
-    final Asset asset = tx.findAsset(assetId, tx.getBucket());
+    StorageTx tx = UnitOfWork.currentTx();
+    final Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     final EntityId componentId = asset.componentId();
     if (componentId == null) {
       // Assets without components should be deleted on their own
@@ -66,7 +66,7 @@ public class SingleAssetComponentMaintenance
   }
 
   private void deleteComponent(final StorageTx tx, final EntityId componentId) {
-    final Component component = tx.findComponent(componentId, tx.getBucket());
+    final Component component = tx.findComponent(componentId, tx.findBucket(getRepository()));
     log.info("Deleting component: {}", component);
     tx.deleteComponent(component); // This in turn cascades back down to the asset
   }

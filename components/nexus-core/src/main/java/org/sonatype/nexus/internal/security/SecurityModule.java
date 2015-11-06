@@ -21,7 +21,7 @@ import org.sonatype.nexus.internal.security.realm.OrientRealmConfigurationStore;
 import org.sonatype.nexus.security.FilterProviderSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationFilter;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.NexusBasicHttpAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
@@ -42,7 +42,7 @@ public class SecurityModule
   protected void configure() {
     bind(filterKey(AnonymousFilter.NAME)).to(AnonymousFilter.class);
     bind(filterKey(NexusBasicHttpAuthenticationFilter.NAME)).to(NexusBasicHttpAuthenticationFilter.class);
-    bind(filterKey(NexusApiKeyAuthenticationFilter.NAME)).to(NexusApiKeyAuthenticationFilter.class);
+    bind(filterKey(ApiKeyAuthenticationFilter.NAME)).to(ApiKeyAuthenticationFilter.class);
     bind(filterKey(PermissionsFilter.NAME)).to(PermissionsFilter.class);
 
     // FIXME: Sort out, and deal with naming the "authcBasic" are presently auth-token bits
@@ -72,7 +72,7 @@ public class SecurityModule
       extends FilterProviderSupport
   {
     @Inject
-    AuthcApiKeyFilterProvider(final NexusApiKeyAuthenticationFilter filter) {
+    AuthcApiKeyFilterProvider(final ApiKeyAuthenticationFilter filter) {
       super(filter);
     }
   }

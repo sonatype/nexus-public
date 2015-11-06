@@ -50,26 +50,18 @@ public class Launcher
 
   private final JettyServer server;
 
-  public Launcher(final String etcPath, final String[] args) throws Exception {
-    if (etcPath == null) {
-      throw new IllegalArgumentException("Missing etcPath");
-    }
-    if (args == null || args.length == 0) {
-      throw new IllegalArgumentException("Missing args");
-    }
+  public Launcher(final File configFile) throws Exception {
 
     if (HAS_JUL_BRIDGE) {
       org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();
       org.slf4j.bridge.SLF4JBridgeHandler.install();
     }
 
-    File etcDir = new File(etcPath).getCanonicalFile();
     ClassLoader cl = getClass().getClassLoader();
 
     ConfigurationBuilder builder = new ConfigurationBuilder().defaults();
 
-    builder.properties(new File(etcDir, "org.sonatype.nexus.cfg"), true);
-
+    builder.properties(configFile, true);
     builder.override(System.getProperties());
 
     Map<String, String> props = builder.build();
@@ -105,7 +97,12 @@ public class Launcher
       ShutdownHelper.setDelegate(ShutdownHelper.NOOP);
     }
 
-    this.server = new JettyServer(cl, props, args);
+    String args = props.get("nexus-args");
+    if (args == null || args.trim().isEmpty()) {
+      throw new IllegalArgumentException("Missing nexus-args");
+    }
+
+    this.server = new JettyServer(cl, props, args.split(","));
   }
 
   public JettyServer getServer() {

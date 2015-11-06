@@ -120,4 +120,9 @@ public interface BlobStore
    * @return Iterable handle must be closed when finished using it.
    */
   AutoClosableIterable<BlobId> iterator();
+
+  /**
+   * Signifies that the {@link BlobStoreManager} has permanently deleted this blob store.
+   */
+  void remove();
 }

@@ -119,19 +119,20 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
       me.setFormFields(formFields);
     }
 
-    if (me.formFields) {
-      Ext.Array.each(me.formFields, function (formField) {
-        data['property_' + formField.id] = '';
-      });
-    }
-
+    // avoid resetting initial values of fields when creating a new record (properties will be null)
     if (properties) {
-      Ext.Object.each(properties, function (key, value) {
+      if (me.formFields) {
+        Ext.Array.each(me.formFields, function(formField) {
+          data['property_' + formField.id] = '';
+        });
+      }
+
+      Ext.Object.each(properties, function(key, value) {
         data['property_' + key] = value;
       });
-    }
 
-    form.setValues(data);
+      form.setValues(data);
+    }
   },
 
   /**

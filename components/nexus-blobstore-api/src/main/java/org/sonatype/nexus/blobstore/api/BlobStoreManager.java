@@ -38,11 +38,6 @@ public interface BlobStoreManager
   BlobStore create(BlobStoreConfiguration blobStoreConfiguration) throws Exception;
 
   /**
-   * Delete an existing BlobStore
-   */
-  void delete(BlobStoreConfiguration blobStoreConfiguration) throws Exception;
-
-  /**
    * Lookup a BlobStore by name
    */
   BlobStore get(String name);

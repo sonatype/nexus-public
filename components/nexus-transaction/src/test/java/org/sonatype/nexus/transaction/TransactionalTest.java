@@ -49,7 +49,7 @@ public class TransactionalTest
 
   boolean isActive;
 
-  boolean throwCME;
+  boolean throwExceptionOnCommit;
 
   @Before
   public void setUp() throws Exception {
@@ -74,7 +74,7 @@ public class TransactionalTest
     {
       public Void answer(InvocationOnMock invocation) throws Throwable {
         isActive = false;
-        if (throwCME) {
+        if (throwExceptionOnCommit) {
           throw new ConcurrentModificationException();
         }
         return null;
@@ -451,11 +451,11 @@ public class TransactionalTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
-      throwCME = true;
+      throwExceptionOnCommit = true;
       methods.retryOnCommitFailure();
     }
     finally {
-      throwCME = false;
+      throwExceptionOnCommit = false;
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).commit();
@@ -475,11 +475,11 @@ public class TransactionalTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
-      throwCME = true;
+      throwExceptionOnCommit = true;
       methods.swallowCommitFailure();
     }
     finally {
-      throwCME = false;
+      throwExceptionOnCommit = false;
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).commit();
@@ -494,11 +494,11 @@ public class TransactionalTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     try {
-      throwCME = true;
+      throwExceptionOnCommit = true;
       methods.commitOnUncheckedSwallowCommitFailure();
     }
     finally {
-      throwCME = false;
+      throwExceptionOnCommit = false;
       InOrder order = inOrder(tx);
       order.verify(tx).begin();
       order.verify(tx).commit();

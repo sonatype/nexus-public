@@ -38,6 +38,7 @@ import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -302,5 +303,17 @@ public class RepositoryManagerImpl
     untrack(repository);
 
     eventBus.post(new RepositoryDeletedEvent(repository));
+  }
+
+  @Override
+  public boolean isBlobstoreUsed(String blobStoreName) {
+    return stream(browse().spliterator(), false)
+      .map(Repository::getConfiguration)
+      .map(Configuration::getAttributes)
+      .map(a -> a.get("storage"))
+      .map(s -> s.get("blobStoreName"))
+      .filter(b -> blobStoreName.equals(b))
+      .findAny()
+      .isPresent();
   }
 }

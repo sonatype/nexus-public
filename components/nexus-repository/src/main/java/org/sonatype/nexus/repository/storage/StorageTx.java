@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -39,6 +40,26 @@ public interface StorageTx
     extends Transaction
 {
   /**
+   * Begins the transaction.
+   */
+  void begin();
+
+  /**
+   * Commits the transaction.
+   */
+  void commit();
+
+  /**
+   * Rolls back the transaction.
+   */
+  void rollback();
+
+  /**
+   * Closes the transaction. Uncommitted changes will be lost, and the object will be ineligible for further use.
+   */
+  void close();
+
+  /**
    * Provides the underlying document transaction.
    *
    * Note: The caller may use this to directly query or manipulate the Orient document DB, if needed, but should not
@@ -60,35 +81,10 @@ public interface StorageTx
   Iterable<ODocument> browse(String selectSql, @Nullable Map<String, Object> params);
 
   /**
-   * Begins the transaction.
-   */
-  void begin();
-
-  /**
-   * Commits the transaction.
-   */
-  void commit();
-
-  /**
-   * Rolls back the transaction.
-   */
-  void rollback();
-
-  /**
-   * Closes the transaction. Uncommitted changes will be lost, and the object will be ineligible for further use.
-   */
-  void close();
-
-  /**
-   * Gets the default {@link Bucket} for the transaction.
-   */
-  Bucket getBucket();
-
-  /**
-   * Finds a bucket based on the repository name.
+   * Finds a bucket based on the repository.
    */
   @Nullable
-  Bucket findBucket(String repositoryName);
+  Bucket findBucket(Repository repository);
 
   /**
    * Gets all buckets.
@@ -160,12 +156,26 @@ public interface StorageTx
                              @Nullable String querySuffix);
 
   /**
+   * Gets all assets in the specified repositories that match the given where clause.
+   *
+   * @param query        an {@link Query} query.
+   * @param repositories the repositories to limit the results to. If null or empty, results won't be limited
+   *                     by repository (unless passed in query limits already).
+   */
+  Iterable<Asset> findAssets(Query query, @Nullable Iterable<Repository> repositories);
+
+  /**
    * Gets the number of assets matching the given where clause.
    */
   long countAssets(@Nullable String whereClause,
                    @Nullable Map<String, Object> parameters,
                    @Nullable Iterable<Repository> repositories,
                    @Nullable String querySuffix);
+
+  /**
+   * Gets the number of assets matching the given {@link Query} clause.
+   */
+  long countAssets(Query query, @Nullable Iterable<Repository> repositories);
 
   /**
    * Gets a component by id, owned by the specified bucket, or {@code null} if not found.
@@ -198,12 +208,31 @@ public interface StorageTx
                                      @Nullable String querySuffix);
 
   /**
+   * Gets all component in the specified repositories that match the given where clause.
+   *
+   * @param query        an {@link Query} query.
+   * @param repositories the repositories to limit the results to. If null or empty, results won't be limited
+   *                     by repository (unless passed in query limits already).
+   */
+  Iterable<Component> findComponents(Query query, @Nullable Iterable<Repository> repositories);
+
+  /**
    * Gets the number of components matching the given where clause.
    */
   long countComponents(@Nullable String whereClause,
                        @Nullable Map<String, Object> parameters,
                        @Nullable Iterable<Repository> repositories,
                        @Nullable String querySuffix);
+
+  /**
+   * Gets the number of components matching the given {@link Query} clause.
+   */
+  long countComponents(Query query, @Nullable Iterable<Repository> repositories);
+
+  /**
+   * Gets the list of all components in the specified repositories.
+   */
+  List<String> getUniqueComponentNames(@Nullable Iterable<Repository> repositories);
 
   /**
    * Creates a new standalone asset.

@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.storage.*
+import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.validation.Validate
 
@@ -94,7 +95,13 @@ class ComponentComponent
     def sort = parameters.sort?.get(0)
     def querySuffix = ''
     if (sort) {
-      querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
+      if (GroupType.NAME != repository.type.value) {
+        // optimization to match component-bucket-group-name-version index when querying on a single repository
+        querySuffix += " ORDER BY ${StorageFacet.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
+      }
+      else {
+        querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
+      }
       if (sort.property == StorageFacet.P_GROUP) {
         querySuffix += ", ${StorageFacet.P_NAME} ASC,${StorageFacet.P_VERSION} ASC"
       }
@@ -173,7 +180,7 @@ class ComponentComponent
       }
 
       if (repositories.size() == 1) {
-        Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.getBucket())
+        Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repositories[0]))
         if (component == null) {
           log.warn 'Component {} not found', componentId
           return null
@@ -222,7 +229,13 @@ class ComponentComponent
     def sort = parameters.sort?.get(0)
     def querySuffix = ''
     if (sort) {
-      querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
+      if (GroupType.NAME != repository.type.value) {
+        // optimization to match asset-bucket-name index when querying on a single repository
+        querySuffix += " ORDER BY ${StorageFacet.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
+      }
+      else {
+        querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
+      }
     }
     if (parameters.start) {
       querySuffix += " SKIP ${parameters.start}"
@@ -284,7 +297,7 @@ class ComponentComponent
       StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
       try {
         storageTx.begin();
-        Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.getBucket())
+        Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
         log.info 'Deleting asset: {}', asset
         storageTx.deleteAsset(asset)
         storageTx.commit()
@@ -310,7 +323,7 @@ class ComponentComponent
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     try {
       storageTx.begin();
-      Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.getBucket())
+      Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repository))
       return component ? COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO : null
     }
     finally {
@@ -332,7 +345,7 @@ class ComponentComponent
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     try {
       storageTx.begin();
-      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.getBucket())
+      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
       return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
     }
     finally {

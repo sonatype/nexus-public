@@ -143,6 +143,9 @@ Ext.define('NX.coreui.controller.Capabilities', {
         },
         'nx-coreui-capability-selecttype': {
           cellclick: me.showAddPanel
+        },
+        'nx-coreui-capability-summary form': {
+          submitted: me.onSettingsSubmitted
         }
       }
     });
@@ -417,6 +420,13 @@ Ext.define('NX.coreui.controller.Capabilities', {
         });
       }
     });
+  },
+
+  /**
+   * @private
+   */
+  onSettingsSubmitted: function() {
+    this.getCapabilityStore().load();
   },
 
   /**
