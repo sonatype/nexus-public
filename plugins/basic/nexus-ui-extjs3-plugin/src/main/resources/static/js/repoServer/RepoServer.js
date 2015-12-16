@@ -81,12 +81,13 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
         // Left Panel
         this.nexusPanel = new Sonatype.navigation.NavigationPanel({
               id : 'st-nexus-tab',
-              title : 'Nexus'
+              title : 'Nexus Repository Manager'
             });
 
         this.createSubComponents();
 
         Sonatype.view.serverTabPanel.add(this.nexusPanel);
+        Sonatype.view.serverTabPanel.hideTabStripItem('st-nexus-tab');
 
         this.loginFormConfig.buttons = [{
               id : 'loginbutton',
@@ -114,7 +115,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
         this.loginForm = new Ext.form.FormPanel(this.loginFormConfig);
         this.loginWindow = new Ext.Window({
               id : 'login-window',
-              title : 'Nexus Log In',
+              title : 'Nexus Repository Manager Log In',
               animateTarget : Ext.get('head-link-r'),
               closable : true,
               closeAction : 'hide',
@@ -281,7 +282,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
                     tabCode : Sonatype.view.welcomePanel
                   },
                   {
-                    title : 'About Nexus',
+                    title : 'About',
                     tabId : 'AboutNexus',
                     tabCode : Sonatype.repoServer.HelpAboutPanel
                   }, {
@@ -379,7 +380,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
 
         var welcomePanelConfig = {
           layout : 'auto',
-          width : 500,
+          width : 670,
           closable : false,
           items : []
         };
@@ -413,7 +414,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
           }
         };
 
-        var welcomeMsg = '<p style="text-align:center;"><a href="http://nexus.sonatype.org" target="new">' + '<img src="images/nexus200x50.png" border="0" alt="Welcome to the Sonatype Nexus Maven Repository Manager"></a>' + '</p>';
+        var welcomeMsg = '<p style="text-align:center;"><a href="http://nexus.sonatype.org" target="new">' + '<img src="images/nexus650x55.png" border="0" alt="Welcome to the Nexus Repository Manager"></a>' + '</p>';
 
         var statusEnabled = sp.checkPermission('nexus:status', sp.READ);
         if (Sonatype.utils.anonDisabled && (!Sonatype.user.curr.isLoggedIn)) {

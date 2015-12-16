@@ -64,8 +64,8 @@ public class ProxiesGETLayoutTest
             new CachingProxyStorage(proxyBase(), new File("src/test/repo").toURI().toURL())
             {
 
-              protected URL toUrl(RubygemsFile file) throws MalformedURLException {
-                return new URL(baseurl + file.storagePath().replace("?", "/"));
+              protected URLStreamLocation toUrl(RubygemsFile file) throws MalformedURLException {
+                  return new URLStreamLocation(new URL(baseurl + file.storagePath().replace("?", "/")));
               }
             }
         }

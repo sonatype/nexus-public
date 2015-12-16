@@ -12,6 +12,9 @@
  */
 package com.bolyuba.nexus.plugin.npm.service.internal.orient;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -41,6 +44,9 @@ public class OrientMetadataStoreLifecycle
   public OrientMetadataStoreLifecycle(
       final OrientMetadataStore orientMetadataStore)
   {
+    // temporary: hide bogus log message due to https://github.com/orientechnologies/orientdb/issues/5457
+    Logger.getLogger("com.orientechnologies.orient.core.config.OGlobalConfiguration$1").setLevel(Level.OFF);
+
     this.orientMetadataStore = checkNotNull(orientMetadataStore);
     Orient.instance().removeShutdownHook();
   }

@@ -58,6 +58,7 @@ public abstract class GeneratorSupport<R extends NpmRepository>
   @Override
   public boolean isNpmMetadataServiced(final ResourceStoreRequest request) {
     if (RepositoryItemUid.PATH_ROOT.equals(request.getRequestPath()) // root
+        || request.getRequestPath().startsWith("/.nexus") // hidden
         || (request.isExternal() && request.getRequestUrl().contains("/service/local/") && request.getRequestUrl().contains("/content/")) // UI Browse Storage
         || request.getRequestContext().containsKey(NpmRepository.NPM_METADATA_NO_SERVICE, false)) {
       // shut down NPM MD+tarball service completely

@@ -65,7 +65,7 @@ public class ProxiedGETLayout
         try (InputStream bundlerResult = store.getInputStream(expired)) {
           bundlerDeps.add(bundlerResult);
         }
-        for(String gemname: bundlerDeps.getGemnames()) {
+        for(String gemname: expiredNames){
           DependencyFile dep = super.dependencyFile(gemname);
           // first store the data for caching
           store.update(bundlerDeps.getInputStreamOf(gemname), dep);

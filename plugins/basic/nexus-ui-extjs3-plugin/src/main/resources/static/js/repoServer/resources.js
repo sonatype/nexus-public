@@ -87,7 +87,7 @@ define('repoServer/resources',['Sonatype/all'], function(){
 
     // Routes Config help text
     routes : {
-      pattern : 'A regular expression used to match the artifact path. The path is everything after /nexus/content/ so it will include the group or repository name. .* is used to specify all paths. \'.*/com/some/company/.*\' will match any artifact with \'com.some.company\' as the group id or artifact id.',
+      pattern : 'A regular expression used to match the artifact path. ".*" is used to specify all paths. ".*/com/some/company/.*" will match any artifact with "com.some.company" as the group id or artifact id. "^/com/some/company/.*" will match any artifact starting with com/some/company.',
       ruleType : 'There are three types of rules: Inclusive (if the pattern matches, only use the repositories listed below), Exclusive (exclude the repositories listed below) and Blocking (block URLs matching the pattern).',
       group : 'A repository group this route applies to.'
     },

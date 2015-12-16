@@ -25,12 +25,12 @@ public class SystemStatus
   /**
    * The Application Name
    */
-  private String appName = "Sonatype Nexus";
+  private String appName = "Nexus Repository Manager";
 
   /**
    * The Formatted Application Name, used whenever possible
    */
-  private String formattedAppName = "Sonatype Nexus&trade;";
+  private String formattedAppName = "Nexus Repository Manager";
 
   /**
    * The Nexus Application version.

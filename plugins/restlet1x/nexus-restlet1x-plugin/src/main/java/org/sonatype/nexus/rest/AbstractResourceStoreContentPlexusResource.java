@@ -63,6 +63,7 @@ import org.sonatype.nexus.rest.repositories.AbstractRepositoryPlexusResource;
 import org.sonatype.nexus.security.filter.authc.NexusHttpAuthenticationFilter;
 import org.sonatype.nexus.web.BaseUrlHolder;
 import org.sonatype.nexus.web.Constants;
+import org.sonatype.nexus.web.ErrorStatusRuntimeException;
 import org.sonatype.plexus.rest.representation.VelocityRepresentation;
 import org.sonatype.security.SecuritySystem;
 
@@ -830,6 +831,10 @@ public abstract class AbstractResourceStoreContentPlexusResource
       }
       else if (t instanceof AccessDeniedException) {
         challengeIfNeeded(req, res, (AccessDeniedException) t);
+      }
+      else if (t instanceof ErrorStatusRuntimeException) {
+        ErrorStatusRuntimeException ex = (ErrorStatusRuntimeException) t;
+        throw new ResourceException(new Status(ex.getResponseCode(), ex.getReasonPhrase(), ex.getMessage(), null), t);
       }
       else {
         // Internal error, we force it to log

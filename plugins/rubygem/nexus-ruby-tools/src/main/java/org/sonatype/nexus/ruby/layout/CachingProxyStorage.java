@@ -79,7 +79,7 @@ public class CachingProxyStorage
   @Override
   public void retrieve(BundlerApiFile file) {
     try {
-      file.set(new URLStreamLocation(toUrl(file)));
+      file.set(toUrl(file));
     }
     catch (IOException e) {
       file.setException(e);
@@ -199,7 +199,7 @@ public class CachingProxyStorage
     Files.setLastModifiedTime(path, FileTime.fromMillis(mod));
   }
 
-  protected URL toUrl(RubygemsFile file) throws MalformedURLException {
-    return new URL(baseurl + file.remotePath());
+  protected URLStreamLocation toUrl(RubygemsFile file) throws MalformedURLException {
+    return new URLStreamLocation(new URL(baseurl + file.remotePath()));
   }
 }

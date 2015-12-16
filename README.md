@@ -12,7 +12,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Sonatype Nexus Open-source Codebase 
+# Nexus Repository Manager OSS Codebase 
 
 ## Requirements
 
@@ -33,4 +33,4 @@ To run Nexus, after building, unzip the assembly and start the server:
     unzip -d target assemblies/nexus-bundle-template/target/nexus-bundle-template-*.zip
     ./target/nexus-bundle-template-*/bin/nexus console
 
-The `nexus-bundle-template` assembly is used as the basis for the official Sonatype Nexus distributions.
+The `nexus-bundle-template` assembly is used as the basis for the official Nexus Repository Manager distributions.

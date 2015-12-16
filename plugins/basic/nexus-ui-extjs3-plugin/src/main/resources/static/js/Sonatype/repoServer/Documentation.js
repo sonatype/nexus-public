@@ -37,13 +37,11 @@ NX.define('Sonatype.repoServer.Documentation', {
 
     getHelpText : function() {
       return '<div class="little-padding">'
-            + '<h1>Sonatype Nexus&trade; '
-            + Sonatype.utils.edition
-            + '</h1>'
-            + '<br><a href="http://nexus.sonatype.org/" target="_new">Nexus OSS Website</a>'
-            + '<br><a href=" http://links.sonatype.com/products/nexus/pro/home " target="_new">Nexus Pro Website</a>'
-            + '<br><a href="http://links.sonatype.com/products/nexus/pro/trial" target="_new">Nexus Trial - including guide and example projects</a>'
-            + '<br><a href="http://links.sonatype.com/products/nexus/pro/kb" target="_new">Knowlege Base</a>'
+            + '<h1>Nexus Repository Manager</h1>'
+            + '<br><a href="http://nexus.sonatype.org/" target="_new">Nexus Community Website</a>'
+            + '<br><a href=" http://links.sonatype.com/products/nexus/pro/home " target="_new">Nexus Repository Manager Website</a>'
+            + '<br><a href="http://links.sonatype.com/products/nexus/pro/trial" target="_new">Nexus Repository Manager Trial - including guide and example projects</a>'
+            + '<br><a href="http://links.sonatype.com/products/nexus/pro/kb" target="_new">Knowledge Base</a>'
             + '<br><a href="http://links.sonatype.com/products/nexus/pro/training" target="_new">Training</a>'
             + '<br><a href="http://links.sonatype.com/products/nexus/oss/docs" target="_new">Repository Management With Nexus - free comprehensive book</a>'
             + '<br><a href="http://links.sonatype.com/products/maven/docs" target="_new">Maven: The Complete Reference and other books</a>'

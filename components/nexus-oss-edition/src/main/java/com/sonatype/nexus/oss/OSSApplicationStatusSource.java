@@ -27,7 +27,7 @@ public class OSSApplicationStatusSource
     extends AbstractApplicationStatusSource
     implements ApplicationStatusSource
 {
-  private static final String FORMATTED_APP_NAME_BASE = "Sonatype Nexus&trade;";
+  private static final String FORMATTED_APP_NAME_BASE = "Nexus Repository Manager OSS";
 
   public OSSApplicationStatusSource() {
     super();

@@ -31,7 +31,7 @@ define('Sonatype/repoServer/NexusUpgradeChecker', function() {
           Sonatype.utils.postWelcomePageAlert(
             '<span style="color:#000">' +
             '<b>UPGRADE AVAILABLE:</b> ' +
-            'Nexus ' + Sonatype.utils.edition + ' ' + r.response.version + ' is now available. ' +
+            'Nexus Repository Manager ' + r.response.version + ' is now available. ' +
             '<a href="' + r.response.url + '" target="_blank">Download now!</a>' +
             '</span>'
           );

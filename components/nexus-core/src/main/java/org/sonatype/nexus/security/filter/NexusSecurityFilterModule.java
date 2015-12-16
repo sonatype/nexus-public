@@ -57,7 +57,7 @@ public class NexusSecurityFilterModule
     @Inject
     AuthcBasicFilterProvider(final NexusAuthenticationFilter filter) {
       super(filter);
-      filter.setApplicationName("Sonatype Nexus Repository Manager API");
+      filter.setApplicationName("Nexus Repository Manager API");
       filter.setFakeAuthScheme(Boolean.toString(false));
     }
   }

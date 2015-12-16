@@ -28,6 +28,7 @@ import org.sonatype.nexus.proxy.storage.local.LocalRepositoryStorage;
 import org.sonatype.nexus.proxy.storage.local.fs.DefaultFSLocalRepositoryStorage;
 import org.sonatype.nexus.proxy.storage.local.fs.FSPeer;
 import org.sonatype.nexus.proxy.wastebasket.Wastebasket;
+import org.sonatype.nexus.ruby.FileType;
 import org.sonatype.nexus.ruby.RubygemsFile;
 import org.sonatype.nexus.ruby.cuba.DefaultRubygemsFileSystem;
 
@@ -59,12 +60,7 @@ public class RubyFSLocalRepositoryStorage
     if (!item.getPath().startsWith("/.nexus")) {
       RubygemsFile file = fileSystem.file(item.getResourceStoreRequest());
 
-      switch (file.type()) {
-        case NOT_FOUND:
-          break;
-        case BUNDLER_API:
-          return;
-        default:
+      if (file.type() != FileType.NOT_FOUND) {
           item.getResourceStoreRequest().setRequestPath(file.storagePath());
           ((AbstractStorageItem) item).setPath(file.storagePath());
       }

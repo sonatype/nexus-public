@@ -69,8 +69,8 @@ public class HostedDELETELayoutTest
             new CachingProxyStorage(proxyBase(), hostedBase().toURI().toURL())
             {
 
-              protected URL toUrl(RubygemsFile file) throws MalformedURLException {
-                return new URL(baseurl + file.storagePath());
+              protected URLStreamLocation toUrl(RubygemsFile file) throws MalformedURLException {
+                return new URLStreamLocation(new URL(baseurl + file.storagePath()));
               }
             }
         }

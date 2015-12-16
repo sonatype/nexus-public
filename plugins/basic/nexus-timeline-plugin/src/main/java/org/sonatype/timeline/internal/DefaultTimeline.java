@@ -238,11 +238,17 @@ public class DefaultTimeline
     if (timelineLock.readLock().tryLock()) {
       try {
         if (started && !indexerIsDead) {
+          boolean isInterrupted = Thread.interrupted();
           try {
             return work.doIt();
           }
           catch (IOException e) {
             markIndexerDead(e);
+          }
+          finally {
+            if (isInterrupted) {
+              Thread.currentThread().interrupt();
+            }
           }
         }
       }

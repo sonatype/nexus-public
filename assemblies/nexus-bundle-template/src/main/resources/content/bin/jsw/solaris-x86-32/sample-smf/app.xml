@@ -68,7 +68,7 @@
 <stability value='Evolving' />
 <template>
 	<common_name>
-		<loctext xml:lang='C'>Sonatype Nexus Maven Repository Manager </loctext>
+		<loctext xml:lang='C'>Nexus Repository Manager </loctext>
 	</common_name>
 	<documentation>
 		<doc_link name='sonatype.org' uri='http://nexus.sonatype.org' />

@@ -18,12 +18,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.SecureRandom;
 import java.util.zip.GZIPInputStream;
+import javax.xml.bind.DatatypeConverter;
 
 import org.sonatype.nexus.ruby.DependencyFile;
 import org.sonatype.nexus.ruby.Directory;
@@ -52,9 +56,19 @@ public class SimpleStorage
       this.url = url;
     }
 
+    public URLConnection openConnection() throws IOException {
+        URLConnection con = url.openConnection();
+        String userinfo = this.url.getUserInfo();
+        if(userinfo != null) {
+            String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(URLDecoder.decode(userinfo, "UTF-8").getBytes(StandardCharsets.UTF_8));
+            con.setRequestProperty ("Authorization", basicAuth);
+        }
+        return con;
+    }
+
     @Override
     public InputStream openStream() throws IOException {
-      return url.openStream();
+      return openConnection().getInputStream();
     }
   }
 
@@ -253,6 +267,10 @@ public class SimpleStorage
 
   @Override
   public String[] listDirectory(Directory dir) {
-    return toPath(dir).toFile().list();
+    String[] list = toPath(dir).toFile().list();
+    if (list == null) {
+        list = new String[0];
+    }
+    return list;
   }
 }

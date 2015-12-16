@@ -64,7 +64,7 @@ module Nexus
     # @param gemname [String]
     # @return [IO] array of dependencies as stream
     def input_stream_of( gemname )
-      marshal_dump( map[ gemname ] )
+      marshal_dump( map[ gemname ] || [] )
     end
     alias :get_input_stream_of :input_stream_of
 

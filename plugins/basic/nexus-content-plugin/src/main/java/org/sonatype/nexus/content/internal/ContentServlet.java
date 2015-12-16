@@ -54,6 +54,7 @@ import org.sonatype.nexus.util.SystemPropertiesHelper;
 import org.sonatype.nexus.web.BaseUrlHolder;
 import org.sonatype.nexus.web.Constants;
 import org.sonatype.nexus.web.ErrorStatusException;
+import org.sonatype.nexus.web.ErrorStatusRuntimeException;
 import org.sonatype.nexus.web.RemoteIPFinder;
 import org.sonatype.nexus.web.WebUtils;
 import org.sonatype.nexus.web.internal.ErrorPageFilter;
@@ -303,6 +304,10 @@ public class ContentServlet
         logger.warn("{} {}", Throwables2.explain(exception), requestDetails(request));
       }
       throw (IOException) exception;
+    }
+    else if (exception instanceof ErrorStatusRuntimeException) {
+      ErrorStatusRuntimeException ex = (ErrorStatusRuntimeException) exception;
+      throw new ErrorStatusException(ex.getResponseCode(), ex.getReasonPhrase(), ex.getMessage(), ex);
     }
     else {
       responseCode = SC_INTERNAL_SERVER_ERROR;

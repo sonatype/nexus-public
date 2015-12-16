@@ -30,7 +30,6 @@ import org.sonatype.nexus.plugins.ruby.RubyRepository;
 import org.sonatype.nexus.proxy.AccessDeniedException;
 import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
-import org.sonatype.nexus.proxy.LocalStorageException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.StorageException;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
@@ -49,6 +48,7 @@ import org.sonatype.nexus.ruby.FileType;
 import org.sonatype.nexus.ruby.RubygemsFile;
 import org.sonatype.nexus.ruby.RubygemsGateway;
 import org.sonatype.nexus.ruby.SpecsIndexType;
+import org.sonatype.nexus.ruby.cuba.RootCuba;
 import org.sonatype.nexus.ruby.cuba.api.ApiV1DependenciesCuba;
 import org.sonatype.nexus.ruby.layout.ProxiedRubygemsFileSystem;
 
@@ -118,38 +118,22 @@ public class DefaultProxyRubyRepository
   }
 
   @Override
-  protected boolean isOld(StorageItem item) {
+  protected boolean isOld(int maxAge, StorageItem item) {
     if (item.getName().endsWith("specs.4.8")) {
       // whenever there is retrieve call to the ungzipped file it will be forwarded to call for the gzipped file
       return false;
     }
-    if (item.getName().endsWith(".gz")) {
+    if (item.getName().endsWith(RootCuba.GZ) || item.getName().endsWith(ApiV1DependenciesCuba.RUBY) ||
+            BUNDLER_API_REQUEST.matcher(item.getName()).matches()) {
+      maxAge = getMetadataMaxAge();
       if (log.isDebugEnabled()) {
-        log.debug("{} needs remote update {} ", item, isOld(getMetadataMaxAge(), item));
+        log.debug("{} needs remote update {} ", item, isOld(maxAge, item, this.isItemAgingActive()));
       }
-      return isOld(getMetadataMaxAge(), item);
-    }
-
-    if (item.getName().endsWith(ApiV1DependenciesCuba.RUBY)) {
-      if (log.isDebugEnabled()) {
-        log.debug("{} needs remote update {}", item, isOld(getMetadataMaxAge(), item));
-      }
-      if (isOld(getMetadataMaxAge(), item)) {
-        // avoid sending a wrong HEAD request which does not trigger the expiration
-        try {
-          super.deleteItem(false, item.getResourceStoreRequest());
-        }
-        catch (IOException
-            | UnsupportedStorageOperationException | IllegalOperationException | ItemNotFoundException e) {
-          log.warn("could not delete volatile file: {}", item, e);
-        }
-        return true;
-      }
-      return false;
+      return isOld(maxAge,item, this.isItemAgingActive());
     }
     else {
       // all other files use artifact max age
-      return isOld(getArtifactMaxAge(), item);
+      return isOld(getArtifactMaxAge(), item, this.isItemAgingActive());
     }
   }
 
@@ -171,21 +155,6 @@ public class DefaultProxyRubyRepository
 
   private static Pattern BUNDLER_API_REQUEST = Pattern.compile(".*[?]gems=.*");
 
-  public AbstractStorageItem doCacheItem(AbstractStorageItem item)
-      throws LocalStorageException
-  {
-    // a bundler API request can not be cached
-    if (BUNDLER_API_REQUEST.matcher(item.getRepositoryItemUid().getPath()).matches()) {
-      return item;
-    }
-    else {
-      // use the storage path for cache - i.e. the request path is used as well
-      item.getResourceStoreRequest().setRequestPath(item.getRepositoryItemUid().getPath());
-      return super.doCacheItem(item);
-    }
-  }
-
-  @SuppressWarnings("deprecation")
   @Override
   protected AbstractStorageItem doRetrieveRemoteItem(ResourceStoreRequest request)
       throws ItemNotFoundException, org.sonatype.nexus.proxy.StorageException
@@ -195,6 +164,17 @@ public class DefaultProxyRubyRepository
     // make the remote request with the respective remote path
     request.setRequestPath(file.remotePath());
     return super.doRetrieveRemoteItem(request);
+  }
+
+  @Override
+  protected StorageItem doRetrieveItem0(ResourceStoreRequest request, AbstractStorageItem localItem)
+          throws IllegalOperationException, ItemNotFoundException, org.sonatype.nexus.proxy.StorageException
+  {
+    RubygemsFile file = facade.file(request.getRequestPath());
+
+    // make the remote request with the respective remote path
+    request.setRequestPath(file.remotePath());
+    return super.doRetrieveItem0(request, localItem);
   }
 
   @Override

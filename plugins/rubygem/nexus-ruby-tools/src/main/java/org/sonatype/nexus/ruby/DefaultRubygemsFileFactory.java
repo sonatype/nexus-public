@@ -196,14 +196,22 @@ public class DefaultRubygemsFileFactory
         join(API_V1_DEPS, "?gems=" + names),
         names.replaceAll(",,", ",")
             .replaceAll("\\s+", "")
+            .replaceAll(",\\s*$", "")
             .split(","));
   }
 
   @Override
   public BundlerApiFile bundlerApiFile(String... names) {
     StringBuilder gems = new StringBuilder("?gems=");
+    boolean first = true;
     for (String name : names) {
-      gems.append(name).append(",");
+      if (first) {
+        first = false;
+      }
+      else {
+        gems.append(",");
+      }
+      gems.append(name);
     }
     return new BundlerApiFile(this,
         join(API_V1_DEPS, gems.toString()),

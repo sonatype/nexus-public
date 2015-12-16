@@ -31,7 +31,7 @@ public class BuildApplicationStatusSource
     extends AbstractApplicationStatusSource
     implements ApplicationStatusSource
 {
-  private static final String FORMATTED_APP_NAME_BASE = "Sonatype Nexus&trade;";
+  private static final String FORMATTED_APP_NAME_BASE = "Nexus Repository Manager";
 
   public BuildApplicationStatusSource() {
     super();
