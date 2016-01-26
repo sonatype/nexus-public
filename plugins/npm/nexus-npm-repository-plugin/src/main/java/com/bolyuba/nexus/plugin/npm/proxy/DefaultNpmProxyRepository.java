@@ -370,6 +370,7 @@ public class DefaultNpmProxyRepository
           // cache and return tarball wrapped into item
           final DefaultStorageFileItem result = new DefaultStorageFileItem(this, request, true, true, tarball);
           result.getRepositoryItemAttributes().put(PackageVersion.TARBALL_NX_SHASUM, tarball.getSha1sum());
+          result.setRemoteUrl(tarballRequest.getPackageVersion().getDistTarball());
           return doCacheItem(result);
         }
         throw new ItemNotFoundException(ItemNotFoundException.reasonFor(request, this,

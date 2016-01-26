@@ -49,7 +49,7 @@ public class GemLifecycleIT
   private void uploadGemWithNexusGemCommand(String repoId) throws Exception {
     log("== START {}", repoId);
     cleanup();
-    repositories().get(RubyProxyRepository.class, "gemsproxy").withMetadataMaxAge(0).save();
+    repositories().get(RubyProxyRepository.class, "gemsproxy").withMetadataMaxAge(0).withNotFoundCacheTTL(0).save();
 
     // start with an empty repo
     assertFileDownloadSize(repoId, "latest_specs.4.8.gz", equalTo(24l));

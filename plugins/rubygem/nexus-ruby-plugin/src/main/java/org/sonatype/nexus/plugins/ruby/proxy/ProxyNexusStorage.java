@@ -45,7 +45,7 @@ public class ProxyNexusStorage
   public void retrieve(BundlerApiFile file) {
     try {
       log.debug("retrieve :: {}", file);
-      file.set(repository.retrieveDirectItem(new ResourceStoreRequest(file.storagePath(), false, false)));
+      file.set(repository.retrieveDirectItem(new ResourceStoreRequest(file.remotePath(), false, false)));
     }
     catch (IOException | IllegalOperationException | ItemNotFoundException e) {
       file.setException(e);
@@ -59,14 +59,7 @@ public class ProxyNexusStorage
       ResourceStoreRequest request = new ResourceStoreRequest(file.storagePath(), true, false);
       if (repository.getLocalStorage().containsItem(repository, request)) {
         StorageItem item = repository.getLocalStorage().retrieveItem(repository, request);
-        // we just have a minimum of 1 minutes to avoid problems with caching under load
-        int maxAge = repository.getMetadataMaxAge();
-        if (maxAge > -1) {
-          expired = item.isExpired() || ((System.currentTimeMillis() - item.getRemoteChecked()) > (maxAge * 60L * 1000L));
-        }
-        else {
-          expired = item.isExpired();
-        }
+        expired = repository.isOld(item);
       }
     }
     catch (ItemNotFoundException e) {

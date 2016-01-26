@@ -48,7 +48,8 @@ public class ContentAuthenticationFilter
   {
     this.constituents = constituents;
     this.factories = factories;
-    setApplicationName("Nexus Repository Manager");
+    // Do not change this string, third-party clients depend on it
+    setApplicationName("Sonatype Nexus Repository Manager");
   }
 
   /**

@@ -17,6 +17,7 @@ import java.io.IOException;
 import org.sonatype.nexus.plugins.ruby.RubyRepository;
 import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
+import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 
 /**
@@ -34,6 +35,8 @@ public interface ProxyRubyRepository
   int getMetadataMaxAge();
 
   void setMetadataMaxAge(int metadataMaxAge);
+
+  boolean isOld(StorageItem item);
 
   void syncMetadata() throws IllegalOperationException, ItemNotFoundException, IOException;
 

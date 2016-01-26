@@ -188,7 +188,7 @@ public class GroupNexusStorage
   public void retrieve(BundlerApiFile file) {
     try {
       // mimic request as coming directly to ProxyRepository
-      repository.doRetrieveItems(new ResourceStoreRequest(file.storagePath()));
+      repository.doRetrieveItems(new ResourceStoreRequest(file.remotePath()));
       file.set(null);
     }
     catch (GroupItemNotFoundException | IOException e) {

@@ -95,7 +95,9 @@ public class DefaultRubygemsFileSystemTest
 
   @Test
   public void testBundlerApi() throws Exception {
-    String[] pathes = {"/api/v1/dependencies?gems=nexus,bundler"};
+    String[] pathes = {"/api/v1/dependencies?gems=nexus,,bundler,",
+            "/api/v1/dependencies?gems=nexus,bundler",
+            "/api/v1/dependencies?gems=nexus%2Cbundler"};
     assertFiletype(pathes, FileType.BUNDLER_API);
   }
 

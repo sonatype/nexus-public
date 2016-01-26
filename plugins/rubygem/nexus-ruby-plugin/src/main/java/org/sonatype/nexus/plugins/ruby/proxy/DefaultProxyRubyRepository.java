@@ -13,6 +13,10 @@
 package org.sonatype.nexus.plugins.ruby.proxy;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -32,7 +36,6 @@ import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.StorageException;
-import org.sonatype.nexus.proxy.item.AbstractStorageItem;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.registry.ContentClass;
@@ -41,6 +44,7 @@ import org.sonatype.nexus.proxy.repository.DefaultRepositoryKind;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryKind;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
+import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
 import org.sonatype.nexus.proxy.walker.DefaultWalkerContext;
 import org.sonatype.nexus.proxy.walker.WalkerException;
 import org.sonatype.nexus.proxy.walker.WalkerProcessor;
@@ -118,23 +122,24 @@ public class DefaultProxyRubyRepository
   }
 
   @Override
-  protected boolean isOld(int maxAge, StorageItem item) {
+  public boolean isOld(StorageItem item) {
     if (item.getName().endsWith("specs.4.8")) {
       // whenever there is retrieve call to the ungzipped file it will be forwarded to call for the gzipped file
       return false;
     }
-    if (item.getName().endsWith(RootCuba.GZ) || item.getName().endsWith(ApiV1DependenciesCuba.RUBY) ||
-            BUNDLER_API_REQUEST.matcher(item.getName()).matches()) {
+    int maxAge;
+    if (item.getName().endsWith(RootCuba.GZ) ||
+        item.getName().endsWith(ApiV1DependenciesCuba.RUBY) ||
+        BUNDLER_API_REQUEST.matcher(item.getName()).matches()) {
       maxAge = getMetadataMaxAge();
-      if (log.isDebugEnabled()) {
-        log.debug("{} needs remote update {} ", item, isOld(maxAge, item, this.isItemAgingActive()));
-      }
-      return isOld(maxAge,item, this.isItemAgingActive());
     }
     else {
       // all other files use artifact max age
-      return isOld(getArtifactMaxAge(), item, this.isItemAgingActive());
+      maxAge = getArtifactMaxAge();
     }
+    boolean isOld = isOld(maxAge, item);
+    log.debug("{} needs remote update {}", item, isOld);
+    return isOld;
   }
 
   public int getArtifactMaxAge() {
@@ -154,28 +159,6 @@ public class DefaultProxyRubyRepository
   }
 
   private static Pattern BUNDLER_API_REQUEST = Pattern.compile(".*[?]gems=.*");
-
-  @Override
-  protected AbstractStorageItem doRetrieveRemoteItem(ResourceStoreRequest request)
-      throws ItemNotFoundException, org.sonatype.nexus.proxy.StorageException
-  {
-    RubygemsFile file = facade.file(request.getRequestPath());
-
-    // make the remote request with the respective remote path
-    request.setRequestPath(file.remotePath());
-    return super.doRetrieveRemoteItem(request);
-  }
-
-  @Override
-  protected StorageItem doRetrieveItem0(ResourceStoreRequest request, AbstractStorageItem localItem)
-          throws IllegalOperationException, ItemNotFoundException, org.sonatype.nexus.proxy.StorageException
-  {
-    RubygemsFile file = facade.file(request.getRequestPath());
-
-    // make the remote request with the respective remote path
-    request.setRequestPath(file.remotePath());
-    return super.doRetrieveItem0(request, localItem);
-  }
 
   @Override
   public RepositoryItemUid createUid(final String path) {
@@ -244,7 +227,7 @@ public class DefaultProxyRubyRepository
   @Override
   public void purgeBrokenMetadataFiles() throws IllegalOperationException, ItemNotFoundException, IOException
   {
-    log.info("Recreating Rubygems index in hosted repository {}", this);
+    log.info("Purge broken Rubygems metadata files on proxy-repository {}", this);
     final WalkerProcessor wp = new PurgeBrokenFilesRubygemsWalkerProcessor(log, gateway);
     final DefaultWalkerContext ctx = new DefaultWalkerContext(this, new ResourceStoreRequest(RepositoryItemUid.PATH_ROOT));
     ctx.getProcessors().add(wp);
@@ -258,5 +241,58 @@ public class DefaultProxyRubyRepository
         throw e;
       }
     }
+  }
+
+  @Override
+  public void setRemoteStorage(final RemoteRepositoryStorage remoteStorage) {
+    if (remoteStorage == null) {
+      super.setRemoteStorage(null); // resetting, nothing to proxy
+      return;
+    }
+    //
+    // intercept request parameters to rewrite their paths when going remote
+    //
+    // an alternative solution is to override doRetrieveRemoteItem, copy over the
+    // skeleton AbstractProxyRepository code and rewrite the request paths for each
+    // call to remote storage (if you try to rewrite the request path for the whole
+    // doRetrieveRemoteItem method that then messes up various NFC and expiry calls).
+    //
+    super.setRemoteStorage((RemoteRepositoryStorage) Proxy.newProxyInstance(
+        RemoteRepositoryStorage.class.getClassLoader(),
+        new Class[] { RemoteRepositoryStorage.class },
+        new InvocationHandler()
+        {
+          @Override
+          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            ResourceStoreRequest request = findRequest(args);
+            if (request != null) {
+              // rewrite path, but only for scope of remote storage
+              RubygemsFile file = facade.file(request.getRequestPath());
+              request.pushRequestPath(file.remotePath());
+            }
+            try {
+              return method.invoke(remoteStorage, args);
+            }
+            catch (InvocationTargetException e) {
+              throw e.getCause(); // unwrap and throw the real exception
+            }
+            finally {
+              if (request != null) {
+                request.popRequestPath();
+              }
+            }
+          }
+
+          private ResourceStoreRequest findRequest(Object[] args) {
+            if (args != null) {
+              for (Object arg : args) {
+                if (arg instanceof ResourceStoreRequest) {
+                  return (ResourceStoreRequest) arg;
+                }
+              }
+            }
+            return null;
+          }
+        }));
   }
 }

@@ -55,5 +55,12 @@ public class SmokeNpmIT
 
     // check that there are not traces of proxied registry URL
     assertThat(commonjsPackageRoot, not(containsString(mockRegistryServerUrl())));
+
+    final File commonjsTarballDescribeFile = new File(localDirectory, "commonjs-0.0.1.tgz.describe");
+    content().download(Location.repositoryLocation(testMethodName(), "commonjs/-/commonjs-0.0.1.tgz?describe"), commonjsTarballDescribeFile);
+    final String commonjsTarballDescribe = Files.toString(commonjsTarballDescribeFile, Charsets.UTF_8);
+
+    assertThat(commonjsTarballDescribe, containsString("storageItem-remoteUrl"));
+    assertThat(commonjsTarballDescribe, containsString(mockRegistryServerUrl() + "/commonjs/-/commonjs-0.0.1.tgz"));
   }
 }

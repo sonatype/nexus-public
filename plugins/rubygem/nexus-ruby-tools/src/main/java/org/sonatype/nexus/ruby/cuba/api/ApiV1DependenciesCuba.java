@@ -46,7 +46,7 @@ public class ApiV1DependenciesCuba
   public RubygemsFile on(State state) {
     if (state.name.isEmpty()) {
       if (state.context.query.startsWith("gems=")) {
-        if (state.context.query.contains(",")) {
+        if (state.context.query.contains(",") || state.context.query.contains("%2C")) {
           return state.context.factory.bundlerApiFile(state.context.query.substring(5));
         }
         else {

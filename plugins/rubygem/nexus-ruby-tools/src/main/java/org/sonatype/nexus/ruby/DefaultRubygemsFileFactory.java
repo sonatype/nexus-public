@@ -192,12 +192,14 @@ public class DefaultRubygemsFileFactory
 
   @Override
   public BundlerApiFile bundlerApiFile(String names) {
+    // normalize query string first
+    names = names.replaceAll("%2C", ",")
+            .replaceAll(",,", ",")
+            .replaceAll("\\s+", "")
+            .replaceAll(",\\s*$", "");
     return new BundlerApiFile(this,
         join(API_V1_DEPS, "?gems=" + names),
-        names.replaceAll(",,", ",")
-            .replaceAll("\\s+", "")
-            .replaceAll(",\\s*$", "")
-            .split(","));
+        names.split(","));
   }
 
   @Override

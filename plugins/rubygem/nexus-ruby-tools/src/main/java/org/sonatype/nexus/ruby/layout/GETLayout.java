@@ -35,6 +35,7 @@ import org.sonatype.nexus.ruby.PomFile;
 import org.sonatype.nexus.ruby.RubygemsDirectory;
 import org.sonatype.nexus.ruby.RubygemsFile;
 import org.sonatype.nexus.ruby.RubygemsGateway;
+import org.sonatype.nexus.ruby.Sha1Digest;
 import org.sonatype.nexus.ruby.Sha1File;
 import org.sonatype.nexus.ruby.SpecsIndexFile;
 import org.sonatype.nexus.ruby.SpecsIndexZippedFile;
@@ -270,28 +271,13 @@ public class GETLayout
       return sha;
     }
     try (InputStream is = store.getInputStream(file)) {
-      MessageDigest digest = MessageDigest.getInstance("SHA1");
+      Sha1Digest digest = new Sha1Digest();
       int i = is.read();
       while (i != -1) {
         digest.update((byte) i);
         i = is.read();
       }
-      StringBuilder dig = new StringBuilder();
-      for (byte b : digest.digest()) {
-        if (b < 0) {
-          dig.append(Integer.toHexString(256 + b));
-        }
-        else if (b < 16) {
-          dig.append("0").append(Integer.toHexString(b));
-        }
-        else {
-          dig.append(Integer.toHexString(b));
-        }
-      }
-      store.memory(dig.toString(), sha);
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("BUG should never happen", e);
+      store.memory(digest.hexDigest(), sha);
     }
     catch (IOException e) {
       sha.setException(e);

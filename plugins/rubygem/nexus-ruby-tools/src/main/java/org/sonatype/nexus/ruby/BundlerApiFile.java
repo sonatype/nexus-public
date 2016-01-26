@@ -20,10 +20,18 @@ package org.sonatype.nexus.ruby;
 public class BundlerApiFile
     extends RubygemsFile
 {
+
   private final String[] names;
 
+  private static String storageName(String remote) {
+    Sha1Digest digest = new Sha1Digest();
+    digest.update(remote.getBytes());
+    // assume no digest collision happens
+    return remote.replaceFirst("\\?gems=.*$", "/" + digest.hexDigest() + ".gems");
+  }
+
   BundlerApiFile(RubygemsFileFactory factory, String remote, String... names) {
-    super(factory, FileType.BUNDLER_API, remote, remote, null);
+    super(factory, FileType.BUNDLER_API, storageName(remote), remote, null);
     this.names = names;
   }
 

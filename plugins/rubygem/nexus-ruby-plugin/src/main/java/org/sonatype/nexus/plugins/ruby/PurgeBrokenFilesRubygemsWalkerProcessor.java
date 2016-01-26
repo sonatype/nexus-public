@@ -67,6 +67,9 @@ public class PurgeBrokenFilesRubygemsWalkerProcessor
             repository.deleteItem(true, new ResourceStoreRequest(item));
           }
         }
+        else if (item.getName().endsWith(".gems")) {
+          repository.deleteItem(true, new ResourceStoreRequest(item));
+        }
       }
       catch (Exception e) {
         logger.warn("Error occurred while processing item '" + item.getPath() + "'.", e);

@@ -23,7 +23,9 @@ public class RubygemsDirectory
 
   public void setItems(String... items) {
     for (String item : items) {
-      this.items.add(item.replace(ApiV1DependenciesCuba.RUBY, ""));
+      if (item.endsWith(ApiV1DependenciesCuba.RUBY)) {
+        this.items.add(item.replace(ApiV1DependenciesCuba.RUBY, ""));
+      }
     }
   }
 }
