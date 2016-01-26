@@ -27,19 +27,19 @@ public interface FileOperations
   {
     private final long size;
 
-    private final String SHA1;
+    private final String sha1;
 
-    public StreamMetrics(final long size, final String SHA1) {
+    public StreamMetrics(final long size, final String sha1) {
       this.size = size;
-      this.SHA1 = SHA1;
+      this.sha1 = sha1;
     }
 
     public long getSize() {
       return size;
     }
 
-    public String getSHA1() {
-      return SHA1;
+    public String getSha1() {
+      return sha1;
     }
   }
 

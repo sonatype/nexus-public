@@ -100,7 +100,7 @@ Ext.define('NX.coreui.controller.Metrics', {
     me.getContent().getEl().mask(NX.I18n.get('Metrics_Load_Mask'));
 
     Ext.Ajax.request({
-      url: NX.util.Url.urlOf('internal/metrics'),
+      url: NX.util.Url.urlOf('service/metrics/data'),
       method: 'GET',
       headers: {
         'accept': 'application/json'
@@ -152,7 +152,7 @@ Ext.define('NX.coreui.controller.Metrics', {
    * Download metrics data.
    */
   downloadMetrics: function () {
-    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('internal/metrics?pretty=true&download=true'));
+    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/metrics/data?pretty=true&download=true'));
   },
 
   /**
@@ -160,7 +160,7 @@ Ext.define('NX.coreui.controller.Metrics', {
    * Download thread dump.
    */
   downloadThreads: function () {
-    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('internal/threads?download=true'));
+    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/metrics/threads?download=true'));
   }
 
 });

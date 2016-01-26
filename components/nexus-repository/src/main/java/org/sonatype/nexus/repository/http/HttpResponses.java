@@ -32,11 +32,13 @@ import static org.sonatype.nexus.repository.http.HttpStatus.*;
  */
 public class HttpResponses
 {
-  private HttpResponses() {}
+  private HttpResponses() {
+    // empty
+  }
 
   // Ok: 200
 
-  public static Response ok(final @Nullable String message) {
+  public static Response ok(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.success(OK, message))
         .build();
@@ -55,7 +57,7 @@ public class HttpResponses
 
   // Created: 201
 
-  public static Response created(final @Nullable String message) {
+  public static Response created(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.success(CREATED, message))
         .build();
@@ -82,7 +84,7 @@ public class HttpResponses
 
   // No Content: 204
 
-  public static Response noContent(final @Nullable String message) {
+  public static Response noContent(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.success(NO_CONTENT, message))
         .build();
@@ -94,7 +96,7 @@ public class HttpResponses
 
   // Not Found: 404
 
-  public static Response notFound(final @Nullable String message) {
+  public static Response notFound(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(NOT_FOUND, message))
         .build();
@@ -106,7 +108,7 @@ public class HttpResponses
 
   // Bad request: 400
 
-  public static Response badRequest(final @Nullable String message) {
+  public static Response badRequest(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(BAD_REQUEST, message))
         .build();
@@ -118,7 +120,7 @@ public class HttpResponses
 
   // Unauthorized: 401
 
-  public static Response unauthorized(final @Nullable String message) {
+  public static Response unauthorized(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(UNAUTHORIZED, message))
         .build();
@@ -130,7 +132,7 @@ public class HttpResponses
 
   // Forbidden: 403
 
-  public static Response forbidden(final @Nullable String message) {
+  public static Response forbidden(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(FORBIDDEN, message))
         .build();
@@ -152,7 +154,7 @@ public class HttpResponses
         .build();
   }
 
-  public static Response serviceUnavailable(final @Nullable String message) {
+  public static Response serviceUnavailable(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(SERVICE_UNAVAILABLE, message))
         .build();
@@ -162,7 +164,7 @@ public class HttpResponses
     return serviceUnavailable(null);
   }
 
-  public static Response badGateway(final @Nullable String message) {
+  public static Response badGateway(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(BAD_GATEWAY, message))
         .build();
@@ -172,7 +174,7 @@ public class HttpResponses
     return badGateway(null);
   }
 
-  public static Response notImplemented(final @Nullable String message) {
+  public static Response notImplemented(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(NOT_IMPLEMENTED, message))
         .build();

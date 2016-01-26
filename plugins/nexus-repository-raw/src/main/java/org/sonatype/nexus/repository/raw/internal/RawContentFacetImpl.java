@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.raw.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -24,7 +25,6 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -40,14 +40,12 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_PATH;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * A {@link RawContentFacet} that persists to a {@link StorageFacet}.
@@ -59,7 +57,7 @@ public class RawContentFacetImpl
     extends FacetSupport
     implements RawContentFacet
 {
-  private final static List<HashAlgorithm> hashAlgorithms = Lists.newArrayList(MD5, SHA1);
+  private static final List<HashAlgorithm> hashAlgorithms = Arrays.asList(MD5, SHA1);
 
   // TODO: raw does not have config, this method is here only to have this bundle do Import-Package org.sonatype.nexus.repository.config
   // TODO: as FacetSupport subclass depends on it. Actually, this facet does not need any kind of configuration
@@ -88,7 +86,7 @@ public class RawContentFacetImpl
   }
 
   @Override
-  public Content put(final String path, final Payload content) throws IOException, InvalidContentException {
+  public Content put(final String path, final Payload content) throws IOException {
     try (final TempStreamSupplier streamSupplier = new TempStreamSupplier(content.openInputStream())) {
       return doPutContent(path, streamSupplier, content);
     }
@@ -107,15 +105,12 @@ public class RawContentFacetImpl
       // CREATE
       component = tx.createComponent(bucket, getRepository().getFormat())
           .group(getGroup(path))
-          .name(getName(path));
+          .name(path);
 
-      // Set attributes map to contain "raw" format-specific metadata (in this case, path)
-      component.formatAttributes().set(P_PATH, path);
       tx.saveComponent(component);
 
       asset = tx.createAsset(bucket, component);
-      asset.name(component.name());
-      asset.formatAttributes().set(P_PATH, path);
+      asset.name(path);
     }
     else {
       // UPDATE
@@ -154,16 +149,6 @@ public class RawContentFacetImpl
     return group.toString();
   }
 
-  private String getName(String path) {
-    int i = path.lastIndexOf("/");
-    if (i != -1) {
-      return path.substring(i + 1);
-    }
-    else {
-      return path;
-    }
-  }
-
   @Override
   @Transactional
   public boolean delete(final String path) throws IOException {
@@ -188,7 +173,7 @@ public class RawContentFacetImpl
     Asset asset = Content.findAsset(tx, bucket, content);
     if (asset == null) {
       // by format coordinates
-      Component component = tx.findComponentWithProperty(P_PATH, path, bucket);
+      Component component = tx.findComponentWithProperty(P_NAME, path, bucket);
       if (component != null) {
         asset = tx.firstAsset(component);
       }
@@ -205,13 +190,11 @@ public class RawContentFacetImpl
 
   // TODO: Consider a top-level indexed property (e.g. "locator") to make these common lookups fast
   private Component findComponent(StorageTx tx, Bucket bucket, String path) {
-    String property = String.format("%s.%s.%s", P_ATTRIBUTES, RawFormat.NAME, P_PATH);
-    return tx.findComponentWithProperty(property, path, bucket);
+    return tx.findComponentWithProperty(P_NAME, path, bucket);
   }
 
   private Asset findAsset(StorageTx tx, String path) {
-    String property = String.format("%s.%s.%s", P_ATTRIBUTES, RawFormat.NAME, P_PATH);
-    return tx.findAssetWithProperty(property, path, tx.findBucket(getRepository()));
+    return tx.findAssetWithProperty(P_NAME, path, tx.findBucket(getRepository()));
   }
 
   private Content toContent(final Asset asset, final Blob blob) {

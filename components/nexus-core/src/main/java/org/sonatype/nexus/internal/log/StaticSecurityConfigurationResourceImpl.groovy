@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'logging-all',
+                id: 'nx-logging-all',
                 description: 'All permissions for Logging',
                 type: 'application',
                 properties: [
@@ -43,7 +43,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'logging-read',
+                id: 'nx-logging-read',
                 description: 'Read permission for Logging',
                 type: 'application',
                 properties: [
@@ -52,7 +52,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'logging-update',
+                id: 'nx-logging-update',
                 description: 'Update permission for Logging',
                 type: 'application',
                 properties: [
@@ -61,7 +61,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'logging-mark',
+                id: 'nx-logging-mark',
                 description: 'Mark permission for Logging',
                 type: 'application',
                 properties: [

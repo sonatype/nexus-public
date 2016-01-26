@@ -14,9 +14,10 @@ package org.sonatype.nexus.orient;
 
 import java.util.Locale;
 
+import javax.annotation.Nullable;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -26,8 +27,9 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class OClassNameBuilder
 {
-  public static final String PREFIX_SEPARATOR = "_";
+  private static final String PREFIX_SEPARATOR = "_";
 
+  @Nullable
   private String prefix;
 
   private String type;
@@ -40,11 +42,6 @@ public class OClassNameBuilder
   public OClassNameBuilder type(final String type) {
     this.type = type;
     return this;
-  }
-
-  public OClassNameBuilder type(final Class type) {
-    checkNotNull(type);
-    return type(type.getSimpleName());
   }
 
   public String build() {

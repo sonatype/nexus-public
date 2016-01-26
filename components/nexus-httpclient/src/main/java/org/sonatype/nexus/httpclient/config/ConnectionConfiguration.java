@@ -16,8 +16,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.Time;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Throwables;
 
 /**
@@ -29,8 +27,6 @@ public class ConnectionConfiguration
     implements Cloneable
 {
   @Nullable
-  @JsonSerialize(using = SecondsSerializer.class)
-  @JsonDeserialize(using = SecondsDeserializer.class)
   private Time timeout;
 
   @Nullable
@@ -61,18 +57,26 @@ public class ConnectionConfiguration
   }
 
   @Nullable
-  public String getUserAgentSuffix() { return userAgentSuffix; }
+  public String getUserAgentSuffix() {
+    return userAgentSuffix;
+  }
 
-  public void setUserAgentSuffix(@Nullable final String userAgentSuffix) { this.userAgentSuffix = userAgentSuffix; }
+  public void setUserAgentSuffix(@Nullable final String userAgentSuffix) {
+    this.userAgentSuffix = userAgentSuffix;
+  }
 
   @Nullable
-  public Boolean getUseTrustStore() { return useTrustStore; }
+  public Boolean getUseTrustStore() {
+    return useTrustStore;
+  }
 
-  public void setUseTrustStore(@Nullable final Boolean useTrustStore) { this.useTrustStore = useTrustStore; }
+  public void setUseTrustStore(@Nullable final Boolean useTrustStore) {
+    this.useTrustStore = useTrustStore;
+  }
 
   public ConnectionConfiguration copy() {
     try {
-      return (ConnectionConfiguration)clone();
+      return (ConnectionConfiguration) clone();
     }
     catch (CloneNotSupportedException e) {
       throw Throwables.propagate(e);

@@ -20,10 +20,9 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
-import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
-import org.sonatype.nexus.blobstore.api.BlobStoreException;
+import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.extdirect.DirectComponentSupport
@@ -37,7 +36,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.hibernate.validator.constraints.NotEmpty
 
 /**
- * BlobStore {@link DirectComponent}
+ * BlobStore {@link DirectComponent}.
+ *
  * @since 3.0
  */
 @Named
@@ -46,7 +46,6 @@ import org.hibernate.validator.constraints.NotEmpty
 class BlobStoreComponent
     extends DirectComponentSupport
 {
-
   @Inject
   BlobStoreManager blobStoreManager
 
@@ -79,8 +78,12 @@ class BlobStoreComponent
   @Validate(groups = [Create.class, Default.class])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
     return asBlobStore(blobStoreManager.create(
-        new BlobStoreConfiguration(name: blobStore.name, type: blobStore.type,
-            attributes: attributeConverter.asAttributes(blobStore.attributes))))
+        new BlobStoreConfiguration(
+            name: blobStore.name,
+            type: blobStore.type,
+            attributes: attributeConverter.asAttributes(blobStore.attributes)
+        )
+    ))
   }
 
   @DirectMethod
@@ -88,18 +91,22 @@ class BlobStoreComponent
   @Validate
   void remove(final @NotEmpty String name) {
     if (repositoryManager.isBlobstoreUsed(name)) {
-      throw new BlobStoreException(String.format("Blob store (%s) is in use by at least one repository", name), null)
+      throw new BlobStoreException("Blob store (${name}) is in use by at least one repository", null)
     }
     blobStoreManager.delete(name)
   }
 
   @DirectMethod
   PathSeparatorXO defaultWorkDirectory() {
-    return new PathSeparatorXO(path: applicationDirectories.getWorkDirectory('blobs'), fileSeparator: File.separator)
+    return new PathSeparatorXO(
+        path: applicationDirectories.getWorkDirectory('blobs'),
+        fileSeparator: File.separator
+    )
   }
 
   BlobStoreXO asBlobStore(final BlobStore blobStore) {
-    return new BlobStoreXO(name: blobStore.blobStoreConfiguration.name,
+    return new BlobStoreXO(
+        name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,
         attributes: attributeConverter.asAttributes(blobStore.blobStoreConfiguration.attributes),
         blobCount: blobStore.metrics.blobCount,

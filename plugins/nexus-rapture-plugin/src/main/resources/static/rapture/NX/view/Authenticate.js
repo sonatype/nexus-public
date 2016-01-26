@@ -24,11 +24,6 @@ Ext.define('NX.view.Authenticate', {
     'NX.Icons',
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('Authenticate_Title'),
-
-  defaultFocus: 'password',
 
   /**
    * @cfg message Message to be shown
@@ -41,7 +36,11 @@ Ext.define('NX.view.Authenticate', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.SMALL_MODAL);
+    me.ui = 'nx-inset';
+    me.title = NX.I18n.get('Authenticate_Title');
+    me.defaultFocus = 'password';
+
+    me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
     if (!me.message) {
       me.message = NX.I18n.get('Authenticate_Help_Text');
@@ -79,7 +78,8 @@ Ext.define('NX.view.Authenticate', {
             inputType: 'password',
             emptyText: NX.I18n.get('SignIn_Password_Empty'),
             allowBlank: false,
-            validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+            // allow cancel to be clicked w/o validating this to be non-blank
+            validateOnBlur: false
           }
         ],
 

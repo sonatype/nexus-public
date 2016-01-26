@@ -14,6 +14,8 @@ package org.sonatype.nexus.orient;
 
 import javax.annotation.Nullable;
 
+import com.google.common.annotations.Beta;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -23,6 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 //@Named("remote")
 //@Singleton
+@Beta
 public class RemoteDatabaseManager
     extends DatabaseManagerSupport
 {
@@ -30,7 +33,7 @@ public class RemoteDatabaseManager
 
   private final Integer port;
 
-  public RemoteDatabaseManager(final String hostname, final @Nullable Integer port) {
+  public RemoteDatabaseManager(final String hostname, @Nullable final Integer port) {
     this.hostname = checkNotNull(hostname);
     this.port = port;
     log.debug("Hostname: {}", hostname);

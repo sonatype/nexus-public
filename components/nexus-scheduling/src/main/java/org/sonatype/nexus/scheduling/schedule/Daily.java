@@ -14,21 +14,22 @@ package org.sonatype.nexus.scheduling.schedule;
 
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Schedule that repeats daily at same time.
+ *
+ * @see ScheduleFactory#daily(Date)
  */
 public class Daily
     extends Schedule
 {
+  public static final String TYPE = "daily";
+
   public Daily(final Date startAt) {
-    super("daily");
-    checkNotNull(startAt);
-    properties.put("schedule.startAt", dateToString(startAt));
+    super(TYPE);
+    set(SCHEDULE_START_AT, dateToString(startAt));
   }
 
   public Date getStartAt() {
-    return stringToDate(properties.get("schedule.startAt"));
+    return stringToDate(get(SCHEDULE_START_AT));
   }
 }

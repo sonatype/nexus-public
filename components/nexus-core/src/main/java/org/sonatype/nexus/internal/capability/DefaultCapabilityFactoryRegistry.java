@@ -97,7 +97,7 @@ class DefaultCapabilityFactoryRegistry
     }
     if (factory == null) {
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
-      if (descriptor != null && descriptor instanceof CapabilityFactory) {
+      if (descriptor instanceof CapabilityFactory) {
         factory = (CapabilityFactory) descriptor;
       }
       if (factory == null) {

@@ -61,7 +61,6 @@ class InstallConfigurationCustomizer
 
     def installDir = applicationDirectories.installDirectory
     if (installDir) {
-      // FIXME: should handle keys.properties and users.properties separably as security config
       new File(installDir, 'etc').eachFile {
         maybeIncludeFile it, 'install/etc', HIGH
       }

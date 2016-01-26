@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'atlas-all',
+                id: 'nx-atlas-all',
                 description: 'All permissions for Support Tools',
                 type: 'application',
                 properties: [

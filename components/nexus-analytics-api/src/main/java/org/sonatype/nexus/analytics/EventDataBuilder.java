@@ -56,7 +56,7 @@ public class EventDataBuilder
     started = System.nanoTime();
   }
 
-  public EventDataBuilder set(final String name, final @Nullable Object value) {
+  public EventDataBuilder set(final String name, @Nullable final Object value) {
     checkNotNull(name);
     if (value == null) {
       data.getAttributes().put(name, null);

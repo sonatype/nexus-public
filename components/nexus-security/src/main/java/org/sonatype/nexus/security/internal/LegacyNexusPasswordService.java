@@ -56,8 +56,7 @@ public class LegacyNexusPasswordService
 
   @Override
   public String encryptPassword(final Object plaintextPassword) {
-    // FIXME: throw UnsupportedOperationException instead?
-    throw new IllegalArgumentException("Not supported");
+    throw new UnsupportedOperationException();
   }
 
   @Override

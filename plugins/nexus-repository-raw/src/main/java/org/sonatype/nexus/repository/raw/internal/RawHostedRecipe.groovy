@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.internal
 
-import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
-
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
@@ -26,9 +24,10 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.http.HttpMethods
-import org.sonatype.nexus.repository.partial.PartialFetchHandler
+import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
+import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
 import org.sonatype.nexus.repository.types.HostedType

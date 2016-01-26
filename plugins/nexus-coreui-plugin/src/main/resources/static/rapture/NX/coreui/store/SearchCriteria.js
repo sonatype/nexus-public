@@ -21,7 +21,7 @@ Ext.define('NX.coreui.store.SearchCriteria', {
   extend: 'Ext.data.Store',
   model: 'NX.coreui.model.SearchCriteria',
   requires: [
-    'NX.I18n',
+    'NX.I18n'
   ],
 
   autoLoad: true,

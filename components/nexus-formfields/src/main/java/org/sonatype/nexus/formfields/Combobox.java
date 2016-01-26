@@ -13,7 +13,7 @@
 package org.sonatype.nexus.formfields;
 
 /**
- * Combo box {@link FormField} support.
+ * Combo-box {@link FormField} support.
  *
  * @since 2.7
  */

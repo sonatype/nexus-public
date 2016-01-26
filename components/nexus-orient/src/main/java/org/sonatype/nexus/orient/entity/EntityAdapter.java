@@ -89,7 +89,7 @@ public abstract class EntityAdapter<T extends Entity>
   // Schema
   //
 
-  public void register(final ODatabaseDocumentTx db, @Nullable final Runnable initalizer) {
+  public void register(final ODatabaseDocumentTx db, @Nullable final Runnable initializer) {
     checkNotNull(db);
 
     OSchema schema = db.getMetadata().getSchema();
@@ -104,9 +104,9 @@ public abstract class EntityAdapter<T extends Entity>
           type.getIndexes()
       );
 
-      if (initalizer != null) {
-        log.debug("Running initializer: {}", initalizer);
-        initalizer.run();
+      if (initializer != null) {
+        log.debug("Running initializer: {}", initializer);
+        initializer.run();
       }
     }
     this.schemaType = type;
@@ -144,7 +144,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Browse all documents.
    */
-  protected Iterable<ODocument> browseDocuments(final ODatabaseDocumentTx db) {
+  public Iterable<ODocument> browseDocuments(final ODatabaseDocumentTx db) {
     checkNotNull(db);
     return db.browseClass(typeName);
   }
@@ -152,7 +152,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Read entity from document.
    */
-  protected T readEntity(final ODocument document) {
+  public T readEntity(final ODocument document) {
     checkNotNull(document);
 
     T entity = newEntity();
@@ -170,7 +170,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Write document from entity.
    */
-  protected ODocument writeEntity(final ODocument document, final T entity) {
+  public ODocument writeEntity(final ODocument document, final T entity) {
     checkNotNull(document);
     checkNotNull(entity);
 
@@ -190,7 +190,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Edit entity.
    */
-  protected ODocument editEntity(final ODatabaseDocumentTx db, final T entity) {
+  public ODocument editEntity(final ODatabaseDocumentTx db, final T entity) {
     checkNotNull(db);
     checkNotNull(entity);
 
@@ -204,7 +204,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Add new entity.
    */
-  protected ODocument addEntity(final ODatabaseDocumentTx db, final T entity) {
+  public ODocument addEntity(final ODatabaseDocumentTx db, final T entity) {
     checkNotNull(db);
     checkNotNull(entity);
 
@@ -218,7 +218,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Delete an entity.
    */
-  protected void deleteEntity(final ODatabaseDocumentTx db, final T entity) {
+  public void deleteEntity(final ODatabaseDocumentTx db, final T entity) {
     checkNotNull(db);
     checkNotNull(entity);
 
@@ -244,7 +244,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Return the document for given {@link EntityId}.
    */
-  protected ODocument document(final ODatabaseDocumentTx db, final EntityId id) {
+  public ODocument document(final ODatabaseDocumentTx db, final EntityId id) {
     ORID rid;
     if (id instanceof AttachedEntityId) {
       rid = ((AttachedEntityId)id).getIdentity();

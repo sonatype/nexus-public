@@ -64,7 +64,8 @@ Ext.define('NX.view.dev.styles.Modals', {
               itemId: 'username',
               emptyText: NX.I18n.get('SignIn_Username_Empty'),
               allowBlank: false,
-              validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+              // allow cancel to be clicked w/o validating this to be non-blank
+              validateOnBlur: false
             },
             {
               name: 'password',
@@ -72,7 +73,8 @@ Ext.define('NX.view.dev.styles.Modals', {
               inputType: 'password',
               emptyText: NX.I18n.get('SignIn_Password_Empty'),
               allowBlank: false,
-              validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+              // allow cancel to be clicked w/o validating this to be non-blank
+              validateOnBlur: false
             },
             {
               xtype: 'checkbox',

@@ -31,7 +31,7 @@ Ext.define('NX.util.Url', {
    * @readonly
    */
   baseUrl: NX.app.baseUrl,
-  
+
   /**
    * @public
    */

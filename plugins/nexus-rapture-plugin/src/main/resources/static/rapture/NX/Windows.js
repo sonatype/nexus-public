@@ -38,7 +38,7 @@ Ext.define('NX.Windows', {
 
     // apply default window specs if omitted, helps keep windows user-controllable on most browsers
     if (specs === undefined) {
-      specs = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes'
+      specs = 'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes';
     }
 
     //<if debug>

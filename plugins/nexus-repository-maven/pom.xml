@@ -66,6 +66,16 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.maven.indexer</groupId>
+      <artifactId>indexer-reader</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.archetype</groupId>
+      <artifactId>archetype-catalog</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
       <scope>test</scope>

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.blobstore;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -27,10 +25,9 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.blobstore.file.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -53,9 +50,6 @@ public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
     implements BlobStoreManager
 {
-  private static final String BASEDIR = "blobs";
-
-  private final Path basedir;
 
   private final Map<String, BlobStore> stores = Maps.newHashMap();
 
@@ -63,30 +57,27 @@ public class BlobStoreManagerImpl
 
   private final Map<String, Provider<BlobStore>> blobstorePrototypes;
 
+  private final PeriodicJobService jobService;
+
   @Inject
-  public BlobStoreManagerImpl(final ApplicationDirectories directories, final BlobStoreConfigurationStore store,
+  public BlobStoreManagerImpl(final BlobStoreConfigurationStore store,
+                              final PeriodicJobService jobService,
                               Map<String, Provider<BlobStore>> blobstorePrototypes)
   {
-    checkNotNull(directories);
-    this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
-  }
-
-  @ManagedAttribute
-  public File getBasedir() {
-    return basedir.toFile();
+    this.jobService = checkNotNull(jobService);
   }
 
   @Override
   protected void doStart() throws Exception {
+    jobService.start();
+
     store.start();
     List<BlobStoreConfiguration> configurations = store.list();
     if (configurations.isEmpty()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
-      store.create(FileBlobStore.configure(
-          DEFAULT_BLOBSTORE_NAME, basedir.toAbsolutePath().resolve(DEFAULT_BLOBSTORE_NAME).toString()
-      ));
+      store.create(FileBlobStore.configure(DEFAULT_BLOBSTORE_NAME, DEFAULT_BLOBSTORE_NAME));
       configurations = store.list();
     }
 
@@ -124,6 +115,8 @@ public class BlobStoreManagerImpl
     }
 
     stores.clear();
+
+    jobService.stop();
   }
 
   @Override
@@ -139,13 +132,13 @@ public class BlobStoreManagerImpl
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
 
-    store.create(configuration);
+    BlobStore blobStore = newBlobStore(configuration);
 
-    BlobStore blobStore;
     try {
-      blobStore = newBlobStore(configuration);
-    } catch (Exception e) {
-      store.delete(configuration);
+      store.create(configuration);
+    }
+    catch (Exception e) {
+      blobStore.remove();
       throw e;
     }
 

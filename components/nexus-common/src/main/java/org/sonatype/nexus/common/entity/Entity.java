@@ -31,7 +31,7 @@ public abstract class Entity
     return metadata;
   }
 
-  public void setEntityMetadata(final @Nullable EntityMetadata metadata) {
+  public void setEntityMetadata(@Nullable final EntityMetadata metadata) {
     this.metadata = metadata;
   }
 }

@@ -24,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * A condition that is satisfied when a repository exists.
  *
- * @since capabilities 2.0
+ * @since 3.0
  */
 public class RepositoryExistsCondition
     extends RepositoryConditionSupport

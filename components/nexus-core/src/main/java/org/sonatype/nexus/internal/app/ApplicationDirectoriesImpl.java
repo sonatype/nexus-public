@@ -21,7 +21,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirSupport;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.base.Throwables;
 
@@ -45,19 +45,14 @@ public class ApplicationDirectoriesImpl
   private final File tempDir;
 
   @Inject
-  public ApplicationDirectoriesImpl(final @Named("${karaf.base}") File installDir,
-                                    final @Named("${karaf.data}") File workDir)
+  public ApplicationDirectoriesImpl(@Named("${karaf.base}") final File installDir,
+                                    @Named("${karaf.data}") final File workDir)
   {
     this.installDir = resolve(installDir, false);
     log.debug("Install dir: {}", this.installDir);
 
     this.workDir = resolve(workDir, true);
     log.debug("Work dir: {}", this.workDir);
-
-    // TODO: May want to consider having the application tmp dir as a well known sub-directory under java.io.tmpdir
-    // TODO: similar to how jetty does this with "jetty-<addr>-<port>-<context>".  If we normalize on a nexus
-    // TODO: instance/node identifiers then this could be "nexus-<node-id>".  This however would still be
-    // TODO: prefixed in the java.io.tmpdir location
 
     // Resolve the tmp dir from system properties.
     String tmplocation = System.getProperty("java.io.tmpdir", "tmp");
@@ -100,7 +95,7 @@ public class ApplicationDirectoriesImpl
     }
 
     try {
-      DirSupport.mkdir(dir.toPath());
+      DirectoryHelper.mkdir(dir.toPath());
       log.debug("Created directory: {}", dir);
     }
     catch (Exception e) {

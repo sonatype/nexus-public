@@ -20,7 +20,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 import com.sonatype.nexus.ssl.plugin.PemCertificate
-import com.sonatype.nexus.ssl.plugin.TrustStore
+import org.sonatype.nexus.ssl.TrustStore
 import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever
 
 import org.sonatype.nexus.extdirect.DirectComponent

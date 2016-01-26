@@ -24,9 +24,9 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
     'NX.I18n',
     'NX.coreui.store.RepositoryReference'
   ],
-  
+
   /**
-   * @cfg String 
+   * @cfg String
    * Set the format to narrow the format of groups available to choose from.
    */
   format: undefined,
@@ -34,26 +34,31 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
   /**
    * @override
    */
-  initComponent: function() {
+  initComponent: function () {
     var me = this;
-    
-    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', { remote: true });
+
+    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true});
     me.repositoryStore.filter([
-      { property: 'format', value: me.format }
+      {property: 'format', value: me.format}
     ]);
-    me.repositoryStore.load(function(records, operation, success) {
+    me.repositoryStore.load(function (records, operation, success) {
       //TODO - KR hackity hack, but it appears that the store loading somehow unsets values?
       var form = me.up('form');
       if (form) {
         var record = form.getRecord();
         if (record) {
           me.repositoryStore.filter([
-            { property: 'format', value: me.format },
-            { filterFn: function(item) { return item.get('name') != record.get('name'); }}
+            {property: 'format', value: me.format},
+            {
+              filterFn: function (item) {
+                return item.get('name') !== record.get('name');
+              }
+            }
           ]);
           var memberNames = record.get('attributes').group.memberNames;
           form.down('#groupMemberNames').setValue(memberNames);
-          form.down('#groupMemberNames').resetOriginalValue();   //clears isDirty state after setting the value
+          // clears isDirty state after setting the value
+          form.down('#groupMemberNames').resetOriginalValue();
         }
       }
     });

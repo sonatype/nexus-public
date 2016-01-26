@@ -121,6 +121,10 @@ class RoleComponent
   @RequiresPermissions('nexus:roles:create')
   @Validate(groups = [Create.class, Default.class])
   RoleXO create(@NotNull @Valid final RoleXO roleXO) {
+    // HACK: Temporary validation for external role IDs to support editable text entry in combo box (LDAP only)
+    if (roleXO.source == 'LDAP') {
+      securitySystem.getAuthorizationManager(roleXO.source).getRole(roleXO.id)
+    }
     return convert(securitySystem.getAuthorizationManager(DEFAULT_SOURCE).addRole(
         new Role(
             roleId: roleXO.id,

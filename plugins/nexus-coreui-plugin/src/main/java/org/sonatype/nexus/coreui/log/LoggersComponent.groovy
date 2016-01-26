@@ -31,6 +31,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
+import static com.google.common.base.Preconditions.checkArgument
+
 /**
  * Loggers {@link DirectComponent}.
  *
@@ -91,7 +93,7 @@ extends DirectComponentSupport
   @RequiresPermissions('nexus:logging:update')
   @Validate
   void remove(final @NotEmpty String name) {
-    assert name != ROOT, "${ROOT} logger cannot be removed"
+    checkArgument(name != ROOT, "$ROOT logger cannot be removed")
     logManager.unsetLoggerLevel(name)
   }
 

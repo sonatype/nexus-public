@@ -12,7 +12,7 @@
  *###
 <html>
 <head>
-  <title>$errorCode - Sonatype Nexus</title>
+  <title>$errorCode - Nexus Repository Manager</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
   <link rel="icon" type="image/png" href="$nexusUrl/favicon.png$?$urlSuffix">
@@ -26,7 +26,7 @@
 <div class="nexus-header">
   <a href="$nexusUrl">
     <img src="$nexusUrl/static/images/nexus.png?$urlSuffix"/>
-    <span class="name">Sonatype Nexus</span>
+    <span class="name">Nexus Repository Manager</span>
   </a>
   <span class="version">$nexusEdition $nexusVersion</span>
 </div>

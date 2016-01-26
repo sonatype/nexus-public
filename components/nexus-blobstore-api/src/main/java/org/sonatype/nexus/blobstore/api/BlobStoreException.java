@@ -22,17 +22,17 @@ public class BlobStoreException
 {
   private final BlobId blobId;
 
-  public BlobStoreException(final String message, final @Nullable BlobId blobId) {
+  public BlobStoreException(final String message, @Nullable final BlobId blobId) {
     super(message);
     this.blobId = blobId;
   }
 
-  public BlobStoreException(final String message, final Throwable cause, final @Nullable BlobId blobId) {
+  public BlobStoreException(final String message, final Throwable cause, @Nullable final BlobId blobId) {
     super(message, cause);
     this.blobId = blobId;
   }
 
-  public BlobStoreException(final Throwable cause, final @Nullable BlobId blobId) {
+  public BlobStoreException(final Throwable cause, @Nullable final BlobId blobId) {
     super(cause);
     this.blobId = blobId;
   }

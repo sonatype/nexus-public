@@ -29,8 +29,8 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>karaf-nexus-branding</module>
-    <module>nexus-boot-feature</module>
+    <module>nexus-system-feature</module>
+    <module>nexus-jetty-feature</module>
     <module>nexus-base-edition</module>
     <module>nexus-core-feature</module>
     <module>nexus-base-template</module>

@@ -15,6 +15,9 @@ package org.sonatype.nexus.common.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Wraps an {@link InputStream} and limits the content read.
+ */
 public class LimitedInputStream
     extends InputStream
 {
@@ -28,7 +31,7 @@ public class LimitedInputStream
 
   private long readAlready = 0;
 
-  public LimitedInputStream(InputStream is, long from, long count) throws IOException {
+  public LimitedInputStream(final InputStream is, final long from, final long count) throws IOException {
     this.is = is;
     this.from = from;
     this.count = count;

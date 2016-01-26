@@ -19,7 +19,9 @@ package org.sonatype.nexus.repository.security;
  */
 public class CrudActions
 {
-  private CrudActions() {}
+  private CrudActions() {
+    // empty
+  }
 
   public static final String CREATE = "create";
 

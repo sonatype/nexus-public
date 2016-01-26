@@ -24,14 +24,23 @@ Ext.define('NX.coreui.view.system.Bundles', {
     'NX.I18n'
   ],
 
-  iconName: 'bundle-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'bundle-default',
 
-  masters: [
-    { xtype: 'nx-coreui-system-bundlelist' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-system-bundlelist' }
+      ],
 
-  tabs: {
-    xtype: 'nx-info-panel',
-    title: NX.I18n.get('System_Bundles_Details_Tab')
+      tabs: {
+        xtype: 'nx-info-panel',
+        title: NX.I18n.get('System_Bundles_Details_Tab')
+      }
+    });
+
+    this.callParent();
   }
 });

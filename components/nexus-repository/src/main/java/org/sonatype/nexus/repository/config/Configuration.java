@@ -74,7 +74,7 @@ public class Configuration
     return attributes;
   }
 
-  public void setAttributes(final @Nullable Map<String, Map<String, Object>> attributes) {
+  public void setAttributes(@Nullable final Map<String, Map<String, Object>> attributes) {
     this.attributes = attributes;
   }
 

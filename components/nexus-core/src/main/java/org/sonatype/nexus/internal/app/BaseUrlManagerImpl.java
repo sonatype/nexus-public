@@ -103,8 +103,7 @@ public class BaseUrlManagerImpl
       StringBuffer url = request.getRequestURL();
       String uri = request.getRequestURI();
       String ctx = request.getContextPath();
-      String base = url.substring(0, url.length() - uri.length() + ctx.length());
-      return base;
+      return url.substring(0, url.length() - uri.length() + ctx.length());
     }
 
     // no request in context, non-forced base-url

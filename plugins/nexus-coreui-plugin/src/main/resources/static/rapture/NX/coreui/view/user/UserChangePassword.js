@@ -24,10 +24,6 @@ Ext.define('NX.coreui.view.user.UserChangePassword', {
     'NX.Conditions',
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('User_UserChangePassword_Title'),
-  defaultFocus: 'password',
 
   /**
    * @cfg userId to change password for
@@ -40,7 +36,11 @@ Ext.define('NX.coreui.view.user.UserChangePassword', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.SMALL_MODAL);
+    me.ui = 'nx-inset';
+    me.title = NX.I18n.get('User_UserChangePassword_Title');
+    me.defaultFocus = 'password';
+
+    me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
     me.items = {
       xtype: 'form',
@@ -48,7 +48,8 @@ Ext.define('NX.coreui.view.user.UserChangePassword', {
       editableMarker: NX.I18n.get('User_UserChangePassword_NoPermission_Error'),
       defaults: {
         anchor: '100%',
-        validateOnBlur: false // allow cancel to be clicked w/o validating field to be non-blank
+        // allow cancel to be clicked w/o validating field to be non-blank
+        validateOnBlur: false
       },
       items: [
         {

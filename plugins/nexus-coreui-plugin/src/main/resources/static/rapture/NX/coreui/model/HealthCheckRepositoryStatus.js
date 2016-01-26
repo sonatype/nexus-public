@@ -20,7 +20,7 @@
 Ext.define('NX.coreui.model.HealthCheckRepositoryStatus', {
   extend: 'Ext.data.Model',
   fields: [
-    {name:'repositoryId', type: 'string', sortType: 'asUCText'},
+    {name:'repositoryName', type: 'string', sortType: 'asUCText'},
     {name:'enabled', type: 'boolean'},
     {name:'eulaAccepted', type: 'boolean'},
     {name:'analyzing', type: 'boolean'},

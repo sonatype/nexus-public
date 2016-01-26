@@ -31,12 +31,16 @@ import static org.sonatype.nexus.repository.purge.PurgeUnusedTask.REPOSITORY_NAM
 @Named
 @Singleton
 public class PurgeUnusedTaskDescriptor
-    extends TaskDescriptorSupport<PurgeUnusedTask>
+    extends TaskDescriptorSupport
 {
+  public static final String TYPE_ID = "repository.purge-unused";
 
   public PurgeUnusedTaskDescriptor() {
-    super(PurgeUnusedTask.class,
-        "Purge Unused Components and Assets",
+    super(TYPE_ID,
+        PurgeUnusedTask.class,
+        "Purge unused components and assets",
+        VISIBLE,
+        EXPOSED,
         new RepositoryCombobox(
             REPOSITORY_NAME_FIELD_ID,
             "Repository",

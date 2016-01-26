@@ -37,7 +37,7 @@ public abstract class CapabilitySupport<ConfigT>
     extends ComponentSupport
     implements Capability
 {
-  private static interface Messages
+  private interface Messages
       extends MessageBundle
   {
     @DefaultMessage("FAILED: %s")

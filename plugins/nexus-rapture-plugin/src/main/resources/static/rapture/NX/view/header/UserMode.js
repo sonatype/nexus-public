@@ -23,21 +23,31 @@ Ext.define('NX.view.header.UserMode', {
   requires: [
     'NX.I18n'
   ],
-  ui: 'nx-header',
-  cls: 'nx-modebutton',
-  scale: 'medium',
-  height: 39,
 
   /**
-   * @cfg mode Mode name
+   * @override
    */
-  mode: 'user',
-  toggleGroup: 'mode',
-  allowDepress: false,
+  initComponent: function() {
+    Ext.apply(this, {
+      ui: 'nx-header',
+      cls: 'nx-modebutton',
+      scale: 'medium',
+      height: 39,
 
-  title: NX.I18n.get('Header_UserMode_Title'),
-  glyph: 'xf007@FontAwesome', // fa-user
+      /**
+       * @cfg mode Mode name
+       */
+      mode: 'user',
+      toggleGroup: 'mode',
+      allowDepress: false,
 
-  autoHide: false,
-  collapseMenu: false
+      title: NX.I18n.get('Header_UserMode_Title'),
+      glyph: 'xf007@FontAwesome', // fa-user
+
+      autoHide: false,
+      collapseMenu: false
+    });
+
+    this.callParent();
+  }
 });

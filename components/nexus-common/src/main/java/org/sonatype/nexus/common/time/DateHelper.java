@@ -25,6 +25,10 @@ import org.joda.time.DateTime;
  */
 public class DateHelper
 {
+  private DateHelper() {
+    // empty
+  }
+
   /**
    * Copy given date.
    */

@@ -30,17 +30,6 @@ Ext.define('NX.coreui.controller.SearchRaw', {
     var me = this,
         search = me.getController('NX.coreui.controller.Search');
 
-    search.registerCriteria([
-      {
-        id: 'attributes.raw.path.tree',
-        group: NX.I18n.get('SearchRaw_Group'),
-        config: {
-          fieldLabel: NX.I18n.get('SearchRaw_Path_FieldLabel'),
-          width: 300
-        }
-      }
-    ], me);
-
     search.registerFilter({
       id: 'raw',
       name: 'Raw',
@@ -49,7 +38,7 @@ Ext.define('NX.coreui.controller.SearchRaw', {
       readOnly: true,
       criterias: [
         { id: 'format', value: 'raw', hidden: true },
-        { id: 'attributes.raw.path.tree' }
+        { id: 'name.raw' }
       ]
     }, me);
   }

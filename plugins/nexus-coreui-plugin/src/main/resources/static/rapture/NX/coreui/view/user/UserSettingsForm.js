@@ -28,14 +28,15 @@ Ext.define('NX.coreui.view.user.UserSettingsForm', {
   api: {
     submit: 'NX.direct.coreui_User.update'
   },
-  settingsFormSuccessMessage: function(data) {
-    return NX.I18n.get('User_UserSettingsForm_Update_Success') + data['userId'];
-  },
-
-  editableMarker: NX.I18n.get('User_UserSettingsForm_Update_Error'),
 
   initComponent: function() {
     var me = this;
+
+    me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
+      return NX.I18n.get('User_UserSettingsForm_Update_Success') + data['userId'];
+    };
+
+    me.editableMarker = NX.I18n.get('User_UserSettingsForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.and(
         NX.Conditions.isPermitted('nexus:users:update'),

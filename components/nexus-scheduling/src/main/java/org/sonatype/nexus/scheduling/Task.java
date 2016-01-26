@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.scheduling;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * The main interface for all Tasks used in Nexus. All implementations should keep their configuration (if any) in the
- * corresponding {@link TaskConfiguration} object, due to persistence implications. Or, the task might source it's
- * configuration from other (injected) component.
+ * The main interface for all Tasks used in Nexus.
+ *
+ * All implementations should keep their configuration (if any) in the corresponding {@link TaskConfiguration} object,
+ * due to persistence implications.  Or, the task might source it's configuration from other (injected) component.
+ * Implementations <em>must not be marked as singletons</em>, container must provide new instance for each execution.
  *
  * @since 3.0
  */
@@ -26,8 +27,9 @@ public interface Task
     extends Callable<Object>
 {
   /**
-   * Returns the copy of the task configuration, modifying this map has no effect on effective configuration of the
-   * task..
+   * Returns the copy of the task configuration.
+   *
+   * Modifying this map has no effect on effective configuration of the task.
    */
   TaskConfiguration taskConfiguration();
 
@@ -36,33 +38,25 @@ public interface Task
    *
    * @throws IllegalArgumentException if passed in configuration is invalid.
    */
-  void configure(TaskConfiguration taskConfiguration) throws IllegalArgumentException;
+  void configure(TaskConfiguration taskConfiguration);
 
   /**
-   * Returns a unique ID of the task instance. Shorthand method for {@link TaskConfiguration#getId()}
+   * Returns a unique ID of the task instance.
+   *
+   * Shorthand method for {@link TaskConfiguration#getId()}.
    */
   String getId();
 
   /**
-   * Returns a descriptive name of the task instance, usually set by user. Example: "Empty
-   * trash". It is modifiable by user/caller of this code, like over UI or REST.
+   * Returns a descriptive name of the task instance, usually set by user.
    */
   String getName();
 
   /**
-   * Returns short generated message of current task's instance work. This message is based on task configuration and
-   * same typed tasks might emit different messages depending on configuration. Example: "Emptying trash of
-   * repository Foo".
+   * Returns short generated message of current task's instance work.
+   *
+   * This message is based on task configuration and same typed tasks might emit different messages depending
+   * on configuration.
    */
   String getMessage();
-
-
-  /**
-   * Method should return list of tasks that block this task instance from running.
-   * This method might be invoked multiple times during task instance lifetime but only before it's main execute
-   * method. Once the method returns empty list (is not blocked by any tasks), the task execution will continue and
-   * this method will not be invoked anymore.
-   * // TODO: this should be not exposed via Task iface, this is internal to taskSupport?
-   */
-  List<TaskInfo> isBlockedBy(List<TaskInfo> runningTasks);
 }

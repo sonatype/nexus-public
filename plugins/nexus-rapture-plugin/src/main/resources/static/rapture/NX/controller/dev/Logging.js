@@ -83,7 +83,7 @@ Ext.define('NX.controller.dev.Logging', {
             sink('store').setMaxSize(field.getValue());
           },
           keypress: function (field, event) {
-            if (event.getKey() == event.ENTER) {
+            if (event.getKey() === event.ENTER) {
               sink('store').setMaxSize(field.getValue());
             }
           }

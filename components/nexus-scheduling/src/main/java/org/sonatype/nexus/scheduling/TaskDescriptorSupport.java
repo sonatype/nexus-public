@@ -16,26 +16,33 @@ import java.util.List;
 
 import org.sonatype.nexus.formfields.FormField;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
- * Support class for {@link TaskDescriptor}s.
+ * Support for {@link TaskDescriptor} implementations.
  *
  * @since 3.0
  */
-public abstract class TaskDescriptorSupport<T extends Task>
-    implements TaskDescriptor<T>
+public abstract class TaskDescriptorSupport
+    implements TaskDescriptor
 {
+  // Constants to help document configuration, since these are final and we have no fluent builder ATM
+
+  protected static final boolean VISIBLE = true;
+
+  protected static final boolean NOT_VISIBLE = false;
+
+  protected static final boolean EXPOSED = true;
+
+  protected static final boolean NOT_EXPOSED = false;
+
   private final String id;
 
   private final String name;
 
-  private final Class<T> type;
+  private final Class<? extends Task> type;
 
   private final boolean visible;
 
@@ -43,64 +50,22 @@ public abstract class TaskDescriptorSupport<T extends Task>
 
   private final List<FormField> formFields;
 
-  private final Predicate<TaskInfo> predicate;
-
-  /**
-   * Simplified constructor that will create visible and exposed descriptor without any formField.
-   */
-  public TaskDescriptorSupport(final Class<T> type, final String name)
-  {
-    this(type, name, true, true);
-  }
-
-  /**
-   * Simplified constructor that will create visible and exposed descriptor with formFields.
-   */
-  public TaskDescriptorSupport(final Class<T> type, final String name, final FormField... formFields)
-  {
-    this(type, name, true, true, formFields);
-  }
-
-  /**
-   * Constructor with all bells and whistles making task class' "simple class name" as type ID. Basically this
-   * is somewhat backward compatible with old scheduler, where @Named was used with usually simple class name.
-   */
-  public TaskDescriptorSupport(final Class<T> type,
-                               final String name,
-                               final boolean visible,
-                               final boolean exposed,
-                               final FormField... formFields)
-  {
-    this(type.getSimpleName(), type, name, visible, exposed, formFields);
-  }
-
-  /**
-   * Constructor with all bells and whistles.
-   */
   public TaskDescriptorSupport(final String id,
-                               final Class<T> type,
+                               final Class<? extends Task> type,
                                final String name,
                                final boolean visible,
                                final boolean exposed,
                                final FormField... formFields)
   {
-    checkNotNull(id);
-    checkNotNull(type);
-    checkNotNull(name);
-    checkNotNull(formFields);
-    this.id = id;
-    this.name = name;
-    this.type = type;
+
+    this.id = checkNotNull(id);
+    this.type = checkNotNull(type);
+    this.name = checkNotNull(name);
     this.visible = visible;
     this.exposed = exposed;
+
+    checkNotNull(formFields);
     this.formFields = ImmutableList.copyOf(formFields);
-    this.predicate = new Predicate<TaskInfo>()
-    {
-      @Override
-      public boolean apply(final TaskInfo input) {
-        return id.equals(input.getConfiguration().getTypeId());
-      }
-    };
   }
 
   @Override
@@ -114,12 +79,14 @@ public abstract class TaskDescriptorSupport<T extends Task>
   }
 
   @Override
-  public final Class<T> getType() {
+  public final Class<? extends Task> getType() {
     return type;
   }
 
   @Override
-  public final boolean isVisible() { return visible; }
+  public final boolean isVisible() {
+    return visible;
+  }
 
   @Override
   public final boolean isExposed() {
@@ -127,17 +94,18 @@ public abstract class TaskDescriptorSupport<T extends Task>
   }
 
   @Override
-  public final List<FormField> formFields() {
+  public final List<FormField> getFormFields() {
     return formFields;
   }
 
   @Override
-  public final Predicate<TaskInfo> predicate() {
-    return predicate;
-  }
-
-  @Override
-  public final List<TaskInfo> filter(final List<TaskInfo> tasks) {
-    return newArrayList(Iterables.filter(tasks, predicate()));
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+        "id='" + id + '\'' +
+        ", name='" + name + '\'' +
+        ", type=" + type +
+        ", visible=" + visible +
+        ", exposed=" + exposed +
+        '}';
   }
 }

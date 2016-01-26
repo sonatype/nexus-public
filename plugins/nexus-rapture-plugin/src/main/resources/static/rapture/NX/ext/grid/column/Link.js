@@ -23,7 +23,7 @@ Ext.define('NX.ext.grid.column.Link', {
   requires: [
     'NX.util.Url'
   ],
-  
+
   stateId: 'url',
 
   /**

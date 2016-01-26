@@ -28,9 +28,14 @@ import org.eclipse.sisu.EagerSingleton;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A simple "debug" helper component, that dumps out events to log. Usable for debugging or problem solving, not for
- * production use! It will register itself to listen for events only when enabled, otherwise it will not spend any CPU
- * cycles being dormant. It can be enabled via System property or JMX.
+ * A simple "debug" helper component, that dumps out events to log.
+ *
+ * Usable for debugging or problem solving, not for production use!
+ *
+ * It will register itself to listen for events only when enabled,
+ * otherwise it will not spend any CPU cycles being dormant.
+ *
+ * It can be enabled via System property or JMX.
  *
  * @author cstamas
  * @since 2.1
@@ -41,7 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DebugEventInspector
     extends ComponentSupport
 {
-  private final boolean ENABLED_DEFAULT = SystemPropertiesHelper.getBoolean(
+  private static final boolean ENABLED_DEFAULT = SystemPropertiesHelper.getBoolean(
       DebugEventInspector.class.getName() + ".enabled", false);
 
   private volatile boolean enabled;

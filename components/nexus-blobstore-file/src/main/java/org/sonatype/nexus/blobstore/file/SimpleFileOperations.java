@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.file;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,17 +25,17 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.file.internal.MetricsInputStream;
-import org.sonatype.nexus.common.io.DirSupport;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.io.ByteStreams;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+// TODO: Move this and MapdbBlobMetadataStore back into .internal, with a parameterizable provider
+
 /**
  * A simple {@code java.nio} implementation of {@link FileOperations}.
- *
- * TODO: Move this and MapdbBlobMetadataStore back into .internal, with a parameterizable provider
  *
  * @since 3.0
  */
@@ -50,7 +52,7 @@ public class SimpleFileOperations
     // Ensure path exists for new blob
     Path dir = path.getParent();
     checkNotNull(dir, "Null parent for path: %s", path);
-    DirSupport.mkdir(dir);
+    DirectoryHelper.mkdir(dir);
 
     final MetricsInputStream input = new MetricsInputStream(data);
     try {
@@ -75,7 +77,7 @@ public class SimpleFileOperations
   @Override
   public InputStream openInputStream(final Path path) throws IOException {
     checkNotNull(path);
-    return Files.newInputStream(path, StandardOpenOption.READ);
+    return new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
   }
 
   @Override
@@ -97,7 +99,7 @@ public class SimpleFileOperations
    */
   @Override
   public void deleteDirectory(final Path directory) throws IOException {
-    DirSupport.emptyIfExists(directory);
+    DirectoryHelper.emptyIfExists(directory);
     Files.deleteIfExists(directory);
   }
 }

@@ -60,7 +60,7 @@ Ext.define('NX.view.dev.styles.Tabs', {
           me.label('ui: ' + name + '; plain: true'),
           Ext.apply(proto, { plain: true })
         ]
-      }
+      };
     }
 
     me.items = [

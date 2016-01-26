@@ -19,7 +19,9 @@ package org.sonatype.nexus.repository.http;
  */
 public class HttpStatus
 {
-  private HttpStatus() {}
+  private HttpStatus() {
+    // empty
+  }
 
   public static final int CONTINUE = 100;
 

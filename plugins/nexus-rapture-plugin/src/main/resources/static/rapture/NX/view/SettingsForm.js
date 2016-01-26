@@ -31,7 +31,7 @@ Ext.define('NX.view.SettingsForm', {
    *
    * @private
    */
-  constructor : function(config) {
+  constructor: function (config) {
     config = config || {};
     config.trackResetOnLoad = true;
     this.callParent([config]);
@@ -92,14 +92,14 @@ Ext.define('NX.view.SettingsForm', {
   buttonAlign: 'left',
 
   buttons: [
-    { 
+    {
       text: NX.I18n.get('SettingsForm_Save_Button'),
       action: 'save',
-      ui: 'nx-primary', 
-      bindToEnter: false 
+      ui: 'nx-primary',
+      bindToEnter: false
     },
-    { 
-      text: NX.I18n.get('SettingsForm_Discard_Button'), 
+    {
+      text: NX.I18n.get('SettingsForm_Discard_Button'),
       action: 'discard'
     }
   ],

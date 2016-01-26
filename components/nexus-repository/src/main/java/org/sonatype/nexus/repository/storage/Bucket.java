@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Entity;
+
+import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * A logical container of components and assets.
@@ -29,6 +33,8 @@ public class Bucket
 
   private String repositoryName;
 
+  private NestedAttributesMap attributes;
+
   /**
    * Gets the repository name.
    */
@@ -41,5 +47,21 @@ public class Bucket
    */
   public void setRepositoryName(final String repositoryName) {
     this.repositoryName = repositoryName;
+  }
+
+  /**
+   * Gets the "attributes" property of this node, a map of maps that is possibly empty, but never {@code null}.
+   */
+  public NestedAttributesMap attributes() {
+    checkState(attributes != null, "Missing attributes: %s", P_ATTRIBUTES);
+    return attributes;
+  }
+
+  /**
+   * Sets the attributes.
+   */
+  Bucket attributes(final NestedAttributesMap attributes) {
+    this.attributes = attributes;
+    return this;
   }
 }

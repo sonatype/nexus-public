@@ -47,7 +47,7 @@ public class NexusContextModule
 {
   private static final String ALLOW_SERVICES = "org.apache.karaf.*,org.sonatype.nexus.*," + defaultAllow();
 
-  private static final String IGNORE_SERVICES = "org.apache.karaf.shell.*," + defaultIgnore();
+  private static final String IGNORE_SERVICES = "org.apache.karaf.shell.commands.*," + defaultIgnore();
 
   private final BundleContext bundleContext;
 
@@ -65,7 +65,6 @@ public class NexusContextModule
 
   @Override
   protected void configure() {
-    binder().requireExplicitBindings();
 
     // key components we expect to be able to find after booting nexus
     requireBinding(Key.get(Lifecycle.class, Names.named("NxApplication")));

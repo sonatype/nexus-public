@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.capability;
 
+/**
+ * A capability is a stateful representation of configuration and lifecycle exposed for generalized management.
+ */
 public interface Capability
 {
-
   /**
    * Initializes the capability after it has been created by factory.
    *
@@ -45,8 +47,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be create
    */
-  void onCreate()
-      throws Exception;
+  void onCreate()  throws Exception;
 
   /**
    * Callback when a capability configuration is loaded from persisted store (configuration file).
@@ -57,8 +58,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be loaded
    */
-  void onLoad()
-      throws Exception;
+  void onLoad() throws Exception;
 
   /**
    * Callback when a capability configuration is updated.
@@ -68,8 +68,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be updated
    */
-  void onUpdate()
-      throws Exception;
+  void onUpdate() throws Exception;
 
   /**
    * Callback when a capability is removed.
@@ -80,8 +79,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be removed
    */
-  void onRemove()
-      throws Exception;
+  void onRemove() throws Exception;
 
   /**
    * Callback when capability is activated. Activation is triggered on create/load (if capability is not disabled),
@@ -104,8 +102,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be passivated
    */
-  void onPassivate()
-      throws Exception;
+  void onPassivate() throws Exception;
 
   /**
    * Returns the condition that should be satisfied in order for this capability to be active.
@@ -128,5 +125,4 @@ public interface Capability
    * @return activation condition. If null, it considers that condition is always valid.
    */
   Condition validityCondition();
-
 }

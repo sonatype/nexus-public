@@ -30,7 +30,7 @@ public class CipherRequiredCondition
     extends ConditionSupport
     implements Condition
 {
-  private static interface Messages
+  private interface Messages
       extends MessageBundle
   {
     @DefaultMessage("JVM supports '%s' cipher")
@@ -87,6 +87,7 @@ public class CipherRequiredCondition
       setSatisfied(true);
     }
     catch (Exception e) {
+      log.trace("Verify failure", e);
       setSatisfied(false);
     }
   }

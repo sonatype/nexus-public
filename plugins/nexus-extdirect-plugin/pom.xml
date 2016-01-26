@@ -64,8 +64,7 @@
             <Private-Package/>
             <_exportcontents>
               org.sonatype.nexus.extdirect.*,
-              com.softwarementors.extjs.*,
-              com.google.gson
+              com.softwarementors.extjs.*
             </_exportcontents>
             <Import-Package>
               com.yahoo.*|org.mozilla.*;resolution:=optional,*

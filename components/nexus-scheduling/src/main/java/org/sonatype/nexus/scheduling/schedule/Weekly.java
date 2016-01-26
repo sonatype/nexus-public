@@ -14,53 +14,47 @@ package org.sonatype.nexus.scheduling.schedule;
 
 import java.util.Date;
 import java.util.Set;
-
-import com.google.common.base.Function;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.function.Function;
 
 /**
  * Schedule that repeats on same days of a week repeatedly.
+ *
+ * @see ScheduleFactory#weekly(Date, Set)
  */
 public class Weekly
     extends Schedule
 {
-  public static enum Weekday
+  public static final String TYPE = "weekly";
+
+  /**
+   * Representation of weekday.
+   */
+  public enum Weekday
   {
     SUN, MON, TUE, WED, THU, FRI, SAT;
 
-    public static final Function<Weekday, String> toString = new Function<Weekday, String>()
-    {
-      @Override
-      public String apply(final Weekday input) {
-        return input.name();
-      }
-    };
+    /**
+     * Function to convert {@link Weekday} to strings.
+     */
+    public static final Function<Weekday, String> dayToString = Enum::name;
 
-    public static final Function<String, Weekday> toWeekday = new Function<String, Weekday>()
-    {
-      @Override
-      public Weekday apply(final String input) {
-        return Weekday.valueOf(input);
-      }
-    };
+    /**
+     * Function to convert string to {@link Weekday}.
+     */
+    public static final Function<String, Weekday> stringToDay = Weekday::valueOf;
   }
 
   public Weekly(final Date startAt, final Set<Weekday> daysToRun) {
-    super("weekly");
-    checkNotNull(startAt);
-    checkNotNull(daysToRun);
-    checkArgument(!daysToRun.isEmpty(), "No days of week set to run");
-    properties.put("schedule.startAt", dateToString(startAt));
-    properties.put("schedule.daysToRun", setToCsv(daysToRun, Weekday.toString));
+    super(TYPE);
+    set(SCHEDULE_START_AT, dateToString(startAt));
+    set(SCHEDULE_DAYS_TO_RUN, setToCsv(daysToRun, Weekday.dayToString));
   }
 
   public Date getStartAt() {
-    return stringToDate(properties.get("schedule.startAt"));
+    return stringToDate(get(SCHEDULE_START_AT));
   }
 
   public Set<Weekday> getDaysToRun() {
-    return csvToSet(properties.get("schedule.daysToRun"), Weekday.toWeekday);
+    return csvToSet(get(SCHEDULE_DAYS_TO_RUN), Weekday.stringToDay);
   }
 }

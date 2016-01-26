@@ -35,7 +35,7 @@ Ext.define('NX.view.ChangeOrderWindow', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.MEDIUM_MODAL);
+    me.setWidth(NX.view.ModalDialog.MEDIUM_MODAL);
 
     me.items = {
       xtype: 'form',

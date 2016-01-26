@@ -51,7 +51,7 @@ public abstract class CapabilityConfigurationSupport
    *
    * @see #parseUri(String)
    */
-  protected URI parseUri(final String value, final @Nullable URI defaultValue) {
+  protected URI parseUri(final String value, @Nullable final URI defaultValue) {
     if (isEmpty(value)) {
       return defaultValue;
     }

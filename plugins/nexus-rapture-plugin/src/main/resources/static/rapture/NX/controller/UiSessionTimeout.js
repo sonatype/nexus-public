@@ -31,12 +31,12 @@ Ext.define('NX.controller.UiSessionTimeout', {
   views: [
     'ExpireSession'
   ],
-  
+
   refs: [
     {
       ref: 'expireSessionWindow',
       selector: 'nx-expire-session'
-    }  
+    }
   ],
 
   SECONDS_TO_EXPIRE: 30,
@@ -76,7 +76,7 @@ Ext.define('NX.controller.UiSessionTimeout', {
   onLaunch: function () {
     this.setupTimeout();
   },
-  
+
   /**
    * Reset UI session timeout when uiSettings.sessionTimeout changes.
    *
@@ -105,13 +105,14 @@ Ext.define('NX.controller.UiSessionTimeout', {
         sessionTimeout = user ? uiSettings['sessionTimeout'] : undefined;
 
     me.cancelTimeout();
-    if ((user &&  NX.State.isReceiving()) && sessionTimeout > 0) {
+    if ((user && NX.State.isReceiving()) && sessionTimeout > 0) {
       //<if debug>
       me.logDebug('Session expiration enabled for', sessionTimeout, 'minutes');
       //</if>
 
       me.activityMonitor = Ext.create('Ext.ux.ActivityMonitor', {
-        interval: 1000, // check every second,
+        // check every second
+        interval: 1000,
         maxInactive: ((sessionTimeout * 60) - me.SECONDS_TO_EXPIRE) * 1000,
         isInactive: Ext.bind(me.showExpirationWindow, me)
       });
@@ -123,14 +124,14 @@ Ext.define('NX.controller.UiSessionTimeout', {
    * @private
    */
   cancelTimeout: function () {
-    var me = this, 
+    var me = this,
         expireSessionView = me.getExpireSessionWindow();
-    
+
     // close the window if the session has not yet expired or if the server is disconnected
-    if(expireSessionView  && (!expireSessionView.sessionExpired() || !NX.State.isReceiving())) {
+    if (expireSessionView && (!expireSessionView.sessionExpired() || !NX.State.isReceiving())) {
       expireSessionView.close();
     }
-    
+
     if (me.activityMonitor) {
       me.activityMonitor.stop();
       delete me.activityMonitor;
@@ -154,7 +155,7 @@ Ext.define('NX.controller.UiSessionTimeout', {
    * @private
    */
   showExpirationWindow: function () {
-    NX.Messages.add({text: NX.I18n.get('UiSessionTimeout_Expire_Message'), type: 'warning' });
+    NX.Messages.add({text: NX.I18n.get('UiSessionTimeout_Expire_Message'), type: 'warning'});
     this.getExpireSessionView().create();
   },
 

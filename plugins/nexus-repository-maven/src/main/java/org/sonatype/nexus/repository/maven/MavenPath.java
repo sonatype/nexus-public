@@ -184,7 +184,9 @@ public class MavenPath
 
   public MavenPath(final String path, final Coordinates coordinates)
   {
-    this.path = checkNotNull(path);
+    checkNotNull(path);
+    checkArgument(!path.startsWith("/"), "Path must not start with '/'");
+    this.path = path;
     this.fileName = this.path.substring(path.lastIndexOf('/') + 1);
     HashType ht = null;
     for (HashType v : HashType.values()) {

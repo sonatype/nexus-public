@@ -92,7 +92,8 @@ Ext.define('NX.util.log.StoreSink', {
     NX.Assert.assert(this.store, 'Store not attached');
     //</if>
 
-    var record = this.store.add(event)[0]; // only 1 record, pick off first
+    // only 1 record, pick off first
+    var record = this.store.add(event)[0];
 
     // maybe shrink
     this.shrink();

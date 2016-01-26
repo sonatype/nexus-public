@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.scheduling;
 
+import javax.annotation.Nullable;
+
 /**
  * Checked exception thrown in cases when task is removed by some other party, but the caller is unaware of it.
  *
@@ -20,13 +22,11 @@ package org.sonatype.nexus.scheduling;
 public class TaskRemovedException
     extends Exception
 {
-  public TaskRemovedException(String taskId)
-  {
-    super(String.format("Task '%s' does not exists", taskId));
+  public TaskRemovedException(final String taskId) {
+    this(taskId, null);
   }
 
-  public TaskRemovedException(String taskId, Throwable cause)
-  {
+  public TaskRemovedException(final String taskId, @Nullable  final Throwable cause) {
     super(String.format("Task '%s' does not exists", taskId), cause);
   }
 }

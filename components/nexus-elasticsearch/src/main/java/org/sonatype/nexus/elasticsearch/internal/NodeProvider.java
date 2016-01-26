@@ -63,13 +63,13 @@ public class NodeProvider
   public synchronized Node get() {
     if (node == null) {
       try {
-        Node node = create();
+        Node newNode = create();
 
         // yellow status means that node is up (green will mean that replicas are online but we have only one node)
         log.debug("Waiting for yellow-status");
-        node.client().admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
+        newNode.client().admin().cluster().prepareHealth().setWaitForYellowStatus().execute().actionGet();
 
-        this.node = node;
+        this.node = newNode;
       }
       catch (Exception e) {
         // If we can not acquire an ES node reference, give up

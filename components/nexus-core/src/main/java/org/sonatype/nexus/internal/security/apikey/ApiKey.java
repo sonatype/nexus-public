@@ -19,8 +19,7 @@ import org.sonatype.nexus.common.entity.Entity;
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
- * An Orient-stored object representing the association between a {@link PrincipalCollection} and a Api Key
- * (char[]).
+ * An Orient-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
  *
  * @since 3.0
  */

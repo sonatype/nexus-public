@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.app.NexusStoppingEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.orient.OrientBootstrap;
+import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import org.sonatype.nexus.security.SecuritySystem;
 
 import org.eclipse.sisu.bean.BeanManager;
@@ -55,6 +56,8 @@ public class NxApplication
 
   private final OrientBootstrap orientBootstrap;
 
+  private final SchedulerSPI scheduler;
+
   private final BeanManager beanManager;
 
   @Inject
@@ -62,12 +65,14 @@ public class NxApplication
                        final SecuritySystem securitySystem,
                        final EventManager eventManager,
                        final OrientBootstrap orientBootstrap,
+                       final SchedulerSPI scheduler,
                        final BeanManager beanManager)
   {
     this.eventBus = checkNotNull(eventBus);
     this.securitySystem = checkNotNull(securitySystem);
     this.eventManager = checkNotNull(eventManager);
     this.orientBootstrap = checkNotNull(orientBootstrap);
+    this.scheduler = checkNotNull(scheduler);
     this.beanManager = checkNotNull(beanManager);
   }
 
@@ -82,6 +87,9 @@ public class NxApplication
 
     // start database services manually
     orientBootstrap.start();
+
+    // start scheduler services manually
+    scheduler.start();
 
     eventBus.post(new NexusInitializedEvent(this));
 
@@ -105,7 +113,10 @@ public class NxApplication
 
     securitySystem.stop();
 
-    // must stop database services manually
+    // stop scheduler service manually
+    scheduler.stop();
+
+    // stop database services manually
     orientBootstrap.stop();
 
     // dispose of JSR-250

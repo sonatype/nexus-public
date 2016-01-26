@@ -36,7 +36,6 @@ import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
-import org.sonatype.nexus.security.config.SecurityConfigurationModifier;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationResource;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
@@ -64,8 +63,6 @@ public class SecurityConfigurationManagerImpl
 
   private final SecurityConfigurationCleaner configCleaner;
 
-  private final List<SecurityConfigurationModifier> configurationModifiers;
-
   private final PasswordService passwordService;
 
   private final EventBus eventBus;
@@ -82,7 +79,6 @@ public class SecurityConfigurationManagerImpl
   public SecurityConfigurationManagerImpl(final SecurityConfigurationSource configurationSource,
                                           final List<StaticSecurityConfigurationResource> staticResources,
                                           final List<DynamicSecurityConfigurationResource> dynamicResources,
-                                          final List<SecurityConfigurationModifier> configurationModifiers,
                                           final SecurityConfigurationCleaner configCleaner,
                                           final PasswordService passwordService,
                                           final EventBus eventBus)
@@ -91,7 +87,6 @@ public class SecurityConfigurationManagerImpl
     this.dynamicResources = dynamicResources;
     this.staticResources = staticResources;
     this.eventBus = eventBus;
-    this.configurationModifiers = configurationModifiers;
     this.configCleaner = configCleaner;
     this.passwordService = passwordService;
   }
@@ -298,9 +293,6 @@ public class SecurityConfigurationManagerImpl
 
   private SecurityConfiguration doGetDefaultConfiguration() {
     configurationSource.loadConfiguration();
-    for (SecurityConfigurationModifier modifier : configurationModifiers) {
-      modifier.apply(configurationSource.getConfiguration());
-    }
     return configurationSource.getConfiguration();
   }
 

@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'blobstores-all',
+                id: 'nx-blobstores-all',
                 description: 'All permissions for Blobstores',
                 type: 'application',
                 properties: [
@@ -43,7 +43,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'blobstores-create',
+                id: 'nx-blobstores-create',
                 description: 'Create permission for Blobstores',
                 type: 'application',
                 properties: [
@@ -52,7 +52,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'blobstores-read',
+                id: 'nx-blobstores-read',
                 description: 'Read permission for Blobstores',
                 type: 'application',
                 properties: [
@@ -61,7 +61,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'blobstores-delete',
+                id: 'nx-blobstores-delete',
                 description: 'Delete permission for Blobstores',
                 type: 'application',
                 properties: [

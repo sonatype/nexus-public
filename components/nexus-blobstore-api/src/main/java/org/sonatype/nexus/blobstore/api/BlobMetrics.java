@@ -26,13 +26,13 @@ public class BlobMetrics
 {
   private final DateTime creationTime;
 
-  private final String SHA1Hash;
+  private final String sha1Hash;
 
   private final long contentSize;
 
-  public BlobMetrics(final DateTime creationTime, final String SHA1Hash, final long contentSize) {
+  public BlobMetrics(final DateTime creationTime, final String sha1Hash, final long contentSize) {
     this.creationTime = creationTime;
-    this.SHA1Hash = SHA1Hash;
+    this.sha1Hash = sha1Hash;
     this.contentSize = contentSize;
   }
 
@@ -40,8 +40,8 @@ public class BlobMetrics
     return creationTime;
   }
 
-  public String getSHA1Hash() {
-    return SHA1Hash;
+  public String getSha1Hash() {
+    return sha1Hash;
   }
 
   public long getContentSize() {
@@ -52,7 +52,7 @@ public class BlobMetrics
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "creationTime=" + creationTime +
-        ", SHA1Hash='" + SHA1Hash + '\'' +
+        ", sha1Hash='" + sha1Hash + '\'' +
         ", contentSize=" + contentSize +
         '}';
   }

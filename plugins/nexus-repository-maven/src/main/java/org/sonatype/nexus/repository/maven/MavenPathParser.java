@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.nexus.repository.maven.MavenPath;
-
 /**
  * Component representing Maven layout specific bits, like parsing request paths into {@link MavenPath}.
  *

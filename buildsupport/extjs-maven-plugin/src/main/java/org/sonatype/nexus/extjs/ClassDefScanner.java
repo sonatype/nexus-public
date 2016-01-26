@@ -86,7 +86,7 @@ public class ClassDefScanner
     return namespace;
   }
 
-  public void setNamespace(final @Nullable String namespace) {
+  public void setNamespace(@Nullable final String namespace) {
     this.namespace = namespace;
   }
 

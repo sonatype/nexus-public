@@ -7444,6 +7444,14 @@
 }
 
 /**
+ * ui: 'nx-info'
+ */
+/* line 563, ../../../baseapp/packages/rapture-theme/sass/src/Ext/panel/Panel.scss */
+.nx-info table {
+  border-spacing: 5px;
+}
+
+/**
  * @class Ext.window.Window
  */
 /**

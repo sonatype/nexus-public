@@ -26,16 +26,16 @@ Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted'
   ],
-  
+
   /**
    * @override
    */
-  initComponent: function() {
+  initComponent: function () {
     var me = this;
 
     me.items = [
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
+      {xtype: 'nx-coreui-repository-storage-facet'},
+      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
     ];
 
     me.callParent(arguments);

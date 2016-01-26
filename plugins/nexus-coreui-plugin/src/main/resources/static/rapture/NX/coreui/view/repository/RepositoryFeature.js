@@ -24,18 +24,27 @@ Ext.define('NX.coreui.view.repository.RepositoryFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'repository-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'repository-default',
 
-  masters: [
-    { xtype: 'nx-coreui-repository-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-repository-list' }
+      ],
 
-  tabs: { xtype: 'nx-coreui-repository-settings' },
+      tabs: { xtype: 'nx-coreui-repository-settings' },
 
-  actions: [
-    { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true },
-    { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_RebuildIndex_Button'), glyph: 'xf0ad@FontAwesome' /* fa-wrench */, action: 'rebuildIndex', disabled: true },
-    { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_InvalidateProxyCache_Button'), glyph: 'xf12d@FontAwesome' /* fa-eraser */, action: 'invalidateProxyCache', disabled: true },
-    { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_InvalidateNegativeCache_Button'), glyph: 'xf12d@FontAwesome' /* fa-eraser */, action: 'invalidateNegativeCache', disabled: true }
-  ]
+      actions: [
+        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true },
+        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_RebuildIndex_Button'), glyph: 'xf0ad@FontAwesome' /* fa-wrench */, action: 'rebuildIndex', disabled: true },
+        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_InvalidateCache_Button'), glyph: 'xf12d@FontAwesome' /* fa-eraser */, action: 'invalidateCache', disabled: true },
+        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_HealthCheckEnable_Button'), glyph: 'xf201@FontAwesome' /* fa-line-chart */, action: 'toggleHealthCheck', disabled: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

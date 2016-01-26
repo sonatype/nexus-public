@@ -20,8 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.view.Payload;
 
-import org.joda.time.DateTime;
-
 /**
  * HTTP request payload adapts {@link HttpServletRequest} body-content to {@link Payload}.
  *
@@ -40,13 +38,6 @@ class HttpRequestPayloadAdapter
     this.request = request;
     this.contentType = request.getContentType();
     this.size = request.getContentLength();
-  }
-
-  private static DateTime parseLastModified(final long value) {
-    if (value != -1) {
-      return new DateTime(value);
-    }
-    return null;
   }
 
   @Nullable

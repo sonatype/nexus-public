@@ -50,7 +50,7 @@ public class ConfigurationFacetImpl
 
   @Inject
   public ConfigurationFacetImpl(final ConfigurationStore store,
-                                final @Named(ConfigurationObjectMapperProvider.NAME) ObjectMapper objectMapper,
+                                @Named(ConfigurationObjectMapperProvider.NAME) final ObjectMapper objectMapper,
                                 final Provider<Validator> validatorProvider)
   {
     this.store = checkNotNull(store);

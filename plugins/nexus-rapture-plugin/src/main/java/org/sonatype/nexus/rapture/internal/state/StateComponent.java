@@ -22,7 +22,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpSession;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -36,7 +35,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod;
-import com.softwarementors.extjs.djn.servlet.ssm.WebContextManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,9 +53,12 @@ public class StateComponent
 {
   private static final Logger log = LoggerFactory.getLogger(StateComponent.class);
 
-  private final List<Provider<StateContributor>> stateContributors;
+  /**
+   * Randomly generated identifier on each boot to identify the running instance of the server and detect server reboots.
+   */
+  private static final String serverId = String.valueOf(System.nanoTime());
 
-  private final static String serverId = String.valueOf(System.nanoTime());
+  private final List<Provider<StateContributor>> stateContributors;
 
   @Inject
   public StateComponent(final List<Provider<StateContributor>> stateContributors) {

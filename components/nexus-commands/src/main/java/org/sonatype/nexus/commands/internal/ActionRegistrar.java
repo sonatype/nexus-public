@@ -12,20 +12,17 @@
  */
 package org.sonatype.nexus.commands.internal;
 
-import java.util.Dictionary;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.commands.BeanEntryCommand;
-import org.sonatype.nexus.commands.CommandHelper;
 
 import com.google.inject.Key;
-import org.apache.felix.service.command.Function;
-import org.apache.karaf.shell.commands.Action;
-import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.console.SessionFactory;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.EagerSingleton;
 import org.eclipse.sisu.Mediator;
@@ -46,11 +43,15 @@ public class ActionRegistrar
 {
   private final BeanLocator beanLocator;
 
+  private final SessionFactory sessionFactory;
+
   @Inject
   public ActionRegistrar(final BeanLocator beanLocator,
-                         final @Nullable BundleContext bundleContext)
+                         @Nullable final SessionFactory sessionFactory,
+                         @Nullable final BundleContext bundleContext)
   {
     this.beanLocator = checkNotNull(beanLocator);
+    this.sessionFactory = sessionFactory; // might be null during tests
 
     // HACK: BundleContext may be null in present injected-UT environment
     if (bundleContext != null) {
@@ -68,15 +69,8 @@ public class ActionRegistrar
     public void add(final BeanEntry<Named, Action> beanEntry, final BundleContext bundleContext) throws Exception {
       Command command = beanEntry.getImplementationClass().getAnnotation(Command.class);
       if (command != null) {
-        // TODO: warn if @Singleton is present, this is probably not desired due to @Option/@Argument processing ?
-
-        Dictionary<String, ?> config = CommandHelper.config(command);
-        log.debug("Adding action: {}, config: {}", beanEntry, config);
-        bundleContext.registerService(
-            Function.class,
-            new BeanEntryCommand(beanLocator, beanEntry),
-            config
-        );
+        log.debug("Registering command: {}", beanEntry);
+        sessionFactory.getRegistry().register(new BeanEntryCommand(beanLocator, beanEntry));
       }
       else {
         log.warn("Missing @Command annotation on action: {}", beanEntry);
@@ -85,7 +79,11 @@ public class ActionRegistrar
 
     @Override
     public void remove(final BeanEntry<Named, Action> beanEntry, final BundleContext bundleContext) throws Exception {
-      // TODO: implement remove
+      Command command = beanEntry.getImplementationClass().getAnnotation(Command.class);
+      if (command != null) {
+        log.debug("Unregistering command: {}", beanEntry);
+        sessionFactory.getRegistry().unregister(new BeanEntryCommand(beanLocator, beanEntry));
+      }
     }
   }
 }

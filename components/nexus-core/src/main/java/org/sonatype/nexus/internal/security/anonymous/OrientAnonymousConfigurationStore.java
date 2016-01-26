@@ -47,7 +47,7 @@ public class OrientAnonymousConfigurationStore
   private final AnonymousConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public OrientAnonymousConfigurationStore(final @Named("security") Provider<DatabaseInstance> databaseInstance,
+  public OrientAnonymousConfigurationStore(@Named("security") final Provider<DatabaseInstance> databaseInstance,
                                            final AnonymousConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
@@ -80,14 +80,14 @@ public class OrientAnonymousConfigurationStore
   @Nullable
   public AnonymousConfiguration load() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.get(db);
+      return entityAdapter.singleton.get(db);
     }
   }
 
   @Override
   public void save(final AnonymousConfiguration configuration) {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.set(db, configuration);
+      entityAdapter.singleton.set(db, configuration);
     }
   }
 }

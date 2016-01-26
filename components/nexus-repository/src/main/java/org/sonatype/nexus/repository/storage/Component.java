@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.storage;
 
 import javax.annotation.Nullable;
 
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_GROUP;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_VERSION;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 
 /**
  * Metadata about a software component.
@@ -47,7 +47,7 @@ public class Component
   /**
    * Sets the group to the given value, or {@code null} to un-define it.
    */
-  public Component group(final @Nullable String group) {
+  public Component group(@Nullable final String group) {
     this.group = group;
     return this;
   }
@@ -70,7 +70,7 @@ public class Component
   /**
    * Sets the version to the given value, or {@code null} to un-define it.
    */
-  public Component version(final @Nullable String version) {
+  public Component version(@Nullable final String version) {
     this.version = version;
     return this;
   }

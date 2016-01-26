@@ -17,7 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.net.ssl.SSLContext;
 
-import com.sonatype.nexus.ssl.plugin.TrustStore;
+import org.sonatype.nexus.ssl.TrustStore;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.httpclient.SSLContextSelector;

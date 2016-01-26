@@ -15,8 +15,6 @@ package org.sonatype.nexus.internal.app;
 import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-import org.sonatype.nexus.capability.UniquePerCapabilityType;
-import org.sonatype.nexus.validation.group.Create;
 
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
@@ -28,7 +26,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-@UniquePerCapabilityType(value = BaseUrlCapabilityDescriptor.TYPE_ID, groups = Create.class)
 public class BaseUrlCapabilityConfiguration
     extends CapabilityConfigurationSupport
 {

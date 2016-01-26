@@ -150,7 +150,7 @@ public class MBean
   // TODO: Unsure if return is nullable or not, error on side of caution
 
   @Override
-  public AttributeList getAttributes(final @Nullable String[] names) {
+  public AttributeList getAttributes(@Nullable final String[] names) {
     AttributeList result = new AttributeList();
     if (names != null) {
       for (String name : names) {
@@ -169,7 +169,7 @@ public class MBean
   // TODO: Unsure if return or params are nullable or not, error on side of caution
 
   @Override
-  public AttributeList setAttributes(final @Nullable AttributeList attributes) {
+  public AttributeList setAttributes(@Nullable final AttributeList attributes) {
     AttributeList result = new AttributeList();
     if (attributes != null) {
       for (Attribute attribute : attributes.asList()) {

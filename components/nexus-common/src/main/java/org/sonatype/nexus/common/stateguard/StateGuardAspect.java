@@ -26,6 +26,10 @@ import org.aopalliance.intercept.MethodInvocation;
  */
 public class StateGuardAspect
 {
+  private StateGuardAspect() {
+    // empty
+  }
+
   static final MethodInterceptor GUARD = new GuardedInterceptor();
 
   static final MethodInterceptor TRANSITION = new TransitionsInterceptor();

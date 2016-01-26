@@ -32,6 +32,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupFieldSet', {
   items: [
     {
       xtype: 'combo',
+      itemId: 'template',
       fieldLabel: NX.I18n.get('Ldap_LdapServerUserAndGroupFieldSet_Template_FieldLabel'),
       emptyText: NX.I18n.get('Ldap_LdapServerUserAndGroupFieldSet_Template_EmptyText'),
       editable: false,

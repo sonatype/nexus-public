@@ -25,15 +25,15 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupForm', {
     'NX.I18n'
   ],
 
-  items: { xtype: 'nx-coreui-ldapserver-userandgroup-fieldset' },
-
-  editableMarker: NX.I18n.get('Ldap_LdapServerConnectionForm_Update_Error'),
-
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.items = { xtype: 'nx-coreui-ldapserver-userandgroup-fieldset' };
+
+    me.editableMarker = NX.I18n.get('Ldap_LdapServerConnectionForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.isPermitted('nexus:ldap:update');
 

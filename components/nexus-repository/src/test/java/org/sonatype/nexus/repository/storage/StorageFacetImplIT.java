@@ -65,7 +65,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Integration tests for {@link StorageFacetImpl}.
@@ -605,7 +605,6 @@ public class StorageFacetImplIT
     createAsset(null, "name");
   }
 
-
   @Test(expected = ORecordDuplicatedException.class)
   public void duplicateAssetComponentName() throws Exception {
     Component component = createComponent("group", "name", "1");
@@ -767,6 +766,35 @@ public class StorageFacetImplIT
 
       // Correct use of attached entity ids prevent an exception being thrown by this line
       tx.browseAssets(component);
+    }
+  }
+
+  @Test
+  public void assetLastAccessed() throws Exception {
+    final String ASSET_NAME = "assetLastAccessed";
+    try (StorageTx tx = beginTX()) {
+      Bucket bucket = tx.findBucket(testRepository1);
+      Asset asset = tx.createAsset(bucket, testFormat).name(ASSET_NAME);
+      tx.saveAsset(asset);
+      tx.commit();
+    }
+
+    try (StorageTx tx = beginTX()) {
+      Bucket bucket = tx.findBucket(testRepository1);
+      Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
+      assertThat(asset, notNullValue());
+      assertThat(asset.lastAccessed(), nullValue());
+      assertThat(asset.markAsAccessed(), is(true));
+      tx.saveAsset(asset);
+      tx.commit();
+    }
+
+    try (StorageTx tx = beginTX()) {
+      Bucket bucket = tx.findBucket(testRepository1);
+      Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
+      assertThat(asset, notNullValue());
+      assertThat(asset.lastAccessed(), notNullValue());
+      assertThat(asset.markAsAccessed(), is(false));
     }
   }
 

@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.formfields;
 
+/**
+ * Number field.
+ */
 public class NumberTextFormField
     extends AbstractFormField<Number>
 {

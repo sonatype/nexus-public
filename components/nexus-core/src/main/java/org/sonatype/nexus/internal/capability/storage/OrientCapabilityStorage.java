@@ -47,7 +47,7 @@ public class OrientCapabilityStorage
   private final CapabilityStorageItemEntityAdapter entityAdapter;
 
   @Inject
-  public OrientCapabilityStorage(final @Named("config") Provider<DatabaseInstance> databaseInstance,
+  public OrientCapabilityStorage(@Named("config") final Provider<DatabaseInstance> databaseInstance,
                                  final CapabilityStorageItemEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
@@ -77,7 +77,7 @@ public class OrientCapabilityStorage
   @Override
   public CapabilityIdentity add(final CapabilityStorageItem item) throws IOException {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.add(db, item);
+      entityAdapter.addEntity(db, item);
     }
 
     return identity(item);
@@ -102,7 +102,7 @@ public class OrientCapabilityStorage
     Map<CapabilityIdentity, CapabilityStorageItem> items = Maps.newHashMap();
 
     try (ODatabaseDocumentTx db = openDb()) {
-      for (CapabilityStorageItem item : entityAdapter.browse(db)) {
+      for (CapabilityStorageItem item : entityAdapter.browse.execute(db)) {
         items.put(identity(item), item);
       }
     }

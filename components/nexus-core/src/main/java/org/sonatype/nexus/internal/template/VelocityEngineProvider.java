@@ -47,7 +47,7 @@ public class VelocityEngineProvider
   }
 
   private VelocityEngine create() {
-    VelocityEngine engine = new VelocityEngine(); //NOSONAR
+    VelocityEngine engine = new VelocityEngine();
 
     // log using our chute (slf4j with level fix)
     engine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new Slf4jLogChute());

@@ -20,6 +20,11 @@ import javax.xml.bind.annotation.XmlType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Auth-token exchange object.
+ *
+ * @since 3.0
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "authToken", propOrder = {
     "u",

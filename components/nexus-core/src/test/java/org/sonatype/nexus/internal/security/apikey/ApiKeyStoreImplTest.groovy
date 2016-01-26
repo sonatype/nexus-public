@@ -13,6 +13,8 @@
 package org.sonatype.nexus.internal.security.apikey
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
+import org.sonatype.nexus.crypto.internal.RandomBytesGeneratorImpl
 import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.security.UserPrincipalsHelper
 
@@ -49,7 +51,7 @@ class ApiKeyStoreImplTest
         new ApiKeyEntityAdapter(),
         mock(UserPrincipalsHelper.class),
         Maps.newHashMap(),
-        new DefaultApiKeyFactory()
+        new DefaultApiKeyFactory(new RandomBytesGeneratorImpl(new CryptoHelperImpl()))
     )
     underTest.start()
   }

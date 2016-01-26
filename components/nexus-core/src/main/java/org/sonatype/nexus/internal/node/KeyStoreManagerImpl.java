@@ -34,7 +34,7 @@ public class KeyStoreManagerImpl
 
   @Inject
   public KeyStoreManagerImpl(final CryptoHelper crypto,
-                             final @Named(NAME) KeyStoreManagerConfiguration config)
+                             @Named(NAME) final KeyStoreManagerConfiguration config)
   {
     super(crypto, config);
   }

@@ -46,7 +46,7 @@ public class RawContentHandler
 {
   @Nonnull
   @Override
-  public Response handle(final @Nonnull Context context) throws Exception {
+  public Response handle(@Nonnull final Context context) throws Exception {
     String name = contentName(context);
     String method = context.getRequest().getAction();
 

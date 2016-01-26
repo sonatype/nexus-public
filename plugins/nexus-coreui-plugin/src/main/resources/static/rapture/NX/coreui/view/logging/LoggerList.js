@@ -24,83 +24,98 @@ Ext.define('NX.coreui.view.logging.LoggerList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-logger-list'
-  },
-  
-  store: 'Logger',
+  stateful: true,
+  stateId: 'nx-coreui-logger-list',
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'logger-default';
-      }
-    },
-    { header: NX.I18n.get('Logging_LoggerList_Name_Header'), dataIndex: 'name', stateId: 'name', hideable: false, flex: 1 },
-    {
-      header: NX.I18n.get('Logging_LoggerList_Level_Header'),
-      dataIndex: 'level',
-      stateId: 'level',
-      hideable: false,
-      editor: {
-        xtype: 'combo',
-        editable: false,
-        store: [
-          ['TRACE', NX.I18n.get('Logging_LoggerList_Level_TraceItem')],
-          ['DEBUG', NX.I18n.get('Logging_LoggerList_Level_DebugItem')],
-          ['INFO', NX.I18n.get('Logging_LoggerList_Level_InfoItem')],
-          ['WARN', NX.I18n.get('Logging_LoggerList_Level_WarnItem')],
-          ['ERROR', NX.I18n.get('Logging_LoggerList_Level_ErrorItem')],
-          ['OFF', NX.I18n.get('Logging_LoggerList_Level_OffItem')],
-          ['DEFAULT', NX.I18n.get('Logging_LoggerList_Level_DefaultItem')]
-        ],
-        queryMode: 'local'
-      }
-    }
-  ],
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'Logger',
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Logging_LoggerList_EmptyText'),
-    deferEmptyText: false
-  },
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          width: 36,
+          iconVariant: 'x16',
+          iconName: function () {
+            return 'logger-default';
+          }
+        },
+        {
+          header: NX.I18n.get('Logging_LoggerList_Name_Header'),
+          dataIndex: 'name',
+          stateId: 'name',
+          hideable: false,
+          flex: 1
+        },
+        {
+          header: NX.I18n.get('Logging_LoggerList_Level_Header'),
+          dataIndex: 'level',
+          stateId: 'level',
+          hideable: false,
+          editor: {
+            xtype: 'combo',
+            editable: false,
+            store: [
+              ['TRACE', NX.I18n.get('Logging_LoggerList_Level_TraceItem')],
+              ['DEBUG', NX.I18n.get('Logging_LoggerList_Level_DebugItem')],
+              ['INFO', NX.I18n.get('Logging_LoggerList_Level_InfoItem')],
+              ['WARN', NX.I18n.get('Logging_LoggerList_Level_WarnItem')],
+              ['ERROR', NX.I18n.get('Logging_LoggerList_Level_ErrorItem')],
+              ['OFF', NX.I18n.get('Logging_LoggerList_Level_OffItem')],
+              ['DEFAULT', NX.I18n.get('Logging_LoggerList_Level_DefaultItem')]
+            ],
+            queryMode: 'local'
+          }
+        }
+      ],
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Logging_LoggerList_New_Button'),
-        glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
-        action: 'new',
-        disabled: true
+      viewConfig: {
+        emptyText: NX.I18n.get('Logging_LoggerList_EmptyText'),
+        deferEmptyText: false
       },
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Logging_LoggerList_Delete_Button'),
-        glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
-        action: 'delete',
-        disabled: true
-      },
-      '-',
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Logging_LoggerList_Reset_Button'),
-        glyph: 'xf0e2@FontAwesome' /* fa-undo */,
-        action: 'reset',
-        disabled: true
-      }
-    ]
-  }],
 
-  plugins: [
-    { pluginId: 'editor', ptype: 'rowediting', clicksToEdit: 1, errorSummary: false },
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Logging_LoggerList_Filter_EmptyText') }
-  ]
+      dockedItems: [
+        {
+          xtype: 'toolbar',
+          dock: 'top',
+          cls: 'nx-actions nx-borderless',
+          items: [
+            {
+              xtype: 'button',
+              text: NX.I18n.get('Logging_LoggerList_New_Button'),
+              glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+              action: 'new',
+              disabled: true
+            },
+            {
+              xtype: 'button',
+              text: NX.I18n.get('Logging_LoggerList_Delete_Button'),
+              glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+              action: 'delete',
+              disabled: true
+            },
+            '-',
+            {
+              xtype: 'button',
+              text: NX.I18n.get('Logging_LoggerList_Reset_Button'),
+              glyph: 'xf0e2@FontAwesome' /* fa-undo */,
+              action: 'reset',
+              disabled: true
+            }
+          ]
+        }
+      ],
+
+      plugins: [
+        {pluginId: 'editor', ptype: 'rowediting', clicksToEdit: 1, errorSummary: false},
+        {ptype: 'gridfilterbox', emptyText: NX.I18n.get('Logging_LoggerList_Filter_EmptyText')}
+      ]
+    });
+
+    this.callParent();
+  }
 
 });

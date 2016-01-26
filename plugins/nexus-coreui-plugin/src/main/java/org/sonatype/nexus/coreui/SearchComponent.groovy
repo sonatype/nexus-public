@@ -38,11 +38,11 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.SortOrder
 
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_FORMAT
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_GROUP
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_VERSION
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION
 
 /**
  * Search {@link DirectComponent}.
@@ -53,7 +53,7 @@ import static org.sonatype.nexus.repository.storage.StorageFacet.P_VERSION
 @Singleton
 @DirectAction(action = 'coreui_Search')
 class SearchComponent
-extends DirectComponentSupport
+    extends DirectComponentSupport
 {
 
   @Inject
@@ -70,7 +70,7 @@ extends DirectComponentSupport
    */
   @DirectMethod
   @RequiresPermissions('nexus:search:read')
-  PagedResponse<ComponentXO> read(final @Nullable StoreLoadParameters parameters) {
+  PagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
     QueryBuilder query = buildQuery(parameters)
     if (!query) {
       return null
@@ -81,18 +81,18 @@ extends DirectComponentSupport
       def sortBuilders = []
       if (sort) {
         switch (sort.property) {
-          case P_GROUP:
-            sortBuilders << fieldSort("${P_GROUP}.case_insensitive").order(SortOrder.valueOf(sort.direction))
-            sortBuilders << fieldSort("${P_NAME}.case_insensitive").order(SortOrder.ASC)
-            sortBuilders << fieldSort(P_VERSION).order(SortOrder.ASC)
+          case GROUP:
+            sortBuilders << fieldSort("${GROUP}.case_insensitive").order(SortOrder.valueOf(sort.direction))
+            sortBuilders << fieldSort("${NAME}.case_insensitive").order(SortOrder.ASC)
+            sortBuilders << fieldSort(VERSION).order(SortOrder.ASC)
             break
-          case P_NAME:
-            sortBuilders << fieldSort("${P_NAME}.case_insensitive").order(SortOrder.valueOf(sort.direction))
-            sortBuilders << fieldSort(P_VERSION).order(SortOrder.ASC)
-            sortBuilders << fieldSort("${P_GROUP}.case_insensitive").order(SortOrder.ASC)
+          case NAME:
+            sortBuilders << fieldSort("${NAME}.case_insensitive").order(SortOrder.valueOf(sort.direction))
+            sortBuilders << fieldSort(VERSION).order(SortOrder.ASC)
+            sortBuilders << fieldSort("${GROUP}.case_insensitive").order(SortOrder.ASC)
             break
           case 'repositoryName':
-            sortBuilders = [fieldSort(P_REPOSITORY_NAME).order(SortOrder.valueOf(sort.direction))]
+            sortBuilders = [fieldSort(REPOSITORY_NAME).order(SortOrder.valueOf(sort.direction))]
             break
           default:
             sortBuilders = [fieldSort(sort.property).order(SortOrder.valueOf(sort.direction))]
@@ -104,11 +104,11 @@ extends DirectComponentSupport
           response.hits.hits?.collect { hit ->
             return new ComponentXO(
                 id: hit.id,
-                repositoryName: hit.source[P_REPOSITORY_NAME],
-                group: hit.source[P_GROUP],
-                name: hit.source[P_NAME],
-                version: hit.source[P_VERSION],
-                format: hit.source[P_FORMAT]
+                repositoryName: hit.source[REPOSITORY_NAME],
+                group: hit.source[GROUP],
+                name: hit.source[NAME],
+                version: hit.source[VERSION],
+                format: hit.source[FORMAT]
             )
           }
       )

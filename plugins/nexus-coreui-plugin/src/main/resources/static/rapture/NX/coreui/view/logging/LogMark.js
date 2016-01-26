@@ -24,37 +24,38 @@ Ext.define('NX.coreui.view.logging.LogMark', {
     'NX.Conditions',
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('Logging_LogMark_Title'),
-  defaultFocus: 'message',
-
-  items: {
-    xtype: 'nx-settingsform',
-    frame: false,
-    defaults: {
-      anchor: '100%'
-    },
-    settingsFormSuccessMessage: NX.I18n.get('Logging_LogMark_Success'),
-    settingsFormSubmitOnEnter: true,
-    editableMarker: NX.I18n.get('Logging_LogMark_Error'),
-    items: [
-      {
-        xtype: 'textfield',
-        name: 'message',
-        itemId: 'message',
-        fieldLabel: NX.I18n.get('Logging_LogMark_FieldLabel'),
-        helpText: NX.I18n.get('Logging_LogMark_HelpText'),
-        allowBlank: false
-      }
-    ]
-  },
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.ui = 'nx-inset';
+
+    me.title = NX.I18n.get('Logging_LogMark_Title');
+    me.defaultFocus = 'message';
+
+    me.items = {
+      xtype: 'nx-settingsform',
+        frame: false,
+        defaults: {
+        anchor: '100%'
+      },
+      settingsFormSuccessMessage: NX.I18n.get('Logging_LogMark_Success'),
+        settingsFormSubmitOnEnter: true,
+        editableMarker: NX.I18n.get('Logging_LogMark_Error'),
+        items: [
+        {
+          xtype: 'textfield',
+          name: 'message',
+          itemId: 'message',
+          fieldLabel: NX.I18n.get('Logging_LogMark_FieldLabel'),
+          helpText: NX.I18n.get('Logging_LogMark_HelpText'),
+          allowBlank: false
+        }
+      ]
+    };
 
     me.items.buttons = [
       { text: NX.I18n.get('Logging_LogViewer_Mark_Button'), action: 'add', formBind: true, ui: 'nx-primary', bindToEnter: me.items.settingsFormSubmitOnEnter },

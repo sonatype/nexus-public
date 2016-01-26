@@ -17,8 +17,14 @@ import java.util.Map;
 
 import com.google.common.base.Predicate;
 
+/**
+ * Helper to build {@link CapabilityReferenceFilter}.
+ */
 public class CapabilityReferenceFilterBuilder
 {
+  private CapabilityReferenceFilterBuilder() {
+    // empty
+  }
 
   public static CapabilityReferenceFilter capabilities() {
     return new CapabilityReferenceFilter();
@@ -37,6 +43,26 @@ public class CapabilityReferenceFilterBuilder
     private Boolean includeNotExposed = false;
 
     private Map<String, String> properties = new HashMap<String, String>();
+
+    public String getTypeId() {
+      return typeId;
+    }
+
+    public Boolean isEnabled() {
+      return enabled;
+    }
+
+    public Boolean isActive() {
+      return active;
+    }
+
+    public Boolean isIncludeNotExposed() {
+      return includeNotExposed;
+    }
+
+    public Map<String, String> getProperties() {
+      return properties;
+    }
 
     public CapabilityReferenceFilter withType(final CapabilityType type) {
       typeId = type.toString();

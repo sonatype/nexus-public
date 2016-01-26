@@ -39,7 +39,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ClientInfoProviderImpl
     implements ClientInfoProvider
 {
-
   private final Provider<HttpServletRequest> httpRequestProvider;
 
   @Inject
@@ -59,8 +58,8 @@ public class ClientInfoProviderImpl
       );
     }
     catch (ProvisionException | OutOfScopeException e) {
+      // ignore; this happens when called out of scope of http request
       return null;
     }
   }
-
 }

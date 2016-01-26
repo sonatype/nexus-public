@@ -19,7 +19,9 @@ package org.sonatype.nexus.repository.security;
  */
 public class BreadActions
 {
-  private BreadActions() {}
+  private BreadActions() {
+    // empty
+  }
 
   public static final String BROWSE = "browse";
 

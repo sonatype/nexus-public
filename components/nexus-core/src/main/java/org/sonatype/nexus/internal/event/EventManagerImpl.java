@@ -53,7 +53,7 @@ public class EventManagerImpl
     extends LifecycleSupport
     implements EventManager
 {
-  private final int HOST_THREAD_POOL_SIZE = SystemPropertiesHelper.getInteger(
+  private static final int HOST_THREAD_POOL_SIZE = SystemPropertiesHelper.getInteger(
       EventManagerImpl.class.getName() + ".poolSize", 500);
 
   private final BeanLocator beanLocator;
@@ -77,7 +77,7 @@ public class EventManagerImpl
         HOST_THREAD_POOL_SIZE,
         60L,
         TimeUnit.SECONDS,
-        new SynchronousQueue<Runnable>(),
+        new SynchronousQueue<>(),
         new NexusThreadFactory("event", "event-manager"),
         new CallerRunsPolicy()
     );

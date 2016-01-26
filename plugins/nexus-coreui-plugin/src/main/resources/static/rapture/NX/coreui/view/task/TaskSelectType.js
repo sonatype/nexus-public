@@ -24,27 +24,40 @@ Ext.define('NX.coreui.view.task.TaskSelectType', {
     'NX.I18n'
   ],
 
-  store: 'TaskType',
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function() {
-        return 'task-default';
-      }
-    },
-    { header: NX.I18n.get('Task_TaskSelectType_Name_Header'), dataIndex: 'name', flex: 1 }
-  ],
+  /**
+   * @override
+   */
+  initComponent: function() {
+    var me = this;
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless'
-  }],
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconName: function() {
+          return 'task-default';
+        }
+      },
+      { header: NX.I18n.get('Task_TaskSelectType_Name_Header'), dataIndex: 'name', flex: 1 }
+    ];
 
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Task_TaskSelectType_Filter_EmptyText') }
-  ]
+    me.dockedItems = [{
+      xtype: 'toolbar',
+      dock: 'top',
+      cls: 'nx-actions nx-borderless'
+    }];
+
+    me.plugins = [
+      { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Task_TaskSelectType_Filter_EmptyText') }
+    ];
+
+    me.store = Ext.create('NX.coreui.store.TaskType');
+    me.store.addFilter([
+      { property: 'exposed', value: true }
+    ], false);
+
+    me.callParent(arguments);
+  }
 
 });

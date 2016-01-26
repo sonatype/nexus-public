@@ -63,7 +63,7 @@ public class BrandingCapabilityDescriptor
 
     @DefaultMessage(
         "An HTML snippet to be included in branding header.<br/>"
-            + "Use '$baseUrl' in order to insert Nexus base URL (e.g. referencing an image)"
+            + "Use '$baseUrl' to insert the base URL of the server (e.g. to reference an image)"
     )
     String headerHtmlHelp();
 
@@ -78,7 +78,7 @@ public class BrandingCapabilityDescriptor
 
     @DefaultMessage(
         "An HTML snippet to be included in branding footer.<br/>"
-            + "Use '$baseUrl' in order to insert Nexus base URL (e.g. referencing an image)"
+            + "Use '$baseUrl' to insert the base URL of the server (e.g. to reference an image)"
     )
     String footerHtmlHelp();
   }

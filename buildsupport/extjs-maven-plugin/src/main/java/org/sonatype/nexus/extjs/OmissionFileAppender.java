@@ -41,7 +41,7 @@ public class OmissionFileAppender
 
   public OmissionFileAppender(final Log log,
                               final Writer output,
-                              final @Nullable Map<String,String> rawFlags)
+                              @Nullable final Map<String,String> rawFlags)
   {
     super(log, output);
     if (rawFlags != null) {

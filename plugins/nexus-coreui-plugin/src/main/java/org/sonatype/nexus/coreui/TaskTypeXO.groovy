@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.NotNull
+
 import groovy.transform.ToString
 import org.hibernate.validator.constraints.NotBlank
 
@@ -28,6 +30,9 @@ class TaskTypeXO
 
   @NotBlank
   String name
+
+  @NotNull
+  Boolean exposed
   
   List<FormFieldXO> formFields
 }

@@ -14,28 +14,29 @@ package org.sonatype.nexus.scheduling;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 /**
- * The factory for {@link Task} instances.
+ * Factory for creating {@link Task} instances.
+ *
+ * @see TaskDescriptor
+ * @see TaskConfiguration
  */
 public interface TaskFactory
 {
   /**
-   * Returns the list of task descriptors for all known tasks in system.
+   * Returns an immutable list of all detected descriptors.
    */
-  List<TaskDescriptor<?>> listTaskDescriptors();
+  List<TaskDescriptor> getDescriptors();
 
   /**
-   * Resolves the task descriptor by type ID of the task. Returns {@code null} if no task found for given task ID. This
-   * "resolution" is laxed, in a way it will not work only for actual type ID (as reported by Task descriptor), but
-   * also by task FQCN, Simple Class name and @Named value.
+   * Find a descriptor by its type-id; null if not found.
    */
-  <T extends Task> TaskDescriptor<T> resolveTaskDescriptorByTypeId(String taskTypeId);
+  @Nullable
+  TaskDescriptor findDescriptor(String typeId);
 
   /**
-   * A factory for tasks based on passed in task configuration. Returns a configured task instance.
-   *
-   * @throws IllegalArgumentException if taskType carried by configuration is not a valid task type.
+   * Create a task from given configuration.
    */
-  <T extends Task> T createTaskInstance(TaskConfiguration taskConfiguration)
-      throws IllegalArgumentException;
+  Task create(TaskConfiguration config);
 }

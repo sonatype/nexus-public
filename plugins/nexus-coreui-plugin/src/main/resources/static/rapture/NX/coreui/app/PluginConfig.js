@@ -79,7 +79,21 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.HealthCheckColumns',
+      id: 'NX.coreui.controller.HealthCheckInfo',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-healthcheck-oss-plugin')
+            || NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-clm-plugin');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.HealthCheckRepositoryColumn',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-healthcheck-oss-plugin')
+            || NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-clm-plugin');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.HealthCheckRepositoryConfiguration',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-healthcheck-oss-plugin')
             || NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-clm-plugin');

@@ -32,6 +32,7 @@ import org.sonatype.nexus.rest.Resource
 
 import org.apache.shiro.authz.annotation.RequiresPermissions
 
+import static com.google.common.base.Preconditions.checkNotNull
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION
 import static com.google.common.net.HttpHeaders.CONTENT_LENGTH
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST
@@ -57,8 +58,7 @@ class DownloadResource
 
   @Inject
   DownloadResource(final DownloadService downloadService) {
-    assert downloadService
-    this.downloadService = downloadService
+    this.downloadService = checkNotNull(downloadService)
   }
 
   /**
@@ -72,7 +72,7 @@ class DownloadResource
                        final @Nullable @QueryParam('t') String authTicketParam, // Base64
                        final @Nullable @HeaderParam(AUTH_TICKET_HEADER) String authTicketHeader)
   {
-    assert fileName
+    checkNotNull(fileName)
     log.info 'Download: {}', fileName
 
     // pick authTicket from either query-param or header

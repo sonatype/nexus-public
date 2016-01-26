@@ -1,4 +1,4 @@
-/*
+ /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -28,14 +28,15 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
   api: {
     submit: 'NX.direct.coreui_Blobstore.update'
   },
-  settingsFormSuccessMessage: function(data) {
-    return NX.I18n.get('Blobstore_BlobstoreSettingsForm_Update_Success') + data['name'];
-  },
-
-  editableMarker: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Update_Error'),
 
   initComponent: function() {
     var me = this;
+
+    me.settingsFormSuccessMessage = function(data) {
+      return NX.I18n.get('Blobstore_BlobstoreSettingsForm_Update_Success') + data['name'];
+    };
+
+    me.editableMarker = NX.I18n.get('Blobstore_BlobstoreSettingsForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.never();
 

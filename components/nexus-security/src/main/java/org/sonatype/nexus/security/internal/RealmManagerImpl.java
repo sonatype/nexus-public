@@ -71,7 +71,7 @@ public class RealmManagerImpl
   @Inject
   public RealmManagerImpl(final EventBus eventBus,
                           final RealmConfigurationStore store,
-                          final @Named("initial") Provider<RealmConfiguration> defaults,
+                          @Named("initial") final Provider<RealmConfiguration> defaults,
                           final RealmSecurityManager realmSecurityManager,
                           final Map<String, Realm> availableRealms)
   {

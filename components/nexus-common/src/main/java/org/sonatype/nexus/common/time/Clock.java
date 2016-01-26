@@ -31,7 +31,9 @@ public class Clock
   /**
    * Current time in nano-seconds.
    */
-  public long nanos() { return System.nanoTime(); }
+  public long nanos() {
+    return System.nanoTime();
+  }
 
   /**
    * Current date-time.

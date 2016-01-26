@@ -298,9 +298,10 @@ Ext.define('NX.controller.Menu', {
       // Get the path (minus an optional filter string)
       if (bookmark.getSegments().length) {
         queryIndex = bookmark.getSegment(0).indexOf('=');
-        if (queryIndex != -1) {
+        if (queryIndex !== -1) {
           menuBookmark = bookmark.getSegment(0).slice(0, bookmark.getSegment(0).indexOf('='));
-        } else {
+        }
+        else {
           menuBookmark = bookmark.getSegment(0);
         }
       }
@@ -590,7 +591,7 @@ Ext.define('NX.controller.Menu', {
 
   getMode: function (bookmark) {
     if (bookmark && bookmark.getSegment(0)) {
-      return bookmark.getSegment(0).split('/')[0]
+      return bookmark.getSegment(0).split('/')[0];
     }
     return undefined;
   },
@@ -666,7 +667,7 @@ Ext.define('NX.controller.Menu', {
         me.getFeatureMenu().getSelectionModel().select(record);
         me.getFeatureMenu().fireEvent('itemclick', me.getFeatureMenu(), record);
       }
-    )
+    );
   },
 
   /**
@@ -684,7 +685,8 @@ Ext.define('NX.controller.Menu', {
 
     if (me.warnBeforeNavigate(cb)) {
       me.changeMode(button.mode);
-    } else {
+    }
+    else {
       me.getHeaderPanel().down('button[mode=' + me.mode + ']').toggle(true);
     }
   },
@@ -702,7 +704,7 @@ Ext.define('NX.controller.Menu', {
       function() {
         button.fireEvent('search', button, button.getValue());
       }
-    )
+    );
   },
 
   /**
@@ -731,7 +733,7 @@ Ext.define('NX.controller.Menu', {
       function() {
         button.fireEvent('click');
       }
-    )
+    );
   },
 
   /**
@@ -744,7 +746,7 @@ Ext.define('NX.controller.Menu', {
       function() {
         NX.getApplication().getController('User').signOut();
       }
-    )
+    );
   },
 
   /**
@@ -821,14 +823,22 @@ Ext.define('NX.controller.Menu', {
   },
 
   /**
-   * Disable backspace as a means for navigating back.
+   * Disable backspace as a means for navigating back. Allow backspace when an enabled
+   * input field has focus.
+   *
+   * The Menu controller is probably the wrong place for this. Consider moving to the
+   * KeyNav controller instead.
    *
    * @private
    */
   disableBackspaceNav: function() {
     var parent = Ext.isIE ? document : window;
     Ext.EventManager.on(parent, 'keydown', function (e, focused) {
-      if (e.getKey() == e.BACKSPACE && (!/^input$/i.test(focused.tagName) && !/^textarea$/i.test(focused.tagName)) || focused.disabled || focused.readOnly) {
+      var isBackspace = e.getKey() === e.BACKSPACE,
+          roleAttribute = focused.attributes["role"],
+          isTextField = roleAttribute ? /^textbox$/i.test(roleAttribute.value) : false,
+          isReadOnly = focused.disabled || focused.readOnly;
+      if (isBackspace && (!isTextField || isReadOnly)) {
         e.stopEvent();
       }
     });

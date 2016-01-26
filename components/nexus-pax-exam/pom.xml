@@ -37,6 +37,11 @@
       <artifactId>org.osgi.compendium</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.eclipse.equinox</groupId>
+      <artifactId>org.eclipse.equinox.region</artifactId>
+    </dependency>
+
     <!--
     Pax-Exam setup for Karaf-based distributions
     -->
@@ -52,6 +57,10 @@
       <groupId>org.ops4j.pax.exam</groupId>
       <artifactId>pax-exam-container-karaf</artifactId>
     </dependency>
+
+    <!--
+    Allow mvn: style URLs during test setup
+    -->
     <dependency>
       <groupId>org.ops4j.pax.url</groupId>
       <artifactId>pax-url-aether</artifactId>

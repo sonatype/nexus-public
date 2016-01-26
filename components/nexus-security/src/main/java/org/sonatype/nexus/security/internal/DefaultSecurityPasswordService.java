@@ -56,7 +56,7 @@ public class DefaultSecurityPasswordService
   private final PasswordService legacyPasswordService;
 
   @Inject
-  public DefaultSecurityPasswordService(final @Named("legacy") PasswordService legacyPasswordService) {
+  public DefaultSecurityPasswordService(@Named("legacy") final PasswordService legacyPasswordService) {
     this.passwordService = new DefaultPasswordService();
     this.legacyPasswordService = checkNotNull(legacyPasswordService);
 

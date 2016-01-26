@@ -24,70 +24,79 @@ Ext.define('NX.coreui.view.logging.LogViewer', {
     'NX.I18n'
   ],
 
-  layout: 'fit',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      layout: 'fit',
 
-  items: {
-    xtype: 'textarea',
-    cls: 'nx-log-viewer-field nx-monospace-field',
-    readOnly: true,
-    hideLabel: true,
-    emptyText: NX.I18n.get('Logging_LogViewer_EmptyText'),
-    inputAttrTpl: 'wrap="off"'
-  },
+      items: {
+        xtype: 'textarea',
+        cls: 'nx-log-viewer-field nx-monospace-field',
+        readOnly: true,
+        hideLabel: true,
+        emptyText: NX.I18n.get('Logging_LogViewer_EmptyText'),
+        inputAttrTpl: 'wrap="off"'
+      },
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Logging_LogViewer_Download_Button'),
-        glyph: 'xf019@FontAwesome' /* fa-download */,
-        action: 'download'
-      },
-      '-',
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Logging_LogViewer_Mark_Button'),
-        glyph: 'xf11e@FontAwesome' /* fa-flag-checkered */,
-        action: 'mark',
-        disabled: true
-      },
-      '->',
-      {
-        xtype: 'label',
-        text: NX.I18n.get('Logging_LogViewer_Refresh_Text')
-      },
-      {
-        xtype: 'combo',
-        itemId: 'refreshPeriod',
-        width: 140,
-        editable: false,
-        value: 0,
-        store: [
-          [0, NX.I18n.get('Logging_LogViewer_Refresh_ManualItem')],
-          [20, NX.I18n.get('Logging_LogViewer_Refresh_20SecondsItem')],
-          [60, NX.I18n.get('Logging_LogViewer_Refresh_MinuteItem')],
-          [120, NX.I18n.get('Logging_LogViewer_Refresh_2MinutesItem')],
-          [300, NX.I18n.get('Logging_LogViewer_Refresh_5MinutesItem')]
-        ],
-        queryMode: 'local'
-      },
-      {
-        xtype: 'combo',
-        itemId: 'refreshSize',
-        width: 120,
-        editable: false,
-        value: 25,
-        store: [
-          [25, NX.I18n.get('Logging_LogViewer_Last25KBItem')],
-          [50, NX.I18n.get('Logging_LogViewer_Last50KBItem')],
-          [100, NX.I18n.get('Logging_LogViewer_Last100KBItem')]
-        ],
-        queryMode: 'local'
-      }
-    ]
-  }]
+      dockedItems: [{
+        xtype: 'toolbar',
+        dock: 'top',
+        cls: 'nx-actions nx-borderless',
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Logging_LogViewer_Download_Button'),
+            glyph: 'xf019@FontAwesome' /* fa-download */,
+            action: 'download'
+          },
+          '-',
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Logging_LogViewer_Mark_Button'),
+            glyph: 'xf11e@FontAwesome' /* fa-flag-checkered */,
+            action: 'mark',
+            disabled: true
+          },
+          '->',
+          {
+            xtype: 'label',
+            text: NX.I18n.get('Logging_LogViewer_Refresh_Text')
+          },
+          {
+            xtype: 'combo',
+            itemId: 'refreshPeriod',
+            width: 140,
+            editable: false,
+            value: 0,
+            store: [
+              [0, NX.I18n.get('Logging_LogViewer_Refresh_ManualItem')],
+              [20, NX.I18n.get('Logging_LogViewer_Refresh_20SecondsItem')],
+              [60, NX.I18n.get('Logging_LogViewer_Refresh_MinuteItem')],
+              [120, NX.I18n.get('Logging_LogViewer_Refresh_2MinutesItem')],
+              [300, NX.I18n.get('Logging_LogViewer_Refresh_5MinutesItem')]
+            ],
+            queryMode: 'local'
+          },
+          {
+            xtype: 'combo',
+            itemId: 'refreshSize',
+            width: 120,
+            editable: false,
+            value: 25,
+            store: [
+              [25, NX.I18n.get('Logging_LogViewer_Last25KBItem')],
+              [50, NX.I18n.get('Logging_LogViewer_Last50KBItem')],
+              [100, NX.I18n.get('Logging_LogViewer_Last100KBItem')]
+            ],
+            queryMode: 'local'
+          }
+        ]
+      }]
+    });
+
+    this.callParent();
+  }
 
 });

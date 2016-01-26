@@ -12,16 +12,21 @@
  */
 package org.sonatype.nexus.internal.email;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
+import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.action.SingletonActions;
+import org.sonatype.nexus.security.PasswordHelper;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link EmailConfiguration} entity-adapter.
@@ -31,10 +36,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Named
 @Singleton
 public class EmailConfigurationEntityAdapter
-    extends SingletonEntityAdapter<EmailConfiguration>
+    extends EntityAdapter<EmailConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(EmailConfiguration.class)
+      .type("email")
       .build();
 
   private static final String P_ENABLED = "enabled";
@@ -51,8 +56,22 @@ public class EmailConfigurationEntityAdapter
 
   private static final String P_SUBJECT_PREFIX = "subject_prefix";
 
-  public EmailConfigurationEntityAdapter() {
+  private static final String P_START_TLS_ENABLED = "start_tls_enabled";
+
+  private static final String P_START_TLS_REQUIRED = "start_tls_required";
+
+  private static final String P_SSL_ON_CONNECT_ENABLED = "ssl_on_connect_enabled";
+
+  private static final String P_SSL_CHECK_SERVER_IDENTITY_ENABLED = "ssl_check_server_identity_enabled";
+
+  private static final String P_NEXUS_TRUST_STORE_ENABLED = "nexus_trust_store_enabled";
+
+  private final PasswordHelper passwordHelper;
+
+  @Inject
+  public EmailConfigurationEntityAdapter(final PasswordHelper passwordHelper) throws Exception {
     super(DB_CLASS);
+    this.passwordHelper = checkNotNull(passwordHelper);
   }
 
   @Override
@@ -64,6 +83,11 @@ public class EmailConfigurationEntityAdapter
     type.createProperty(P_PASSWORD, OType.STRING);
     type.createProperty(P_FROM_ADDRESS, OType.STRING);
     type.createProperty(P_SUBJECT_PREFIX, OType.STRING);
+    type.createProperty(P_START_TLS_ENABLED, OType.BOOLEAN);
+    type.createProperty(P_START_TLS_REQUIRED, OType.BOOLEAN);
+    type.createProperty(P_SSL_ON_CONNECT_ENABLED, OType.BOOLEAN);
+    type.createProperty(P_SSL_CHECK_SERVER_IDENTITY_ENABLED, OType.BOOLEAN);
+    type.createProperty(P_NEXUS_TRUST_STORE_ENABLED, OType.BOOLEAN);
   }
 
   @Override
@@ -80,14 +104,24 @@ public class EmailConfigurationEntityAdapter
     String password = document.field(P_PASSWORD, OType.STRING);
     String fromAddress = document.field(P_FROM_ADDRESS, OType.STRING);
     String subjectPrefix = document.field(P_SUBJECT_PREFIX, OType.STRING);
+    boolean startTlsEnabled = document.field(P_START_TLS_ENABLED, OType.BOOLEAN);
+    boolean startTlsRequired = document.field(P_START_TLS_REQUIRED, OType.BOOLEAN);
+    boolean sslOnConnectEnabled = document.field(P_SSL_ON_CONNECT_ENABLED, OType.BOOLEAN);
+    boolean sslCheckServerIdentityEnabled = document.field(P_SSL_CHECK_SERVER_IDENTITY_ENABLED, OType.BOOLEAN);
+    boolean nexusTrustStoreEnabled = document.field(P_NEXUS_TRUST_STORE_ENABLED, OType.BOOLEAN);
 
     entity.setEnabled(enabled);
     entity.setHost(host);
     entity.setPort(port);
     entity.setUsername(username);
-    entity.setPassword(password);
+    entity.setPassword(passwordHelper.decrypt(password));
     entity.setFromAddress(fromAddress);
     entity.setSubjectPrefix(subjectPrefix);
+    entity.setStartTlsEnabled(startTlsEnabled);
+    entity.setStartTlsRequired(startTlsRequired);
+    entity.setSslOnConnectEnabled(sslOnConnectEnabled);
+    entity.setSslCheckServerIdentityEnabled(sslCheckServerIdentityEnabled);
+    entity.setNexusTrustStoreEnabled(nexusTrustStoreEnabled);
   }
 
   @Override
@@ -96,8 +130,19 @@ public class EmailConfigurationEntityAdapter
     document.field(P_HOST, entity.getHost());
     document.field(P_PORT, entity.getPort());
     document.field(P_USERNAME, entity.getUsername());
-    document.field(P_PASSWORD, entity.getPassword());
+    document.field(P_PASSWORD, passwordHelper.encrypt(entity.getPassword()));
     document.field(P_FROM_ADDRESS, entity.getFromAddress());
     document.field(P_SUBJECT_PREFIX, entity.getSubjectPrefix());
+    document.field(P_START_TLS_ENABLED, entity.isStartTlsEnabled());
+    document.field(P_START_TLS_REQUIRED, entity.isStartTlsRequired());
+    document.field(P_SSL_ON_CONNECT_ENABLED, entity.isSslOnConnectEnabled());
+    document.field(P_SSL_CHECK_SERVER_IDENTITY_ENABLED, entity.isSslCheckServerIdentityEnabled());
+    document.field(P_NEXUS_TRUST_STORE_ENABLED, entity.isNexusTrustStoreEnabled());
   }
+
+  //
+  // Actions
+  //
+
+  public final SingletonActions<EmailConfiguration> singleton = new SingletonActions<>(this);
 }

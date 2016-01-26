@@ -15,9 +15,7 @@ package org.sonatype.nexus.common.app;
 import java.util.Date;
 
 /**
- * The event that is occured when nexus has started (fired as last step of boot process, everything is in place).
- *
- * @author cstamas
+ * Base-class for events fired on lifecycle state changes.
  */
 public abstract class NexusStateChangeEvent
 {

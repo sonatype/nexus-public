@@ -24,85 +24,92 @@ Ext.define('NX.coreui.view.system.BundleList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-system-bundlelist'
-  },
+  stateful: true,
+  stateId: 'nx-coreui-system-bundlelist',
 
-  store: 'Bundle',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'Bundle',
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'bundle-default';
-      }
-    },
-    {
-      header: NX.I18n.get('System_BundleList_ID_Header'),
-      dataIndex: 'id',
-      stateId: 'id',
-      width: 60,
-      resizable: false
-    },
-    {
-      header: NX.I18n.get('System_BundleList_State_Header'),
-      dataIndex: 'state',
-      stateId: 'state',
-      width: 80,
-      resizable: false
-    },
-    {
-      header: NX.I18n.get('System_BundleList_Level_Header'),
-      dataIndex: 'startLevel',
-      stateId: 'startLevel',
-      width: 60,
-      resizable: false
-    },
-    {
-      header: NX.I18n.get('System_BundleList_Name_Header'),
-      dataIndex: 'name',
-      stateId: 'name',
-      flex: 2
-    },
-    {
-      header: NX.I18n.get('System_BundleList_SymbolicName_Header'),
-      dataIndex: 'symbolicName',
-      stateId: 'symbolicName',
-      flex: 2,
-      hidden: true
-    },
-    {
-      header: NX.I18n.get('System_BundleList_Version_Header'),
-      dataIndex: 'version',
-      stateId: 'version',
-      flex: 1
-    },
-    {
-      header: NX.I18n.get('System_BundleList_Location_Header'),
-      dataIndex: 'location',
-      stateId: 'location',
-      hidden: true
-    },
-    {
-      header: NX.I18n.get('System_BundleList_Fragment_Header'),
-      dataIndex: 'fragment',
-      stateId: 'fragment',
-      hidden: true
-    }
-  ],
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          width: 36,
+          iconVariant: 'x16',
+          iconName: function () {
+            return 'bundle-default';
+          }
+        },
+        {
+          header: NX.I18n.get('System_BundleList_ID_Header'),
+          dataIndex: 'id',
+          stateId: 'id',
+          width: 60,
+          resizable: false
+        },
+        {
+          header: NX.I18n.get('System_BundleList_State_Header'),
+          dataIndex: 'state',
+          stateId: 'state',
+          width: 80,
+          resizable: false
+        },
+        {
+          header: NX.I18n.get('System_BundleList_Level_Header'),
+          dataIndex: 'startLevel',
+          stateId: 'startLevel',
+          width: 60,
+          resizable: false
+        },
+        {
+          header: NX.I18n.get('System_BundleList_Name_Header'),
+          dataIndex: 'name',
+          stateId: 'name',
+          flex: 2
+        },
+        {
+          header: NX.I18n.get('System_BundleList_SymbolicName_Header'),
+          dataIndex: 'symbolicName',
+          stateId: 'symbolicName',
+          flex: 2,
+          hidden: true
+        },
+        {
+          header: NX.I18n.get('System_BundleList_Version_Header'),
+          dataIndex: 'version',
+          stateId: 'version',
+          flex: 1
+        },
+        {
+          header: NX.I18n.get('System_BundleList_Location_Header'),
+          dataIndex: 'location',
+          stateId: 'location',
+          hidden: true
+        },
+        {
+          header: NX.I18n.get('System_BundleList_Fragment_Header'),
+          dataIndex: 'fragment',
+          stateId: 'fragment',
+          hidden: true
+        }
+      ],
 
-  dockedItems: [
-    {
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless'
-    }
-  ],
+      dockedItems: [
+        {
+          xtype: 'toolbar',
+          dock: 'top',
+          cls: 'nx-actions nx-borderless'
+        }
+      ],
 
-  plugins: [
-    {ptype: 'gridfilterbox', emptyText: NX.I18n.get('System_BundleList_Filter_EmptyText')}
-  ]
+      plugins: [
+        {ptype: 'gridfilterbox', emptyText: NX.I18n.get('System_BundleList_Filter_EmptyText')}
+      ]
+    });
+
+    this.callParent();
+  }
 });

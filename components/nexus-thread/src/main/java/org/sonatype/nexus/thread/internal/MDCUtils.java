@@ -26,6 +26,10 @@ import org.slf4j.MDC;
  */
 public class MDCUtils
 {
+  private MDCUtils() {
+    // empty
+  }
+
   public static final String CONTEXT_NON_INHERITABLE_KEY = "non-inheritable";
 
   public static Map<String, String> getCopyOfContextMap() {

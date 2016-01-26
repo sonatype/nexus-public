@@ -17,8 +17,8 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 import org.sonatype.nexus.bootstrap.Launcher;
-import org.sonatype.nexus.bootstrap.ShutdownHelper;
-import org.sonatype.nexus.bootstrap.ShutdownHelper.ShutdownDelegate;
+import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
+import org.sonatype.nexus.bootstrap.internal.ShutdownHelper.ShutdownDelegate;
 import org.sonatype.nexus.bootstrap.jetty.JettyServerConfiguration;
 
 import org.osgi.framework.BundleActivator;
@@ -97,6 +97,7 @@ public class LauncherActivator
   }
 
   public void doExit(int code) {
+    ShutdownHelper.setDelegate(ShutdownHelper.JAVA); // avoid recursion
     try {
       framework.stop();
       framework.waitForStop(0);

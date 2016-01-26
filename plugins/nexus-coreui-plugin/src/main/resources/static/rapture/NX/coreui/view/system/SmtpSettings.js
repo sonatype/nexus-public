@@ -51,16 +51,26 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
           {
             xtype: 'textfield',
             name: 'host',
+            itemId: 'host',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Host_FieldLabel')
           },
           {
             xtype: 'numberfield',
             name: 'port',
+            itemId: 'port',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Port_FieldLabel'),
             minValue: 1,
             maxValue: 65536,
             allowDecimals: false,
-            allowExponential: false
+            allowExponential: false,
+            useTrustStore: function (field) {
+              var form = field.up('form');
+              return {
+                name: 'nexusTrustStoreEnabled',
+                host: form.down('#host'),
+                port: form.down('#port')
+              };
+            }
           },
           {
             xtype: 'textfield',
@@ -84,6 +94,34 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             name: 'subjectPrefix',
             fieldLabel: NX.I18n.get('System_SmtpSettings_SubjectPrefix_FieldLabel'),
             allowBlank: true
+          },
+          {
+            xtype: 'checkboxgroup',
+            fieldLabel: NX.I18n.get('System_SmtpSettings_SslTlsSection_FieldLabel'),
+            columns: 1,
+            allowBlank: true,
+            items: [
+              {
+                xtype: 'checkbox',
+                name: 'startTlsEnabled',
+                boxLabel: NX.I18n.get('System_SmtpSettings_StartTlsEnabled_FieldLabel')
+              },
+              {
+                xtype: 'checkbox',
+                name: 'startTlsRequired',
+                boxLabel: NX.I18n.get('System_SmtpSettings_StartTlsRequired_FieldLabel')
+              },
+              {
+                xtype: 'checkbox',
+                name: 'sslOnConnectEnabled',
+                boxLabel: NX.I18n.get('System_SmtpSettings_SslOnConnectEnabled_FieldLabel')
+              },
+              {
+                xtype: 'checkbox',
+                name: 'sslCheckServerIdentityEnabled',
+                boxLabel: NX.I18n.get('System_SmtpSettings_SslCheckServerIdentityEnabled_FieldLabel')
+              }
+            ]
           }
         ]
       }

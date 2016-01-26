@@ -36,27 +36,11 @@ class Strings2Test
   }
 
   @Test
-  void 'is not blank'() {
-    assert !Strings2.isNotBlank(null)
-    assert !Strings2.isNotBlank('')
-    assert !Strings2.isNotBlank('   ')
-    assert Strings2.isNotBlank('foo')
-  }
-
-  @Test
   void 'is empty'() {
     assert Strings2.isEmpty(null)
     assert Strings2.isEmpty('')
     assert !Strings2.isEmpty('   ')
     assert !Strings2.isEmpty('foo')
-  }
-
-  @Test
-  void 'is not empty'() {
-    assert !Strings2.isNotEmpty(null)
-    assert !Strings2.isNotEmpty('')
-    assert Strings2.isNotEmpty('   ')
-    assert Strings2.isNotEmpty('foo')
   }
 
   @Test

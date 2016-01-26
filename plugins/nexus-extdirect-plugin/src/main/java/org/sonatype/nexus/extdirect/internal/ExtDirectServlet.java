@@ -90,7 +90,7 @@ public class ExtDirectServlet
   @Inject
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
-                          final @Nullable EventRecorder eventRecorder)
+                          @Nullable final EventRecorder eventRecorder)
   {
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);

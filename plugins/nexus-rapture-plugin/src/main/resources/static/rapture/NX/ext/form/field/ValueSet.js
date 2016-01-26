@@ -170,7 +170,7 @@ Ext.define('NX.ext.form.field.ValueSet', {
               },
               mouseover: function() {
                 // Sticky the input field’s error message
-                me.items.items[0].items.items[0].suspendEvents(false)
+                me.items.items[0].items.items[0].suspendEvents(false);
               },
               mouseout: function() {
                 // Unsticky the input field’s error message
@@ -226,7 +226,7 @@ Ext.define('NX.ext.form.field.ValueSet', {
         }
       });
       me.mon(me.valueField, 'change', function (input, newValue) {
-        if (!newValue || newValue == '') {
+        if (!newValue || newValue === '') {
           me.validate();
         }
       });

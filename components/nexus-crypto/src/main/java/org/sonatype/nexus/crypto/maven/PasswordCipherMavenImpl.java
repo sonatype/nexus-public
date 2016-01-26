@@ -23,7 +23,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
-import org.sonatype.nexus.crypto.PasswordCipher;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;

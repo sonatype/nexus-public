@@ -32,14 +32,14 @@ Ext.define('NX.coreui.view.repository.recipe.DockerGroup', {
   /**
    * @override
    */
-  initComponent: function() {
+  initComponent: function () {
     var me = this;
 
     me.items = [
-      { xtype: 'nx-coreui-repository-docker-connector-facet'},
-      { xtype: 'nx-coreui-repository-docker-v1-facet'},
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'docker' } 
+      {xtype: 'nx-coreui-repository-docker-connector-facet'},
+      {xtype: 'nx-coreui-repository-docker-v1-facet'},
+      {xtype: 'nx-coreui-repository-storage-facet'},
+      {xtype: 'nx-coreui-repository-group-facet', format: 'docker'}
     ];
 
     me.callParent(arguments);

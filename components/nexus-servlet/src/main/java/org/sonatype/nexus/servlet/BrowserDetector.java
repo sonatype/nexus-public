@@ -54,8 +54,8 @@ public class BrowserDetector
       .build();
 
   @Inject
-  public BrowserDetector(final @Named("${nexus.browserdetector.disable:-false}") boolean disable,
-                         final @Named("${nexus.browserdetector.excludedUserAgents}") @Nullable String excludedUserAgents) {
+  public BrowserDetector(@Named("${nexus.browserdetector.disable:-false}") final boolean disable,
+                         @Named("${nexus.browserdetector.excludedUserAgents}") @Nullable final String excludedUserAgents) {
     this.disable = disable;
     if (disable) {
       log.info("Browser detector disabled");

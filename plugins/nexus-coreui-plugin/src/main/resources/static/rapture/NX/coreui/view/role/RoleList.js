@@ -25,41 +25,39 @@ Ext.define('NX.coreui.view.role.RoleList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-role-list'
-  },
-
-  store: 'Role',
-
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'role-default';
-      }
-    },
-    {header: NX.I18n.get('Role_RoleList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1},
-    {header: NX.I18n.get('Role_RoleList_Source_Header'), dataIndex: 'source', stateId: 'source'},
-    {header: NX.I18n.get('Role_RoleList_Description_Header'), dataIndex: 'description', stateId: 'description', flex: 1}
-  ],
-
-  viewConfig: {
-    emptyText: NX.I18n.get('Role_RoleList_EmptyText'),
-    deferEmptyText: false
-  },
-
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Role_RoleList_Filter_EmptyText') }
-  ],
+  stateful: true,
+  stateId: 'nx-coreui-role-list',
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.store = 'Role';
+
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconName: function () {
+          return 'role-default';
+        }
+      },
+      {header: NX.I18n.get('Role_RoleList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1},
+      {header: NX.I18n.get('Role_RoleList_Source_Header'), dataIndex: 'source', stateId: 'source'},
+      {header: NX.I18n.get('Role_RoleList_Description_Header'), dataIndex: 'description', stateId: 'description', flex: 1}
+    ];
+
+    me.viewConfig = {
+      emptyText: NX.I18n.get('Role_RoleList_EmptyText'),
+      deferEmptyText: false
+    };
+
+    me.plugins = [
+      { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Role_RoleList_Filter_EmptyText') }
+    ];
 
     me.dockedItems = [{
       xtype: 'toolbar',

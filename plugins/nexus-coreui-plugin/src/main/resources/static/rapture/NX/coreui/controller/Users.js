@@ -186,14 +186,14 @@ Ext.define('NX.coreui.controller.Users', {
           me.addTab({ xtype: 'nx-coreui-user-settings-external', title: 'Settings', weight: 10 });
           externalSettingsPanel = me.getExternalSettings();
         }
-        externalSettingsPanel.loadRecord(model)
+        externalSettingsPanel.loadRecord(model);
       }
       else {
         if (!settingsPanel) {
           me.addTab({ xtype: 'nx-coreui-user-settings', title: 'Settings', weight: 10 });
           settingsPanel = me.getSettings();
         }
-        settingsPanel.loadRecord(model)
+        settingsPanel.loadRecord(model);
       }
 
       if (model.get('external')) {

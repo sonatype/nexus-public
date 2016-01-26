@@ -24,25 +24,34 @@ Ext.define('NX.coreui.view.search.SaveSearchFilter', {
     'NX.I18n'
   ],
 
-  title: NX.I18n.get('Search_SaveSearchFilter_Title'),
-  defaultFocus: 'name',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      title: NX.I18n.get('Search_SaveSearchFilter_Title'),
+      defaultFocus: 'name',
 
-  settingsForm: {
-    xtype: 'nx-settingsform',
-    items: [
-      {
-        xtype: 'textfield',
-        name: 'name',
-        itemId: 'name',
-        fieldLabel: NX.I18n.get('Search_SaveSearchFilter_Name_FieldLabel')
-      },
-      {
-        xtype: 'textfield',
-        name: 'description',
-        fieldLabel: NX.I18n.get('Search_SaveSearchFilter_Description_FieldLabel'),
-        allowBlank: true
+      settingsForm: {
+        xtype: 'nx-settingsform',
+        items: [
+          {
+            xtype: 'textfield',
+            name: 'name',
+            itemId: 'name',
+            fieldLabel: NX.I18n.get('Search_SaveSearchFilter_Name_FieldLabel')
+          },
+          {
+            xtype: 'textfield',
+            name: 'description',
+            fieldLabel: NX.I18n.get('Search_SaveSearchFilter_Description_FieldLabel'),
+            allowBlank: true
+          }
+        ]
       }
-    ]
+    });
+
+    this.callParent();
   }
 
 });

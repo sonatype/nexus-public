@@ -35,7 +35,7 @@ public final class DelegatingFilter
 
   private static volatile Filter delegate;
 
-  public synchronized static void set(Filter filter) {
+  public static synchronized void set(Filter filter) {
     if (cachedConfig != null) {
       try {
         filter.init(cachedConfig);
@@ -47,7 +47,7 @@ public final class DelegatingFilter
     delegate = filter;
   }
 
-  public synchronized static void unset(Filter filter) {
+  public static synchronized void unset(Filter filter) {
     if (delegate == filter) {
       delegate = null;
     }

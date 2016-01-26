@@ -21,6 +21,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.security.config.CUser;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
@@ -42,7 +43,6 @@ public class CUserEntityAdapter
     extends IterableEntityAdapter<CUser>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .prefix("security")
       .type("user")
       .build();
 
@@ -114,22 +114,7 @@ public class CUserEntityAdapter
   // TODO: Sort out API below with EntityAdapter, do not expose ODocument
   //
 
-  @Deprecated
-  public void write(final ODocument document, final CUser entity) {
-    writeEntity(document, entity);
-  }
-
   private static final String READ_QUERY = String.format("SELECT FROM %s WHERE %s = ?", DB_CLASS, P_ID);
-
-  @Nullable
-  public CUser read(final ODatabaseDocumentTx db, final String id) {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(READ_QUERY);
-    List<ODocument> results = db.command(query).execute(id);
-    if (results.isEmpty()) {
-      return null;
-    }
-    return readEntity(results.get(0));
-  }
 
   @Nullable
   @Deprecated
@@ -142,11 +127,11 @@ public class CUserEntityAdapter
     return results.get(0);
   }
 
-  private static final String DELETE_COMMAND = String.format("DELETE FROM %s WHERE %s = ?", DB_CLASS, P_ID);
+  //
+  // Actions
+  //
 
-  public boolean delete(final ODatabaseDocumentTx db, final String id) {
-    OCommandSQL command = new OCommandSQL(DELETE_COMMAND);
-    int records = db.command(command).execute(id);
-    return records == 1;
-  }
+  public final ReadEntityByPropertyAction<CUser> read = new ReadEntityByPropertyAction<>(this, P_ID);
+
+  public final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
 }

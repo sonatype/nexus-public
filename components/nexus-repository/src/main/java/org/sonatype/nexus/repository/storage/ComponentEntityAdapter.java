@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -23,22 +21,14 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityEvent;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_GROUP;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_VERSION;
+import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 
 /**
  * {@link Component} entity-adapter.
@@ -51,8 +41,18 @@ public class ComponentEntityAdapter
     extends MetadataNodeEntityAdapter<Component>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(Component.class)
+      .type("component")
       .build();
+
+  /**
+   * Key of {@link Component} group coordinate.
+   */
+  public static final String P_GROUP = "group";
+
+  /**
+   * Key of {@link Component} version coordinate.
+   */
+  public static final String P_VERSION = "version";
 
   private static final String I_BUCKET_GROUP_NAME_VERSION = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -130,25 +130,5 @@ public class ComponentEntityAdapter
       default:
         return null;
     }
-  }
-
-  private static final String DISTINCT_COMPONENT_NAMES = String
-      .format("SELECT DISTINCT(%s) AS %s FROM %s", P_NAME, P_NAME, DB_CLASS);
-  
-  private static final String ORDER_BY_NAME = String.format(" ORDER BY %s", P_NAME);
-
-  /**
-   * List the distinct names of components in the given buckets.
-   */
-  public List<String> getUniqueComponentNames(final ODatabaseDocumentTx db, final Iterable<Bucket> buckets) {
-    StringBuilder query = new StringBuilder(DISTINCT_COMPONENT_NAMES);
-    addBucketConstraints(null, buckets, query);
-    query.append(ORDER_BY_NAME);
-    final OResultSet<ODocument> resultSet = db
-        .command(new OSQLSynchQuery<>(query.toString()))
-        .execute();
-    return Lists.newArrayList(Iterables.transform(
-        resultSet, (ODocument input) -> input == null ? null : input.field(P_NAME, String.class)
-    ));
   }
 }

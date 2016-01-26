@@ -164,7 +164,7 @@ public class CapabilityEvent
   /**
    * Event fired when a capability is created (added to registry).
    * <p/>
-   * Called before {@link Capability#onCreate(java.util.Map)} / {@link Capability#onLoad(java.util.Map)} are called.
+   * Called before {@link Capability#onCreate} / {@link Capability#onLoad} are called.
    *
    * @since capabilities 2.0
    */

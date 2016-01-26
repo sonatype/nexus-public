@@ -24,14 +24,13 @@ Ext.define('NX.coreui.view.analytics.EventsZipCreated', {
     'NX.Icons'
   ],
 
-  fileType: 'Events ZIP',
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
 
+    me.fileType = NX.I18n.get('Analytics_EventsZipCreated_FileType');
     me.fileIcon = NX.Icons.img('analyticsevent-zip', 'x32');
 
     me.callParent();

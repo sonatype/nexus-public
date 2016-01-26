@@ -142,6 +142,6 @@ Ext.define('NX.view.drilldown.Drilldown', {
           itemId: 'nothin' + index
         }
       ]
-    }
+    };
   }
 });

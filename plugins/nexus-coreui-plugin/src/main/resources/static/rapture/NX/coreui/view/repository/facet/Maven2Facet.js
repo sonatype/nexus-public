@@ -58,6 +58,19 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
             ],
             value: 'RELEASE',
             readOnlyOnUpdate: true
+          },
+          {
+            xtype: 'combo',
+            name: 'attributes.maven.layoutPolicy',
+            fieldLabel: NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_HelpText'),
+            emptyText: NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_EmptyText'),
+            editable: false,
+            store: [
+              ['STRICT', NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_StrictItem')],
+              ['PERMISSIVE', NX.I18n.get('Repository_Facet_Maven2Facet_LayoutPolicy_PermissiveItem')]
+            ],
+            value: 'STRICT'
           }
         ]
       }

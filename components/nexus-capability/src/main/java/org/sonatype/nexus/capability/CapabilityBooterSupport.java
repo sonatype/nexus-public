@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.common.event.EventAware;
@@ -48,8 +50,8 @@ public abstract class CapabilityBooterSupport
   protected void maybeAddCapability(final CapabilityRegistry capabilityRegistry,
                                     final CapabilityType type,
                                     final boolean enabled,
-                                    final String notes,
-                                    final Map<String, String> properties)
+                                    @Nullable final String notes,
+                                    @Nullable final Map<String, String> properties)
       throws Exception
   {
     CapabilityReference reference = findCapability(capabilityRegistry, type);
@@ -85,12 +87,10 @@ public abstract class CapabilityBooterSupport
   protected void addCapability(final CapabilityRegistry capabilityRegistry,
                                final CapabilityType type,
                                final boolean enabled,
-                               final String notes,
-                               final Map<String, String> properties)
+                               @Nullable final String notes,
+                               @Nullable final Map<String, String> properties)
       throws Exception
   {
-    capabilityRegistry.add(
-        type, enabled, notes == null ? "Automatically added on " + new Date() : notes, properties
-    );
+    capabilityRegistry.add(type, enabled, notes == null ? "Automatically added on " + new Date() : notes, properties);
   }
 }

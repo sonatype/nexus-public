@@ -33,6 +33,7 @@ import org.sonatype.nexus.supportzip.SupportZipGenerator.Result
 import com.google.common.io.CountingOutputStream
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static com.google.common.base.Preconditions.checkState
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
@@ -72,10 +73,8 @@ class SupportZipGeneratorImpl
                           final @Named('${atlas.supportZipGenerator.maxFileSize:-30mb}') ByteSize maxFileSize,
                           final @Named('${atlas.supportZipGenerator.maxZipFileSize:-20mb}') ByteSize maxZipFileSize)
   {
-    assert downloadService
     this.bundleCustomizers = checkNotNull(bundleCustomizers)
-
-    this.downloadService = downloadService
+    this.downloadService = checkNotNull(downloadService)
 
     this.maxFileSize = maxFileSize
     log.info 'Maximum included file size: {}', maxFileSize
@@ -130,7 +129,7 @@ class SupportZipGeneratorImpl
 
   @Override
   Result generate(final Request request) {
-    assert request
+    checkNotNull(request)
 
     log.info 'Generating support ZIP: {}', request
 
@@ -141,11 +140,11 @@ class SupportZipGeneratorImpl
       log.debug 'Customizing bundle with: {}', it
       it.customize(bundle)
     }
-    assert !bundle.sources.isEmpty(): 'At least one bundle source must be configured'
+    checkState(!bundle.sources.isEmpty(), 'At least one bundle source must be configured')
 
     // filter only sources which user requested
     def sources = filterSources(request, bundle)
-    assert !sources.isEmpty(): 'At least one content source must be configured'
+    checkState(!sources.isEmpty(), 'At least one content source must be configured')
 
     try {
       // prepare bundle sources

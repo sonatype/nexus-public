@@ -25,8 +25,6 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,8 +36,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class NexusWebSecurityManager
     extends DefaultWebSecurityManager
 {
-  private static final Logger log = LoggerFactory.getLogger(NexusWebSecurityManager.class);
-
   private final Provider<EventBus> eventBus;
 
   @Inject
@@ -61,7 +57,7 @@ public class NexusWebSecurityManager
    * After login set the userId MDC attribute.
    */
   @Override
-  public Subject login(Subject subject, final AuthenticationToken token) throws AuthenticationException {
+  public Subject login(Subject subject, final AuthenticationToken token) {
     try {
       subject = super.login(subject, token);
       UserIdMdcHelper.set(subject);

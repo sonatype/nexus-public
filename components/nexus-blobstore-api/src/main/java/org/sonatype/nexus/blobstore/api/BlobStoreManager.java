@@ -25,7 +25,7 @@ public interface BlobStoreManager
   /**
    * Default blob store name.
    */
-  final String DEFAULT_BLOBSTORE_NAME = "default";
+  String DEFAULT_BLOBSTORE_NAME = "default";
 
   /**
    * @return all BlobStores

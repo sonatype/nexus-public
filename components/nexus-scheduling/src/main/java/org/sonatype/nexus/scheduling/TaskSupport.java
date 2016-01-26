@@ -12,24 +12,21 @@
  */
 package org.sonatype.nexus.scheduling;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.scheduling.CancelableSupport.CancelableFlagHolder;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Support for {@link Task} implementations. Subclasses may implement {@link Cancelable} interface if they are
- * implemented to periodically check for {@link #isCanceled()} or {@link CancelableSupport#checkCancellation()}
- * methods. Task implementations should be {@code @Named} components but must not be {@code @Singletons}.
+ * Support for {@link Task} implementations.
+ *
+ * Subclasses may implement {@link Cancelable} interface if they are implemented to periodically check for
+ * {@link #isCanceled()} or {@link CancelableHelper#checkCancellation()} methods.
+ *
+ * Task implementations should be {@code @Named} components but must not be {@code @Singletons}.
  *
  * @since 3.0
  */
@@ -39,31 +36,34 @@ public abstract class TaskSupport
 {
   private final TaskConfiguration configuration;
 
-  private final CancelableFlagHolder cancelableFlagHolder;
+  private final AtomicBoolean canceledFlag;
 
   public TaskSupport() {
     this.configuration = createTaskConfiguration();
-    this.cancelableFlagHolder = new CancelableFlagHolder();
+    this.canceledFlag = new AtomicBoolean(false);
   }
 
   protected TaskConfiguration createTaskConfiguration() {
     return new TaskConfiguration();
   }
 
-  protected TaskConfiguration getConfiguration() { return configuration; }
+  protected TaskConfiguration getConfiguration() {
+    return configuration;
+  }
 
-  // == NexusTask
-
+  @Override
   public TaskConfiguration taskConfiguration() {
     return new TaskConfiguration(configuration);
   }
 
   @Override
-  public void configure(final TaskConfiguration configuration) throws IllegalArgumentException {
+  public void configure(final TaskConfiguration configuration) {
     checkNotNull(configuration);
+
     configuration.validate();
     this.configuration.apply(configuration);
-    final String message = getMessage();
+
+    String message = getMessage();
     if (!Strings.isNullOrEmpty(message)) {
       this.configuration.setMessage(message);
     }
@@ -80,52 +80,41 @@ public abstract class TaskSupport
   }
 
   /**
-   * Returns running tasks having same type as this task.
+   * Install canceled flag and {@link #execute()}.
    */
   @Override
-  public List<TaskInfo> isBlockedBy(final List<TaskInfo> runningTasks) {
-    return Lists.newArrayList(Iterables.filter(runningTasks, new Predicate<TaskInfo>()
-    {
-      @Override
-      public boolean apply(final TaskInfo taskInfo) {
-        // blockedBy: running tasks of same type as me
-        return State.RUNNING == taskInfo.getCurrentState().getState()
-            && getConfiguration().getTypeId().equals(taskInfo.getConfiguration().getTypeId());
-      }
-    }));
-  }
-
-  @Override
   public final Object call() throws Exception {
-    MDC.put(TaskSupport.class.getSimpleName(), getClass().getSimpleName());
-    CancelableSupport.setCurrent(cancelableFlagHolder);
+    CancelableHelper.set(canceledFlag);
     try {
       return execute();
     }
     finally {
-      CancelableSupport.setCurrent(null);
-      MDC.remove(TaskSupport.class.getSimpleName());
+      CancelableHelper.remove();
     }
   }
 
-  // == Cancelable (default implementations, used when Cancelable iface implemented)
-
-  public void cancel() {
-    cancelableFlagHolder.cancel();
-  }
-
-  public boolean isCanceled() {
-    return cancelableFlagHolder.isCanceled();
-  }
-
-  // == Internal
-
   /**
-   * Where the job is done.
+   * Execute task logic.
    */
   protected abstract Object execute() throws Exception;
 
-  // ==
+  //
+  // Cancelable; not directly implemented but here allow Cancelable to be used as a marker and provide impl
+  //
+
+  /**
+   * Cancel this task.
+   */
+  public void cancel() {
+    canceledFlag.set(true);
+  }
+
+  /**
+   * Check if this task is canceled.
+   */
+  public boolean isCanceled() {
+    return canceledFlag.get();
+  }
 
   @Override
   public String toString() {

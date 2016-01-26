@@ -18,7 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore
-import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.blobstore.file.PeriodicJobService
 
 import com.google.common.collect.Lists
 import org.junit.Before
@@ -28,7 +28,6 @@ import org.junit.rules.TemporaryFolder
 import org.mockito.Mock
 
 import static org.junit.Assert.fail
-import static org.mockito.Matchers.anyString
 import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.spy
@@ -45,20 +44,19 @@ class BlobStoreManagerImplTest
   public TemporaryFolder temporaryFolder = new TemporaryFolder()
 
   @Mock
-  ApplicationDirectories directories
-
-  @Mock
   BlobStoreConfigurationStore store
   
   @Mock
   Provider<BlobStore> provider
 
+  @Mock
+  PeriodicJobService jobService
+
   BlobStoreManagerImpl underTest
 
   @Before
   void setup() {
-    when(directories.getWorkDirectory(anyString())).thenReturn(temporaryFolder.root)
-    underTest = spy(new BlobStoreManagerImpl(directories, store, [test: provider, File: provider]))
+    underTest = spy(new BlobStoreManagerImpl(store, jobService, [test: provider, File: provider]))
   }
 
   @Test
@@ -121,8 +119,7 @@ class BlobStoreManagerImplTest
   }
 
   @Test
-  void 'Invalid configuration is rolled back'() {
-    BlobStore blobStore = mock(BlobStore)
+  void 'Blob store not created for invalid configuration'() {
     when(provider.get()).thenThrow(new IllegalArgumentException())
 
     BlobStoreConfiguration configuration = createConfig('test')
@@ -135,16 +132,13 @@ class BlobStoreManagerImplTest
       // expected
     }
 
-    verify(store).create(configuration)
-    verify(store).delete(configuration)
-
     assert underTest.browse().toList() == []
   }
 
-  private BlobStoreConfiguration createConfig(name = 'foo', attributes = [file:[path:'baz']]) {
+  private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {
     def entity = new BlobStoreConfiguration(
         name: name,
-        type: 'test',
+        type: type,
         attributes: attributes
     )
     return entity

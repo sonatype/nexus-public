@@ -24,24 +24,33 @@ Ext.define('NX.view.footer.Panel', {
     'NX.I18n'
   ],
 
-  layout: {
-    type: 'vbox',
-    align: 'stretch',
-    pack: 'start'
-  },
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      layout: {
+        type: 'vbox',
+        align: 'stretch',
+        pack: 'start'
+      },
 
-  items: [
-    {
-      xtype: 'container',
-      html: NX.I18n.get('Footer_Panel_HTML'),
-      style: {
-        'background-color': '#444444',
-        'color': '#C6C6C6',
-        'font-size': '8px',
-        'text-align': 'right',
-        'padding': '1px 2px 0px 0px'
-      }
-    },
-    { xtype: 'nx-footer-branding', hidden: true }
-  ]
+      items: [
+        {
+          xtype: 'container',
+          html: NX.I18n.get('Footer_Panel_HTML'),
+          style: {
+            'background-color': '#444444',
+            'color': '#C6C6C6',
+            'font-size': '8px',
+            'text-align': 'right',
+            'padding': '1px 2px 0px 0px'
+          }
+        },
+        { xtype: 'nx-footer-branding', hidden: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

@@ -37,7 +37,7 @@ import static org.apache.maven.plugins.annotations.LifecyclePhase.PROCESS_RESOUR
 public class AggregateJsMojo
     extends AbstractMojo
 {
-  public static final String[] DEFAULT_INCLUDES = { "**/*.js" };
+  private static final String[] DEFAULT_INCLUDES = { "**/*.js" };
 
   @Parameter(required = true)
   private File sourceDirectory;

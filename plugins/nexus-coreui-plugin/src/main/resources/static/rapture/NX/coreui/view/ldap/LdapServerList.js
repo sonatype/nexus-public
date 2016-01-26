@@ -24,63 +24,70 @@ Ext.define('NX.coreui.view.ldap.LdapServerList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-ldapserver-list'
-  },
+  stateful: true,
+  stateId: 'nx-coreui-ldapserver-list',
 
-  store: 'LdapServer',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'LdapServer',
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'ldapserver-default';
-      }
-    },
-    { header: NX.I18n.get('Ldap_LdapServerList_Order_Header'), dataIndex: 'order', stateId: 'order', width: 80 },
-    { header: NX.I18n.get('Ldap_LdapServerList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1 },
-    { header: NX.I18n.get('Ldap_LdapServerList_URL_Header'), dataIndex: 'url', stateId: 'url', flex: 1 }
-  ],
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          width: 36,
+          iconVariant: 'x16',
+          iconName: function () {
+            return 'ldapserver-default';
+          }
+        },
+        { header: NX.I18n.get('Ldap_LdapServerList_Order_Header'), dataIndex: 'order', stateId: 'order', width: 80 },
+        { header: NX.I18n.get('Ldap_LdapServerList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1 },
+        { header: NX.I18n.get('Ldap_LdapServerList_URL_Header'), dataIndex: 'url', stateId: 'url', flex: 1 }
+      ],
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Ldap_LdapServerList_EmptyText'),
-    deferEmptyText: false
-  },
-
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Ldap_LdapServerList_New_Button'),
-        glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
-        action: 'new',
-        disabled: true
+      viewConfig: {
+        emptyText: NX.I18n.get('Ldap_LdapServerList_EmptyText'),
+        deferEmptyText: false
       },
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Ldap_LdapServerList_ChangeOrder_Button'),
-        glyph: 'xf162@FontAwesome' /* fa-sort-numeric-asc */,
-        action: 'changeorder',
-        disabled: true
-      },
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Ldap_LdapServerList_ClearCache_Button'),
-        glyph: 'xf014@FontAwesome' /* fa-trash-o */,
-        action: 'clearcache',
-        disabled: true
-      }
-    ]
-  }],
 
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Ldap_LdapServerList_Filter_EmptyText') }
-  ]
+      dockedItems: [{
+        xtype: 'toolbar',
+        dock: 'top',
+        cls: 'nx-actions nx-borderless',
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Ldap_LdapServerList_New_Button'),
+            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            action: 'new',
+            disabled: true
+          },
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Ldap_LdapServerList_ChangeOrder_Button'),
+            glyph: 'xf162@FontAwesome' /* fa-sort-numeric-asc */,
+            action: 'changeorder',
+            disabled: true
+          },
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Ldap_LdapServerList_ClearCache_Button'),
+            glyph: 'xf014@FontAwesome' /* fa-trash-o */,
+            action: 'clearcache',
+            disabled: true
+          }
+        ]
+      }],
+
+      plugins: [
+        { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Ldap_LdapServerList_Filter_EmptyText') }
+      ]
+    });
+
+    this.callParent();
+  }
 
 });

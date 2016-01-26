@@ -41,5 +41,7 @@ public class GroupType
     return ValidationGroup.class;
   }
 
-  public static interface ValidationGroup {}
+  public interface ValidationGroup {
+    // empty
+  }
 }

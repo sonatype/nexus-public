@@ -17,6 +17,10 @@ package org.sonatype.nexus.common.property;
  */
 public class SystemPropertiesHelper
 {
+  private SystemPropertiesHelper() {
+    // empty
+  }
+
   public static int getInteger(final String key, final int defaultValue) {
     final String value = System.getProperty(key);
 

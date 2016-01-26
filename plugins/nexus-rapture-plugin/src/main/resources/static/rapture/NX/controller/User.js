@@ -247,9 +247,9 @@ Ext.define('NX.controller.User', {
       },
       scope: me,
       suppressStatus: true,
-      success: function() {
+      success: function () {
         win.getEl().unmask();
-        NX.State.setUser({ id: values.username });
+        NX.State.setUser({id: values.username});
         win.close();
 
         // invoke optional success callback registered on window
@@ -257,10 +257,10 @@ Ext.define('NX.controller.User', {
           win.options.success.call(win.options.scope, win.options);
         }
       },
-      failure: function(response) {
+      failure: function (response) {
         var message = NX.I18n.get('User_Credentials_Message');
-        if(response.status === 0) {
-          message = NX.I18n.get('User_ConnectFailure_Message');  
+        if (response.status === 0) {
+          message = NX.I18n.get('User_ConnectFailure_Message');
         }
         win.getEl().unmask();
         NX.Messages.add({
@@ -351,7 +351,7 @@ Ext.define('NX.controller.User', {
   /**
    * @private
    */
-  onClickSignOut: function() {
+  onClickSignOut: function () {
     var me = this;
 
     if (me.fireEvent('beforesignout')) {
@@ -374,7 +374,7 @@ Ext.define('NX.controller.User', {
       method: 'DELETE',
       scope: me,
       suppressStatus: true,
-      success: function() {
+      success: function () {
         NX.State.setUser(undefined);
       }
     });

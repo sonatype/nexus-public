@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.extender;
 
-import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.EnumSet;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -48,10 +48,13 @@ import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.SynchronousBundleListener;
+import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
@@ -60,9 +63,8 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonMap;
-import static org.apache.karaf.features.FeaturesService.Option.ContinueBatchOnFailure;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
-import static org.apache.karaf.features.FeaturesService.Option.NoCleanIfFailure;
+import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 
 /**
  * {@link ServletContextListener} that bootstraps the core Nexus application.
@@ -159,19 +161,17 @@ public class NexusContextListener
       application = injector.getInstance(Key.get(Lifecycle.class, Names.named("NxApplication")));
       log.debug("Application: {}", application);
 
-      final FrameworkStartLevel fsl = bundleContext.getBundle(0).adapt(FrameworkStartLevel.class);
-
-      // assign higher start level to hold back plugin activation
-      fsl.setInitialBundleStartLevel(NEXUS_PLUGIN_START_LEVEL);
+      // assign higher start level to any bundles installed after this point to hold back activation
+      bundleContext.addBundleListener((SynchronousBundleListener) (e) -> {
+        if (e.getType() == BundleEvent.INSTALLED) {
+          e.getBundle().adapt(BundleStartLevel.class).setStartLevel(NEXUS_PLUGIN_START_LEVEL);
+        }
+      });
 
       installFeatures(getFeatures((String) nexusProperties.get("nexus-features")));
 
-      if (nexusProperties.containsKey("nexus-test-features")) {
-        installFeatures(getFeatures((String) nexusProperties.get("nexus-test-features")));
-      }
-
-      // raise framework start level to activate plugins
-      fsl.setStartLevel(NEXUS_PLUGIN_START_LEVEL, this);
+      // feature bundles have all been installed, so raise framework start level to finish activation
+      bundleContext.getBundle(0).adapt(FrameworkStartLevel.class).setStartLevel(NEXUS_PLUGIN_START_LEVEL, this);
     }
     catch (final Exception e) {
       log.error("Failed to lookup application", e);
@@ -196,7 +196,7 @@ public class NexusContextListener
     checkNotNull(event);
 
     if (event.getType() == FrameworkEvent.STARTLEVEL_CHANGED) {
-      // any local Nexus plugins have now been activated
+      // feature bundles have all been activated at this point
 
       try {
         application.start();
@@ -295,11 +295,18 @@ public class NexusContextListener
   private void installFeatures(final Set<Feature> features) throws Exception {
     log.info("Installing selected features...");
 
-    // install features using batch mode; skip features already in the cache
-    features.removeAll(Arrays.asList(featuresService.listInstalledFeatures()));
-    if (features.size() > 0) {
-      final EnumSet<Option> options = EnumSet.of(ContinueBatchOnFailure, NoCleanIfFailure, NoAutoRefreshBundles);
-      featuresService.installFeatures(features, options);
+    Set<String> featureIds = new HashSet<>(features.size());
+    for (final Feature f : features) {
+      // feature might already be installed in the cache; if so then skip installation
+      if (!featuresService.isInstalled(f)) {
+        featureIds.add(f.getId());
+      }
+    }
+
+    if (!featureIds.isEmpty()) {
+      // avoid auto-refreshing bundles as that could trigger unwanted restart/lifecycle events
+      EnumSet<Option> options = EnumSet.of(NoAutoRefreshBundles, NoAutoRefreshManagedBundles);
+      featuresService.installFeatures(featureIds, options);
     }
 
     log.info("Installed {} features", features.size());

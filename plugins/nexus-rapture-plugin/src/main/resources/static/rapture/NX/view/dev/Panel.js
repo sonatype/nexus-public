@@ -49,7 +49,7 @@ Ext.define('NX.view.dev.Panel', {
     getState: function() {
       return {
         activeTabId: this.items.findIndex('id', this.getActiveTab().id)
-      }
+      };
     },
 
     /**

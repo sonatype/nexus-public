@@ -41,7 +41,7 @@ public class BlobStoreConfigurationEntityAdapter
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .prefix("repository")
-      .type(BlobStoreConfiguration.class)
+      .type("blobstore")
       .build();
 
   private static final String P_NAME = "name";

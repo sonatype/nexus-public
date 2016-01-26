@@ -21,12 +21,12 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
   requires: [
     'NX.I18n'
   ],
-  
+
   /**
    * @override
    */
   initComponent: function() {
-    var me = this, 
+    var me = this,
         helpUrl = NX.getApplication().getController('Help').createUrl('docker connector');
 
     me.items = [
@@ -53,7 +53,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
                 html: NX.I18n.format('Repository_Facet_DockerConnectorFacet_Help', helpUrl)
               }
             ]
-          },  
+          },
           {
             xtype: 'fieldcontainer',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel'),

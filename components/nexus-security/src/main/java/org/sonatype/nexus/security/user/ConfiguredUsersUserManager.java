@@ -94,7 +94,7 @@ public class ConfiguredUsersUserManager
     List<CUserRoleMapping> userRoleMappings = configuration.listUserRoleMappings();
     for (CUserRoleMapping userRoleMapping : userRoleMappings) {
       String userId = userRoleMapping.getUserId();
-      if (Strings2.isNotBlank(userId)) {
+      if (!Strings2.isBlank(userId)) {
         userIds.add(userId);
       }
     }

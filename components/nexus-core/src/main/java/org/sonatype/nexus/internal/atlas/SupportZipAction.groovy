@@ -17,9 +17,9 @@ import javax.inject.Named
 
 import org.sonatype.nexus.supportzip.SupportZipGenerator
 
-import org.apache.karaf.shell.commands.Command
-import org.apache.karaf.shell.commands.Option
-import org.apache.karaf.shell.console.AbstractAction
+import org.apache.karaf.shell.api.action.Action
+import org.apache.karaf.shell.api.action.Command
+import org.apache.karaf.shell.api.action.Option
 
 /**
  * Action to generate a support ZIP.
@@ -29,7 +29,7 @@ import org.apache.karaf.shell.console.AbstractAction
 @Named
 @Command(name = 'support-zip', scope = 'nexus', description = 'Generate a support ZIP')
 class SupportZipAction
-    extends AbstractAction
+    implements Action
 {
   @Inject
   SupportZipGenerator supportZipGenerator
@@ -59,7 +59,7 @@ class SupportZipAction
   boolean limitZipSize = false
 
   @Override
-  protected def doExecute() {
+  public Object execute() throws Exception {
     def request = new SupportZipGenerator.Request(
         systemInformation: systemInformation,
         threadDump: threadDump,

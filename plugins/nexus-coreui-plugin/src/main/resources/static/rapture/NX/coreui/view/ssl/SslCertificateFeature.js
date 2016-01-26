@@ -24,15 +24,24 @@ Ext.define('NX.coreui.view.ssl.SslCertificateFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'sslcertificate-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'sslcertificate-default',
 
-  masters: [
-    { xtype: 'nx-coreui-sslcertificate-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-sslcertificate-list' }
+      ],
 
-  tabs: { xtype: 'nx-coreui-sslcertificate-details' },
+      tabs: { xtype: 'nx-coreui-sslcertificate-details' },
 
-  actions: [
-    { xtype: 'button', text: NX.I18n.get('Ssl_SslCertificateFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
-  ]
+      actions: [
+        { xtype: 'button', text: NX.I18n.get('Ssl_SslCertificateFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

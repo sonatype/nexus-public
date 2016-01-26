@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.bootstrap.PropertyMap;
-import org.sonatype.nexus.bootstrap.ShutdownHelper;
+import org.sonatype.nexus.bootstrap.internal.PropertyMap;
+import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -265,8 +265,8 @@ public class JettyServer
 
     @Override
     public void run() {
+      Server server = null;
       try {
-        Server server = null;
         try {
           for (LifeCycle component : components) {
             if (!component.isRunning()) {
@@ -294,16 +294,17 @@ public class JettyServer
           }
           server.join();
         }
-        else {
-          log.error("Failed to start", exception);
-          ShutdownHelper.exit(-1);
-        }
       }
       catch (InterruptedException e) {
         // nothing
       }
       finally {
         stopped.countDown();
+      }
+
+      if (server == null) {
+        log.error("Failed to start", exception);
+        ShutdownHelper.exit(-1);
       }
     }
 
@@ -349,7 +350,7 @@ public class JettyServer
 
       StringBuilder buf = new StringBuilder();
       buf.append("\n-------------------------------------------------\n\n");
-      buf.append("Started ").append(banner instanceof String ? banner : "Sonatype Nexus");
+      buf.append("Started ").append(banner instanceof String ? banner : "Nexus Repository Manager");
       buf.append("\n\n-------------------------------------------------");
       log.info(buf.toString());
     }

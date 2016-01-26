@@ -33,7 +33,7 @@ public class TokenMatcher
     extends ComponentSupport
     implements Matcher
 {
-  public static interface State
+  public interface State
   {
     String pattern();
 

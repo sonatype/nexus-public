@@ -15,10 +15,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sonatype Nexus</title>
+  <title>Nexus Repository Manager</title>
 
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <meta name="description" content="Sonatype Nexus"/>
+  <meta name="description" content="Nexus Repository Manager"/>
   <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 
   <link rel="icon" type="image/png" href="$raptureUrl/resources/favicon.png?$urlSuffix"/>

@@ -18,17 +18,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Schedule that executes once at given time.
+ *
+ * @see ScheduleFactory#once(Date)
  */
 public class Once
     extends Schedule
 {
+  public static final String TYPE = "once";
+
   public Once(final Date startAt) {
-    super("once");
+    super(TYPE);
     checkNotNull(startAt);
-    properties.put("schedule.startAt", dateToString(startAt));
+    set(SCHEDULE_START_AT, dateToString(startAt));
   }
 
   public Date getStartAt() {
-    return stringToDate(properties.get("schedule.startAt"));
+    return stringToDate(get(SCHEDULE_START_AT));
   }
 }

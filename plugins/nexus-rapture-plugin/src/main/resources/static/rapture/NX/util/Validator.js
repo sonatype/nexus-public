@@ -40,6 +40,13 @@ Ext.define('NX.util.Validator', {
   nxNameRegex : /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/,
 
   /**
+   * Removes the constraint for a maximum of 6 characters in the last element of the domain name, otherwise
+   * is the same as default ExtJS email vtype.
+   * @private
+   */
+  nxEmailRegex : /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.){1,5}([A-Za-z]){2,60}$/,
+
+  /**
    * @private
    */
   vtypes : [
@@ -47,7 +54,11 @@ Ext.define('NX.util.Validator', {
       'nx-name': function(val) {
         return NX.util.Validator.nxNameRegex.test(val);
       },
-      'nx-nameText': NX.I18n.get('Util_Validator_Text')
+      'nx-nameText': NX.I18n.get('Util_Validator_Text'),
+      'nx-email': function(val) {
+        return NX.util.Validator.nxEmailRegex.test(val);
+      },
+      'nx-emailText': Ext.form.field.VTypes.emailText
     }
   ],
 

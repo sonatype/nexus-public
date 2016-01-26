@@ -91,7 +91,7 @@ Ext.define('NX.view.dev.styles.Buttons', {
           button(name, name, false, false, true),
           me.html(colorSampleTpl.apply(colors))
         ]
-      }
+      };
     }
 
     me.items = [

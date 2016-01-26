@@ -24,7 +24,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.PbeCompression;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -49,7 +51,7 @@ public class ApiKeyEntityAdapter
     extends IterableEntityAdapter<ApiKey>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(ApiKey.class)
+      .type("api_key")
       .build();
 
   private static final String P_DOMAIN = "domain";
@@ -74,6 +76,12 @@ public class ApiKeyEntityAdapter
 
   public ApiKeyEntityAdapter() {
     super(DB_CLASS);
+  }
+
+  @Override
+  protected void defineType(final ODatabaseDocumentTx db, final OClass type) {
+    super.defineType(db, type);
+    PbeCompression.enableRecordEncryption(db, type);
   }
 
   @Override
@@ -110,40 +118,6 @@ public class ApiKeyEntityAdapter
     entity.setPrincipals(principals);
   }
 
-  @Override
-  protected void writeFields(final ODocument document, final ApiKey entity) {
-    document.field(P_DOMAIN, entity.getDomain());
-    document.field(P_APIKEY, String.valueOf(entity.getApiKey()));
-    document.field(P_PRIMARY_PRINCIPAL, entity.getPrincipals().getPrimaryPrincipal().toString());
-    document.field(P_PRINCIPALS, serialize(entity.getPrincipals()));
-  }
-
-  private static final String SELECT_BY_API_KEY = String.format("SELECT FROM %s WHERE %s=? AND %s=?", DB_CLASS, P_DOMAIN, P_APIKEY);
-
-  @Nullable
-  public ApiKey findByApiKey(final ODatabaseDocumentTx db, final String domain, final char[] apiKey) {
-    final OResultSet<ODocument> resultSet = db
-        .command(new OSQLSynchQuery<ODocument>(SELECT_BY_API_KEY))
-        .execute(checkNotNull(domain), String.valueOf(checkNotNull(apiKey)));
-
-    if (resultSet.isEmpty()) {
-      return null;
-    }
-
-    return readEntity(resultSet.iterator().next());
-  }
-
-  private static final String SELECT_BY_PRIMARY_PRINCIPAL =
-      String.format("SELECT FROM %s WHERE %s=?", DB_CLASS, P_PRIMARY_PRINCIPAL);
-
-  public Iterable<ApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db, final String principal) {
-    final OResultSet<ODocument> resultSet = db
-        .command(new OSQLSynchQuery<ODocument>(SELECT_BY_PRIMARY_PRINCIPAL))
-        .execute(checkNotNull(principal));
-
-    return transform(resultSet);
-  }
-
   private Object deserialize(final ODocument document, final String fieldName) {
     ClassLoader tccl = Thread.currentThread().getContextClassLoader();
     final byte[] bytes = document.field(fieldName, OType.BINARY);
@@ -159,6 +133,14 @@ public class ApiKeyEntityAdapter
     }
   }
 
+  @Override
+  protected void writeFields(final ODocument document, final ApiKey entity) {
+    document.field(P_DOMAIN, entity.getDomain());
+    document.field(P_APIKEY, String.valueOf(entity.getApiKey()));
+    document.field(P_PRIMARY_PRINCIPAL, entity.getPrincipals().getPrimaryPrincipal().toString());
+    document.field(P_PRINCIPALS, serialize(entity.getPrincipals()));
+  }
+
   private byte[] serialize(final Object object) {
     try (ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
       ObjectOutputStream objects = new ObjectOutputStream(bytes);
@@ -169,5 +151,33 @@ public class ApiKeyEntityAdapter
     catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  //
+  // Actions
+  //
+
+  /**
+   * Browse all entities which have matching primary principal.
+   */
+  public final BrowseEntitiesByPropertyAction<ApiKey> browseByPrimaryPrincipal =
+      new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
+
+  private static final String SELECT_BY_API_KEY = String.format("SELECT FROM %s WHERE %s=? AND %s=?", DB_CLASS, P_DOMAIN, P_APIKEY);
+
+  @Nullable
+  public ApiKey findByApiKey(final ODatabaseDocumentTx db, final String domain, final char[] apiKey) {
+    checkNotNull(domain);
+    checkNotNull(apiKey);
+
+    final OResultSet<ODocument> resultSet = db
+        .command(new OSQLSynchQuery<ODocument>(SELECT_BY_API_KEY))
+        .execute(domain, String.valueOf(apiKey));
+
+    if (resultSet.isEmpty()) {
+      return null;
+    }
+
+    return readEntity(resultSet.iterator().next());
   }
 }

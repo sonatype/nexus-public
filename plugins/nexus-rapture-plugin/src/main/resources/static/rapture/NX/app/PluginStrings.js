@@ -33,7 +33,7 @@ Ext.define('NX.app.PluginStrings', {
 
   keys: {
     // Header
-    Header_Panel_Logo_Text: 'Sonatype Nexus',
+    Header_Panel_Logo_Text: 'Nexus Repository Manager',
     Header_BrowseMode_Title: 'Browse',
     Header_BrowseMode_Tooltip: 'Browse server contents',
     Header_AdminMode_Title: 'Administration',
@@ -52,17 +52,17 @@ Ext.define('NX.app.PluginStrings', {
     Help_Feature_Text: 'Help for: ',
     Header_Help_Feature_Tooltip: 'Help and documentation for the currently selected feature',
     Header_Help_About_Text: 'About',
-    Header_Help_About_Tooltip: 'About Sonatype Nexus',
+    Header_Help_About_Tooltip: 'About Nexus Repository Manager',
     Header_Help_Documentation_Text: 'Documentation',
-    Header_Help_Documentation_Tooltip: 'Sonatype Nexus product documentation',
+    Header_Help_Documentation_Tooltip: 'Product documentation',
     Header_Help_KB_Text: 'Knowledge base',
-    Header_Help_KB_Tooltip: 'Sonatype Nexus knowledge base',
+    Header_Help_KB_Tooltip: 'Knowledge base',
     Header_Help_Community_Text: 'Community',
-    Header_Help_Community_Tooltip: 'Sonatype Nexus community information',
+    Header_Help_Community_Tooltip: 'Community information',
     Header_Help_Issues_Text: 'Issue tracker',
-    Header_Help_Issues_Tooltip: 'Sonatype Nexus issue and bug tracker',
+    Header_Help_Issues_Tooltip: 'Issue and bug tracker',
     Header_Help_Support_Text: 'Support',
-    Header_Help_Support_Tooltip: 'Sonatype Nexus product support',
+    Header_Help_Support_Tooltip: 'Product support',
 
     // Footer
     Footer_Panel_HTML: 'Copyright &copy; 2008-present, Sonatype Inc. All rights reserved.',
@@ -87,6 +87,7 @@ Ext.define('NX.app.PluginStrings', {
     Add_Cancel_Button: 'Cancel',
     ChangeOrderWindow_Submit_Button: 'Save',
     ChangeOrderWindow_Cancel_Button: 'Cancel',
+    Close_Button: 'Close',
 
     // Server
     User_ConnectFailure_Message: 'Operation failed as server could not be contacted',
@@ -96,7 +97,7 @@ Ext.define('NX.app.PluginStrings', {
     UiSessionTimeout_Expired_Message: 'Session expired after being inactive for {0} minutes',
     User_SignedIn_Message: 'User signed in: {0}',
     User_SignedOut_Message: 'User signed out',
-    User_Credentials_Message: 'Incorrect username and/or password or no permission to use the Nexus User Interface.',
+    User_Credentials_Message: 'Incorrect username or password, or no permission to use the application.',
     Util_DownloadHelper_Download_Message: 'Download initiated',
     Windows_Popup_Message: 'Window pop-up was blocked!',
 
@@ -105,8 +106,7 @@ Ext.define('NX.app.PluginStrings', {
     State_Uninstalled_Message: 'License uninstalled',
 
     // About modal
-    AboutWindow_Title: 'About Sonatype Nexus',
-    AboutWindow_Close_Button: 'Close',
+    AboutWindow_Title: 'About Nexus Repository Manager',
     AboutWindow_About_Title: 'Copyright',
     AboutWindow_License_Tab: 'License',
 
@@ -125,7 +125,6 @@ Ext.define('NX.app.PluginStrings', {
     SignedOut_Text: 'Your session has expired. Please sign in.',
     ExpireSession_Cancel_Button: 'Cancel',
     ExpireSession_SignIn_Button: 'Sign in',
-    ExpireSession_Close_Button: 'Close',
 
     // Unsaved changes modal
     UnsavedChanges_Title: 'Unsaved changes',
@@ -157,7 +156,7 @@ Ext.define('NX.app.PluginStrings', {
 
     // Browse -> Welcome
     Dashboard_Title: 'Welcome',
-    Dashboard_Description: 'Welcome to Sonatype Nexus!',
+    Dashboard_Description: 'Welcome to Nexus Repository Manager!',
 
     // Field validation messages
     Util_Validator_Text: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.'

@@ -54,6 +54,8 @@ public class WebResourceServiceImpl
 
   private final List<WebResource> resources;
 
+  private final DevModeResources devModeResources;
+
   private final ServletContext servletContext;
 
   private final MimeSupport mimeSupport;
@@ -63,11 +65,13 @@ public class WebResourceServiceImpl
   @Inject
   public WebResourceServiceImpl(final List<WebResourceBundle> bundles,
                                 final List<WebResource> resources,
+                                final DevModeResources devModeResources,
                                 final ServletContext servletContext,
                                 final MimeSupport mimeSupport)
   {
     this.bundles = checkNotNull(bundles);
     this.resources = checkNotNull(resources);
+    this.devModeResources = checkNotNull(devModeResources);
     this.servletContext = checkNotNull(servletContext);
     this.mimeSupport = checkNotNull(mimeSupport);
     this.resourcePaths = Maps.newHashMap();
@@ -101,10 +105,11 @@ public class WebResourceServiceImpl
     }
 
     // make it clear we have DEV mode enabled
-    if (DevModeResources.hasResourceLocations()) {
+    List<File> locations = devModeResources.getResourceLocations();
+    if (locations != null) {
       log.warn("DEV mode resources is ENABLED");
       // spit out the locations where we will look for resources
-      for (File file : DevModeResources.getResourceLocations()) {
+      for (File file : locations) {
         log.info("  {}", file);
       }
     }
@@ -115,9 +120,8 @@ public class WebResourceServiceImpl
     log.trace("Adding resource: {} -> {}", path, resource);
     final WebResource old = resourcePaths.put(path, resource);
     if (old != null) {
-      // FIXME: for now this causes a bit of noise on startup for overlapping icons, for now reduce to DEBUG
-      // FIXME: ... we need to sort out a general strategy short/long term for how to handle this issue
-      log.debug("Overlapping resources on path {}: old={}, new={}", path, old, resource);
+      // complain if any resources overlap
+      log.warn("Overlapping resources on path {}: old={}, new={}", path, old, resource);
     }
   }
 
@@ -138,7 +142,7 @@ public class WebResourceServiceImpl
     WebResource resource = null;
 
     // 1) first "dev" resources if enabled (to override everything else)
-    File file = DevModeResources.getFileIfOnFileSystem(path);
+    File file = devModeResources.getFileIfOnFileSystem(path);
     if (file != null) {
       resource = new FileWebResource(file, path, mimeSupport.guessMimeTypeFromPath(file.getName()), false);
       log.trace("Found dev-mode resource: {}", resource);

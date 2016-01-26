@@ -23,6 +23,10 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class PasswordPlaceholder
 {
+  private PasswordPlaceholder() {
+    // empty
+  }
+
   /**
    * Token used for passwords that are defined, but which are not transmitted.
    */
@@ -51,6 +55,6 @@ public class PasswordPlaceholder
    * Determine if given value is a password placeholder.
    */
   public static boolean is(@Nullable final String value) {
-    return value != null && VALUE.equals(value);
+    return VALUE.equals(value);
   }
 }

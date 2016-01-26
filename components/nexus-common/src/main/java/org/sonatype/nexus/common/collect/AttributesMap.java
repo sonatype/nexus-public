@@ -221,7 +221,7 @@ public class AttributesMap
    * Set keyed attribute value.
    */
   @Nullable
-  public Object set(final String key, final @Nullable Object value) {
+  public Object set(final String key, @Nullable final Object value) {
     checkNotNull(key);
     if (value == null) {
       return remove(key);
@@ -237,7 +237,7 @@ public class AttributesMap
    * Set type-keyed attribute value.
    */
   @Nullable
-  public <T> Object set(final Class<T> type, final @Nullable T value) {
+  public <T> Object set(final Class<T> type, @Nullable final T value) {
     return set(AttributeKey.get(type), value);
   }
 

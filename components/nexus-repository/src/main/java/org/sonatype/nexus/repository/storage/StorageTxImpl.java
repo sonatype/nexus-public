@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -53,8 +52,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_CHECKSUM;
+import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.ACTIVE;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.CLOSED;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.OPEN;
@@ -224,7 +223,7 @@ public class StorageTxImpl
   @Override
   @Guarded(by = ACTIVE)
   public Iterable<Bucket> browseBuckets() {
-    return bucketEntityAdapter.browse(db);
+    return bucketEntityAdapter.browse.execute(db);
   }
 
   @Override
@@ -257,11 +256,11 @@ public class StorageTxImpl
   public Asset findAsset(final EntityId id, final Bucket bucket) {
     checkNotNull(id);
     checkNotNull(bucket);
-    Asset asset = assetEntityAdapter.read(db, id);
+    Asset asset = assetEntityAdapter.read.execute(db, id);
     return bucketOwns(bucket, asset) ? asset : null;
   }
 
-  private boolean bucketOwns(final Bucket bucket, final @Nullable MetadataNode<?> item) {
+  private boolean bucketOwns(final Bucket bucket, @Nullable final MetadataNode<?> item) {
     return item != null && Objects.equals(id(bucket), item.bucketId());
   }
 
@@ -317,7 +316,7 @@ public class StorageTxImpl
   public Component findComponent(final EntityId id, final Bucket bucket) {
     checkNotNull(id);
     checkNotNull(bucket);
-    Component component = componentEntityAdapter.read(db, id);
+    Component component = componentEntityAdapter.read.execute(db, id);
     return bucketOwns(bucket, component) ? component : null;
   }
 
@@ -362,12 +361,6 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
-  public List<String> getUniqueComponentNames(@Nullable final Iterable<Repository> repositories) {
-    return componentEntityAdapter.getUniqueComponentNames(db, bucketsOf(repositories));
-  }
-
-  @Override
-  @Guarded(by = ACTIVE)
   public Asset createAsset(final Bucket bucket, final Format format) {
     checkNotNull(format);
     return createAsset(bucket, format.toString());
@@ -378,7 +371,7 @@ public class StorageTxImpl
     Asset asset = new Asset();
     asset.bucketId(id(bucket));
     asset.format(format);
-    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<String, Object>()));
+    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
     return asset;
   }
 
@@ -400,7 +393,7 @@ public class StorageTxImpl
     Component component = new Component();
     component.bucketId(id(bucket));
     component.format(format.toString());
-    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<String, Object>()));
+    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
     return component;
   }
 
@@ -408,10 +401,10 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public void saveComponent(final Component component) {
     if (EntityHelper.hasMetadata(component)) {
-      componentEntityAdapter.edit(db, component);
+      componentEntityAdapter.editEntity(db, component);
     }
     else {
-      componentEntityAdapter.add(db, component);
+      componentEntityAdapter.addEntity(db, component);
     }
   }
 
@@ -419,10 +412,10 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public void saveAsset(final Asset asset) {
     if (EntityHelper.hasMetadata(asset)) {
-      assetEntityAdapter.edit(db, asset);
+      assetEntityAdapter.editEntity(db, asset);
     }
     else {
-      assetEntityAdapter.add(db, asset);
+      assetEntityAdapter.addEntity(db, asset);
     }
   }
 
@@ -438,7 +431,7 @@ public class StorageTxImpl
     for (Asset asset : browseAssets(component)) {
       deleteAsset(asset, checkWritePolicy ? writePolicySelector.select(asset, writePolicy) : null);
     }
-    componentEntityAdapter.delete(db, component);
+    componentEntityAdapter.deleteEntity(db, component);
   }
 
   @Override
@@ -454,7 +447,7 @@ public class StorageTxImpl
     if (blobRef != null) {
       deleteBlob(blobRef, effectiveWritePolicy);
     }
-    assetEntityAdapter.delete(db, asset);
+    assetEntityAdapter.deleteEntity(db, asset);
   }
 
   @Override
@@ -487,7 +480,7 @@ public class StorageTxImpl
     commit();
 
     // finally, delete the bucket document
-    bucketEntityAdapter.delete(db, bucket);
+    bucketEntityAdapter.deleteEntity(db, bucket);
     commit();
   }
 
@@ -565,7 +558,7 @@ public class StorageTxImpl
     asset.contentType(assetBlob.getContentType());
 
     // Set attributes map to contain computed checksum metadata
-    NestedAttributesMap checksums = asset.attributes().child(P_CHECKSUM);
+    NestedAttributesMap checksums = asset.attributes().child(CHECKSUM);
     for (HashAlgorithm algorithm : assetBlob.getHashes().keySet()) {
       checksums.set(algorithm.name(), assetBlob.getHashes().get(algorithm).toString());
     }
@@ -658,7 +651,7 @@ public class StorageTxImpl
       return bucket;
     }
     else {
-      return bucketEntityAdapter.getByRepositoryName(db, repositoryName);
+      return bucketEntityAdapter.read.execute(db, repositoryName);
     }
   }
 

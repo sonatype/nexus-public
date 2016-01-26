@@ -45,7 +45,7 @@ public class ValidationResponse
     //noinspection ThrowableResultOfMethodCallIgnored
     checkNotNull(cause);
     Set<ConstraintViolation<?>> violations = cause.getConstraintViolations();
-    if (violations != null && violations.size() > 0) {
+    if (violations != null && !violations.isEmpty()) {
       for (ConstraintViolation<?> violation : violations) {
         List<String> entries = new ArrayList<>();
         // iterate path to get the full path

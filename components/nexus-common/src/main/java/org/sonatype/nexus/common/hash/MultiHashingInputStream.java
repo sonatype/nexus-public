@@ -15,11 +15,13 @@ package org.sonatype.nexus.common.hash;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.HashingInputStream;
@@ -35,13 +37,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MultiHashingInputStream
     extends FilterInputStream
 {
-  private final Map<HashAlgorithm, Hasher> hashers = Maps.newLinkedHashMap();
+  private final Map<HashAlgorithm, Hasher> hashers = new LinkedHashMap<>();
 
   private long count;
 
-  public MultiHashingInputStream(Iterable<HashAlgorithm> algorithms, InputStream inputStream) {
+  public MultiHashingInputStream(final Iterable<HashAlgorithm> algorithms, final InputStream inputStream) {
     super(checkNotNull(inputStream));
-    for (HashAlgorithm algorithm : checkNotNull(algorithms)) {
+    checkNotNull(algorithms);
+    for (HashAlgorithm algorithm : algorithms) {
       hashers.put(algorithm, algorithm.function().newHasher());
     }
   }
@@ -59,7 +62,7 @@ public class MultiHashingInputStream
   }
 
   @Override
-  public int read(@Nonnull byte[] bytes, int off, int len) throws IOException {
+  public int read(@Nonnull final byte[] bytes, final int off, final int len) throws IOException {
     int numRead = in.read(bytes, off, len);
     if (numRead != -1) {
       for (Hasher hasher : hashers.values()) {
@@ -76,7 +79,7 @@ public class MultiHashingInputStream
   }
 
   @Override
-  public void mark(int readlimit) {
+  public void mark(final int readlimit) {
     // no-op
   }
 
@@ -89,10 +92,9 @@ public class MultiHashingInputStream
    * Gets the {@link HashCode}s based on the data read from this stream.
    */
   public Map<HashAlgorithm, HashCode> hashes() {
-    Map<HashAlgorithm, HashCode> hashes = Maps.newHashMap();
-    for (HashAlgorithm algorithm : hashers.keySet()) {
-      Hasher hasher = hashers.get(algorithm);
-      hashes.put(algorithm, hasher.hash());
+    Map<HashAlgorithm, HashCode> hashes = new HashMap<>(hashers.size());
+    for (Entry<HashAlgorithm, Hasher> entry : hashers.entrySet()) {
+      hashes.put(entry.getKey(), entry.getValue().hash());
     }
     return hashes;
   }

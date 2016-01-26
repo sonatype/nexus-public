@@ -20,7 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirSupport;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseExternalizer;
@@ -78,7 +78,7 @@ public class DatabaseManagerImpl
   protected String connectionUri(final String name) {
     try {
       File dir = directory(name);
-      DirSupport.mkdir(dir);
+      DirectoryHelper.mkdir(dir);
 
       return "plocal:" + dir.toURI().getPath();
     }

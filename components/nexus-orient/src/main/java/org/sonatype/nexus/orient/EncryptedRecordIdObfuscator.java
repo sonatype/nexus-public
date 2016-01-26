@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.io.Hex;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -56,9 +57,9 @@ public class EncryptedRecordIdObfuscator
 
   @Inject
   public EncryptedRecordIdObfuscator(final CryptoHelper crypto,
-                                     final @Named(CPREFIX + ".password:-changeme}") String password,
-                                     final @Named(CPREFIX + ".salt:-changeme}") String salt,
-                                     final @Named(CPREFIX + ".iv:-0123456789ABCDEF}") String iv)
+                                     @Named(CPREFIX + ".password:-changeme}") final String password,
+                                     @Named(CPREFIX + ".salt:-changeme}") final String salt,
+                                     @Named(CPREFIX + ".iv:-0123456789ABCDEF}") final String iv)
       throws Exception
   {
     this.crypto = checkNotNull(crypto);

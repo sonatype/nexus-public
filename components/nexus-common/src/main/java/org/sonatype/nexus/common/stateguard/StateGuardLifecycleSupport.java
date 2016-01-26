@@ -36,8 +36,15 @@ public class StateGuardLifecycleSupport
     return this;
   }
 
+  /**
+   * State constants.
+   */
   public static final class State
   {
+    private State() {
+      // empty
+    }
+
     public static final String NEW = "NEW";
 
     public static final String STARTED = "STARTED";

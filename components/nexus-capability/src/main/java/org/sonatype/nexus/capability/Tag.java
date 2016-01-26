@@ -29,12 +29,12 @@ public class Tag
   /**
    * Key of category tag.
    */
-  public static String CATEGORY = "Category";
+  public static final String CATEGORY = "Category";
 
   /**
    * Key of repository tag.
    */
-  public static String REPOSITORY = "Repository";
+  public static final String REPOSITORY = "Repository";
 
   private final String key;
 

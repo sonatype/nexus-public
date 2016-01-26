@@ -34,7 +34,7 @@ Ext.define('NX.coreui.store.HealthCheckRepositoryStatus', {
     reader: {
       type: 'json',
       root: 'data',
-      idProperty: 'repositoryId',
+      idProperty: 'repositoryName',
       successProperty: 'success'
     }
   },

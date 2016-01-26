@@ -28,15 +28,16 @@ Ext.define('NX.coreui.view.repository.RepositorySettingsForm', {
   api: {
     submit: 'NX.direct.coreui_Repository.update'
   },
-  settingsFormSuccessMessage: function(data) {
-    return NX.I18n.get('Repository_RepositorySettingsForm_Update_Success') + data['name'];
-  },
-
-  editableMarker: NX.I18n.get('Repository_RepositorySettingsForm_Update_Error'),
 
   initComponent: function() {
     var me = this,
         permittedCondition;
+
+    me.settingsFormSuccessMessage = function(data) {
+      return NX.I18n.get('Repository_RepositorySettingsForm_Update_Success') + data['name'];
+    };
+
+    me.editableMarker = NX.I18n.get('Repository_RepositorySettingsForm_Update_Error');
 
     if (!me.editableCondition) {
       me.editableCondition = NX.Conditions.and(

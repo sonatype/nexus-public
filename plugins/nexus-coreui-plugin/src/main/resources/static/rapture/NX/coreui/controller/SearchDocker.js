@@ -26,7 +26,7 @@ Ext.define('NX.coreui.controller.SearchDocker', {
   /**
    * @override
    */
-  init: function() {
+  init: function () {
     var me = this,
         search = me.getController('NX.coreui.controller.Search');
 
@@ -71,11 +71,11 @@ Ext.define('NX.coreui.controller.SearchDocker', {
       description: NX.I18n.get('SearchDocker_Description'),
       readOnly: true,
       criterias: [
-        { id: 'format', value: 'docker', hidden: true },
-        { id: 'attributes.docker.imageName' },
-        { id: 'attributes.docker.imageTag' },
-        { id: 'attributes.docker.layerAncestry'},
-        { id: 'attributes.docker.content_digest'}    
+        {id: 'format', value: 'docker', hidden: true},
+        {id: 'attributes.docker.imageName'},
+        {id: 'attributes.docker.imageTag'},
+        {id: 'attributes.docker.layerAncestry'},
+        {id: 'attributes.docker.content_digest'}
       ]
     }, me);
   }

@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.capability;
 
+/**
+ * Registry of known {@link CapabilityDescriptor} components.
+ */
 public interface CapabilityDescriptorRegistry
 {
-
   CapabilityDescriptorRegistry register(CapabilityDescriptor capabilityDescriptor);
 
   CapabilityDescriptorRegistry unregister(CapabilityDescriptor capabilityDescriptor);
@@ -22,5 +24,4 @@ public interface CapabilityDescriptorRegistry
   CapabilityDescriptor get(CapabilityType capabilityType);
 
   CapabilityDescriptor[] getAll();
-
 }

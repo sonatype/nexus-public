@@ -24,52 +24,59 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
     'NX.I18n'
   ],
 
-  // Mark grid as health check columns target
-  healthCheckColumnsTarget: true,
+  stateful: true,
+  stateId: 'nx-coreui-search-result-list',
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-search-result-list'
-  },
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      // Mark grid as health check columns target
+      healthCheckColumnsTarget: true,
 
-  store: 'SearchResult',
+      store: 'SearchResult',
 
-  // Prevent the store from automatically loading
-  loadStore: Ext.emptyFn,
+      // Prevent the store from automatically loading
+      loadStore: Ext.emptyFn,
 
-  style: {
-    'background-color': '#F4F4F4'
-  },
+      style: {
+        'background-color': '#F4F4F4'
+      },
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Search_SearchResultList_EmptyText'),
-    deferEmptyText: false
-  },
+      viewConfig: {
+        emptyText: NX.I18n.get('Search_SearchResultList_EmptyText'),
+        deferEmptyText: false
+      },
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'search-component';
-      }
-    },
-    { header: NX.I18n.get('Search_SearchResultList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 3 },
-    {
-      header: NX.I18n.get('Search_SearchResultList_Group_Header'), dataIndex: 'group', stateId: 'group', flex: 4,
-      renderer: NX.ext.grid.column.Renderers.optionalData
-    },
-    { header: NX.I18n.get('Search_SearchResultList_Version_Header'), dataIndex: 'version', stateId: 'version', flex: 1,
-      renderer: NX.ext.grid.column.Renderers.optionalData
-    },
-    { header: NX.I18n.get('Search_SearchResultList_Format_Header'), dataIndex: 'format', stateId: 'format', width: 70 },
-    {
-      header: NX.I18n.get('Search_SearchResultList_Repository_Header'),
-      dataIndex: 'repositoryName',
-      stateId: 'repositoryName',
-      hidden: true
-    }
-  ]
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          width: 36,
+          iconVariant: 'x16',
+          iconName: function () {
+            return 'search-component';
+          }
+        },
+        { header: NX.I18n.get('Search_SearchResultList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 3 },
+        {
+          header: NX.I18n.get('Search_SearchResultList_Group_Header'), dataIndex: 'group', stateId: 'group', flex: 4,
+          renderer: NX.ext.grid.column.Renderers.optionalData
+        },
+        { header: NX.I18n.get('Search_SearchResultList_Version_Header'), dataIndex: 'version', stateId: 'version', flex: 1,
+          renderer: NX.ext.grid.column.Renderers.optionalData
+        },
+        { header: NX.I18n.get('Search_SearchResultList_Format_Header'), dataIndex: 'format', stateId: 'format', width: 70 },
+        {
+          header: NX.I18n.get('Search_SearchResultList_Repository_Header'),
+          dataIndex: 'repositoryName',
+          stateId: 'repositoryName',
+          hidden: true
+        }
+      ]
+    });
+
+    this.callParent();
+  }
 
 });

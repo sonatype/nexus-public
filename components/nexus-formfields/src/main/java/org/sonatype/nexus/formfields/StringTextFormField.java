@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.formfields;
 
+/**
+ * Single-line text field.
+ */
 public class StringTextFormField
     extends AbstractFormField<String>
 {

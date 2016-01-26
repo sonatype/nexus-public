@@ -25,6 +25,9 @@ import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.common.wonderland.AuthTicketService
 import org.sonatype.nexus.common.wonderland.DownloadService
 
+import static com.google.common.base.Preconditions.checkArgument
+import static com.google.common.base.Preconditions.checkNotNull
+
 /**
  * Default {@link DownloadService}.
  *
@@ -53,14 +56,12 @@ implements DownloadService
   DownloadServiceImpl(final ApplicationDirectories applicationDirectories,
                       final AuthTicketService authTicketService)
   {
-    assert applicationDirectories
-    assert authTicketService
+    checkNotNull(applicationDirectories)
+    this.authTickets = checkNotNull(authTicketService)
 
     // resolve where files to be downloaded will be stored
     downloadDir = applicationDirectories.getWorkDirectory('downloads')
     log.info 'Downloads directory: {}', downloadDir
-
-    this.authTickets = authTicketService
   }
 
   @Override
@@ -73,13 +74,12 @@ implements DownloadService
     log.info 'Download: {}', fileName
 
     if (!authTickets.redeemTicket(authTicket)) {
-      throw new IllegalAccessException('Invalid authentication ticket')
+      throw new IllegalArgumentException('Invalid authentication ticket')
     }
 
     def file = new File(downloadDir, fileName)
 
-    // ensure we do not leak references outside of the downloads directory, only direct children can be served
-    assert file.parentFile == downloadDir
+    ensureWithinDownloads(file)
 
     if (!file.exists() && file.isFile()) {
       log.warn 'File {} not found in download directory (or is not a file)', file
@@ -91,8 +91,7 @@ implements DownloadService
   @Override
   File move(File source, String name) {
     def target = new File(downloadDir, name)
-    // ensure we only create files in downloads directory
-    assert target.parentFile == downloadDir
+    ensureWithinDownloads(target)
     Files.move(source.toPath(), target.toPath())
     log.debug 'Moved {} to {}', source, target
     return target
@@ -103,4 +102,10 @@ implements DownloadService
     return prefix + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + "-" + counter.incrementAndGet()
   }
 
+  /**
+   *  Ensure we do not leak references outside of the downloads directory, only direct children can be served
+   */
+  private void ensureWithinDownloads(File file) {
+    checkArgument(file.parentFile == downloadDir, "Reference outside of downloads dir: $file")
+  }
 }

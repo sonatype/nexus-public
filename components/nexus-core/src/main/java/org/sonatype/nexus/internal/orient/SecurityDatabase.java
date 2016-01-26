@@ -42,6 +42,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @SuppressWarnings("UnusedDeclaration")
 public class SecurityDatabase
 {
+  private SecurityDatabase() {
+    // empty
+  }
+
   public static final String NAME = "security";
 
   /**
@@ -77,7 +81,7 @@ public class SecurityDatabase
     private final Provider<DatabaseInstance> databaseInstance;
 
     @Inject
-    public SupportBundleCustomizerImpl(final @Named(NAME) Provider<DatabaseInstance> databaseInstance) {
+    public SupportBundleCustomizerImpl(@Named(NAME) final Provider<DatabaseInstance> databaseInstance) {
       this.databaseInstance = checkNotNull(databaseInstance);
     }
 

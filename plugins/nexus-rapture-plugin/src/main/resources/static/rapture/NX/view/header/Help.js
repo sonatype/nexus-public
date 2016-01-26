@@ -24,17 +24,17 @@ Ext.define('NX.view.header.Help', {
     'NX.I18n'
   ],
 
-  tooltip: NX.I18n.get('Header_Help_Tooltip'),
-  glyph: 'xf059@FontAwesome', // fa-question-circle
-
-  // hide the menu button arrow
-  arrowCls: '',
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.tooltip = NX.I18n.get('Header_Help_Tooltip');
+    me.glyph = 'xf059@FontAwesome'; // fa-question-circle
+
+    // hide the menu button arrow
+    me.arrowCls = '';
 
     me.menu = [
       {

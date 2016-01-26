@@ -29,7 +29,7 @@ public class SupportBundle
   /**
    * Source of content for support bundle.
    */
-  public static interface ContentSource
+  public interface ContentSource
       extends Comparable<ContentSource>
   {
     /**
@@ -70,7 +70,7 @@ public class SupportBundle
 
       final int order;
 
-      private Priority(final int order) {
+      Priority(final int order) {
         this.order = order;
       }
     }

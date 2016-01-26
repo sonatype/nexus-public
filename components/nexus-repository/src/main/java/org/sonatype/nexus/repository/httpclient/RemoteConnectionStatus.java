@@ -31,7 +31,7 @@ public class RemoteConnectionStatus
     this(description, null);
   }
 
-  public RemoteConnectionStatus(final String description, final @Nullable String reason) {
+  public RemoteConnectionStatus(final String description, @Nullable final String reason) {
     this.description = checkNotNull(description);
     this.reason = reason;
   }

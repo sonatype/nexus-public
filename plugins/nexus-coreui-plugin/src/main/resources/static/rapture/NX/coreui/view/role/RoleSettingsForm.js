@@ -29,16 +29,17 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
   api: {
     submit: 'NX.direct.coreui_Role.update'
   },
-  settingsFormSuccessMessage: function(data) {
-    return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + data['name'];
-  },
-
-  editableMarker: NX.I18n.get('Role_RoleSettingsForm_Update_Error'),
 
   initComponent: function() {
     var me = this,
         idField,
         roleStore = Ext.create('NX.coreui.store.Role');
+
+    me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
+      return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + data['name'];
+    };
+
+    me.editableMarker = NX.I18n.get('Role_RoleSettingsForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.and(
         NX.Conditions.isPermitted('nexus:roles:update'),
@@ -56,7 +57,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         itemId: 'id',
         fieldLabel: NX.I18n.get('Role_RoleSettingsForm_MappedRole_FieldLabel'),
         emptyText: NX.I18n.get('Role_RoleSettingsForm_MappedRole_EmptyText'),
-        editable: false,
+        editable: true,
         store: 'RoleBySource',
         queryMode: 'local',
         displayField: 'name',
@@ -132,7 +133,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
               store.filter([
                 {
                   filterFn: function(item) {
-                    return item.get('id') !== record.get('id'); 
+                    return item.get('id') !== record.get('id');
                   }
                 }
               ]);

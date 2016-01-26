@@ -25,28 +25,29 @@ Ext.define('NX.coreui.view.support.SysInfo', {
     'NX.Assert',
     'NX.I18n'
   ],
-  layout: 'fit',
-  autoScroll: true,
-
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Support_SysInfo_Download_Button'),
-        glyph: 'xf019@FontAwesome' /* fa-download */,
-        action: 'download'
-      }
-    ]
-  }],
 
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.layout = 'fit';
+    me.autoScroll = true;
+
+    me.dockedItems = [{
+      xtype: 'toolbar',
+      dock: 'top',
+      cls: 'nx-actions',
+      items: [
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Support_SysInfo_Download_Button'),
+          glyph: 'xf019@FontAwesome' /* fa-download */,
+          action: 'download'
+        }
+      ]
+    }];
 
     // simple named section with list of key-value properties
     me.sectionTpl = Ext.create('Ext.XTemplate',
@@ -59,7 +60,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
       '<tpl for="props">',
       '<tr>',
       '<td class="nx-info-entry-name">{name}</td>',
-      '<td>{value}</td>',
+      '<td class="nx-info-entry-value">{value}</td>',
       '</tr>',
       '</tpl>',
       '</table>',
@@ -83,7 +84,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
       '<tpl for="props">',
       '<tr>',
       '<td class="nx-info-entry-name">{name}</td>',
-      '<td>{value}</td>',
+      '<td class="nx-info-entry-value">{value}</td>',
       '</tr>',
       '</tpl>',
       '</table>',

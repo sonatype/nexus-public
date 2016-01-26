@@ -141,6 +141,9 @@ td:not([class|=x]):last-child {
  * @class Ext.panel.Panel
  */
 /**
+ * @class Ext.tip.ToolTip
+ */
+/**
  * @class Ext.tip.QuickTip
  */
 /**
@@ -13026,7 +13029,7 @@ a.x-tab .x-tab-inner-right {
 }
 /* line 172, ../../../baseapp/ext/packages/ext-theme-neutral/sass/src/tip/Tip.scss */
 .x-tip-body-default a {
-  color: black;
+  color: #006bbf;
 }
 
 /* line 137, ../../../baseapp/ext/packages/ext-theme-base/sass/etc/mixins/frame.scss */
@@ -13210,7 +13213,7 @@ a.x-tab .x-tab-inner-right {
 }
 /* line 172, ../../../baseapp/ext/packages/ext-theme-neutral/sass/src/tip/Tip.scss */
 .x-tip-body-form-invalid a {
-  color: black;
+  color: #006bbf;
 }
 
 /* line 277, ../../../baseapp/ext/packages/ext-theme-neutral/sass/src/tip/Tip.scss */

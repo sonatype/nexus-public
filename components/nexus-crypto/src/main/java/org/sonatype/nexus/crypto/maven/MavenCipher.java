@@ -14,8 +14,6 @@ package org.sonatype.nexus.crypto.maven;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.crypto.PasswordCipher;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 

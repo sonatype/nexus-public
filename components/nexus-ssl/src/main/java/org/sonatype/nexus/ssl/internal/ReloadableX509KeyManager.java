@@ -87,31 +87,31 @@ public class ReloadableX509KeyManager
    * one will be replaced.
    *
    * @param reloadableX509KeyManager an existing ReloadableX509KeyManager, or null if one does not exist.
-   * @param KeyManagers              an array of KeyManagers that is expected to contain a X509KeyManager.
+   * @param keyManagers              an array of KeyManagers that is expected to contain a X509KeyManager.
    * @return a newly create ReloadableX509KeyManager
    * @throws NoSuchAlgorithmException
    *                               thrown if a X509KeyManager cannot be found in the array.
    * @throws IllegalStateException thrown if a ReloadableX509KeyManager is found in the array.
    */
   public static ReloadableX509KeyManager replaceX509KeyManager(ReloadableX509KeyManager reloadableX509KeyManager,
-                                                               final KeyManager[] KeyManagers)
+                                                               final KeyManager[] keyManagers)
       throws NoSuchAlgorithmException
   {
-    for (int ii = 0; ii < KeyManagers.length; ii++) {
-      if (ReloadableX509KeyManager.class.isInstance(KeyManagers[ii])) {
+    for (int ii = 0; ii < keyManagers.length; ii++) {
+      if (ReloadableX509KeyManager.class.isInstance(keyManagers[ii])) {
         throw new IllegalStateException(
             "A ReloadableX509KeyManager has already been set for this KeyManager[]");
       }
 
-      if (X509KeyManager.class.isInstance(KeyManagers[ii])) {
+      if (X509KeyManager.class.isInstance(keyManagers[ii])) {
         if (reloadableX509KeyManager == null) {
-          reloadableX509KeyManager = new ReloadableX509KeyManager((X509KeyManager) KeyManagers[ii]);
+          reloadableX509KeyManager = new ReloadableX509KeyManager((X509KeyManager) keyManagers[ii]);
         }
         else {
-          reloadableX509KeyManager.setDelegateKeyManager((X509KeyManager) KeyManagers[ii]);
+          reloadableX509KeyManager.setDelegateKeyManager((X509KeyManager) keyManagers[ii]);
         }
 
-        KeyManagers[ii] = reloadableX509KeyManager;
+        keyManagers[ii] = reloadableX509KeyManager;
         return reloadableX509KeyManager;
       }
     }

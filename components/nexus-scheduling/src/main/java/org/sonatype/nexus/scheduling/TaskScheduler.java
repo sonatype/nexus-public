@@ -18,47 +18,40 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.scheduling.schedule.Schedule;
+import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
+import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 /**
- * Executor facade component of Nexus, responsible for task executing and scheduling.
+ * Application task scheduling facade.
+ *
+ * Provides a high-level API around {@link SchedulerSPI}.
  */
 public interface TaskScheduler
 {
   /**
-   * Returns the list of task descriptors for all known tasks in system.
+   * Returns the factory to create tasks.
    */
-  List<TaskDescriptor<?>> listTaskDescriptors();
+  TaskFactory getTaskFactory();
 
   /**
-   * A factory for task configurations (by actual type). It will honor descriptor if exists for given type, otherwise
-   * will use sane default values. See {@link #createTaskConfigurationInstance(String)}.
+   * Returns the factory to create schedules.
    */
-  TaskConfiguration createTaskConfigurationInstance(Class<? extends Task> taskType)
-      throws IllegalArgumentException;
+  ScheduleFactory getScheduleFactory();
 
   /**
-   * A factory for task configurations (by FQCN as string). It will honor descriptor if exists for given type,
-   * otherwise will use sane default values. It will check is the class actually a {@link Task}.
+   * Create a configuration for the given type-id.
    */
-  TaskConfiguration createTaskConfigurationInstance(String taskType)
-      throws IllegalArgumentException;
+  TaskConfiguration createTaskConfigurationInstance(String typeId);
 
   /**
-   * A factory for tasks (by actual type). Delegates to {@link TaskFactory}. This method should be rarely used, as
-   * it will return a "live" configured task instance that is not scheduled! To be used in cases when task as-is
-   * should be executed synchronously, in caller thread using {@link Task#call()} method directly.
-   */
-  <T extends Task> T createTaskInstance(TaskConfiguration taskConfiguration)
-      throws IllegalArgumentException;
-
-  /**
-   * Issues a NexusTask for immediate execution, giving control over it with returned {@link Future} instance. Tasks
-   * executed via this method are executed as soon as possible, and are not persisted.
+   * Issues a task for immediate execution, giving control over it with returned {@link Future} instance.
+   *
+   * Tasks executed via this method are executed as soon as possible, and are not persisted.
    */
   TaskInfo submit(TaskConfiguration configuration);
 
   /**
-   * Returns the {@link TaskInfo<T>} of a task by it's ID, if present, otherwise {@code null}.
+   * Returns the {@link TaskInfo} of a task by it's ID, if present, otherwise {@code null}.
    */
   @Nullable
   TaskInfo getTaskById(String id);
@@ -69,26 +62,16 @@ public interface TaskScheduler
   List<TaskInfo> listsTasks();
 
   /**
-   * Schedules a tasks. If existing task with ID exists, it will be replaced. As this changes task configuration, task
-   * must not be running.
+   * Schedules a task for execution based on given schedule.
+   *
+   * If existing task with ID exists, it will be replaced.
+   *
+   * Task must not be running.
    */
   TaskInfo scheduleTask(TaskConfiguration configuration, Schedule schedule);
-
-  /**
-   * Re-schedules a tasks. Only change the task schedule. Task might even be running. Returns {@code null} if task not
-   * found, or the updated task info (with new schedule).
-   */
-  @Nullable
-  TaskInfo rescheduleTask(String id, Schedule schedule);
-
-  // -- tests
 
   /**
    * Returns the count of currently running tasks.
    */
   int getRunningTaskCount();
-
-  // TODO: remove, used in UTs only
-  @Deprecated
-  void killAll();
 }

@@ -31,6 +31,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class UserIdMdcHelper
 {
+  private UserIdMdcHelper() {
+    // empty
+  }
+
   private static final Logger log = LoggerFactory.getLogger(UserIdMdcHelper.class);
 
   public static final String KEY = "userId";
@@ -66,7 +70,7 @@ public class UserIdMdcHelper
   }
 
   @VisibleForTesting
-  static String userId(final @Nullable Subject subject) {
+  static String userId(@Nullable final Subject subject) {
     if (subject != null) {
       Object principal = subject.getPrincipal();
       if (principal != null) {

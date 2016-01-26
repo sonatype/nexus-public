@@ -31,7 +31,7 @@ public class TestSessionManager
 
   @Inject
   public void configureProperties(
-      final @Named("${shiro.globalSessionTimeout:-" + DEFAULT_GLOBAL_SESSION_TIMEOUT + "}") long globalSessionTimeout)
+      @Named("${shiro.globalSessionTimeout:-" + DEFAULT_GLOBAL_SESSION_TIMEOUT + "}") final long globalSessionTimeout)
   {
     setGlobalSessionTimeout(globalSessionTimeout);
   }

@@ -25,19 +25,19 @@ Ext.define('NX.coreui.view.capability.CapabilitySummary', {
     'NX.I18n'
   ],
 
-  title: NX.I18n.get('Capability_CapabilitySummary_Title'),
-  autoScroll: true,
-
-  layout: {
-    type: 'vbox',
-    align: 'stretch'
-  },
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.title = NX.I18n.get('Capability_CapabilitySummary_Title');
+    me.autoScroll = true;
+
+    me.layout = {
+      type: 'vbox',
+      align: 'stretch'
+    };
 
     me.items = {
       xtype: 'panel',

@@ -25,77 +25,10 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
     'NX.ext.grid.column.Renderers'
   ],
 
-  store: 'Capability',
-
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconNamePrefix: 'capability-',
-      dataIndex: 'state',
-      hideable: false
-    },
-    {
-      text: NX.I18n.get('Capability_CapabilityList_Type_Header'),
-      dataIndex: 'typeName',
-      flex: 1
-    },
-    {
-      text: NX.I18n.get('Capability_CapabilityList_Description_Header'),
-      dataIndex: 'description',
-      flex: 1,
-      groupable: false,
-      renderer: NX.ext.grid.column.Renderers.optionalData
-    },
-    {
-      text: NX.I18n.get('Capability_CapabilityList_Notes_Header'),
-      dataIndex: 'notes',
-      flex: 1,
-      renderer: NX.ext.grid.column.Renderers.optionalData
-    }
-  ],
-
-  viewConfig: {
-    emptyText: NX.I18n.get('Capability_CapabilityList_EmptyText'),
-    deferEmptyText: false,
-    getRowClass: function (record) {
-      if (record.get('enabled') && !record.get('active')) {
-        return 'nx-red-marker';
-      }
-    }
-  },
-
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Capability_CapabilityList_New_Button'),
-        action: 'new',
-        disabled: true,
-        glyph: 'xf055@FontAwesome' /* fa-plus-circle */
-      }
-    ]
-  }],
-
-  features: [
-    {
-      ftype: 'grouping',
-      groupHeaderTpl: '{[values.name === "" ? "No " + values.columnName : values.name + " " + values.columnName]}'
-    }
-  ],
-
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Capability_CapabilityList_Filter_EmptyText') }
-  ],
-
   /**
    * Copy of original column configuration, to support adding dynamic tag columns.
    *
-   * @public
+   * @cfg
    */
   originalColumns: undefined,
 
@@ -104,6 +37,73 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
    */
   initComponent: function (config) {
     var me = this;
+
+    me.store = 'Capability';
+
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconNamePrefix: 'capability-',
+        dataIndex: 'state',
+        hideable: false
+      },
+      {
+        text: NX.I18n.get('Capability_CapabilityList_Type_Header'),
+        dataIndex: 'typeName',
+        flex: 1
+      },
+      {
+        text: NX.I18n.get('Capability_CapabilityList_Description_Header'),
+        dataIndex: 'description',
+        flex: 1,
+        groupable: false,
+        renderer: NX.ext.grid.column.Renderers.optionalData
+      },
+      {
+        text: NX.I18n.get('Capability_CapabilityList_Notes_Header'),
+        dataIndex: 'notes',
+        flex: 1,
+        renderer: NX.ext.grid.column.Renderers.optionalData
+      }
+    ];
+
+    me.viewConfig = {
+      emptyText: NX.I18n.get('Capability_CapabilityList_EmptyText'),
+      deferEmptyText: false,
+      getRowClass: function (record) {
+        if (record.get('enabled') && !record.get('active')) {
+          return 'nx-red-marker';
+        }
+      }
+    };
+
+    me.dockedItems = [{
+      xtype: 'toolbar',
+      dock: 'top',
+      cls: 'nx-actions nx-borderless',
+      items: [
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Capability_CapabilityList_New_Button'),
+          action: 'new',
+          disabled: true,
+          glyph: 'xf055@FontAwesome' /* fa-plus-circle */
+        }
+      ]
+    }];
+
+    me.features = [
+      {
+        ftype: 'grouping',
+        groupHeaderTpl: '{[values.name === "" ? "No " + values.columnName : values.name + " " + values.columnName]}'
+      }
+    ];
+
+    me.plugins = [
+      { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Capability_CapabilityList_Filter_EmptyText') }
+    ];
 
     me.originalColumns = me.columns;
 

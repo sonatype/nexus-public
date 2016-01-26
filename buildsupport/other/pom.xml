@@ -104,7 +104,7 @@
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
-        <version>2.2.1</version>
+        <version>2.2.2</version>
       </dependency>
 
       <dependency>
@@ -117,6 +117,24 @@
         <groupId>org.apache.servicemix.bundles</groupId>
         <artifactId>org.apache.servicemix.bundles.elasticsearch</artifactId>
         <version>1.7.1_1</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!-- needed by elastic search -->
@@ -201,6 +219,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.squareup</groupId>
+        <artifactId>tape</artifactId>
+        <version>1.2.3</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
         <version>2.3.23</version>
@@ -232,6 +256,12 @@
             <artifactId>commons-codec</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>se.sawano.java</groupId>
+        <artifactId>alphanumeric-comparator</artifactId>
+        <version>1.4.1</version>
       </dependency>
 
     </dependencies>

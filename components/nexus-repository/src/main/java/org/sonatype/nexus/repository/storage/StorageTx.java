@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -228,11 +227,6 @@ public interface StorageTx
    * Gets the number of components matching the given {@link Query} clause.
    */
   long countComponents(Query query, @Nullable Iterable<Repository> repositories);
-
-  /**
-   * Gets the list of all components in the specified repositories.
-   */
-  List<String> getUniqueComponentNames(@Nullable Iterable<Repository> repositories);
 
   /**
    * Creates a new standalone asset.

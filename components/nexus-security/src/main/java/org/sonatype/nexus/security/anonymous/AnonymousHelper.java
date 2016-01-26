@@ -23,12 +23,14 @@ import org.apache.shiro.subject.Subject;
  */
 public class AnonymousHelper
 {
-  private AnonymousHelper() {}
+  private AnonymousHelper() {
+    // empty
+  }
 
   /**
    * Check given given subject is anonymous.
    */
-  public static boolean isAnonymous(final @Nullable Subject subject) {
+  public static boolean isAnonymous(@Nullable final Subject subject) {
     return subject != null && subject.getPrincipals() instanceof AnonymousPrincipalCollection;
   }
 }

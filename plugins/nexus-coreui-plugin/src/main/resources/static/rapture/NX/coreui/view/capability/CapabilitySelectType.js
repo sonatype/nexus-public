@@ -24,35 +24,36 @@ Ext.define('NX.coreui.view.capability.CapabilitySelectType', {
     'NX.I18n'
   ],
 
-  store: 'CapabilityType',
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function() {
-        return 'capability-default';
-      }
-    },
-    { header: NX.I18n.get('Capability_CapabilitySelectType_Type_Header'), dataIndex: 'name', flex: 1 },
-    { header: NX.I18n.get('Capability_CapabilitySelectType_Description_Header'), dataIndex: 'about', flex: 2,
-      renderer: function(val) {
-        var i;
-        if (val) {
-          i = val.indexOf('.');
-          if (i > 0) {
-            val = val.substring(0, i);
-          }
-          // replace HTML
-          return val.replace(/(<([^>]+)>)/ig, '');
-        }
-        return val;
-      }
-    }
-  ],
-
   initComponent: function() {
     var me = this;
+
+    me.store = 'CapabilityType';
+
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconName: function() {
+          return 'capability-default';
+        }
+      },
+      { header: NX.I18n.get('Capability_CapabilitySelectType_Type_Header'), dataIndex: 'name', flex: 1 },
+      { header: NX.I18n.get('Capability_CapabilitySelectType_Description_Header'), dataIndex: 'about', flex: 2,
+        renderer: function(val) {
+          var i;
+          if (val) {
+            i = val.indexOf('.');
+            if (i > 0) {
+              val = val.substring(0, i);
+            }
+            // replace HTML
+            return val.replace(/(<([^>]+)>)/ig, '');
+          }
+          return val;
+        }
+      }
+    ];
 
     me.on('afterrender', function(grid) {
         var view = grid.getView();

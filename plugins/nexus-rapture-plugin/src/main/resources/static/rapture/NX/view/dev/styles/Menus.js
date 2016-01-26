@@ -38,7 +38,7 @@ Ext.define('NX.view.dev.styles.Menus', {
         iconCls: iconCls,
         tooltip: tooltip,
         action: action
-      }
+      };
     }
 
     me.items = [
@@ -48,13 +48,13 @@ Ext.define('NX.view.dev.styles.Menus', {
         items: [
           menu('Help for [Feature]', 'nx-icon-search-default-x16', 'Help for the current feature', 'feature'),
           '-',
-          menu('About', 'nx-icon-nexus-x16', 'About Sonatype Nexus', 'about'),
-          menu('Documentation', 'nx-icon-help-manual-x16', 'Sonatype Nexus product documentation', 'docs'),
-          menu('Knowledge Base', 'nx-icon-help-kb-x16', 'Sonatype Nexus knowledge base', 'kb'),
-          menu('Community', 'nx-icon-help-community-x16', 'Sonatype Nexus community information', 'community'),
-          menu('Issue Tracker', 'nx-icon-help-issues-x16', 'Sonatype Nexus issue and bug tracker', 'issues'),
+          menu('About', 'nx-icon-nexus-x16', 'About Nexus Repository Manager', 'about'),
+          menu('Documentation', 'nx-icon-help-manual-x16', 'Product documentation', 'docs'),
+          menu('Knowledge Base', 'nx-icon-help-kb-x16', 'Knowledge base', 'kb'),
+          menu('Community', 'nx-icon-help-community-x16', 'Community information', 'community'),
+          menu('Issue Tracker', 'nx-icon-help-issues-x16', 'Issue and bug tracker', 'issues'),
           '-',
-          menu('Support', 'nx-icon-help-support-x16', 'Sonatype Nexus product support', 'support')
+          menu('Support', 'nx-icon-help-support-x16', 'Product support', 'support')
         ]
       }
     ];

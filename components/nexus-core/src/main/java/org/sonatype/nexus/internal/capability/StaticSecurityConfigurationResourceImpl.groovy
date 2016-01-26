@@ -36,7 +36,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'capabilities-all',
+                id: 'nx-capabilities-all',
                 description: 'All permissions for Capabilities',
                 type: 'application',
                 properties: [
@@ -45,7 +45,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'capabilities-create',
+                id: 'nx-capabilities-create',
                 description: 'Create permission for Capabilities',
                 type: 'application',
                 properties: [
@@ -54,7 +54,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'capabilities-read',
+                id: 'nx-capabilities-read',
                 description: 'Read permission for Capabilities',
                 type: 'application',
                 properties: [
@@ -63,7 +63,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'capabilities-update',
+                id: 'nx-capabilities-update',
                 description: 'Update permission for Capabilities',
                 type: 'application',
                 properties: [
@@ -72,7 +72,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'capabilities-delete',
+                id: 'nx-capabilities-delete',
                 description: 'Delete permission for Capabilities',
                 type: 'application',
                 properties: [

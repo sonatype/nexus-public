@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -36,12 +35,12 @@ import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
+import org.sonatype.nexus.repository.maven.policy.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.policy.VersionPolicy;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -56,9 +55,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findComponent;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
  * A {@link MavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
@@ -80,7 +83,7 @@ import static java.util.Collections.singletonList;
 @Named
 public class MavenFacetImpl
     extends FacetSupport
-    implements MavenFacet, MavenAttributes
+    implements MavenFacet
 {
   private final Map<String, MavenPathParser> mavenPathParsers;
 
@@ -93,10 +96,14 @@ public class MavenFacetImpl
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
     public VersionPolicy versionPolicy;
 
+    @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
+    public LayoutPolicy layoutPolicy;
+
     @Override
     public String toString() {
       return getClass().getSimpleName() + "{" +
           "versionPolicy=" + versionPolicy +
+          ", layoutPolicy=" + layoutPolicy +
           '}';
     }
   }
@@ -150,6 +157,11 @@ public class MavenFacetImpl
     return config.versionPolicy;
   }
 
+  @Override
+  public LayoutPolicy layoutPolicy() {
+    return config.layoutPolicy;
+  }
+
   @Nullable
   @Override
   @Transactional(retryOn = IllegalStateException.class, swallow = ONeedRetryException.class)
@@ -190,8 +202,8 @@ public class MavenFacetImpl
 
   @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
   protected Content doPut(final MavenPath path,
-                          final Payload payload,
-                          final Supplier<InputStream> streamSupplier)
+      final Payload payload,
+      final Supplier<InputStream> streamSupplier)
       throws IOException
   {
     final StorageTx tx = UnitOfWork.currentTx();
@@ -218,14 +230,14 @@ public class MavenFacetImpl
   }
 
   private Asset putArtifact(final StorageTx tx,
-                            final MavenPath path,
-                            final AssetBlob assetBlob,
-                            @Nullable final AttributesMap contentAttributes)
+      final MavenPath path,
+      final AssetBlob assetBlob,
+      @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     final Coordinates coordinates = checkNotNull(path.getCoordinates());
     final Bucket bucket = tx.findBucket(getRepository());
-    Component component = findComponent(tx, path);
+    Component component = findComponent(tx, getRepository(), path);
     if (component == null) {
       // Create and set top-level properties
       component = tx.createComponent(bucket, getRepository().getFormat())
@@ -239,6 +251,13 @@ public class MavenFacetImpl
       componentAttributes.set(P_ARTIFACT_ID, coordinates.getArtifactId());
       componentAttributes.set(P_VERSION, coordinates.getVersion());
       componentAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
+      if (path.isPom()) {
+        fillInFromModel(path, assetBlob, component.formatAttributes());
+      }
+      tx.saveComponent(component);
+    }
+    else if (path.isPom()) {
+      fillInFromModel(path, assetBlob, component.formatAttributes());
       tx.saveComponent(component);
     }
 
@@ -247,7 +266,6 @@ public class MavenFacetImpl
       asset = tx.createAsset(bucket, component);
 
       asset.name(path.getPath());
-      asset.formatAttributes().set(StorageFacet.P_PATH, path.getPath());
 
       final NestedAttributesMap assetAttributes = asset.formatAttributes();
       assetAttributes.set(P_GROUP_ID, coordinates.getGroupId());
@@ -256,6 +274,10 @@ public class MavenFacetImpl
       assetAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
       assetAttributes.set(P_CLASSIFIER, coordinates.getClassifier());
       assetAttributes.set(P_EXTENSION, coordinates.getExtension());
+      assetAttributes.set(
+          P_ASSET_KIND,
+          path.isSubordinate() ? AssetKind.ARTIFACT_SUBORDINATE.name() : AssetKind.ARTIFACT.name()
+      );
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
@@ -265,10 +287,28 @@ public class MavenFacetImpl
     return asset;
   }
 
+  /**
+   * Parses model from {@link AssetBlob} and sets {@link Component} attributes.
+   */
+  private void fillInFromModel(final MavenPath mavenPath,
+      final AssetBlob assetBlob,
+      final NestedAttributesMap componentAttributes) throws IOException
+  {
+    Model model = MavenModels.readModel(assetBlob.getBlob().getInputStream());
+    if (model == null) {
+      log.debug("Could not parse POM: {} @ {}", getRepository().getName(), mavenPath.getPath());
+      return;
+    }
+    String packaging = model.getPackaging();
+    componentAttributes.set(P_PACKAGING, packaging == null ? "jar" : packaging);
+    componentAttributes.set(P_POM_NAME, model.getName());
+    componentAttributes.set(P_POM_DESCRIPTION, model.getDescription());
+  }
+
   private Asset putFile(final StorageTx tx,
-                        final MavenPath path,
-                        final AssetBlob assetBlob,
-                        @Nullable final AttributesMap contentAttributes)
+      final MavenPath path,
+      final AssetBlob assetBlob,
+      @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     final Bucket bucket = tx.findBucket(getRepository());
@@ -276,7 +316,11 @@ public class MavenFacetImpl
     if (asset == null) {
       asset = tx.createAsset(bucket, getRepository().getFormat());
       asset.name(path.getPath());
-      asset.formatAttributes().set(StorageFacet.P_PATH, path.getPath());
+      asset.formatAttributes().set(
+          P_ASSET_KIND,
+          getMavenPathParser().isRepositoryMetadata(path)
+              ? AssetKind.REPOSITORY_METADATA.name() : AssetKind.OTHER.name()
+      );
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
@@ -287,9 +331,9 @@ public class MavenFacetImpl
   }
 
   private void putAssetPayload(final StorageTx tx,
-                               final Asset asset,
-                               final AssetBlob assetBlob,
-                               @Nullable final AttributesMap contentAttributes)
+      final Asset asset,
+      final AssetBlob assetBlob,
+      @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     tx.attachBlob(asset, assetBlob);
@@ -315,7 +359,7 @@ public class MavenFacetImpl
   }
 
   private boolean deleteArtifact(final MavenPath path, final StorageTx tx) {
-    final Component component = findComponent(tx, path);
+    final Component component = findComponent(tx, getRepository(), path);
     if (component == null) {
       return false;
     }
@@ -337,65 +381,5 @@ public class MavenFacetImpl
     }
     tx.deleteAsset(asset);
     return true;
-  }
-
-  @Override
-  @Transactional(retryOn = ONeedRetryException.class)
-  public boolean setCacheInfo(final MavenPath path, final Content content, final CacheInfo cacheInfo)
-      throws IOException
-  {
-    final StorageTx tx = UnitOfWork.currentTx();
-    final Bucket bucket = tx.findBucket(getRepository());
-
-    // by EntityId
-    Asset asset = Content.findAsset(tx, bucket, content);
-    if (asset == null) {
-      // by format coordinates
-      asset = findAsset(tx, bucket, path);
-    }
-    if (asset == null) {
-      log.debug("Attempting to set cache info for non-existent maven asset {}", path.getPath());
-      return false;
-    }
-
-    log.debug("Updating cacheInfo of {} to {}", path.getPath(), cacheInfo);
-    CacheInfo.applyToAsset(asset, cacheInfo);
-    tx.saveAsset(asset);
-
-    return true;
-  }
-
-  /**
-   * Finds component by maven path.
-   */
-  @Nullable
-  private Component findComponent(final StorageTx tx,
-                                  final MavenPath mavenPath)
-  {
-    final Coordinates coordinates = mavenPath.getCoordinates();
-    final Iterable<Component> components = tx.findComponents(
-        Query.builder()
-            .where(StorageFacet.P_GROUP).eq(coordinates.getGroupId())
-            .and(StorageFacet.P_NAME).eq(coordinates.getArtifactId())
-            .and(StorageFacet.P_VERSION).eq(coordinates.getVersion())
-            .build(),
-        singletonList(getRepository())
-    );
-    if (components.iterator().hasNext()) {
-      return components.iterator().next();
-    }
-    return null;
-  }
-
-  /**
-   * Finds asset by key.
-   */
-  @Nullable
-  private Asset findAsset(final StorageTx tx,
-                          final Bucket bucket,
-                          final MavenPath mavenPath)
-  {
-    // The maven path is stored in the asset 'name' field, which is indexed (the maven format-specific key is not).
-    return tx.findAssetWithProperty(StorageFacet.P_NAME, mavenPath.getPath(), bucket);
   }
 }

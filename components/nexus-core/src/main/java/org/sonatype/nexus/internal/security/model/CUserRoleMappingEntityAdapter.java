@@ -44,7 +44,6 @@ public class CUserRoleMappingEntityAdapter
     extends IterableEntityAdapter<CUserRoleMapping>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .prefix("security")
       .type("user_role_mapping")
       .build();
 
@@ -99,11 +98,6 @@ public class CUserRoleMappingEntityAdapter
   //
   // TODO: Sort out API below with EntityAdapter, do not expose ODocument
   //
-
-  @Deprecated
-  public void write(final ODocument document, final CUserRoleMapping entity) {
-    writeEntity(document, entity);
-  }
 
   private static final String READ_QUERY =
       String.format("SELECT FROM %s WHERE %s = ? AND %s = ?", DB_CLASS, P_USER_ID, P_SOURCE);

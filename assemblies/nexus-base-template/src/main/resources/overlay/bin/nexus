@@ -96,6 +96,7 @@ locateHome() {
     if [ "x$KARAF_HOME" = "x" ]; then
       # In POSIX shells, CDPATH may cause cd to write to stdout
       (unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+      # KARAF_HOME is not provided, fall back to default
       KARAF_HOME=`cd "$DIRNAME/.."; pwd`
     fi
 
@@ -236,11 +237,14 @@ setupDebugOptions() {
 
     # Set Debug options if enabled
     if [ "x$KARAF_DEBUG" != "x" ]; then
-        # Ignore DEBUG in case of stop or client mode
+        # Ignore DEBUG in case of stop, client, or status mode
         if [ "x$MODE" = "xstop" ]; then
             return
         fi
         if [ "x$MODE" = "xclient" ]; then
+            return
+        fi
+        if [ "x$MODE" = "xstatus" ]; then
             return
         fi
         # Use the defaults if JAVA_DEBUG_OPTS was not set
@@ -272,7 +276,7 @@ setupDefaults() {
     fi
 
     # Add the jars in the lib dir
-    for file in "$KARAF_HOME"/lib/karaf*.jar
+    for file in "$KARAF_HOME"/lib/boot/*.jar
     do
         if [ -z "$CLASSPATH" ]; then
             CLASSPATH="$file"
@@ -335,7 +339,7 @@ init() {
 
 run() {
     OPTS="-Dkaraf.startLocalConsole=true -Dkaraf.startRemoteShell=true"
-    MAIN=org.apache.karaf.main.Main
+    MAIN=org.sonatype.nexus.karaf.NexusMain
     while [ "$1" != "" ]; do
         case $1 in
             'clean')
@@ -382,7 +386,9 @@ run() {
         KARAF_BASE=`cygpath --path --windows "$KARAF_BASE"`
         KARAF_DATA=`cygpath --path --windows "$KARAF_DATA"`
         KARAF_ETC=`cygpath --path --windows "$KARAF_ETC"`
-        CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+        if [ ! -z "$CLASSPATH" ]; then
+            CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+        fi
         JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
         # SONATYPE: commented
         #JAVA_ENDORSED_DIRS=`cygpath --path --windows "$JAVA_ENDORSED_DIRS"`
@@ -393,7 +399,7 @@ run() {
     # SONATYPE: removed -Djavax.management.builder.initial
     # SONATYPE: removed -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}"
     # SONATYPE: removed -Djava.ext.dirs="${JAVA_EXT_DIRS}"
-    exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_HOME}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_BASE/etc/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
+    exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_BASE/etc/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
 }
 
 main() {

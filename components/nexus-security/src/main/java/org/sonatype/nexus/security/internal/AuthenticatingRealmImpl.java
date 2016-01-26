@@ -23,7 +23,6 @@ import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import org.apache.shiro.authc.AccountException;
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.DisabledAccountException;
@@ -75,7 +74,7 @@ public class AuthenticatingRealmImpl
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) throws AuthenticationException {
+  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) {
     UsernamePasswordToken upToken = (UsernamePasswordToken) token;
 
     CUser user;

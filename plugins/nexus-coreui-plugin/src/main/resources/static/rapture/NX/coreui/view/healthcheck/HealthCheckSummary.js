@@ -59,7 +59,7 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckSummary', {
   listeners: {
 
     /**
-     * Hook into hoovering over summary window in order to auto close it if mouse is out.
+     * Hook into hovering over summary window in order to auto close it if mouse is out.
      */
     afterrender: function(){
       var me = this;
@@ -84,7 +84,9 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckSummary', {
   },
 
   /**
-   * Auto close window if mouse is out for summary window.
+   * Auto close window if mouse is out of summary window.
+   *
+   * @private
    */
   doAutoClose: function () {
     var me = this;

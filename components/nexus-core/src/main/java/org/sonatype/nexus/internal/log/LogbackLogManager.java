@@ -162,7 +162,7 @@ public class LogbackLogManager
 
     // checking for platform or normalized path-separator (on unix these are the same)
     if (fileName.contains(File.pathSeparator) || fileName.contains("/")) {
-      log.warn("Nexus refuses to retrieve log files with path separators in its name");
+      log.warn("Cannot retrieve log files with path separators in their name");
       return null;
     }
 
@@ -385,7 +385,8 @@ public class LogbackLogManager
     if (factory instanceof LoggerContext) {
       return (LoggerContext) factory;
     }
-    // temporary workaround for situations where SLF4j is not backed by logback
+    // Pax-Logging registers a custom implementation of ILoggerFactory which hides logback; as a workaround
+    // we set org.ops4j.pax.logging.StaticLogbackContext=true in system.properties and access it statically
     return (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
   }
 

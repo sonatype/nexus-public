@@ -24,9 +24,18 @@ Ext.define('NX.view.header.SignOut', {
     'NX.I18n'
   ],
 
-  text: NX.I18n.get('Header_SignOut_Text'),
-  tooltip: NX.I18n.get('Header_SignOut_Tooltip'),
-  glyph: 'xf08b@FontAwesome', // fa-sign-out
-  hidden: true
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      text: NX.I18n.get('Header_SignOut_Text'),
+      tooltip: NX.I18n.get('Header_SignOut_Tooltip'),
+      glyph: 'xf08b@FontAwesome', // fa-sign-out
+      hidden: true
+    });
+
+    this.callParent();
+  }
 
 });

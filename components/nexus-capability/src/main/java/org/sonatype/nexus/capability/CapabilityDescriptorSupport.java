@@ -14,24 +14,33 @@ package org.sonatype.nexus.capability;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
+import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.validation.ConstraintViolations;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 
 /**
  * Support for {@link CapabilityDescriptor} implementations.
@@ -42,9 +51,16 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
     extends ComponentSupport
     implements CapabilityDescriptor
 {
+  private Provider<CapabilityRegistry> capabilityRegistry;
+
   private boolean exposed = true;
 
   private boolean hidden = false;
+
+  @Inject
+  public void installComponents(final Provider<CapabilityRegistry> capabilityRegistry) {
+    this.capabilityRegistry = checkNotNull(capabilityRegistry);
+  }
 
   @Override
   public String about() {
@@ -102,7 +118,30 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   }
 
   @Override
-  public void validate(final Map<String, String> properties, final ValidationMode validationMode) {
+  public void validate(@Nullable final CapabilityIdentity id,
+                       final Map<String, String> properties,
+                       final ValidationMode validationMode)
+  {
+    validateConfig(properties, validationMode);
+    validateUnique(id, properties);
+  }
+
+  /**
+   * Override and return the ids of properties that makes a capability unique.
+   * For example to be able to create multiple capabilities of this type, one per repository, return the id of
+   * repository field.
+   *
+   * @return ids of the fields that makes the capability unique.
+   */
+  @Nullable
+  protected Set<String> uniqueProperties() {
+    return null;
+  }
+
+  protected void validateConfig(final Map<String, String> properties, final ValidationMode validationMode) {
+    checkNotNull(properties);
+    checkNotNull(validationMode);
+
     ConfigT config = createConfig(properties);
     if (config != null) {
       if (validationMode == ValidationMode.CREATE) {
@@ -127,7 +166,45 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
     ConstraintViolations.maybePropagate(violations, log);
   }
 
+  protected void validateUnique(@Nullable final CapabilityIdentity id, final Map<String, String> properties)
+  {
+    checkNotNull(properties);
+    checkNotNull(capabilityRegistry);
+
+    CapabilityReferenceFilter filter = capabilities().withType(type());
+    Set<String> uniqueProperties = uniqueProperties();
+    if (uniqueProperties != null) {
+      for (String key : uniqueProperties) {
+        filter.withProperty(key, properties.get(key));
+      }
+    }
+    log.trace("Validating that unique capability of type {} and properties {}", type(), filter.getProperties());
+
+    Collection<? extends CapabilityReference> references = capabilityRegistry.get().get(filter);
+    if (!references.isEmpty() && !Objects.equals(id, references.iterator().next().context().id())) {
+      StringBuilder message = new StringBuilder().append("Only one capability of type '").append(name()).append("'");
+      for (Entry<String, String> entry : filter.getProperties().entrySet()) {
+        message.append(", ").append(propertyName(entry.getKey()).toLowerCase()).append(" '").append(entry.getValue())
+            .append("'");
+      }
+      message.append(" can be created");
+      throw new ValidationException(message.toString());
+    }
+  }
+
   protected ConfigT createConfig(final Map<String, String> properties) { return null; }
+
+  private String propertyName(final String key) {
+    List<FormField> formFields = formFields();
+    if (formFields != null) {
+      for (FormField field : formFields) {
+        if (Objects.equals(key, field.getId())) {
+          return field.getLabel();
+        }
+      }
+    }
+    return key;
+  }
 
   //
   // Template support

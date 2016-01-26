@@ -377,7 +377,8 @@ Ext.define('NX.controller.Drilldown', {
     // getById() throws an error if a model ID is found, but not cached, check for content first
     model = me.getById(store, modelId);
     if (model === null) {
-      model = me.getById(store, parseInt(modelId)); // check for integer model id
+      // check for integer model id
+      model = me.getById(store, parseInt(modelId));
     }
     if (model === null) {
       if (Ext.isFunction(me.findAndSelectModel)) {
@@ -754,7 +755,8 @@ Ext.define('NX.controller.Drilldown', {
               xtype: 'button',
               scale: 'medium',
               ui: 'nx-drilldown',
-              disabled: (i === me.currentIndex ? true : false), // Disabled if it’s the last item in the breadcrumb
+              // Disabled if it’s the last item in the breadcrumb
+              disabled: (i === me.currentIndex ? true : false),
               text: items[j].itemName,
               handler: function() {
                 var bookmark = items[j].itemBookmark;
@@ -763,7 +765,7 @@ Ext.define('NX.controller.Drilldown', {
                 }
                 me.slidePanels(j, true);
               }
-            }
+            };
           })(i)
         );
       }
@@ -816,7 +818,9 @@ Ext.define('NX.controller.Drilldown', {
       setToWidth;
 
     // Sort the buttons by width
-    buttons = buttons.sort(function(a,b) { return b.getWidth() - a.getWidth() });
+    buttons = buttons.sort(function(a,b) {
+      return b.getWidth() - a.getWidth();
+    });
 
     // Calculate the current width of the buttons
     for (var i = 0; i < buttons.length; ++i) {

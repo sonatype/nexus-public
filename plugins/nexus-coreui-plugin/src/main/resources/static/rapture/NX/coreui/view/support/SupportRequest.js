@@ -24,25 +24,34 @@ Ext.define('NX.coreui.view.support.SupportRequest', {
     'NX.I18n'
   ],
 
-  settingsForm: {
-    xtype: 'nx-settingsform',
-    items: [
-      {
-        xtype: 'label',
-        html: NX.I18n.get('Support_SupportRequest_HelpText')
-      }
-    ],
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      settingsForm: {
+        xtype: 'nx-settingsform',
+        items: [
+          {
+            xtype: 'label',
+            html: NX.I18n.get('Support_SupportRequest_HelpText')
+          }
+        ],
 
-    buttonAlign: 'left',
+        buttonAlign: 'left',
 
-    buttons: [
-      {
-        text: NX.I18n.get('Support_SupportRequest_Submit_Button'),
-        glyph: 'xf08e@FontAwesome' /* fa-external-link */,
-        action: 'makerequest',
-        ui: 'nx-primary'
+        buttons: [
+          {
+            text: NX.I18n.get('Support_SupportRequest_Submit_Button'),
+            glyph: 'xf08e@FontAwesome' /* fa-external-link */,
+            action: 'makerequest',
+            ui: 'nx-primary'
+          }
+        ]
       }
-    ]
+    });
+
+    this.callParent();
   }
 
 });

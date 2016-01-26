@@ -80,14 +80,14 @@ public class OrientRealmConfigurationStore
   @Nullable
   public RealmConfiguration load() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.get(db);
+      return entityAdapter.singleton.get(db);
     }
   }
 
   @Override
   public void save(final RealmConfiguration configuration) {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.set(db, configuration);
+      entityAdapter.singleton.set(db, configuration);
     }
   }
 }

@@ -39,7 +39,7 @@ public class RealmConfiguration
     return realmNames;
   }
 
-  public void setRealmNames(final @Nullable List<String> realmNames) {
+  public void setRealmNames(@Nullable final List<String> realmNames) {
     this.realmNames = realmNames;
   }
 

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.HashMap;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,6 +23,7 @@ import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardAspect;
@@ -41,6 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * Default {@link StorageFacet} implementation.
@@ -104,7 +108,7 @@ public class StorageFacetImpl
   @Inject
   public StorageFacetImpl(final LocalNodeAccess localNodeAccess,
                           final BlobStoreManager blobStoreManager,
-                          final @Named(ComponentDatabase.NAME) Provider<DatabaseInstance> databaseInstanceProvider,
+                          @Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider,
                           final BucketEntityAdapter bucketEntityAdapter,
                           final ComponentEntityAdapter componentEntityAdapter,
                           final AssetEntityAdapter assetEntityAdapter,
@@ -157,11 +161,12 @@ public class StorageFacetImpl
     // get or create the bucket for the repository and set bucketId for fast lookup later
     try (ODatabaseDocumentTx db = databaseInstanceProvider.get().acquire()) {
       String repositoryName = getRepository().getName();
-      bucket = bucketEntityAdapter.getByRepositoryName(db, repositoryName);
+      bucket = bucketEntityAdapter.read.execute(db, repositoryName);
       if (bucket == null) {
         bucket = new Bucket();
         bucket.setRepositoryName(repositoryName);
-        bucketEntityAdapter.add(db, bucket);
+        bucket.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+        bucketEntityAdapter.addEntity(db, bucket);
         db.commit();
       }
     }

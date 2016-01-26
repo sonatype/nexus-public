@@ -56,7 +56,7 @@ class RepositoryPath
    * @return The parsed path or {@code null}
    */
   @Nullable
-  public static RepositoryPath parse(final @Nullable String input) {
+  public static RepositoryPath parse(@Nullable final String input) {
     // input not be null or empty
     if (input == null || input.isEmpty()) {
       return null;
@@ -77,7 +77,7 @@ class RepositoryPath
     String repo = input.substring(1, i);
 
     // repository must not be a relative token
-    if (repo.equals(".") || repo.equals("..")) {
+    if (".".equals(repo) || "..".equals(repo)) {
       return null;
     }
 

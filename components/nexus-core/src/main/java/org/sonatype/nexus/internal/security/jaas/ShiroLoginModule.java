@@ -28,6 +28,7 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.role.RoleIdentifier;
@@ -102,7 +103,7 @@ public class ShiroLoginModule
           )
       );
 
-      if (!shiroSubject.hasRole("anonymous")) {
+      if (!shiroSubject.hasRole(Roles.ANONYMOUS_ROLE_ID)) {
         user = securitySystem.getUser(shiroSubject.getPrincipal().toString());
       }
       else {

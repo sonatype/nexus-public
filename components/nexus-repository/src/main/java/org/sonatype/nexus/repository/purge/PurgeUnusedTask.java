@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.purge;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 
@@ -36,17 +35,11 @@ public class PurgeUnusedTask
 
   @Override
   protected boolean appliesTo(final Repository repository) {
-    try {
-      repository.facet(PurgeUnusedFacet.class);
-      return true;
-    }
-    catch (MissingFacetException e) {
-      return false;
-    }
+    return repository.optionalFacet(PurgeUnusedFacet.class).isPresent();
   }
 
   @Override
   public String getMessage() {
-    return "Purge Unused Components and Assets from " + getRepositoryField();
+    return "Purge unused components and assets from " + getRepositoryField();
   }
 }

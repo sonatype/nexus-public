@@ -24,24 +24,23 @@ Ext.define('NX.coreui.view.system.VerifySMTPConnection', {
     'NX.Icons',
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('System_VerifySmtpConnection_VerifyServer_Title'),
-  defaultFocus: 'email',
-
-  layout: 'fit',
-  autoShow: true,
-  constrain: true,
-  resizable: false,
-  width: 500,
-  border: false,
-  modal: true,
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.ui = 'nx-inset';
+    me.title = NX.I18n.get('System_VerifySmtpConnection_VerifyServer_Title');
+    me.defaultFocus = 'email';
+    me.layout = 'fit';
+    me.autoShow = true;
+    me.constrain = true;
+    me.resizable = false;
+    me.width = 500;
+    me.border = false;
+    me.modal = true;
 
     me.items = [
       {
@@ -74,7 +73,8 @@ Ext.define('NX.coreui.view.system.VerifySMTPConnection', {
             itemId: 'email',
             fieldLabel: 'E-mail',
             allowBlank: false,
-            validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+            // allow cancel to be clicked w/o validating this to be non-blank
+            validateOnBlur: false
           }
         ],
 

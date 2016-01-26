@@ -63,7 +63,12 @@ class EmailComponent
         username: value.username,
         password: value.password,
         fromAddress: value.fromAddress,
-        subjectPrefix: value.subjectPrefix
+        subjectPrefix: value.subjectPrefix,
+        startTlsEnabled: value.startTlsEnabled,
+        startTlsRequired: value.startTlsRequired,
+        sslOnConnectEnabled: value.sslOnConnectEnabled,
+        sslCheckServerIdentityEnabled: value.sslCheckServerIdentityEnabled,
+        nexusTrustStoreEnabled: value.nexusTrustStoreEnabled
     )
   }
 
@@ -89,7 +94,12 @@ class EmailComponent
         username: value.username,
         password: value.password,
         fromAddress: value.fromAddress,
-        subjectPrefix: value.subjectPrefix
+        subjectPrefix: value.subjectPrefix,
+        startTlsEnabled: value.startTlsEnabled,
+        startTlsRequired: value.startTlsRequired,
+        sslOnConnectEnabled: value.sslOnConnectEnabled,
+        sslCheckServerIdentityEnabled: value.sslCheckServerIdentityEnabled,
+        nexusTrustStoreEnabled: value.nexusTrustStoreEnabled
     )
   }
 

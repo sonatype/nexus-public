@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.StringTextFormField;
-import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -29,8 +29,10 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 @Named
 @Singleton
 public class RebuildMaven2MetadataTaskDescriptor
-    extends TaskDescriptorSupport<RebuildMaven2MetadataTask>
+    extends TaskDescriptorSupport
 {
+  public static final String TYPE_ID = "repository.maven.rebuild-metadata";
+
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   public static final String GROUPID_FIELD_ID = "groupId";
@@ -40,8 +42,11 @@ public class RebuildMaven2MetadataTaskDescriptor
   public static final String BASEVERSION_FIELD_ID = "baseVersion";
 
   public RebuildMaven2MetadataTaskDescriptor() {
-    super(RebuildMaven2MetadataTask.class,
-        "Rebuild Maven Repository Metadata",
+    super(TYPE_ID,
+        RebuildMaven2MetadataTask.class,
+        "Rebuild Maven repository metadata",
+        VISIBLE,
+        EXPOSED,
         new RepositoryCombobox(
             REPOSITORY_NAME_FIELD_ID,
             "Repository",

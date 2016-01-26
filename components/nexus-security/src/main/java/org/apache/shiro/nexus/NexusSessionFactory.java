@@ -71,7 +71,7 @@ public class NexusSessionFactory
      */
     @Override
     public void setAttributes(final Map<Object, Object> attributes) {
-      super.setAttributes(attributes != null ? Collections.synchronizedMap(attributes) : attributes);
+      super.setAttributes(attributes != null ? Collections.synchronizedMap(attributes) : null);
     }
   }
 }

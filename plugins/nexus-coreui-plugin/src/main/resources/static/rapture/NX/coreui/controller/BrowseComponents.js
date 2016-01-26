@@ -216,15 +216,18 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
    * Load all of the stores associated with this controller.
    */
   loadStores: function() {
-    if (this.getFeature()) {
-      if (this.currentIndex === 0) {
-        this.getRepositoryList().getStore().load();
+    var me = this;
+    if (me.getFeature()) {
+      if (me.currentIndex === 0) {
+        me.getRepositoryList().getStore().load();
       }
-      if (this.currentIndex === 1) {
-        this.getComponentList().getStore().load();
+      if (me.currentIndex === 1) {
+        me.getComponentList().getStore().load();
       }
-      if (this.currentIndex === 2) {
-        this.getAssetList().getStore().load();
+      if (me.currentIndex >= 2) {
+        me.getAssetList().getStore().load(function() {
+          me.reselect();
+        });
       }
     }
   },

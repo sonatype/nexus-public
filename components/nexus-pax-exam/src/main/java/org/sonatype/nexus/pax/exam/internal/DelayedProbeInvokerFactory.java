@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.pax.exam.internal;
 
+import org.eclipse.equinox.region.RegionDigraph;
 import org.ops4j.pax.exam.ProbeInvoker;
 import org.ops4j.pax.exam.ProbeInvokerFactory;
 import org.ops4j.pax.exam.TestContainerException;
 import org.ops4j.pax.exam.util.Injector;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
@@ -43,15 +45,19 @@ public class DelayedProbeInvokerFactory
 
   private final ServiceTracker<?, Injector> nexusInjectorTracker;
 
+  private final ServiceTracker<?, RegionDigraph> regionDigraphTracker;
+
   public DelayedProbeInvokerFactory(final BundleContext context) {
     examTimeout = getExamTimeout(context);
     examInvoker = getExamInvoker(context);
 
     probeFactoryTracker = new ServiceTracker<>(context, probeInvokerFilter(), null);
     nexusInjectorTracker = new ServiceTracker<>(context, nexusInjectorFilter(), null);
+    regionDigraphTracker = new ServiceTracker<>(context, RegionDigraph.class, null);
 
     probeFactoryTracker.open();
     nexusInjectorTracker.open();
+    regionDigraphTracker.open();
   }
 
   public ProbeInvoker createProbeInvoker(final Object context, final String expr) {
@@ -59,12 +65,15 @@ public class DelayedProbeInvokerFactory
       // wait for Nexus to start and register its Pax-Exam injector
       if (nexusInjectorTracker.waitForService(examTimeout) != null) {
 
+        // include the generated pax-exam test-probe bundle in the root region so it can see our service
+        regionDigraphTracker.getService().getRegion("root").addBundle(((BundleContext) context).getBundle());
+
         // use the real Pax-Exam invoker factory to supply the testsuite invoker
         return probeFactoryTracker.getService().createProbeInvoker(context, expr);
       }
       throw new TestContainerException("Nexus failed to start after " + examTimeout + "ms");
     }
-    catch (final InterruptedException e) {
+    catch (final InterruptedException|BundleException e) {
       throw new TestContainerException("Nexus failed to start after " + examTimeout + "ms", e);
     }
   }

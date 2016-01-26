@@ -38,10 +38,6 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_FORMAT;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_UPDATED;
 
 /**
  * {@link MetadataNode} entity-adapter.
@@ -51,6 +47,35 @@ import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_UPDATED;
 public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     extends IterableEntityAdapter<T>
 {
+  /**
+   * Key of {@link Bucket}, {@link Component} and {@link Asset} attributes nested map.
+   */
+  public static final String P_ATTRIBUTES = "attributes";
+
+  /**
+   * Key of {@link Component} and {@link Asset} bucket reference attribute.
+   */
+  public static final String P_BUCKET = "bucket";
+
+  /**
+   * Key of {@link Component} and {@link Asset} attribute for format reference.
+   */
+  public static final String P_FORMAT = "format";
+
+  /**
+   * Key of {@link Component} name coordinate.
+   */
+  public static final String P_NAME = "name";
+
+  /**
+   * Key of {@link Component} and {@link Asset} attribute denoting when the record was last updated. This denotes a
+   * timestamp when CMA last modified any attribute of the record, and has nothing to do with content change, it's age
+   * or it's last modified attributes. This property is present always on {@link Component} and {@link Asset}.
+   *
+   * @see MetadataNodeEntityAdapter#writeFields(ODocument, MetadataNode)
+   */
+  static final String P_LAST_UPDATED = "last_updated";
+
   protected final BucketEntityAdapter bucketEntityAdapter;
 
   public MetadataNodeEntityAdapter(final String typeName, final BucketEntityAdapter bucketEntityAdapter) {
@@ -125,10 +150,10 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
   }
 
   Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
-                            final @Nullable String whereClause,
-                            final @Nullable Map<String, Object> parameters,
-                            final @Nullable Iterable<Bucket> buckets,
-                            final @Nullable String querySuffix)
+                            @Nullable final String whereClause,
+                            @Nullable final Map<String, Object> parameters,
+                            @Nullable final Iterable<Bucket> buckets,
+                            @Nullable final String querySuffix)
   {
     String query = buildQuery(false, whereClause, buckets, querySuffix);
     log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
@@ -137,10 +162,10 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
   }
 
   long countByQuery(final ODatabaseDocumentTx db,
-                    final @Nullable String whereClause,
-                    final @Nullable Map<String, Object> parameters,
-                    final @Nullable Iterable<Bucket> buckets,
-                    final @Nullable String querySuffix)
+                    @Nullable final String whereClause,
+                    @Nullable final Map<String, Object> parameters,
+                    @Nullable final Iterable<Bucket> buckets,
+                    @Nullable final String querySuffix)
   {
     String query = buildQuery(true, whereClause, buckets, querySuffix);
     log.debug("Counting {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
@@ -149,9 +174,9 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
   }
 
   private String buildQuery(final boolean isCount,
-                            final @Nullable String whereClause,
-                            final @Nullable Iterable<Bucket> buckets,
-                            final @Nullable String querySuffix)
+                            @Nullable final String whereClause,
+                            @Nullable final Iterable<Bucket> buckets,
+                            @Nullable final String querySuffix)
   {
     StringBuilder query = new StringBuilder();
     query.append("select");

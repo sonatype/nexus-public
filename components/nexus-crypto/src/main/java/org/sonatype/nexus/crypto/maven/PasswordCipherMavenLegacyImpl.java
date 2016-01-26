@@ -24,7 +24,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
-import org.sonatype.nexus.crypto.PasswordCipher;
 
 import com.google.common.base.Throwables;
 import org.bouncycastle.util.encoders.Base64Encoder;

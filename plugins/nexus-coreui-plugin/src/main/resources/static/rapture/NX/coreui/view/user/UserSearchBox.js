@@ -25,10 +25,6 @@ Ext.define('NX.coreui.view.user.UserSearchBox', {
     'NX.I18n'
   ],
 
-  emptyText: NX.I18n.get('User_UserList_Filter_EmptyText'),
-  width: 320,
-  submitValue: false,
-
   // TODO: Only show clear trigger if we have text
   trigger1Cls: 'nx-form-fa-times-circle-trigger',
   trigger2Cls: 'x-form-search-trigger',
@@ -38,6 +34,10 @@ Ext.define('NX.coreui.view.user.UserSearchBox', {
    */
   initComponent: function() {
     var me = this;
+
+    me.emptyText = NX.I18n.get('User_UserList_Filter_EmptyText');
+    me.width = 320;
+    me.submitValue = false;
 
     me.callParent(arguments);
 

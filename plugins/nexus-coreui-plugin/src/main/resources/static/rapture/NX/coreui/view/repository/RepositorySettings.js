@@ -24,9 +24,20 @@ Ext.define('NX.coreui.view.repository.RepositorySettings', {
     'NX.I18n'
   ],
 
-  title: NX.I18n.get('Repository_RepositorySettings_Title'),
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
 
-  settingsForm: { xtype: 'nx-coreui-repository-settings-form' },
 
-  dockedItems: null
+      title: NX.I18n.get('Repository_RepositorySettings_Title'),
+
+      settingsForm: { xtype: 'nx-coreui-repository-settings-form' },
+
+      dockedItems: null
+    });
+
+    this.callParent();
+  }
 });

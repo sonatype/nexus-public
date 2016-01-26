@@ -22,7 +22,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.sonatype.nexus.bootstrap.ConfigurationHolder;
-import org.sonatype.nexus.bootstrap.DirectoryHelper;
+import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
@@ -34,9 +34,8 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.karaf.features.FeaturesService.Option.ContinueBatchOnFailure;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
-import static org.apache.karaf.features.FeaturesService.Option.NoCleanIfFailure;
+import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 
 /**
  * {@link ServletContextListener} that bootstraps an OSGi-based application.
@@ -120,8 +119,9 @@ public class BootstrapListener
 
         // edition might already be installed in the cache; if so then skip installation
         if (!featuresService.isInstalled(editionFeature)) {
-          EnumSet<Option> options = EnumSet.of(ContinueBatchOnFailure, NoCleanIfFailure, NoAutoRefreshBundles);
-          featuresService.installFeature(editionFeature, options);
+          // avoid auto-refreshing bundles as that could trigger unwanted restart/lifecycle events
+          EnumSet<Option> options = EnumSet.of(NoAutoRefreshBundles, NoAutoRefreshManagedBundles);
+          featuresService.installFeature(editionFeature.getId(), options);
         }
       }
       finally {

@@ -28,7 +28,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * Tests {@link CacheInfo}.
@@ -49,7 +49,7 @@ public class CacheInfoTest
   public void lastVerifiedOnlyExtract() {
     final DateTime now = DateTime.now();
     NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
-    attributes.child(CacheInfo.P_CACHE).set(CacheInfo.P_LAST_VERIFIED, now.toDate());
+    attributes.child(CacheInfo.CACHE).set(CacheInfo.LAST_VERIFIED, now.toDate());
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     CacheInfo cacheInfo = CacheInfo.extractFromAsset(asset);
@@ -61,7 +61,7 @@ public class CacheInfoTest
   public void cacheTokenOnlyExtract() {
     final String cacheToken = "foo-bar";
     NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
-    attributes.child(CacheInfo.P_CACHE).set(CacheInfo.P_CACHE_TOKEN, cacheToken);
+    attributes.child(CacheInfo.CACHE).set(CacheInfo.CACHE_TOKEN, cacheToken);
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     CacheInfo cacheInfo = CacheInfo.extractFromAsset(asset);
@@ -73,8 +73,8 @@ public class CacheInfoTest
     final DateTime now = DateTime.now();
     final String cacheToken = "foo-bar";
     NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
-    attributes.child(CacheInfo.P_CACHE).set(CacheInfo.P_LAST_VERIFIED, now.toDate());
-    attributes.child(CacheInfo.P_CACHE).set(CacheInfo.P_CACHE_TOKEN, cacheToken);
+    attributes.child(CacheInfo.CACHE).set(CacheInfo.LAST_VERIFIED, now.toDate());
+    attributes.child(CacheInfo.CACHE).set(CacheInfo.CACHE_TOKEN, cacheToken);
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     CacheInfo cacheInfo = CacheInfo.extractFromAsset(asset);
@@ -92,9 +92,9 @@ public class CacheInfoTest
     when(asset.attributes()).thenReturn(attributes);
     CacheInfo cacheInfo = new CacheInfo(now, cacheToken);
     CacheInfo.applyToAsset(asset, cacheInfo);
-    assertThat(asset.attributes().child(CacheInfo.P_CACHE).get(CacheInfo.P_LAST_VERIFIED, Date.class),
+    assertThat(asset.attributes().child(CacheInfo.CACHE).get(CacheInfo.LAST_VERIFIED, Date.class),
         equalTo(now.toDate()));
-    assertThat(asset.attributes().child(CacheInfo.P_CACHE).get(CacheInfo.P_CACHE_TOKEN, String.class),
+    assertThat(asset.attributes().child(CacheInfo.CACHE).get(CacheInfo.CACHE_TOKEN, String.class),
         equalTo(cacheToken));
   }
 }

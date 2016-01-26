@@ -14,11 +14,15 @@ package org.sonatype.nexus.scheduling.schedule;
 
 /**
  * Schedule that never executes, is meant for manual execution (from code or via UI by user).
+ *
+ * @see ScheduleFactory#manual()
  */
 public class Manual
     extends Schedule
 {
+  public static final String TYPE = "manual";
+
   public Manual() {
-    super("manual");
+    super(TYPE);
   }
 }

@@ -34,7 +34,9 @@ Ext.define('NX.view.drilldown.Master', {
     me.on('render', this.loadStore, this);
 
     // Refresh drilldown affordances on load, and when a column is added
-    me.on('viewready', function(view) { view.refreshDrilldown(view.headerCt) });
+    me.on('viewready', function(view) {
+      view.refreshDrilldown(view.headerCt);
+    });
     me.headerCt.on('columnschanged', me.refreshDrilldown);
   },
 
@@ -51,7 +53,7 @@ Ext.define('NX.view.drilldown.Master', {
   refreshDrilldown: function(ct) {
     var firstIdx,
         columns = ct.items.items.filter(function(e, idx) {
-          if (e.cls && e.cls == 'nx-drilldown-affordance') {
+          if (e.cls && e.cls === 'nx-drilldown-affordance') {
             if (!firstIdx) {
               firstIdx = idx;
             }
@@ -62,7 +64,7 @@ Ext.define('NX.view.drilldown.Master', {
 
     // skip adding affordance if the column already exists and is teh last one
     if (columns.length === 1 && firstIdx + 1 === ct.items.items.length) {
-      return
+      return;
     }
 
     this.suspendEvents(false);
@@ -88,10 +90,10 @@ Ext.define('NX.view.drilldown.Master', {
             return Ext.DomHelper.markup(
                 {
                   tag: 'span',
-                  html: '&#xf105;', // Right angle
+                  html: '&#xf105;', /* fa-angle-right */
                   style: 'font-family: FontAwesome;'
                 }
-            )
+            );
           }
         }
     );

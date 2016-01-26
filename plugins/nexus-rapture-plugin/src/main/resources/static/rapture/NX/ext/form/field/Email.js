@@ -21,6 +21,7 @@ Ext.define('NX.ext.form.field.Email', {
   extend: 'Ext.form.field.Text',
   alias: 'widget.nx-email',
 
-  vtype: 'email'
+  vtype: 'nx-email',
+  maxLength: 254
 
 });

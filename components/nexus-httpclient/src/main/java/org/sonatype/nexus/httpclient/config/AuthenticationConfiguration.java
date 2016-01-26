@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.httpclient.config;
 
+import java.util.Map;
+
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,6 +27,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class AuthenticationConfiguration
     implements Cloneable
 {
+  /**
+   * Mapping of type-name to type-class used by deserializers. If you add new type of auth config, this map needs
+   * to be updated as well.
+   */
+  public static final Map<String, Class<? extends AuthenticationConfiguration>> TYPES = ImmutableMap.of(
+      UsernameAuthenticationConfiguration.TYPE, UsernameAuthenticationConfiguration.class,
+      NtlmAuthenticationConfiguration.TYPE, NtlmAuthenticationConfiguration.class
+  );
+
   private final String type;
 
   public AuthenticationConfiguration(final String type) {
@@ -38,7 +50,7 @@ public abstract class AuthenticationConfiguration
 
   public AuthenticationConfiguration copy() {
     try {
-      return (AuthenticationConfiguration)clone();
+      return (AuthenticationConfiguration) clone();
     }
     catch (CloneNotSupportedException e) {
       throw Throwables.propagate(e);

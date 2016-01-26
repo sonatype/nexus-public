@@ -36,6 +36,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleFieldSet', {
       name: 'schedule',
       itemId: 'schedule',
       fieldLabel: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_FieldLabel'),
+      helpText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_HelpText'),
       emptyText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_EmptyText'),
       editable: false,
       store: [
@@ -121,6 +122,9 @@ Ext.define('NX.coreui.view.task.TaskScheduleFieldSet', {
     if (startDate && startTime) {
       startDate.setValue(date);
       startTime.setValue(date);
+
+      // startTime is not part of the form data load and therefore is marked 'dirty' otherwise
+      startTime.resetOriginalValue();
     }
   },
 
@@ -135,6 +139,8 @@ Ext.define('NX.coreui.view.task.TaskScheduleFieldSet', {
       var checkbox = me.down('checkbox[name=recurringDay-' + day + ']');
       if (checkbox) {
         checkbox.setValue(true);
+        //checkboxes are not part of the form data load and therefore is marked 'dirty' otherwise
+        checkbox.resetOriginalValue();
       }
     });
   }

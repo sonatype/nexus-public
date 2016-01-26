@@ -23,7 +23,7 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
     'NX.util.Url',
     'NX.Assert'
   ],
-  
+
   mixins: {
     logAware: 'NX.LogAware'
   },
@@ -34,33 +34,30 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
    * @private
    */
   repositoryUrlStrategies: {
-    maven2: function(assetModel) {
-      var repositoryName = assetModel.get('repositoryName'),
-          assetName = assetModel.get('name');
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + assetName, assetName);
-    },
-    npm: function(assetModel) {
+    maven2: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
     },
-    nuget: function(assetModel) {
-      var repositoryName = assetModel.get('repositoryName'),
-          assetName = assetModel.get('name'),
-          attributes = assetModel.get('attributes'),
-          version = attributes.nuget.version,
-          path = '/' + assetName + '/' + version;
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + path, path);
-    },
-    raw: function(assetModel) {
+    npm: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
     },
-    docker: function(assetModel) {
+    nuget: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');
-      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + assetName, assetName);
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
+    },
+    raw: function (assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = assetModel.get('name');
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
+    },
+    docker: function (assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = assetModel.get('name');
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
     }
   },
 
@@ -69,7 +66,7 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
    *
    * @public
    */
-  addRepositoryUrlStrategy: function(format, strategy) {
+  addRepositoryUrlStrategy: function (format, strategy) {
     this.repositoryUrlStrategies[format] = strategy;
   },
 
@@ -80,7 +77,7 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
    * @param {Object} assetModel the asset to create a link for
    * @param {String} format the format of the repository storing this asset
    */
-  asRepositoryLink: function(assetModel, format) {
+  asRepositoryLink: function (assetModel, format) {
     //<if assert>
     NX.Assert.assert(assetModel, 'Expected an assetModel with format: ' + format);
     //</if>

@@ -12,24 +12,24 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import javax.annotation.Nullable;
+import java.util.Map;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
-import com.google.common.collect.Iterables;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * {@link Bucket} entity-adapter.
@@ -42,8 +42,13 @@ public class BucketEntityAdapter
     extends IterableEntityAdapter<Bucket>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(Bucket.class)
+      .type("bucket")
       .build();
+
+  /**
+   * Key of {@link Bucket} repository name attribute.
+   */
+  public static final String P_REPOSITORY_NAME = "repository_name";
 
   private static final String I_REPOSITORY_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -57,7 +62,10 @@ public class BucketEntityAdapter
 
   @Override
   protected void defineType(final OClass type) {
-    type.createProperty(P_REPOSITORY_NAME, OType.STRING).setMandatory(true).setNotNull(true);
+    type.createProperty(P_REPOSITORY_NAME, OType.STRING)
+        .setMandatory(true)
+        .setNotNull(true);
+    type.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP);
 
     type.createIndex(I_REPOSITORY_NAME, INDEX_TYPE.UNIQUE, P_REPOSITORY_NAME);
   }
@@ -70,21 +78,21 @@ public class BucketEntityAdapter
   @Override
   protected void readFields(final ODocument document, final Bucket entity) {
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
+    Map<String, Object> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
 
     entity.setRepositoryName(repositoryName);
+    entity.attributes(new NestedAttributesMap(P_ATTRIBUTES, attributes));
   }
 
   @Override
   protected void writeFields(final ODocument document, final Bucket entity) {
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
+    document.field(P_ATTRIBUTES, entity.attributes().backing());
   }
 
-  private static final String GET_BY_QUERY = String.format("SELECT FROM %s WHERE %s = ?", DB_CLASS, P_REPOSITORY_NAME);
+  //
+  // Actions
+  //
 
-  @Nullable
-  Bucket getByRepositoryName(final ODatabaseDocumentTx db, final String repositoryName) {
-    Iterable<ODocument> docs = db.command(new OCommandSQL(GET_BY_QUERY)).execute(repositoryName);
-    ODocument first = Iterables.getFirst(docs, null);
-    return first != null ? readEntity(first) : null;
-  }
+  public final ReadEntityByPropertyAction<Bucket> read = new ReadEntityByPropertyAction<>(this, P_REPOSITORY_NAME);
 }

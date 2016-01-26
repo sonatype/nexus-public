@@ -22,13 +22,12 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
-import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.negativecache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
@@ -140,12 +139,7 @@ public abstract class ProxyFacetSupport
     if (remoteUrlChanged) {
       remoteUrlChanged = false;
 
-      try {
-        facet(NegativeCacheFacet.class).invalidate();
-      }
-      catch (MissingFacetException e) {
-        // NCF is optional
-      }
+      optionalFacet(NegativeCacheFacet.class).ifPresent((nfc) -> nfc.invalidate());
     }
   }
 
@@ -193,11 +187,14 @@ public abstract class ProxyFacetSupport
   protected abstract Content getCachedContent(final Context context) throws IOException;
 
   /**
-   * Store a new Payload, freshly fetched from the remote URL. The Context indicates which component
-   * was being requested.
+   * Store a new Payload, freshly fetched from the remote URL.
+   *
+   * The Context indicates which component was being requested.
+   *
+   * @throws IOException
+   * @throws InvalidContentException
    */
-  protected abstract Content store(final Context context, final Content content)
-      throws IOException, InvalidContentException;
+  protected abstract Content store(final Context context, final Content content) throws IOException;
 
   @Nullable
   protected Content fetch(final Context context, Content stale) throws IOException {

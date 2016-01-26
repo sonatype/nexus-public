@@ -17,10 +17,10 @@ import javax.inject.Named
 
 import org.sonatype.nexus.common.log.LogManager
 
-import org.apache.karaf.shell.commands.Command
-import org.apache.karaf.shell.commands.Option
-import org.apache.karaf.shell.console.AbstractAction
-import org.apache.karaf.shell.table.ShellTable
+import org.apache.karaf.shell.api.action.Action
+import org.apache.karaf.shell.api.action.Command
+import org.apache.karaf.shell.api.action.Option
+import org.apache.karaf.shell.support.table.ShellTable
 
 /**
  * Action to display configured loggers.
@@ -30,7 +30,7 @@ import org.apache.karaf.shell.table.ShellTable
 @Named
 @Command(name='loggers', scope = 'nexus', description = 'Display loggers')
 class LoggersAction
-  extends AbstractAction
+  implements Action
 {
   @Inject
   LogManager logManager
@@ -39,7 +39,7 @@ class LoggersAction
   Boolean reset
 
   @Override
-  protected def doExecute() {
+  public Object execute() throws Exception {
     if (reset) {
       logManager.resetLoggers()
       return null

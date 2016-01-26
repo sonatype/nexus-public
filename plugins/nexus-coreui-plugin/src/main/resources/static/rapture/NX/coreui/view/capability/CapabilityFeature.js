@@ -24,41 +24,54 @@ Ext.define('NX.coreui.view.capability.CapabilityFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'capability-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'capability-default',
 
-  masters: [
-    { xtype: 'nx-coreui-capability-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-capability-list' }
+      ],
 
-  tabs: [
-    { xtype: 'nx-coreui-capability-summary', weight: 10 },
-    { xtype: 'nx-coreui-capability-settings', title: NX.I18n.get('Capability_CapabilitySettings_Title'), weight: 20 }
-  ],
+      tabs: [
+        { xtype: 'nx-coreui-capability-summary', weight: 10 },
+        { xtype: 'nx-coreui-capability-settings', title: NX.I18n.get('Capability_CapabilitySettings_Title'), weight: 20 }
+      ],
 
-  actions: [
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Capability_CapabilityFeature_Delete_Button'),
-      action: 'delete',
-      disabled: true,
-      glyph: 'xf056@FontAwesome' /* fa-minus-circle */
-    },
-    '-',
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Capability_CapabilityFeature_Enable_Button'),
-      action: 'enable',
-      handler: function(button) { button.fireEvent('runaction') },
-      disabled: true,
-      glyph: 'xf04b@FontAwesome' /* fa-play */
-    },
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Capability_CapabilityFeature_Disable_Button'),
-      action: 'disable',
-      handler: function(button) { button.fireEvent('runaction') },
-      disabled: true,
-      glyph: 'xf04d@FontAwesome' /* fa-stop */
-    }
-  ]
+      actions: [
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Capability_CapabilityFeature_Delete_Button'),
+          action: 'delete',
+          disabled: true,
+          glyph: 'xf056@FontAwesome' /* fa-minus-circle */
+        },
+        '-',
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Capability_CapabilityFeature_Enable_Button'),
+          action: 'enable',
+          handler: function(button) {
+            button.fireEvent('runaction');
+          },
+          disabled: true,
+          glyph: 'xf04b@FontAwesome' /* fa-play */
+        },
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Capability_CapabilityFeature_Disable_Button'),
+          action: 'disable',
+          handler: function(button) {
+            button.fireEvent('runaction');
+          },
+          disabled: true,
+          glyph: 'xf04d@FontAwesome' /* fa-stop */
+        }
+      ]
+    });
+
+    this.callParent();
+  }
 });

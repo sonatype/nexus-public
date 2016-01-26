@@ -34,7 +34,7 @@ public class Status
 
   private final String message;
 
-  public Status(final boolean successful, final int code, final @Nullable String message) {
+  public Status(final boolean successful, final int code, @Nullable final String message) {
     this.successful = successful;
     this.code = code;
     this.message = message;

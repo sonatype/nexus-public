@@ -25,62 +25,60 @@ Ext.define('NX.coreui.view.ssl.SslCertificateList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-sslcertificate-list'
-  },
-
-  store: 'SslCertificate',
-
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'sslcertificate-default';
-      }
-    },
-    {
-      header: NX.I18n.get('Ssl_SslCertificateList_Name_Header'),
-      dataIndex: 'subjectCommonName',
-      stateId: 'subjectCommonName',
-      flex: 1
-    },
-    {
-      header: NX.I18n.get('Ssl_SslCertificateList_IssuedTo_Header'),
-      dataIndex: 'subjectOrganization',
-      stateId: 'subjectOrganization',
-      flex: 1
-    },
-    {
-      header: NX.I18n.get('Ssl_SslCertificateList_IssuedBy_Header'),
-      dataIndex: 'issuerOrganization',
-      stateId: 'issuerOrganization',
-      flex: 1
-    },
-    {
-      header: NX.I18n.get('Ssl_SslCertificateList_Fingerprint_Header'),
-      dataIndex: 'fingerprint',
-      stateId: 'fingerprint',
-      flex: 1
-    }
-  ],
-
-  viewConfig: {
-    emptyText: NX.I18n.get('Ssl_SslCertificateList_EmptyText'),
-    deferEmptyText: false
-  },
-
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Ssl_SslCertificateList_Filter_EmptyText') }
-  ],
+  stateful: true,
+  stateId: 'nx-coreui-sslcertificate-list',
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.store = 'SslCertificate';
+
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconName: function () {
+          return 'sslcertificate-default';
+        }
+      },
+      {
+        header: NX.I18n.get('Ssl_SslCertificateList_Name_Header'),
+        dataIndex: 'subjectCommonName',
+        stateId: 'subjectCommonName',
+        flex: 1
+      },
+      {
+        header: NX.I18n.get('Ssl_SslCertificateList_IssuedTo_Header'),
+        dataIndex: 'subjectOrganization',
+        stateId: 'subjectOrganization',
+        flex: 1
+      },
+      {
+        header: NX.I18n.get('Ssl_SslCertificateList_IssuedBy_Header'),
+        dataIndex: 'issuerOrganization',
+        stateId: 'issuerOrganization',
+        flex: 1
+      },
+      {
+        header: NX.I18n.get('Ssl_SslCertificateList_Fingerprint_Header'),
+        dataIndex: 'fingerprint',
+        stateId: 'fingerprint',
+        flex: 1
+      }
+    ];
+
+    me.viewConfig = {
+      emptyText: NX.I18n.get('Ssl_SslCertificateList_EmptyText'),
+      deferEmptyText: false
+    };
+
+    me.plugins = [
+      { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Ssl_SslCertificateList_Filter_EmptyText') }
+    ];
 
     me.dockedItems = [{
       xtype: 'toolbar',

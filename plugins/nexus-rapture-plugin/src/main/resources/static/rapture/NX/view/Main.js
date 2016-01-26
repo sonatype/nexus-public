@@ -80,7 +80,8 @@ Ext.define('NX.view.Main', {
     me.callParent();
 
     me.down('nx-header-panel>toolbar').add([
-      ' ', ' ', // 2x pad
+      // 2x pad
+      ' ', ' ',
       {
         xtype: 'nx-header-mode',
         items: { xtype: 'nx-header-browse-mode' }

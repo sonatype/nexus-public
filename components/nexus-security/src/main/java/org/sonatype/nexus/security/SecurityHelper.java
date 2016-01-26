@@ -58,8 +58,10 @@ public class SecurityHelper
 
   /**
    * Ensure subject has given permissions.
+   *
+   * @throws AuthorizationException
    */
-  public void ensurePermitted(final Subject subject, final Permission... permissions) throws AuthorizationException {
+  public void ensurePermitted(final Subject subject, final Permission... permissions) {
     checkNotNull(subject);
     checkNotNull(permissions);
     checkArgument(permissions.length != 0);
@@ -72,8 +74,10 @@ public class SecurityHelper
 
   /**
    * Ensure current subject has given permissions.
+   *
+   * @throws AuthorizationException
    */
-  public void ensurePermitted(final Permission... permissions) throws AuthorizationException {
+  public void ensurePermitted(final Permission... permissions) {
     ensurePermitted(subject(), permissions);
   }
 

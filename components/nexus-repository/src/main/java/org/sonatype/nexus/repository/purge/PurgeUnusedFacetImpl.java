@@ -13,37 +13,34 @@
 package org.sonatype.nexus.repository.purge;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.orient.entity.AttachedEntityId;
+import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_COMPONENT;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_ACCESSED;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_ACCESSED;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
 /**
  * {@link PurgeUnusedFacet} implementation.
@@ -55,20 +52,12 @@ public class PurgeUnusedFacetImpl
     extends FacetSupport
     implements PurgeUnusedFacet
 {
-  private final BucketEntityAdapter bucketEntityAdapter;
-
   private final ComponentEntityAdapter componentEntityAdapter;
 
-  private final AssetEntityAdapter assetEntityAdapter;
-
   @Inject
-  public PurgeUnusedFacetImpl(final BucketEntityAdapter bucketEntityAdapter,
-                              final ComponentEntityAdapter componentEntityAdapter,
-                              final AssetEntityAdapter assetEntityAdapter)
+  public PurgeUnusedFacetImpl(final ComponentEntityAdapter componentEntityAdapter)
   {
-    this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
-    this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
   }
 
   @Override
@@ -76,37 +65,43 @@ public class PurgeUnusedFacetImpl
   public void purgeUnused(final int numberOfDays) {
     checkArgument(numberOfDays > 0, "Number of days must be greater then zero");
     log.info("Purging unused components from repository {}", getRepository().getName());
-    try (StorageTx tx = facet(StorageFacet.class).txSupplier().get()) {
-      Date olderThan = DateTime.now().minusDays(numberOfDays).toDateMidnight().toDate();
-      deleteUnusedComponents(tx, olderThan);
-      deleteUnusedAssets(tx, olderThan);
+
+    Date olderThan = DateTime.now().minusDays(numberOfDays).withTimeAtStartOfDay().toDate();
+
+    UnitOfWork.beginBatch(facet(StorageFacet.class).txSupplier());
+    try {
+      deleteUnusedComponents(olderThan);
+      deleteUnusedAssets(olderThan);
+    }
+    finally {
+      UnitOfWork.end();
     }
   }
 
   /**
    * Delete all unused components.
    */
-  private void deleteUnusedComponents(final StorageTx tx, final Date olderThan) {
-    tx.begin();
-    Iterable<Component> components = findUnusedComponents(tx, olderThan);
-    for (Component component : components) {
+  @Transactional
+  protected void deleteUnusedComponents(final Date olderThan) {
+    StorageTx tx = UnitOfWork.currentTx();
+
+    for (Component component : findUnusedComponents(tx, olderThan)) {
       log.debug("Deleting unused component {}", component);
-      tx.deleteComponent(component);
+      tx.deleteComponent(component); // TODO: commit in batches
     }
-    tx.commit();
   }
 
   /**
    * Delete all unused assets.
    */
-  private void deleteUnusedAssets(final StorageTx tx, final Date olderThan) {
-    tx.begin();
-    Iterable<Asset> assets = findUnusedAssets(tx, olderThan);
-    for (Asset asset : assets) {
+  @Transactional
+  protected void deleteUnusedAssets(final Date olderThan) {
+    StorageTx tx = UnitOfWork.currentTx();
+
+    for (Asset asset : findUnusedAssets(tx, olderThan)) {
       log.debug("Deleting unused asset {}", asset);
-      tx.deleteAsset(asset);
+      tx.deleteAsset(asset); // TODO: commit in batches
     }
-    tx.commit();
   }
 
   /**
@@ -114,23 +109,20 @@ public class PurgeUnusedFacetImpl
    * last time an asset of that component was last accessed.
    */
   private Iterable<Component> findUnusedComponents(final StorageTx tx, final Date olderThan) {
-    String sql = String.format(
-        "SELECT FROM (SELECT %s, MAX(%s) AS lastAccessed FROM %s WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastAccessed < :olderThan",
-        P_COMPONENT, P_LAST_ACCESSED, assetEntityAdapter.getTypeName(), P_BUCKET, P_COMPONENT, P_COMPONENT
-    );
-    Map<String, Object> sqlParams = new HashMap<>();
-    sqlParams.put("bucket", bucketEntityAdapter.recordIdentity(tx.findBucket(getRepository())));
-    sqlParams.put("olderThan", olderThan);
+    final Bucket bucket = tx.findBucket(getRepository());
 
-    return Iterables.transform(tx.browse(sql, sqlParams), new Function<ODocument, Component>()
-    {
-      @Nullable
-      @Override
-      public Component apply(final ODocument input) {
-        ORID componentId = input.field(P_COMPONENT, ORID.class);
-        return tx.findComponent(new AttachedEntityId(componentEntityAdapter, componentId), tx.findBucket(getRepository()));
-      }
-    });
+    String sql = String.format(
+        "SELECT FROM (SELECT %s, MAX(%s) AS lastAccessed FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastAccessed < :olderThan",
+        P_COMPONENT, P_LAST_ACCESSED, P_BUCKET, P_COMPONENT, P_COMPONENT
+    );
+
+    Map<String, Object> sqlParams = ImmutableMap.of(
+        "bucket", AttachedEntityHelper.id(bucket),
+        "olderThan", olderThan
+    );
+
+    return Iterables.transform(tx.browse(sql, sqlParams),
+        (doc) -> componentEntityAdapter.readEntity(doc.field(P_COMPONENT)));
   }
 
   /**
@@ -138,8 +130,7 @@ public class PurgeUnusedFacetImpl
    */
   private Iterable<Asset> findUnusedAssets(final StorageTx tx, final Date olderThan) {
     String whereClause = String.format("%s IS NULL AND %s < :olderThan", P_COMPONENT, P_LAST_ACCESSED);
-    Map<String, Object> sqlParams = new HashMap<>();
-    sqlParams.put("olderThan", olderThan);
+    Map<String, Object> sqlParams = ImmutableMap.of("olderThan", olderThan);
 
     return tx.findAssets(whereClause, sqlParams, ImmutableList.of(getRepository()), null);
   }

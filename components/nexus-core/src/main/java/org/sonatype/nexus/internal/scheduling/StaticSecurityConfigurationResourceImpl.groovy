@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'tasks-all',
+                id: 'nx-tasks-all',
                 description: 'All permissions for Scheduled Tasks',
                 type: 'application',
                 properties: [
@@ -43,7 +43,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'tasks-create',
+                id: 'nx-tasks-create',
                 description: 'Create permission for Scheduled Tasks',
                 type: 'application',
                 properties: [
@@ -52,7 +52,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'tasks-read',
+                id: 'nx-tasks-read',
                 description: 'Read permission for Scheduled Tasks',
                 type: 'application',
                 properties: [
@@ -61,7 +61,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'tasks-update',
+                id: 'nx-tasks-update',
                 description: 'Update permission for Scheduled Tasks',
                 type: 'application',
                 properties: [
@@ -70,7 +70,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'tasks-delete',
+                id: 'nx-tasks-delete',
                 description: 'Delete permission for Scheduled Tasks',
                 type: 'application',
                 properties: [
@@ -80,7 +80,7 @@ class StaticSecurityConfigurationResourceImpl
             ),
 
             new CPrivilege(
-                id: 'tasks-run',
+                id: 'nx-tasks-run',
                 description: 'Run permission for Scheduled Tasks',
                 type: 'application',
                 properties: [

@@ -147,7 +147,7 @@ Ext.define('NX.controller.Help', {
   createUrl: function(keyword) {
     return this.baseUrl + '/docs-search/' + NX.State.getVersionMajorMinor() + '/' + keyword;
   },
-  
+
   /**
    * @private
    */

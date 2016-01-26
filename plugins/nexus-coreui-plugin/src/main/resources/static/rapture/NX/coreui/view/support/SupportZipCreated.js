@@ -25,8 +25,6 @@ Ext.define('NX.coreui.view.support.SupportZipCreated', {
       'NX.I18n'
   ],
 
-  fileType: 'Support ZIP',
-
   /**
    * @override
    */
@@ -34,6 +32,7 @@ Ext.define('NX.coreui.view.support.SupportZipCreated', {
     var me = this;
 
     me.fileIcon = NX.Icons.img('supportzip-zip', 'x32');
+    me.fileType = NX.I18n.get('Support_SupportZipCreated_FileType_Text'),
 
     me.callParent(arguments);
 

@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-class PropertiesFile
+public class PropertiesFile
     extends Properties
 {
   private static final Logger log = LoggerFactory.getLogger(PropertiesFile.class);
@@ -50,9 +50,13 @@ class PropertiesFile
   }
 
   public void store() throws IOException {
-    log.debug("Storing: {}, file");
+    log.debug("Storing: {}", file);
     FileReplacer replacer = new FileReplacer(file);
     replacer.setDeleteBackupFile(true);
     replacer.replace(output -> store(output, null));
+  }
+
+  public File getFile() {
+    return file;
   }
 }

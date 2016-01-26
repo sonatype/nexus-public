@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.Map;
+
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -20,6 +23,8 @@ import org.sonatype.goodies.common.ComponentSupport;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Provides {@link ObjectMapper} for repository configuration.
@@ -34,10 +39,21 @@ public class ConfigurationObjectMapperProvider
 {
   public static final String NAME = "repository-configuration";
 
+  private final Map<String, ConfigurationObjectMapperCustomizer> customizers;
+
+  @Inject
+  public ConfigurationObjectMapperProvider(final Map<String, ConfigurationObjectMapperCustomizer> customizers)
+  {
+    this.customizers = checkNotNull(customizers);
+  }
+
   @Override
   public ObjectMapper get() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    for (ConfigurationObjectMapperCustomizer customizer : customizers.values()) {
+      customizer.customize(mapper);
+    }
     // TODO: ISO-8601, joda
     // TODO: null handling
     return mapper;

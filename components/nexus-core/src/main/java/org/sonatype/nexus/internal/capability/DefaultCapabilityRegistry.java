@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -113,8 +114,8 @@ public class DefaultCapabilityRegistry
   @Override
   public CapabilityReference add(final CapabilityType type,
                                  final boolean enabled,
-                                 final String notes,
-                                 final Map<String, String> properties)
+                                 @Nullable final String notes,
+                                 @Nullable final Map<String, String> properties)
       throws IOException
   {
     checkNotNull(type);
@@ -128,7 +129,7 @@ public class DefaultCapabilityRegistry
 
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
 
-      descriptor.validate(props, ValidationMode.CREATE);
+      descriptor.validate(null, props, ValidationMode.CREATE);
 
       final Map<String, String> encryptedProps = encryptValuesIfNeeded(descriptor, props);
 
@@ -157,8 +158,8 @@ public class DefaultCapabilityRegistry
   @Override
   public CapabilityReference update(final CapabilityIdentity id,
                                     final boolean enabled,
-                                    final String notes,
-                                    final Map<String, String> properties)
+                                    @Nullable final String notes,
+                                    @Nullable final Map<String, String> properties)
       throws IOException
   {
     try {
@@ -170,7 +171,7 @@ public class DefaultCapabilityRegistry
 
       final DefaultCapabilityReference reference = get(id);
 
-      reference.descriptor().validate(props, ValidationMode.UPDATE);
+      reference.descriptor().validate(id, props, ValidationMode.UPDATE);
 
       final Map<String, String> encryptedProps = encryptValuesIfNeeded(reference.descriptor(), props);
 
@@ -200,9 +201,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference remove(final CapabilityIdentity id)
-      throws IOException
-  {
+  public CapabilityReference remove(final CapabilityIdentity id) throws IOException {
     try {
       lock.writeLock().lock();
 
@@ -223,9 +222,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference enable(final CapabilityIdentity id)
-      throws IOException
-  {
+  public CapabilityReference enable(final CapabilityIdentity id) throws IOException {
     try {
       lock.writeLock().lock();
 
@@ -240,9 +237,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference disable(final CapabilityIdentity id)
-      throws IOException
-  {
+  public CapabilityReference disable(final CapabilityIdentity id) throws IOException {
     try {
       lock.writeLock().lock();
 
@@ -285,9 +280,7 @@ public class DefaultCapabilityRegistry
     }
   }
 
-  public void load()
-      throws IOException
-  {
+  public void load() throws IOException {
     final Map<CapabilityIdentity, CapabilityStorageItem> items = capabilityStorage.getAll();
     for (final Map.Entry<CapabilityIdentity, CapabilityStorageItem> entry : items.entrySet()) {
       CapabilityIdentity id = entry.getKey();
@@ -342,7 +335,7 @@ public class DefaultCapabilityRegistry
 
       final DefaultCapabilityReference reference = create(id, capabilityType(item.getType()), descriptor);
 
-      reference.descriptor().validate(properties, ValidationMode.LOAD);
+      reference.descriptor().validate(id, properties, ValidationMode.LOAD);
 
       reference.setNotes(item.getNotes());
       reference.load(properties);
@@ -394,7 +387,7 @@ public class DefaultCapabilityRegistry
     );
   }
 
-  private void validateId(final CapabilityIdentity id) throws CapabilityNotFoundException {
+  private void validateId(final CapabilityIdentity id) {
     if (get(id) == null) {
       throw new CapabilityNotFoundException(id);
     }

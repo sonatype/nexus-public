@@ -60,7 +60,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  *
  * @since 3.0
  */
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 @Named
 @Singleton
 public class HttpClientManagerImpl
@@ -203,7 +202,7 @@ public class HttpClientManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public CloseableHttpClient create(final @Nullable HttpClientPlan.Customizer customizer) {
+  public CloseableHttpClient create(@Nullable final HttpClientPlan.Customizer customizer) {
     return prepare(customizer).build();
   }
 
@@ -216,7 +215,7 @@ public class HttpClientManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public HttpClientBuilder prepare(final @Nullable Customizer customizer) {
+  public HttpClientBuilder prepare(@Nullable final Customizer customizer) {
     final HttpClientPlan plan = new HttpClientPlan();
 
     // attach connection manager early, so customizer has chance to replace it if needed

@@ -29,46 +29,55 @@ Ext.define('NX.coreui.view.component.AssetList', {
    */
   componentModel: undefined,
 
-  store: 'ComponentAsset',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'ComponentAsset',
 
-  // Marker for source of targets to be shown in container assets
-  assetContainerSource: true,
+      // Marker for source of targets to be shown in container assets
+      assetContainerSource: true,
 
-  // Prevent the store from automatically loading
-  loadStore: Ext.emptyFn,
+      // Prevent the store from automatically loading
+      loadStore: Ext.emptyFn,
 
-  allowDeselect: true,
+      allowDeselect: true,
 
-  viewConfig: {
-    emptyText: 'No assets found',
-    deferEmptyText: false
-  },
+      viewConfig: {
+        emptyText: 'No assets found',
+        deferEmptyText: false
+      },
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      dataIndex: 'contentType',
-      width: 36,
-      iconVariant: 'x16',
-      iconNamePrefix: 'asset-type-',
-      iconName: function(value) {
-        var assetType;
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          dataIndex: 'contentType',
+          width: 36,
+          iconVariant: 'x16',
+          iconNamePrefix: 'asset-type-',
+          iconName: function(value) {
+            var assetType;
 
-        if (value) {
-          assetType = value.replace('/', '-');
-          if (NX.getApplication().getIconController().findIcon('asset-type-' + assetType, 'x16')) {
-            return assetType;
+            if (value) {
+              assetType = value.replace('/', '-');
+              if (NX.getApplication().getIconController().findIcon('asset-type-' + assetType, 'x16')) {
+                return assetType;
+              }
+            }
+            return 'default';
           }
+        },
+        {
+          text: NX.I18n.get('SearchResultAssetList_Name_Header'),
+          dataIndex: 'name',
+          flex: 2.5
         }
-        return 'default';
-      }
-    },
-    {
-      text: NX.I18n.get('SearchResultAssetList_Name_Header'),
-      dataIndex: 'name',
-      flex: 2.5
-    }
-  ],
+      ]
+    });
+
+    this.callParent();
+  },
 
   /**
    * @public

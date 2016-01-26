@@ -47,16 +47,20 @@
     <module>nexus-scheduling</module>
     <module>nexus-formfields</module>
     <module>nexus-guice-servlet</module>
+    <module>nexus-main</module>
     <module>nexus-mime</module>
     <module>nexus-orient</module>
     <module>nexus-oss-edition</module>
     <module>nexus-pax-exam</module>
+    <module>nexus-pax-logging</module>
     <module>nexus-plugin-api</module>
+    <module>nexus-quartz</module>
     <module>nexus-repository</module>
     <module>nexus-rest</module>
     <module>nexus-rest-client</module>
     <module>nexus-rest-jackson2</module>
     <module>nexus-security</module>
+    <module>nexus-selector</module>
     <module>nexus-servlet</module>
     <module>nexus-ssl</module>
     <module>nexus-supportzip-api</module>
@@ -65,8 +69,6 @@
     <module>nexus-transaction</module>
     <module>nexus-validation</module>
     <module>nexus-webresources-api</module>
-    <module>pax-logging-metrics</module>
-    <module>pax-logging-access</module>
   </modules>
 
   <dependencyManagement>

@@ -12,16 +12,22 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 
+import com.google.common.collect.Maps;
+import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BLOB_REF;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_CONTENT_TYPE;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_SIZE;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_CONTENT_TYPE;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_SIZE;
 
 /**
  * Metadata about a file, which may or may not belong to a component.
@@ -31,6 +37,13 @@ import static org.sonatype.nexus.repository.storage.StorageFacet.P_SIZE;
 public class Asset
     extends MetadataNode<Asset>
 {
+  /**
+   * Key of {@link Asset} nested map of blob content hashes (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String CHECKSUM = "checksum";
+
   private EntityId componentId;
 
   private Long size;
@@ -75,7 +88,7 @@ public class Asset
   /**
    * Sets the size to the given value, or {@code null} to un-define it.
    */
-  public Asset size(final @Nullable Long size) {
+  public Asset size(@Nullable final Long size) {
     this.size = size;
     return this;
   }
@@ -98,7 +111,7 @@ public class Asset
   /**
    * Sets the content type to the given value, or {@code null} to un-define it.
    */
-  public Asset contentType(final @Nullable String contentType) {
+  public Asset contentType(@Nullable final String contentType) {
     this.contentType = contentType;
     return this;
   }
@@ -121,7 +134,7 @@ public class Asset
   /**
    * Sets the blobRef to the given value, or {@code null} to un-define it.
    */
-  Asset blobRef(final @Nullable BlobRef blobRef) {
+  Asset blobRef(@Nullable final BlobRef blobRef) {
     this.blobRef = blobRef;
     return this;
   }
@@ -154,6 +167,33 @@ public class Asset
       return true;
     }
     return false;
+  }
+
+  /**
+   * Extract checksums of asset blob if checksums are present in asset attributes.
+   */
+  public Map<HashAlgorithm, HashCode> getChecksums(final Iterable<HashAlgorithm> hashAlgorithms)
+  {
+    final NestedAttributesMap checksumAttributes = attributes().child(CHECKSUM);
+    final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
+    for (HashAlgorithm algorithm : hashAlgorithms) {
+      final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
+      hashCodes.put(algorithm, hashCode);
+    }
+    return hashCodes;
+  }
+
+  /**
+   * Extract checksum of asset blob if checksum is present in asset attributes.
+   */
+  @Nullable
+  public HashCode getChecksum(final HashAlgorithm hashAlgorithm)
+  {
+    String hashCode = attributes().child(CHECKSUM).get(hashAlgorithm.name(), String.class);
+    if (hashCode != null) {
+      return HashCode.fromString(hashCode);
+    }
+    return null;
   }
 
   @Override

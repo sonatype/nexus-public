@@ -37,14 +37,15 @@ public class Privilege
   private String version;
 
   public Privilege() {
+    // empty
   }
 
-  public Privilege(String id,
-                   String name,
-                   String description,
-                   String type,
-                   Map<String, String> properties,
-                   boolean readOnly)
+  public Privilege(final String id,
+                   final String name,
+                   final String description,
+                   final String type,
+                   final Map<String, String> properties,
+                   final boolean readOnly)
   {
     this.id = id;
     this.name = name;
@@ -118,7 +119,6 @@ public class Privilege
     this.version = version;
   }
 
-  // HACK: expose the real shiro permission string
   private Permission permission;
 
   public Permission getPermission() {

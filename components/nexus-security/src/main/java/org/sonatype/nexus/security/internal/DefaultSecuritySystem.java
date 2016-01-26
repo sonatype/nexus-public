@@ -29,7 +29,6 @@ import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.common.throwables.ConfigurationException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -53,7 +52,6 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -133,7 +131,7 @@ public class DefaultSecuritySystem
   }
 
   @Override
-  public void checkPermission(PrincipalCollection principal, String permission) throws AuthorizationException {
+  public void checkPermission(PrincipalCollection principal, String permission) {
     realmSecurityManager.checkPermission(principal, permission);
   }
 
@@ -185,7 +183,7 @@ public class DefaultSecuritySystem
     UserManager userManager = getUserManager(user.getSource());
 
     if (!userManager.supportsWrite()) {
-      throw new ConfigurationException("UserManager: " + userManager.getSource() + " does not support writing.");
+      throw new RuntimeException("UserManager: " + userManager.getSource() + " does not support writing.");
     }
 
     userManager.addUser(user, password);
@@ -220,7 +218,7 @@ public class DefaultSecuritySystem
     UserManager userManager = getUserManager(user.getSource());
 
     if (!userManager.supportsWrite()) {
-      throw new ConfigurationException("UserManager: " + userManager.getSource() + " does not support writing.");
+      throw new RuntimeException("UserManager: " + userManager.getSource() + " does not support writing.");
     }
 
     final User oldUser = userManager.getUser(user.getUserId());

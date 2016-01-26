@@ -33,6 +33,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException
 import org.apache.shiro.authz.annotation.RequiresPermissions
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static com.google.common.base.Preconditions.checkState
 
 /**
  * Renders security diagnostic information.
@@ -66,7 +67,7 @@ class SecurityDiagnosticResource
     log.info 'Generating security diagnostics for user: {}', userId
 
     def authzman = securitySystem.getAuthorizationManager('default')
-    assert authzman
+    checkState(authzman != null, 'Unable to access default authorization manager')
 
     // convert object into map, sans special properties or excluded keys
     def mappify = { obj, Set excludes = [] ->

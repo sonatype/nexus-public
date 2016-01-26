@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.sonatype.nexus.common.io.DirSupport;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -41,7 +41,8 @@ public class PersistentDatabaseInstanceRule
     try {
       SLF4JBridgeHandler.removeHandlersForRootLogger();
       SLF4JBridgeHandler.install();
-    } catch (LinkageError e) {
+    }
+    catch (LinkageError e) {
       // no-op, jul-to-slf4j not installed
     }
   }
@@ -130,15 +131,20 @@ public class PersistentDatabaseInstanceRule
   }
 
   class PersistentDatabaseManager
-      extends DatabaseManagerSupport {
-
+      extends DatabaseManagerSupport
+  {
     private final File databasesDirectory;
 
     PersistentDatabaseManager() {
       File targetDir = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile();
       this.databasesDirectory = new File(targetDir, "test-db." + System.currentTimeMillis());
       log.info("Database dir: " + databasesDirectory);
-      try { Thread.sleep(250); } catch (InterruptedException e) { }
+      try {
+        Thread.sleep(250);
+      }
+      catch (InterruptedException e) {
+        // ignore
+      }
     }
 
     /**
@@ -152,7 +158,7 @@ public class PersistentDatabaseInstanceRule
     protected String connectionUri(final String name) {
       try {
         File dir = directory(name);
-        DirSupport.mkdir(dir);
+        DirectoryHelper.mkdir(dir);
 
         return "plocal:" + dir.toURI().getPath();
       }
@@ -160,8 +166,6 @@ public class PersistentDatabaseInstanceRule
         throw Throwables.propagate(e);
       }
     }
-
-
   }
 }
 

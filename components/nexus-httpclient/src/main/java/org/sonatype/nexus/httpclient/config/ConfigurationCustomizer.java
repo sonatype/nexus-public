@@ -57,7 +57,6 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
  *
  * @since 3.0
  */
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public class ConfigurationCustomizer
     extends ComponentSupport
     implements HttpClientPlan.Customizer

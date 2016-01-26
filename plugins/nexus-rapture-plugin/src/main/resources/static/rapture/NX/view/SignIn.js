@@ -23,11 +23,6 @@ Ext.define('NX.view.SignIn', {
   requires: [
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('SignIn_Title'),
-
-  defaultFocus: 'username',
 
   /**
    * @override
@@ -35,7 +30,11 @@ Ext.define('NX.view.SignIn', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.SMALL_MODAL);
+    me.ui = 'nx-inset';
+    me.title = NX.I18n.get('SignIn_Title');
+    me.defaultFocus = 'username';
+
+    me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
     Ext.apply(me, {
       items: {
@@ -50,7 +49,8 @@ Ext.define('NX.view.SignIn', {
             itemId: 'username',
             emptyText: NX.I18n.get('SignIn_Username_Empty'),
             allowBlank: false,
-            validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+            // allow cancel to be clicked w/o validating this to be non-blank
+            validateOnBlur: false
           },
           {
             name: 'password',
@@ -58,7 +58,8 @@ Ext.define('NX.view.SignIn', {
             inputType: 'password',
             emptyText: NX.I18n.get('SignIn_Password_Empty'),
             allowBlank: false,
-            validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
+            // allow cancel to be clicked w/o validating this to be non-blank
+            validateOnBlur: false
           },
           {
             xtype: 'checkbox',

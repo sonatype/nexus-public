@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.security;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.shiro.authz.Permission;
 
@@ -26,11 +25,7 @@ import org.apache.shiro.authz.Permission;
 public class RepositoryComponentPermission
   implements Permission, Serializable
 {
-  private String format;
-
-  // TODO: values are glob or regex or both with syntax?
-  // [!] /regex/ || glob*
-  private Map<String,String> query;
+  // FIXME: apply with content selector
 
   private List<String> actions;
 

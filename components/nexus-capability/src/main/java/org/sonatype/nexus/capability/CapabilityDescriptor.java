@@ -15,6 +15,8 @@ package org.sonatype.nexus.capability;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.formfields.FormField;
 
 /**
@@ -73,7 +75,7 @@ public interface CapabilityDescriptor
   /**
    * Validate properties before create/update/load.
    */
-  void validate(Map<String, String> properties, ValidationMode validationMode);
+  void validate(@Nullable CapabilityIdentity id, Map<String, String> properties, ValidationMode validationMode);
 
   /**
    * Returns the version of descriptor. The version should change when the descriptor fields change, case when the

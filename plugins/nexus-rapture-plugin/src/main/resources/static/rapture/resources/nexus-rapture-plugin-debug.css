@@ -56,6 +56,7 @@
 .nx-info-entry-value {
   padding-left: 0;
   padding-right: 25px;
+  word-break: break-all;
 }
 
 .nx-info-entry-value pre {

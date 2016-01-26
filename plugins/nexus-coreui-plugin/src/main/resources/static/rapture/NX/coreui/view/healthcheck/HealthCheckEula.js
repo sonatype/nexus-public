@@ -24,7 +24,7 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckEula', {
     'NX.util.Url'
   ],
 
-  title: 'CLM Terms of Use',
+  title: 'Nexus IQ Server Terms of Use',
 
   layout: 'fit',
   autoShow: true,

@@ -41,5 +41,7 @@ public class VirtualType
     return ValidationGroup.class;
   }
 
-  public static interface ValidationGroup {}
+  public interface ValidationGroup {
+    // empty
+  }
 }

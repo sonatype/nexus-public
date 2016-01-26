@@ -15,14 +15,14 @@ package org.sonatype.nexus.internal.log
 import javax.inject.Inject
 import javax.inject.Named
 
-import org.sonatype.nexus.commands.Complete
 import org.sonatype.nexus.common.log.LogManager
 import org.sonatype.nexus.common.log.LoggerLevel
 
-import org.apache.karaf.shell.commands.Argument
-import org.apache.karaf.shell.commands.Command
-import org.apache.karaf.shell.commands.Option
-import org.apache.karaf.shell.console.AbstractAction
+import org.apache.karaf.shell.api.action.Action
+import org.apache.karaf.shell.api.action.Argument
+import org.apache.karaf.shell.api.action.Command
+import org.apache.karaf.shell.api.action.Completion
+import org.apache.karaf.shell.api.action.Option
 
 /**
  * Action to set or display logger level.
@@ -32,7 +32,7 @@ import org.apache.karaf.shell.console.AbstractAction
 @Named
 @Command(name='logger', scope = 'nexus', description = 'Set or display logger level')
 class LoggerAction
-  extends AbstractAction
+  implements Action
 {
   @Inject
   LogManager logManager
@@ -48,15 +48,14 @@ class LoggerAction
   // FIXME: ... unsure where, but looks like if a completer fails, all completers after it are ignored
 
   @Argument(name="name", index = 0, required = true, description = 'Logger name')
-  @Complete('logger-name')
+  @Completion(LoggerNameCompleter)
   String name
 
   @Argument(name="level", index = 1, description = 'Logger level')
-  @Complete('auto')
   LoggerLevel level
 
   @Override
-  protected def doExecute() {
+  public Object execute() throws Exception {
     if (delete) {
       logManager.unsetLoggerLevel(name)
     }

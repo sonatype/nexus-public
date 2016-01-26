@@ -54,7 +54,7 @@ Ext.define('NX.view.dev.styles.Header', {
               'padding-left': '8px'
             }
           }
-      )
+      );
     }
 
     items.push({ xtype: 'nx-header-logo' });
@@ -62,7 +62,8 @@ Ext.define('NX.view.dev.styles.Header', {
 
     if (!logoOnly) {
       items.push(
-          ' ', ' ', // 2x pad
+          // 2x pad
+          ' ', ' ',
           {
             xtype: 'nx-header-mode',
             items: {
@@ -100,7 +101,8 @@ Ext.define('NX.view.dev.styles.Header', {
             cls: 'nx-quicksearch',
             width: 200,
             emptyText: NX.I18n.get('Header_QuickSearch_Empty'),
-            inputAttrTpl: "data-qtip='" + NX.I18n.get('Header_QuickSearch_Tooltip') + "'" // field tooltip
+            // field tooltip
+            inputAttrTpl: "data-qtip='" + NX.I18n.get('Header_QuickSearch_Tooltip') + "'"
           },
           '->',
           //{
@@ -120,7 +122,8 @@ Ext.define('NX.view.dev.styles.Header', {
             ui: 'nx-header',
             tooltip: NX.I18n.get('Header_Help_Tooltip'),
             glyph: 'xf059@FontAwesome', // fa-question-circle
-            arrowCls: '', // hide the menu button arrow
+            // hide the menu button arrow
+            arrowCls: '',
             menu: [
               {
                 text: 'Menu item 1'

@@ -61,50 +61,42 @@ public class ExceptionCatchingModularRealmAuthorizer
 
   // Authorization
   @Override
-  public void checkPermission(PrincipalCollection subjectPrincipal, String permission) throws AuthorizationException {
+  public void checkPermission(PrincipalCollection subjectPrincipal, String permission) {
     if (!isPermitted(subjectPrincipal, permission)) {
       throw new AuthorizationException("User is not permitted: " + permission);
     }
   }
 
   @Override
-  public void checkPermission(PrincipalCollection subjectPrincipal, Permission permission)
-      throws AuthorizationException
-  {
+  public void checkPermission(PrincipalCollection subjectPrincipal, Permission permission) {
     if (!isPermitted(subjectPrincipal, permission)) {
       throw new AuthorizationException("User is not permitted: " + permission);
     }
   }
 
   @Override
-  public void checkPermissions(PrincipalCollection subjectPrincipal, String... permissions)
-      throws AuthorizationException
-  {
+  public void checkPermissions(PrincipalCollection subjectPrincipal, String... permissions) {
     for (String permission : permissions) {
       checkPermission(subjectPrincipal, permission);
     }
   }
 
   @Override
-  public void checkPermissions(PrincipalCollection subjectPrincipal, Collection<Permission> permissions)
-      throws AuthorizationException
-  {
+  public void checkPermissions(PrincipalCollection subjectPrincipal, Collection<Permission> permissions) {
     for (Permission permission : permissions) {
       checkPermission(subjectPrincipal, permission);
     }
   }
 
   @Override
-  public void checkRole(PrincipalCollection subjectPrincipal, String roleIdentifier) throws AuthorizationException {
+  public void checkRole(PrincipalCollection subjectPrincipal, String roleIdentifier) {
     if (!hasRole(subjectPrincipal, roleIdentifier)) {
       throw new AuthorizationException("User is not permitted role: " + roleIdentifier);
     }
   }
 
   @Override
-  public void checkRoles(PrincipalCollection subjectPrincipal, Collection<String> roleIdentifiers)
-      throws AuthorizationException
-  {
+  public void checkRoles(PrincipalCollection subjectPrincipal, Collection<String> roleIdentifiers) {
     if (!hasAllRoles(subjectPrincipal, roleIdentifiers)) {
       throw new AuthorizationException("User is not permitted role: " + roleIdentifiers);
     }

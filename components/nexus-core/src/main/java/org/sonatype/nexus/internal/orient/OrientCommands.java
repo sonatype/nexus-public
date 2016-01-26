@@ -13,14 +13,12 @@
 package org.sonatype.nexus.internal.orient;
 
 import java.lang.reflect.Method;
-import java.util.Dictionary;
 import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.commands.CommandHelper;
 import org.sonatype.nexus.commands.CommandSupport;
 import org.sonatype.nexus.common.text.Strings2;
 
@@ -28,13 +26,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
-import org.apache.felix.service.command.CommandSession;
-import org.apache.felix.service.command.Function;
-import org.apache.karaf.shell.commands.Action;
-import org.apache.karaf.shell.commands.basic.AbstractCommand;
-import org.apache.karaf.shell.console.SubShellAction;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.console.Completer;
+import org.apache.karaf.shell.api.console.Function;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.api.console.SessionFactory;
 import org.eclipse.sisu.EagerSingleton;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,39 +52,31 @@ public class OrientCommands
 
   private static final String SCOPE = "orient";
 
-  private final BundleContext bundleContext;
-
-  // TODO: Consider a mass-command register/unregister component with mediator to avoid needing eager-singleton
-  // TODO: and injected bundle-context
+  private final SessionFactory sessionFactory;
 
   @Inject
-  public OrientCommands(final @Nullable BundleContext bundleContext) {
+  public OrientCommands(@Nullable final SessionFactory sessionFactory) {
     super(new String[0]);
 
-    // HACK: should be non-null, but in test env is null
-    this.bundleContext = bundleContext;
-
-    // define our own Karaf sub-shell: type 'orient' to enter, and 'exit' to leave
-    register(createShellCommand(), CommandHelper.config("*", SCOPE));
+    this.sessionFactory = sessionFactory; // might be null during tests
 
     for (Method method : getConsoleMethods().keySet()) {
       if (method.isAnnotationPresent(ConsoleCommand.class)) {
-        register(createOrientCommand(method), CommandHelper.config(SCOPE, method.getName()));
+        register(createOrientCommand(method));
       }
     }
 
     onBefore(); // set OrientDB command defaults
   }
 
-  private void register(final Function function, final Dictionary<String,?> config) {
-    // HACK: should be non-null, but in test env is null
-    if (bundleContext == null) {
-      log.warn("Unable to register function, bundle-context is null: {}, config: {}", function, config);
-      return;
+  private void register(final Function command) {
+    log.debug("Registering command: {}", command);
+    if (sessionFactory != null) {
+      sessionFactory.getRegistry().register(command);
     }
-
-    log.debug("Registering function: {}, config: {}", function, config);
-    bundleContext.registerService(Function.class, function, config);
+    else {
+      log.warn("Unable to register command, sessionFactory is null: {}", command);
+    }
   }
 
   @Override
@@ -95,42 +84,50 @@ public class OrientCommands
     // hide banner as it doesn't apply here
   }
 
-  private AbstractCommand createOrientCommand(final Method method) {
-    return new CommandSupport()
+  private Function createOrientCommand(final Method method) {
+    return new CommandSupport(Action.class)
     {
       // OrientDB expects the method name to be transformed from camel-case into lower-case with spaces
       private final String command = LOWER_CAMEL.to(LOWER_UNDERSCORE, method.getName()).replace('_', ' ');
 
       @Override
-      public Object execute(final CommandSession session, final List<Object> params) throws Exception {
-        return OrientCommands.this.execute(method, command, params);
+      public Object execute(final Session session, final List<Object> arguments) throws Exception {
+        return OrientCommands.this.execute(method, command, arguments);
       }
 
       @Override
-      public Class<? extends Action> getActionClass() {
-        return Action.class;
+      public String getScope() {
+        return SCOPE;
       }
 
       @Override
-      public Action createNewAction() {
+      public String getName() {
+        return method.getName();
+      }
+
+      @Override
+      public String getDescription() {
+        return method.getAnnotation(ConsoleCommand.class).description();
+      }
+
+      @Override
+      public Completer getCompleter(final boolean scoped) {
+        return null; // no special completion
+      }
+
+      @Override
+      public Action createNewAction(final Session session) {
         return null; // not used
+      }
+
+      @Override
+      protected void releaseAction(final Action action) {
+        // no-op
       }
 
       @Override
       public String toString() {
         return method.toString();
-      }
-    };
-  }
-
-  private static AbstractCommand createShellCommand() {
-    return new AbstractCommand()
-    {
-      @Override
-      public Action createNewAction() {
-        SubShellAction subShell = new SubShellAction();
-        subShell.setSubShell(SCOPE);
-        return subShell;
       }
     };
   }

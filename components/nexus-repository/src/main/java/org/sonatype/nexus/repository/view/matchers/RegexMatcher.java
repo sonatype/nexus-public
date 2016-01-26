@@ -30,7 +30,7 @@ public class RegexMatcher
   extends ComponentSupport
   implements Matcher
 {
-  public static interface State
+  public interface State
   {
     MatchResult getMatchResult();
   }

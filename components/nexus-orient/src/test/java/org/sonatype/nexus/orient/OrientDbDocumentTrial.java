@@ -13,6 +13,7 @@
 package org.sonatype.nexus.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.io.Hex;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

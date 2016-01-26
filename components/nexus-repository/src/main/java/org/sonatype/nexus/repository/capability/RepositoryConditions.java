@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Factory of {@link Condition}s related to repositories.
  *
- * @since capabilities 2.0
+ * @since 3.0
  */
 @Named
 @Singleton
@@ -64,7 +64,10 @@ public class RepositoryConditions
     return new RepositoryExistsCondition(eventBus, repositoryManager, repositoryName);
   }
 
-  public static interface RepositoryName
+  /**
+   * Function to return repository name.
+   */
+  public interface RepositoryName
   {
     String get();
   }

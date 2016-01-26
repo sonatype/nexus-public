@@ -26,6 +26,10 @@ public class AttributeKey
   @VisibleForTesting
   static final String SUFFIX_SEPARATOR = "#";
 
+  private AttributeKey() {
+    // empty
+  }
+
   public static String get(final Class type) {
     checkNotNull(type);
     return type.getName();

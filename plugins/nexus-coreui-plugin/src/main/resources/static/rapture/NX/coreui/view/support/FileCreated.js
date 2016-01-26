@@ -41,7 +41,7 @@ Ext.define('NX.coreui.view.support.FileCreated', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.LARGE_MODAL);
+    me.setWidth(NX.view.ModalDialog.LARGE_MODAL);
 
     Ext.apply(me, {
       title: me.title || me.fileType + ' Created',
@@ -80,7 +80,8 @@ Ext.define('NX.coreui.view.support.FileCreated', {
               xtype: 'textfield',
               name: 'size',
               fieldLabel: NX.I18n.get('Support_FileCreated_Size_FieldLabel'),
-              helpText: 'Size of ' + me.fileType + ' file in bytes',  // FIXME: Would like to render in bytes/kilobytes/megabytes
+              // FIXME: Would like to render in bytes/kilobytes/megabytes
+              helpText: 'Size of ' + me.fileType + ' file in bytes',
               readOnly: true
             },
             {

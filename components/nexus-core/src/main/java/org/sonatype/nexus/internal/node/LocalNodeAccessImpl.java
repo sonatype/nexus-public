@@ -46,7 +46,7 @@ public class LocalNodeAccessImpl
   private String fingerprint;
 
   @Inject
-  public LocalNodeAccessImpl(final @Named(KeyStoreManagerImpl.NAME) KeyStoreManager keyStoreManager) {
+  public LocalNodeAccessImpl(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
     this.keyStoreManager = checkNotNull(keyStoreManager);
   }
 

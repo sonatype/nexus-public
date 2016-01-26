@@ -24,39 +24,48 @@ Ext.define('NX.coreui.view.logging.LoggerAdd', {
     'NX.I18n'
   ],
 
-  defaultFocus: 'name',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      defaultFocus: 'name',
 
-  settingsForm: {
-    xtype: 'nx-settingsform',
-    items: [
-      {
-        xtype: 'textfield',
-        name: 'name',
-        itemId: 'name',
-        fieldLabel: NX.I18n.get('Logging_LoggerAdd_Name_FieldLabel')
-      },
-      {
-        xtype: 'combo',
-        name: 'level',
-        fieldLabel: NX.I18n.get('Logging_LoggerAdd_Level_FieldLabel'),
-        editable: false,
-        value: 'INFO',
-        store: [
-          ['TRACE', NX.I18n.get('Logging_LoggerList_Level_TraceItem')],
-          ['DEBUG', NX.I18n.get('Logging_LoggerList_Level_DebugItem')],
-          ['INFO', NX.I18n.get('Logging_LoggerList_Level_InfoItem')],
-          ['WARN', NX.I18n.get('Logging_LoggerList_Level_WarnItem')],
-          ['ERROR', NX.I18n.get('Logging_LoggerList_Level_ErrorItem')],
-          ['OFF', NX.I18n.get('Logging_LoggerList_Level_OffItem')],
-          ['DEFAULT', NX.I18n.get('Logging_LoggerList_Level_DefaultItem')]
+      settingsForm: {
+        xtype: 'nx-settingsform',
+        items: [
+          {
+            xtype: 'textfield',
+            name: 'name',
+            itemId: 'name',
+            fieldLabel: NX.I18n.get('Logging_LoggerAdd_Name_FieldLabel')
+          },
+          {
+            xtype: 'combo',
+            name: 'level',
+            fieldLabel: NX.I18n.get('Logging_LoggerAdd_Level_FieldLabel'),
+            editable: false,
+            value: 'INFO',
+            store: [
+              ['TRACE', NX.I18n.get('Logging_LoggerList_Level_TraceItem')],
+              ['DEBUG', NX.I18n.get('Logging_LoggerList_Level_DebugItem')],
+              ['INFO', NX.I18n.get('Logging_LoggerList_Level_InfoItem')],
+              ['WARN', NX.I18n.get('Logging_LoggerList_Level_WarnItem')],
+              ['ERROR', NX.I18n.get('Logging_LoggerList_Level_ErrorItem')],
+              ['OFF', NX.I18n.get('Logging_LoggerList_Level_OffItem')],
+              ['DEFAULT', NX.I18n.get('Logging_LoggerList_Level_DefaultItem')]
+            ],
+            queryMode: 'local'
+          }
         ],
-        queryMode: 'local'
+        buttons: [
+          { text: NX.I18n.get('Logging_LoggerList_New_Button'), action: 'add', formBind: true, ui: 'nx-primary' },
+          { text: NX.I18n.get('Add_Cancel_Button'), action: 'back' }
+        ]
       }
-    ],
-    buttons: [
-      { text: NX.I18n.get('Logging_LoggerList_New_Button'), action: 'add', formBind: true, ui: 'nx-primary' },
-      { text: NX.I18n.get('Add_Cancel_Button'), action: 'back' }
-    ]
+    });
+
+    this.callParent();
   }
 
 });

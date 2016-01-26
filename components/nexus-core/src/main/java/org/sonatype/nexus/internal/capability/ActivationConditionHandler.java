@@ -49,7 +49,7 @@ public class ActivationConditionHandler
   @Inject
   ActivationConditionHandler(final EventBus eventBus,
                              final Conditions conditions,
-                             final @Assisted DefaultCapabilityReference reference)
+                             @Assisted final DefaultCapabilityReference reference)
   {
     this.eventBus = checkNotNull(eventBus);
     this.conditions = checkNotNull(conditions);

@@ -45,7 +45,7 @@ public class MultipleFailures
   public class MultipleFailuresException
     extends Exception
   {
-    private MultipleFailuresException(final @Nullable String message) {
+    private MultipleFailuresException(@Nullable final String message) {
       super(message);
       for (Throwable failure : failures) {
         addSuppressed(failure);
@@ -69,7 +69,7 @@ public class MultipleFailures
   /**
    * Maybe throw {@link MultipleFailuresException} if there are any failures with optional message.
    */
-  public void maybePropagate(final @Nullable String message) throws MultipleFailuresException {
+  public void maybePropagate(@Nullable final String message) throws MultipleFailuresException {
     if (!failures.isEmpty()) {
       log.trace("Propagating: {}", failures);
       throw new MultipleFailuresException(message);

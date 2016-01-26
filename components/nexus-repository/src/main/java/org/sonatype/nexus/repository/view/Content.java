@@ -27,13 +27,11 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.util.TypeTokens;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
+import com.google.common.reflect.TypeToken;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,13 +39,19 @@ import static org.sonatype.nexus.common.time.DateHelper.toDate;
 import static org.sonatype.nexus.common.time.DateHelper.toDateTime;
 
 /**
- * Content, that is wrapped {@link Payload} with {@link Attributes}.
+ * Content, that is wrapped {@link Payload} with {@link AttributesMap}.
  *
  * @since 3.0
  */
 public class Content
     implements Payload
 {
+  /**
+   * Key of {@link Asset} nested map of content related properties.
+   */
+  @VisibleForTesting
+  static final String CONTENT = "content";
+
   /**
    * Key of content "Last-Modified" attribute, with type {@link DateTime}.
    */
@@ -59,12 +63,14 @@ public class Content
   public static final String CONTENT_ETAG = "etag";
 
   /**
-   * Key of the "hashCodes" attribute, with type of {@link TypeTokens#HASH_CODES_MAP}. Essentially, this is a map
-   * of content hashes required by the format from where this content originates.
+   * Key of the "hashCodes" attribute, with type of {@link #T_CONTENT_HASH_CODES_MAP}.
    *
-   * @see TypeTokens#HASH_CODES_MAP
+   * Essentially, this is a map of content hashes required by the format from where this content originates.
    */
   public static final String CONTENT_HASH_CODES_MAP = "hashCodesMap";
+
+  public static final TypeToken<Map<HashAlgorithm, HashCode>> T_CONTENT_HASH_CODES_MAP =
+      new TypeToken<Map<HashAlgorithm, HashCode>>() {};
 
   private final Payload payload;
 
@@ -107,19 +113,14 @@ public class Content
   // Persistence of attributes to and from Asset
 
   /**
-   * Key of the nested map on {@link Asset} attributes carrying content related attributes.
-   */
-  @VisibleForTesting
-  static final String P_CONTENT_ATTRIBUTES = "content_attributes";
-
-  /**
    * Key of last modified {@link Date}.
    */
   @VisibleForTesting
   static final String P_LAST_MODIFIED = "last_modified";
 
   /**
-   * Key of etag {@link String}. If extracted from upstream response, it must have quotes removed.
+   * Key of etag {@link String}. If present, was extracted from upstream response, and it has quotes removed (by RFC
+   * {@code ETag} header value is {@code "quoted"}, this attribute stores it <strong>without quotes</strong>).
    */
   @VisibleForTesting
   static final String P_ETAG = "etag";
@@ -134,21 +135,16 @@ public class Content
   {
     checkNotNull(asset);
     checkNotNull(hashAlgorithms);
-    final NestedAttributesMap assetAttributes = asset.attributes().child(P_CONTENT_ATTRIBUTES);
+    final NestedAttributesMap assetAttributes = asset.attributes().child(CONTENT);
     final DateTime lastModified = toDateTime(assetAttributes.get(P_LAST_MODIFIED, Date.class));
     final String etag = assetAttributes.get(P_ETAG, String.class);
 
-    final NestedAttributesMap checksumAttributes = asset.attributes().child(StorageFacet.P_CHECKSUM);
-    final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
-    for (HashAlgorithm algorithm : hashAlgorithms) {
-      final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
-      hashCodes.put(algorithm, hashCode);
-    }
+    final Map<HashAlgorithm, HashCode> checksums = asset.getChecksums(hashAlgorithms);
 
     contentAttributes.set(Asset.class, asset);
     contentAttributes.set(Content.CONTENT_LAST_MODIFIED, lastModified);
     contentAttributes.set(Content.CONTENT_ETAG, etag);
-    contentAttributes.set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
+    contentAttributes.set(Content.CONTENT_HASH_CODES_MAP, checksums);
     contentAttributes.set(CacheInfo.class, CacheInfo.extractFromAsset(asset));
   }
 
@@ -159,7 +155,7 @@ public class Content
   public static void applyToAsset(final Asset asset, final AttributesMap contentAttributes) {
     checkNotNull(asset);
     checkNotNull(contentAttributes);
-    final NestedAttributesMap assetAttributes = asset.attributes().child(P_CONTENT_ATTRIBUTES);
+    final NestedAttributesMap assetAttributes = asset.attributes().child(CONTENT);
     assetAttributes.set(P_LAST_MODIFIED, toDate(contentAttributes.get(Content.CONTENT_LAST_MODIFIED, DateTime.class)));
     assetAttributes.set(P_ETAG, contentAttributes.get(Content.CONTENT_ETAG, String.class));
     final CacheInfo cacheInfo = contentAttributes.get(CacheInfo.class);

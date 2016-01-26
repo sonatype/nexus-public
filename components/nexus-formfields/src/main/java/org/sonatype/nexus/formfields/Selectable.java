@@ -22,11 +22,10 @@ import java.util.Map;
  */
 public interface Selectable
 {
-
   /**
    * Returns Ext.Direct API name used to configure Ext proxy.
-   * E.g.
-   * "coreui_RepositoryTarget.read"
+   *
+   * E.g. "coreui_RepositoryTarget.read"
    *
    * @since 3.0
    */

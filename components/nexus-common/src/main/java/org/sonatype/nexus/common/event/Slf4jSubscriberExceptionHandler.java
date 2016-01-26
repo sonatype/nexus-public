@@ -36,7 +36,7 @@ final class Slf4jSubscriberExceptionHandler
 
   @Override
   public void handleException(final Throwable exception, final SubscriberExceptionContext context) {
-    logger.error("Could not dispatch event: {} to {}",
-        context.getSubscriber(), context.getSubscriberMethod(), exception);
+    logger.error("Could not dispatch event {} to subscriber {} method [{}]",
+        context.getEvent(), context.getSubscriber(), context.getSubscriberMethod(), exception);
   }
 }

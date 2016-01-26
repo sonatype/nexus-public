@@ -48,7 +48,7 @@ Ext.define('NX.coreui.view.ssl.SslCertificateAddFromPem', {
 
       buttons: [
         { text: NX.I18n.get('Ssl_SslCertificateList_New_Button'), action: 'load', formBind: true, ui: 'nx-primary' },
-        { text: NX.I18n.get('Ssl_SslCertificateAddFromPem_Cancel_Button'), action: 'back' },
+        { text: NX.I18n.get('Ssl_SslCertificateAddFromPem_Cancel_Button'), action: 'back' }
       ]
     };
 

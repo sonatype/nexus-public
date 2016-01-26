@@ -25,55 +25,62 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-privilege-list'
-  },
+  stateful: true,
+  stateId: 'nx-coreui-privilege-list',
 
-  store: 'Privilege',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'Privilege',
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      dataIndex: 'type',
-      width: 36,
-      iconVariant: 'x16',
-      iconNamePrefix: 'privilege-'
-    },
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          dataIndex: 'type',
+          width: 36,
+          iconVariant: 'x16',
+          iconNamePrefix: 'privilege-'
+        },
 
-    // NOTE: Not including ID here as for user-created privileges these are random strings
+        // NOTE: Not including ID here as for user-created privileges these are random strings
 
-    { header: NX.I18n.get('Privilege_PrivilegeList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 2 },
+        { header: NX.I18n.get('Privilege_PrivilegeList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 2 },
 
-    {
-      header: NX.I18n.get('Privilege_PrivilegeList_Description_Header'),
-      dataIndex: 'description',
-      stateId: 'description',
-      flex: 4
-    },
+        {
+          header: NX.I18n.get('Privilege_PrivilegeList_Description_Header'),
+          dataIndex: 'description',
+          stateId: 'description',
+          flex: 4
+        },
 
-    { header: NX.I18n.get('Privilege_PrivilegeList_Type_Header'), dataIndex: 'type', stateId: 'type', flex: 1 },
+        { header: NX.I18n.get('Privilege_PrivilegeList_Type_Header'), dataIndex: 'type', stateId: 'type', flex: 1 },
 
-    {
-      header: NX.I18n.get('Privilege_PrivilegeList_Permission_Header'),
-      dataIndex: 'permission',
-      stateId: 'permission',
-      flex: 2
-    }
-  ],
+        {
+          header: NX.I18n.get('Privilege_PrivilegeList_Permission_Header'),
+          dataIndex: 'permission',
+          stateId: 'permission',
+          flex: 2
+        }
+      ],
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Privilege_PrivilegeList_EmptyText'),
-    deferEmptyText: false
-  },
+      viewConfig: {
+        emptyText: NX.I18n.get('Privilege_PrivilegeList_EmptyText'),
+        deferEmptyText: false
+      },
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless'
-  }],
+      dockedItems: [{
+        xtype: 'toolbar',
+        dock: 'top',
+        cls: 'nx-actions nx-borderless'
+      }],
 
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Privilege_PrivilegeList_Filter_EmptyText') }
-  ]
+      plugins: [
+        { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Privilege_PrivilegeList_Filter_EmptyText') }
+      ]
+    });
+
+    this.callParent();
+  }
 });

@@ -24,32 +24,51 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
     'NX.Icons'
   ],
 
-  autoScroll: true,
-
-  layout: {
-    type: 'vbox',
-    align: 'stretch',
-    pack: 'start'
-  },
-
   /**
    * Currently shown asset model.
+   *
+   * @private
    */
   assetModel: undefined,
 
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      autoScroll: true,
 
-  dockedItems: {
-    xtype: 'nx-actions',
+      layout: {
+        type: 'vbox',
+        align: 'stretch',
+        pack: 'start'
+      },
 
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('AssetInfo_Delete_Button'),
-        glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
-        action: 'deleteAsset',
-        disabled: true
-      }
-    ]
+      dockedItems: {
+        xtype: 'nx-actions',
+
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('AssetInfo_Delete_Button'),
+            glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+            action: 'deleteAsset',
+            disabled: true
+          }
+        ]
+      },
+
+      items: [
+        {
+          xtype: 'nx-sorted-tabpanel',
+          ui: 'nx-light',
+          itemId: 'assetInfoTabs',
+          activeTab: 0
+        }
+      ]
+    });
+
+    this.callParent();
   },
 
   /**
@@ -58,7 +77,7 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
    * @public
    * @param {NX.coreui.model.Asset} assetModel asset to be shown
    */
-  refreshInfo: function(assetModel) {
+  refreshInfo: function (assetModel) {
     var me = this,
         iconName = 'asset-type-default',
         contentType;
@@ -81,6 +100,20 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
     else {
       me.hide();
     }
+  },
+
+  /**
+   * Contribute a content tab related to the visible Asset. If the tabItemId already exists, it will be replaced.
+   * @public
+   */
+  addTab: function (item) {
+    var me = this, tabs = me.down('#assetInfoTabs');
+    var existingTab = tabs.down('#' + item.itemId);
+    if (existingTab) {
+      tabs.remove(existingTab);
+    }
+    tabs.add(item);
+    tabs.setActiveTab(0);
   }
 
 });

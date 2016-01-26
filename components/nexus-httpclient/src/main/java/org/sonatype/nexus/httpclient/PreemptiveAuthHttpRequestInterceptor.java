@@ -34,7 +34,6 @@ import org.apache.http.protocol.HttpContext;
  *
  * @since 2.8
  */
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public class PreemptiveAuthHttpRequestInterceptor
     implements HttpRequestInterceptor
 {

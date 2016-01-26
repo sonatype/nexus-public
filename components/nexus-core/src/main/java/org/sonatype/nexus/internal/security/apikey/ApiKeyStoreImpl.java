@@ -22,16 +22,24 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.NexusStartedEvent;
+import org.sonatype.nexus.common.app.NexusStoppedEvent;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -45,7 +53,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Singleton
 public class ApiKeyStoreImpl
     extends StateGuardLifecycleSupport
-    implements ApiKeyStore
+    implements ApiKeyStore, EventAware
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -89,7 +97,7 @@ public class ApiKeyStoreImpl
     entity.setApiKey(apiKeyCharArray);
     entity.setPrincipals(principals);
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.add(db, entity);
+      entityAdapter.addEntity(db, entity);
     }
     return apiKeyCharArray;
   }
@@ -124,7 +132,7 @@ public class ApiKeyStoreImpl
     try (ODatabaseDocumentTx db = openDb()) {
       for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
         if (entity.getDomain().equals(domain)) {
-          entityAdapter.delete(db, entity);
+          entityAdapter.deleteEntity(db, entity);
         }
       }
     }
@@ -135,7 +143,7 @@ public class ApiKeyStoreImpl
   public void deleteApiKeys(final PrincipalCollection principals) {
     try (ODatabaseDocumentTx db = openDb()) {
       for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
-        entityAdapter.delete(db, entity);
+        entityAdapter.deleteEntity(db, entity);
       }
     }
   }
@@ -145,7 +153,9 @@ public class ApiKeyStoreImpl
   public void purgeApiKeys() {
     try (ODatabaseDocumentTx db = openDb()) {
       List<ApiKey> delete = new ArrayList<>();
-      for (ApiKey entity : entityAdapter.browse(db)) {
+      for (ApiKey entity : entityAdapter.browse.execute(db)) {
+        // avoid leaking current DB when calling out
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
         try {
           principalsHelper.getUserStatus(entity.getPrincipals());
         }
@@ -153,10 +163,36 @@ public class ApiKeyStoreImpl
           log.debug("Stale user found", e);
           delete.add(entity);
         }
+        finally {
+          // restore DB in case getUserStatus changed it
+          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        }
       }
       for (ApiKey entity : delete) {
-        entityAdapter.delete(db, entity);
+        entityAdapter.deleteEntity(db, entity);
       }
+    }
+  }
+
+  @Subscribe
+  public void on(final NexusStartedEvent event) throws Exception {
+    start();
+  }
+
+  @Subscribe
+  public void on(final NexusStoppedEvent event) throws Exception {
+    stop();
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final UserPrincipalsExpired event) {
+    final String userId = event.getUserId();
+    if (userId != null) {
+      deleteApiKeys(new SimplePrincipalCollection(userId, event.getSource()));
+    }
+    else {
+      purgeApiKeys();
     }
   }
 
@@ -165,10 +201,10 @@ public class ApiKeyStoreImpl
   }
 
   private Iterable<ApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db,
-                                                             final PrincipalCollection principals)
+                                                  final PrincipalCollection principals)
   {
     final String primaryPrincipal = checkNotNull(principals).getPrimaryPrincipal().toString();
-    return entityAdapter.findByPrimaryPrincipal(db, primaryPrincipal);
+    return entityAdapter.browseByPrimaryPrincipal.execute(db, primaryPrincipal);
   }
 
   private char[] makeApiKey(final String domain, final PrincipalCollection principals) {

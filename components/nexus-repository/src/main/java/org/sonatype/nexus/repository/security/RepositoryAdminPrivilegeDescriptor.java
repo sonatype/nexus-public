@@ -64,7 +64,7 @@ public class RepositoryAdminPrivilegeDescriptor
   //
 
   public static String id(final String format, final String name, final String... actions) {
-    return String.format("%s-%s-%s-%s", TYPE, format, name, Joiner.on(',').join(actions));
+    return String.format("nx-%s-%s-%s-%s", TYPE, format, name, Joiner.on(',').join(actions));
   }
 
   public static CPrivilege privilege(final String format, final String name, final String... actions) {

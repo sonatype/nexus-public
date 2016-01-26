@@ -37,7 +37,7 @@ public class CipherKeyHighStrengthCondition
    */
   public static final int MIN_BITS = 4096;
 
-  private static interface Messages
+  private interface Messages
       extends MessageBundle
   {
     @DefaultMessage("JVM supports high-strength '%s' cipher keys")
@@ -99,6 +99,7 @@ public class CipherKeyHighStrengthCondition
       }
     }
     catch (NoSuchAlgorithmException e) {
+      log.trace("Verify failure", e);
       setSatisfied(false);
     }
   }

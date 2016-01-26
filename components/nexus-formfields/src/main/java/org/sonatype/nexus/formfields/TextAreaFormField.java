@@ -20,7 +20,6 @@ package org.sonatype.nexus.formfields;
 public class TextAreaFormField
     extends AbstractFormField<String>
 {
-
   public TextAreaFormField(String id, String label, String helpText, boolean required, String regexValidation) {
     super(id, label, helpText, required, regexValidation);
   }
@@ -41,5 +40,4 @@ public class TextAreaFormField
     setInitialValue(initialValue);
     return this;
   }
-
 }

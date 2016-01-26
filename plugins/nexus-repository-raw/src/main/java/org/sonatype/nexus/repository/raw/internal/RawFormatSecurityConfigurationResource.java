@@ -30,7 +30,7 @@ public class RawFormatSecurityConfigurationResource
     extends RepositoryFormatSecurityConfigurationResource
 {
   @Inject
-  public RawFormatSecurityConfigurationResource(final @Named(RawFormat.NAME) Format format) {
+  public RawFormatSecurityConfigurationResource(@Named(RawFormat.NAME) final Format format) {
     super(format);
   }
 }

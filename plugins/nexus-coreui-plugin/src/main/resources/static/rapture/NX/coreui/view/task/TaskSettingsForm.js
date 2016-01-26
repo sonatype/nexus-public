@@ -25,44 +25,47 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     'NX.I18n'
   ],
 
-  items: [
-    {
-      xtype: 'hiddenfield',
-      name: 'id'
-    },
-    {
-      xtype: 'hiddenfield',
-      name: 'typeId'
-    },
-    {
-      xtype: 'checkbox',
-      fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Enabled_FieldLabel'),
-      name: 'enabled',
-      allowBlank: false,
-      checked: true,
-      editable: true
-    },
-    {
-      name: 'name',
-      fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Name_FieldLabel')
-    },
-    {
-      xtype: 'nx-email',
-      name: 'alertEmail',
-      fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Email_FieldLabel'),
-      allowBlank: true
-    },
-    { xtype: 'nx-coreui-formfield-settingsfieldset' },
-    { xtype: 'nx-coreui-task-schedulefieldset' }
-  ],
-
-  editableMarker: NX.I18n.get('Task_TaskSettingsForm_Update_Error'),
-
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.items = [
+      {
+        xtype: 'hiddenfield',
+        name: 'id'
+      },
+      {
+        xtype: 'hiddenfield',
+        name: 'typeId'
+      },
+      {
+        xtype: 'checkbox',
+        fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Enabled_FieldLabel'),
+        helpText: NX.I18n.get('Task_TaskSettingsForm_Enabled_HelpText'),
+        name: 'enabled',
+        allowBlank: false,
+        checked: true,
+        editable: true
+      },
+      {
+        name: 'name',
+        fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Name_FieldLabel'),
+        helpText: NX.I18n.get('Task_TaskSettingsForm_Name_HelpText')
+      },
+      {
+        xtype: 'nx-email',
+        name: 'alertEmail',
+        fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Email_FieldLabel'),
+        helpText: NX.I18n.get('Task_TaskSettingsForm_Email_HelpText'),
+        allowBlank: true
+      },
+      { xtype: 'nx-coreui-formfield-settingsfieldset' },
+      { xtype: 'nx-coreui-task-schedulefieldset' }
+    ];
+
+    me.editableMarker = NX.I18n.get('Task_TaskSettingsForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.and(
       NX.Conditions.isPermitted('nexus:tasks:update'),

@@ -69,7 +69,7 @@ Ext.define('NX.view.dev.styles.Panels', {
             ]
           }
         ]
-      }
+      };
     }
 
     me.items = [

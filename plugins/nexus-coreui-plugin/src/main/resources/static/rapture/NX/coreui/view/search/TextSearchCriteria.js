@@ -32,12 +32,8 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
    */
   removable: false,
 
-  emptyText: NX.I18n.get('Search_TextSearchCriteria_Filter_EmptyText'),
-
-  padding: '0 5 0 0',
+  // Width must be defined on the class, otherwise overrides won’t be applied correctly
   width: 100,
-  labelAlign: 'top',
-  labelSeparator: '',
 
   filter: function() {
     var me = this;
@@ -47,8 +43,16 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
     return undefined;
   },
 
+  /**
+   * @override
+   */
   initComponent: function() {
     var me = this;
+
+    me.emptyText = NX.I18n.get('Search_TextSearchCriteria_Filter_EmptyText');
+    me.padding = '0 5 0 0';
+    me.labelAlign = 'top';
+    me.labelSeparator = '';
 
     if (me.removable) {
       me.trigger2Cls = 'nx-form-fa-minus-circle-trigger';

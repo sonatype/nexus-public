@@ -15,6 +15,8 @@ package org.sonatype.nexus.security.config
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.security.Roles
+
 // FIXME: Perhaps this would be better in nexus-core internal.security?
 
 /**
@@ -55,14 +57,14 @@ class StaticSecurityConfigurationSource
                 userId: 'admin',
                 source: 'default',
                 roles: [
-                    'admin'
+                    Roles.ADMIN_ROLE_ID
                 ]
             ),
             new CUserRoleMapping(
                 userId: 'anonymous',
                 source: 'default',
                 roles: [
-                    'anonymous'
+                    Roles.ANONYMOUS_ROLE_ID
                 ]
             )
         ],

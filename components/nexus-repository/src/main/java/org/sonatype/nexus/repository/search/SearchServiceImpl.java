@@ -23,7 +23,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,8 +30,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.BreadActions;
@@ -54,6 +51,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.indices.IndexMissingException;
@@ -62,6 +60,7 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * Default {@link SearchService} implementation. It does not expects that {@link Repository} have storage facet
@@ -75,14 +74,14 @@ public class SearchServiceImpl
     extends ComponentSupport
     implements SearchService
 {
-  public static final String TYPE = "component";
+  private static final String TYPE = "component";
 
   /**
    * Resource name of ElasticSearch mapping configuration.
    */
   public static final String MAPPING_JSON = "elasticsearch-mapping.json";
 
-  public static final SearchResponse EMPTY_SEARCH_RESPONSE = new SearchResponse(InternalSearchResponse.empty(), null, 0,
+  private static final SearchResponse EMPTY_SEARCH_RESPONSE = new SearchResponse(InternalSearchResponse.empty(), null, 0,
       0, 0, new ShardSearchFailure[]{});
 
   private final Provider<Client> client;
@@ -93,7 +92,7 @@ public class SearchServiceImpl
 
   private final List<IndexSettingsContributor> indexSettingsContributors;
 
-  private final ConcurrentMap<String, Boolean> indexRegistry;
+  private final ConcurrentMap<String, String> repositoryNameMapping;
 
   @Inject
   public SearchServiceImpl(final Provider<Client> client,
@@ -105,16 +104,22 @@ public class SearchServiceImpl
     this.repositoryManager = checkNotNull(repositoryManager);
     this.securityHelper = checkNotNull(securityHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
-    this.indexRegistry = Maps.newConcurrentMap();
+    this.repositoryNameMapping = Maps.newConcurrentMap();
   }
 
   @Override
   public void createIndex(final Repository repository) {
     checkNotNull(repository);
+    final String safeIndexName = SHA1.function().hashUnencodedChars(repository.getName()).toString();
+    log.debug("Creating index for {}", repository);
+    createIndex(repository, safeIndexName);
+  }
+
+  private void createIndex(final Repository repository, final String indexName) {
     // TODO we should calculate the checksum of index settings and compare it with a value stored in index _meta tags
     // in case that they not match (settings changed) we should drop the index, recreate it and re-index all components
-    if (!client.get().admin().indices().prepareExists(safeIndexName(repository)).execute().actionGet()
-        .isExists()) {
+    IndicesAdminClient indices = indicesAdminClient();
+    if (!indices.prepareExists(indexName).execute().actionGet().isExists()) {
       // determine list of mapping configuration urls
       List<URL> urls = Lists.newArrayListWithExpectedSize(indexSettingsContributors.size() + 1);
       urls.add(Resources.getResource(getClass(), MAPPING_JSON)); // core mapping
@@ -136,8 +141,7 @@ public class SearchServiceImpl
         }
         // update runtime configuration
         log.trace("ElasticSearch mapping: {}", source);
-        log.debug("Creating index for {}", repository);
-        client.get().admin().indices().prepareCreate(safeIndexName(repository))
+        indices.prepareCreate(indexName)
             .setSource(source)
             .execute()
             .actionGet();
@@ -146,24 +150,34 @@ public class SearchServiceImpl
         throw Throwables.propagate(e);
       }
     }
-    indexRegistry.put(repository.getName(), Boolean.TRUE);
+    repositoryNameMapping.put(repository.getName(), indexName);
   }
 
   @Override
   public void deleteIndex(final Repository repository) {
     checkNotNull(repository);
-    if (client.get().admin().indices().prepareExists(repository.getName()).execute().actionGet().isExists()) {
+    String indexName = repositoryNameMapping.remove(repository.getName());
+    if (indexName != null) {
       log.debug("Removing index of {}", repository);
-      client.get().admin().indices().prepareDelete(safeIndexName(repository)).execute().actionGet();
+      deleteIndex(indexName);
     }
-    indexRegistry.remove(repository.getName());
+  }
+
+  private void deleteIndex(final String indexName) {
+    IndicesAdminClient indices = indicesAdminClient();
+    if (indices.prepareExists(indexName).execute().actionGet().isExists()) {
+      indices.prepareDelete(indexName).execute().actionGet();
+    }
   }
 
   public void rebuildIndex(final Repository repository) {
     checkNotNull(repository);
-    indexRegistry.remove(repository.getName());
-    deleteIndex(repository);
-    createIndex(repository);
+    String indexName = repositoryNameMapping.remove(repository.getName());
+    if (indexName != null) {
+      log.debug("Rebuilding index for {}", repository);
+      deleteIndex(indexName);
+      createIndex(repository, indexName);
+    }
   }
 
   @Override
@@ -171,30 +185,31 @@ public class SearchServiceImpl
     checkNotNull(repository);
     checkNotNull(identifier);
     checkNotNull(json);
-    if (!indexRegistry.replace(repository.getName(), Boolean.TRUE, Boolean.TRUE)) {
+    String indexName = repositoryNameMapping.get(repository.getName());
+    if (indexName == null) {
       return;
     }
     log.debug("Adding to index document {} from {}: {}", identifier, repository, json);
-    client.get().prepareIndex(safeIndexName(repository), TYPE, identifier)
-        .setSource(json).execute();
+    client.get().prepareIndex(indexName, TYPE, identifier).setSource(json).execute();
   }
 
   @Override
   public void delete(final Repository repository, final String identifier) {
     checkNotNull(repository);
     checkNotNull(identifier);
-    if (!indexRegistry.replace(repository.getName(), Boolean.TRUE, Boolean.TRUE)) {
+    String indexName = repositoryNameMapping.get(repository.getName());
+    if (indexName == null) {
       return;
     }
     log.debug("Removing from index document {} from {}", identifier, repository);
-    client.get().prepareDelete(safeIndexName(repository), TYPE, identifier).execute();
+    client.get().prepareDelete(indexName, TYPE, identifier).execute();
   }
 
   @Override
   public Iterable<SearchHit> browse(final QueryBuilder query) {
     checkNotNull(query);
     try {
-      if (!client.get().admin().indices().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
+      if (!indicesAdminClient().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
         throw new IllegalArgumentException("Invalid query");
       }
     }
@@ -265,12 +280,12 @@ public class SearchServiceImpl
   @Override
   public Iterable<SearchHit> browse(final QueryBuilder query, final int from, final int size) {
     SearchResponse response = search(query, null, from, size);
-    return Arrays.asList(response.getHits().getHits());
+    return response.getHits();
   }
 
   @Override
   public SearchResponse search(final QueryBuilder query,
-                               final @Nullable List<SortBuilder> sort,
+                               @Nullable final List<SortBuilder> sort,
                                final int from,
                                final int size)
   {
@@ -312,7 +327,7 @@ public class SearchServiceImpl
   private boolean validateQuery(QueryBuilder query) {
     checkNotNull(query);
     try {
-      ValidateQueryResponse validateQueryResponse = client.get().admin().indices().prepareValidateQuery()
+      ValidateQueryResponse validateQueryResponse = indicesAdminClient().prepareValidateQuery()
           .setQuery(query).setExplain(true).execute().actionGet();
       if (!validateQueryResponse.isValid()) {
         if (log.isDebugEnabled()) {
@@ -340,27 +355,23 @@ public class SearchServiceImpl
   private String[] getSearchableIndexes() {
     List<String> indexes = Lists.newArrayList();
     for (Repository repository : repositoryManager.browse()) {
-      try {
-        // check if search facet is available so avoid searching repositories without an index
-        repository.facet(SearchFacet.class);
-        if (repository.getConfiguration().isOnline()
+      // check if search facet is available so avoid searching repositories without an index
+      repository.optionalFacet(SearchFacet.class).ifPresent((searchFacet) -> {
+        String indexName = repositoryNameMapping.get(repository.getName());
+        if (indexName != null
+            && repository.getConfiguration().isOnline()
             && securityHelper.allPermitted(new RepositoryViewPermission(repository, BreadActions.BROWSE))) {
-          indexes.add(safeIndexName(repository));
+          indexes.add(indexName);
         }
-      }
-      catch (MissingFacetException e) {
-        // no search facet, no search
-      }
+      });
     }
     return indexes.toArray(new String[indexes.size()]);
   }
 
   /**
-   * Sanitize repository name in a consistent fashion to ensure that the name used for an index is safe.
+   * Returns the indixes admin client.
    */
-  @Nonnull
-  private static String safeIndexName(final Repository repository) {
-    return Strings2.lower(repository.getName());
+  private IndicesAdminClient indicesAdminClient() {
+    return client.get().admin().indices();
   }
-
 }

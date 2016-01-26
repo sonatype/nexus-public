@@ -25,13 +25,13 @@ Ext.define('NX.coreui.view.ldap.LdapServerChangeOrder', {
     'NX.I18n'
   ],
 
-  title: NX.I18n.get('Ldap_LdapServerChangeOrder_Title'),
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.title = NX.I18n.get('Ldap_LdapServerChangeOrder_Title');
 
     me.store = Ext.create('NX.coreui.store.LdapServer', {
       sortOnLoad: true,

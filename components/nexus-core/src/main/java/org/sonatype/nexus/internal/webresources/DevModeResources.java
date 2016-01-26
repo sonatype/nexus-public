@@ -13,14 +13,16 @@
 package org.sonatype.nexus.internal.webresources;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 /**
  * Utility related to finding resources when {@code NEXUS_RESOURCE_DIRS} environment-variable
@@ -28,69 +30,94 @@ import com.google.common.collect.Lists;
  *
  * @since 2.7
  */
+@Named
+@Singleton
 public class DevModeResources
+    extends ComponentSupport
 {
-  private DevModeResources() {
-    // empty
+  private static final String ENV_VAR = "NEXUS_RESOURCE_DIRS";
+
+  private static final String SYS_PROP = "nexus.resource.dirs";
+
+  /**
+   * List of directories configured as dev-mode resource locations, or null if not configured.
+   */
+  @Nullable
+  private final List<File> resourceLocations;
+
+  public DevModeResources() {
+    this.resourceLocations = initializeResourceLocations();
   }
 
-  private static final List<File> resourceLocations = initializeResourceLocations();
+  /**
+   * Detect the dev-mode resources search path from environment-variable or system-property, or null if not configured.
+   */
+  @Nullable
+  private String detectSearchPath() {
+    String envVar = System.getenv(ENV_VAR);
+    String sysProp = System.getProperty(SYS_PROP);
+
+    // complain if both mechanisms to configure are present, this can/will cause confusion
+    if (envVar != null && sysProp != null) {
+      log.warn("Both environment-variable: {} and system-property: {} are set; environment-variable takes precedence",
+          ENV_VAR, SYS_PROP);
+    }
+
+    if (envVar != null) {
+      log.info("Search-path configured from environment-variable: {}", ENV_VAR);
+      return envVar;
+    }
+    if (sysProp != null) {
+      log.info("Search-path configured from system-property: {}", SYS_PROP);
+      return sysProp;
+    }
+
+    // not configured
+    return null;
+  }
 
   @Nullable
-  private static List<File> initializeResourceLocations() {
-    String directoriesToSearchProperty = System.getenv("NEXUS_RESOURCE_DIRS");
-    if (directoriesToSearchProperty == null) {
-      directoriesToSearchProperty = System.getProperty("nexus.resource.dirs");
-    }
-    if (directoriesToSearchProperty != null) {
-      List<File> directoriesToSearch = Lists.newArrayList();
-      String[] segments = directoriesToSearchProperty.split(",");
-      for (String segment : segments) {
+  private List<File> initializeResourceLocations() {
+    String searchPath = detectSearchPath();
+
+    if (searchPath != null) {
+      List<File> locations = new ArrayList<>();
+      for (String segment : searchPath.split(",")) {
         try {
           File dir = new File(segment).getCanonicalFile();
           if (dir.exists() && dir.isDirectory()) {
-            directoriesToSearch.add(dir);
+            locations.add(dir);
+          }
+          else {
+            log.warn("Invalid search-path segment: {}; ignoring", segment);
           }
         }
         catch (Exception e) {
           throw Throwables.propagate(e);
         }
       }
-      if (!directoriesToSearch.isEmpty()) {
-        return directoriesToSearch;
+      if (!locations.isEmpty()) {
+        return locations;
       }
     }
     return null;
   }
 
   /**
+   * Returns list of detected dev-mode resource locations or null if not configured or not valid locations detected.
+   *
    * @since 3.0
    */
   @Nullable
-  public static List<File> getResourceLocations() {
+  public List<File> getResourceLocations() {
     return resourceLocations;
   }
 
-  public static boolean hasResourceLocations() {
-    return resourceLocations != null;
-  }
-
+  /**
+   * Returns a file reference for given path if dev-mode is configured and a matching file exists.
+   */
   @Nullable
-  public static URL getResourceIfOnFileSystem(final String path) {
-    try {
-      File file = getFileIfOnFileSystem(path);
-      if (file != null) {
-        return file.getAbsoluteFile().toURI().toURL();
-      }
-    }
-    catch (MalformedURLException e) {
-      // ignore
-    }
-    return null;
-  }
-
-  @Nullable
-  public static File getFileIfOnFileSystem(final String path) {
+  public File getFileIfOnFileSystem(final String path) {
     if (resourceLocations != null) {
       for (File dir : resourceLocations) {
         File file = new File(dir, path);
@@ -101,5 +128,4 @@ public class DevModeResources
     }
     return null;
   }
-
 }

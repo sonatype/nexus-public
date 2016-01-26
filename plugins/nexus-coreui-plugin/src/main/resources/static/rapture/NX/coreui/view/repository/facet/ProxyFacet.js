@@ -62,14 +62,14 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
           },
           {
             xtype: 'checkbox',
-            name: 'attributes.httpclient.connection.blocked',
+            name: 'attributes.httpclient.blocked',
             fieldLabel: NX.I18n.get('Repository_Facet_ProxyFacet_Blocked_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_ProxyFacet_Blocked_HelpText'),
             value: false
           },
           {
             xtype: 'checkbox',
-            name: 'attributes.httpclient.connection.autoBlock',
+            name: 'attributes.httpclient.autoBlock',
             fieldLabel: NX.I18n.get('Repository_Facet_ProxyFacet_Autoblock_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_ProxyFacet_Autoblock_HelpText'),
             value: true

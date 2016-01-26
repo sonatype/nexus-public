@@ -57,7 +57,7 @@ public class RepositoryCombobox
 
   private boolean generateAllRepositoriesEntry;
 
-  private static interface Messages
+  private interface Messages
       extends MessageBundle
   {
 

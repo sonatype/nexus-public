@@ -26,13 +26,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.wire.EntryListAdapter;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Dynamic {@code ServletPipeline} that can update its sequence of servlet definitions on-demand.
@@ -88,23 +89,24 @@ final class DynamicServletPipeline
       if (servletDefinition.shouldServe(path)) {
         return new RequestDispatcher()
         {
-          public void forward(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException,
-              IOException
+          public void forward(ServletRequest servletRequest, ServletResponse servletResponse)
+              throws ServletException, IOException
           {
-            Preconditions.checkState(!servletResponse.isCommitted(),
+            checkState(!servletResponse.isCommitted(),
                 "Response has been committed--you can only call forward before"
                     + " committing the response (hint: don't flush buffers)");
 
             servletResponse.resetBuffer();
 
-            ServletRequest requestToProcess = servletRequest instanceof HttpServletRequest ? wrapRequest(
-                (HttpServletRequest) servletRequest, path) : servletRequest;
+            ServletRequest requestToProcess = servletRequest instanceof HttpServletRequest ?
+                wrapRequest((HttpServletRequest) servletRequest, path) :
+                servletRequest;
 
             doServiceImpl(requestToProcess, servletResponse);
           }
 
-          public void include(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException,
-              IOException
+          public void include(ServletRequest servletRequest, ServletResponse servletResponse)
+              throws ServletException, IOException
           {
             doServiceImpl(servletRequest, servletResponse);
           }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.manager;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -72,8 +73,8 @@ public class RepositoryImpl
 
   @Inject
   public RepositoryImpl(final EventBus eventBus,
-                        final @Assisted Type type,
-                        final @Assisted Format format)
+                        @Assisted final Type type,
+                        @Assisted final Format format)
   {
     this.eventBus = checkNotNull(eventBus);
     this.type = checkNotNull(type);
@@ -322,6 +323,12 @@ public class RepositoryImpl
     }
 
     return facet;
+  }
+
+  @Override
+  @Nonnull
+  public <T extends Facet> Optional<T> optionalFacet(final Class<T> type) {
+    return Optional.ofNullable(facets.get(type));
   }
 
   @Override

@@ -62,7 +62,7 @@ public class SessionAuthenticationFilter
                                     final Object mappedValue)
   {
     Subject subject = getSubject(request, response);
-    return subject.isAuthenticated() || isLogoutRequest(request, response);
+    return subject.isAuthenticated() || isLogoutRequest(request);
   }
 
   /**
@@ -97,7 +97,7 @@ public class SessionAuthenticationFilter
         WebUtils.toHttp(request).getMethod().equalsIgnoreCase(POST_METHOD);
   }
 
-  private boolean isLogoutRequest(final ServletRequest request, final ServletResponse response) {
+  private boolean isLogoutRequest(final ServletRequest request) {
     return (request instanceof HttpServletRequest) &&
         WebUtils.toHttp(request).getMethod().equalsIgnoreCase(DELETE_METHOD);
   }

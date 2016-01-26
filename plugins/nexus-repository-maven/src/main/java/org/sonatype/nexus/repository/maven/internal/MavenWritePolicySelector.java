@@ -35,13 +35,13 @@ public class MavenWritePolicySelector
   }
 
   /**
-   * In case of {@link WritePolicy#ALLOW_ONCE}, metadata write policy is overridden to {@link WritePolicy#ALLOW}.
+   * In case of {@link WritePolicy#ALLOW_ONCE}, write policy for non-artifacts is overridden to {@link WritePolicy#ALLOW}.
    */
   @Override
   public WritePolicy select(final Asset asset, final WritePolicy configured) {
     if (WritePolicy.ALLOW_ONCE == configured) {
       final MavenPath mavenPath = mavenPathParser.parsePath(asset.name());
-      if (mavenPathParser.isRepositoryMetadata(mavenPath)) {
+      if (mavenPath.getCoordinates() == null) {
         return WritePolicy.ALLOW;
       }
     }

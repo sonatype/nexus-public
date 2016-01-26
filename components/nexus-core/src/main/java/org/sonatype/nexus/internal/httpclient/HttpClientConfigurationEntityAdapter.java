@@ -14,14 +14,17 @@ package org.sonatype.nexus.internal.httpclient;
 
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
-import org.sonatype.nexus.httpclient.config.AuthenticationConfigurationDeserializer;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
+import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.action.SingletonActions;
+import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -42,24 +45,42 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Named
 @Singleton
 public class HttpClientConfigurationEntityAdapter
-    extends SingletonEntityAdapter<HttpClientConfiguration>
+    extends EntityAdapter<HttpClientConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(HttpClientConfiguration.class)
+      .type("http_client")
       .build();
 
   private final ObjectMapper objectMapper;
 
-  public HttpClientConfigurationEntityAdapter() {
+  @Inject
+  public HttpClientConfigurationEntityAdapter(final PasswordHelper passwordHelper) throws Exception {
     super(DB_CLASS);
 
     this.objectMapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-        // AuthenticationConfiguration deserialization needs a tiny bit of logic to resolve the proper impl
-        .registerModule(new SimpleModule().addDeserializer(
-                AuthenticationConfiguration.class,
-                new AuthenticationConfigurationDeserializer())
+        // register custom serializers and deserializers
+        // - goodies Time is our internal Time representation
+        // - AuthenticationConfiguration needs a tiny bit of logic for resolving the proper impl and encryption
+        .registerModule(
+            new SimpleModule()
+                .addSerializer(
+                    Time.class,
+                    new SecondsSerializer()
+                )
+                .addDeserializer(
+                    Time.class,
+                    new SecondsDeserializer()
+                )
+                .addSerializer(
+                    AuthenticationConfiguration.class,
+                    new AuthenticationConfigurationSerializer(passwordHelper)
+                )
+                .addDeserializer(
+                    AuthenticationConfiguration.class,
+                    new AuthenticationConfigurationDeserializer(passwordHelper)
+                )
         );
   }
 
@@ -91,7 +112,7 @@ public class HttpClientConfigurationEntityAdapter
   }
 
   private static final TypeReference<Map<String, Object>> MAP_STRING_OBJECT =
-      new TypeReference<Map<String, Object>>() {};
+      new TypeReference<Map<String, Object>>() { };
 
   @Override
   protected void writeFields(final ODocument document, final HttpClientConfiguration entity) throws Exception {
@@ -99,4 +120,10 @@ public class HttpClientConfigurationEntityAdapter
     log.trace("Writing fields: {}", fields);
     document.fromMap(fields);
   }
+
+  //
+  // Actions
+  //
+
+  public final SingletonActions<HttpClientConfiguration> singleton = new SingletonActions<>(this);
 }

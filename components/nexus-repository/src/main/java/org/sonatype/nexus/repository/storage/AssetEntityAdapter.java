@@ -42,14 +42,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BLOB_REF;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_COMPONENT;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_CONTENT_TYPE;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_ACCESSED;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_SIZE;
+import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 
 /**
  * {@link Asset} entity-adapter.
@@ -62,8 +55,44 @@ public class AssetEntityAdapter
     extends MetadataNodeEntityAdapter<Asset>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type(Asset.class)
+      .type("asset")
       .build();
+
+  /**
+   * Applied (optionally) to asset only, holds a value from format describing what current asset is.
+   */
+  public static final String P_ASSET_KIND = "asset_kind";
+
+  /**
+   * Key of {@link Asset} blob ref attribute (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String P_BLOB_REF = "blob_ref";
+
+  /**
+   * Key of {@link Asset} component reference attribute (if asset belongs to a component).
+   */
+  public static final String P_COMPONENT = "component";
+
+  /**
+   * Key of {@link Asset} for content type attribute (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String P_CONTENT_TYPE = "content_type";
+
+  /**
+   * Key of {@link Asset} attribute denoting when it was last accessed.
+   */
+  public static final String P_LAST_ACCESSED = "last_accessed";
+
+  /**
+   * Key of {@link Asset} size attribute (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String P_SIZE = "size";
 
   private static final String I_BUCKET_COMPONENT_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -134,7 +163,9 @@ public class AssetEntityAdapter
     if (blobRef != null) {
       entity.blobRef(BlobRef.parse(blobRef));
     }
-    entity.lastAccessed(new DateTime(lastAccessed));
+    if (lastAccessed != null) {
+      entity.lastAccessed(new DateTime(lastAccessed));
+    }
   }
 
   @Override
@@ -155,7 +186,8 @@ public class AssetEntityAdapter
   Asset findByProperty(final ODatabaseDocumentTx db,
                        final String propName,
                        final Object propValue,
-                       final Component component) {
+                       final Component component)
+  {
     checkNotNull(propName);
     checkNotNull(propValue);
     checkNotNull(component);

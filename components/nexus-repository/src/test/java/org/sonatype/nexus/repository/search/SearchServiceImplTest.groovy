@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.security.SecurityHelper
 
+import com.google.common.base.Charsets
 import org.elasticsearch.action.ListenableActionFuture
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse
@@ -38,6 +39,7 @@ import org.mockito.Mock
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.contains
 import static org.powermock.api.mockito.PowerMockito.when
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 
 class SearchServiceImplTest
     extends TestSupport
@@ -94,22 +96,22 @@ class SearchServiceImplTest
     repository.name = 'test'
     searchService.createIndex(repository)
 
-    assertThat(varArgs.getAllValues(), contains('test'))
+    assertThat(varArgs.getAllValues(), contains(SHA1.function().hashUnencodedChars('test').toString()))
   }
 
   /**
-   * Search indices are stored in all lowercase so ensure that we normalize our repo names to lowercase when checking
-   * to see if the index already exists.
+   * Search indices identifiers are {@link Repository#getName()} passed thru SHA1 hasher to normalize them and
+   * make them suit ES index name requirements (lower case, max len 255, etc).
    */
   @Test
-  public void testCreateIndexForCaseInsensitivity() throws Exception {
+  public void testCreateIndexRepositoryNameMapping() throws Exception {
     ArgumentCaptor<String> varArgs = captureRepoNameArg()
 
     Repository repository = new RepositoryImpl(eventBus, new HostedType(), new TestFormat('test'))
     repository.name = 'UPPERCASE'
     searchService.createIndex(repository)
 
-    assertThat(varArgs.getAllValues(), contains('uppercase'))
+    assertThat(varArgs.getAllValues(), contains(SHA1.function().hashUnencodedChars('UPPERCASE').toString()))
   }
 
   private ArgumentCaptor<String> captureRepoNameArg() {

@@ -13,9 +13,7 @@
 package org.sonatype.nexus.common.app;
 
 /**
- * The event that is occured when nexus has started (fired as last step of boot process, everything is in place).
- *
- * @author cstamas
+ * Event fired when the application has started.
  */
 public class NexusStartedEvent
     extends NexusStateChangeEvent

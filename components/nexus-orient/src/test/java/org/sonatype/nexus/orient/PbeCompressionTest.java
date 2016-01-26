@@ -13,7 +13,9 @@
 package org.sonatype.nexus.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.crypto.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +34,12 @@ public class PbeCompressionTest
 
   @Before
   public void setUp() throws Exception {
-    this.underTest = new PbeCompression(new CryptoHelperImpl(), "password", "salt", "0123456789ABCDEF");
+    this.underTest = new PbeCompression(
+        new PbeCipherFactoryImpl(new CryptoHelperImpl()),
+        "password",
+        "salt",
+        "0123456789ABCDEF"
+    );
   }
 
   @Test

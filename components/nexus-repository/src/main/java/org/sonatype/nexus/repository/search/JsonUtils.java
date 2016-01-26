@@ -27,6 +27,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 class JsonUtils
 {
+  private JsonUtils() {
+    // empty
+  }
+
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private static final ObjectWriter objectWriter = objectMapper.writerWithDefaultPrettyPrinter();

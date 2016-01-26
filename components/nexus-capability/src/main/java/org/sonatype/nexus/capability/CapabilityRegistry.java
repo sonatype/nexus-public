@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Predicate;
 
 /**
@@ -36,8 +38,8 @@ public interface CapabilityRegistry
    */
   CapabilityReference add(CapabilityType type,
                           boolean enabled,
-                          String notes,
-                          Map<String, String> properties)
+                          @Nullable String notes,
+                          @Nullable Map<String, String> properties)
       throws IOException;
 
   /**
@@ -53,9 +55,9 @@ public interface CapabilityRegistry
    */
   CapabilityReference update(CapabilityIdentity id,
                              boolean enabled,
-                             String notes,
-                             Map<String, String> properties)
-      throws IOException, CapabilityNotFoundException;
+                             @Nullable String notes,
+                             @Nullable Map<String, String> properties)
+      throws IOException;
 
   /**
    * Removes a capability.
@@ -65,8 +67,7 @@ public interface CapabilityRegistry
    * @throws IOException                 If capabilities could not be stored
    * @throws CapabilityNotFoundException If capability with specified id does not exist
    */
-  CapabilityReference remove(CapabilityIdentity id)
-      throws IOException, CapabilityNotFoundException;
+  CapabilityReference remove(CapabilityIdentity id) throws IOException;
 
   /**
    * Enables a capability.
@@ -76,8 +77,7 @@ public interface CapabilityRegistry
    * @throws IOException                 If capabilities could not be stored
    * @throws CapabilityNotFoundException If capability with specified id does not exist
    */
-  CapabilityReference enable(CapabilityIdentity id)
-      throws IOException, CapabilityNotFoundException;
+  CapabilityReference enable(CapabilityIdentity id) throws IOException;
 
   /**
    * Disables a capability.
@@ -87,8 +87,7 @@ public interface CapabilityRegistry
    * @throws IOException                 If capabilities could not be stored
    * @throws CapabilityNotFoundException If capability with specified id does not exist
    */
-  CapabilityReference disable(CapabilityIdentity id)
-      throws IOException, CapabilityNotFoundException;
+  CapabilityReference disable(CapabilityIdentity id) throws IOException;
 
   /**
    * Retrieves the capability from registry with specified id. If there is no capability with specified id in the

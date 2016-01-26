@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'wonderland-all',
+                id: 'nx-wonderland-all',
                 description: 'All permissions for Wonderland',
                 type: 'application',
                 properties: [

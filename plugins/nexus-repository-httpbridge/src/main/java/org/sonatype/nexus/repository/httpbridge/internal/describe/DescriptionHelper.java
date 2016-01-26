@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.util.StringMultimap;
+import org.sonatype.nexus.common.collect.StringMultimap;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;

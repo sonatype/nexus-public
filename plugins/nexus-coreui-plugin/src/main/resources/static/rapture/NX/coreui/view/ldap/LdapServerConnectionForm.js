@@ -1,4 +1,4 @@
-/*
+  /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -25,15 +25,15 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionForm', {
     'NX.I18n'
   ],
 
-  items: { xtype: 'nx-coreui-ldapserver-connection-fieldset' },
-
-  editableMarker: NX.I18n.get('Ldap_LdapServerConnectionForm_Update_Error'),
-
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.items = { xtype: 'nx-coreui-ldapserver-connection-fieldset' };
+
+    me.editableMarker = NX.I18n.get('Ldap_LdapServerConnectionForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.isPermitted('nexus:ldap:update');
 

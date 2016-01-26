@@ -27,7 +27,10 @@ public class RepoTargetComboFormField
 
   public static final String DEFAULT_LABEL = "Repository Target";
 
-  public RepoTargetComboFormField(String id, String label, String helpText, boolean required,
+  public RepoTargetComboFormField(String id,
+                                  String label,
+                                  String helpText,
+                                  boolean required,
                                   String regexValidation)
   {
     super(id, label, helpText, required, regexValidation);

@@ -55,13 +55,13 @@ public class KeyStoreManagerConfigurationImpl
   @Inject
   public KeyStoreManagerConfigurationImpl(
       final ApplicationDirectories directories,
-      final @Named(CPREFIX + ".keyStoreType:-JKS}") String keyStoreType,
-      final @Named(CPREFIX + ".keyAlgorithm:-RSA}") String keyAlgorithm,
-      final @Named(CPREFIX + ".keyAlgorithmSize:-2048}") int keyAlgorithmSize,
-      final @Named(CPREFIX + ".certificateValidity:-36500d}") Time certificateValidity,
-      final @Named(CPREFIX + ".signatureAlgorithm:-SHA1WITHRSA}") String signatureAlgorithm,
-      final @Named(CPREFIX + ".keyManagerAlgorithm:-DEFAULT}") String keyManagerAlgorithm,
-      final @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") String trustManagerAlgorithm)
+      @Named(CPREFIX + ".keyStoreType:-JKS}") final String keyStoreType,
+      @Named(CPREFIX + ".keyAlgorithm:-RSA}") final String keyAlgorithm,
+      @Named(CPREFIX + ".keyAlgorithmSize:-2048}") final int keyAlgorithmSize,
+      @Named(CPREFIX + ".certificateValidity:-36500d}") final Time certificateValidity,
+      @Named(CPREFIX + ".signatureAlgorithm:-SHA1WITHRSA}") final String signatureAlgorithm,
+      @Named(CPREFIX + ".keyManagerAlgorithm:-DEFAULT}") final String keyManagerAlgorithm,
+      @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") final String trustManagerAlgorithm)
   {
     setBaseDir(new File(directories.getWorkDirectory("keystores"), KeyStoreManagerImpl.NAME));
 

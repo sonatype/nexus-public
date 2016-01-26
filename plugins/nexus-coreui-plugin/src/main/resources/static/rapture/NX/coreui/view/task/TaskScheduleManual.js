@@ -24,9 +24,18 @@ Ext.define('NX.coreui.view.task.TaskScheduleManual', {
     'NX.I18n'
   ],
 
-  items: {
-    xtype: 'label',
-    text: NX.I18n.get('Task_TaskScheduleManual_HelpText')
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      items: {
+        xtype: 'label',
+        text: NX.I18n.get('Task_TaskScheduleManual_HelpText')
+      }
+    });
+
+    this.callParent();
   }
 
 });

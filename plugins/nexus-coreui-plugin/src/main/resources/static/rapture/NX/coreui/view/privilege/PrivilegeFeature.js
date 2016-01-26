@@ -24,18 +24,27 @@ Ext.define('NX.coreui.view.privilege.PrivilegeFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'privilege-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'privilege-default',
 
-  masters: [
-    { xtype: 'nx-coreui-privilege-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-privilege-list' }
+      ],
 
-  tabs: {
-    xtype: 'nx-info-panel',
-    title: NX.I18n.get('Privilege_PrivilegeFeature_Details_Tab')
-  },
+      tabs: {
+        xtype: 'nx-info-panel',
+        title: NX.I18n.get('Privilege_PrivilegeFeature_Details_Tab')
+      },
 
-  actions: [
-    { xtype: 'button', text: NX.I18n.get('Privilege_PrivilegeFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
-  ]
+      actions: [
+        { xtype: 'button', text: NX.I18n.get('Privilege_PrivilegeFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

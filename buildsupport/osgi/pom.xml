@@ -28,9 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <osgi-spec.version>4.3.1</osgi-spec.version>
-    <felix.version>4.4.0</felix.version>
-    <karaf.version>3.0.5</karaf.version>
+    <karaf.version>4.0.4</karaf.version>
   </properties>
 
   <dependencyManagement>
@@ -38,19 +36,19 @@
       <dependency>
         <groupId>org.osgi</groupId>
         <artifactId>org.osgi.core</artifactId>
-        <version>${osgi-spec.version}</version>
+        <version>6.0.0</version>
       </dependency>
 
       <dependency>
         <groupId>org.osgi</groupId>
         <artifactId>org.osgi.compendium</artifactId>
-        <version>${osgi-spec.version}</version>
+        <version>5.0.0</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.framework</artifactId>
-        <version>${felix.version}</version>
+        <version>5.4.0</version>
       </dependency>
 
       <dependency>
@@ -70,12 +68,6 @@
         <artifactId>framework</artifactId>
         <version>${karaf.version}</version>
         <type>kar</type>
-        <exclusions>
-          <exclusion>
-            <groupId>org.eclipse</groupId>
-            <artifactId>org.eclipse.osgi</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -84,6 +76,12 @@
         <version>${karaf.version}</version>
         <classifier>features</classifier>
         <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.equinox</groupId>
+        <artifactId>org.eclipse.equinox.region</artifactId>
+        <version>1.1.0.v20120522-1841</version>
       </dependency>
 
       <dependency>
@@ -106,20 +104,13 @@
 
       <dependency>
         <groupId>org.apache.karaf.shell</groupId>
-        <artifactId>org.apache.karaf.shell.console</artifactId>
+        <artifactId>org.apache.karaf.shell.core</artifactId>
         <version>${karaf.version}</version>
-        <exclusions>
-          <!-- exclude jaas module, which includes embedded httpclient -->
-          <exclusion>
-            <groupId>org.apache.karaf.jaas</groupId>
-            <artifactId>org.apache.karaf.jaas.modules</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
         <groupId>org.apache.karaf.shell</groupId>
-        <artifactId>org.apache.karaf.shell.table</artifactId>
+        <artifactId>org.apache.karaf.shell.commands</artifactId>
         <version>${karaf.version}</version>
       </dependency>
     </dependencies>

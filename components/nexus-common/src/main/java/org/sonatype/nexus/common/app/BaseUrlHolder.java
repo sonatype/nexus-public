@@ -27,11 +27,11 @@ public final class BaseUrlHolder
 {
   private static final Logger log = LoggerFactory.getLogger(BaseUrlHolder.class);
 
-  // TODO: Sort out if we want a java.net.URL or if String is fine
-
   private static final InheritableThreadLocal<String> value = new InheritableThreadLocal<>();
 
-  private BaseUrlHolder() {}
+  private BaseUrlHolder() {
+    // empty
+  }
 
   /**
    * Set the current base URL.

@@ -37,7 +37,7 @@ import com.google.common.collect.Maps;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
 /**
  * Default {@link SearchFacet} implementation. It depends on presence of a {@link StorageFacet} attached to {@link
@@ -129,7 +129,7 @@ public class SearchFacetImpl
    */
   private void put(final Component component, final Iterable<Asset> assets) {
     Map<String, Object> additional = Maps.newHashMap();
-    additional.put(P_REPOSITORY_NAME, getRepository().getName());
+    additional.put(REPOSITORY_NAME, getRepository().getName());
     String json = producer(component).getMetadata(component, assets, additional);
     searchService.put(getRepository(), EntityHelper.id(component).getValue(), json);
   }

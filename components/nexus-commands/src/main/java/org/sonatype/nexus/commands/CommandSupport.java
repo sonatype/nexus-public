@@ -12,60 +12,30 @@
  */
 package org.sonatype.nexus.commands;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.apache.karaf.shell.commands.CommandWithAction;
-import org.apache.karaf.shell.commands.basic.AbstractCommand;
-import org.apache.karaf.shell.console.CompletableFunction;
-import org.apache.karaf.shell.console.Completer;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.console.Command;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.impl.action.command.ActionCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides support for Karaf {@link CommandWithAction} implementations.
+ * Provides support for Karaf {@link Action} {@link Command} implementations.
  * 
  * @since 3.0
  */
 public abstract class CommandSupport
-    extends AbstractCommand
-    implements CompletableFunction
+    extends ActionCommand
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private List<Completer> argumentCompleters;
-
-  private Map<String, Completer> optionCompleters;
-
-  protected void addArgumentCompleter(final int index, final Completer completer) {
-    if (argumentCompleters == null) {
-      argumentCompleters = Lists.newLinkedList();
-    }
-    argumentCompleters.add(index, completer);
-  }
-
-  protected void addOptionCompleter(final String name, final Completer completer) {
-    if (optionCompleters == null) {
-      optionCompleters = Maps.newHashMap();
-    }
-    optionCompleters.put(name, completer);
-  }
-
-  // NOTE: Both return values appear to be nullable, but not marked on interface
-
-  @Override
-  @Nullable
-  public List<Completer> getCompleters() {
-    return argumentCompleters;
+  public CommandSupport(final Class<? extends Action> actionClass) {
+    super(null, actionClass);
   }
 
   @Override
-  @Nullable
-  public Map<String, Completer> getOptionalCompleters() {
-    return optionCompleters;
-  }
+  protected abstract Action createNewAction(Session session);
+
+  @Override
+  protected abstract void releaseAction(Action action) throws Exception;
 }

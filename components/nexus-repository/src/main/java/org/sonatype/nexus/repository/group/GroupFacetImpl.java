@@ -23,13 +23,15 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.cache.RepositoryCacheUtils;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -51,6 +53,8 @@ public class GroupFacetImpl
     implements GroupFacet
 {
   private final RepositoryManager repositoryManager;
+
+  private final Type groupType;
 
   @VisibleForTesting
   static final String CONFIG_KEY = "group";
@@ -75,8 +79,11 @@ public class GroupFacetImpl
   private CacheController cacheController;
 
   @Inject
-  public GroupFacetImpl(final RepositoryManager repositoryManager) {
+  public GroupFacetImpl(final RepositoryManager repositoryManager,
+                        @Named(GroupType.NAME) final Type groupType)
+  {
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.groupType = checkNotNull(groupType);
   }
 
   @Override
@@ -151,16 +158,24 @@ public class GroupFacetImpl
     List<Repository> leafMembers = new ArrayList<>();
 
     for (Repository repository : members()) {
-      try {
-        final GroupFacet groupFacet = repository.facet(GroupFacet.class);
-        leafMembers.addAll(groupFacet.leafMembers());
+      if (groupType.equals(repository.getType())) {
+        leafMembers.addAll(repository.facet(GroupFacet.class).leafMembers());
       }
-      catch (MissingFacetException e) {
+      else {
         leafMembers.add(repository);
       }
     }
 
     return leafMembers;
+  }
+
+  @Override
+  public void invalidateGroupCaches() {
+    log.info("Invalidating group caches of {}", getRepository().getName());
+    cacheController.invalidateCache();
+    for (Repository repository : members()) {
+      RepositoryCacheUtils.invalidateCaches(repository);
+    }
   }
 
   /**

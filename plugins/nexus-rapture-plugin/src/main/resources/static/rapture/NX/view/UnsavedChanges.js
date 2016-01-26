@@ -24,9 +24,6 @@ Ext.define('NX.view.UnsavedChanges', {
   ],
   alias: 'widget.nx-unsaved-changes',
 
-  title: NX.I18n.get('UnsavedChanges_Title'),
-  defaultFocus: 'nx-discard',
-
   /**
    * Panel with content to be saved.
    *
@@ -47,7 +44,10 @@ Ext.define('NX.view.UnsavedChanges', {
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.SMALL_MODAL);
+    me.title = NX.I18n.get('UnsavedChanges_Title');
+    me.defaultFocus = 'nx-discard';
+
+    me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
     Ext.apply(me, {
       items: {

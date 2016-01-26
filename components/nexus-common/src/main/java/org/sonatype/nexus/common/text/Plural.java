@@ -23,12 +23,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class Plural
 {
-  private Plural() {}
+  private Plural() {
+    // empty
+  }
 
   public static StringBuilder append(final StringBuilder buff,
                                      final int value,
                                      final String singular,
-                                     final @Nullable String plural)
+                                     @Nullable final String plural)
   {
     checkNotNull(buff);
     checkNotNull(singular);
@@ -55,7 +57,7 @@ public final class Plural
   }
 
 
-  public static String of(final int value, final String singular, final @Nullable String plural) {
+  public static String of(final int value, final String singular, @Nullable final String plural) {
     return append(new StringBuilder(), value, singular, plural).toString();
   }
 

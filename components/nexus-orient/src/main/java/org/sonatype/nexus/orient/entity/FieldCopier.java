@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class FieldCopier
 {
-  private FieldCopier() {}
+  private FieldCopier() {
+    // empty
+  }
 
   private static Object maybeCopy(final Object source) {
     if (source instanceof ODocument) {
@@ -74,7 +76,7 @@ public class FieldCopier
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public static <T extends Map<?,?>> T copyIf(final @Nullable T source) {
+  public static <T extends Map<?,?>> T copyIf(@Nullable final T source) {
     if (source != null) {
       return (T) copy(source);
     }

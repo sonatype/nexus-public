@@ -29,7 +29,9 @@ Ext.define('NX.view.ModalDialog', {
   resizable: false,
 
   // Standard modal widths
-  SMALL_MODAL: 320,
-  MEDIUM_MODAL: 480,
-  LARGE_MODAL: 640
+  statics: {
+    SMALL_MODAL: 320,
+    MEDIUM_MODAL: 480,
+    LARGE_MODAL: 640
+  }
 });

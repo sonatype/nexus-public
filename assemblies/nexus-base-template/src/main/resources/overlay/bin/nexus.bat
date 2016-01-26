@@ -215,6 +215,7 @@ if "%EXTRA_JAVA_OPTS%" == "" goto :KARAF_EXTRA_JAVA_OPTS_END
 if "%KARAF_DEBUG%" == "" goto :KARAF_DEBUG_END
     if "%1" == "stop" goto :KARAF_DEBUG_END
     if "%1" == "client" goto :KARAF_DEBUG_END
+    if "%1" == "status" goto :KARAF_DEBUG_END
     rem Use the defaults if JAVA_DEBUG_OPTS was not set
     if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUG_OPTS%
 
@@ -231,15 +232,15 @@ if "%KARAF_PROFILER%" == "" goto :KARAF_PROFILER_END
 :KARAF_PROFILER_END
 
 rem Setup the classpath
-pushd "%KARAF_HOME%\lib"
-for %%G in (karaf*.jar) do call:APPEND_TO_CLASSPATH %%G
+pushd "%KARAF_HOME%\lib\boot"
+for %%G in (*.jar) do call:APPEND_TO_CLASSPATH %%G
 popd
 goto CLASSPATH_END
 
 : APPEND_TO_CLASSPATH
 set filename=%~1
 set suffix=%filename:~-4%
-if %suffix% equ .jar set CLASSPATH=%CLASSPATH%;%KARAF_HOME%\lib\%filename%
+if %suffix% equ .jar set CLASSPATH=%CLASSPATH%;%KARAF_HOME%\lib\boot\%filename%
 goto :EOF
 
 :CLASSPATH_END
@@ -252,7 +253,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
 
 :RUN
     SET OPTS=-Dkaraf.startLocalConsole=true -Dkaraf.startRemoteShell=true
-    SET MAIN=org.apache.karaf.main.Main
+    SET MAIN=org.sonatype.nexus.karaf.NexusMain
     SET SHIFT=false
 
 :RUN_LOOP
@@ -308,7 +309,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     rem SONATYPE: removed -Djavax.management.builder.initial
     rem SONATYPE: removed -Djava.endorsed.dirs="%JAVA_HOME%\jre\lib\endorsed;%JAVA_HOME%\lib\endorsed;%KARAF_HOME%\lib\endorsed"
     rem SONATYPE: removed -Djava.ext.dirs="%JAVA_HOME%\jre\lib\ext;%JAVA_HOME%\lib\ext;%KARAF_HOME%\lib\ext"
-    "%JAVA%" %JAVA_OPTS% %OPTS% -classpath "%CLASSPATH%" -Dkaraf.instances="%KARAF_HOME%\instances" -Dkaraf.home="%KARAF_HOME%" -Dkaraf.base="%KARAF_BASE%" -Dkaraf.etc="%KARAF_ETC%" -Djava.io.tmpdir="%KARAF_DATA%\tmp" -Dkaraf.data="%KARAF_DATA%" -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" %KARAF_OPTS% %MAIN% %ARGS%
+    "%JAVA%" %JAVA_OPTS% %OPTS% -classpath "%CLASSPATH%" -Dkaraf.instances="%KARAF_DATA%\instances" -Dkaraf.home="%KARAF_HOME%" -Dkaraf.base="%KARAF_BASE%" -Dkaraf.etc="%KARAF_ETC%" -Djava.io.tmpdir="%KARAF_DATA%\tmp" -Dkaraf.data="%KARAF_DATA%" -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" %KARAF_OPTS% %MAIN% %ARGS%
 
 rem # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

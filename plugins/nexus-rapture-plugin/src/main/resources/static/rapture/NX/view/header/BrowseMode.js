@@ -23,29 +23,39 @@ Ext.define('NX.view.header.BrowseMode', {
   requires: [
     'NX.I18n'
   ],
-  ui: 'nx-header',
-  cls: 'nx-modebutton',
-  scale: 'medium',
-  height: 39,
-  width: 39,
 
   /**
-   * @cfg mode Mode name
+   * @override
    */
-  mode: 'browse',
-  toggleGroup: 'mode',
-  allowDepress: false,
+  initComponent: function() {
+    Ext.apply(this, {
+      ui: 'nx-header',
+      cls: 'nx-modebutton',
+      scale: 'medium',
+      height: 39,
+      width: 39,
 
-  /**
-   * @cfg autoHide If button should auto hide when no features are available for selected mode
-   */
-  autoHide: true,
+      /**
+       * @cfg mode Mode name
+       */
+      mode: 'browse',
+      toggleGroup: 'mode',
+      allowDepress: false,
 
-  /**
-   * @cfg collapseMenu If menu should be collapsed automatically when mode is selected
-   */
-  collapseMenu: true,
-  title: NX.I18n.get('Header_BrowseMode_Title'),
-  tooltip: NX.I18n.get('Header_BrowseMode_Tooltip'),
-  glyph: 'xf1b2@FontAwesome' /* fa-cube */
+      /**
+       * @cfg autoHide If button should auto hide when no features are available for selected mode
+       */
+      autoHide: true,
+
+      /**
+       * @cfg collapseMenu If menu should be collapsed automatically when mode is selected
+       */
+      collapseMenu: true,
+      title: NX.I18n.get('Header_BrowseMode_Title'),
+      tooltip: NX.I18n.get('Header_BrowseMode_Tooltip'),
+      glyph: 'xf1b2@FontAwesome' /* fa-cube */
+    });
+
+    this.callParent();
+  }
 });

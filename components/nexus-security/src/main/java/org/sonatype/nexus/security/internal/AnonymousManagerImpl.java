@@ -53,7 +53,7 @@ public class AnonymousManagerImpl
 
   @Inject
   public AnonymousManagerImpl(final AnonymousConfigurationStore store,
-                              final @Named("initial") Provider<AnonymousConfiguration> defaults)
+                              @Named("initial") final Provider<AnonymousConfiguration> defaults)
   {
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);

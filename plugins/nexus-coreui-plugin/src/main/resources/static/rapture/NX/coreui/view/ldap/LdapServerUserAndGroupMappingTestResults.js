@@ -18,35 +18,35 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
-  extend: 'Ext.window.Window',
+  extend: 'NX.view.ModalDialog',
   alias: 'widget.nx-coreui-ldapserver-userandgroup-testresults',
   requires: [
     'Ext.data.JsonStore',
     'NX.I18n'
   ],
 
-  title: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Title'),
-
-  layout: 'fit',
-  autoShow: true,
-  modal: true,
-  constrain: true,
-  width: 630,
-
-  buttonAlign: 'left',
-  buttons: [
-    { text: NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Close_Button'), handler: function () {
-      this.up('window').close();
-    }}
-  ],
-
   /**
    * @cfg json array of users (as returned by checking the user mapping)
    */
-  mappedUsers: undefined,
+  config: {
+    mappedUsers: undefined
+  },
 
   initComponent: function () {
     var me = this;
+
+    me.title = NX.I18n.get('Ldap_LdapServerUserAndGroupMappingTestResults_Title');
+    me.layout = 'fit';
+    me.closeable = true;
+    me.autoShow = true;
+    me.modal = true;
+    me.constrain = true;
+    me.buttonAlign = 'left';
+    me.buttons = [
+      { text: NX.I18n.get('Close_Button'), handler: function () {
+        this.up('window').close();
+      }}
+    ];
 
     me.items = {
       xtype: 'grid',
@@ -62,9 +62,11 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
       })
     };
 
-    me.maxHeight = Ext.getBody().getViewSize().height - 100;
+    me.width = NX.view.ModalDialog.LARGE_MODAL;
+    me.maxHeight = me.height = Ext.getBody().getViewSize().height - 100;
 
     me.callParent(arguments);
+    me.center();
   }
 
 });

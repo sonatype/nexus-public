@@ -40,6 +40,16 @@ public class EmailConfiguration
 
   private String subjectPrefix;
 
+  private boolean startTlsEnabled;
+
+  private boolean startTlsRequired;
+
+  private boolean sslOnConnectEnabled;
+
+  private boolean sslCheckServerIdentityEnabled;
+
+  private boolean nexusTrustStoreEnabled;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -96,6 +106,46 @@ public class EmailConfiguration
     this.subjectPrefix = subjectPrefix;
   }
 
+  public boolean isStartTlsEnabled() {
+    return startTlsEnabled;
+  }
+
+  public void setStartTlsEnabled(final boolean startTlsEnabled) {
+    this.startTlsEnabled = startTlsEnabled;
+  }
+
+  public boolean isStartTlsRequired() {
+    return startTlsRequired;
+  }
+
+  public void setStartTlsRequired(final boolean startTlsRequired) {
+    this.startTlsRequired = startTlsRequired;
+  }
+
+  public boolean isSslOnConnectEnabled() {
+    return sslOnConnectEnabled;
+  }
+
+  public void setSslOnConnectEnabled(final boolean sslOnConnectEnabled) {
+    this.sslOnConnectEnabled = sslOnConnectEnabled;
+  }
+
+  public boolean isSslCheckServerIdentityEnabled() {
+    return sslCheckServerIdentityEnabled;
+  }
+
+  public void setSslCheckServerIdentityEnabled(final boolean sslCheckServerIdentityEnabled) {
+    this.sslCheckServerIdentityEnabled = sslCheckServerIdentityEnabled;
+  }
+
+  public boolean isNexusTrustStoreEnabled() {
+    return nexusTrustStoreEnabled;
+  }
+
+  public void setNexusTrustStoreEnabled(final boolean nexusTrustStoreEnabled) {
+    this.nexusTrustStoreEnabled = nexusTrustStoreEnabled;
+  }
+
   public EmailConfiguration copy() {
     try {
       return (EmailConfiguration)clone();
@@ -115,6 +165,11 @@ public class EmailConfiguration
         ", password='" + Strings2.mask(password) + '\'' +
         ", fromAddress='" + fromAddress + '\'' +
         ", subjectPrefix='" + subjectPrefix + '\'' +
+        ", startTlsEnabled=" + startTlsEnabled +
+        ", startTlsRequired=" + startTlsRequired +
+        ", sslOnConnectEnabled=" + sslOnConnectEnabled +
+        ", sslCheckServerIdentityEnabled=" + sslCheckServerIdentityEnabled +
+        ", nexusTrustStoreEnabled=" + nexusTrustStoreEnabled + 
         '}';
   }
 }

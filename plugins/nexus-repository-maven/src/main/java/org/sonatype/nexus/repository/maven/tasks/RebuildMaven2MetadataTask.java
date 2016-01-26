@@ -12,14 +12,18 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
-import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.BASEVERSION_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.GROUPID_FIELD_ID;
@@ -34,6 +38,19 @@ public class RebuildMaven2MetadataTask
     extends RepositoryTaskSupport
 {
 
+  private final Type hostedType;
+
+  private final Format maven2Format;
+
+  @Inject
+  public RebuildMaven2MetadataTask(@Named(HostedType.NAME) final Type hostedType,
+                                   @Named(Maven2Format.NAME) final Format maven2Format)
+  {
+    this.hostedType = checkNotNull(hostedType);
+    this.maven2Format = checkNotNull(maven2Format);
+  }
+
+
   @Override
   protected void execute(final Repository repository) {
     MavenHostedFacet mavenHostedFacet = repository.facet(MavenHostedFacet.class);
@@ -46,8 +63,7 @@ public class RebuildMaven2MetadataTask
 
   @Override
   protected boolean appliesTo(final Repository repository) {
-    return repository.getFormat().getValue().equals(Maven2Format.NAME)
-        && repository.getType().getValue().equals(HostedType.NAME);
+    return maven2Format.equals(repository.getFormat()) && hostedType.equals(repository.getType());
   }
 
   @Override

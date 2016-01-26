@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.security
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.security.Roles
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
@@ -38,7 +39,7 @@ class StaticSecurityConfigurationResourceImpl
              * Grants permission for anything in the 'nexus:' namespace.
              */
             new CPrivilege(
-                id: 'all',
+                id: 'nx-all',
                 type: 'wildcard',
                 description: 'All permissions',
                 properties: [
@@ -51,7 +52,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'settings-all',
+                id: 'nx-settings-all',
                 description: 'All permissions for Settings',
                 type: 'application',
                 properties: [
@@ -60,7 +61,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'settings-read',
+                id: 'nx-settings-read',
                 description: 'Read permission for Settings',
                 type: 'application',
                 properties: [
@@ -69,7 +70,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'settings-update',
+                id: 'nx-settings-update',
                 description: 'Update permission for Settings',
                 type: 'application',
                 properties: [
@@ -83,7 +84,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'bundles-all',
+                id: 'nx-bundles-all',
                 description: 'All permissions for Bundles',
                 type: 'application',
                 properties: [
@@ -92,7 +93,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'bundles-read',
+                id: 'nx-bundles-read',
                 description: 'Read permission for Bundles',
                 type: 'application',
                 properties: [
@@ -106,7 +107,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'search-read',
+                id: 'nx-search-read',
                 description: 'Read permission for Search',
                 type: 'application',
                 properties: [
@@ -120,7 +121,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'apikey-all',
+                id: 'nx-apikey-all',
                 description: 'All permissions for APIKey',
                 type: 'application',
                 properties: [
@@ -134,7 +135,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'privileges-all',
+                id: 'nx-privileges-all',
                 description: 'All permissions for Privileges',
                 type: 'application',
                 properties: [
@@ -143,7 +144,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'privileges-create',
+                id: 'nx-privileges-create',
                 description: 'Create permission for Privileges',
                 type: 'application',
                 properties: [
@@ -152,7 +153,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'privileges-read',
+                id: 'nx-privileges-read',
                 description: 'Read permission for Privileges',
                 type: 'application',
                 properties: [
@@ -161,7 +162,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'privileges-update',
+                id: 'nx-privileges-update',
                 description: 'Update permission for Privileges',
                 type: 'application',
                 properties: [
@@ -170,7 +171,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'privileges-delete',
+                id: 'nx-privileges-delete',
                 description: 'Delete permission for Privileges',
                 type: 'application',
                 properties: [
@@ -184,7 +185,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'roles-all',
+                id: 'nx-roles-all',
                 description: 'All permissions for Roles',
                 type: 'application',
                 properties: [
@@ -193,7 +194,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'roles-create',
+                id: 'nx-roles-create',
                 description: 'Create permission for Roles',
                 type: 'application',
                 properties: [
@@ -202,7 +203,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'roles-read',
+                id: 'nx-roles-read',
                 description: 'Read permission for Roles',
                 type: 'application',
                 properties: [
@@ -211,7 +212,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'roles-update',
+                id: 'nx-roles-update',
                 description: 'Update permission for Roles',
                 type: 'application',
                 properties: [
@@ -220,7 +221,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'roles-delete',
+                id: 'nx-roles-delete',
                 description: 'Delete permission for Roles',
                 type: 'application',
                 properties: [
@@ -234,7 +235,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'users-all',
+                id: 'nx-users-all',
                 description: 'All permissions for Users',
                 type: 'application',
                 properties: [
@@ -243,7 +244,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'users-create',
+                id: 'nx-users-create',
                 description: 'Create permission for Users',
                 type: 'application',
                 properties: [
@@ -252,7 +253,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'users-read',
+                id: 'nx-users-read',
                 description: 'Read permission for Users',
                 type: 'application',
                 properties: [
@@ -261,7 +262,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'users-update',
+                id: 'nx-users-update',
                 description: 'Update permission for Users',
                 type: 'application',
                 properties: [
@@ -270,7 +271,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'users-delete',
+                id: 'nx-users-delete',
                 description: 'Delete permission for Users',
                 type: 'application',
                 properties: [
@@ -281,7 +282,7 @@ class StaticSecurityConfigurationResourceImpl
 
             // FIXME: Sort out what the use-case is for this distinct permission, consider nexus:users:change-password?
             new CPrivilege(
-                id: 'userschangepw',
+                id: 'nx-userschangepw',
                 description: 'Change password permission',
                 type: 'application',
                 properties: [
@@ -296,10 +297,10 @@ class StaticSecurityConfigurationResourceImpl
              * Admin role grants all permissions (ie. super-user)
              */
             new CRole(
-                id: 'admin',
+                id: Roles.ADMIN_ROLE_ID,
                 description: 'Administrator Role',
                 privileges: [
-                    'all'
+                    'nx-all'
                 ]
             ),
 
@@ -307,12 +308,12 @@ class StaticSecurityConfigurationResourceImpl
              * Anonymous role grants permissions to non-authenticated users.
              */
             new CRole(
-                id: 'anonymous',
+                id: Roles.ANONYMOUS_ROLE_ID,
                 description: 'Anonymous Role',
                 privileges: [
-                    'search-read',
-                    'repository-view-*-*-browse',
-                    'repository-view-*-*-read'
+                    'nx-search-read',
+                    'nx-repository-view-*-*-browse',
+                    'nx-repository-view-*-*-read'
                 ]
             )
         ]

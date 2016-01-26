@@ -24,79 +24,86 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-browse-asset-list'
-  },
+  stateful: true,
+  stateId: 'nx-coreui-browse-asset-list',
 
-  store: 'Asset',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'Asset',
 
-  // Marker for source of targets to be shown in container assets
-  assetContainerSource: true,
+      // Marker for source of targets to be shown in container assets
+      assetContainerSource: true,
 
-  // Prevent the store from automatically loading
-  loadStore: Ext.emptyFn,
+      // Prevent the store from automatically loading
+      loadStore: Ext.emptyFn,
 
-  style: {
-    'background-color': '#F4F4F4'
-  },
+      style: {
+        'background-color': '#F4F4F4'
+      },
 
-  selModel: {
-    pruneRemoved: false
-  },
+      selModel: {
+        pruneRemoved: false
+      },
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Browse_BrowseAssetList_EmptyText_View'),
-    emptyTextFilter: NX.I18n.get('Browse_BrowseAssetList_EmptyText_Filter'),
-    deferEmptyText: false
-  },
+      viewConfig: {
+        emptyText: NX.I18n.get('Browse_BrowseAssetList_EmptyText_View'),
+        emptyTextFilter: NX.I18n.get('Browse_BrowseAssetList_EmptyText_Filter'),
+        deferEmptyText: false
+      },
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      dataIndex: 'contentType',
-      width: 36,
-      iconVariant: 'x16',
-      iconNamePrefix: 'asset-type-',
-      iconName: function(value) {
-        var assetType;
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          dataIndex: 'contentType',
+          width: 36,
+          iconVariant: 'x16',
+          iconNamePrefix: 'asset-type-',
+          iconName: function(value) {
+            var assetType;
 
-        if (value) {
-          assetType = value.replace('/', '-');
-          if (NX.getApplication().getIconController().findIcon('asset-type-' + assetType, 'x16')) {
-            return assetType;
+            if (value) {
+              assetType = value.replace('/', '-');
+              if (NX.getApplication().getIconController().findIcon('asset-type-' + assetType, 'x16')) {
+                return assetType;
+              }
+            }
+            return 'default';
           }
+        },
+        {
+          text: NX.I18n.get('Browse_BrowseAssetList_Name_Column'),
+          dataIndex: 'name',
+          stateId: 'name',
+          flex: 1
         }
-        return 'default';
-      }
-    },
-    {
-      text: NX.I18n.get('Browse_BrowseAssetList_Name_Column'),
-      dataIndex: 'name',
-      stateId: 'name',
-      flex: 1
-    }
-  ],
+      ],
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      '->',
-      {
-        xtype: 'nx-searchbox',
-        itemId: 'filter',
-        emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
-        width: 200
-      }
-    ]
-  }],
+      dockedItems: [{
+        xtype: 'toolbar',
+        dock: 'top',
+        cls: 'nx-actions nx-borderless',
+        items: [
+          '->',
+          {
+            xtype: 'nx-searchbox',
+            itemId: 'filter',
+            emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
+            width: 200
+          }
+        ]
+      }],
 
-  plugins: {
-    ptype: 'bufferedrenderer',
-    trailingBufferZone: 20,
-    leadingBufferZone: 50
+      plugins: {
+        ptype: 'bufferedrenderer',
+        trailingBufferZone: 20,
+        leadingBufferZone: 50
+      }
+    });
+
+    this.callParent();
   }
 
 });

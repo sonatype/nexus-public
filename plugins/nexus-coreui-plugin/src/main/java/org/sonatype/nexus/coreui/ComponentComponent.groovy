@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.coreui
 
-import com.google.common.collect.ImmutableList
-import com.softwarementors.extjs.djn.config.annotations.DirectAction
-import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.shiro.authz.annotation.RequiresAuthentication
-import org.hibernate.validator.constraints.NotEmpty
+import javax.annotation.Nullable
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
 import org.sonatype.nexus.extdirect.DirectComponent
@@ -29,15 +29,23 @@ import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
-import org.sonatype.nexus.repository.storage.*
+import org.sonatype.nexus.repository.storage.Asset
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter
+import org.sonatype.nexus.repository.storage.Component
+import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
+import org.sonatype.nexus.repository.storage.ComponentMaintenance
+import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter
+import org.sonatype.nexus.repository.storage.StorageFacet
+import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.validation.Validate
 
-import javax.annotation.Nullable
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
+import com.google.common.collect.ImmutableList
+import com.softwarementors.extjs.djn.config.annotations.DirectAction
+import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import org.apache.shiro.authz.annotation.RequiresAuthentication
+import org.hibernate.validator.constraints.NotEmpty
 
 /**
  * Component {@link DirectComponent}.
@@ -83,6 +91,9 @@ class ComponentComponent
   @Inject
   RepositoryManager repositoryManager
 
+  @Inject
+  GroupType groupType
+
   @DirectMethod
   PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
     Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
@@ -97,16 +108,16 @@ class ComponentComponent
     if (sort) {
       if (GroupType.NAME != repository.type.value) {
         // optimization to match component-bucket-group-name-version index when querying on a single repository
-        querySuffix += " ORDER BY ${StorageFacet.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
+        querySuffix += " ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
       }
       else {
         querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
       }
-      if (sort.property == StorageFacet.P_GROUP) {
-        querySuffix += ", ${StorageFacet.P_NAME} ASC,${StorageFacet.P_VERSION} ASC"
+      if (sort.property == ComponentEntityAdapter.P_GROUP) {
+        querySuffix += ", ${MetadataNodeEntityAdapter.P_NAME} ASC,${ComponentEntityAdapter.P_VERSION} ASC"
       }
-      else if (sort.property == StorageFacet.P_NAME) {
-        querySuffix += ", ${StorageFacet.P_VERSION} ASC,${StorageFacet.P_GROUP} ASC"
+      else if (sort.property == MetadataNodeEntityAdapter.P_NAME) {
+        querySuffix += ", ${ComponentEntityAdapter.P_VERSION} ASC,${ComponentEntityAdapter.P_GROUP} ASC"
       }
     }
     if (parameters.start) {
@@ -121,11 +132,11 @@ class ComponentComponent
       storageTx.begin();
 
       def repositories
-      try {
+      if (groupType == repository.type) {
         repositories = repository.facet(GroupFacet).leafMembers()
-        querySuffix = " GROUP BY ${StorageFacet.P_GROUP},${StorageFacet.P_NAME},${StorageFacet.P_VERSION}" + querySuffix
+        querySuffix = " GROUP BY ${ComponentEntityAdapter.P_GROUP},${MetadataNodeEntityAdapter.P_NAME},${ComponentEntityAdapter.P_VERSION}" + querySuffix
       }
-      catch (MissingFacetException e) {
+      else {
         repositories = ImmutableList.of(repository)
       }
 
@@ -133,7 +144,7 @@ class ComponentComponent
       def queryParams = null
       def filter = parameters.getFilter('filter')
       if (filter) {
-        whereClause = "${StorageFacet.P_NAME} LIKE :nameFilter OR ${StorageFacet.P_GROUP} LIKE :groupFilter OR ${StorageFacet.P_VERSION} LIKE :versionFilter"
+        whereClause = "${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter OR ${ComponentEntityAdapter.P_GROUP} LIKE :groupFilter OR ${ComponentEntityAdapter.P_VERSION} LIKE :versionFilter"
         queryParams = [
             'nameFilter'   : "%${filter}%",
             'groupFilter'  : "%${filter}%",
@@ -172,15 +183,17 @@ class ComponentComponent
       storageTx.begin();
 
       def repositories
-      try {
+      if (groupType == repository.type) {
         repositories = repository.facet(GroupFacet).leafMembers()
       }
-      catch (MissingFacetException e) {
+      else {
         repositories = ImmutableList.of(repository)
       }
 
       if (repositories.size() == 1) {
-        Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repositories[0]))
+        Component component = storageTx.findComponent(
+            new DetachedEntityId(componentId), storageTx.findBucket(repositories[0])
+        )
         if (component == null) {
           log.warn 'Component {} not found', componentId
           return null
@@ -194,17 +207,17 @@ class ComponentComponent
         def componentVersion = parameters.getFilter('componentVersion')
 
         if (componentName) {
-          def whereClause = "${StorageFacet.P_COMPONENT}.${StorageFacet.P_NAME} = :name"
+          def whereClause = "${AssetEntityAdapter.P_COMPONENT}.${MetadataNodeEntityAdapter.P_NAME} = :name"
           def params = ['name': componentName]
           if (componentGroup) {
-            whereClause += " AND ${StorageFacet.P_COMPONENT}.${StorageFacet.P_GROUP} = :group"
+            whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${ComponentEntityAdapter.P_GROUP} = :group"
             params << ['group': componentGroup]
           }
           if (componentVersion) {
-            whereClause += " AND ${StorageFacet.P_COMPONENT}.${StorageFacet.P_VERSION} = :version"
+            whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${ComponentEntityAdapter.P_VERSION} = :version"
             params << ['version': componentVersion]
           }
-          def groupBy = " GROUP BY ${StorageFacet.P_NAME}"
+          def groupBy = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME}"
           return storageTx.findAssets(whereClause, params, repositories, groupBy).
               collect(ASSET_CONVERTER.rcurry(componentName, repositoryName))
         }
@@ -231,7 +244,7 @@ class ComponentComponent
     if (sort) {
       if (GroupType.NAME != repository.type.value) {
         // optimization to match asset-bucket-name index when querying on a single repository
-        querySuffix += " ORDER BY ${StorageFacet.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
+        querySuffix += " ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
       }
       else {
         querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
@@ -249,11 +262,11 @@ class ComponentComponent
       storageTx.begin();
 
       def repositories
-      try {
+      if (groupType == repository.type) {
         repositories = repository.facet(GroupFacet).leafMembers()
-        querySuffix = " GROUP BY ${StorageFacet.P_NAME}" + querySuffix
+        querySuffix = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME}" + querySuffix
       }
-      catch (MissingFacetException e) {
+      else {
         repositories = ImmutableList.of(repository)
       }
 
@@ -261,7 +274,7 @@ class ComponentComponent
       def queryParams = null
       def filter = parameters.getFilter('filter')
       if (filter) {
-        whereClause = "${StorageFacet.P_NAME} LIKE :nameFilter"
+        whereClause = "${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
         queryParams = [
             'nameFilter': "%${filter}%"
         ]

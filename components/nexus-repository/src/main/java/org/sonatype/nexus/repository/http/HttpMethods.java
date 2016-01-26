@@ -19,7 +19,9 @@ package org.sonatype.nexus.repository.http;
  */
 public class HttpMethods
 {
-  private HttpMethods() {}
+  private HttpMethods() {
+    // empty
+  }
 
   // http://ietf.org/rfc/rfc2616
 

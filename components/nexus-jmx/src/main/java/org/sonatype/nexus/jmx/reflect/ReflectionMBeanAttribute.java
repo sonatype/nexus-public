@@ -48,8 +48,8 @@ public class ReflectionMBeanAttribute
 
   public ReflectionMBeanAttribute(final MBeanAttributeInfo info,
                                   final Supplier target,
-                                  final @Nullable Method getter,
-                                  final @Nullable Method setter)
+                                  @Nullable final Method getter,
+                                  @Nullable final Method setter)
   {
     this.info = checkNotNull(info);
     this.name = info.getName();
@@ -100,7 +100,7 @@ public class ReflectionMBeanAttribute
   }
 
   @Override
-  public void setValue(final @Nullable Object value) throws Exception {
+  public void setValue(@Nullable final Object value) throws Exception {
     checkState(setter != null);
     log.trace("Set value: {} -> {}", value, setter);
     //noinspection ConstantConditions

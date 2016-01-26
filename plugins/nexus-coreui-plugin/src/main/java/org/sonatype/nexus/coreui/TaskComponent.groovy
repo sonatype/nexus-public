@@ -64,9 +64,8 @@ import org.hibernate.validator.constraints.NotEmpty
 class TaskComponent
     extends DirectComponentSupport
 {
-
   @Inject
-  TaskScheduler nexusScheduler
+  TaskScheduler scheduler
 
   @Inject
   Provider<Validator> validatorProvider
@@ -77,12 +76,9 @@ class TaskComponent
   @DirectMethod
   @RequiresPermissions('nexus:tasks:read')
   List<TaskXO> read() {
-    return nexusScheduler.listsTasks().findAll { TaskInfo task ->
+    return scheduler.listsTasks().findAll {TaskInfo task ->
       return task.configuration.visible ? task : null
-    }.collect { TaskInfo task ->
-      TaskXO result = asTaskXO(task)
-      return result
-    }
+    }.collect { TaskInfo task -> asTaskXO(task) }
   }
 
   /**
@@ -92,13 +88,12 @@ class TaskComponent
   @DirectMethod
   @RequiresPermissions('nexus:tasks:read')
   List<TaskTypeXO> readTypes() {
-    return nexusScheduler.listTaskDescriptors().findAll { descriptor ->
-      descriptor.exposed ? descriptor : null
-    }.collect { descriptor ->
+    return scheduler.taskFactory.descriptors.collect { descriptor ->
       def result = new TaskTypeXO(
           id: descriptor.id,
           name: descriptor.name,
-          formFields: descriptor.formFields()?.collect { formField ->
+          exposed: descriptor.exposed,
+          formFields: descriptor.formFields?.collect {formField ->
             def formFieldXO = new FormFieldXO(
                 id: formField.id,
                 type: formField.type,
@@ -133,17 +128,16 @@ class TaskComponent
   TaskXO create(final @NotNull @Valid TaskXO taskXO) {
     Schedule schedule = asSchedule(taskXO)
 
-    TaskConfiguration nexusTask = nexusScheduler.createTaskConfigurationInstance(taskXO.typeId)
+    TaskConfiguration config = scheduler.createTaskConfigurationInstance(taskXO.typeId)
     taskXO.properties.each { key, value ->
-      nexusTask.setString(key, value)
+      config.setString(key, value)
     }
-    nexusTask.setAlertEmail(taskXO.alertEmail)
-    nexusTask.setName(taskXO.name)
-    nexusTask.setEnabled(taskXO.enabled)
+    config.setAlertEmail(taskXO.alertEmail)
+    config.setName(taskXO.name)
+    config.setEnabled(taskXO.enabled)
 
-    TaskInfo<?> task = scheduleTask { nexusScheduler.scheduleTask(nexusTask, schedule) }
-
-    log.debug "Created task with type '${nexusTask.class}': ${nexusTask.name} (${nexusTask.id})"
+    TaskInfo task = scheduleTask { scheduler.scheduleTask(config, schedule) }
+    log.debug "Created task with type '${config.class}': ${config.name} (${config.id})"
     return asTaskXO(task)
   }
 
@@ -157,7 +151,7 @@ class TaskComponent
   @RequiresPermissions('nexus:tasks:update')
   @Validate(groups = [Update.class, Default.class])
   TaskXO update(final @NotNull @Valid TaskXO taskXO) {
-    TaskInfo task = nexusScheduler.getTaskById(taskXO.id);
+    TaskInfo task = scheduler.getTaskById(taskXO.id)
     validateState(task)
     Schedule schedule = asSchedule(taskXO)
     task.configuration.enabled = taskXO.enabled
@@ -168,7 +162,7 @@ class TaskComponent
     task.configuration.setAlertEmail(taskXO.alertEmail)
     task.configuration.setName(taskXO.name)
 
-    task = scheduleTask { nexusScheduler.scheduleTask(task.configuration, schedule) }
+    task = scheduleTask { scheduler.scheduleTask(task.configuration, schedule) }
 
     return asTaskXO(task)
   }
@@ -178,7 +172,7 @@ class TaskComponent
   @RequiresPermissions('nexus:tasks:delete')
   @Validate
   void remove(final @NotEmpty String id) {
-    nexusScheduler.getTaskById(id)?.remove()
+    scheduler.getTaskById(id)?.remove()
   }
 
   @DirectMethod
@@ -186,7 +180,7 @@ class TaskComponent
   @RequiresPermissions('nexus:tasks:start')
   @Validate
   void run(final @NotEmpty String id) {
-    nexusScheduler.getTaskById(id)?.runNow()
+    scheduler.getTaskById(id)?.runNow()
   }
 
   @DirectMethod
@@ -194,7 +188,7 @@ class TaskComponent
   @RequiresPermissions('nexus:tasks:stop')
   @Validate
   void stop(final @NotEmpty String id) {
-    nexusScheduler.getTaskById(id)?.currentState?.future?.cancel(false)
+    scheduler.getTaskById(id)?.currentState?.future?.cancel(false)
   }
 
   @PackageScope
@@ -202,16 +196,20 @@ class TaskComponent
     switch (currentState.state) {
       case State.WAITING:
         return 'Waiting'
+
       case State.RUNNING:
         switch (currentState.runState) {
           case RunState.RUNNING:
-            return "Running";
+            return 'Running'
+
           case RunState.BLOCKED:
-            return "Blocked";
+            return 'Blocked'
+
           case RunState.CANCELED:
-            return "Cancelling";
+            return 'Cancelling'
+
           case RunState.STARTING:
-            return "Starting";
+            return 'Starting'
         }
       case State.DONE:
         return 'Done'
@@ -245,13 +243,14 @@ class TaskComponent
       return 'advanced'
     }
     else {
+      // FIXME: Is this valid?  There should be no other Schedule types other than handled above
       return schedule.getClass().getName()
     }
   }
 
   @PackageScope
   Date getNextRun(final TaskInfo task) {
-    return task.currentState.nextRun;
+    return task.currentState.nextRun
   }
 
   @PackageScope
@@ -261,16 +260,19 @@ class TaskComponent
     if (task.lastRunState != null) {
       switch (task.lastRunState.endState) {
         case EndState.OK:
-          lastRunResult = "Ok";
-          break;
+          lastRunResult = 'Ok'
+          break
+
         case EndState.CANCELED:
-          lastRunResult = "Canceled";
-          break;
+          lastRunResult = 'Canceled'
+          break
+
         case EndState.FAILED:
-          lastRunResult = "Error";
-          break;
+          lastRunResult = 'Error'
+          break
+
         default:
-          lastRunResult = task.lastRunState.endState.name();
+          lastRunResult = task.lastRunState.endState.name()
       }
       if (task.lastRunState.runDuration != 0) {
         long milliseconds = task.lastRunState.runDuration
@@ -279,18 +281,18 @@ class TaskComponent
         int minutes = (int) ((milliseconds / 1000) / 60 - hours * 60)
         int seconds = (int) (((long) (milliseconds / 1000)) % 60)
 
-        lastRunResult += " ["
+        lastRunResult += ' ['
         if (hours != 0) {
           lastRunResult += hours
-          lastRunResult += "h"
+          lastRunResult += 'h'
         }
         if (minutes != 0 || hours != 0) {
           lastRunResult += minutes
-          lastRunResult += "m"
+          lastRunResult += 'm'
         }
         lastRunResult += seconds
-        lastRunResult += "s"
-        lastRunResult += "]"
+        lastRunResult += 's'
+        lastRunResult += ']'
       }
     }
     return lastRunResult
@@ -332,7 +334,7 @@ class TaskComponent
     }
     if (schedule instanceof Monthly) {
       result.startDate = schedule.startAt
-      // expects ints, with 999 being the "lastDayOfMonth"
+      // expects ints, with 999 being the lastDayOfMonth
       result.recurringDays = schedule.daysToRun.collect { it.isLastDayOfMonth() ? 999 : it.day }
     }
     if (schedule instanceof Cron) {
@@ -346,7 +348,7 @@ class TaskComponent
   Schedule asSchedule(final TaskXO taskXO) {
     if (taskXO.schedule == 'advanced') {
       validatorProvider.get().validate(taskXO, TaskXO.AdvancedSchedule)
-      return new Cron(new Date(), taskXO.cronExpression)
+      return scheduler.getScheduleFactory().cron(new Date(), taskXO.cronExpression)
     }
     if (taskXO.schedule != 'manual') {
       if (!taskXO.startDate) {
@@ -359,26 +361,30 @@ class TaskComponent
       switch (taskXO.schedule) {
         case 'once':
           validatorProvider.get().validate(taskXO, TaskXO.OnceSchedule)
-          return new Once(date.time)
+          return scheduler.getScheduleFactory().once(date.time)
+
         case 'hourly':
-          return new Hourly(date.time)
+          return scheduler.getScheduleFactory().hourly(date.time)
+
         case 'daily':
-          return new Daily(date.time)
+          return scheduler.getScheduleFactory().daily(date.time)
+
         case 'weekly':
-          return new Weekly(date.time, taskXO.recurringDays.collect { Weekday.values()[it - 1] } as Set<Weekday>)
+          return scheduler.getScheduleFactory().weekly(date.time, taskXO.recurringDays.collect { Weekday.values()[it - 1] } as Set<Weekday>)
+
         case 'monthly':
-          return new Monthly(date.time, taskXO.recurringDays.
+          return scheduler.getScheduleFactory().monthly(date.time, taskXO.recurringDays.
               collect { it == 999 ? CalendarDay.lastDay() : CalendarDay.day(it) } as Set<CalendarDay>)
       }
     }
-    return new Manual()
+    return scheduler.getScheduleFactory().manual()
   }
 
   @PackageScope
   void validateState(final TaskInfo task) {
-    State state = task.currentState.state;
+    State state = task.currentState.state
     if (State.RUNNING == state) {
-      throw new Exception('Task can\'t be edited while it is being executed or it is in line to be executed');
+      throw new Exception('Task can not be edited while it is being executed or it is in line to be executed')
     }
   }
 
@@ -396,5 +402,4 @@ class TaskComponent
       throw e
     }
   }
-
 }

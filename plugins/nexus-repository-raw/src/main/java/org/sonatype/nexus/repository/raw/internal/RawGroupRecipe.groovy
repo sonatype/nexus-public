@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.group.GroupFacetImpl
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.security.SecurityHandler
+import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
@@ -46,6 +47,9 @@ class RawGroupRecipe
     extends RecipeSupport
 {
   public static final String NAME = 'raw-group'
+
+  @Inject
+  Provider<StorageFacet> storageFacet
 
   @Inject
   Provider<RawSecurityFacet> securityFacet
@@ -77,6 +81,7 @@ class RawGroupRecipe
 
   @Override
   void apply(@Nonnull final Repository repository) throws Exception {
+    repository.attach(storageFacet.get())
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(groupFacet.get())

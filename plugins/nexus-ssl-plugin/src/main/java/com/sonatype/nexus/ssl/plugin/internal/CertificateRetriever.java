@@ -75,9 +75,11 @@ public class CertificateRetriever
     }
 
     public void checkClientTrusted(X509Certificate[] certs, String authType) {
+      // all trusted
     }
 
     public void checkServerTrusted(X509Certificate[] certs, String authType) {
+      // all trusted
     }
   };
 

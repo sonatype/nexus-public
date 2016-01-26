@@ -17,7 +17,6 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -43,13 +42,13 @@ public class RawProxyFacet
   }
 
   @Override
-  protected Content store(final Context context, final Content payload) throws IOException, InvalidContentException {
+  protected Content store(final Context context, final Content payload) throws IOException {
     final String path = componentPath(context);
     return content().put(path, payload);
   }
 
   @Override
-  protected String getUrl(final @Nonnull Context context) {
+  protected String getUrl(@Nonnull final Context context) {
     return componentPath(context);
   }
 

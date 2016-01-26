@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.internal.orient;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +28,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -47,7 +48,6 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
-import org.apache.commons.io.output.WriterOutputStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -130,10 +130,11 @@ public class DatabaseServerImpl
 
     // Log global configuration
     if (log.isDebugEnabled()) {
-      StringWriter buff = new StringWriter();
-      // FIXME: Remove need for commons-io WriterOutputStream
-      OGlobalConfiguration.dumpConfiguration(new PrintStream(new WriterOutputStream(buff), true));
-      log.debug("Global configuration:\n{}", buff);
+      // dumpConfiguration() only accepts ancient stream api
+      String encoding = Charsets.UTF_8.name();
+      ByteArrayOutputStream buff = new ByteArrayOutputStream();
+      OGlobalConfiguration.dumpConfiguration(new PrintStream(buff, true, encoding));
+      log.debug("Global configuration:\n{}", new String(buff.toByteArray(), encoding));
     }
 
     Orient.instance().addDbLifecycleListener(entityHook);

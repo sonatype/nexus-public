@@ -12,29 +12,29 @@
  */
 package org.sonatype.nexus.orient;
 
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.KeySpec;
+import java.io.IOException;
+import java.util.Arrays;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.crypto.CryptoHelper;
+import org.sonatype.nexus.crypto.PbeCipherFactory;
+import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
 
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.compression.OCompression;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of OrientDB's {@code OCompression} interface to provide password-based-encryption of stored records.
- * 
+ *
  * @since 3.0
  */
 @Singleton
@@ -42,69 +42,71 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class PbeCompression
     implements OCompression
 {
+  private static final Logger log = LoggerFactory.getLogger(PbeCompression.class);
+
   public static final String NAME = "pbe";
 
   private static final String CPREFIX = "${nexus.orient." + NAME;
 
-  private final CryptoHelper cryptoHelper;
-
-  private final AlgorithmParameterSpec paramSpec;
-
-  private final SecretKey secretKey;
+  private final PbeCipher pbeCipher;
 
   @Inject
-  public PbeCompression(final CryptoHelper cryptoHelper,
-                        final @Named(CPREFIX + ".password:-changeme}") String password,
-                        final @Named(CPREFIX + ".salt:-changeme}") String salt,
-                        final @Named(CPREFIX + ".iv:-0123456789ABCDEF}") String iv)
-      throws Exception
+  public PbeCompression(final PbeCipherFactory pbeCipherFactory,
+                        @Named(CPREFIX + ".password:-changeme}") final String password,
+                        @Named(CPREFIX + ".salt:-changeme}") final String salt,
+                        @Named(CPREFIX + ".iv:-0123456789ABCDEF}") final String iv) throws Exception
   {
-    this.cryptoHelper = checkNotNull(cryptoHelper);
-
-    checkNotNull(iv);
-    this.paramSpec = new IvParameterSpec(iv.getBytes());
-
-    checkNotNull(password);
-    checkNotNull(salt);
-    KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), 1024, 128);
-    SecretKeyFactory factory = cryptoHelper.createSecretKeyFactory("PBKDF2WithHmacSHA1");
-    SecretKey tmp = factory.generateSecret(spec);
-    this.secretKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+    this.pbeCipher = pbeCipherFactory.create(password, salt, iv);
   }
 
   @Override
   public byte[] compress(final byte[] bytes) {
-    return compress(bytes, 0, bytes.length);
+    return pbeCipher.encrypt(bytes);
   }
 
   @Override
   public byte[] uncompress(final byte[] bytes) {
-    return uncompress(bytes, 0, bytes.length);
+    return pbeCipher.decrypt(bytes);
   }
 
   @Override
-  public byte[] compress(final byte[] bytes, final int i, final int i2) {
-    return transform(Cipher.ENCRYPT_MODE, bytes, i, i2);
+  public byte[] compress(final byte[] bytes, final int offset, final int length) {
+    return pbeCipher.encrypt(Arrays.copyOfRange(bytes, offset, offset + length));
   }
 
   @Override
-  public byte[] uncompress(final byte[] bytes, final int i, final int i2) {
-    return transform(Cipher.DECRYPT_MODE, bytes, i, i2);
-  }
-
-  private byte[] transform(final int mode, final byte[] bytes, final int i, final int i2) {
-    try {
-      Cipher cipher = cryptoHelper.createCipher("AES/CBC/PKCS5Padding");
-      cipher.init(mode, secretKey, paramSpec);
-      return cipher.doFinal(bytes, i, i2);
-    }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public byte[] uncompress(final byte[] bytes, final int offset, final int length) {
+    return pbeCipher.decrypt(Arrays.copyOfRange(bytes, offset, offset + length));
   }
 
   @Override
   public String name() {
     return NAME;
+  }
+
+  //
+  // Helpers
+  //
+
+  /**
+   * Enables password-based-encryption for records of the given type.
+   *
+   * Can only be called when creating the schema.
+   */
+  public static void enableRecordEncryption(final ODatabaseDocumentTx db, final OClass type) {
+    OStorage storage = db.getStorage();
+    for (int clusterId : type.getClusterIds()) {
+      OCluster cluster = storage.getClusterById(clusterId);
+      try {
+        log.debug("Enabling PBE compression for cluster: {}", cluster.getName());
+        cluster.set(OCluster.ATTRIBUTES.COMPRESSION, PbeCompression.NAME);
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+      catch (IllegalArgumentException | OStorageException e) {
+        log.warn("Cannot enable PBE compression for cluster: {}", cluster.getName(), e);
+      }
+    }
   }
 }

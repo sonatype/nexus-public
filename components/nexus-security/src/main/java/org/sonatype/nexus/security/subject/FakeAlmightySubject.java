@@ -17,9 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.ExecutionException;
@@ -107,22 +105,22 @@ public class FakeAlmightySubject
   }
 
   @Override
-  public void checkPermission(final String permission) throws AuthorizationException {
+  public void checkPermission(final String permission) {
     // do nothing
   }
 
   @Override
-  public void checkPermission(final Permission permission) throws AuthorizationException {
+  public void checkPermission(final Permission permission) {
     // do nothing
   }
 
   @Override
-  public void checkPermissions(final String... permissions) throws AuthorizationException {
+  public void checkPermissions(final String... permissions) {
     // do nothing
   }
 
   @Override
-  public void checkPermissions(final Collection<Permission> permissions) throws AuthorizationException {
+  public void checkPermissions(final Collection<Permission> permissions) {
     // do nothing
   }
 
@@ -142,22 +140,22 @@ public class FakeAlmightySubject
   }
 
   @Override
-  public void checkRole(final String roleIdentifier) throws AuthorizationException {
+  public void checkRole(final String roleIdentifier) {
     // do nothing
   }
 
   @Override
-  public void checkRoles(final Collection<String> roleIdentifiers) throws AuthorizationException {
+  public void checkRoles(final Collection<String> roleIdentifiers) {
     // do nothing
   }
 
   @Override
-  public void checkRoles(final String... roleIdentifiers) throws AuthorizationException {
+  public void checkRoles(final String... roleIdentifiers) {
     // do nothing
   }
 
   @Override
-  public void login(final AuthenticationToken token) throws AuthenticationException {
+  public void login(final AuthenticationToken token) {
     // do nothing
   }
 

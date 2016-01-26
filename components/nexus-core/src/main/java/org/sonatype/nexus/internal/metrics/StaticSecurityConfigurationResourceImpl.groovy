@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'metrics-all',
+                id: 'nx-metrics-all',
                 description: 'All permissions for Metrics',
                 type: 'application',
                 properties: [

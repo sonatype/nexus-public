@@ -51,6 +51,10 @@
             "case_insensitive": {
               "type": "string",
               "analyzer": "case_insensitive_sort"
+            },
+            "raw": {
+              "type": "string",
+              "index": "not_analyzed"
             }
           }
         },
@@ -60,6 +64,10 @@
             "case_insensitive": {
               "type": "string",
               "analyzer": "case_insensitive_sort"
+            },
+            "raw": {
+              "type": "string",
+              "index": "not_analyzed"
             }
           }
         },

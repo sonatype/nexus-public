@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.formfields;
 
+/**
+ * Support for {@link FormField} implementations.
+ */
 public abstract class AbstractFormField<T>
     implements FormField<T>
 {
@@ -27,8 +30,12 @@ public abstract class AbstractFormField<T>
 
   private T initialValue;
 
-  public AbstractFormField(final String id, final String label, final String helpText, final boolean required,
-                           final String regexValidation, final T initialValue)
+  public AbstractFormField(final String id,
+                           final String label,
+                           final String helpText,
+                           final boolean required,
+                           final String regexValidation,
+                           final T initialValue)
   {
     this(id, label, helpText, required, regexValidation);
     this.initialValue = initialValue;

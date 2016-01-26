@@ -16,7 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import org.apache.karaf.shell.commands.InfoProvider;
+import org.apache.karaf.shell.commands.info.InfoProvider;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.osgi.framework.BundleContext;

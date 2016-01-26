@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -20,8 +21,9 @@ import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.sonatype.nexus.crypto.maven.PasswordCipherMavenImpl;
 
-import com.google.common.base.Preconditions;
-
+/**
+ * Password encryption helper.
+ */
 @Singleton
 @Named
 public class PasswordHelper
@@ -32,32 +34,35 @@ public class PasswordHelper
 
   @Inject
   public PasswordHelper(final CryptoHelper cryptoHelper) {
-    Preconditions.checkNotNull(cryptoHelper, "mavenCipher");
     this.mavenCipher = new MavenCipher(new PasswordCipherMavenImpl(cryptoHelper));
   }
 
-  public String encrypt(String password)
+  @Nullable
+  public String encrypt(@Nullable final String password)
   {
     return encrypt(password, ENC);
   }
 
-  public String encrypt(String password, String encoding) {
+  @Nullable
+  public String encrypt(@Nullable final String password, final String encoding) {
     // check if the password is encrypted
     if (mavenCipher.isPasswordCipher(password)) {
       return password;
     }
     if (password != null) {
-        return mavenCipher.encrypt(password, encoding);
+      return mavenCipher.encrypt(password, encoding);
     }
     return null;
   }
 
-  public String decrypt(String encodedPassword)
+  @Nullable
+  public String decrypt(@Nullable final String encodedPassword)
   {
     return decrypt(encodedPassword, ENC);
   }
 
-  public String decrypt(String encodedPassword, String encoding) {
+  @Nullable
+  public String decrypt(@Nullable final String encodedPassword, final String encoding) {
     // check if the password is encrypted
     if (!mavenCipher.isPasswordCipher(encodedPassword)) {
       return encodedPassword;

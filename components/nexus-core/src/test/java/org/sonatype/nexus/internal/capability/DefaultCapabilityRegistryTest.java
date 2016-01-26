@@ -277,7 +277,8 @@ public class DefaultCapabilityRegistryTest
     final CapabilityStorageItem item = new CapabilityStorageItem(
         0, CAPABILITY_TYPE.toString(), true, null, oldProps
     );
-    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(capabilityIdentity("foo"), item));
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
 
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
@@ -288,7 +289,7 @@ public class DefaultCapabilityRegistryTest
     verify(capabilityStorage).getAll();
     verify(descriptor).version();
     verify(descriptor).formFields();
-    verify(descriptor).validate(oldProps, ValidationMode.LOAD);
+    verify(descriptor).validate(fooId, oldProps, ValidationMode.LOAD);
     verifyNoMoreInteractions(descriptor, capabilityStorage);
   }
 

@@ -82,7 +82,7 @@ class BlobTx
         blobStore.delete(blobRef.getBlobId());
       }
       catch (Throwable t) {
-        log.warn("Unable to delete old blob {} while committing transaction", t, blobRef);
+        log.warn("Unable to delete old blob {} while committing transaction", blobRef, t);
       }
     }
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
@@ -92,7 +92,7 @@ class BlobTx
         }
       }
       catch (Throwable t) {
-        log.warn("Unable to delete new orphan blob {} while committing transaction", t, assetBlob.getBlobRef());
+        log.warn("Unable to delete new orphan blob {} while committing transaction", assetBlob.getBlobRef(), t);
       }
     }
     clearState();
@@ -104,7 +104,7 @@ class BlobTx
         blobStore.delete(assetBlob.getBlobRef().getBlobId());
       }
       catch (Throwable t) {
-        log.warn("Unable to delete new blob {} while rolling back transaction", t, assetBlob.getBlobRef());
+        log.warn("Unable to delete new blob {} while rolling back transaction", assetBlob.getBlobRef(), t);
       }
     }
     clearState();

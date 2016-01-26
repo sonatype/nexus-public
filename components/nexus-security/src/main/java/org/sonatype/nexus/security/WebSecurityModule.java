@@ -75,15 +75,15 @@ public class WebSecurityModule
   protected void configureShiroWeb() {
     bindRealm().to(EmptyRealm.class); // not used in practice, just here to keep Shiro module happy
 
-    bind(SessionFactory.class).to(NexusSessionFactory.class).in(Singleton.class);
-    bind(SessionStorageEvaluator.class).to(NexusSessionStorageEvaluator.class).in(Singleton.class);
-    bind(SubjectDAO.class).to(NexusSubjectDAO.class).in(Singleton.class);
-    bind(RememberMeManager.class).to(NexusCookieRememberMeManager.class).in(Singleton.class);
+    bindSingleton(SessionFactory.class, NexusSessionFactory.class);
+    bindSingleton(SessionStorageEvaluator.class, NexusSessionStorageEvaluator.class);
+    bindSingleton(SubjectDAO.class, NexusSubjectDAO.class);
+    bindSingleton(RememberMeManager.class, NexusCookieRememberMeManager.class);
 
     // configure our preferred security components
-    bind(SessionDAO.class).to(NexusSessionDAO.class).asEagerSingleton();
-    bind(Authenticator.class).to(FirstSuccessfulModularRealmAuthenticator.class).in(Singleton.class);
-    bind(Authorizer.class).to(ExceptionCatchingModularRealmAuthorizer.class).in(Singleton.class);
+    bindSingleton(SessionDAO.class, NexusSessionDAO.class);
+    bindSingleton(Authenticator.class, FirstSuccessfulModularRealmAuthenticator.class);
+    bindSingleton(Authorizer.class, ExceptionCatchingModularRealmAuthorizer.class);
 
     // override the default resolver with one backed by a FilterChainManager using an injected filter map
     bind(FilterChainResolver.class).toConstructor(ctor(PathMatchingFilterChainResolver.class)).asEagerSingleton();
@@ -92,6 +92,12 @@ public class WebSecurityModule
     // bindings used by external modules
     expose(FilterChainResolver.class);
     expose(FilterChainManager.class);
+  }
+
+  // bind a given API to an implementation and make that implementation a singleton
+  private <T> void bindSingleton(final Class<T> api, final Class<? extends T> impl) {
+    bind(impl).in(Singleton.class);
+    bind(api).to(impl);
   }
 
   @Override
@@ -160,7 +166,7 @@ public class WebSecurityModule
     private final BeanLocator beanLocator;
 
     @Inject
-    private FilterChainManagerProvider(final @Named("SHIRO") ServletContext servletContext,
+    private FilterChainManagerProvider(@Named("SHIRO") final ServletContext servletContext,
                                        final BeanLocator beanLocator)
     {
       // simple configuration so we can initialize filters as we add them

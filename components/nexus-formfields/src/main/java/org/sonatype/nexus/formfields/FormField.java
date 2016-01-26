@@ -12,11 +12,22 @@
  */
 package org.sonatype.nexus.formfields;
 
+/**
+ * Form field.
+ *
+ * @param <T> The data type of the field.
+ */
 public interface FormField<T>
 {
-  public static final boolean MANDATORY = true;
+  /**
+   * Required {@code true} symbol.
+   */
+  boolean MANDATORY = true;
 
-  public static final boolean OPTIONAL = false;
+  /**
+   * Required {@code false} symbol.
+   */
+  boolean OPTIONAL = false;
 
   /**
    * Get the type of this form field

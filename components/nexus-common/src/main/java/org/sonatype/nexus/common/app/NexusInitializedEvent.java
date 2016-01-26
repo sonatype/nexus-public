@@ -13,7 +13,9 @@
 package org.sonatype.nexus.common.app;
 
 /**
- * The event that is fired as last step of nexus initialization process.
+ * Event fired at the end of bootstrap initialization.
+ *
+ * Fires before {@link NexusStartedEvent}.
  */
 public class NexusInitializedEvent
     extends NexusStateChangeEvent

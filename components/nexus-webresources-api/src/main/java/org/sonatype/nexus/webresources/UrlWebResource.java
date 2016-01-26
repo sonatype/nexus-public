@@ -62,11 +62,11 @@ public class UrlWebResource
         }
 
         // support for legacy int and modern long content-length
-        long size = connection.getContentLengthLong();
-        if (size == -1) {
-          size = connection.getContentLength();
+        long detectedSize = connection.getContentLengthLong();
+        if (detectedSize == -1) {
+          detectedSize = connection.getContentLength();
         }
-        this.size = size;
+        this.size = detectedSize;
 
         this.lastModified = connection.getLastModified();
       }

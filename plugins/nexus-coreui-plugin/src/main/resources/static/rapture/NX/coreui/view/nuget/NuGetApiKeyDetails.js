@@ -41,7 +41,7 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKeyDetails', {
   initComponent: function() {
     var me = this;
 
-    me.setWidth(me.LARGE_MODAL);
+    me.setWidth(NX.view.ModalDialog.LARGE_MODAL);
 
     me.items = {
       xtype: 'form',
@@ -103,7 +103,7 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKeyDetails', {
       ],
       buttonAlign: 'left',
       buttons: [
-        { text: 'Close', handler: function() {
+        { text: NX.I18n.get('Close_Button'), handler: function() {
           this.up('window').close();
         }}
       ]

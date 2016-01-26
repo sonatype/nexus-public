@@ -29,14 +29,15 @@ Ext.define('NX.coreui.view.user.UserSettingsExternalForm', {
   api: {
     submit: 'NX.direct.coreui_User.updateRoleMappings'
   },
-  settingsFormSuccessMessage: function(data) {
-    return 'User role mappings updated: ' + data['userId'];
-  },
-
-  editableMarker: NX.I18n.get('User_UserSettingsForm_Update_Error'),
 
   initComponent: function() {
     var me = this;
+
+    me.settingsFormSuccessMessage = function(data) {
+      return NX.I18n.format('User_UserSettingsForm_UpdateRoles_Success', data['userId']);
+    };
+
+    me.editableMarker = NX.I18n.get('User_UserSettingsForm_Update_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.and(
         NX.Conditions.isPermitted('nexus:users:update'),

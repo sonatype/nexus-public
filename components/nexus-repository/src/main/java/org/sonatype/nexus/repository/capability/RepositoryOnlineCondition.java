@@ -25,7 +25,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * A condition that is satisfied when a repository is online.
  *
- * @since capabilities 2.0
+ * @since 3.0
  */
 public class RepositoryOnlineCondition
     extends RepositoryConditionSupport

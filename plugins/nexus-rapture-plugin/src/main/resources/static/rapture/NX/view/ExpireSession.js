@@ -24,15 +24,15 @@ Ext.define('NX.view.ExpireSession', {
   ],
   alias: 'widget.nx-expire-session',
 
-  title: NX.I18n.get('ExpireSession_Title'),
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.MEDIUM_MODAL);
+    me.title = NX.I18n.get('ExpireSession_Title');
+
+    me.setWidth(NX.view.ModalDialog.MEDIUM_MODAL);
 
     Ext.apply(me, {
       items: [
@@ -61,7 +61,7 @@ Ext.define('NX.view.ExpireSession', {
           }
         },
         {
-          text: NX.I18n.get('ExpireSession_Close_Button'),
+          text: NX.I18n.get('Close_Button'),
           action: 'close',
           hidden: true,
           handler: function() {

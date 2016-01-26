@@ -48,7 +48,7 @@ public class StateGuard
   StateGuard(final Logger log,
              final ReadWriteLock readWriteLock,
              final String initial,
-             final @Nullable String failure)
+             @Nullable final String failure)
   {
     this.log = checkNotNull(log);
     this.readWriteLock = checkNotNull(readWriteLock);
@@ -102,6 +102,9 @@ public class StateGuard
     }
   }
 
+  /**
+   * Ensure the current state is one of allowed, bypassing locking semantics.
+   */
   private void _ensure(final String[] allowed) {
     for (String allow : allowed) {
       if (current.equals(allow)) {

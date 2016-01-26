@@ -24,6 +24,9 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -36,6 +39,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 
@@ -56,13 +62,27 @@ public class FileBlobStoreIT
 
   private Path blobStoreDirectory;
 
+  private PeriodicJobServiceImpl jobService;
+
+  private BlobStoreMetricsStore metricsStore;
+
   @Before
   public void setUp() throws Exception {
+    ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
+    when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
+
+    jobService = new PeriodicJobServiceImpl();
+    jobService.start();
+
+    metricsStore = new BlobStoreMetricsStoreImpl(jobService);
 
     final BlobStoreConfiguration config = new BlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    underTest = new FileBlobStore(new VolumeChapterLocationStrategy(), new SimpleFileOperations());
+    underTest = new FileBlobStore(new VolumeChapterLocationStrategy(),
+        new SimpleFileOperations(),
+        applicationDirectories,
+        metricsStore);
     underTest.init(config);
     underTest.start();
   }
@@ -71,6 +91,9 @@ public class FileBlobStoreIT
   public void tearDown() throws Exception {
     if (underTest != null) {
       underTest.stop();
+    }
+    if (jobService != null) {
+      jobService.stop();
     }
   }
 

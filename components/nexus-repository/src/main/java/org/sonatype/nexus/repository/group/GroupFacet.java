@@ -45,4 +45,10 @@ public interface GroupFacet
    * Return the full list of members, including the members of groups, but excluding groups.
    */
   List<Repository> leafMembers();
+
+  /**
+   * Removes all entries from the group cache and the member caches.
+   */
+  void invalidateGroupCaches();
+
 }

@@ -85,6 +85,7 @@ public class NexusBundleTracker
   public void close() {
     try {
       closing = true;
+      purgeBundles();
       super.close();
     }
     finally {

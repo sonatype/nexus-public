@@ -24,42 +24,55 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'task-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'task-default',
 
-  masters: [
-    { xtype: 'nx-coreui-task-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-task-list' }
+      ],
 
-  tabs: [
-    {
-      xtype: 'nx-info-panel',
-      title: NX.I18n.get('TaskFeature_Summary_Title'),
-      weight: 10
-    }
-  ],
+      tabs: [
+        {
+          xtype: 'nx-info-panel',
+          title: NX.I18n.get('TaskFeature_Summary_Title'),
+          weight: 10
+        }
+      ],
 
-  actions: [
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Task_TaskFeature_Delete_Button'),
-      glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
-      action: 'delete',disabled: true
-    },
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Task_TaskFeature_Run_Button'),
-      glyph: 'xf04b@FontAwesome' /* fa-play */,
-      action: 'run',
-      handler: function(button) { button.fireEvent('runaction') },
-      disabled: true
-    },
-    {
-      xtype: 'button',
-      text: NX.I18n.get('Task_TaskFeature_Stop_Button'),
-      glyph: 'xf04d@FontAwesome' /* fa-stop */,
-      action: 'stop',
-      handler: function(button) { button.fireEvent('runaction') },
-      disabled: true
-    }
-  ]
+      actions: [
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Task_TaskFeature_Delete_Button'),
+          glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+          action: 'delete',disabled: true
+        },
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Task_TaskFeature_Run_Button'),
+          glyph: 'xf04b@FontAwesome' /* fa-play */,
+          action: 'run',
+          handler: function(button) {
+            button.fireEvent('runaction');
+          },
+          disabled: true
+        },
+        {
+          xtype: 'button',
+          text: NX.I18n.get('Task_TaskFeature_Stop_Button'),
+          glyph: 'xf04d@FontAwesome' /* fa-stop */,
+          action: 'stop',
+          handler: function(button) {
+            button.fireEvent('runaction');
+          },
+          disabled: true
+        }
+      ]
+    });
+
+    this.callParent();
+  }
 });

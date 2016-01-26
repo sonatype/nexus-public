@@ -18,6 +18,8 @@ import java.util.logging.Handler;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
+import org.sonatype.nexus.bootstrap.internal.TemporaryDirectory;
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 
 import org.slf4j.Logger;

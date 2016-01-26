@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -21,12 +24,16 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.security.PasswordHelper;
 
+import com.google.common.base.Function;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link Configuration} entity-adapter.
@@ -39,8 +46,7 @@ public class ConfigurationEntityAdapter
     extends IterableEntityAdapter<Configuration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .prefix("repository")
-      .type(Configuration.class)
+      .type("repository")
       .build();
 
   private static final String P_REPOSITORY_NAME = "repository_name";
@@ -56,8 +62,12 @@ public class ConfigurationEntityAdapter
       .property(P_REPOSITORY_NAME)
       .build();
 
-  public ConfigurationEntityAdapter() {
+  private final PasswordHelper passwordHelper;
+
+  @Inject
+  public ConfigurationEntityAdapter(final PasswordHelper passwordHelper) {
     super(DB_CLASS);
+    this.passwordHelper = checkNotNull(passwordHelper);
   }
 
   @Override
@@ -94,14 +104,58 @@ public class ConfigurationEntityAdapter
     entity.setRecipeName(recipeName);
     entity.setRepositoryName(repositoryName);
     entity.setOnline(online);
-    entity.setAttributes(attributes);
+    entity.setAttributes(decrypt(attributes));
+  }
+
+  /**
+   * Processes recursively the passed in attributes by decrypting sensitive entry values.
+   */
+  private Map<String, Map<String, Object>> decrypt(Map<String, Map<String, Object>> attributes) {
+    process(attributes, passwordHelper::decrypt);
+    return attributes;
   }
 
   @Override
   protected void writeFields(final ODocument document, final Configuration entity) {
+    // deeply copy attributes to divorce from entity (encryption would modify it)
+    Map<String, Map<String, Object>> attributes = FieldCopier.copyIf(entity.getAttributes());
+
     document.field(P_RECIPE_NAME, entity.getRecipeName());
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
     document.field(P_ONLINE, entity.isOnline());
-    document.field(P_ATTRIBUTES, entity.getAttributes());
+    document.field(P_ATTRIBUTES, encrypt(attributes));
+  }
+
+  /**
+   * Processes recursively the passed in attributes by encrypting sensitive entry values.
+   */
+  private Map<String, Map<String, Object>> encrypt(final Map<String, Map<String, Object>> attributes) {
+    process(attributes, passwordHelper::encrypt);
+    return attributes;
+  }
+
+  /**
+   * Processes recursively passed in map looking for sensitive data and applying passed in transformation to values.
+   */
+  @SuppressWarnings("unchecked")
+  private void process(final Map<String, ?> map, final Function<String, String> transform) {
+    if (map == null) {
+      return;
+    }
+    for (Entry entry : map.entrySet()) {
+      if (entry.getValue() instanceof Map) {
+        process((Map<String, Object>) entry.getValue(), transform);
+      }
+      else if (isSensitiveEntry(entry)) {
+        entry.setValue(transform.apply((String) entry.getValue()));
+      }
+    }
+  }
+
+  /**
+   * Returns {@code true} if entry carries sensitive data, that should be encrypted/decrypted on externalization.
+   */
+  private boolean isSensitiveEntry(final Entry<String, Object> entry) {
+    return entry.getKey().toLowerCase(Locale.ENGLISH).endsWith("password") && entry.getValue() instanceof String;
   }
 }

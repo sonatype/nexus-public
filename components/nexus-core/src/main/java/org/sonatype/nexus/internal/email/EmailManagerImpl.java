@@ -12,10 +12,16 @@
  */
 package org.sonatype.nexus.internal.email;
 
+import java.util.Properties;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.mail.Session;
+import javax.net.ssl.SSLContext;
+
+import org.sonatype.nexus.ssl.TrustStore;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
@@ -23,7 +29,9 @@ import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.email.EmailManager;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailConstants;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
@@ -42,6 +50,8 @@ public class EmailManagerImpl
 {
   private final EmailConfigurationStore store;
 
+  private final TrustStore trustStore;
+
   private final Provider<EmailConfiguration> defaults;
 
   private final Mutex lock = new Mutex();
@@ -50,9 +60,11 @@ public class EmailManagerImpl
 
   @Inject
   public EmailManagerImpl(final EmailConfigurationStore store,
+                          final TrustStore trustStore,
                           @Named("initial") final Provider<EmailConfiguration> defaults)
   {
     this.store = checkNotNull(store);
+    this.trustStore = checkNotNull(trustStore);
     this.defaults = checkNotNull(defaults);
   }
 
@@ -122,11 +134,17 @@ public class EmailManagerImpl
   /**
    * Apply server configuration to email.
    */
-  private Email apply(final EmailConfiguration configuration, final Email mail) throws EmailException {
+  @VisibleForTesting
+  Email apply(final EmailConfiguration configuration, final Email mail) throws EmailException {
     mail.setHostName(configuration.getHost());
     mail.setSmtpPort(configuration.getPort());
+    mail.setAuthentication(configuration.getUsername(), configuration.getPassword());
 
-    // TODO: ssl/tls configuration
+    mail.setStartTLSEnabled(configuration.isStartTlsEnabled());
+    mail.setStartTLSRequired(configuration.isStartTlsRequired());
+    mail.setSSLOnConnect(configuration.isSslOnConnectEnabled());
+    mail.setSSLCheckServerIdentity(configuration.isSslCheckServerIdentityEnabled());
+    mail.setSslSmtpPort(Integer.toString(configuration.getPort()));
 
     // default from address
     if (mail.getFromAddress() == null) {
@@ -138,6 +156,16 @@ public class EmailManagerImpl
     if (subjectPrefix != null) {
       String subject = mail.getSubject();
       mail.setSubject(String.format("%s %s", subjectPrefix, subject));
+    }
+
+    // do this last (mail properties are set up from the email fields when you get the mail session)
+    if (configuration.isNexusTrustStoreEnabled()) {
+      SSLContext context = trustStore.getSSLContext();
+      Session session = mail.getMailSession();
+      Properties properties = session.getProperties();
+      properties.remove(EmailConstants.MAIL_SMTP_SOCKET_FACTORY_CLASS);
+      properties.put(EmailConstants.MAIL_SMTP_SSL_ENABLE, true);
+      properties.put("mail.smtp.ssl.socketFactory", context.getSocketFactory());
     }
 
     return mail;

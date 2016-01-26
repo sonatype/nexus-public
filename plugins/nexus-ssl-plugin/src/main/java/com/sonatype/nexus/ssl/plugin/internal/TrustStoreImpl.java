@@ -31,12 +31,11 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import com.sonatype.nexus.ssl.plugin.TrustStore;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
+import org.sonatype.nexus.ssl.TrustStore;
 
 import com.google.common.base.Throwables;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -65,7 +64,7 @@ public class TrustStoreImpl
   private volatile SSLContext sslcontext;
 
   @Inject
-  public TrustStoreImpl(final @Named("ssl") KeyStoreManager keyStoreManager) throws Exception {
+  public TrustStoreImpl(@Named("ssl") final KeyStoreManager keyStoreManager) throws Exception {
     this.keyStoreManager = checkNotNull(keyStoreManager);
     keyManagers = getSystemKeyManagers();
     trustManagers = getTrustManagers(keyStoreManager);

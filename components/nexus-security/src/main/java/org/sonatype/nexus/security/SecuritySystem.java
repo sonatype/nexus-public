@@ -31,7 +31,6 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 
@@ -74,7 +73,7 @@ public interface SecuritySystem
   /**
    * Checks if principal has a permission, throws an AuthorizationException otherwise.
    */
-  void checkPermission(PrincipalCollection principal, String permission) throws AuthorizationException;
+  void checkPermission(PrincipalCollection principal, String permission);
 
   // ******************************
   // * Role permission management
@@ -148,7 +147,8 @@ public interface SecuritySystem
    * Remove a user based on the Id.
    *
    * @param userId The id of the user to be removed.
-   * @Deprecated use deleteUser( String userId, String source )
+   *
+   * @deprecated use deleteUser( String userId, String source )
    */
   @Deprecated
   void deleteUser(String userId) throws UserNotFoundException;

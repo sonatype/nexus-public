@@ -31,7 +31,7 @@ public class KeyStoreManagerImpl
 {
   @Inject
   public KeyStoreManagerImpl(final CryptoHelper crypto,
-                             final @Named("ssl") KeyStoreManagerConfiguration config)
+                             @Named("ssl") final KeyStoreManagerConfiguration config)
   {
     super(crypto, config);
   }

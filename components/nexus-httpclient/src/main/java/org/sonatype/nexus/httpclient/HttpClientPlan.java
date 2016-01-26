@@ -34,7 +34,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
  *
  * @since 3.0
  */
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public class HttpClientPlan
     extends ComponentSupport
 {
@@ -103,14 +102,21 @@ public class HttpClientPlan
   }
 
   @Nullable
-  public String getUserAgent() { return userAgent; }
+  public String getUserAgent() {
+    return userAgent;
+  }
 
-  public void setUserAgent(@Nullable final String userAgent) { this.userAgent = userAgent; }
+  public void setUserAgent(@Nullable final String userAgent) {
+    this.userAgent = userAgent;
+  }
 
   //
   // Customizer
   //
 
+  /**
+   * {@link HttpClientPlan} customization support.
+   */
   public interface Customizer
   {
     void customize(HttpClientPlan plan);

@@ -51,7 +51,7 @@ public class NexusSSLConnectionSocketFactory
 
   private final String[] supportedCipherSuites;
 
-  public NexusSSLConnectionSocketFactory(final @Nullable List<SSLContextSelector> sslContextSelectors) {
+  public NexusSSLConnectionSocketFactory(@Nullable final List<SSLContextSelector> sslContextSelectors) {
     this.defaultSocketFactory = SSLConnectionSocketFactory.getSystemSocketFactory();
     this.sslContextSelectors = sslContextSelectors; // might be null
     this.supportedProtocols = split(System.getProperty("https.protocols"));

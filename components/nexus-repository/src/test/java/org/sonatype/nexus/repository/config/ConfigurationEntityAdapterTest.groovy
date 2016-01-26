@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.config
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
 import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
+import org.sonatype.nexus.security.PasswordHelper
 
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException
 import org.junit.After
@@ -35,7 +37,7 @@ class ConfigurationEntityAdapterTest
 
   @Before
   void setUp() {
-    underTest = new ConfigurationEntityAdapter()
+    underTest = new ConfigurationEntityAdapter(new PasswordHelper(new CryptoHelperImpl()))
     underTest.installDependencies(new HexRecordIdObfuscator())
   }
 
@@ -59,7 +61,7 @@ class ConfigurationEntityAdapterTest
       def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
       config.attributes('baz').set('a', 'b')
 
-      underTest.add(db, config)
+      underTest.addEntity(db, config)
     }
   }
 
@@ -69,10 +71,10 @@ class ConfigurationEntityAdapterTest
       underTest.register(db)
 
       def config = new Configuration(repositoryName: 'bar', recipeName: 'foo', attributes: [:])
-      underTest.add(db, config)
+      underTest.addEntity(db, config)
       def conflictingConfig = new Configuration(repositoryName: config.repositoryName.capitalize(),
           recipeName: config.recipeName, attributes: config.attributes)
-      underTest.add(db, conflictingConfig)
+      underTest.addEntity(db, conflictingConfig)
     }
   }
 

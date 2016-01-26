@@ -53,9 +53,9 @@ class HttpClientConfigurationEntityAdapterTrial
               password: 'admin123'
           )
       )
-      underTest.set(db, config)
+      underTest.singleton.set(db, config)
 
-      config = underTest.get(db)
+      config = underTest.singleton.get(db)
       log config
     }
   }

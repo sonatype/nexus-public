@@ -38,7 +38,9 @@ public final class Strings2
    */
   public static final String MASK = "****";
 
-  private Strings2() {}
+  private Strings2() {
+    // empty
+  }
 
   /**
    * Returns {@code true} if given string is null, or length is zero.
@@ -48,35 +50,11 @@ public final class Strings2
   }
 
   /**
-   * Returns {@code true} if given string is not empty.
-   *
-   * @see #isEmpty
-   *
-   * @deprecated Prefer {@code !isEmpty(value}
-   */
-  @Deprecated
-  public static boolean isNotEmpty(@Nullable final String value) {
-    return !isEmpty(value);
-  }
-
-  /**
    * Returns {@code true} if given string is null, or length is zero after {@link String#trim()}.
    */
   public static boolean isBlank(@Nullable final String value) {
     // TODO: Consider using Character.isWhitespace() to determine blank-ness for commons-lang/plexus-utils impl parity
     return value == null || value.trim().length() == 0;
-  }
-
-  /**
-   * Returns {@code true} if given string is not blank.
-   *
-   * @see #isBlank
-   *
-   * @deprecated Prefer {@code !isBlank(value}
-   */
-  @Deprecated
-  public static boolean isNotBlank(@Nullable final String value) {
-    return !isBlank(value);
   }
 
   /**

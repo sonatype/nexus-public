@@ -43,7 +43,7 @@ public class NestedAttributesMap
   }
 
   @VisibleForTesting
-  NestedAttributesMap(final @Nullable NestedAttributesMap parent,
+  NestedAttributesMap(@Nullable final NestedAttributesMap parent,
                       final String key,
                       final Map<String, Object> backing)
   {
@@ -128,7 +128,7 @@ public class NestedAttributesMap
    */
   @Nullable
   @Override
-  public Object set(final String key, final @Nullable Object value) {
+  public Object set(final String key, @Nullable final Object value) {
     checkState(!(value instanceof Map), "Use child() to set a map value");
     return super.set(key, value);
   }

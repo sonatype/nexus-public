@@ -25,11 +25,20 @@ Ext.define('NX.coreui.view.ssl.SslCertificateDetailsPanel', {
     'NX.I18n'
   ],
 
-  settingsForm: {
-    xtype: 'nx-coreui-sslcertificate-details-form',
-    buttons: [
-      { text: NX.I18n.get('Ssl_SslCertificateDetailsWindow_Cancel_Button'), action: 'back' }
-    ]
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      settingsForm: {
+        xtype: 'nx-coreui-sslcertificate-details-form',
+        buttons: [
+          { text: NX.I18n.get('Ssl_SslCertificateDetailsWindow_Cancel_Button'), action: 'back' }
+        ]
+      }
+    });
+
+    this.callParent();
   }
 
 });

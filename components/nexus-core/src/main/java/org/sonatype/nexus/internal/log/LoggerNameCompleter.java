@@ -19,8 +19,10 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.log.LogManager;
 
-import org.apache.karaf.shell.console.Completer;
-import org.apache.karaf.shell.console.completer.StringsCompleter;
+import org.apache.karaf.shell.api.console.CommandLine;
+import org.apache.karaf.shell.api.console.Completer;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.support.completers.StringsCompleter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-@Named("logger-name")
+@Named
 public class LoggerNameCompleter
     implements Completer
 {
@@ -41,9 +43,7 @@ public class LoggerNameCompleter
   }
 
   @Override
-  public int complete(final String buffer, final int cursor, final List<String> candidates) {
-    StringsCompleter delegate = new StringsCompleter();
-    delegate.getStrings().addAll(logManager.getLoggers().keySet());
-    return delegate.complete(buffer, cursor, candidates);
+  public int complete(final Session session, final CommandLine commandLine, final List<String> candidates) {
+    return new StringsCompleter(logManager.getLoggers().keySet()).complete(session, commandLine, candidates);
   }
 }

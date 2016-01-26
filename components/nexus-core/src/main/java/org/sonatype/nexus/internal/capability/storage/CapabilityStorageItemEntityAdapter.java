@@ -36,8 +36,7 @@ public class CapabilityStorageItemEntityAdapter
   extends IterableEntityAdapter<CapabilityStorageItem>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .prefix("capability")
-      .type(CapabilityStorageItem.class)
+      .type("capability")
       .build();
 
   private static final String P_VERSION = "version";
@@ -70,10 +69,10 @@ public class CapabilityStorageItemEntityAdapter
 
   @Override
   protected void readFields(final ODocument document, final CapabilityStorageItem entity) {
-    entity.setVersion((Integer) document.field(P_VERSION, OType.INTEGER));
-    entity.setType((String) document.field(P_TYPE, OType.STRING));
-    entity.setEnabled((Boolean) document.field(P_ENABLED, OType.BOOLEAN));
-    entity.setNotes((String) document.field(P_NOTES, OType.STRING));
+    entity.setVersion(document.field(P_VERSION, OType.INTEGER));
+    entity.setType(document.field(P_TYPE, OType.STRING));
+    entity.setEnabled(document.field(P_ENABLED, OType.BOOLEAN));
+    entity.setNotes(document.field(P_NOTES, OType.STRING));
 
     Map<String,String> properties = document.field(P_PROPERTIES, OType.EMBEDDEDMAP);
     entity.setProperties(properties);

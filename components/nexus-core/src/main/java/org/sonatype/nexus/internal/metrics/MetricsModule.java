@@ -29,15 +29,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <a href="http://metrics.codahale.com">Codahale Metrics</a> guice configuration.
+ * <a href="http://metrics.dropwizard.io">Dropwizard Metrics</a> guice configuration.
  * 
  * Installs servlet endpoints:
  * 
  * <ul>
- * <li>/internal/ping</li>
- * <li>/internal/threads</li>
- * <li>/internal/metrics</li>
- * <li>/internal/healthcheck</li>
+ * <li>/service/metrics/ping</li>
+ * <li>/service/metrics/threads</li>
+ * <li>/service/metrics/data</li>
+ * <li>/service/metrics/healthcheck</li>
  * </ul>
  * 
  * Protected by {@code nexus:metrics:read} permission.
@@ -49,9 +49,7 @@ public class MetricsModule
 {
   private static final Logger log = LoggerFactory.getLogger(MetricsModule.class);
 
-  // TODO: Change MP to /service/* ?
-
-  private static final String MOUNT_POINT = "/internal";
+  private static final String MOUNT_POINT = "/service/metrics";
 
   @Override
   protected void configure() {
@@ -72,7 +70,7 @@ public class MetricsModule
 
         serve(MOUNT_POINT + "/ping").with(new PingServlet());
         serve(MOUNT_POINT + "/threads").with(new ThreadDumpServlet());
-        serve(MOUNT_POINT + "/metrics").with(MetricsServlet.class);
+        serve(MOUNT_POINT + "/data").with(MetricsServlet.class);
         serve(MOUNT_POINT + "/healthcheck").with(HealthCheckServlet.class);
 
         // record metrics for all webapp access
@@ -90,9 +88,6 @@ public class MetricsModule
     {
       @Override
       protected void configure() {
-        // TODO: Expose resource permissions for ping/threads/metrics/healthcheck?
-        // TODO: Maybe consider re-implementing as JAX-RS endpoints?
-
         addFilterChain(MOUNT_POINT + "/**",
             NexusBasicHttpAuthenticationFilter.NAME,
             AnonymousFilter.NAME,

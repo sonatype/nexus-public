@@ -27,23 +27,23 @@ Ext.define('NX.view.AboutWindow', {
     'NX.util.Url'
   ],
 
-  layout: {
-    type: 'vbox',
-    align: 'stretch'
-  },
-
-  height: 480,
-  padding: 0,
-
-  title: NX.I18n.get('AboutWindow_Title'),
-
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
 
-    me.setWidth(me.LARGE_MODAL);
+    me.layout = {
+      type: 'vbox',
+      align: 'stretch'
+    };
+
+    me.height = 480;
+    me.padding = 0;
+
+    me.title = NX.I18n.get('AboutWindow_Title');
+
+    me.setWidth(NX.view.ModalDialog.LARGE_MODAL);
 
     me.items = [
       {
@@ -87,7 +87,7 @@ Ext.define('NX.view.AboutWindow', {
     ];
 
     me.buttons = [
-      { text: NX.I18n.get('AboutWindow_Close_Button'), action: 'close', ui: 'nx-primary', handler: function () { me.close(); }}
+      { text: NX.I18n.get('Close_Button'), action: 'close', ui: 'nx-primary', handler: function () { me.close(); }}
     ];
     me.buttonAlign = 'left';
 

@@ -27,7 +27,9 @@ public class WildcardPermission2
 {
   private int cachedHash;
 
-  protected WildcardPermission2() {}
+  protected WildcardPermission2() {
+    // empty
+  }
 
   public WildcardPermission2(final String wildcardString) {
     this(wildcardString, DEFAULT_CASE_SENSITIVE);

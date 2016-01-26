@@ -14,8 +14,8 @@ package org.sonatype.nexus.coreui
 
 import javax.validation.constraints.Future
 import javax.validation.constraints.NotNull
-import javax.validation.constraints.Pattern
 
+import org.sonatype.nexus.scheduling.constraints.CronExpression
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
@@ -65,22 +65,26 @@ class TaskXO
   Integer[] recurringDays
 
   @NotBlank(groups = AdvancedSchedule)
-  @Pattern(
-      regexp = '^([[0-9]|\\-|,|\\*]+) ([[0-9]|\\-|,|\\*]+) ([[0-9]|\\-|,|\\*]+) (\\?|\\*|[[0-9]|\\-|,|/|L|W]+) (\\*|[JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|[0-9]|\\-|,]+) (\\*|\\?|[MON|TUE|WED|THU|FRI|SAT|SUN|[0-9]|\\-|,|/|L|W]+)( [[0-9]{4}|,]+)?$',
-      message = 'Invalid CRON expression'
-  )
+  @CronExpression(groups = AdvancedSchedule)
   String cronExpression
 
   public interface Schedule
   {
+    // empty
   }
 
   public interface AdvancedSchedule
-  {}
+  {
+    // empty
+  }
 
   public interface OnceSchedule
-  {}
+  {
+    // empty
+  }
 
   public interface OnceToMonthlySchedule
-  {}
+  {
+    // empty
+  }
 }

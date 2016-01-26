@@ -42,7 +42,7 @@ Ext.define('NX.coreui.controller.Assets', {
   /**
    * @override
    */
-  init: function() {
+  init: function () {
     var me = this;
 
     me.getApplication().getIconController().addIcons({
@@ -81,7 +81,7 @@ Ext.define('NX.coreui.controller.Assets', {
       }
     });
 
-    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', { remote: true, autoLoad:true });
+    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true, autoLoad: true});
   },
 
   /**
@@ -91,29 +91,44 @@ Ext.define('NX.coreui.controller.Assets', {
    * @param {NX.coreui.view.component.AssetContainer} container asset container
    * @param {NX.coreui.model.Asset} assetModel selected asset
    */
-  showAssetInfo: function(container, assetModel) {
+  showAssetInfo: function (container, assetModel) {
     var info = container.down('nx-coreui-component-assetinfo'),
-      attributes = container.down('nx-coreui-component-assetattributes'),
-      panel;
+        attributes = container.down('nx-coreui-component-assetattributes'),
+        panel;
 
     if (!info) {
-      info = container.add({xtype: 'nx-coreui-component-assetinfo', weight: 10});
+      container.addTab(
+          {
+            xtype: 'nx-coreui-component-assetinfo',
+            title: NX.I18n.get('Component_AssetInfo_Info_Title'),
+            itemId: 'assetInfo',
+            weight: 10
+          }
+      );
+      info = container.down('nx-coreui-component-assetinfo');
     }
     info.setAssetModel(assetModel);
 
     if (!attributes) {
-      attributes = Ext.create('widget.nx-coreui-component-assetattributes');
-      panel = Ext.create('Ext.Panel', {
-        ui: 'nx-inset',
-        weight: 10
-      });
-      panel.add(attributes);
-      container.add(panel);
+      container.addTab(
+          {
+            xtype: 'panel',
+            ui: 'nx-inset',
+            title: NX.I18n.get('Component_AssetInfo_Attributes_Title'),
+            itemId: 'attributeInfo',
+            weight: 20,
+            items: [
+              {xtype: 'nx-coreui-component-assetattributes'}
+            ]
+          }
+      );
+
+      attributes = container.down('nx-coreui-component-assetattributes');
     }
     attributes.setAssetModel(assetModel);
   },
 
-  showComponentDetails: function(container, componentModel) {
+  showComponentDetails: function (container, componentModel) {
     var repositoryInfo = {},
         componentInfo = {};
 
@@ -137,7 +152,7 @@ Ext.define('NX.coreui.controller.Assets', {
    * @param {NX.coreui.view.component.AssetList} grid assets grid
    * @param {NX.coreui.model.Component} componentModel component owning the assets to be loaded
    */
-  loadAssets: function(grid, componentModel) {
+  loadAssets: function (grid, componentModel) {
     var assetStore = grid.getStore(),
         filters;
 
@@ -178,7 +193,7 @@ Ext.define('NX.coreui.controller.Assets', {
    *
    * @public
    */
-  updateAssetContainer: function(gridView, td, cellIndex, assetModel) {
+  updateAssetContainer: function (gridView, td, cellIndex, assetModel) {
     this.getAssetContainer().refreshInfo(assetModel);
     this.bindDeleteAssetButton(this.getDeleteAssetButton());
   },
@@ -233,7 +248,7 @@ Ext.define('NX.coreui.controller.Assets', {
             assetList.getSelectionModel().deselectAll();
             assetList.getStore().load();
             Ext.util.History.back();
-            NX.Messages.add({ text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success' });
+            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });
       });

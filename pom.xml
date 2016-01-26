@@ -100,7 +100,7 @@
     -->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    
+
     <!--
     Sonar configuration.
     -->
@@ -260,6 +260,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-main</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-mime</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
@@ -280,7 +286,19 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-pax-logging</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-plugin-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-quartz</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
@@ -311,6 +329,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-selector</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
@@ -356,18 +380,6 @@
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>pax-logging-metrics</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>pax-logging-access</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
-      </dependency>
-
       <!-- testsupport -->
 
       <dependency>
@@ -386,8 +398,18 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>karaf-nexus-branding</artifactId>
+        <artifactId>nexus-system-feature</artifactId>
         <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-jetty-feature</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
       </dependency>
 
       <dependency>
@@ -400,25 +422,17 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-base-template</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
-        <type>zip</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-boot-feature</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-core-feature</artifactId>
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-base-template</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <type>zip</type>
       </dependency>
 
     </dependencies>
@@ -607,7 +621,7 @@
         <plugin>
           <groupId>org.apache.karaf.tooling</groupId>
           <artifactId>karaf-maven-plugin</artifactId>
-          <version>3.0.5</version>
+          <version>4.0.4</version>
           <extensions>true</extensions>
           <configuration>
             <excludedArtifactIds>
@@ -1246,6 +1260,7 @@
                         <goals>
                           <goal>features-generate-descriptor</goal>
                           <goal>install-kars</goal>
+                          <goal>assembly</goal>
                         </goals>
                       </pluginExecutionFilter>
                       <action>

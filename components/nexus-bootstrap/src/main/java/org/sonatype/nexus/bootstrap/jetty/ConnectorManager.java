@@ -123,7 +123,7 @@ public class ConnectorManager
     }
     catch (Exception e) {
       log.warn("Could not start connector: {}", connectorConfiguration, e);
-      throw new RuntimeException(e); // NOSONAR: no guava in scope
+      throw new RuntimeException(e);
     }
 
     return serverConnector;
@@ -140,7 +140,7 @@ public class ConnectorManager
       }
       catch (Exception e) {
         log.warn("Could not stop connector: {}", connectorConfiguration, e);
-        throw new RuntimeException(e); // NOSONAR: no guava in scope
+        throw new RuntimeException(e);
       }
       server.removeConnector(serverConnector);
     }

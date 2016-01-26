@@ -13,8 +13,10 @@
 package org.sonatype.nexus.scheduling;
 
 /**
- * Runtime exception thrown in cases when task is interrupted. Semantically meaning is almost same as
- * {@link InterruptedException} except this one is unchecked exception and may carry some cause.
+ * Runtime exception thrown in cases when task is interrupted.
+ *
+ * Semantically meaning is almost same as {@link InterruptedException} except
+ * this one is unchecked exception and may carry some cause.
  *
  * @since 3.0
  */
@@ -23,22 +25,9 @@ public class TaskInterruptedException
 {
   private final boolean canceled;
 
-  /**
-   * Ctor for "clean interruption" of task, usually by user or some expected condition.
-   */
-  public TaskInterruptedException(String message, boolean canceled)
-  {
+  public TaskInterruptedException(final String message, final boolean canceled) {
     super(message);
     this.canceled = canceled;
-  }
-
-  /**
-   * Ctor for "erroneus interruption" of task, usually by some other unexpected exception.
-   */
-  public TaskInterruptedException(Throwable cause)
-  {
-    super(cause);
-    this.canceled = false;
   }
 
   public boolean isCanceled() {

@@ -29,6 +29,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class ConstraintViolations
 {
+  private ConstraintViolations() {
+    // empty
+  }
+
   private static final Logger log = LoggerFactory.getLogger(ConstraintViolations.class);
 
   /**

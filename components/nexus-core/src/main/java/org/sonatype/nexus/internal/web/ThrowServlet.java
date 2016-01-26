@@ -38,16 +38,16 @@ public class ThrowServlet
 
   private enum Type
   {
-    runtime,
-    error,
-    io,
-    servlet;
+    RUNTIME,
+    ERROR,
+    IO,
+    SERVLET;
 
     static Type parse(final String value) {
       if (value == null) {
-        return runtime;
+        return RUNTIME;
       }
-      return valueOf(Strings2.lower(value));
+      return valueOf(Strings2.upper(value));
     }
   }
 
@@ -60,16 +60,16 @@ public class ThrowServlet
     log.info("Throwing {} w/message: {}", type, message);
 
     switch (type) {
-      case runtime:
+      case RUNTIME:
         throw new RuntimeException(message);
 
-      case io:
+      case IO:
         throw new IOException(message);
 
-      case servlet:
+      case SERVLET:
         throw new ServletException(message);
 
-      case error:
+      case ERROR:
       default:
         throw new Error(message);
     }

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven;
 
+import java.io.IOException;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
@@ -36,4 +38,9 @@ public interface MavenHostedFacet
   void rebuildMetadata(@Nullable String groupId,
                        @Nullable String artifactId,
                        @Nullable String baseVersion);
+
+  /**
+   * Rebuilds archetype catalog for given repository. Returns the number of archetypes hosted.
+   */
+  int rebuildArchetypeCatalog() throws IOException;
 }

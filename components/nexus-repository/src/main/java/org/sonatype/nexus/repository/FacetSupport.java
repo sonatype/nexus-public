@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
@@ -63,7 +65,7 @@ public abstract class FacetSupport
   // State
   //
 
-  public final class State
+  public static final class State
   {
     public static final String NEW = "NEW";
 
@@ -208,5 +210,17 @@ public abstract class FacetSupport
   @Nonnull
   protected <T extends Facet> T facet(final Class<T> type) throws MissingFacetException {
     return getRepository().facet(type);
+  }
+
+  /**
+   * Lookup an {@link Optional} facet on attached repository.
+   *
+   * Reduce some verbosity for commonly used repository operation.
+   *
+   * @see Repository#optionalFacet(Class)
+   */
+  @Nonnull
+  protected <T extends Facet> Optional<T> optionalFacet(final Class<T> type) {
+    return getRepository().optionalFacet(type);
   }
 }

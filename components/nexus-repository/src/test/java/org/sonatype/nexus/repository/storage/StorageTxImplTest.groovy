@@ -101,7 +101,7 @@ extends TestSupport
     }
     catch (IllegalOperationException e) {}
     verify(blobTx, never()).delete(any(BlobRef))
-    verify(assetEntityAdapter, never()).delete(db, asset)
+    verify(assetEntityAdapter, never()).deleteEntity(db, asset)
   }
 
   /**
@@ -116,7 +116,7 @@ extends TestSupport
   @Test
   void 'deleting assets pass when DENY write policy without blob'() {
     new StorageTxImpl('test', blobTx, db, bucket, WritePolicy.DENY, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP).deleteAsset(asset)
-    verify(assetEntityAdapter, times(1)).delete(db, asset)
+    verify(assetEntityAdapter, times(1)).deleteEntity(db, asset)
   }
 
   /**
@@ -154,7 +154,7 @@ extends TestSupport
     when(asset.blobRef()).thenReturn(blobRef)
     new StorageTxImpl('test', blobTx, db, bucket, writePolicy, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP).deleteAsset(asset)
     verify(blobTx, times(1)).delete(blobRef)
-    verify(assetEntityAdapter, times(1)).delete(db, asset)
+    verify(assetEntityAdapter, times(1)).deleteEntity(db, asset)
   }
 
   /**

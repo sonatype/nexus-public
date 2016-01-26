@@ -16,7 +16,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
+import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.action.SingletonActions;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,11 +32,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Named
 @Singleton
 public class AnonymousConfigurationEntityAdapter
-    extends SingletonEntityAdapter<AnonymousConfiguration>
+    extends EntityAdapter<AnonymousConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .prefix("security")
-      .type(AnonymousConfiguration.class)
+      .type("anonymous")
       .build();
 
   private static final String P_ENABLED = "enabled";
@@ -81,4 +81,10 @@ public class AnonymousConfigurationEntityAdapter
     document.field(P_USER_ID, entity.getUserId());
     document.field(P_REALM_NAME, entity.getRealmName());
   }
+
+  //
+  // Actions
+  //
+
+  public final SingletonActions<AnonymousConfiguration> singleton = new SingletonActions<>(this);
 }

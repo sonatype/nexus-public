@@ -28,8 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.5.4</jackson2.version>
-    <resteasy.version>3.0.12.Final</resteasy.version>
+    <jackson2.version>2.6.4</jackson2.version>
+    <resteasy.version>3.0.14.Final</resteasy.version>
   </properties>
 
   <dependencyManagement>
@@ -118,9 +118,6 @@
         <version>${resteasy.version}</version>
       </dependency>
 
-      <!--
-      FIXME: RESTEasy is not compatible with Jackson 2.6+ due to use of deprecated AnnotationBundleKey CTOR
-      -->
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-jackson2-provider</artifactId>
@@ -174,6 +171,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-parameter-names</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.fasterxml.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-smile</artifactId>
         <version>${jackson2.version}</version>
@@ -182,6 +185,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-joda</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-guava</artifactId>
         <version>${jackson2.version}</version>
       </dependency>
     </dependencies>

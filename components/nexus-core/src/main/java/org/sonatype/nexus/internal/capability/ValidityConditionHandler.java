@@ -54,7 +54,7 @@ public class ValidityConditionHandler
   ValidityConditionHandler(final EventBus eventBus,
                            final CapabilityRegistry capabilityRegistry,
                            final Conditions conditions,
-                           final @Assisted DefaultCapabilityReference reference)
+                           @Assisted final DefaultCapabilityReference reference)
   {
     this.eventBus = checkNotNull(eventBus);
     this.capabilityRegistry = checkNotNull(capabilityRegistry);

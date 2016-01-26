@@ -23,12 +23,15 @@ import ch.qos.logback.classic.Level;
  */
 class LogbackLevels
 {
+  private LogbackLevels() {
+    // empty
+  }
+
   /**
    * Convert a Logback {@link Level} into a {@link LoggerLevel}.
    */
   public static LoggerLevel convert(final Level level) {
     switch (level.toInt()) {
-
       case Level.ERROR_INT:
         return LoggerLevel.ERROR;
 

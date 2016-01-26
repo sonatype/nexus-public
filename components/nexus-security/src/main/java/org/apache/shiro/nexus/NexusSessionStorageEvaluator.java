@@ -17,8 +17,6 @@ import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.apache.shiro.mgt.SessionStorageEvaluator;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.mgt.DefaultWebSessionStorageEvaluator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Custom {@link SessionStorageEvaluator}.
@@ -28,8 +26,6 @@ import org.slf4j.LoggerFactory;
 public class NexusSessionStorageEvaluator
   extends DefaultWebSessionStorageEvaluator
 {
-  private static final Logger log = LoggerFactory.getLogger(NexusSessionStorageEvaluator.class);
-
   /**
    * Disable storage for anonymous subject.
    */

@@ -18,8 +18,8 @@ import javax.inject.Named
 import org.sonatype.nexus.common.app.ApplicationLicense
 import org.sonatype.nexus.common.app.ApplicationVersion
 
-import org.apache.karaf.shell.commands.Command
-import org.apache.karaf.shell.console.AbstractAction
+import org.apache.karaf.shell.api.action.Action
+import org.apache.karaf.shell.api.action.Command
 import org.fusesource.jansi.Ansi
 
 /**
@@ -30,7 +30,7 @@ import org.fusesource.jansi.Ansi
 @Named
 @Command(name = 'info', scope = 'nexus', description = 'Nexus system information')
 class InfoAction
-    extends AbstractAction
+    implements Action
 {
   @Inject
   ApplicationVersion applicationVersion
@@ -39,7 +39,7 @@ class InfoAction
   ApplicationLicense applicationLicense
 
   @Override
-  protected def doExecute() {
+  public Object execute() throws Exception {
     def section = { String name ->
       println Ansi.ansi().bold().a(name).reset()
     }

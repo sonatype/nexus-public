@@ -14,34 +14,52 @@ package org.sonatype.nexus.scheduling.schedule;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Schedule support class.
+ * Schedule.
  */
 public abstract class Schedule
 {
-  protected final Map<String, String> properties;
+  public static final String SCHEDULE_TYPE = "schedule.type";
 
-  public Schedule(final String type) {
+  public static final String SCHEDULE_START_AT = "schedule.startAt";
+
+  public static final String SCHEDULE_DAYS_TO_RUN = "schedule.daysToRun";
+
+  private final Map<String, String> properties = new HashMap<>();
+
+  protected Schedule(final String type) {
     checkNotNull(type);
-    this.properties = Maps.newHashMap();
-    this.properties.put("schedule.type", type);
+    set(SCHEDULE_TYPE, type);
   }
 
   public String getType() {
-    return properties.get("schedule.type");
+    return properties.get(SCHEDULE_TYPE);
+  }
+
+  /**
+   * Get a schedule property.
+   */
+  protected String get(final String name) {
+    return properties.get(name);
+  }
+
+  /**
+   * Set a schedule property.
+   */
+  protected void set(final String name, final String value) {
+    properties.put(name, value);
   }
 
   public Map<String, String> asMap() {
@@ -55,35 +73,43 @@ public abstract class Schedule
         '}';
   }
 
-  // ==
+  //
+  // Helpers
+  //
 
   /**
-   * Helper method to set {@link Date} types, handles conversion to string automatically.
+   * Convert a date into a string.
    */
   public static String dateToString(final Date date) {
     return new DateTime(date).toString();
   }
 
   /**
-   * Helper method to get {@link Date} types, handles conversion from string automatically.
+   * Convert a string into a date.
    */
   public static Date stringToDate(final String string) {
     return DateTime.parse(string).toDate();
   }
 
   /**
-   * Helper method to set {@link Set} types, handles conversion to CSV with provided function. Ordering of set
-   * elements in produced CSV string is enforced to their natural ordering.
+   * Convert a set into a CSV formatted string using given mapping function.
+   *
+   * Ordering of set elements in produced CSV string is enforced to their natural ordering.
    */
-  public static <T extends Comparable<T>> String setToCsv(final Set<T> set, final Function<T, String> func) {
-    return Joiner.on(',').join(Collections2.transform(Sets.newTreeSet(set), func));
+  public static <T extends Comparable<T>> String setToCsv(final Set<T> set, final Function<T, String> function) {
+    return new TreeSet<>(set).stream()
+        .map(function)
+        .collect(Collectors.joining(","));
   }
 
   /**
-   * Helper method to get {@link Set} types, handles conversion from CSV with provided function. Ordering of
-   * returned set element does not reflect CSV ordering, elements are (re)sorted by their natural ordering.
+   * Convert a CSV formatted string into a set using given mapping function.
+   *
+   * Ordering of returned set element does not reflect CSV ordering, elements are (re)sorted by their natural ordering.
    */
-  public static <T extends Comparable<T>> Set<T> csvToSet(String value, final Function<String, T> func) {
-    return Sets.newTreeSet(Collections2.transform(Splitter.on(',').splitToList(value), func));
+  public static <T extends Comparable<T>> Set<T> csvToSet(final String csv, final Function<String, T> function) {
+    return Splitter.on(',').splitToList(csv).stream()
+        .map(function)
+        .collect(Collectors.toCollection(TreeSet::new));
   }
 }

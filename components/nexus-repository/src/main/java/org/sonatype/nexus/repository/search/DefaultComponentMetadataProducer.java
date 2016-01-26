@@ -27,12 +27,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_CONTENT_TYPE;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_FORMAT;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_GROUP;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_VERSION;
 
 /**
  * Default {@link ComponentMetadataProducer} implementation that uses all properties of a component & its assets as
@@ -46,25 +40,39 @@ public class DefaultComponentMetadataProducer
     implements ComponentMetadataProducer
 {
 
+  public static final String ATTRIBUTES = "attributes";
+
+  public static final String CONTENT_TYPE = "content_type";
+
+  public static final String FORMAT = "format";
+
+  public static final String NAME = "name";
+
+  public static final String GROUP = "group";
+
+  public static final String REPOSITORY_NAME = "repository_name";
+
+  public static final String VERSION = "version";
+
   @Override
   public String getMetadata(final Component component, final Iterable<Asset> assets,
-      final Map<String, Object> additional)
+                            final Map<String, Object> additional)
   {
     checkNotNull(component);
 
     Map<String, Object> metadata = Maps.newHashMap();
-    put(metadata, P_FORMAT, component.format());
-    put(metadata, P_GROUP, component.group());
-    put(metadata, P_NAME, component.name());
-    put(metadata, P_VERSION, component.version());
-    put(metadata, P_ATTRIBUTES, component.attributes().backing());
+    put(metadata, FORMAT, component.format());
+    put(metadata, GROUP, component.group());
+    put(metadata, NAME, component.name());
+    put(metadata, VERSION, component.version());
+    put(metadata, ATTRIBUTES, component.attributes().backing());
 
     List<Map<String, Object>> allAssetMetadata = Lists.newArrayList();
     for (Asset asset : assets) {
       Map<String, Object> assetMetadata = Maps.newHashMap();
-      put(assetMetadata, P_NAME, asset.name());
-      put(assetMetadata, P_CONTENT_TYPE, asset.contentType());
-      put(assetMetadata, P_ATTRIBUTES, asset.attributes().backing());
+      put(assetMetadata, NAME, asset.name());
+      put(assetMetadata, CONTENT_TYPE, asset.contentType());
+      put(assetMetadata, ATTRIBUTES, asset.attributes().backing());
 
       allAssetMetadata.add(assetMetadata);
     }

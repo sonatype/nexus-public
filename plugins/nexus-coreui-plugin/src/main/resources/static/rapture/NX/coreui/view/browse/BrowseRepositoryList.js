@@ -24,61 +24,59 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-browse-repository-list'
-  },
-
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconNamePrefix: 'repository-',
-      dataIndex: 'type'
-    },
-    {
-      text: NX.I18n.get('Browse_BrowseRepositoryList_Name_Column'),
-      dataIndex: 'name',
-      stateId: 'name',
-      flex: 1
-    },
-    {
-      text: NX.I18n.get('Browse_BrowseRepositoryList_Type_Column'),
-      dataIndex: 'type',
-      stateId: 'type'
-    },
-    {
-      text: NX.I18n.get('Browse_BrowseRepositoryList_Format_Column'),
-      dataIndex: 'format',
-      stateId: 'format'
-    }
-  ],
-
-  viewConfig: {
-    emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_View'),
-    deferEmptyText: false,
-    markDirty: false
-  },
-
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless'
-  }],
-
-  plugins: [
-    {
-      ptype: 'gridfilterbox',
-      emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_Filter')
-    }
-  ],
+  stateful: true,
+  stateId: 'nx-coreui-browse-repository-list',
 
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.columns = [
+      {
+        xtype: 'nx-iconcolumn',
+        width: 36,
+        iconVariant: 'x16',
+        iconNamePrefix: 'repository-',
+        dataIndex: 'type'
+      },
+      {
+        text: NX.I18n.get('Browse_BrowseRepositoryList_Name_Column'),
+        dataIndex: 'name',
+        stateId: 'name',
+        flex: 1
+      },
+      {
+        text: NX.I18n.get('Browse_BrowseRepositoryList_Type_Column'),
+        dataIndex: 'type',
+        stateId: 'type'
+      },
+      {
+        text: NX.I18n.get('Browse_BrowseRepositoryList_Format_Column'),
+        dataIndex: 'format',
+        stateId: 'format'
+      }
+    ];
+
+    me.viewConfig = {
+      emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_View'),
+      deferEmptyText: false,
+      markDirty: false
+    };
+
+    me.dockedItems = [{
+      xtype: 'toolbar',
+      dock: 'top',
+      cls: 'nx-actions nx-borderless'
+    }];
+
+    me.plugins = [
+      {
+        ptype: 'gridfilterbox',
+        emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_Filter')
+      }
+    ];
 
     me.store = Ext.create('NX.coreui.store.RepositoryReference', { remoteFilter: true });
     me.store.addFilter([

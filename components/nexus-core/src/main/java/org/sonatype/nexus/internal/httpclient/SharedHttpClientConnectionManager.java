@@ -45,7 +45,6 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
  */
 @Named("shared")
 @Singleton
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public class SharedHttpClientConnectionManager
     extends PoolingHttpClientConnectionManager
     implements Lifecycle

@@ -28,16 +28,16 @@ import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.cache.RepositoryCacheUtils
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.negativecache.NegativeCacheFacet
-import org.sonatype.nexus.repository.proxy.ProxyFacet
-import org.sonatype.nexus.repository.search.tasks.RebuildIndexTask
+import org.sonatype.nexus.repository.search.RebuildIndexTask
+import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
+import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
@@ -79,6 +79,9 @@ class RepositoryComponent
 
   @Inject
   GlobalComponentLookupHelper typeLookup
+
+  @Inject
+  ProxyType proxyType
 
   @DirectMethod
   List<RepositoryXO> read() {
@@ -161,7 +164,9 @@ class RepositoryComponent
   String rebuildIndex(final @NotEmpty String name) {
     Repository repository = repositoryManager.get(name)
     securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
-    TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(RebuildIndexTask.class)
+    TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(
+        RebuildIndexTaskDescriptor.TYPE_ID
+    )
     taskConfiguration.setString(RebuildIndexTask.REPOSITORY_NAME_FIELD_ID, repository.name)
     TaskInfo taskInfo = taskScheduler.submit(taskConfiguration)
     return taskInfo.id
@@ -170,21 +175,10 @@ class RepositoryComponent
   @DirectMethod
   @RequiresAuthentication
   @Validate
-  void invalidateProxyCache(final @NotEmpty String name) {
+  void invalidateCache(final @NotEmpty String name) {
     Repository repository = repositoryManager.get(name)
     securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
-    ProxyFacet proxyFacet = repository.facet(ProxyFacet)
-    proxyFacet.invalidateProxyCaches()
-  }
-
-  @DirectMethod
-  @RequiresAuthentication
-  @Validate
-  void invalidateNegativeCache(final @NotEmpty String name) {
-    Repository repository = repositoryManager.get(name)
-    securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
-    NegativeCacheFacet negativeCacheFacet = repository.facet(NegativeCacheFacet)
-    negativeCacheFacet.invalidate()
+    RepositoryCacheUtils.invalidateCaches(repository)
   }
 
   RepositoryXO asRepository(Repository input) {
@@ -206,29 +200,24 @@ class RepositoryComponent
     browse().collect { Repository repository -> buildStatus(repository) }
   }
 
-  RepositoryStatusXO buildStatus(Repository input) {
-    RepositoryStatusXO statusXO = new RepositoryStatusXO(repositoryName: input.name,
-        online: input.configuration.online)
+  RepositoryStatusXO buildStatus(Repository repository) {
+    RepositoryStatusXO statusXO = new RepositoryStatusXO(
+        repositoryName: repository.name,
+        online: repository.configuration.online
+    )
 
-    try {
-      if (input.facet(GroupFacet)) {
-        //TODO - should we try to aggregate status from group members?
-        return statusXO
+    //TODO - should we try to aggregate status from group members?
+    if (proxyType == repository.type) {
+      try {
+        def remoteStatus = repository.facet(HttpClientFacet).status
+        statusXO.description = remoteStatus.description
+        if (remoteStatus.reason) {
+          statusXO.reason = remoteStatus.reason
+        }
       }
-    }
-    catch (MissingFacetException e) {
-      // no group, can refine status
-    }
-
-    try {
-      def remoteStatus = input.facet(HttpClientFacet).status
-      statusXO.description = remoteStatus.description
-      if (remoteStatus.reason) {
-        statusXO.reason = remoteStatus.reason
+      catch (MissingFacetException e) {
+        // no http client facet (usually on proxies), no remote status
       }
-    }
-    catch (MissingFacetException e) {
-      // no proxy, no remote status
     }
     return statusXO
   }

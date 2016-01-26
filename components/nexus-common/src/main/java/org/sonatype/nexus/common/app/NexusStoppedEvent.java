@@ -13,9 +13,7 @@
 package org.sonatype.nexus.common.app;
 
 /**
- * The event that is occured when nexus has been stopped (fired as first step of shutdown process).
- *
- * @author cstamas
+ * Event fired when the application has stopped.
  */
 public class NexusStoppedEvent
     extends NexusStateChangeEvent

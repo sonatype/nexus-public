@@ -69,7 +69,7 @@ public class GroupHandler
 
   @Nonnull
   @Override
-  public Response handle(final @Nonnull Context context) throws Exception {
+  public Response handle(@Nonnull final Context context) throws Exception {
     final String method = context.getRequest().getAction();
     switch (method) {
       case GET:
@@ -87,8 +87,8 @@ public class GroupHandler
   /**
    * Method that actually performs group GET. Override if needed.
    */
-  protected Response doGet(final @Nonnull Context context,
-                           final @Nonnull DispatchedRepositories dispatched)
+  protected Response doGet(@Nonnull final Context context,
+                           @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
     final GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
@@ -99,9 +99,9 @@ public class GroupHandler
    * Returns the first OK response from member repositories or {@link HttpResponses#notFound()} if none of the members
    * responded with OK.
    */
-  protected Response getFirst(final @Nonnull Context context,
-                              final @Nonnull List<Repository> members,
-                              final @Nonnull DispatchedRepositories dispatched)
+  protected Response getFirst(@Nonnull final Context context,
+                              @Nonnull final List<Repository> members,
+                              @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
     final Request request = context.getRequest();
@@ -127,9 +127,9 @@ public class GroupHandler
   /**
    * Returns all responses from all members as a linked map, where order is group member order.
    */
-  protected LinkedHashMap<Repository, Response> getAll(final @Nonnull Context context,
-                                                       final @Nonnull Iterable<Repository> members,
-                                                       final @Nonnull DispatchedRepositories dispatched)
+  protected LinkedHashMap<Repository, Response> getAll(@Nonnull final Context context,
+                                                       @Nonnull final Iterable<Repository> members,
+                                                       @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
     final Request request = context.getRequest();

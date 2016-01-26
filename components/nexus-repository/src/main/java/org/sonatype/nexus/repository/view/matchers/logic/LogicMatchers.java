@@ -26,7 +26,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class LogicMatchers
 {
-  private LogicMatchers() {}
+  private LogicMatchers() {
+    // empty
+  }
 
   public static Matcher and(final Matcher... matchers) {
     checkNotNull(matchers);

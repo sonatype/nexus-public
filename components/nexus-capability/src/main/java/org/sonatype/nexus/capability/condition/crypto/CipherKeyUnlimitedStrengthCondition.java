@@ -37,7 +37,7 @@ public class CipherKeyUnlimitedStrengthCondition
    */
   public static final int MIN_BITS = Integer.MAX_VALUE;
 
-  private static interface Messages
+  private interface Messages
       extends MessageBundle
   {
     @DefaultMessage("JVM supports unlimited-strength '%s' cipher keys")
@@ -99,6 +99,7 @@ public class CipherKeyUnlimitedStrengthCondition
       }
     }
     catch (NoSuchAlgorithmException e) {
+      log.trace("Verify failure", e);
       setSatisfied(false);
     }
   }

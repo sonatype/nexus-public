@@ -15,14 +15,13 @@ package org.sonatype.nexus.orient.entity;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Entity;
-import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.orient.entity.action.BrowseEntitiesAction;
+import org.sonatype.nexus.orient.entity.action.CountDocumentsAction;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByIdAction;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Iterable records entity-adapter.
@@ -37,17 +36,9 @@ public abstract class IterableEntityAdapter<T extends Entity>
   }
 
   /**
-   * Return number of entities.
+   * Transform documents into entities.
    */
-  public long count(final ODatabaseDocumentTx db) {
-    checkNotNull(db);
-    return db.countClass(getTypeName());
-  }
-
-  /**
-   * Helper to iterate over set of documents and transform into entities.
-   */
-  protected Iterable<T> transform(final Iterable<ODocument> documents) {
+  public Iterable<T> transform(final Iterable<ODocument> documents) {
     return Iterables.transform(documents, new Function<ODocument, T>()
     {
       @Nullable
@@ -58,42 +49,13 @@ public abstract class IterableEntityAdapter<T extends Entity>
     });
   }
 
-  /**
-   * Browse all entities.
-   */
-  public Iterable<T> browse(final ODatabaseDocumentTx db) {
-    return transform(browseDocuments(db));
-  }
+  //
+  // Actions
+  //
 
-  /**
-   * Read entity.
-   */
-  @Nullable
-  public T read(final ODatabaseDocumentTx db, final EntityId id) {
-    checkNotNull(db);
-    checkNotNull(id);
-    ODocument doc = document(db, id);
-    return doc != null ? readEntity(doc) : null;
-  }
+  public final ReadEntityByIdAction<T> read = new ReadEntityByIdAction<>(this);
 
-  /**
-   * Edit entity.
-   */
-  public void edit(final ODatabaseDocumentTx db, final T entity) {
-    super.editEntity(db, entity);
-  }
+  public final BrowseEntitiesAction<T> browse = new BrowseEntitiesAction<>(this);
 
-  /**
-   * Add entity.
-   */
-  public void add(final ODatabaseDocumentTx db, final T entity) {
-    super.addEntity(db, entity);
-  }
-
-  /**
-   * Delete entity.
-   */
-  public void delete(final ODatabaseDocumentTx db, final T entity) {
-    super.deleteEntity(db, entity);
-  }
+  public final CountDocumentsAction count = new CountDocumentsAction(this);
 }

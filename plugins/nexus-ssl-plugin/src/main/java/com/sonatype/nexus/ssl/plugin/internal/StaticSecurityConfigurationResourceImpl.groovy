@@ -34,7 +34,7 @@ class StaticSecurityConfigurationResourceImpl
     return new MemorySecurityConfiguration(
         privileges: [
             new CPrivilege(
-                id: 'ssl-truststore-all',
+                id: 'nx-ssl-truststore-all',
                 description: 'All permissions for SSL Truststore',
                 type: 'application',
                 properties: [
@@ -43,7 +43,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'ssl-truststore-read',
+                id: 'nx-ssl-truststore-read',
                 description: 'Read permission for SSL Truststore',
                 type: 'application',
                 properties: [
@@ -52,7 +52,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'ssl-truststore-create',
+                id: 'nx-ssl-truststore-create',
                 description: 'Create permission for SSL Truststore',
                 type: 'application',
                 properties: [
@@ -61,7 +61,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'ssl-truststore-update',
+                id: 'nx-ssl-truststore-update',
                 description: 'Update permission for SSL Truststore',
                 type: 'application',
                 properties: [
@@ -70,7 +70,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'ssl-truststore-delete',
+                id: 'nx-ssl-truststore-delete',
                 description: 'Delete permission for SSL Truststore',
                 type: 'application',
                 properties: [

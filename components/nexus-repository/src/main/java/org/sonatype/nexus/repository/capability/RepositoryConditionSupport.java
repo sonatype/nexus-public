@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Support class for repository conditions.
  *
- * @since capabilities 2.0
+ * @since 3.0
  */
 public abstract class RepositoryConditionSupport
     extends ConditionSupport

@@ -21,6 +21,10 @@ import javax.validation.ConstraintViolationException;
  */
 public class Responses
 {
+  private Responses() {
+    // empty
+  }
+
   public static Response<Object> success() {
     return success(null);
   }

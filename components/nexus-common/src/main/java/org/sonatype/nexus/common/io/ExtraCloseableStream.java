@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * A decorator that gives an InputStream the ability to close an additional {@link Closeable} resource when the
+ * A decorator that gives an {@link InputStream} the ability to close an additional {@link Closeable} resource when the
  * InputStream is closed.
  *
  * @since 3.0

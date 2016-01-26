@@ -313,7 +313,7 @@ public class FilteredHttpClient
     return delegate.toString();
   }
 
-  private static interface Filterable<T>
+  private interface Filterable<T>
   {
     T call() throws IOException;
   }

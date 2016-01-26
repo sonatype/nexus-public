@@ -23,27 +23,37 @@ Ext.define('NX.view.header.AdminMode', {
   requires: [
     'NX.I18n'
   ],
-  ui: 'nx-header',
-  cls: 'nx-modebutton',
-  scale: 'medium',
-  height: 39,
-  width: 39,
 
   /**
-   * @cfg mode Mode name
+   * @override
    */
-  mode: 'admin',
-  toggleGroup: 'mode',
-  allowDepress: false,
+  initComponent: function() {
+    Ext.apply(this, {
+      ui: 'nx-header',
+      cls: 'nx-modebutton',
+      scale: 'medium',
+      height: 39,
+      width: 39,
 
-  /**
-   * @cfg autoHide If button should auto hide when no features are available for selected mode
-   */
-  autoHide: true,
+      /**
+       * @cfg mode Mode name
+       */
+      mode: 'admin',
+      toggleGroup: 'mode',
+      allowDepress: false,
 
-  title: NX.I18n.get('Header_AdminMode_Title'),
-  tooltip: NX.I18n.get('Header_AdminMode_Tooltip'),
-  glyph: 'xf013@FontAwesome', /* fa-gear */
+      /**
+       * @cfg autoHide If button should auto hide when no features are available for selected mode
+       */
+      autoHide: true,
 
-  collapseMenu: false
+      title: NX.I18n.get('Header_AdminMode_Title'),
+      tooltip: NX.I18n.get('Header_AdminMode_Tooltip'),
+      glyph: 'xf013@FontAwesome', /* fa-gear */
+
+      collapseMenu: false
+    });
+
+    this.callParent();
+  }
 });

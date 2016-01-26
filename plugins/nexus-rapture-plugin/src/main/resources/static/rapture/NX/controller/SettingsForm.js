@@ -222,7 +222,7 @@ Ext.define('NX.controller.SettingsForm', {
             bindable.enable();
           }
           else {
-            bindable.disable()
+            bindable.disable();
           }
         });
       });

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.repository.config.Configuration;
@@ -108,6 +110,12 @@ public interface Repository
    */
   @Nonnull
   <T extends Facet> T facet(Class<T> type) throws MissingFacetException;
+
+  /**
+   * Returns an {@link Optional} facet instance for the given type.
+   */
+  @Nonnull
+  <T extends Facet> Optional<T> optionalFacet(Class<T> type);
 
   /**
    * Returns the URL for the root of the repository, without its trailing slash.

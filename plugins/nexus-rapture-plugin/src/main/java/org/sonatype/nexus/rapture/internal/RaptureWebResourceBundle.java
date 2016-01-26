@@ -90,13 +90,11 @@ public class RaptureWebResourceBundle
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
 
-    // HACK: bring back logging to help sort out why dynamic collection isn't including the impl from this plugin
     log.info("UI plugin descriptors:");
     for (UiPluginDescriptor descriptor : pluginDescriptors) {
       log.info("  {}", descriptor.getPluginId());
     }
 
-    // FIXME: Should be updated to use Jackson?
     gson = new GsonBuilder().setPrettyPrinting().create();
   }
 
@@ -132,7 +130,7 @@ public class RaptureWebResourceBundle
      */
     public String fileName(final URI uri) {
       String path = uri.getPath();
-      int i = path.lastIndexOf("/");
+      int i = path.lastIndexOf('/');
       return path.substring(i + 1, path.length());
     }
   }

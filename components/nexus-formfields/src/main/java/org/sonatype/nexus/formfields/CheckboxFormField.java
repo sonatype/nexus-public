@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.formfields;
 
+/**
+ * Checkbox field.
+ */
 public class CheckboxFormField
     extends AbstractFormField<Boolean>
 {
@@ -31,5 +34,4 @@ public class CheckboxFormField
     setInitialValue(initialValue);
     return this;
   }
-
 }

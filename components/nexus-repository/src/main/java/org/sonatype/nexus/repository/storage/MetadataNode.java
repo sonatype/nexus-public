@@ -22,11 +22,11 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_FORMAT;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_LAST_UPDATED;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_NAME;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_FORMAT;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_LAST_UPDATED;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Wraps an {@code ODocument} to provide a simpler API for working with stored component and asset metadata.

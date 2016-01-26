@@ -29,6 +29,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class NodeIdEncoding
 {
+  private NodeIdEncoding() {
+    // empty
+  }
+
   /**
    * Encode plain Certificate SHA1 into node-id string.
    */

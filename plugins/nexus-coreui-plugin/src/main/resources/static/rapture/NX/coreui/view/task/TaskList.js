@@ -24,53 +24,59 @@ Ext.define('NX.coreui.view.task.TaskList', {
     'NX.I18n'
   ],
 
-  config: {
-    stateful: true,
-    stateId: 'nx-coreui-task-list'
-  },
+  stateful: true,
+  stateId: 'nx-coreui-task-list',
 
-  store: 'Task',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      store: 'Task',
 
-  columns: [
-    {
-      xtype: 'nx-iconcolumn',
-      width: 36,
-      iconVariant: 'x16',
-      iconName: function () {
-        return 'task-default';
-      }
-    },
-    { header: NX.I18n.get('Task_TaskList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1 },
-    { header: NX.I18n.get('Task_TaskList_Type_Header'), dataIndex: 'typeName', stateId: 'typeName', flex: 1 },
-    { header: NX.I18n.get('Task_TaskList_Status_Header'), dataIndex: 'statusDescription', stateId: 'statusDescription' },
-    { header: NX.I18n.get('Task_TaskList_Schedule_Header'), dataIndex: 'schedule', stateId: 'schedule' },
-    { header: NX.I18n.get('Task_TaskList_NextRun_Header'), dataIndex: 'nextRun', stateId: 'nextRun', flex: 1 },
-    { header: NX.I18n.get('Task_TaskList_LastRun_Header'), dataIndex: 'lastRun', stateId: 'lastRun', flex: 1 },
-    { header: NX.I18n.get('Task_TaskList_LastResult_Header'), dataIndex: 'lastRunResult', stateId: 'lastRunResult' }
-  ],
+      columns: [
+        {
+          xtype: 'nx-iconcolumn',
+          width: 36,
+          iconVariant: 'x16',
+          iconName: function () {
+            return 'task-default';
+          }
+        },
+        { header: NX.I18n.get('Task_TaskList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1 },
+        { header: NX.I18n.get('Task_TaskList_Type_Header'), dataIndex: 'typeName', stateId: 'typeName', flex: 1 },
+        { header: NX.I18n.get('Task_TaskList_Status_Header'), dataIndex: 'statusDescription', stateId: 'statusDescription' },
+        { header: NX.I18n.get('Task_TaskList_Schedule_Header'), dataIndex: 'schedule', stateId: 'schedule' },
+        { header: NX.I18n.get('Task_TaskList_NextRun_Header'), dataIndex: 'nextRun', stateId: 'nextRun', flex: 1 },
+        { header: NX.I18n.get('Task_TaskList_LastRun_Header'), dataIndex: 'lastRun', stateId: 'lastRun', flex: 1 },
+        { header: NX.I18n.get('Task_TaskList_LastResult_Header'), dataIndex: 'lastRunResult', stateId: 'lastRunResult' }
+      ],
 
-  viewConfig: {
-    emptyText: NX.I18n.get('Task_TaskList_EmptyState'),
-    deferEmptyText: false
-  },
+      viewConfig: {
+        emptyText: NX.I18n.get('Task_TaskList_EmptyState'),
+        deferEmptyText: false
+      },
 
-  dockedItems: [{
-    xtype: 'toolbar',
-    dock: 'top',
-    cls: 'nx-actions nx-borderless',
-    items: [
-      {
-        xtype: 'button',
-        text: NX.I18n.get('Task_TaskList_New_Button'),
-        glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
-        action: 'new',
-        disabled: true
-      }
-    ]
-  }],
+      dockedItems: [{
+        xtype: 'toolbar',
+        dock: 'top',
+        cls: 'nx-actions nx-borderless',
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Task_TaskList_New_Button'),
+            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            action: 'new',
+            disabled: true
+          }
+        ]
+      }],
 
-  plugins: [
-    { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Task_TaskList_Filter_EmptyState') }
-  ]
+      plugins: [
+        { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Task_TaskList_Filter_EmptyState') }
+      ]
+    });
 
+    this.callParent();
+  }
 });

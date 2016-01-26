@@ -115,10 +115,9 @@ Ext.define('NX.controller.Icon', {
     style += 'background: url(' + icon.url + ') no-repeat center center !important;';
     style += 'height: ' + icon.height + 'px;';
     style += 'width: ' + icon.width + 'px;';
-    style += 'vertical-align: middle;';  // needed to get iconCls lined up in trees when height/width is set
+    // needed to get iconCls lined up in trees when height/width is set
+    style += 'vertical-align: middle;';
     style += '}';
-
-    // TODO: Consider adding *additional* plain style w/o height/width/etc on it?
 
     return style;
   },
@@ -220,11 +219,14 @@ Ext.define('NX.controller.Icon', {
         // if icon has a variant match that too
         if (variant) {
           if (variant === record.get('variant')) {
-            return true; // match
+            // match
+            return true;
           }
         }
       }
-      return false; // no match
+
+      // no match
+      return false;
     });
 
     if (recordId === -1) {

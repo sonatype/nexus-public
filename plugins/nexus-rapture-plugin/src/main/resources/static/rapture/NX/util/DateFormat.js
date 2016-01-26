@@ -29,18 +29,27 @@ Ext.define('NX.util.DateFormat', {
    */
   defaultPatterns: {
     date: {
-      'short': 'Y-M-d',       // 2013-Mar-06
-      'long': 'l, F d, Y'     // Wednesday, March 06, 2013
+      // 2013-Mar-06
+      'short': 'Y-M-d',
+
+      // Wednesday, March 06, 2013
+      'long': 'l, F d, Y'
     },
 
     time: {
-      'short': 'H:i:s',                   // 15:49:57
-      'long': 'H:i:s T (\\G\\M\\TO)'      // 15:49:57-0700 PST (GMT-0700)
+      // 15:49:57
+      'short': 'H:i:s',
+
+      // 15:49:57-0700 PST (GMT-0700)
+      'long': 'H:i:s T (\\G\\M\\TO)'
     },
 
     datetime: {
-      'short': 'Y-M-d H:i:s',                     // 2013-Mar-06 15:49:57
-      'long': 'l, F d, Y H:i:s T (\\G\\M\\TO)'    // Wednesday, March 06, 2013 15:50:19 PDT (GMT-0700)
+      // 2013-Mar-06 15:49:57
+      'short': 'Y-M-d H:i:s',
+
+      // Wednesday, March 06, 2013 15:50:19 PDT (GMT-0700)
+      'long': 'l, F d, Y H:i:s T (\\G\\M\\TO)'
     }
   },
 

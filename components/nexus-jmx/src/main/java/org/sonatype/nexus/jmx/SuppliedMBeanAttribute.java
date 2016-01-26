@@ -124,7 +124,7 @@ public class SuppliedMBeanAttribute
       return this;
     }
 
-    public Builder value(final @Nullable Object value) {
+    public Builder value(@Nullable final Object value) {
       this.supplier = Suppliers.ofInstance(value);
 
       // auto-set type if we can

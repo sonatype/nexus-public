@@ -24,16 +24,6 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupLoginCredentials', {
     'NX.Icons',
     'NX.I18n'
   ],
-  ui: 'nx-inset',
-
-  title: NX.I18n.get('Ldap_LdapServerUserAndGroupLoginCredentials_Title'),
-
-  layout: 'fit',
-  autoShow: true,
-  modal: true,
-  constrain: true,
-  width: 360,
-  defaultFocus: 'username',
 
   /**
    * @protected
@@ -45,7 +35,15 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupLoginCredentials', {
       me.message = NX.I18n.get('Ldap_LdapServerUserAndGroupLoginCredentials_Text');
     }
 
-    Ext.apply(this, {
+    Ext.apply(me, {
+      ui: 'nx-inset',
+      title: NX.I18n.get('Ldap_LdapServerUserAndGroupLoginCredentials_Title'),
+      layout: 'fit',
+      autoShow: true,
+      modal: true,
+      constrain: true,
+      width: 360,
+      defaultFocus: 'username',
       items: {
         xtype: 'form',
         defaultType: 'textfield',

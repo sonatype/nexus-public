@@ -45,7 +45,7 @@ public class ConfigurationStoreImpl
   private final ConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public ConfigurationStoreImpl(final @Named("config") Provider<DatabaseInstance> databaseInstance,
+  public ConfigurationStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
                                 final ConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
@@ -67,7 +67,7 @@ public class ConfigurationStoreImpl
   @Guarded(by = STARTED)
   public List<Configuration> list() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return Lists.newArrayList(entityAdapter.browse(db));
+      return Lists.newArrayList(entityAdapter.browse.execute(db));
     }
   }
 
@@ -77,7 +77,7 @@ public class ConfigurationStoreImpl
     checkNotNull(configuration);
 
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.add(db, configuration);
+      entityAdapter.addEntity(db, configuration);
     }
   }
 
@@ -87,7 +87,7 @@ public class ConfigurationStoreImpl
     checkNotNull(configuration);
 
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.edit(db, configuration);
+      entityAdapter.editEntity(db, configuration);
     }
   }
 
@@ -97,7 +97,7 @@ public class ConfigurationStoreImpl
     checkNotNull(configuration);
 
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.delete(db, configuration);
+      entityAdapter.deleteEntity(db, configuration);
     }
   }
 }

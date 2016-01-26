@@ -28,8 +28,9 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
    * model to display
    */
   assetModel: null,
-
-  title: 'Attributes',
+  viewConfig: {
+    enableTextSelection: true
+  },
   ui: 'nx-subsection',
   frame: true,
   bodyBorder: false,
@@ -85,7 +86,7 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
     Ext.iterate(me.assetModel.get('attributes'), function(facet, facetValues) {
       Ext.iterate(facetValues, function(key, value) {
         store.add({facet: facet, label: key, value: Ext.isObject(value) ? Ext.encode(value) : value});
-      })
+      });
     });
   }
 });

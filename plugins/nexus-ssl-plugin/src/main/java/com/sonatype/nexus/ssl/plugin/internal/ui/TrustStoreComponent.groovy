@@ -22,7 +22,7 @@ import javax.naming.ldap.LdapName
 import javax.naming.ldap.Rdn
 
 import com.sonatype.nexus.ssl.plugin.PemCertificate
-import com.sonatype.nexus.ssl.plugin.TrustStore
+import org.sonatype.nexus.ssl.TrustStore
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport

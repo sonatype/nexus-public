@@ -38,7 +38,7 @@ class StaticSecurityConfigurationResourceImpl
             //
 
             new CPrivilege(
-                id: 'repository-view-*-*-*',
+                id: 'nx-repository-view-*-*-*',
                 description: 'All permissions for all repository view',
                 type: 'repository-view',
                 properties: [
@@ -48,7 +48,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'repository-view-*-*-browse',
+                id: 'nx-repository-view-*-*-browse',
                 description: 'Browse permission for all repository view',
                 type: 'repository-view',
                 properties: [
@@ -58,7 +58,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'repository-view-*-*-read',
+                id: 'nx-repository-view-*-*-read',
                 description: 'Read permission for all repository view',
                 type: 'repository-view',
                 properties: [
@@ -68,7 +68,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'repository-view-*-*-edit',
+                id: 'nx-repository-view-*-*-edit',
                 description: 'Edit permission for all repository view',
                 type: 'repository-view',
                 properties: [
@@ -78,7 +78,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'repository-view-*-*-add',
+                id: 'nx-repository-view-*-*-add',
                 description: 'Add permission for all repository view',
                 type: 'repository-view',
                 properties: [
@@ -88,7 +88,7 @@ class StaticSecurityConfigurationResourceImpl
                 ]
             ),
             new CPrivilege(
-                id: 'repository-view-*-*-delete',
+                id: 'nx-repository-view-*-*-delete',
                 description: 'Delete permission for all repository view',
                 type: 'repository-view',
                 properties: [

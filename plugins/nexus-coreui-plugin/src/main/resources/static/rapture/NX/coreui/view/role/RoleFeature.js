@@ -24,17 +24,26 @@ Ext.define('NX.coreui.view.role.RoleFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'role-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'role-default',
 
-  masters: [
-    { xtype: 'nx-coreui-role-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-role-list' }
+      ],
 
-  tabs: [
-    { xtype: 'nx-coreui-role-settings', title: NX.I18n.get('Role_RoleFeature_Settings_Title'), weight: 10 }
-  ],
+      tabs: [
+        { xtype: 'nx-coreui-role-settings', title: NX.I18n.get('Role_RoleFeature_Settings_Title'), weight: 10 }
+      ],
 
-  actions: [
-    { xtype: 'button', text: NX.I18n.get('Role_RoleFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
-  ]
+      actions: [
+        { xtype: 'button', text: NX.I18n.get('Role_RoleFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

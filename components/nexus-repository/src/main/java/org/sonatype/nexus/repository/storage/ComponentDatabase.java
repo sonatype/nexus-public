@@ -29,6 +29,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class ComponentDatabase
 {
+  private ComponentDatabase() {
+    // empty
+  }
+
   public static final String NAME = "component";
 
   /**

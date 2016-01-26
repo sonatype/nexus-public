@@ -53,7 +53,10 @@ public class MutableDynamicSecurityConfigurationResource
     }
   }
 
-  public static interface Mutator
+  /**
+   * Exposes ability to mutate {@link SecurityConfiguration}.
+   */
+  public interface Mutator
   {
     void apply(SecurityConfiguration model);
   }

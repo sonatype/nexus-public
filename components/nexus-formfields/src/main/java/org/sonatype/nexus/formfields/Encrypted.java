@@ -19,5 +19,5 @@ package org.sonatype.nexus.formfields;
  */
 public interface Encrypted
 {
-
+  // empty
 }

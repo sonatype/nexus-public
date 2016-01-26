@@ -41,5 +41,7 @@ public class HostedType
     return ValidationGroup.class;
   }
 
-  public static interface ValidationGroup {}
+  public interface ValidationGroup {
+    // empty
+  }
 }

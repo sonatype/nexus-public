@@ -20,7 +20,6 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -33,7 +32,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.storage.StorageFacet.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * Tests {@link Content}.
@@ -45,7 +45,7 @@ public class ContentTest
 
   private NestedAttributesMap nestedAttributesMap() {
     NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
-    attributes.child(StorageFacet.P_CHECKSUM).set(
+    attributes.child(CHECKSUM).set(
         HashAlgorithm.SHA1.name(),
         HashAlgorithm.SHA1.function().hashString("foobar", Charsets.UTF_8).toString()
     );
@@ -68,7 +68,7 @@ public class ContentTest
   public void lastModifiedOnlyExtract() {
     final DateTime now = DateTime.now();
     final NestedAttributesMap attributes = nestedAttributesMap();
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_LAST_MODIFIED, now.toDate());
+    attributes.child(Content.CONTENT).set(Content.P_LAST_MODIFIED, now.toDate());
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     AttributesMap contentAttributes = new AttributesMap();
@@ -82,7 +82,7 @@ public class ContentTest
   public void etagOnlyExtract() {
     final String etag = "foo-bar";
     final NestedAttributesMap attributes = nestedAttributesMap();
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_ETAG, etag);
+    attributes.child(Content.CONTENT).set(Content.P_ETAG, etag);
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     AttributesMap contentAttributes = new AttributesMap();
@@ -97,8 +97,8 @@ public class ContentTest
     final DateTime now = DateTime.now();
     final String etag = "foo-bar";
     final NestedAttributesMap attributes = nestedAttributesMap();
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_LAST_MODIFIED, now.toDate());
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_ETAG, etag);
+    attributes.child(Content.CONTENT).set(Content.P_LAST_MODIFIED, now.toDate());
+    attributes.child(Content.CONTENT).set(Content.P_ETAG, etag);
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     AttributesMap contentAttributes = new AttributesMap();
@@ -113,17 +113,17 @@ public class ContentTest
     final DateTime now = DateTime.now();
     final String etag = "foo-bar";
     final NestedAttributesMap attributes = nestedAttributesMap();
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_LAST_MODIFIED, now.toDate());
-    attributes.child(Content.P_CONTENT_ATTRIBUTES).set(Content.P_ETAG, etag);
+    attributes.child(Content.CONTENT).set(Content.P_LAST_MODIFIED, now.toDate());
+    attributes.child(Content.CONTENT).set(Content.P_ETAG, etag);
     Asset asset = mock(Asset.class);
     when(asset.attributes()).thenReturn(attributes);
     AttributesMap contentAttributes = new AttributesMap();
     contentAttributes.set(Content.CONTENT_LAST_MODIFIED, now);
     contentAttributes.set(Content.CONTENT_ETAG, etag);
     Content.applyToAsset(asset, contentAttributes);
-    assertThat(asset.attributes().child(Content.P_CONTENT_ATTRIBUTES).get(Content.P_LAST_MODIFIED, Date.class),
+    assertThat(asset.attributes().child(Content.CONTENT).get(Content.P_LAST_MODIFIED, Date.class),
         equalTo(now.toDate()));
-    assertThat(asset.attributes().child(Content.P_CONTENT_ATTRIBUTES).get(Content.P_ETAG, String.class), equalTo(
+    assertThat(asset.attributes().child(Content.CONTENT).get(Content.P_ETAG, String.class), equalTo(
         etag));
   }
 }

@@ -30,19 +30,18 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>karaf-nexus-branding</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-main</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <!--
-    Karaf features
+    Framework/startup features (compile-scope)
     -->
     <dependency>
       <groupId>org.apache.karaf.features</groupId>
       <artifactId>framework</artifactId>
       <type>kar</type>
-      <scope>compile</scope>
     </dependency>
 
     <dependency>
@@ -50,15 +49,21 @@
       <artifactId>standard</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
-      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.assemblies</groupId>
+      <artifactId>nexus-system-feature</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
     </dependency>
 
     <!--
-    Nexus features
+    Installed features (runtime-scope)
     -->
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-boot-feature</artifactId>
+      <artifactId>nexus-jetty-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -94,7 +99,6 @@
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-community</artifactId>
-      <classifier>distribution</classifier>
       <type>zip</type>
       <scope>runtime</scope>
       <exclusions>
@@ -124,6 +128,13 @@
                   // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
                   project.properties['mvn:'+v.artifactId]='mvn\:'+v.groupId+'/'+v.artifactId+'/'+v.baseVersion
                 }
+
+                // workaround https://issues.apache.org/jira/browse/KARAF-4288
+                def settingsFile = session.request.userSettingsFile
+                if (settingsFile?.isFile()) {
+                  // pass custom settings file to pax-url as karaf-maven-plugin may need it to fetch content
+                  System.setProperty('org.ops4j.pax.url.mvn.settings', session.request.userSettingsFile.path)
+                }
               </source>
             </configuration>
           </execution>
@@ -142,7 +153,11 @@
             </goals>
             <configuration>
               <target>
-                <!-- install some custom lib/ jar -->
+                <!-- install additional boot jars -->
+                <copy file="${org.sonatype.nexus:nexus-main:jar}"
+                      tofile="${project.build.directory}/assembly/lib/boot/nexus-main.jar"/>
+
+                <!-- install additional framework jars -->
                 <copy file="${javax.annotation:javax.annotation-api:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${com.google.code.findbugs:jsr305:jar}"
@@ -153,18 +168,17 @@
                       todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${org.bouncycastle:bcpg-jdk15on:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
-                <copy file="${org.sonatype.nexus.assemblies:karaf-nexus-branding:jar}"
-                      tofile="${project.build.directory}/assembly/lib/karaf-nexus-branding.jar"/>
 
+                <!-- delete some cruft which karaf includes by default -->
                 <delete>
                   <fileset dir="${project.build.directory}/assembly">
-                    <!-- delete some cruft which karaf includes by default -->
                     <include name="bin/*"/>
                     <include name="**/README"/>
                     <include name="etc/all.policy"/>
                     <include name="etc/distribution.info"/>
                     <include name="etc/equinox-debug.properties"/>
                     <include name="etc/regions-config.xml"/>
+                    <include name="etc/org.apache.felix.eventadmin.impl.EventAdmin"/>
                     <include name="etc/org.apache.karaf.kar.cfg"/>
                     <include name="etc/org.apache.karaf.features.obr.cfg"/>
                     <include name="etc/org.apache.karaf.features.repos.cfg"/>
@@ -185,25 +199,21 @@
                   <fileset dir="${project.basedir}/src/main/resources/overlay"/>
                 </copy>
 
-                <!-- trim out various enterprise/deployment features we don't need at the moment -->
-                <replace file="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg">
-                  <replacefilter token=",mvn:org.apache.karaf.features/enterprise/3.0.5/xml/features"/>
-                  <replacefilter token=",mvn:org.ops4j.pax.web/pax-web-features/3.2.6/xml/features"/>
-                  <replacefilter token=",mvn:org.apache.karaf.features/spring/3.0.5/xml/features"/>
-                  <replacefilter token=",kar,ssh,management"/>
-                  <replacefilter token=",region"/>
+                <!-- disable log4j backend so we can use logback -->
+                <replace file="${project.build.directory}/assembly/etc/startup.properties">
+                  <replacefilter token="${mvn:pax-logging-service}"
+                                 value="# ${mvn:pax-logging-service}"/>
                 </replace>
 
-                <replace file="${project.build.directory}/assembly/etc/startup.properties">
-                  <!-- swap pax-logging-service (log4j) with pax-logging-logback plus our metrics+access support -->
-                  <replacefilter token="${mvn:pax-logging-service}"
-                                 value="${mvn:metrics-core} = 8${line.separator}${mvn:metrics-logback} = 8${line.separator}${mvn:pax-logging-metrics} = 8${line.separator}${mvn:pax-logging-access} = 8${line.separator}${mvn:pax-logging-logback}"/>
-                </replace>
+                <!-- disable automatic updates and retries -->
+                <concat destfile="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" append="true">
+                  serviceRequirements=disable${line.separator}updateSnapshots=false${line.separator}scheduleMaxRun=1
+                </concat>
 
                 <!--
                 HACK: Include orientdb-studio plugin.
                 -->
-                <unzip src="${com.orientechnologies:orientdb-community:zip:distribution}"
+                <unzip src="${com.orientechnologies:orientdb-community:zip}"
                        dest="${project.build.directory}/assembly/data/orient/plugins">
                   <mergemapper to="studio.zip"/>
                   <patternset>
@@ -223,17 +233,32 @@
           <!-- disable archive generation, will use maven-assembly-plugin -->
           <archiveTarGz>false</archiveTarGz>
           <archiveZip>false</archiveZip>
+          <!-- disable include of target/classes, we use overlay instead -->
+          <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
+          <!-- override expected osgi.ee to match compilation target -->
+          <javase>1.8</javase>
+          <startupFeatures>
+            <feature>wrap</feature>
+            <feature>nexus-system-feature</feature>
+          </startupFeatures>
           <bootFeatures>
+            <feature>bundle</feature>
             <feature>config</feature>
-            <feature>standard</feature>
+            <feature>diagnostic</feature>
+            <feature>feature</feature>
+            <feature>jaas</feature>
+            <feature>log</feature>
             <feature>package</feature>
-            <feature>nexus-boot-feature</feature>
+            <feature>shell</feature>
+            <feature>service</feature>
+            <feature>system</feature>
+            <feature>nexus-jetty-feature</feature>
           </bootFeatures>
           <installedFeatures>
             <feature>management</feature>
             <feature>ssh</feature>
-            <feature>nexus-oss-edition</feature>
             <feature>nexus-core-feature</feature>
+            <feature>nexus-oss-edition</feature>
           </installedFeatures>
         </configuration>
       </plugin>

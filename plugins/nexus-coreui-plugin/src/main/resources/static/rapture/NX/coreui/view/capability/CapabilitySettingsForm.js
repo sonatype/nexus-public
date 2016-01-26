@@ -24,37 +24,37 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
     'NX.I18n'
   ],
 
-  items: [
-    {
-      xtype: 'hiddenfield',
-      name: 'id'
-    },
-    {
-      xtype: 'hiddenfield',
-      name: 'typeId'
-    },
-    {
-      xtype: 'hiddenfield',
-      name: 'notes'
-    },
-    {
-      xtype: 'checkbox',
-      fieldLabel: NX.I18n.get('Capability_CapabilitySettingsForm_Enabled_FieldLabel'),
-      name: 'enabled',
-      allowBlank: false,
-      checked: true,
-      editable: true
-    },
-    { xtype: 'nx-coreui-formfield-settingsfieldset' }
-  ],
-
-  editableMarker: NX.I18n.get('Capability_CapabilityAdd_Create_Error'),
-
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
+
+    me.items = [
+      {
+        xtype: 'hiddenfield',
+        name: 'id'
+      },
+      {
+        xtype: 'hiddenfield',
+        name: 'typeId'
+      },
+      {
+        xtype: 'hiddenfield',
+        name: 'notes'
+      },
+      {
+        xtype: 'checkbox',
+        fieldLabel: NX.I18n.get('Capability_CapabilitySettingsForm_Enabled_FieldLabel'),
+        name: 'enabled',
+        allowBlank: false,
+        checked: true,
+        editable: true
+      },
+      { xtype: 'nx-coreui-formfield-settingsfieldset' }
+    ];
+
+    me.editableMarker = NX.I18n.get('Capability_CapabilityAdd_Create_Error');
 
     me.editableCondition = me.editableCondition || NX.Conditions.isPermitted('nexus:capabilities:update');
 

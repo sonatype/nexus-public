@@ -176,6 +176,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
 
       me.getConnection().loadRecord(model);
       me.getUserAndGroup().loadRecord(model);
+      me.getUserAndGroup().down('#template').setValue(null);
 
       Ext.resumeLayouts(true);
     }

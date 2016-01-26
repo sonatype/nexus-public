@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.internal
 
-import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
-
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
@@ -24,13 +22,15 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.cache.NegativeCacheFacet
+import org.sonatype.nexus.repository.cache.NegativeCacheHandler
+import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
-import org.sonatype.nexus.repository.negativecache.NegativeCacheFacet
-import org.sonatype.nexus.repository.negativecache.NegativeCacheHandler
-import org.sonatype.nexus.repository.partial.PartialFetchHandler
 import org.sonatype.nexus.repository.proxy.ProxyHandler
+import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
+import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
 import org.sonatype.nexus.repository.types.ProxyType
@@ -86,6 +86,9 @@ class RawProxyRecipe
   Provider<SearchFacet> searchFacet
 
   @Inject
+  Provider<PurgeUnusedFacet> purgeUnusedFacet
+
+  @Inject
   ExceptionHandler exceptionHandler
 
   @Inject
@@ -130,6 +133,7 @@ class RawProxyRecipe
     repository.attach(storageFacet.get())
     repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get())
+    repository.attach(purgeUnusedFacet.get())
   }
 
   /**

@@ -83,7 +83,7 @@ final class TransactionalWrapper
             continue;
           }
           // only want to swallow commit exceptions distinct from 'throwing'
-          if (throwing != e && instanceOf(e, spec.swallow())) { // NOSONAR
+          if (throwing != e && instanceOf(e, spec.swallow())) {
             if (tracing) {
               log.trace("SWALLOW {} : {}", tx, aspect.getStaticPart(), e);
             }

@@ -39,7 +39,7 @@ public class TimingHandler
 
   @Nonnull
   @Override
-  public Response handle(final @Nonnull Context context) throws Exception {
+  public Response handle(@Nonnull final Context context) throws Exception {
     Stopwatch watch = Stopwatch.createStarted();
 
     try {

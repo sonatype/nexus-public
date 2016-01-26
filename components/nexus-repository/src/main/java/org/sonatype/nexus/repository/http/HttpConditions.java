@@ -56,7 +56,9 @@ public class HttpConditions
       HttpHeaders.IF_NONE_MATCH
   );
 
-  private HttpConditions() {}
+  private HttpConditions() {
+    // empty
+  }
 
   /**
    * Stashes the conditions of the passed in request, making it non-conditional request. To reverse this change,
@@ -93,7 +95,7 @@ public class HttpConditions
   }
 
   /**
-   * Builds a {@link Predicate<Response>} that contains conditions in passed in {@link Request} or {@code null} if
+   * Builds a {@link Predicate} that contains conditions in passed in {@link Request} or {@code null} if
    * request does not contains any condition. The predicate applies to {@link Response} if it meets all the conditions
    * found (they all are logically AND bound).
    */

@@ -28,23 +28,11 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.1.5</orientdb.version>
+    <orientdb.version>2.1.8</orientdb.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-
-      <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.188</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.mapdb</groupId>
-        <artifactId>mapdb</artifactId>
-        <version>1.0.8</version>
-      </dependency>
 
       <dependency>
         <groupId>com.orientechnologies</groupId>
@@ -127,9 +115,8 @@
       <dependency>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-community</artifactId>
-        <classifier>distribution</classifier>
-        <type>zip</type>
         <version>${orientdb.version}</version>
+        <type>zip</type>
       </dependency>
 
       <dependency>
@@ -141,7 +128,19 @@
       <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast</artifactId>
-        <version>3.3.5</version>
+        <version>3.5.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna</artifactId>
+        <version>4.0.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna-platform</artifactId>
+        <version>4.0.0</version>
       </dependency>
 
     </dependencies>

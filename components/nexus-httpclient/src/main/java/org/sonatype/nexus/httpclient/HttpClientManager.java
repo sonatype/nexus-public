@@ -25,7 +25,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
  *
  * @since 3.0
  */
-@SuppressWarnings("PackageAccessibility") // FIXME: httpclient usage is producing lots of OSGI warnings in IDEA
 public interface HttpClientManager
 {
   /**
@@ -57,5 +56,5 @@ public interface HttpClientManager
    * once the api will be changed to allow direct usage of an http client instance
    */
   @Deprecated
-  HttpClientBuilder prepare(final @Nullable Customizer customizer);
+  HttpClientBuilder prepare(@Nullable final Customizer customizer);
 }

@@ -24,15 +24,24 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreFeature', {
     'NX.I18n'
   ],
 
-  iconName: 'blobstore-default',
+  /**
+   * @override
+   */
+  initComponent: function() {
+    Ext.apply(this, {
+      iconName: 'blobstore-default',
 
-  masters: [
-    { xtype: 'nx-coreui-blobstore-list' }
-  ],
+      masters: [
+        { xtype: 'nx-coreui-blobstore-list' }
+      ],
 
-  tabs: { xtype: 'nx-coreui-blobstore-settings' },
+      tabs: { xtype: 'nx-coreui-blobstore-settings' },
 
-  actions: [
-    { xtype: 'button', text: NX.I18n.get('Blobstore_BlobstoreFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
-  ]
+      actions: [
+        { xtype: 'button', text: NX.I18n.get('Blobstore_BlobstoreFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
+      ]
+    });
+
+    this.callParent();
+  }
 });

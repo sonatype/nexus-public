@@ -23,5 +23,7 @@ public class HttpSchemes
 
   public static final String HTTPS = "https";
 
-  private HttpSchemes() {}
+  private HttpSchemes() {
+    // empty
+  }
 }

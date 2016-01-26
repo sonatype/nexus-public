@@ -19,7 +19,7 @@ import com.google.common.collect.Maps;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A mutable combo box {@link FormField}.
+ * A mutable combo-box {@link FormField}.
  *
  * @since 2.7
  */

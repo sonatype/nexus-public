@@ -173,7 +173,7 @@ Ext.define('NX.coreui.controller.Search', {
     models = me.getStore('SearchCriteria').add(criterias);
     if (owner) {
       owner.on('destroy', function() {
-        me.getStore('SearchCriteria').remove(models)
+        me.getStore('SearchCriteria').remove(models);
       }, me);
     }
   },

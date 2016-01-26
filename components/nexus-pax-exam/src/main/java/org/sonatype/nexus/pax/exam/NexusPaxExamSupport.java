@@ -323,7 +323,8 @@ public abstract class NexusPaxExamSupport
         systemProperty("basedir").value(BASEDIR),
 
         karafDistributionConfiguration() //
-            .karafVersion("3") //
+            .karafMain("org.sonatype.nexus.karaf.NexusMain") //
+            .karafVersion("4") //
             .frameworkUrl(frameworkZip) //
             .unpackDirectory(resolveBaseFile("target/it-data")) //
             .useDeployFolder(false), //
@@ -363,12 +364,7 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
             "rmiRegistryPort", Integer.toString(portRegistry.reservePort())),
         editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
-            "rmiServerPort", Integer.toString(portRegistry.reservePort())),
-
-        // KarafTestContainer currently won't start unless "lib/ext" directory exists.
-        // As a quick fix we copy a known file (pom.xml) into the directory to ensure
-        // its created after the distribution is unpacked, but before the test starts.
-        replaceConfigurationFile("lib/ext/.placeholder", resolveBaseFile("pom.xml"))
+            "rmiServerPort", Integer.toString(portRegistry.reservePort()))
     );
   }
 
@@ -391,14 +387,14 @@ public abstract class NexusPaxExamSupport
   /**
    * @return Pax-Exam option to install a Nexus plugin based on groupId and artifactId
    */
-  public static Option nexusPlugin(final String groupId, final String artifactId) {
-    return nexusPlugin(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"), artifactId);
+  public static Option nexusFeature(final String groupId, final String artifactId) {
+    return nexusFeature(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"), artifactId);
   }
 
   /**
    * @return Pax-Exam option to install a Nexus plugin from the given feature XML and name
    */
-  public static Option nexusPlugin(final MavenUrlReference featureXml, final String name) {
+  public static Option nexusFeature(final MavenUrlReference featureXml, final String name) {
     return composite(features(featureXml), editConfigurationFileExtend("etc/org.sonatype.nexus.cfg", "nexus-features", name));
   }
 

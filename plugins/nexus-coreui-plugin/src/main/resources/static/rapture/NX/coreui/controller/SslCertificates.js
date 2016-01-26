@@ -253,10 +253,14 @@ Ext.define('NX.coreui.controller.SslCertificates', {
     if (!server) {
       return [];
     }
-    if (server.indexOf(":") === -1) { // neither URL nor host:port
+
+    // neither URL nor host:port
+    if (server.indexOf(":") === -1) {
       return [server];
     }
-    if (server.indexOf("/") === -1) { // definitely no URL
+
+    // definitely no URL
+    if (server.indexOf("/") === -1) {
       server.split(":");
     }
 

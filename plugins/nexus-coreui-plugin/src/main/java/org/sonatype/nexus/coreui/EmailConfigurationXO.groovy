@@ -44,12 +44,17 @@ class EmailConfigurationXO
 
   String subjectPrefix
 
-  // TODO: SSL/TLS options:
-  // starttls enabled
-  // starttls required
-  // ssl on connect
-  // ssl check server identity
-  // use nexus trust-store
+  // SSL/TLS options
+
+  boolean startTlsEnabled
+
+  boolean startTlsRequired
+
+  boolean sslOnConnectEnabled
+
+  boolean sslCheckServerIdentityEnabled
+
+  boolean nexusTrustStoreEnabled
 
   // TODO: Advanced configuration:
   // socket connection timeout
