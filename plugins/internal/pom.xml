@@ -31,6 +31,7 @@
     <module>nexus-groovyremote-client</module>
     <module>nexus-groovyremote-plugin</module>
     <module>nexus-kazuki-plugin</module>
+    <module>nexus-orient-plugin</module>
     <module>nexus-plexusplugin-plugin</module>
     <module>nexus-atlas-plugin</module>
     <module>nexus-wonderland-model</module>

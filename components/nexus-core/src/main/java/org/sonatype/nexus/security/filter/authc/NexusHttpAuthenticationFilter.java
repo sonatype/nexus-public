@@ -35,6 +35,7 @@ import org.sonatype.sisu.goodies.eventbus.EventBus;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -313,7 +314,7 @@ public class NexusHttpAuthenticationFilter
       eventBus.post(
           new NexusAuthenticationEvent(
               this,
-              new ClientInfo(username, RemoteIPFinder.findIP((HttpServletRequest) request), userAgent),
+              new ClientInfo(StringEscapeUtils.escapeHtml(username), RemoteIPFinder.findIP((HttpServletRequest) request), userAgent),
               success
           )
       );

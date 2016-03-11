@@ -61,11 +61,13 @@ public class MetadataServiceFactoryImpl
 
   @Override
   public HostedMetadataService createHostedMetadataService(final NpmHostedRepository npmHostedRepository) {
+    metadataStore.startOnce();
     return new HostedMetadataServiceImpl(npmHostedRepository, metadataStore, metadataParser);
   }
 
   @Override
   public ProxyMetadataService createProxyMetadataService(final NpmProxyRepository npmProxyRepository) {
+    metadataStore.startOnce();
     return new ProxyMetadataServiceImpl(npmProxyRepository, metadataStore,
         getProxyMetadataTransport(), metadataParser);
   }

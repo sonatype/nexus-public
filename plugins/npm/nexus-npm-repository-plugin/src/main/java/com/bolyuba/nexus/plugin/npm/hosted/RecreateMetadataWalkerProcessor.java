@@ -169,24 +169,25 @@ public class RecreateMetadataWalkerProcessor
     try (final GZIPInputStream gzipInputStream = new GZIPInputStream(file.getInputStream())) {
       log.debug("Examining TAR file");
       final TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream);
-      TarArchiveEntry tarEntry;
       // npm uses tar option "--strip-components=1", so we need to strip first path element to have proper names
-      String tarEntryName;
-      do {
-        tarEntry = tarArchiveInputStream.getNextTarEntry();
-        tarEntryName = null;
-        if (tarEntry != null) {
-          // tar entry names are "pathelem1/pathelem2/.../filename"
-          int indexOfSlash = tarEntry.getName().indexOf("/");
+      TarArchiveEntry tarEntry = tarArchiveInputStream.getNextTarEntry();
+      while (tarEntry != null) {
+        if (tarEntry.isFile()) { // skip specials, like pax header or others
+          int indexOfSlash = tarEntry.getName().indexOf('/');
           if (indexOfSlash > 0) {
-            tarEntryName = tarEntry.getName().substring(indexOfSlash);
+            String tarEntryName = tarEntry.getName().substring(indexOfSlash);
+            log.debug("tarEntry={}, name={}", tarEntry.getName(), tarEntryName);
+            if (PACKAGE_JSON_PATH.equalsIgnoreCase(tarEntryName)) {
+              break;
+            }
           }
-          log.debug("tarEntry={}, name={}", tarEntry.getName(), tarEntryName);
         }
+
+        tarEntry = tarArchiveInputStream.getNextTarEntry();
       }
-      while (tarEntryName != null && !PACKAGE_JSON_PATH.equalsIgnoreCase(tarEntryName));
+
       // checks for corrupted data, we do want to report these
-      checkArgument(tarEntryName != null, "Tar does not contains %s?", PACKAGE_JSON_PATH);
+      checkArgument(tarEntry != null, "Tar does not contains %s?", PACKAGE_JSON_PATH);
       checkArgument(tarEntry.isFile(), "Tar content %s not a file?", PACKAGE_JSON_PATH);
       checkArgument(tarEntry.getSize() < MAX_PACKAGE_JSON_FILE_SIZE, "Tar content too big %s: %s bytes",
           PACKAGE_JSON_PATH, tarEntry.getSize());

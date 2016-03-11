@@ -30,6 +30,7 @@ import org.sonatype.nexus.logging.model.MarkerXO;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 import org.sonatype.sisu.siesta.common.Resource;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.codehaus.plexus.util.StringUtils;
 import org.slf4j.Logger;
@@ -115,10 +116,12 @@ public class LogResource
     // ensure that level for marking logger is enabled
     logManager.setLoggerLevel(log.getName(), LoggerLevel.INFO);
 
-    String asterixes = StringUtils.repeat("*", marker.getMessage().length() + 4);
+    final String msg = StringEscapeUtils.escapeHtml(marker.getMessage());
+
+    String asterixes = StringUtils.repeat("*", msg.length() + 4);
     log.info("\n"
         + asterixes + "\n"
-        + "* " + marker.getMessage() + " *" + "\n"
+        + "* " + msg + " *" + "\n"
         + asterixes
     );
   }

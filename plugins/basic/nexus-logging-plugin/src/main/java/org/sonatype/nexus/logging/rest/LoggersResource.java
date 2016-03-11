@@ -142,6 +142,7 @@ public class LoggersResource
       throws Exception
   {
     checkNotNull(name, "name");
+    checkLoggerName(name);
 
     configurator.remove(name);
   }

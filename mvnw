@@ -184,27 +184,17 @@ fi
 
 CLASSWORLDS_LAUNCHER=org.codehaus.plexus.classworlds.launcher.Launcher
 
-# For Cygwin, switch paths to Windows format before running java
-if $cygwin; then
-  [ -n "$M2_HOME" ] &&
-    M2_HOME=`cygpath --path --windows "$M2_HOME"`
-  [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
-  [ -n "$CLASSPATH" ] &&
-    CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
-fi
-
 # traverses directory structure from process work directory to filesystem root
 # first directory with .mvn subdirectory is considered project base directory
 find_maven_basedir() {
   local basedir=$(pwd)
   local wdir=$(pwd)
   while [ "$wdir" != '/' ] ; do
-    wdir=$(cd "$wdir/.."; pwd)
     if [ -d "$wdir"/.mvn ] ; then
       basedir=$wdir
       break
     fi
+    wdir=$(cd "$wdir/.."; pwd)
   done
   echo "${basedir}"
 }
@@ -219,6 +209,18 @@ concat_lines() {
 export MAVEN_PROJECTBASEDIR=${MAVEN_BASEDIR:-$(find_maven_basedir)}
 MAVEN_OPTS="$(concat_lines "$MAVEN_PROJECTBASEDIR/.mvn/jvm.config") $MAVEN_OPTS"
 
+# For Cygwin, switch paths to Windows format before running java
+if $cygwin; then
+  [ -n "$M2_HOME" ] &&
+    M2_HOME=`cygpath --path --windows "$M2_HOME"`
+  [ -n "$JAVA_HOME" ] &&
+    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+  [ -n "$CLASSPATH" ] &&
+    CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  [ -n "$MAVEN_PROJECTBASEDIR" ] &&
+    MAVEN_PROJECTBASEDIR=`cygpath --path --windows "$MAVEN_PROJECTBASEDIR"`
+fi
+
 # Provide a "standardized" way to retrieve the CLI args that will 
 # work with both Windows and non-Windows executions.
 MAVEN_CMD_LINE_ARGS="$MAVEN_CONFIG $@"
@@ -228,7 +230,7 @@ WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
 exec "$JAVACMD" \
   $MAVEN_OPTS \
-  -classpath "./.mvn/wrapper/maven-wrapper.jar" \
+  -classpath "$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar" \
   "-Dmaven.home=${M2_HOME}" "-Dmaven.multiModuleProjectDirectory=${MAVEN_PROJECTBASEDIR}" \
-  ${WRAPPER_LAUNCHER} "$@"
+  ${WRAPPER_LAUNCHER} $MAVEN_CMD_LINE_ARGS
 

@@ -69,6 +69,9 @@ public abstract class NpmITSupport
         .setLogLevel("remote.storage.outbound", "DEBUG") // see outbound HTTP requests
         .addPlugins(
             artifactResolver().resolvePluginFromDependencyManagement(
+                "org.sonatype.nexus.plugins", "nexus-orient-plugin"
+            ),
+            artifactResolver().resolvePluginFromDependencyManagement(
                 "org.sonatype.nexus.plugins", "nexus-npm-repository-plugin"
             ));
   }

@@ -16,7 +16,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
@@ -33,7 +32,6 @@ import com.google.common.collect.Lists;
  * @since 2.11
  */
 @Named(NpmHostedMetadataRebuildTaskDescriptor.ID)
-@Singleton
 public class NpmHostedMetadataRebuildTask
     extends NpmTaskSupport<NpmHostedRepository>
 {

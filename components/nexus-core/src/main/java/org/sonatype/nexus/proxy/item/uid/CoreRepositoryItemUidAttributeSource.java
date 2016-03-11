@@ -34,6 +34,7 @@ public class CoreRepositoryItemUidAttributeSource
   public CoreRepositoryItemUidAttributeSource() {
     Map<Class<?>, Attribute<?>> attrs = new HashMap<Class<?>, Attribute<?>>(2);
 
+    attrs.put(IsInternalAttribute.class, new IsInternalAttribute());
     attrs.put(IsMetacontentAttribute.class, new IsMetacontentAttribute());
     attrs.put(IsTrashMetacontentAttribute.class, new IsTrashMetacontentAttribute());
     attrs.put(IsItemAttributeMetacontentAttribute.class, new IsItemAttributeMetacontentAttribute());

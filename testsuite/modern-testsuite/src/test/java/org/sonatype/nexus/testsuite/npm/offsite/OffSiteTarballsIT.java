@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.npm.offsite;
 
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
 /**
  * IT for off-site tarballs, ensuring that NX will pull tarballs for URL metadata says, and not from proxy registry's
@@ -122,7 +124,7 @@ public class OffSiteTarballsIT
 
     assertThat(stdOut, containsString("commonjs@0.0.1"));
     assertThat(stdOut, containsString("system@0.1.0"));
-    assertThat(stdOut, containsString("test@0.6.0 (ansi-font@0.0.2)"));
+    assertThat(stdOut, stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2")));
 
     assertThat(exitCode, equalTo(0));
 

@@ -26,6 +26,11 @@ import com.google.common.base.Predicate;
 public interface MetadataStore
 {
   /**
+   * First invocation of this method will start underlying database, while subsequent invocations will do nothing.
+   */
+  void startOnce();
+
+  /**
    * Returns the names of present packages in the store.
    */
   List<String> listPackageNames(NpmRepository repository);

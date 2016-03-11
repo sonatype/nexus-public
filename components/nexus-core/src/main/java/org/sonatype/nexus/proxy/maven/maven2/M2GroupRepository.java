@@ -326,6 +326,7 @@ public class M2GroupRepository
     ResourceStoreRequest req = new ResourceStoreRequest(digestFileName);
 
     req.getRequestContext().setParentContext(request.getRequestContext());
+    req.getRequestContext().setRequestIsExternal(false); // override in THIS context possible TRUE from parent
 
     // Metadata checksum files are not composite ones, they are derivatives of the Metadata (and metadata file _is_
     // composite one)

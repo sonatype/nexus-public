@@ -997,6 +997,10 @@ public abstract class AbstractRepository
     final Action action = getResultingActionOnWrite(item.getResourceStoreRequest());
 
     try {
+      if (item.getResourceStoreRequest().isExternal()) {
+        enforceWritePolicy(item.getResourceStoreRequest(), action); // 2nd check within exclusive lock
+      }
+
       // NEXUS-4550: we are shared-locking the actual UID (to not prevent downloaders while
       // we save to temporary location. But this depends on actual LS backend actually...)
       // but we exclusive lock uploaders to serialize them!

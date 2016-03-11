@@ -586,7 +586,7 @@
               Exclude top-level helper scripts.
               -->
               <exclude>*.sh</exclude>
-              <exclude>*.bat</exclude>
+              <exclude>*.cmd</exclude>
 
               <!--
               Exclude maven-wrapper configuration.

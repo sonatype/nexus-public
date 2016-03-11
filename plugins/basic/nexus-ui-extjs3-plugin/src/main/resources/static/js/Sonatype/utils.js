@@ -192,7 +192,7 @@ define('Sonatype/utils',['../extjs', 'Nexus/config', 'Nexus/util/Format', 'Sonat
         }
         if (serverMessage)
         {
-          message += serverMessage;
+          message += (message.length > 0 ? ' ' : '') + serverMessage;
         }
 
         var responseStatus = response.status;

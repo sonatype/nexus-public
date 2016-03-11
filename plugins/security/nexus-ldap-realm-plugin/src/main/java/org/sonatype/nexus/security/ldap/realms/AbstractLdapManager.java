@@ -180,7 +180,7 @@ public abstract class AbstractLdapManager
     if (connInfo.getRealm() != null) {
       connectionProperties.put("java.naming.security.sasl.realm", connInfo.getRealm());
     }
-    defaultLdapContextFactory.setAdditionalEnvironment(connectionProperties);
+    defaultLdapContextFactory.addAdditionalEnvironment(connectionProperties);
 
     return defaultLdapContextFactory;
   }

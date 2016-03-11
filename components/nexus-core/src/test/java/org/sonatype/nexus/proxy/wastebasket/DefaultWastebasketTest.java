@@ -15,6 +15,7 @@ package org.sonatype.nexus.proxy.wastebasket;
 import java.io.File;
 
 import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
+import org.sonatype.nexus.configuration.application.NexusConfiguration;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
@@ -32,13 +33,16 @@ import org.sonatype.nexus.proxy.walker.AbstractWalkerProcessor;
 import org.sonatype.nexus.proxy.walker.Walker;
 import org.sonatype.nexus.proxy.walker.WalkerContext;
 import org.sonatype.nexus.proxy.walker.WalkerException;
-import org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isDirectory;
+import static org.sonatype.sisu.litmus.testsupport.hamcrest.FileMatchers.isEmptyDirectory;
 
 /**
  * Tests the {@link DefaultWastebasket} class.
@@ -105,7 +109,7 @@ public class DefaultWastebasketTest
 
     this.addRepository("out-of-service-repo");
     File repoLocation = this.addRepository("active-repo");
-    assertThat(new File(repoLocation, ".nexus/trash"), FileMatchers.isDirectory());
+    assertThat(new File(repoLocation, ".nexus/trash"), isDirectory());
 
     M2Repository outOfServiceRepo =
         (M2Repository) this.lookup(RepositoryRegistry.class).getRepository("out-of-service-repo");
@@ -116,8 +120,8 @@ public class DefaultWastebasketTest
     wastebasket.purgeAll(1L);
 
     // NEXUS-4642 check if directories were deleted
-    assertThat(new File(repoLocation, ".nexus/trash"), FileMatchers.isDirectory());
-    assertThat(new File(repoLocation, ".nexus/trash"), FileMatchers.isEmpty());
+    assertThat(new File(repoLocation, ".nexus/trash"), isDirectory());
+    assertThat(new File(repoLocation, ".nexus/trash"), isEmptyDirectory());
   }
 
   /**
@@ -148,8 +152,51 @@ public class DefaultWastebasketTest
     Wastebasket wastebasket = this.lookup(Wastebasket.class);
     wastebasket.purgeAll(DefaultWastebasket.ALL);
 
-    assertThat(basketDir, FileMatchers.isDirectory());
-    assertThat(basketDir, FileMatchers.isEmpty());
+    assertThat(basketDir, isDirectory());
+    assertThat(basketDir, isEmptyDirectory());
+  }
+
+  @Test
+  public void repeatedRepoDeletion()
+      throws Exception
+  {
+    final String REPO_ID = "repeatedly-deleted-repository";
+    final CoreRepositoryFolderCleaner cleaner = new CoreRepositoryFolderCleaner();
+    cleaner.setApplicationConfiguration(lookup(ApplicationConfiguration.class));
+    final RepositoryRegistry repositoryRegistry = lookup(RepositoryRegistry.class);
+    final NexusConfiguration nexusConfiguration = lookup(NexusConfiguration.class);
+    Repository repository;
+
+    // 1st
+    addRepository(REPO_ID);
+    repository = repositoryRegistry.getRepository(REPO_ID);
+    nexusConfiguration.deleteRepository(repository.getId());
+    cleaner.cleanRepositoryFolders(repository, false);
+    wairForAsyncEventsToCalmDown();
+    waitForTasksToStop();
+
+    // 2nd
+    addRepository(REPO_ID);
+    repository = repositoryRegistry.getRepository(REPO_ID);
+    nexusConfiguration.deleteRepository(repository.getId());
+    cleaner.cleanRepositoryFolders(repository, false);
+    wairForAsyncEventsToCalmDown();
+    waitForTasksToStop();
+
+    ApplicationConfiguration applicationConfiguration = lookup(ApplicationConfiguration.class);
+    File basketDir =
+        applicationConfiguration.getWorkingDirectory(AbstractRepositoryFolderCleaner.GLOBAL_TRASH_KEY);
+
+    assertThat(basketDir, isDirectory());
+    File[] directories = basketDir.listFiles();
+    assertThat(directories.length, equalTo(2));
+    for (File directory : directories) {
+      // one is "REPO_ID" other is "REPO_ID__time"
+      assertThat(directory.getName(), startsWith(REPO_ID));
+      if (directory.getName().length() > REPO_ID.length()) {
+        assertThat(directory.getName(), startsWith(REPO_ID + "__"));
+      }
+    }
   }
 
   /**

@@ -28,7 +28,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
+import org.sonatype.nexus.events.EventSubscriber;
 import org.sonatype.nexus.proxy.access.Action;
+import org.sonatype.nexus.proxy.events.NexusStoppedEvent;
 import org.sonatype.nexus.proxy.item.RepositoryItemUidLock;
 import org.sonatype.nexus.util.file.DirSupport;
 import org.sonatype.sisu.goodies.common.SimpleFormat;
@@ -42,8 +44,8 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -64,7 +66,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named("default")
 public class OrientMetadataStore
     extends LifecycleSupport
-    implements MetadataStore
+    implements MetadataStore, EventSubscriber
 {
   private static final String DB_LOCATION = "db/npm";
 
@@ -77,6 +79,8 @@ public class OrientMetadataStore
   private final Map<Class<?>, EntityHandler<?>> entityHandlers;
 
   private final int poolMaxSize;
+
+  private RuntimeException startException = null;
 
   private OPartitionedDatabasePool pool;
 
@@ -97,9 +101,6 @@ public class OrientMetadataStore
     final String dbUri = "plocal:" + databaseDirectory.getAbsolutePath();
     try (ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUri)) {
       if (!db.exists()) {
-        // latest advice is to disable DB compression as it doesn't buy much,
-        // also snappy has issues with use of native lib (unpacked under tmp)
-        OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
         db.create();
         log.info("Created database: {}", databaseDirectory);
       }
@@ -119,6 +120,16 @@ public class OrientMetadataStore
     log.info("Closing pool: {}", pool);
     pool.close();
     pool = null;
+  }
+
+  /**
+   * Adapt event to {@link #stop()}
+   */
+  @Subscribe
+  public void on(final NexusStoppedEvent event) throws Exception {
+    if (isStarted()) {
+      stop();
+    }
   }
 
   /**
@@ -182,6 +193,23 @@ public class OrientMetadataStore
   }
 
   // == API
+
+  @Override
+  public synchronized void startOnce() {
+    if (startException != null) {
+      throw startException;
+    }
+    if (!isStarted()) {
+      try {
+        start();
+      }
+      catch (Exception e) {
+        log.warn("Could not start {}", getClass().getSimpleName(), e);
+        startException = Throwables.propagate(e);
+        throw startException;
+      }
+    }
+  }
 
   @Override
   public List<String> listPackageNames(final NpmRepository repository) {

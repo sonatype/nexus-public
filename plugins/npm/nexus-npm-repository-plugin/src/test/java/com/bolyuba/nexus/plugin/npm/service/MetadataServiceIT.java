@@ -226,8 +226,6 @@ public class MetadataServiceIT
         return result;
       }
     };
-
-    metadataStore.start();
   }
 
   @After

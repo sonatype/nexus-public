@@ -14,6 +14,7 @@ package org.sonatype.nexus.proxy.wastebasket;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import javax.inject.Inject;
 
@@ -47,11 +48,19 @@ public abstract class AbstractRepositoryFolderCleaner
   protected void delete(final File file, final boolean deleteForever)
       throws IOException
   {
-    File basketFile =
-        new File(getApplicationConfiguration().getWorkingDirectory(GLOBAL_TRASH_KEY), file.getName());
+    Path basketPath =
+        new File(getApplicationConfiguration().getWorkingDirectory(GLOBAL_TRASH_KEY), file.getName()).toPath();
     if (!deleteForever) {
+      // if trash already has this named path (whatever is), rename it
+      DirSupport.moveIfExists(
+          basketPath,
+          basketPath.getParent().resolve(file.getName() + "__" + System.currentTimeMillis())
+      );
       // move to trash
-      DirSupport.moveIfExists(file.toPath(), basketFile.toPath());
+      DirSupport.moveIfExists(
+          file.toPath(),
+          basketPath
+      );
     }
     else {
       DirSupport.deleteIfExists(file.toPath());

@@ -16,7 +16,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
 
@@ -31,7 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 2.11
  */
 @Named(NpmDbBackupTaskDescriptor.ID)
-@Singleton
 public class NpmDbBackupTask
     extends NpmTaskSupport<NpmRepository>
 {

@@ -19,7 +19,10 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+import org.sonatype.nexus.events.Asynchronous;
+import org.sonatype.nexus.events.EventSubscriber;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.access.AccessManager;
@@ -45,13 +48,10 @@ import org.sonatype.nexus.yum.YumGroup;
 import org.sonatype.nexus.yum.YumHosted;
 import org.sonatype.nexus.yum.YumProxy;
 import org.sonatype.nexus.yum.YumRegistry;
-import org.sonatype.sisu.goodies.eventbus.EventBus;
+import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import org.eclipse.sisu.EagerSingleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,12 +59,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since yum 3.0
  */
 @Named
-@EagerSingleton
+@Singleton
 public class EventsRouter
+    extends ComponentSupport
+    implements EventSubscriber, Asynchronous
 {
-
-  private static final Logger log = LoggerFactory.getLogger(EventsRouter.class);
-
   private final Provider<RepositoryRegistry> repositoryRegistryProvider;
 
   private final Provider<YumRegistry> yumRegistryProvider;
@@ -74,13 +73,11 @@ public class EventsRouter
   @Inject
   public EventsRouter(final Provider<RepositoryRegistry> repositoryRegistryProvider,
                       final Provider<YumRegistry> yumRegistryProvider,
-                      final Provider<Walker> walkerProvider,
-                      final EventBus eventBus)
+                      final Provider<Walker> walkerProvider)
   {
     this.repositoryRegistryProvider = checkNotNull(repositoryRegistryProvider);
     this.yumRegistryProvider = checkNotNull(yumRegistryProvider);
     this.walkerProvider = checkNotNull(walkerProvider);
-    checkNotNull(eventBus).register(this);
   }
 
   @AllowConcurrentEvents

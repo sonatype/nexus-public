@@ -29,7 +29,7 @@ public class RepositoryDependentException
   private final Repository repository;
 
   public RepositoryDependentException(Repository repository, Repository dependant) {
-    super(format("Repository %s cannot be deleted due to dependency: repository %s.",
+    super(format("Repository %s cannot be deleted due to dependant repository %s.",
         getHumanizedNameString(repository), getHumanizedNameString(dependant)));
     this.repository = repository;
     this.dependant = dependant;
@@ -45,7 +45,7 @@ public class RepositoryDependentException
 
   public String getUIMessage() {
     return format(
-        "Repository '%s' cannot be deleted due to dependencies on repository '%s'.\nDependencies must be removed in order to complete this operation.",
+        "Repository '%s' cannot be deleted due to dependant repository '%s'.\nDependencies must be removed in order to complete this operation.",
         getHumanizedNameString(repository), getHumanizedNameString(dependant));
   }
 

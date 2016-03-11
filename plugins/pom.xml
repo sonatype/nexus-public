@@ -307,6 +307,30 @@
         <type>jar</type>
         <version>2.13.0-SNAPSHOT</version>
       </dependency>
+
+      <!-- orient -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-orient-plugin</artifactId>
+        <type>nexus-plugin</type>
+        <version>2.13.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-orient-plugin</artifactId>
+        <classifier>bundle</classifier>
+        <type>zip</type>
+        <version>2.13.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-orient-plugin</artifactId>
+        <type>jar</type>
+        <version>2.13.0-SNAPSHOT</version>
+      </dependency>
       
       <!-- kenai -->
 

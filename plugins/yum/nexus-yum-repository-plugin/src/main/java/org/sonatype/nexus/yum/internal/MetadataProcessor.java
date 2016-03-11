@@ -64,6 +64,21 @@ public class MetadataProcessor
 
   private static final Logger log = LoggerFactory.getLogger(MetadataProcessor.class);
 
+  /**
+   * Location tag.
+   */
+  private static final String LOCATION = "location";
+
+  /**
+   * Attribute of {@link #LOCATION} tag.
+   */
+  private static final String LOCATION_XML_BASE = "xml:base";
+
+  /**
+   * Attribute of {@link #LOCATION} tag.
+   */
+  private static final String LOCATION_HREF = "href";
+
   private MetadataProcessor() {
   }
 
@@ -87,9 +102,9 @@ public class MetadataProcessor
         {
           @Override
           public boolean process(final Element location) {
-            String xmlBase = location.getAttribute("xml:base");
+            String xmlBase = location.getAttribute(LOCATION_XML_BASE);
             if (xmlBase != null) {
-              String href = location.getAttribute("href");
+              String href = location.getAttribute(LOCATION_HREF);
               if (!xmlBase.endsWith("/")) {
                 xmlBase += "/";
               }
@@ -102,8 +117,8 @@ public class MetadataProcessor
                   if (href.startsWith("/")) {
                     href = href.substring(1);
                   }
-                  location.setAttribute("href", href);
-                  location.removeAttribute("xml:base");
+                  location.setAttribute(LOCATION_HREF, href);
+                  location.removeAttribute(LOCATION_XML_BASE);
                   return true;
                 }
               }
@@ -132,9 +147,9 @@ public class MetadataProcessor
         {
           @Override
           public boolean process(final Element location) {
-            String xmlBase = location.getAttribute("xml:base");
+            String xmlBase = location.getAttribute(LOCATION_XML_BASE);
             if (xmlBase != null) {
-              String href = location.getAttribute("href");
+              String href = location.getAttribute(LOCATION_HREF);
               if (!xmlBase.endsWith("/")) {
                 xmlBase += "/";
               }
@@ -144,8 +159,8 @@ public class MetadataProcessor
                 if (href.startsWith("/")) {
                   href = href.substring(1);
                 }
-                location.setAttribute("href", href);
-                location.removeAttribute("xml:base");
+                location.setAttribute(LOCATION_HREF, href);
+                location.removeAttribute(LOCATION_XML_BASE);
                 return true;
               }
             }
@@ -159,6 +174,7 @@ public class MetadataProcessor
    * Processes metadata:
    * - Use processor to process all locations in primary.xml.
    * - Update primary data entry in repomd.xml if primary.xml changes.
+   * - Removes location/@xml:base attributes if any.
    * - Removes sqllite from repomd.xml.
    *
    * @param repository containing primary.xml
@@ -170,6 +186,7 @@ public class MetadataProcessor
       Document repoMDDoc = parseRepoMD(repository);
       String primaryHref = processPrimary(repository, processor, repoMDDoc);
       boolean changed = updatePrimaryInRepoMD(repository, repoMDDoc, primaryHref);
+      changed = removeLocationXmlBaseInRepoMD(repository, repoMDDoc) || changed;
       changed = removeSqliteFromRepoMD(repository, repoMDDoc) || changed;
       if (changed) {
         storeRepoMD(repository, repoMDDoc);
@@ -209,7 +226,7 @@ public class MetadataProcessor
     boolean changed = false;
     try (InputStream primaryIn = new GZIPInputStream(new BufferedInputStream(primaryItem.getInputStream()))) {
       doc = documentBuilder.parse(primaryIn);
-      NodeList locations = doc.getElementsByTagName("location");
+      NodeList locations = doc.getElementsByTagName(LOCATION);
       if (locations != null) {
         for (int i = 0; i < locations.getLength(); i++) {
           Element location = (Element) locations.item(i);
@@ -283,11 +300,34 @@ public class MetadataProcessor
         ));
       }
 
-      ((Element) primaryEl.getElementsByTagName("location").item(0)).setAttribute("href", primaryPath);
+      ((Element) primaryEl.getElementsByTagName(LOCATION).item(0)).setAttribute(LOCATION_HREF, primaryPath);
 
       return true;
     }
     return false;
+  }
+
+  /**
+   * Remove location tag's xml:base attribute from repomd.xml
+   *
+   * @param repository containing repomd.xml
+   * @return true if repomd.xml was changed
+   */
+  private static boolean removeLocationXmlBaseInRepoMD(final Repository repository, final Document repoMDDoc) {
+    boolean changed = false;
+    NodeList locationNodes = repoMDDoc.getElementsByTagName(LOCATION);
+    for (int i = 0; i < locationNodes.getLength(); i++) {
+      Element location = (Element) locationNodes.item(i);
+      if (location.hasAttribute(LOCATION_XML_BASE)) {
+        location.removeAttribute(LOCATION_XML_BASE);
+        changed = true;
+      }
+    }
+    if (changed) {
+      log.debug("Removed location/@xml:base attributes from {}:repomd.xml", repository.getId());
+    }
+
+    return changed;
   }
 
   /**

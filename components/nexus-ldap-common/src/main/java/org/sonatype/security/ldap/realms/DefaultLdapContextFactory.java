@@ -73,11 +73,11 @@ public class DefaultLdapContextFactory
 
   protected String searchBase = null;
 
-  protected String contextFactoryClassName = "com.sun.jndi.ldap.LdapCtxFactory";
+  protected String contextFactoryClassName = null;
 
   protected String url = null;
 
-  protected String referral = "follow";
+  protected String referral = null;
 
   protected String systemUsername = null;
 
@@ -88,19 +88,18 @@ public class DefaultLdapContextFactory
   private Map<String, String> additionalEnvironment;
 
   public DefaultLdapContextFactory() {
-    final Map<String, String> envVars = Maps.newHashMap();
+    additionalEnvironment = Maps.newHashMap();
+    additionalEnvironment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+    additionalEnvironment.put(Context.REFERRAL, "follow");
     for (String propertyName : System.getProperties().stringPropertyNames()) {
       if (propertyName.startsWith(NEXUS_LDAP_ENV_PREFIX) &&
           propertyName.length() > NEXUS_LDAP_ENV_PREFIX.length()) {
         String key = propertyName.substring(NEXUS_LDAP_ENV_PREFIX.length());
         String value = System.getProperty(propertyName);
         if (value != null) {
-          envVars.put(key, value);
+          additionalEnvironment.put(key, value);
         }
       }
-    }
-    if (!envVars.isEmpty()) {
-      setAdditionalEnvironment(envVars);
     }
   }
 
@@ -214,7 +213,8 @@ public class DefaultLdapContextFactory
    * @param additionalEnvironment additional environment entries to be configured on the LDAP context.
    */
   public void setAdditionalEnvironment(Map<String, String> additionalEnvironment) {
-    this.additionalEnvironment = additionalEnvironment;
+    this.additionalEnvironment = Maps.newHashMap();
+    this.additionalEnvironment.putAll(additionalEnvironment);
   }
 
   /**
@@ -223,12 +223,7 @@ public class DefaultLdapContextFactory
    * @param additionalEnvironment additional environment entries to be configured on the LDAP context.
    */
   public void addAdditionalEnvironment(Map<String, String> additionalEnvironment) {
-    if (this.additionalEnvironment == null) {
-      this.additionalEnvironment = additionalEnvironment;
-    }
-    else {
-      this.additionalEnvironment.putAll(additionalEnvironment);
-    }
+    this.additionalEnvironment.putAll(additionalEnvironment);
   }
 
     /*--------------------------------------------
@@ -284,9 +279,13 @@ public class DefaultLdapContextFactory
     if (password != null) {
       env.put(Context.SECURITY_CREDENTIALS, password);
     }
-    env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactoryClassName);
+    if (contextFactoryClassName != null) {
+      env.put(Context.INITIAL_CONTEXT_FACTORY, contextFactoryClassName);
+    }
     env.put(Context.PROVIDER_URL, url);
-    env.put(Context.REFERRAL, referral);
+    if (referral != null) {
+      env.put(Context.REFERRAL, referral);
+    }
 
     if (usePooling && username != null && systemContext) {
       // Enable connection pooling

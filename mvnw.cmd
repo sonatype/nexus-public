@@ -24,6 +24,7 @@
 @REM JAVA_HOME - location of a JDK home dir
 @REM
 @REM Optional ENV vars
+@REM M2_HOME - location of maven2's installed home dir
 @REM MAVEN_BATCH_ECHO - set to 'on' to enable the echoing of the batch commands
 @REM MAVEN_BATCH_PAUSE - set to 'on' to wait for a key stroke before ending
 @REM MAVEN_OPTS - parameters passed to the Java VM when running Maven
@@ -75,9 +76,11 @@ echo location of your Java installation. >&2
 echo.
 goto error
 
+@REM ==== END VALIDATION ====
+
 :init
 
-set MAVEN_CMD_LINE_ARGS=%*
+set MAVEN_CMD_LINE_ARGS=%MAVEN_CONFIG% %*
 
 @REM Find the project base dir, i.e. the directory that contains the folder ".mvn".
 @REM Fallback to current working directory if not found.
@@ -115,12 +118,10 @@ for /F "usebackq delims=" %%a in ("%MAVEN_PROJECTBASEDIR%\.mvn\jvm.config") do s
 
 SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 
-for %%i in ("%M2_HOME%"\boot\plexus-classworlds-*) do set CLASSWORLDS_JAR="%%i"
-
-set WRAPPER_JAR="".\.mvn\wrapper\maven-wrapper.jar""
+set WRAPPER_JAR=""%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar""
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-%MAVEN_JAVA_EXE% %JVM_CONFIG_MAVEN_PROPS% %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath %WRAPPER_JAR% "-Dmaven.home=%M2_HOME%" "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
+%MAVEN_JAVA_EXE% %JVM_CONFIG_MAVEN_PROPS% %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath %WRAPPER_JAR% "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 

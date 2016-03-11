@@ -27,8 +27,13 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
+  <properties>
+    <orientdb.version>2.1.8</orientdb.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
+
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
@@ -52,6 +57,43 @@
         <artifactId>stringtemplate</artifactId>
         <version>3.0</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-core</artifactId>
+        <version>${orientdb.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-server</artifactId>
+        <version>${orientdb.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-enterprise</artifactId>
+        <version>${orientdb.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-client</artifactId>
+        <version>${orientdb.version}</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

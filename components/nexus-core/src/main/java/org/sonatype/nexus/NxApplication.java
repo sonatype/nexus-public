@@ -20,6 +20,7 @@ import java.util.Date;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.configuration.ConfigurationException;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.scheduling.NexusScheduler;
 import org.sonatype.nexus.tasks.SynchronizeShadowsTask;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
+import org.sonatype.sisu.goodies.lifecycle.Lifecycle;
 import org.sonatype.sisu.goodies.lifecycle.LifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -73,11 +75,14 @@ public class NxApplication
 
   private final EventSubscriberHost eventSubscriberHost;
 
+  private final Provider<Lifecycle> orientBootstrap;
+
   @Inject
   public NxApplication(final EventBus eventBus, final NexusConfiguration nexusConfiguration,
       final NexusPluginManager nexusPluginManager, final ApplicationStatusSource applicationStatusSource,
       final SecuritySystem securitySystem, final NexusScheduler nexusScheduler,
-      final RepositoryRegistry repositoryRegistry, final EventSubscriberHost eventSubscriberHost)
+      final RepositoryRegistry repositoryRegistry, final EventSubscriberHost eventSubscriberHost,
+      @Named("orient-bootstrap") final Provider<Lifecycle> orientBootstrap)
   {
     this.eventBus = checkNotNull(eventBus);
     this.applicationStatusSource = checkNotNull(applicationStatusSource);
@@ -87,6 +92,7 @@ public class NxApplication
     this.nexusScheduler = checkNotNull(nexusScheduler);
     this.repositoryRegistry = checkNotNull(repositoryRegistry);
     this.eventSubscriberHost = checkNotNull(eventSubscriberHost);
+    this.orientBootstrap = checkNotNull(orientBootstrap);
 
     logInitialized();
 
@@ -122,6 +128,7 @@ public class NxApplication
   protected final String getNexusNameForLogs() {
     final StringBuilder msg = new StringBuilder();
     msg.append(applicationStatusSource.getSystemStatus().getAppName());
+    msg.append(" ").append(applicationStatusSource.getSystemStatus().getEditionShort());
     msg.append(" ").append(applicationStatusSource.getSystemStatus().getVersion());
     return msg.toString();
   }
@@ -130,6 +137,20 @@ public class NxApplication
   protected void doStart() {
     applicationStatusSource.getSystemStatus().setState(SystemState.STARTING);
     try {
+      // HACK: bootstrap orient services right away, before nexus-configuration loads
+      try {
+        Lifecycle orientLifecycle = orientBootstrap.get();
+        if (orientLifecycle != null) {
+          orientLifecycle.start();
+        }
+        else {
+          log.warn("Orient services are not installed");
+        }
+      }
+      catch (Exception e) {
+        log.error("Failed to start Orient services", e);
+      }
+
       // force configuration load, validation and probable upgrade if needed
       // applies configuration and notifies listeners
       nexusConfiguration.loadConfiguration(true);
@@ -198,12 +219,26 @@ public class NxApplication
 
     // Due to no dependency mechanism in NX for components, we need to fire off a hint about shutdown first
     eventBus.post(new NexusStoppingEvent(this));
+
     // kill services + notify
     nexusScheduler.shutdown();
     eventBus.post(new NexusStoppedEvent(this));
+
     eventSubscriberHost.shutdown();
     nexusConfiguration.dropInternals();
     securitySystem.stop();
+
+    // HACK: shutdown orient services
+    try {
+      Lifecycle orientLifecycle = orientBootstrap.get();
+      if (orientLifecycle != null) {
+        orientLifecycle.stop();
+      }
+    }
+    catch (Exception e) {
+      log.error("Failed to stop Orient services", e);
+    }
+
     applicationStatusSource.getSystemStatus().setState(SystemState.STOPPED);
     log.info("Stopped {}", getNexusNameForLogs());
   }

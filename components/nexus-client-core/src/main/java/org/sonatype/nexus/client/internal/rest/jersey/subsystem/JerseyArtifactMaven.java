@@ -47,7 +47,7 @@ public class JerseyArtifactMaven
     queryParams.add("a", req.getArtifactId());
     queryParams.add("v", req.getVersion());
     if (req.getPackaging() != null) {
-      queryParams.add("p", req.getVersion());
+      queryParams.add("p", req.getPackaging());
     }
     if (req.getClassifier() != null) {
       queryParams.add("c", req.getClassifier());

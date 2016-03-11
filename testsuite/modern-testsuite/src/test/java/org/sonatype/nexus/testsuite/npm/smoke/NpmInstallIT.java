@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.npm.smoke;
 
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 import org.sonatype.nexus.testsuite.npm.NpmMockRegistryITSupport;
 
@@ -24,6 +25,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 
 /**
  * NPM CLI IT for NPM plugin with simple "install" invocation. The test required the "npm" command to be present on
@@ -70,7 +72,7 @@ public class NpmInstallIT
 
     assertThat(stdOut, containsString("commonjs@0.0.1"));
     assertThat(stdOut, containsString("system@0.1.0"));
-    assertThat(stdOut, containsString("test@0.6.0 (ansi-font@0.0.2)"));
+    assertThat(stdOut, stringContainsInOrder(Arrays.asList("test@0.6.0", "ansi-font@0.0.2")));
 
     assertThat(exitCode, equalTo(0));
   }
