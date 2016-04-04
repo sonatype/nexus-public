@@ -51,6 +51,18 @@ public interface FileOperations
    */
   StreamMetrics create(Path path, InputStream data) throws IOException;
 
+  /**
+   * Creates a hard link.
+   *
+   * @throws UnsupportedOperationException if a hard link can't be established
+   */
+  void hardLink(Path source, Path newLink) throws IOException;
+
+  /**
+   * Computes basic metrics about the file.
+   */
+  StreamMetrics computeMetrics(Path file) throws IOException;
+
   boolean exists(Path path);
 
   InputStream openInputStream(Path path) throws IOException;
@@ -64,4 +76,9 @@ public interface FileOperations
    * Recursively deletes all files and subdirectories, then the directory itself.
    */
   void deleteDirectory(Path directory) throws IOException;
+
+  /**
+   * Returns true if the directory was empty and could be removed, false otherwise.
+   */
+  boolean deleteEmptyDirectory(Path directory) throws IOException;
 }

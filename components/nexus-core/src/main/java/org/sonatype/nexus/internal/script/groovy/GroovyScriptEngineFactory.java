@@ -13,6 +13,8 @@
 package org.sonatype.nexus.internal.script.groovy;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,11 +24,17 @@ import javax.script.ScriptEngineFactory;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
+import com.google.common.collect.ImmutableMap;
 import groovy.lang.GroovyClassLoader;
+import groovy.transform.TimedInterrupt;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
+import org.codehaus.groovy.control.customizers.CompilationCustomizer;
+import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -59,14 +67,27 @@ public class GroovyScriptEngineFactory
     // custom the configuration of the compiler
     CompilerConfiguration cc = new CompilerConfiguration();
     cc.setTargetDirectory(new File(applicationDirectories.getTemporaryDirectory(), "groovy-classes"));
+    cc.setSourceEncoding("UTF-8");
+    cc.addCompilationCustomizers(secureASTCustomizer());
     GroovyClassLoader gcl = new GroovyClassLoader(classLoader, cc);
 
-    GroovyScriptEngine engine = new GroovyScriptEngine(gcl);
+    engine = new GroovyScriptEngine(gcl);
 
     // HACK: For testing
     log.info("Created engine: {}", engine);
 
     return engine;
+  }
+
+  /**
+   * Secure potentially dangerous calls in scripts.
+   */
+  private CompilationCustomizer secureASTCustomizer() {
+    SecureASTCustomizer secureASTCustomizer = new SecureASTCustomizer();
+    secureASTCustomizer.setImportsBlacklist(Collections.singletonList("java.lang.System"));
+    secureASTCustomizer.setReceiversBlackList(Collections.singletonList(System.class.getName()));
+    secureASTCustomizer.setIndirectImportCheckEnabled(true);
+    return secureASTCustomizer;
   }
 
   // TODO: Groovy engine is thread-safe, so re-use the engine instance instead of creating new ones each time asked

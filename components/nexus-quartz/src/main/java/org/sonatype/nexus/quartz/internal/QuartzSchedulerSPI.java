@@ -27,8 +27,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppingEvent;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.common.thread.TcclBlock;
@@ -48,7 +47,6 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
-import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -72,6 +70,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
 
 /**
@@ -79,8 +78,9 @@ import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.list
  *
  * @since 3.0
  */
-@Singleton
 @Named
+@ManagedLifecycle(phase = SERVICES)
+@Singleton
 public class QuartzSchedulerSPI
     extends LifecycleSupport
     implements SchedulerSPI
@@ -151,9 +151,6 @@ public class QuartzSchedulerSPI
 
     // re-attach listeners right after scheduler is available
     reattachJobListeners();
-
-    // listen for events
-    eventBus.register(this);
   }
 
   /**
@@ -198,21 +195,8 @@ public class QuartzSchedulerSPI
     return scheduler;
   }
 
-  @Subscribe
-  public void on(final NexusStartedEvent event) throws Exception {
-    applyActive();
-  }
-
-  @Subscribe
-  public void on(final NexusStoppingEvent event) throws Exception {
-    scheduler.standby();
-  }
-
   @Override
   protected void doStop() throws Exception {
-    // stop listening for events
-    eventBus.unregister(this);
-
     // shutdown and unregister the scheduler instance
     scheduler.shutdown();
     SchedulerRepository.getInstance().remove(SCHEDULER_NAME);

@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.http.PartialFetchHandler
@@ -80,6 +81,9 @@ class RawProxyRecipe
   Provider<StorageFacet> storageFacet
 
   @Inject
+  Provider<AttributesFacet> attributesFacet
+
+  @Inject
   Provider<SingleAssetComponentMaintenance> componentMaintenance
 
   @Inject
@@ -131,6 +135,7 @@ class RawProxyRecipe
     repository.attach(proxyFacet.get())
     repository.attach(rawContentFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get())
     repository.attach(purgeUnusedFacet.get())

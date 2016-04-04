@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.search;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +25,6 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,22 +54,27 @@ public class DefaultComponentMetadataProducer
 
   public static final String VERSION = "version";
 
+  public static final String ASSETS = "assets";
+
   @Override
-  public String getMetadata(final Component component, final Iterable<Asset> assets,
+  public String getMetadata(final Component component,
+                            final Iterable<Asset> assets,
                             final Map<String, Object> additional)
   {
     checkNotNull(component);
+    checkNotNull(assets);
+    checkNotNull(additional);
 
-    Map<String, Object> metadata = Maps.newHashMap();
+    Map<String, Object> metadata = new HashMap<>();
     put(metadata, FORMAT, component.format());
     put(metadata, GROUP, component.group());
     put(metadata, NAME, component.name());
     put(metadata, VERSION, component.version());
     put(metadata, ATTRIBUTES, component.attributes().backing());
 
-    List<Map<String, Object>> allAssetMetadata = Lists.newArrayList();
+    List<Map<String, Object>> allAssetMetadata = new ArrayList<>();
     for (Asset asset : assets) {
-      Map<String, Object> assetMetadata = Maps.newHashMap();
+      Map<String, Object> assetMetadata = new HashMap<>();
       put(assetMetadata, NAME, asset.name());
       put(assetMetadata, CONTENT_TYPE, asset.contentType());
       put(assetMetadata, ATTRIBUTES, asset.attributes().backing());
@@ -77,7 +82,7 @@ public class DefaultComponentMetadataProducer
       allAssetMetadata.add(assetMetadata);
     }
     if (!allAssetMetadata.isEmpty()) {
-      put(metadata, "assets", allAssetMetadata.toArray(new Map[allAssetMetadata.size()]));
+      metadata.put(ASSETS, allAssetMetadata);
     }
 
     metadata.putAll(additional);

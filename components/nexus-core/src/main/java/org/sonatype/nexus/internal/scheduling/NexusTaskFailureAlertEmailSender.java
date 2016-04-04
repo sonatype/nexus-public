@@ -17,6 +17,7 @@ import java.io.StringWriter;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -43,10 +44,10 @@ public class NexusTaskFailureAlertEmailSender
     extends ComponentSupport
     implements EventAware, Asynchronous
 {
-  private final EmailManager emailManager;
+  private final Provider<EmailManager> emailManager;
 
   @Inject
-  public NexusTaskFailureAlertEmailSender(final EmailManager emailManager) {
+  public NexusTaskFailureAlertEmailSender(final Provider<EmailManager> emailManager) {
     this.emailManager = checkNotNull(emailManager);
   }
 
@@ -96,6 +97,6 @@ public class NexusTaskFailureAlertEmailSender
     }
     mail.setMsg(buff.toString());
 
-    emailManager.send(mail);
+    emailManager.get().send(mail);
   }
 }

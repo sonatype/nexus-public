@@ -12,10 +12,33 @@
  */
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Map;
+
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
+import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
+import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
+import org.sonatype.nexus.repository.maven.internal.MavenModels;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
+
+import com.google.common.base.Throwables;
+import com.google.common.hash.HashCode;
+import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Utility class containing shared methods for Maven metadata.
@@ -24,6 +47,8 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
  */
 public final class MetadataUtils
 {
+  private static Logger log = LoggerFactory.getLogger(MetadataUtils.class);
+
   private MetadataUtils() {
   }
 
@@ -44,5 +69,59 @@ public final class MetadataUtils
     }
     sb.append("/").append(Constants.METADATA_FILENAME);
     return new MavenPath(sb.toString(), null);
+  }
+
+  /**
+   * Reads content stored at given path as {@link Metadata}. Returns null if the content does not exist.
+   */
+  @Nullable
+  public static Metadata read(final Repository repository, final MavenPath mavenPath) throws IOException {
+    final Content content = repository.facet(MavenFacet.class).get(mavenPath);
+    if (content == null) {
+      return null;
+    }
+    else {
+      Metadata metadata = MavenModels.readMetadata(content.openInputStream());
+      if (metadata == null) {
+        log.warn("Corrupted metadata {} @ {}", repository.getName(), mavenPath.getPath());
+      }
+      return metadata;
+    }
+  }
+
+  /**
+   * Writes passed in metadata as XML.
+   */
+  public static void write(final Repository repository, final MavenPath mavenPath, final Metadata metadata)
+      throws IOException
+  {
+    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    MavenModels.writeMetadata(buffer, metadata);
+    mavenFacet.put(mavenPath, new BytesPayload(buffer.toByteArray(),
+        MavenMimeRulesSource.METADATA_TYPE));
+    final Map<HashAlgorithm, HashCode> hashCodes = mavenFacet.get(mavenPath).getAttributes()
+        .require(Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
+    checkState(hashCodes != null, "hashCodes");
+    for (HashType hashType : HashType.values()) {
+      MavenPath checksumPath = mavenPath.hash(hashType);
+      HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
+      checkState(hashCode != null, "hashCode: type=%s", hashType);
+      mavenFacet.put(checksumPath, new StringPayload(hashCode.toString(), Constants.CHECKSUM_CONTENT_TYPE));
+    }
+  }
+
+  /**
+   * Deletes metadata.
+   */
+  public static void delete(final Repository repository, final MavenPath mavenPath) {
+    checkNotNull(repository);
+    checkNotNull(mavenPath);
+    try {
+      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), mavenPath);
+    }
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

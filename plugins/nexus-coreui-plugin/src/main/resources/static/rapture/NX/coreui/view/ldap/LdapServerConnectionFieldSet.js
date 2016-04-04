@@ -245,7 +245,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.showOrHide('authScheme', undefined);
   },

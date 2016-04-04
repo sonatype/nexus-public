@@ -13,10 +13,10 @@
 package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -69,6 +69,22 @@ public class SimpleFileOperations
   }
 
   @Override
+  public void hardLink(final Path source, final Path newLink) throws IOException {
+    DirectoryHelper.mkdir(newLink.getParent());
+    Files.createLink(newLink, source);
+    log.debug("Hard link created from {} to {}", newLink, source);
+  }
+
+  @Override
+  public StreamMetrics computeMetrics(final Path file) throws IOException {
+    try (InputStream is = Files.newInputStream(file);
+         MetricsInputStream mis = new MetricsInputStream(is)) {
+      ByteStreams.copy(mis, ByteStreams.nullOutputStream());
+      return mis.getMetrics();
+    }
+  }
+
+  @Override
   public boolean exists(final Path path) {
     checkNotNull(path);
     return Files.exists(path);
@@ -101,5 +117,20 @@ public class SimpleFileOperations
   public void deleteDirectory(final Path directory) throws IOException {
     DirectoryHelper.emptyIfExists(directory);
     Files.deleteIfExists(directory);
+  }
+
+  /**
+   * Removes the directory if and only if the directory is empty.
+   */
+  @Override
+  public boolean deleteEmptyDirectory(final Path directory) throws IOException {
+    try {
+      Files.deleteIfExists(directory);
+      return true;
+    }
+    catch (DirectoryNotEmptyException e) {
+      log.debug("Cannot remove non-empty directory {}", directory, e);
+      return false;
+    }
   }
 }

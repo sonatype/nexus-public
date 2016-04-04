@@ -12,7 +12,6 @@
  */
 /*global Ext, NX*/
 
-
 /**
  * Metrics panel.
  *
@@ -28,6 +27,8 @@ Ext.define('NX.coreui.view.support.Metrics', {
     'NX.I18n'
   ],
 
+  cls: 'nx-coreui-support-metrics',
+
   /**
    * @override
    */
@@ -36,9 +37,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
       autoScroll: true,
 
       dockedItems: [{
-        xtype: 'toolbar',
-        dock: 'top',
-        cls: 'nx-actions',
+        xtype: 'nx-actions',
         items: [
           {
             xtype: 'button',
@@ -60,20 +59,21 @@ Ext.define('NX.coreui.view.support.Metrics', {
 
       items: {
         xtype: 'panel',
-        ui: 'nx-inset',
+        cls: [
+          'nx-inset',
+          'nx-hr'
+        ],
         layout: 'column',
-        defaults: {
-          style: {
-            margin: '0px 20px 20px 0px'
-          }
-        },
+
+        // FIXME: Remove use of ui 'nx-subsection', adjust scss style of .nx-coreui-support-metrics .metricwidget
 
         items: [
           {
             xtype: 'panel',
+            ui: 'nx-subsection',
+            cls: 'metricwidget',
             title: NX.I18n.get('Support_Metrics_MemoryUsage_Title'),
             frame: true,
-            ui: 'nx-subsection',
             height: 240,
             width: 300,
             layout: 'fit',
@@ -120,9 +120,10 @@ Ext.define('NX.coreui.view.support.Metrics', {
           },
           {
             xtype: 'panel',
+            ui: 'nx-subsection',
+            cls: 'metricwidget',
             title: NX.I18n.get('Support_Metrics_MemoryDistribution_Title'),
             frame: true,
-            ui: 'nx-subsection',
             height: 240,
             width: 300,
             layout: 'fit',
@@ -163,9 +164,10 @@ Ext.define('NX.coreui.view.support.Metrics', {
           },
           {
             xtype: 'panel',
+            ui: 'nx-subsection',
+            cls: 'metricwidget',
             title: NX.I18n.get('Support_Metrics_ThreadStates_Title'),
             frame: true,
-            ui: 'nx-subsection',
             height: 240,
             width: 300,
 
@@ -226,8 +228,9 @@ Ext.define('NX.coreui.view.support.Metrics', {
     //<if assert>
     NX.Assert.assert(p, "Expected this.down('" + query + "') to return component");
     //</if>
-    if (!p) return;
-    p.getStore().loadData(data);
+    if (p) {
+      p.getStore().loadData(data);
+    }
   },
 
   /**

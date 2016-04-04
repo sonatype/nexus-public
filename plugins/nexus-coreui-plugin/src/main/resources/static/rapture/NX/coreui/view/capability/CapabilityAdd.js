@@ -41,7 +41,7 @@ Ext.define('NX.coreui.view.capability.CapabilityAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

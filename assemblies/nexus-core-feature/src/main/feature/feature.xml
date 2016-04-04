@@ -15,10 +15,7 @@
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}">
-    <feature>nexus-siesta-plugin</feature>
     <feature>nexus-ssl-plugin</feature>
-    <feature>nexus-rapture-plugin</feature>
-    <feature>nexus-extdirect-plugin</feature>
     <feature>nexus-coreui-plugin</feature>
     <feature>nexus-repository-httpbridge</feature>
     <feature>nexus-repository-maven</feature>

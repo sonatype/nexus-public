@@ -45,6 +45,9 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.RepositorySelectRecipe',
     'repository.RepositorySettings',
     'repository.RepositorySettingsForm',
+    'repository.recipe.BowerGroup',
+    'repository.recipe.BowerHosted',
+    'repository.recipe.BowerProxy',
     'repository.recipe.Maven2Hosted',
     'repository.recipe.Maven2Proxy',
     'repository.recipe.Maven2Group',
@@ -201,7 +204,6 @@ Ext.define('NX.coreui.controller.Repositories', {
         pack: 'start'
       },
       items: [
-        {xtype: 'nx-actions'},
         {
           xtype: 'nx-coreui-repository-selectrecipe',
           flex: 1

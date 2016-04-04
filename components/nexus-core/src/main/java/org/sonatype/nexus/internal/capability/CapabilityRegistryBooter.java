@@ -16,18 +16,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
-import org.sonatype.nexus.common.app.NexusInitializedEvent;
-import org.sonatype.nexus.common.app.NexusStoppingEvent;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
 
 import com.google.common.base.Throwables;
-import com.google.common.eventbus.Subscribe;
 import com.google.inject.Provider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
 
 /**
  * Loads configuration when Nexus is initialized.
@@ -35,9 +34,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since capabilities 2.0
  */
 @Named
+@ManagedLifecycle(phase = CAPABILITIES)
 @Singleton
 public class CapabilityRegistryBooter
-  implements EventAware
+  extends LifecycleSupport
 {
   private final EventBus eventBus;
 
@@ -55,8 +55,8 @@ public class CapabilityRegistryBooter
     this.capabilityStorageProvider = checkNotNull(capabilityStorageProvider);
   }
 
-  @Subscribe
-  public void handle(final NexusInitializedEvent event) {
+  @Override
+  protected void doStart() throws Exception {
     try {
       capabilityStorageProvider.get().start();
 
@@ -72,8 +72,8 @@ public class CapabilityRegistryBooter
     }
   }
 
-  @Subscribe
-  public void handle(final NexusStoppingEvent event) {
+  @Override
+  protected void doStop() throws Exception {
     try {
       capabilityStorageProvider.get().stop();
     }

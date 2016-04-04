@@ -39,7 +39,7 @@ Ext.define('NX.coreui.view.user.UserSearchBox', {
     me.width = 320;
     me.submitValue = false;
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.addEvents(
         /**

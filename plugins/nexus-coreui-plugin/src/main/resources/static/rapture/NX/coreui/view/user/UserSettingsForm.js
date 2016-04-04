@@ -96,7 +96,7 @@ Ext.define('NX.coreui.view.user.UserSettingsForm', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

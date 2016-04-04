@@ -66,6 +66,6 @@ Ext.define('NX.coreui.view.logging.LogMark', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

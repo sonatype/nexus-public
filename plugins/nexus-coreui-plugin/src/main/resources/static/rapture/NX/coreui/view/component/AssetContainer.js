@@ -36,17 +36,10 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
    */
   initComponent: function() {
     Ext.apply(this, {
-      autoScroll: true,
-
-      layout: {
-        type: 'vbox',
-        align: 'stretch',
-        pack: 'start'
-      },
+      layout: 'fit',
 
       dockedItems: {
         xtype: 'nx-actions',
-
         items: [
           {
             xtype: 'button',
@@ -62,7 +55,10 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
         {
           xtype: 'nx-sorted-tabpanel',
           ui: 'nx-light',
+          cls: 'nx-hr',
           itemId: 'assetInfoTabs',
+          autoScroll: true,
+          layout: 'vbox',
           activeTab: 0
         }
       ]

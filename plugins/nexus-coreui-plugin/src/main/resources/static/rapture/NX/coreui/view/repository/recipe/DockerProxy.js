@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-docker-proxy',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
@@ -47,7 +45,7 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
       {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.down('#proxyFieldSet').add(1, {xtype: 'nx-coreui-repository-docker-proxy-facet'});
   }

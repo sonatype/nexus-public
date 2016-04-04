@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.NpmProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-npm-proxy',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
@@ -42,6 +40,6 @@ Ext.define('NX.coreui.view.repository.recipe.NpmProxy', {
       {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

@@ -1,0 +1,32 @@
+/**
+ * @class NX.view.feature.Menu
+ */
+
+@include extjs-panel-ui(
+    $ui: 'nx-feature-menu',
+    $ui-header-padding: 4px,
+    $ui-body-background-color: $color-gainsboro
+);
+
+.x-panel-nx-feature-menu {
+  border-width: 0 2px 0 0;
+  border-color: $color-light-gray;
+  border-style: solid;
+
+  .x-grid-header-ct {
+    border: none;
+  }
+
+  .x-panel-body-nx-feature-menu {
+    .x-grid-cell {
+      background-color: $color-gainsboro;
+    }
+    .x-grid-row-over .x-grid-td {
+      background-color: $color-smoke;
+    }
+    .x-grid-row-selected .x-grid-td {
+      color: $color-white;
+      background-color: $color-cerulean-blue;
+    }
+  }
+}

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
+import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.group.IndexGroupFacet
@@ -70,6 +71,9 @@ extends MavenRecipeSupport
   IndexGroupHandler indexGroupHandler
 
   @Inject
+  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
+
+  @Inject
   Maven2GroupRecipe(@Named(GroupType.NAME) Type type,
                     @Named(Maven2Format.NAME) Format format,
                     @Named(Maven2Format.NAME) MavenPathParser mavenPathParser,
@@ -82,10 +86,12 @@ extends MavenRecipeSupport
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(mavenFacet.get())
     repository.attach(mavenGroupFacet.get())
     repository.attach(mavenIndexFacet.get())
     repository.attach(mavenPurgeSnapshotsFacet.get())
+    repository.attach(removeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
   }
 

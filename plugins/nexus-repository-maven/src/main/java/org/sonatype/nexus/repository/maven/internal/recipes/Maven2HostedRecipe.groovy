@@ -23,11 +23,13 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
+import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.ArchetypeCatalogHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.HostedHandler
+import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedComponentMaintenanceFacet
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedFacetImpl
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.search.SearchFacet
@@ -65,6 +67,9 @@ class Maven2HostedRecipe
   Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
 
   @Inject
+  Provider<MavenHostedComponentMaintenanceFacet> componentMaintenanceFacet
+
+  @Inject
   VersionPolicyHandler versionPolicyHandler
 
   @Inject
@@ -72,6 +77,9 @@ class Maven2HostedRecipe
 
   @Inject
   ArchetypeCatalogHandler archetypeCatalogHandler
+  
+  @Inject
+  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
 
   @Inject
   Maven2HostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -86,11 +94,14 @@ class Maven2HostedRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(componentMaintenanceFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(mavenFacet.get())
     repository.attach(mavenHostedFacet.get())
     repository.attach(mavenIndexFacet.get())
     repository.attach(mavenPurgeSnapshotsFacet.get())
+    repository.attach(removeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
   }
 

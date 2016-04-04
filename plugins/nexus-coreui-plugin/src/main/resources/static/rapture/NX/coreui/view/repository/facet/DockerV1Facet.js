@@ -50,7 +50,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerV1Facet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

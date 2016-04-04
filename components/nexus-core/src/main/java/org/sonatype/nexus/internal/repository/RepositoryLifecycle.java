@@ -15,19 +15,16 @@ package org.sonatype.nexus.internal.repository;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleManagerImpl;
+import org.sonatype.goodies.lifecycle.LifecycleManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import com.google.common.eventbus.Subscribe;
-import org.eclipse.sisu.EagerSingleton;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 /**
  * Repository lifecycle.
@@ -35,12 +32,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Named
-@EagerSingleton
+@ManagedLifecycle(phase = SERVICES)
+@Singleton
 public class RepositoryLifecycle
-    extends LifecycleManagerImpl
+    extends LifecycleManager
 {
-  private final EventBus eventBus;
-
   private final Provider<BlobStoreManager> blobStoreManager;
 
   private final Provider<ConfigurationStore> configurationStore;
@@ -48,32 +44,28 @@ public class RepositoryLifecycle
   private final Provider<RepositoryManager> repositoryManager;
 
   @Inject
-  public RepositoryLifecycle(final EventBus eventBus,
-                             final Provider<BlobStoreManager> blobStoreManager,
+  public RepositoryLifecycle(final Provider<BlobStoreManager> blobStoreManager,
                              final Provider<ConfigurationStore> configurationStore,
                              final Provider<RepositoryManager> repositoryManager)
   {
-    this.eventBus = checkNotNull(eventBus);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.configurationStore = checkNotNull(configurationStore);
     this.repositoryManager = checkNotNull(repositoryManager);
-
-    eventBus.register(this);
   }
 
-  @Subscribe
-  public void on(final NexusStartedEvent event) throws Exception {
+  @Override
+  protected void doStart() throws Exception {
     add(blobStoreManager.get());
     add(configurationStore.get());
     add(repositoryManager.get());
-    start();
+
+    super.doStart();
   }
 
-  @Subscribe
-  public void on(final NexusStoppedEvent event) throws Exception {
-    eventBus.unregister(this);
+  @Override
+  protected void doStop() throws Exception {
+    super.doStop();
 
-    stop();
     clear();
   }
 }

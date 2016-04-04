@@ -25,11 +25,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.I18n'
   ],
 
-  /*
-   * Note: Symbols follow the following naming convention:
-   * <Class>_<Name>_<Component or Attribute>
+  /**
+   * String keys.
+   *
+   * Keys follow the following naming convention:
+   *
+   * Class_Name>_[Component_or_Attribute]: string
+   *
+   * @type {Object}
    */
-
   keys: {
     // Browse -> Browse
     Browse_Assets_Title_Feature: 'Assets',
@@ -60,6 +64,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     AssetInfo_Delete_Title: 'Confirm deletion?',
     AssetInfo_Delete_Success: 'Asset deleted: {0}',
 
+    ComponentDetails_Delete_Button: 'Delete component',
+    ComponentDetails_Delete_Title: 'Confirm deletion?',
+    ComponentDetails_Delete_Success: 'Component deleted: {0}',
+
     HealthCheckInfo_Most_Popular_Version_Label: 'Most popular version',
     HealthCheckInfo_Age_Label: 'Age',
     HealthCheckInfo_Popularity_Label: 'Popularity',
@@ -84,7 +92,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchMaven_Group: 'Maven Repositories',
     SearchNpm_Group: 'npm Repositories',
     SearchNuget_Group: 'NuGet Repositories',
-    SearchRaw_Group: 'Raw Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
     SearchCriteria_SHA256_FieldLabel: 'SHA-256',
@@ -106,8 +113,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchNpm_Version_FieldLabel: 'Version',
     SearchNuget_ID_FieldLabel: 'ID',
     SearchNuget_Tags_FieldLabel: 'Tags',
-    SearchRaw_Name_FieldLabel: 'Name',
-    SearchRaw_Group_FieldLabel: 'Group',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -121,9 +126,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Search_Assets_Repository: 'Repository',
     Search_Assets_Version: 'Version',
     SearchResultAssetList_Name_Header: 'Name',
-    Component_AssetInfo_Info_Title: 'Info',
+    Component_AssetInfo_Info_Title: 'Summary',
     Component_AssetInfo_Attributes_Title: 'Attributes',
     Component_AssetInfo_HealthCheck_Title: 'Component IQ',
+
+    // Browse -> Search -> Bower
+    SearchBower_Text: 'Bower',
+    SearchBower_Description: 'Search for components in bower repositories',
 
     // Browse -> Search -> Docker
     SearchDocker_Text: 'Docker',
@@ -184,6 +193,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryFeature_HealthCheckEnable_Button: 'Enable HealthCheck',
     Repository_RepositoryFeature_InvalidateCache_Button: 'Invalidate cache',
     Repository_RepositorySettings_Title: 'Settings',
+    Repository_Facet_BowerProxyFacet_Title: 'Bower',
+    Repository_Facet_BowerProxyFacet_RewritePackageUrls_FieldLabel: 'Enable rewrite of package URLs',
+    Repository_Facet_BowerProxyFacet_RewritePackageUrls_HelpText: 'Force Bower to retrieve packages through the proxy repository',
     Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
     Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository.',
@@ -326,6 +338,29 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreSettingsForm_Name_FieldLabel: 'Name',
     Blobstore_BlobstoreSettingsForm_Path_FieldLabel: 'Path',
 
+    // Admin -> Repository -> Selectors
+    Selectors_Text: 'Content Selectors',
+    Selectors_Description: 'Manage content selectors',
+    Selectors_Create_Title: 'Create Selector',
+    Selector_SelectorAdd_Create_Error: 'You do not have permission to create selectors',
+    Selector_SelectorAdd_Create_Success: 'Selector created: {0}',
+    Selector_SelectorSettingsForm_Update_Error: 'You do not have permission to update selectors',
+    Selector_SelectorSettingsForm_Update_Success: 'Selector updated: {0}',
+    Selector_SelectorList_New_Button: 'Create selector',
+    Selector_SelectorList_Name_Header: 'Name',
+    Selector_SelectorList_Description_Header: 'Description',
+    Selector_SelectorList_EmptyText: 'No selectors defined',
+    Selector_SelectorList_Filter_EmptyText: 'No selectors matched "$filter"',
+    Selector_SelectorFeature_Delete_Button: 'Delete selector',
+    Selectors_Delete_Message: 'Selector deleted: {0}',
+    Selector_SelectorFeature_Settings_Title: 'Settings',
+    Selector_SelectorSettingsForm_Name_FieldLabel: 'Name',
+    Selector_SelectorSettingsForm_Description_FieldLabel: 'Description',
+    Selector_SelectorSettingsForm_Expression_FieldLabel: 'Search expression',
+    Selector_SelectorSettingsForm_Expression_HelpText: 'Identify repositories, components or assets (JEXL query)',
+    Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
+    Selector_SelectorSettingsForm_Specification_Title: 'Specification',
+
     // Admin -> Security
     FeatureGroups_Security_Title: 'Security',
     FeatureGroups_Security_Description: 'Security administration',
@@ -333,7 +368,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Admin -> Security -> Privileges
     Privileges_Text: 'Privileges',
     Privileges_Description: 'Manage privileges',
+    Privileges_Update_Mask: 'Updating privilege',
+    Privileges_Update_Success: 'Privilege updated: {0}',
+    Privileges_Create_Success: 'Privilege created: {0}',
     Privileges_Delete_Success: 'Privilege deleted: {0}',
+    Privileges_Select_Title: 'Select Privilege Type',
+    Privilege_PrivilegeList_New_Button: 'Create privilege',
     Privilege_PrivilegeList_Name_Header: 'Name',
     Privilege_PrivilegeList_Description_Header: 'Description',
     Privilege_PrivilegeList_Type_Header: 'Type',
@@ -342,12 +382,20 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Privilege_PrivilegeList_Filter_EmptyText: 'No privileges matched "$filter"',
     Privilege_PrivilegeFeature_Details_Tab: 'Summary',
     Privilege_PrivilegeFeature_Delete_Button: 'Delete privilege',
+    Privilege_PrivilegeFeature_Settings_Title: 'Settings',
+    Privilege_PrivilegeSelectType_Type_Header: 'Type',
+    Privilege_PrivilegeAdd_Create_Error: 'You do not have permission to create privileges',
+    Privilege_PrivilegeSettingsForm_Update_Success: 'Privilege updated: {0}',
+    Privilege_PrivilegeSettingsForm_Update_Error: 'You do not have permission to update privileges or privilege is read only',
+    Privilege_PrivilegeSettingsForm_Description_FieldLabel: 'Description',
+    Privilege_PrivilegeSettingsForm_Name_FieldLabel: 'Name',
     Privileges_Summary_ID: 'ID',
     Privileges_Summary_Type: 'Type',
     Privileges_Summary_Name: 'Name',
     Privileges_Summary_Description: 'Description',
     Privileges_Summary_Permission: 'Permission',
     Privileges_Summary_Property: 'Property-{0}',
+    Privileges_Create_Title: 'Create {0} Privilege',
 
     // Admin -> Security -> Roles
     Roles_Text: 'Roles',
@@ -397,7 +445,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     User_UserChangePassword_Password_FieldLabel: 'New password',
     User_UserChangePassword_PasswordConfirm_FieldLabel: 'Confirm password',
     User_UserChangePassword_Submit_Button: 'Change password',
-    User_UserChangePassword_Cancel_Button: 'Cancel',
+    User_UserChangePassword_Cancel_Button: '@Button_Cancel',
     User_UserChangePassword_NoPermission_Error: 'You do not have permission to change your password',
     User_UserList_New_Button: 'Create user',
     User_UserList_Source_Label: 'Source:',
@@ -461,7 +509,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerUserAndGroupLoginCredentials_Username_FieldLabel: 'LDAP server username',
     Ldap_LdapServerUserAndGroupLoginCredentials_Password_FieldLabel: 'LDAP server password',
     Ldap_LdapServerUserAndGroupLoginCredentials_Submit_Button: 'Test connection',
-    Ldap_LdapServerUserAndGroupLoginCredentials_Cancel_Button: 'Cancel',
+    Ldap_LdapServerUserAndGroupLoginCredentials_Cancel_Button: '@Button_Cancel',
     Ldap_LdapServerUserAndGroupMappingTestResults_Title: 'User Mapping Test Results',
     Ldap_LdapServerUserAndGroupMappingTestResults_ID_Header: 'User ID',
     Ldap_LdapServerUserAndGroupMappingTestResults_Name_Header: 'Name',
@@ -562,11 +610,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SslCertificates_Text: 'SSL Certificates',
     SslCertificates_Description: 'Manage trusted SSL certificates for use with the Nexus truststore',
     SslCertificates_Paste_Title: 'Paste Certificate as PEM',
-    Ssl_SslCertificateAddFromPem_Cancel_Button: 'Cancel',
+    Ssl_SslCertificateAddFromPem_Cancel_Button: '@Button_Cancel',
     SslCertificates_Load_Title: 'Load Certificate from Server',
     Ssl_SslCertificateAddFromServer_Load_FieldLabel: 'Please enter a hostname, hostname:port or a URL to fetch a SSL certificate from',
     SslTrustStore_Load_Mask: 'Loading certificate&hellip;',
-    Ssl_SslCertificateAddFromServer_Cancel_Button: 'Cancel',
+    Ssl_SslCertificateAddFromServer_Cancel_Button: '@Button_Cancel',
     SslCertificates_Load_Success: 'SSL Certificate created: {0}',
     Ssl_SslCertificateList_New_Button: 'Load certificate',
     Ssl_SslCertificateList_Load_Button: 'Load from server',
@@ -582,7 +630,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SslCertificates_Add_Button: 'Add certificate to truststore',
     Ssl_SslCertificateFeature_Delete_Button: 'Delete certificate',
     SslCertificates_Delete_Success: 'SSL Certificate deleted: {0}',
-    Ssl_SslCertificateDetailsWindow_Cancel_Button: 'Cancel',
+    Ssl_SslCertificateDetailsWindow_Cancel_Button: '@Button_Cancel',
     Ssl_SslCertificateDetailsForm_Subject_Title: 'Subject',
     Ssl_SslCertificateDetailsForm_SubjectCommonName_FieldLabel: 'Common name',
     Ssl_SslCertificateDetailsForm_SubjectOrganization_FieldLabel: 'Organization',
@@ -744,7 +792,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_FileCreated_Size_FieldLabel: 'Size',
     Support_FileCreated_Path_FieldLabel: 'Path',
     Support_FileCreated_Download_Button: 'Download',
-    Support_FileCreated_Cancel_Button: 'Cancel',
+    Support_FileCreated_Cancel_Button: '@Button_Cancel',
     SupportZip_Authenticate_Text: 'Downloading support ZIP requires validation of your credentials.',
     SupportZip_Permission_Error: 'You do not have permission to create a support ZIP',
 
@@ -969,6 +1017,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Users_Text: 'Account',
     Users_Description: 'Manage your account',
     User_UserAccount_Update_Success: 'User account settings $action',
+    User_UserAccount_Update_Error: 'External users cannot be updated',
     User_UserAccount_ID_FieldLabel: 'ID',
     User_UserAccount_ID_HelpText: 'This is used as your username.',
     User_UserAccount_First_FieldLabel: 'First name',
@@ -991,7 +1040,111 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Nuget_NuGetApiKey_Access_HelpText: 'Accessing NuGet API Key requires validation of your credentials.',
     Nuget_NuGetApiKey_Reset_Button: 'Reset API Key',
     Nuget_NuGetApiKey_Reset_HelpText: 'Resetting NuGet API Key requires validation of your credentials.'
+  },
+
+  /**
+   * String bundles.
+   *
+   * @type {Object}
+   */
+  bundles: {
+    'NX.coreui.migration.Controller': {
+      Feature_Text: 'Migration',
+      Feature_Description: 'Migrate configuration and content from remote server',
+
+      Activate_Mask: 'Loading',
+
+      Configure_Mask: 'Configuring',
+      Configure_Message: 'Migration configured',
+
+      Cancel_Confirm_Title: 'Cancel Migration',
+      Cancel_Confirm_Text: 'Do you want to cancel migration?',
+      Cancel_Mask: 'Canceling',
+      Cancel_Message: 'Migration canceled',
+
+      IncompleteCancel_Title: 'Configuration Incomplete',
+      IncompleteCancel_Text: 'Migration has been partially configured and needs to be reset to continue.',
+      IncompleteCancel_Mask: 'Resetting',
+
+      PlanStepDetail_Mask: 'Fetching details'
+    },
+
+    'NX.coreui.migration.AgentStep': {
+      Connect_Mask: 'Connecting',
+      Connect_Message: 'Connected'
+    },
+
+    'NX.coreui.migration.RepositoryDefaultsScreen': {
+      $extend: 'NX.coreui.migration.RepositoryCustomizeWindow',
+      IngestMethod_HelpText: 'Choose how the repository should be migrated. The method you choose may not be supported by all repositories.'
+    },
+
+    'NX.coreui.migration.RepositoryCustomizeWindow': {
+      Title: 'Customize {0}',
+
+      BlobStore_FieldLabel: 'Destination',
+      BlobStore_HelpText: 'Choose where this repository should be migrated',
+      BlobStore_EmptyText: 'Choose a blob store',
+
+      IngestMethod_FieldLabel: 'Method',
+      IngestMethod_HelpText: 'Choose how the repository should be migrated',
+      IngestMethod_EmptyText: 'Choose a migration method',
+      IngestMethod_Link: 'Hard link (fastest)',
+      IngestMethod_Copy: 'Filesystem copy (slow)',
+      IngestMethod_Download: 'Download (slowest)'
+    },
+
+    'NX.coreui.migration.PlanStepDetailWindow': {
+      Title: '{0}',
+      EmptyLog: 'No progress'
+    },
+
+    'NX.coreui.migration.PreviewStep': {
+      Begin_Confirm_Title: 'Being Migration',
+      Begin_Confirm_Text: 'Do you want to begin migration?',
+      Begin_Mask: 'Migration beginning',
+      Begin_Message: 'Migration begun'
+    },
+
+    'NX.coreui.migration.ProgressStepSupport': {
+      Loading_Mask: 'Loading'
+    },
+
+    'NX.coreui.migration.PhasePrepareStep': {
+      $extend: 'NX.coreui.migration.ProgressStepSupport',
+
+      Abort_Confirm_Title: 'Abort Migration',
+      Abort_Confirm_Text: 'Do you want to abort migration?',
+      Abort_Mask: 'Migration aborting',
+      Abort_Message: 'Migration aborted',
+
+      Continue_Confirm_Title: 'Continue Migration',
+      Continue_Confirm_Text: 'Do you want to continue migration?',
+      Continue_Mask: 'Migration continuing',
+      Continue_Message: 'Migration continuing'
+    },
+
+    'NX.coreui.migration.PhaseSyncStep': {
+      $extend: 'NX.coreui.migration.ProgressStepSupport',
+
+      Abort_Confirm_Title: 'Abort Migration',
+      Abort_Confirm_Text: 'Do you want to abort migration?',
+      Abort_Mask: 'Migration aborting',
+      Abort_Message: 'Migration aborted',
+
+      Finish_Confirm_Title: 'Finish Migration',
+      Finish_Confirm_Text: 'Do you want to finish migration?',
+      Finish_Mask: 'Migration finishing',
+      Finish_Message: 'Migration finishing'
+    },
+
+    'NX.coreui.migration.PhaseFinishStep': {
+      $extend: 'NX.coreui.migration.ProgressStepSupport',
+
+      Done_Mask: 'Confirming',
+      Done_Message: 'Migration done'
+    }
   }
-}, function(obj) {
-  NX.I18n.register(obj.keys);
+}, function(self) {
+  NX.I18n.register(self);
 });

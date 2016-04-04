@@ -51,6 +51,7 @@ public class BootstrapListener
 
   private FilterTracker filterTracker;
 
+  @Override
   public void contextInitialized(final ServletContextEvent event) {
     log.info("Initializing");
 
@@ -98,7 +99,7 @@ public class BootstrapListener
       filterTracker.waitForService(0);
     }
     catch (Exception e) {
-      log.error("Failed to start Nexus", e);
+      log.error("Failed to initialize", e);
       throw e instanceof RuntimeException ? ((RuntimeException) e) : new RuntimeException(e);
     }
 
@@ -109,13 +110,13 @@ public class BootstrapListener
       throws Exception
   {
     if (editionName != null && editionName.length() > 0) {
-      log.info("Installing edition: {}", editionName);
-
       final ServiceTracker<?, FeaturesService> tracker = new ServiceTracker<>(ctx, FeaturesService.class, null);
       tracker.open();
       try {
         FeaturesService featuresService = tracker.waitForService(1000);
         Feature editionFeature = featuresService.getFeature(editionName);
+
+        log.info("Installing: {}", editionFeature);
 
         // edition might already be installed in the cache; if so then skip installation
         if (!featuresService.isInstalled(editionFeature)) {
@@ -123,6 +124,8 @@ public class BootstrapListener
           EnumSet<Option> options = EnumSet.of(NoAutoRefreshBundles, NoAutoRefreshManagedBundles);
           featuresService.installFeature(editionFeature.getId(), options);
         }
+
+        log.info("Installed: {}", editionFeature);
       }
       finally {
         tracker.close();
@@ -136,6 +139,7 @@ public class BootstrapListener
     }
   }
 
+  @Override
   public void contextDestroyed(final ServletContextEvent event) {
     log.info("Destroying");
 

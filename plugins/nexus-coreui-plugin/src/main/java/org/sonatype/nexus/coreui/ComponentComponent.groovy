@@ -19,15 +19,16 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
+import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.types.GroupType
+import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.validation.Validate
 
@@ -134,7 +136,8 @@ class ComponentComponent
       def repositories
       if (groupType == repository.type) {
         repositories = repository.facet(GroupFacet).leafMembers()
-        querySuffix = " GROUP BY ${ComponentEntityAdapter.P_GROUP},${MetadataNodeEntityAdapter.P_NAME},${ComponentEntityAdapter.P_VERSION}" + querySuffix
+        querySuffix = " GROUP BY ${ComponentEntityAdapter.P_GROUP},${MetadataNodeEntityAdapter.P_NAME},${ComponentEntityAdapter.P_VERSION}" +
+            querySuffix
       }
       else {
         repositories = ImmutableList.of(repository)
@@ -297,29 +300,34 @@ class ComponentComponent
   @DirectMethod
   @RequiresAuthentication
   @Validate
-  void deleteAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
+  void deleteComponent(@NotEmpty final String componentId, @NotEmpty final String repositoryName) {
+    deleteEntity(componentId, repositoryName, { ComponentMaintenance facet, EntityId entityId ->
+      facet.deleteComponent(entityId)
+    })
+  }
+
+  @DirectMethod
+  @RequiresAuthentication
+  @Validate
+  void deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
+    deleteEntity(assetId, repositoryName, { ComponentMaintenance facet, EntityId entityId ->
+      facet.deleteAsset(entityId)
+    })
+  }
+
+  void deleteEntity(final String entityId, final String repositoryName, final Closure action) {
     Repository repository = repositoryManager.get(repositoryName)
     securityHelper.ensurePermitted(new RepositoryViewPermission(repository, BreadActions.DELETE))
 
     try {
-      ComponentMaintenance componentMaintenance = repository.facet(ComponentMaintenance.class)
-      componentMaintenance.deleteAsset(new DetachedEntityId(assetId))
+      ComponentMaintenance componentMaintenanceFacet = repository.facet(ComponentMaintenance.class)
+      action.call(componentMaintenanceFacet, new DetachedEntityId(entityId))
     }
     catch (MissingFacetException e) {
-      // TODO: Move this direct use of DefaultComponentMaintenance facet to eliminate the missing facet check
-      StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-      try {
-        storageTx.begin();
-        Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
-        log.info 'Deleting asset: {}', asset
-        storageTx.deleteAsset(asset)
-        storageTx.commit()
-      }
-      finally {
-        storageTx.close()
-      }
+      throw new IllegalOperationException(
+          "Deleting from repository '$repositoryName' of type '$repository.type' is not supported"
+      )
     }
-
   }
 
   /**

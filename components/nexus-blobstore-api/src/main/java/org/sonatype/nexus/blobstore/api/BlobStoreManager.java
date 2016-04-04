@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
@@ -40,6 +42,7 @@ public interface BlobStoreManager
   /**
    * Lookup a BlobStore by name
    */
+  @Nullable
   BlobStore get(String name);
 
   /**

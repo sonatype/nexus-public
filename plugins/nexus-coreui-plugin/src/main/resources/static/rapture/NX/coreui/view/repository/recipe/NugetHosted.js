@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.NugetHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-nuget-hosted',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted'
   ],
@@ -38,6 +36,6 @@ Ext.define('NX.coreui.view.repository.recipe.NugetHosted', {
       { xtype: 'nx-coreui-repository-storage-hosted-facet'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

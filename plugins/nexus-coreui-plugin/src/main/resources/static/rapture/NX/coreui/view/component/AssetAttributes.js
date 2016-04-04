@@ -24,6 +24,8 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
     'NX.I18n'
   ],
 
+  cls: 'nx-coreui-component-assetattributes',
+
   /**
    * model to display
    */
@@ -31,9 +33,6 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
   viewConfig: {
     enableTextSelection: true
   },
-  ui: 'nx-subsection',
-  frame: true,
-  bodyBorder: false,
   itemId: 'attributeGrid',
   store: Ext.create('Ext.data.Store', {
     fields: ['facet', 'label', 'value'],
@@ -56,14 +55,16 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
         flex: 2,
         dataIndex: 'value',
         renderer: function (val) {
-          return '<div style="word-wrap: break-word ;white-space:normal !important;">' + val + '</div>';
+          return Ext.DomHelper.markup({
+            tag: 'div',
+            cls: 'attribute-value',
+            html: val
+          });
         }
       }
     ]
   },
   hideHeaders: true,
-  overflowY: 'auto',
-  scroll: false,
   features: [
     {
       ftype: 'grouping',

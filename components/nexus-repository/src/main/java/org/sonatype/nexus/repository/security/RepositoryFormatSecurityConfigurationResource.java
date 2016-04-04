@@ -18,11 +18,11 @@ import org.sonatype.nexus.security.config.MutableDynamicSecurityConfigurationRes
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.security.BreadActions.ADD;
-import static org.sonatype.nexus.repository.security.BreadActions.BROWSE;
-import static org.sonatype.nexus.repository.security.BreadActions.DELETE;
-import static org.sonatype.nexus.repository.security.BreadActions.EDIT;
-import static org.sonatype.nexus.repository.security.BreadActions.READ;
+import static org.sonatype.nexus.security.BreadActions.ADD;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
+import static org.sonatype.nexus.security.BreadActions.DELETE;
+import static org.sonatype.nexus.security.BreadActions.EDIT;
+import static org.sonatype.nexus.security.BreadActions.READ;
 import static org.sonatype.nexus.repository.security.RepositoryViewPrivilegeDescriptor.id;
 import static org.sonatype.nexus.repository.security.RepositoryViewPrivilegeDescriptor.privilege;
 import static org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport.ALL;

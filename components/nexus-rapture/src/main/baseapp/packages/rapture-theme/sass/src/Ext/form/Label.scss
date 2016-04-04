@@ -1,0 +1,10 @@
+/**
+ * @class Ext.form.Label
+ */
+
+.nx-monospace-field {
+  textarea, input {
+    font-family: $font-monospace;
+    font-size: $font-size-code;
+  }
+}

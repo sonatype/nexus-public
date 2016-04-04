@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -27,6 +29,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -51,7 +54,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 public class FileBlobStoreIT
     extends TestSupport
 {
-  public static final int TEST_DATA_LENGTH = 10_000;
+  public static final int TEST_DATA_LENGTH = 10;
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
@@ -139,9 +142,41 @@ public class FileBlobStoreIT
     //assertThat("compacting should reclaim deleted blobs' space", storeMetrics3.getTotalSize(), is(equalTo(0L)));
   }
 
+  @Test
+  public void hardLinkIngestion() throws Exception {
+    final Path sourceFile = testFile();
+
+    // Attempt to make a hard link to the file we're importing
+    final Blob blob = underTest.create(sourceFile, TEST_HEADERS);
+
+    // Now append some telltale bytes to the end of the original file
+    final byte[] appendMe = new byte[100];
+    Arrays.fill(appendMe, (byte) 3);
+    Files.write(sourceFile, appendMe, StandardOpenOption.APPEND);
+
+    // Now see if the blob was modified. This isn't a real use case, but checks the hard link.
+    assertThat("blob must have been modified", extractContent(blob), is(equalTo(extractContent(sourceFile))));
+  }
+
+  private Path testFile() throws IOException {
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    new Random().nextBytes(content);
+
+    Path tempFile = util.createTempFile().toPath();
+    DirectoryHelper.mkdir(tempFile.getParent());
+    Files.write(tempFile, content);
+    return tempFile;
+  }
+
   private byte[] extractContent(final Blob blob) throws IOException {
     try (InputStream inputStream = blob.getInputStream()) {
       return ByteStreams.toByteArray(inputStream);
+    }
+  }
+
+  private byte[] extractContent(final Path path) throws IOException {
+    try (InputStream input = Files.newInputStream(path)) {
+      return ByteStreams.toByteArray(input);
     }
   }
 
@@ -165,13 +200,27 @@ public class FileBlobStoreIT
   }
 
   @Test
-  public void blobstoreRemovalDeletesAllFiles() throws Exception {
+  public void blobstoreRemovalPreservesExternalFiles() throws Exception {
     final byte[] content = new byte[TEST_DATA_LENGTH];
     new Random().nextBytes(content);
 
     for (int i = 0; i < 100; i++) {
       underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
     }
+
+    assertThat(Files.exists(this.blobStoreDirectory), is(true));
+
+    underTest.stop();
+    underTest.remove();
+
+    assertThat(Files.exists(this.blobStoreDirectory), is(true));
+
+    underTest = null; // The store is stopped, no cleanup required
+  }
+
+
+  @Test
+  public void blobstoreRemovalDeletesInternalFiles() throws Exception {
 
     assertThat(Files.exists(this.blobStoreDirectory), is(true));
 

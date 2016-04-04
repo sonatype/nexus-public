@@ -22,13 +22,13 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
 import org.sonatype.nexus.common.stateguard.Transitions;
-import org.sonatype.nexus.common.throwables.MultipleFailures;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.MissingFacetException;

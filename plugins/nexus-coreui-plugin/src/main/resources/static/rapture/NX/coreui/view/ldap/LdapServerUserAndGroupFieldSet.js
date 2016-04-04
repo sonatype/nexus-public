@@ -176,7 +176,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupFieldSet', {
   initComponent: function () {
     var me = this;
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.showOrHide('ldapGroupsAsRoles', true);
     me.showOrHide('groupType', undefined);

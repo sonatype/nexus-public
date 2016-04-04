@@ -24,6 +24,8 @@ Ext.define('NX.coreui.view.repository.RepositorySelectRecipe', {
     'NX.I18n'
   ],
 
+  cls: 'nx-hr',
+
   store: 'RepositoryRecipe',
   columns: [
     {

@@ -109,7 +109,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

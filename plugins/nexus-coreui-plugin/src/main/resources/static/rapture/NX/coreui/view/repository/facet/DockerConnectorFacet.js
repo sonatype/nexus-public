@@ -78,7 +78,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   createCheckbox: function(type) {

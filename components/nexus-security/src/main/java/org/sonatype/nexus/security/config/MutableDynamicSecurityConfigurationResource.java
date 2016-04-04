@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.concurrent.Locks;
+import org.sonatype.goodies.common.Locks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

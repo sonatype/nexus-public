@@ -23,6 +23,7 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.formfields.NumberTextFormField
 import org.sonatype.nexus.formfields.Selectable
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
@@ -108,6 +109,10 @@ class TaskComponent
               formFieldXO.storeFilters = formField.storeFilters
               formFieldXO.idMapping = formField.idMapping
               formFieldXO.nameMapping = formField.nameMapping
+            }
+            if (formField instanceof NumberTextFormField) {
+              formFieldXO.minValue = formField.minimumValue
+              formFieldXO.maxValue = formField.maximumValue
             }
             return formFieldXO
           }

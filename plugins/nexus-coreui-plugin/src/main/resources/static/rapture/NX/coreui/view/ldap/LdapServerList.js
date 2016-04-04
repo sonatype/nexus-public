@@ -54,9 +54,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerList', {
       },
 
       dockedItems: [{
-        xtype: 'toolbar',
-        dock: 'top',
-        cls: 'nx-actions nx-borderless',
+        xtype: 'nx-actions',
         items: [
           {
             xtype: 'button',

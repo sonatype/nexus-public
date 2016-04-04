@@ -53,7 +53,7 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckSummary', {
       }
     };
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   listeners: {

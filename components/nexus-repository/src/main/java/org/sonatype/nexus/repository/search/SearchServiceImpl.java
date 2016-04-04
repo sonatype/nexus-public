@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +33,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.security.BreadActions;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.base.Charsets;
@@ -53,10 +54,15 @@ import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.internal.InternalSearchResponse;
+import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -93,18 +99,22 @@ public class SearchServiceImpl
   private final List<IndexSettingsContributor> indexSettingsContributors;
 
   private final ConcurrentMap<String, String> repositoryNameMapping;
+  
+  private final boolean profile;
 
   @Inject
   public SearchServiceImpl(final Provider<Client> client,
                            final RepositoryManager repositoryManager,
                            final SecurityHelper securityHelper,
-                           final List<IndexSettingsContributor> indexSettingsContributors)
+                           final List<IndexSettingsContributor> indexSettingsContributors,
+                           @Named("${nexus.elasticsearch.profile:-false}") final boolean profile)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.securityHelper = checkNotNull(securityHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.repositoryNameMapping = Maps.newConcurrentMap();
+    this.profile = checkNotNull(profile);
   }
 
   @Override
@@ -213,7 +223,7 @@ public class SearchServiceImpl
         throw new IllegalArgumentException("Invalid query");
       }
     }
-    catch (IndexMissingException e) {
+    catch (IndexNotFoundException e) {
       // no repositories were created yet, so there is no point in searching
       return null;
     }
@@ -301,13 +311,20 @@ public class SearchServiceImpl
         .setTypes(TYPE)
         .setQuery(query)
         .setFrom(from)
-        .setSize(size);
+        .setSize(size)
+        .setProfile(profile);
     if (sort != null) {
       for (SortBuilder entry : sort) {
         searchRequestBuilder.addSort(entry);
       }
     }
-    return searchRequestBuilder.execute().actionGet();
+    SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
+    
+    if(profile) {
+      logProfileResults(searchResponse);
+    }
+    
+    return searchResponse;
   }
 
   @Override
@@ -345,7 +362,7 @@ public class SearchServiceImpl
         throw new IllegalArgumentException("Invalid query");
       }
     }
-    catch (IndexMissingException e) {
+    catch (IndexNotFoundException e) {
       // no repositories were created yet, so there is no point in searching
       return false;
     }
@@ -373,5 +390,22 @@ public class SearchServiceImpl
    */
   private IndicesAdminClient indicesAdminClient() {
     return client.get().admin().indices();
+  }
+
+  private void logProfileResults(final SearchResponse searchResponse) {
+    for (Entry<String, List<ProfileShardResult>> entry : searchResponse.getProfileResults().entrySet()) {
+      for (ProfileShardResult profileShardResult : entry.getValue()) {
+        try {
+          XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
+          builder.startObject();
+          profileShardResult.toXContent(builder, ToXContent.EMPTY_PARAMS);
+          builder.endObject();
+          log.info("Elasticsearch profile for {} is: {}", entry.getKey(), builder.string());
+        }
+        catch (IOException e) {
+          log.error("Error writing elasticsearch profile result", e);
+        }
+      }
+    }
   }
 }

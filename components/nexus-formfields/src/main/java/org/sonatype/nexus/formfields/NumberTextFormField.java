@@ -12,12 +12,18 @@
  */
 package org.sonatype.nexus.formfields;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Number field.
  */
 public class NumberTextFormField
     extends AbstractFormField<Number>
 {
+  private Number minimumValue;
+  
+  private Number maximumValue;
+  
   public NumberTextFormField(String id, String label, String helpText, boolean required, String regexValidation) {
     super(id, label, helpText, required, regexValidation);
   }
@@ -38,5 +44,22 @@ public class NumberTextFormField
     setInitialValue(initialValue);
     return this;
   }
+  
+  public NumberTextFormField withMinimumValue(final Number minimumValue) {
+    this.minimumValue = checkNotNull(minimumValue);
+    return this;
+  }
 
+  public NumberTextFormField withMaximumValue(final Number maximumValue) {
+    this.maximumValue = checkNotNull(maximumValue);
+    return this;
+  }
+
+  public Number getMinimumValue() {
+    return minimumValue;
+  }
+
+  public Number getMaximumValue() {
+    return maximumValue;
+  }
 }

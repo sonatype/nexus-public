@@ -22,8 +22,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -42,6 +41,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -50,6 +50,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.0
  */
 @Named
+@ManagedLifecycle(phase = SERVICES)
 @Singleton
 public class ApiKeyStoreImpl
     extends StateGuardLifecycleSupport
@@ -172,16 +173,6 @@ public class ApiKeyStoreImpl
         entityAdapter.deleteEntity(db, entity);
       }
     }
-  }
-
-  @Subscribe
-  public void on(final NexusStartedEvent event) throws Exception {
-    start();
-  }
-
-  @Subscribe
-  public void on(final NexusStoppedEvent event) throws Exception {
-    stop();
   }
 
   @Subscribe

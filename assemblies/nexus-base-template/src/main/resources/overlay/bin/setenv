@@ -29,10 +29,10 @@
 # KARAF_DEBUG # Enable debug mode
 # KARAF_REDIRECT # Enable/set the std/err redirection when using bin/start
 
-JAVA_MIN_MEM="256M"
+JAVA_MIN_MEM="1200M"
 export JAVA_MIN_MEM
 
-JAVA_MAX_MEM="768M"
+JAVA_MAX_MEM="1200M"
 export JAVA_MAX_MEM
 
 KARAF_OPTS="-Djava.net.preferIPv4Stack=true"

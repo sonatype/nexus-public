@@ -15,6 +15,7 @@ package org.sonatype.nexus.coreui
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
 
+import org.sonatype.nexus.validation.constraint.NamePatternConstants
 import org.sonatype.nexus.repository.config.UniqueRepositoryName
 import org.sonatype.nexus.validation.group.Create
 
@@ -30,10 +31,7 @@ import org.hibernate.validator.constraints.NotEmpty
 @ToString(includePackage = false, includeNames = true)
 class RepositoryXO
 {
-  @Pattern(
-      regexp = /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/,
-      message = 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.'
-  )
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotEmpty
   @UniqueRepositoryName(groups = Create)
   String name

@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class FileContentSourceSupport
     extends ContentSourceSupport
 {
-  private final File file;
+  protected final File file;
 
   /**
    * @since 3.0

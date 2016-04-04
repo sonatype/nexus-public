@@ -89,6 +89,7 @@ Ext.define('NX.coreui.controller.Outreach', {
             xtype: 'uxiframe',
             itemId: 'outreach',
             anchor: '100%',
+            width: '100%',
             flex: 1,
             border: false,
             frame: false,

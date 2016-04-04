@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.NpmGroup', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-npm-group',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.GroupFacet'
   ],
@@ -38,6 +36,6 @@ Ext.define('NX.coreui.view.repository.recipe.NpmGroup', {
       { xtype: 'nx-coreui-repository-group-facet', format: 'npm' }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

@@ -42,12 +42,6 @@ Ext.define('NX.coreui.view.task.TaskSelectType', {
       { header: NX.I18n.get('Task_TaskSelectType_Name_Header'), dataIndex: 'name', flex: 1 }
     ];
 
-    me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless'
-    }];
-
     me.plugins = [
       { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Task_TaskSelectType_Filter_EmptyText') }
     ];
@@ -57,7 +51,7 @@ Ext.define('NX.coreui.view.task.TaskSelectType', {
       { property: 'exposed', value: true }
     ], false);
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

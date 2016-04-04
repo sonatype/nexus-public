@@ -45,6 +45,6 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-raw-hosted',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted'
   ],
@@ -38,6 +36,6 @@ Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
       {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

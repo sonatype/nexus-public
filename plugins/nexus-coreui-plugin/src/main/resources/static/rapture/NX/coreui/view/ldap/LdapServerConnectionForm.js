@@ -37,7 +37,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionForm', {
 
     me.editableCondition = me.editableCondition || NX.Conditions.isPermitted('nexus:ldap:update');
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.getDockedItems('toolbar[dock="bottom"]')[0].add(
         { xtype: 'button', text: NX.I18n.get('Ldap_LdapServerConnectionForm_VerifyConnection_Button'), formBind: true, action: 'verifyconnection' }

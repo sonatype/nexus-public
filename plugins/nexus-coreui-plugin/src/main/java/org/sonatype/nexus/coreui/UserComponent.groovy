@@ -115,7 +115,8 @@ class UserComponent
         userId: user.userId,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.emailAddress
+        email: user.emailAddress,
+        external: user.source != DEFAULT_SOURCE
     )
   }
 

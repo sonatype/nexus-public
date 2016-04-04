@@ -1,0 +1,53 @@
+//
+// Utility SCSS styles for entire theme.  These are included before var/... and src/... files.
+//
+
+@import 'colors';
+@import 'fonts';
+
+/**
+ * Links
+ */
+
+a:not([class*="x-"]) {
+  color: $color-navy-blue;
+  text-decoration: none;
+
+  &:visited {
+    color: $color-dark-denim;
+  }
+
+  &:focus, &:hover {
+    color: $color-dark-cerulean;
+    text-decoration: underline;
+  }
+
+  &:active {
+    color: $color-cornflower;
+  }
+}
+
+/**
+ * Paragraphs
+ */
+
+p {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+/**
+ * Tables
+ */
+
+th {
+  text-align: left;
+}
+
+td:not([class|=x]) {
+  padding-right: 5px;
+}
+
+td:not([class|=x]):last-child {
+  padding-right: 0;
+}

@@ -78,7 +78,7 @@ public class MavenHostedFacetImpl
       "AND attributes.maven2.packaging=:packaging";
 
   private final MetadataRebuilder metadataRebuilder;
-
+  
   private MavenFacet mavenFacet;
 
   private MavenPath archetypeCatalogMavenPath;
@@ -114,6 +114,13 @@ public class MavenHostedFacetImpl
   public int rebuildArchetypeCatalog() throws IOException {
     log.debug("Rebuilding hosted archetype catalog for {}", getRepository().getName());
     return doRebuildArchetypeCatalog();
+  }
+
+  @Override
+  public void deleteMetadata(final String groupId, final String artifactId, final String baseVersion) {
+    log.debug("Deleting Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}", getRepository().getName(),
+        groupId, artifactId, baseVersion);
+    metadataRebuilder.deleteAndRebuild(getRepository(), groupId, artifactId, baseVersion);
   }
 
   @Transactional
@@ -184,7 +191,7 @@ public class MavenHostedFacetImpl
     if (deleteCatalog) {
       UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
       try {
-        transactional().call(() ->
+        transactional().throwing(IOException.class).call(() ->
             MavenFacetUtils.deleteWithHashes(mavenFacet, archetypeCatalogMavenPath)
         );
       }

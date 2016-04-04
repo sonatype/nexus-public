@@ -54,7 +54,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleOnce', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

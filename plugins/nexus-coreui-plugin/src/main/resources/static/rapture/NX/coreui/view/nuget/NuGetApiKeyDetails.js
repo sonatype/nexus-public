@@ -103,13 +103,13 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKeyDetails', {
       ],
       buttonAlign: 'left',
       buttons: [
-        { text: NX.I18n.get('Close_Button'), handler: function() {
+        { text: NX.I18n.get('Button_Close'), handler: function() {
           this.up('window').close();
         }}
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
 
     // Automatically close the window
     Ext.defer(function() {

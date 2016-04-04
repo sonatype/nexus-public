@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.goodies.common.Locks;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -40,7 +42,6 @@ import org.sonatype.nexus.blobstore.file.internal.BlobAttributes;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.collect.AutoClosableIterable;
-import org.sonatype.nexus.common.concurrent.Locks;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -151,7 +152,7 @@ public class FileBlobStore
       metadata.setProperty(TYPE_KEY, TYPE_V1);
       metadata.store();
     }
-    liveBlobs = CacheBuilder.newBuilder().weakValues().build(from((blobId) -> new FileBlob(blobId)));
+    liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
     deletedBlobIndex = new QueueFile(storageDir.resolve(DELETIONS_FILENAME).toFile());
     storeMetrics.setStorageDir(storageDir);
     storeMetrics.start();
@@ -196,6 +197,22 @@ public class FileBlobStore
   @Override
   public Blob create(final InputStream blobData, final Map<String, String> headers) {
     checkNotNull(blobData);
+
+    return create(headers, destination -> fileOperations.create(destination, blobData));
+  }
+
+  @Override
+  public Blob create(final Path sourceFile, final Map<String, String> headers) {
+    checkNotNull(sourceFile);
+    checkArgument(Files.exists(sourceFile));
+
+    return create(headers, destination -> {
+      fileOperations.hardLink(sourceFile, destination);
+      return fileOperations.computeMetrics(destination);
+    });
+  }
+
+  private Blob create(final Map<String, String> headers, final BlobIngester ingester) {
     checkNotNull(headers);
 
     checkArgument(headers.containsKey(BLOB_NAME_HEADER), "Missing header: %s", BLOB_NAME_HEADER);
@@ -213,7 +230,7 @@ public class FileBlobStore
     try {
       log.debug("Writing blob {} to {}", blobId, blobPath);
 
-      final StreamMetrics streamMetrics = fileOperations.create(blobPath, blobData);
+      final StreamMetrics streamMetrics = ingester.ingestTo(blobPath);
       final BlobMetrics metrics = new BlobMetrics(new DateTime(), streamMetrics.getSha1(), streamMetrics.getSize());
       blob.refresh(headers, metrics);
 
@@ -458,12 +475,23 @@ public class FileBlobStore
   }
 
   /**
-   * Recursively delete everything in the blob store's configured directory.
+   * Delete files known to be part of the FileBlobStore implementation if the content directory is empty.
    */
   @Override
   public void remove() {
     try {
-      fileOperations.deleteDirectory(getAbsoluteBlobDir());
+      Path blobDir = getAbsoluteBlobDir();
+      if (fileOperations.deleteEmptyDirectory(contentDir)) {
+        deleteQuietly(blobDir.resolve("metrics.properties"));
+        deleteQuietly(blobDir.resolve("metadata.properties"));
+        deleteQuietly(blobDir.resolve("deletions.index"));
+        if (!fileOperations.deleteEmptyDirectory(blobDir)) {
+          log.warn("Unable to delete non-empty blob store directory {}", blobDir);
+        }
+      }
+      else {
+        log.warn("Unable to delete non-empty blob store content directory {}", contentDir);
+      }
     }
     catch (IOException e) {
       throw new BlobStoreException(e, null);
@@ -566,4 +594,8 @@ public class FileBlobStore
     }
   }
 
+  private interface BlobIngester
+  {
+    StreamMetrics ingestTo(final Path destination) throws IOException;
+  }
 }

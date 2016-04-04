@@ -29,6 +29,8 @@ Ext.define('NX.coreui.view.capability.CapabilitySelectType', {
 
     me.store = 'CapabilityType';
 
+    me.cls = 'nx-hr';
+
     me.columns = [
       {
         xtype: 'nx-iconcolumn',
@@ -72,7 +74,7 @@ Ext.define('NX.coreui.view.capability.CapabilitySelectType', {
       }
     );
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

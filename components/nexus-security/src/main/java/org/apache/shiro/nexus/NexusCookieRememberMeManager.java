@@ -14,6 +14,7 @@ package org.apache.shiro.nexus;
 
 import org.sonatype.goodies.common.Time;
 
+import org.apache.shiro.crypto.AesCipherService;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.servlet.Cookie;
 import org.slf4j.Logger;
@@ -36,6 +37,10 @@ public class NexusCookieRememberMeManager
   // TODO: Expose for configuration, for now just use a more sane defaults
 
   public NexusCookieRememberMeManager() {
+
+    // generate a new 'rememberMe' cipher key whenever Nexus starts
+    setCipherKey(new AesCipherService().generateNewKey().getEncoded());
+
     Cookie cookie = getCookie();
     cookie.setName(DEFAULT_REMEMBER_ME_COOKIE_NAME);
     cookie.setMaxAge(DEFAULT_REMEMBER_ME_COOKIE_MAX_AGE.toSecondsI());

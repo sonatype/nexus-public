@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.capability.condition;
 
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,9 +30,7 @@ public class NexusIsActiveConditionTest
   private NexusIsActiveCondition underTest;
 
   @Before
-  public final void setUpNexusIsActiveCondition()
-      throws Exception
-  {
+  public final void setUpNexusIsActiveCondition() throws Exception {
     underTest = new NexusIsActiveCondition(eventBus);
   }
 
@@ -52,7 +47,7 @@ public class NexusIsActiveConditionTest
    */
   @Test
   public void satisfiedWhenNexusStarted() {
-    underTest.handle(new NexusStartedEvent(this));
+    underTest.start();
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventBusEvents(satisfied(underTest));
@@ -63,8 +58,8 @@ public class NexusIsActiveConditionTest
    */
   @Test
   public void unsatisfiedWhenNexusStopped() {
-    underTest.handle(new NexusStartedEvent(this));
-    underTest.handle(new NexusStoppedEvent(this));
+    underTest.start();
+    underTest.stop();
     assertThat(underTest.isSatisfied(), is(false));
 
     verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));

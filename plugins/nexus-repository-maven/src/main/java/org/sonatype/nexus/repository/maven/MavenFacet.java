@@ -13,13 +13,13 @@
 package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.maven.policy.LayoutPolicy;
-import org.sonatype.nexus.repository.maven.policy.VersionPolicy;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -55,6 +55,8 @@ public interface MavenFacet
   Content get(MavenPath path) throws IOException;
 
   Content put(MavenPath path, Payload payload) throws IOException;
+
+  Content put(MavenPath path, Path sourceFile, String contentType, AttributesMap contentAttributes) throws IOException;
 
   boolean delete(MavenPath... paths) throws IOException;
 }

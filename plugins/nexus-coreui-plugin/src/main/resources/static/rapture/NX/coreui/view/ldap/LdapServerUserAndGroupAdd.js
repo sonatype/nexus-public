@@ -45,6 +45,6 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

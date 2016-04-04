@@ -58,7 +58,7 @@ Ext.define('NX.coreui.view.system.AuthenticationSettings', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

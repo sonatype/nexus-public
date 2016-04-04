@@ -65,7 +65,8 @@ public class BucketEntityAdapter
     type.createProperty(P_REPOSITORY_NAME, OType.STRING)
         .setMandatory(true)
         .setNotNull(true);
-    type.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP);
+    type.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP)
+        .setNotNull(true);
 
     type.createIndex(I_REPOSITORY_NAME, INDEX_TYPE.UNIQUE, P_REPOSITORY_NAME);
   }

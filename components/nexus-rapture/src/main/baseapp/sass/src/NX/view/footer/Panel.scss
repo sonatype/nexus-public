@@ -1,0 +1,14 @@
+/**
+ * @class NX.view.footer.Panel
+ */
+
+.nx-footer {
+  background-color: $color-charcoal;
+
+  .copyright {
+    color: $color-light-gray;
+    font-size: 8px;
+    text-align: right;
+    padding: 1px 2px 0 0;
+  }
+}

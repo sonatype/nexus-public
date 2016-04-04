@@ -55,6 +55,6 @@ Ext.define('NX.coreui.view.task.TaskScheduleDaily', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

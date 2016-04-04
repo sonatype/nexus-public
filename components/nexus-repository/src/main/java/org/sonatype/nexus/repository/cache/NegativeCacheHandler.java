@@ -56,15 +56,19 @@ public class NegativeCacheHandler
       }
     }
     else {
-      response = new Response.Builder()
-          .status(status)
-          .build();
+      response = buildResponse(status, context);
 
       log.debug("Found {} in negative cache, returning {}", key, response);
     }
     return response;
   }
-
+  
+  protected Response buildResponse(final Status status, final Context context) {
+    return new Response.Builder()
+        .status(status)
+        .build();  
+  }
+  
   private boolean isNotFound(final Response response) {
     return HttpStatus.NOT_FOUND == response.getStatus().getCode();
   }

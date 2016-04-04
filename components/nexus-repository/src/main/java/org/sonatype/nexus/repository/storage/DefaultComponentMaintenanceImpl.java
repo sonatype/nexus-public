@@ -37,6 +37,32 @@ public class DefaultComponentMaintenanceImpl
     implements ComponentMaintenance
 {
   /**
+   * Deletes the component directly, with no additional bookkeeping.
+   */
+  @Override
+  public void deleteComponent(final EntityId componentId) {
+    checkNotNull(componentId);
+    UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
+    try {
+      deleteComponentTx(componentId);
+    }
+    finally {
+      UnitOfWork.end();
+    }
+  }
+
+  @Transactional(retryOn = ONeedRetryException.class)
+  protected void deleteComponentTx(final EntityId componentId) {
+    StorageTx tx = UnitOfWork.currentTx();
+    Component component = tx.findComponent(componentId, tx.findBucket(getRepository()));
+    if (component == null) {
+      return;
+    }
+    log.info("Deleting component: {}", component);
+    tx.deleteComponent(component);
+  }
+
+  /**
    * Deletes the asset directly, with no additional bookkeeping.
    */
   @Override

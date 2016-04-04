@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
+import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
@@ -33,6 +34,7 @@ import org.sonatype.nexus.repository.maven.internal.proxy.MavenProxyIndexFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.search.SearchFacet
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
@@ -73,6 +75,9 @@ class Maven2ProxyRecipe
   Provider<PurgeUnusedFacet> purgeUnusedFacet
 
   @Inject
+  Provider<DefaultComponentMaintenanceImpl> componentMaintenanceFacet
+
+  @Inject
   NegativeCacheHandler negativeCacheHandler
 
   @Inject
@@ -80,6 +85,9 @@ class Maven2ProxyRecipe
 
   @Inject
   ProxyHandler proxyHandler
+
+  @Inject
+  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
 
   @Inject
   Maven2ProxyRecipe(@Named(ProxyType.NAME) final Type type,
@@ -94,6 +102,8 @@ class Maven2ProxyRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(componentMaintenanceFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(httpClientFacet.get())
     repository.attach(negativeCacheFacet.get())
@@ -101,6 +111,7 @@ class Maven2ProxyRecipe
     repository.attach(mavenProxyFacet.get())
     repository.attach(mavenIndexFacet.get())
     repository.attach(purgeUnusedFacet.get())
+    repository.attach(removeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
   }
 

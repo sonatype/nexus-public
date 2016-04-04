@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -35,8 +36,8 @@ import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.maven.policy.LayoutPolicy;
-import org.sonatype.nexus.repository.maven.policy.VersionPolicy;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
+import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -200,6 +201,18 @@ public class MavenFacetImpl
     }
   }
 
+  @Override
+  public Content put(final MavenPath path,
+                     final Path sourceFile,
+                     final String contentType,
+                     final AttributesMap contentAttributes)
+      throws IOException
+  {
+    log.debug("PUT {} : {}", getRepository().getName(), path.getPath());
+
+    return doPut(path, sourceFile, contentType, contentAttributes);
+  }
+
   @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
   protected Content doPut(final MavenPath path,
       final Payload payload,
@@ -220,6 +233,31 @@ public class MavenFacetImpl
     if (payload instanceof Content) {
       contentAttributes = ((Content) payload).getAttributes();
     }
+
+    if (path.getCoordinates() != null) {
+      return toContent(putArtifact(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
+    }
+    else {
+      return toContent(putFile(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
+    }
+  }
+
+  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  protected Content doPut(final MavenPath path,
+                          final Path sourceFile,
+                          final String contentType,
+                          final AttributesMap contentAttributes)
+      throws IOException
+  {
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    final AssetBlob assetBlob = tx.createBlob(
+        path.getPath(),
+        sourceFile,
+        HashType.ALGORITHMS,
+        null,
+        contentType
+    );
 
     if (path.getCoordinates() != null) {
       return toContent(putArtifact(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
@@ -347,7 +385,7 @@ public class MavenFacetImpl
 
     boolean result = false;
     for (MavenPath path : paths) {
-      log.debug("DELETE {} : {}", getRepository().getName(), path.getPath());
+      log.trace("DELETE {} : {}", getRepository().getName(), path.getPath());
       if (path.getCoordinates() != null) {
         result = deleteArtifact(path, tx) || result;
       }

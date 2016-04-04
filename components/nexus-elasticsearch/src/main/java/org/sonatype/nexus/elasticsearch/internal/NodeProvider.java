@@ -13,8 +13,11 @@
 package org.sonatype.nexus.elasticsearch.internal;
 
 import java.io.File;
-import java.net.URL;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,10 +28,16 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.cli.Terminal;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.plugins.PluginManager;
+import org.elasticsearch.plugins.PluginManager.OutputMode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -48,15 +57,19 @@ public class NodeProvider
   private final ApplicationDirectories directories;
 
   private final LocalNodeAccess localNodeAccess;
+  
+  private final List<String> plugins;
 
   private Node node;
 
   @Inject
   public NodeProvider(final ApplicationDirectories directories,
-                      final LocalNodeAccess localNodeAccess)
+                      final LocalNodeAccess localNodeAccess,
+                      @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins)
   {
     this.directories = checkNotNull(directories);
     this.localNodeAccess = checkNotNull(localNodeAccess);
+    this.plugins = plugins == null ? new ArrayList<>() : Splitter.on(",").splitToList(plugins);
   }
 
   @Override
@@ -82,17 +95,29 @@ public class NodeProvider
   private Node create() throws Exception {
     File file = new File(directories.getInstallDirectory(), "etc/elasticsearch.yml");
     checkState(file.exists(), "Missing configuration: %s", file);
-    URL url = file.toURI().toURL();
-    log.info("Creating node with config: {}", url);
+    log.info("Creating node with config: {}", file);
 
-    ImmutableSettings.Builder settings = ImmutableSettings.settingsBuilder()
-        .classLoader(NodeProvider.class.getClassLoader())
-        .loadFromUrl(url);
+    Settings.Builder settings = Settings.builder().loadFromPath(file.toPath());
 
     // assign node.name to local node-id
     settings.put("node.name", localNodeAccess.getId());
-
+    settings.put("path.plugins", new File(directories.getInstallDirectory(), "plugins").getAbsolutePath());
     NodeBuilder builder = nodeBuilder().settings(settings);
+
+    if (!plugins.isEmpty()) {
+      PluginManager pluginManager = new PluginManager(new Environment(settings.build()), null, OutputMode.VERBOSE,
+          new TimeValue(30000));
+
+      for (String plugin : plugins) {
+        try {
+          pluginManager.downloadAndExtract(plugin, Terminal.DEFAULT, true);
+        }
+        catch (IOException e) {
+          log.warn("Failed to install elasticsearch plugin: {}", plugin);
+        }
+      }
+    }
+
     return builder.node();
   }
 

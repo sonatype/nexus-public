@@ -16,17 +16,13 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.log.LogManager;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.security.WebSecurityModule;
 import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceFilter;
+import org.eclipse.sisu.bean.BeanManager;
 import org.eclipse.sisu.inject.DefaultBeanLocator;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.osgi.ServiceBindings;
@@ -66,11 +62,11 @@ public class NexusContextModule
   @Override
   protected void configure() {
 
-    // key components we expect to be able to find after booting nexus
-    requireBinding(Key.get(Lifecycle.class, Names.named("NxApplication")));
+    // we will look these up later...
     requireBinding(GuiceFilter.class);
-    requireBinding(LocalNodeAccess.class);
-    requireBinding(LogManager.class);
+    requireBinding(BeanManager.class);
+
+    bind(NexusLifecycleManager.class);
 
     bind(ServletContext.class).toInstance(servletContext);
     bind(ParameterKeys.PROPERTIES).toInstance(nexusProperties);

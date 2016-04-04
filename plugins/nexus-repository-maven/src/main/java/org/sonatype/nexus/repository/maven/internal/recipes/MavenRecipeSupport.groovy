@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.internal.recipes
 
+import org.sonatype.nexus.repository.attributes.AttributesFacet
+
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -53,6 +55,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   Provider<StorageFacet> storageFacet
+
+  @Inject
+  Provider<AttributesFacet> attributesFacet
 
   @Inject
   Provider<MavenFacetImpl> mavenFacet

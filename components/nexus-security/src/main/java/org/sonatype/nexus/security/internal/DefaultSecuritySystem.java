@@ -21,12 +21,13 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.crypto.Cipher;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -59,15 +60,17 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.LifecycleUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 
 /**
  * This implementation wraps a Shiro SecurityManager, and adds user management.
  */
 @Named("default")
+@ManagedLifecycle(phase = SECURITY)
 @Singleton
 public class DefaultSecuritySystem
     extends LifecycleSupport
-    implements SecuritySystem, EventAware
+    implements SecuritySystem
 {
   private static final String ALL_ROLES_KEY = "all";
 
@@ -103,6 +106,10 @@ public class DefaultSecuritySystem
 
   @Override
   protected void doStart() throws Exception {
+    if (Cipher.getMaxAllowedKeyLength("AES") == Integer.MAX_VALUE) {
+      log.info("Unlimited strength JCE policy detected");
+    }
+
     SecurityUtils.setSecurityManager(realmSecurityManager);
 
     realmManager.start();

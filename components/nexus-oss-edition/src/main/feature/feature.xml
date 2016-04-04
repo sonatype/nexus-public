@@ -16,6 +16,6 @@
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}">
     <bundle>mvn:${project.groupId}/${project.artifactId}/${project.version}</bundle>
-    <feature>nexus-base-edition</feature>
+    <feature>nexus-base-feature</feature>
   </feature>
 </features>

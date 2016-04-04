@@ -25,8 +25,11 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.raw.RawContentFacet;
+import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -98,24 +101,7 @@ public class RawContentFacetImpl
   {
     StorageTx tx = UnitOfWork.currentTx();
 
-    final Bucket bucket = tx.findBucket(getRepository());
-    Component component = findComponent(tx, bucket, path);
-    Asset asset;
-    if (component == null) {
-      // CREATE
-      component = tx.createComponent(bucket, getRepository().getFormat())
-          .group(getGroup(path))
-          .name(path);
-
-      tx.saveComponent(component);
-
-      asset = tx.createAsset(bucket, component);
-      asset.name(path);
-    }
-    else {
-      // UPDATE
-      asset = tx.firstAsset(component);
-    }
+    Asset asset = getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
 
     AttributesMap contentAttributes = null;
     if (payload instanceof Content) {
@@ -131,22 +117,39 @@ public class RawContentFacetImpl
         payload.getContentType(),
         false
     );
-    asset.markAsAccessed();
+
     tx.saveAsset(asset);
 
     return toContent(asset, assetBlob.getBlob());
   }
 
-  private String getGroup(String path) {
-    StringBuilder group = new StringBuilder();
-    if (!path.startsWith("/")) {
-      group.append("/");
+  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  public Asset getOrCreateAsset(final Repository repository, final String componentName, final String componentGroup,
+                                final String assetName) {
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    final Bucket bucket = tx.findBucket(getRepository());
+    Component component = tx.findComponentWithProperty(P_NAME, componentName, bucket);
+    Asset asset;
+    if (component == null) {
+      // CREATE
+      component = tx.createComponent(bucket, getRepository().getFormat())
+          .group(componentGroup)
+          .name(componentName);
+
+      tx.saveComponent(component);
+
+      asset = tx.createAsset(bucket, component);
+      asset.name(assetName);
     }
-    int i = path.lastIndexOf("/");
-    if (i != -1) {
-      group.append(path.substring(0, i));
+    else {
+      // UPDATE
+      asset = tx.firstAsset(component);
     }
-    return group.toString();
+
+    asset.markAsAccessed();
+
+    return asset;
   }
 
   @Override
@@ -188,7 +191,6 @@ public class RawContentFacetImpl
     tx.saveAsset(asset);
   }
 
-  // TODO: Consider a top-level indexed property (e.g. "locator") to make these common lookups fast
   private Component findComponent(StorageTx tx, Bucket bucket, String path) {
     return tx.findComponentWithProperty(P_NAME, path, bucket);
   }

@@ -58,7 +58,7 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
       me.trigger2Cls = 'nx-form-fa-minus-circle-trigger';
     }
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.addEvents(
         /**

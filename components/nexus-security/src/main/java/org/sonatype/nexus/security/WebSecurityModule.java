@@ -13,21 +13,14 @@
 package org.sonatype.nexus.security;
 
 import java.lang.reflect.Constructor;
-import java.util.Enumeration;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 
 import org.sonatype.nexus.security.authc.FirstSuccessfulModularRealmAuthenticator;
 import org.sonatype.nexus.security.authz.ExceptionCatchingModularRealmAuthorizer;
 
 import com.google.common.base.Throwables;
-import com.google.inject.Key;
 import com.google.inject.binder.AnnotatedBindingBuilder;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -50,14 +43,10 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.SessionFactory;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
-import org.apache.shiro.web.filter.mgt.DefaultFilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.filter.mgt.PathMatchingFilterChainResolver;
 import org.apache.shiro.web.mgt.WebSecurityManager;
-import org.eclipse.sisu.BeanEntry;
-import org.eclipse.sisu.Mediator;
-import org.eclipse.sisu.inject.BeanLocator;
 
 /**
  * Shiro security configuration Guice module for the runtime server.
@@ -84,10 +73,10 @@ public class WebSecurityModule
     bindSingleton(SessionDAO.class, NexusSessionDAO.class);
     bindSingleton(Authenticator.class, FirstSuccessfulModularRealmAuthenticator.class);
     bindSingleton(Authorizer.class, ExceptionCatchingModularRealmAuthorizer.class);
+    bindSingleton(FilterChainManager.class, DynamicFilterChainManager.class);
 
-    // override the default resolver with one backed by a FilterChainManager using an injected filter map
+    // path matching resolver has several constructors so we need to point Guice to the appropriate one
     bind(FilterChainResolver.class).toConstructor(ctor(PathMatchingFilterChainResolver.class)).asEagerSingleton();
-    bind(FilterChainManager.class).toProvider(FilterChainManagerProvider.class).in(Singleton.class);
 
     // bindings used by external modules
     expose(FilterChainResolver.class);
@@ -129,14 +118,17 @@ public class WebSecurityModule
   private static final class EmptyRealm
       implements Realm
   {
+    @Override
     public String getName() {
       return getClass().getName();
     }
 
+    @Override
     public boolean supports(final AuthenticationToken token) {
       return false;
     }
 
+    @Override
     public AuthenticationInfo getAuthenticationInfo(final AuthenticationToken token) {
       return null;
     }
@@ -152,72 +144,6 @@ public class WebSecurityModule
     catch (Exception e) {
       Throwables.propagateIfPossible(e);
       throw new ConfigurationException(e);
-    }
-  }
-
-  /**
-   * Constructs a {@link DefaultFilterChainManager} from an injected {@link Filter} map.
-   */
-  private static final class FilterChainManagerProvider
-      implements Provider<FilterChainManager>, Mediator<Named, Filter, FilterChainManager>
-  {
-    private final FilterConfig filterConfig;
-
-    private final BeanLocator beanLocator;
-
-    @Inject
-    private FilterChainManagerProvider(@Named("SHIRO") final ServletContext servletContext,
-                                       final BeanLocator beanLocator)
-    {
-      // simple configuration so we can initialize filters as we add them
-      this.filterConfig = new SimpleFilterConfig("SHIRO", servletContext);
-      this.beanLocator = beanLocator;
-    }
-
-    public FilterChainManager get() {
-      FilterChainManager filterChainManager = new DefaultFilterChainManager(filterConfig);
-      beanLocator.watch(Key.get(Filter.class, Named.class), this, filterChainManager);
-      return filterChainManager;
-    }
-
-    public void add(final BeanEntry<Named, Filter> entry, final FilterChainManager manager) {
-      manager.addFilter(entry.getKey().value(), entry.getValue(), true);
-    }
-
-    public void remove(final BeanEntry<Named, Filter> filter, final FilterChainManager manager) {
-      // no-op
-    }
-  }
-
-  /**
-   * Simple {@link FilterConfig} that delegates to the surrounding {@link ServletContext}.
-   */
-  private static final class SimpleFilterConfig
-      implements FilterConfig
-  {
-    private final String filterName;
-
-    private final ServletContext servletContext;
-
-    SimpleFilterConfig(final String filterName, final ServletContext servletContext) {
-      this.filterName = filterName;
-      this.servletContext = servletContext;
-    }
-
-    public String getFilterName() {
-      return filterName;
-    }
-
-    public ServletContext getServletContext() {
-      return servletContext;
-    }
-
-    public String getInitParameter(String name) {
-      return servletContext.getInitParameter(name);
-    }
-
-    public Enumeration<String> getInitParameterNames() {
-      return servletContext.getInitParameterNames();
     }
   }
 }

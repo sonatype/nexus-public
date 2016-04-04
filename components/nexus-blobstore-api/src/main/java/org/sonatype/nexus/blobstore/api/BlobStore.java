@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.api;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -58,6 +59,14 @@ public interface BlobStore
    * @throws IllegalArgumentException if mandatory headers are missing
    */
   Blob create(InputStream blobData, Map<String, String> headers);
+
+  /**
+   * Imports a blob by creating a hard link, throwing {@link UnsupportedOperationException} if that's not supported
+   * from the source file's location.
+   *
+   * Otherwise behaves as {@link #create(InputStream, Map)}.
+   */
+  Blob create(Path sourceFile, Map<String, String> headers);
 
   /**
    * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete

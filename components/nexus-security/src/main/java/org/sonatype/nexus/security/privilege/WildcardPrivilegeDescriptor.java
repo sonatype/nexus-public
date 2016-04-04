@@ -12,13 +12,20 @@
  */
 package org.sonatype.nexus.security.privilege;
 
+import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.i18n.I18N;
+import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 /**
@@ -36,8 +43,33 @@ public class WildcardPrivilegeDescriptor
 
   public static final String P_PATTERN = "pattern";
 
+  private interface Messages
+      extends MessageBundle
+  {
+    @DefaultMessage("Wildcard")
+    String name();
+
+    @DefaultMessage("Pattern")
+    String pattern();
+
+    @DefaultMessage("The regex pattern")
+    String patternHelp();
+  }
+
+  private static final Messages messages = I18N.create(Messages.class);
+
+  private final List<FormField> formFields;
+
   public WildcardPrivilegeDescriptor() {
     super(TYPE);
+    this.formFields = ImmutableList.of(
+        new StringTextFormField(
+            P_PATTERN,
+            messages.pattern(),
+            messages.patternHelp(),
+            FormField.MANDATORY
+        )
+    );
   }
 
   @Override
@@ -45,6 +77,16 @@ public class WildcardPrivilegeDescriptor
     assert privilege != null;
     String pattern = readProperty(privilege, P_PATTERN);
     return new WildcardPermission2(pattern);
+  }
+
+  @Override
+  public List<FormField> getFormFields() {
+    return formFields;
+  }
+
+  @Override
+  public String getName() {
+    return messages.name();
   }
 
   //

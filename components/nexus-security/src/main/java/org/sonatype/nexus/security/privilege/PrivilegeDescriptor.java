@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.security.privilege;
 
+import java.util.List;
+
+import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.security.config.CPrivilege;
 
 import org.apache.shiro.authz.Permission;
@@ -23,5 +26,9 @@ public interface PrivilegeDescriptor
 {
   String getType();
 
+  String getName();
+
   Permission createPermission(CPrivilege privilege);
+
+  List<FormField> getFormFields();
 }

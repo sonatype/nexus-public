@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui.search;
 
-import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 
 /**
@@ -26,11 +25,6 @@ public class SearchContributionSupport
 
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
-    // do nothing
-  }
-
-  @Override
-  public void contribute(final BoolFilterBuilder filter, final String type, final String value) {
     // do nothing
   }
 

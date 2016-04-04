@@ -28,6 +28,11 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
   stateful: true,
   stateId: 'nx-coreui-privilege-list',
 
+  // filter will install into toolbar, ensure its properly styled for drilldown
+  tbar: {
+    xtype: 'nx-actions'
+  },
+
   /**
    * @override
    */
@@ -71,9 +76,16 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
       },
 
       dockedItems: [{
-        xtype: 'toolbar',
-        dock: 'top',
-        cls: 'nx-actions nx-borderless'
+        xtype: 'nx-actions',
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('Privilege_PrivilegeList_New_Button'),
+            action: 'new',
+            disabled: true,
+            glyph: 'xf055@FontAwesome' /* fa-plus-circle */
+          }
+        ]
       }],
 
       plugins: [

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +29,9 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
+import org.sonatype.nexus.common.sequence.NumberSequence;
+import org.sonatype.nexus.common.sequence.RandomExponentialSequence;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
@@ -39,6 +43,7 @@ import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -100,6 +105,10 @@ public class StorageTxImpl
 
   private int retries = 0;
 
+  private NumberSequence retryDelay;
+
+  private final int initialDelay;
+
   public StorageTxImpl(final String createdBy,
                        final BlobTx blobTx,
                        final ODatabaseDocumentTx db,
@@ -130,6 +139,8 @@ public class StorageTxImpl
     // To be discussed in future, or at the point when we will have need for nested TX
     // Note: orient DB sports some rudimentary support for nested TXes
     checkArgument(!db.getTransaction().isActive(), "Nested DB TX!");
+
+    initialDelay = SystemPropertiesHelper.getInteger(getClass().getName() + ".retrydelay.initial", 10);
   }
 
   public static final class State
@@ -179,6 +190,18 @@ public class StorageTxImpl
   @Override
   public boolean allowRetry(final Exception cause) throws RetryDeniedException {
     if (retries < MAX_RETRIES) {
+      try {
+        if (retryDelay == null) {
+          retryDelay = delaySequence();
+        }
+        long delay = retryDelay.next();
+        log.trace("Delaying tx retry for {}ms", delay);
+        Thread.sleep(delay);
+      }
+      catch (InterruptedException e) {
+        Throwables.propagate(e);
+      }
+
       retries++;
       log.debug("Retrying operation: {}/{}", retries, MAX_RETRIES);
       return true;
@@ -399,6 +422,12 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public void saveBucket(final Bucket bucket) {
+    bucketEntityAdapter.editEntity(db, bucket);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public void saveComponent(final Component component) {
     if (EntityHelper.hasMetadata(component)) {
       componentEntityAdapter.editEntity(db, component);
@@ -532,6 +561,39 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public AssetBlob createBlob(final String blobName,
+                              final Path sourceFile,
+                              final Iterable<HashAlgorithm> hashAlgorithms,
+                              @Nullable final Map<String, String> headers,
+                              final String declaredContentType) throws IOException
+  {
+    checkNotNull(blobName);
+    checkNotNull(sourceFile);
+    checkNotNull(hashAlgorithms);
+    checkArgument(!Strings2.isBlank(declaredContentType), "no declaredContentType provided");
+
+    if (!writePolicy.checkCreateAllowed()) {
+      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+    }
+
+    ImmutableMap.Builder<String, String> storageHeaders = ImmutableMap.builder();
+    storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
+    storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
+    storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
+    storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
+    if (headers != null) {
+      storageHeaders.putAll(headers);
+    }
+    return blobTx.createByHardLinking(
+        sourceFile,
+        storageHeaders.build(),
+        hashAlgorithms,
+        declaredContentType
+    );
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public void attachBlob(final Asset asset, final AssetBlob assetBlob)
   {
     checkNotNull(asset);
@@ -593,6 +655,37 @@ public class StorageTxImpl
         headers,
         declaredContentType,
         skipContentVerification
+    );
+    attachBlob(asset, assetBlob);
+    return assetBlob;
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public AssetBlob setBlob(final Asset asset,
+                           final String blobName,
+                           final Path sourceFile,
+                           final Iterable<HashAlgorithm> hashAlgorithms,
+                           @Nullable final Map<String, String> headers,
+                           String declaredContentType) throws IOException
+  {
+    checkNotNull(asset);
+    checkArgument(!Strings2.isBlank(declaredContentType), "no declaredContentType provided");
+
+    // Enforce write policy ahead, as we have asset here
+    BlobRef oldBlobRef = asset.blobRef();
+    if (oldBlobRef != null) {
+      if (!writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
+        throw new IllegalOperationException(
+            "Repository does not allow updating assets: " + bucket.getRepositoryName());
+      }
+    }
+    final AssetBlob assetBlob = createBlob(
+        blobName,
+        sourceFile,
+        hashAlgorithms,
+        headers,
+        declaredContentType
     );
     attachBlob(asset, assetBlob);
     return assetBlob;
@@ -668,5 +761,13 @@ public class StorageTxImpl
       bucketsBuilder.add(bucketOf(repository.getName()));
     }
     return bucketsBuilder.build();
+  }
+
+  private NumberSequence delaySequence() {
+    return RandomExponentialSequence.builder()
+        .start(initialDelay) // start at 10ms
+        .factor(2) // delay an average of 100% longer, each time
+        .maxDeviation(.5) // ±50%
+        .build();
   }
 }

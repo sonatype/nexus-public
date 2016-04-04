@@ -77,12 +77,13 @@ class SearchServiceImplTest
 
   @Mock
   EventBus eventBus
-
-  @InjectMocks
+  
   SearchServiceImpl searchService
 
   @Before
   public void setup() {
+    searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, indexSettingsContributors,
+        false)
     when(clientProvider.get()).thenReturn(client);
     when(client.admin()).thenReturn(adminClient)
     when(adminClient.indices()).thenReturn(indicesAdminClient)

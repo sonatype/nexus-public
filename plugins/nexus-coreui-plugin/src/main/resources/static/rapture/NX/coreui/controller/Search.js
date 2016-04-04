@@ -344,8 +344,8 @@ Ext.define('NX.coreui.controller.Search', {
 
     searchCriteriaPanel.add({
       xtype: 'button',
+      cls: 'more-criteria',
       itemId: 'addButton',
-      margin: '36px 0 0 0',
       text: NX.I18n.get('Search_More_Text'),
       glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
       menu: addCriteriaMenu
@@ -414,12 +414,15 @@ Ext.define('NX.coreui.controller.Search', {
    * Search on refresh.
    */
   loadStores: function() {
-    if (this.getFeature()) {
-      if (this.currentIndex === 0) {
-        this.getSearchResult().getStore().load();
+    var me = this;
+    if (me.getFeature()) {
+      if (me.currentIndex === 0) {
+        me.getSearchResult().getStore().load();
       }
-      if (this.currentIndex === 1) {
-        this.getAssetList().getStore().load();
+      if (me.currentIndex >= 1) {
+        me.getAssetList().getStore().load(function () {
+          me.reselect();
+        });
       }
     }
   },

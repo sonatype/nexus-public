@@ -85,8 +85,8 @@
 
       <dependency>
         <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>sonatype-clm-scanner</artifactId>
-        <version>1.11.1-01</version>
+        <artifactId>nexus-iq-cli</artifactId>
+        <version>1.18.0-02</version>
       </dependency>
 
       <dependency>

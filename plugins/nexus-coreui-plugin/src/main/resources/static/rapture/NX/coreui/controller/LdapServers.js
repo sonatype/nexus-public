@@ -198,7 +198,6 @@ Ext.define('NX.coreui.controller.LdapServers', {
         pack: 'start'
       },
       items: [
-        { xtype: 'nx-actions' },
         {
           xtype: 'nx-coreui-ldapserver-connection-add',
           flex: 1
@@ -223,7 +222,6 @@ Ext.define('NX.coreui.controller.LdapServers', {
         pack: 'start'
       },
       items: [
-        { xtype: 'nx-actions' },
         {
           xtype: 'nx-coreui-ldapserver-userandgroup-add',
           flex: 1
@@ -365,13 +363,15 @@ Ext.define('NX.coreui.controller.LdapServers', {
    * Change LDAP servers order.
    */
   changeOrder: function(button) {
-    var win = button.up('window'),
+    var me = this,
+        win = button.up('window'),
         order = button.up('form').down('nx-itemorderer').getValue();
 
     NX.direct.ldap_LdapServer.changeOrder(order, function(response) {
       if (Ext.isObject(response) && response.success) {
         win.close();
         NX.Messages.add({ text: NX.I18n.get('LdapServers_ChangeOrder_Success'), type: 'success' });
+        me.getStore('LdapServer').load();
       }
     });
   },

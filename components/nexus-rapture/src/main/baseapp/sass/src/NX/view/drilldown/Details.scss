@@ -1,0 +1,39 @@
+/**
+ * @class NX.view.drilldown.Details
+ */
+
+@include extjs-panel-ui(
+    $ui: 'nx-drilldown-message',
+    $ui-header-color: $color-night-rider
+);
+
+.x-panel-nx-drilldown-message {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  background-color: $color-white;
+
+  .x-panel-header {
+    padding: 8px;
+    border: 1px solid !important;
+    height: 32px;
+    border-radius: 8px;
+
+    img {
+      margin-right: 5px !important;
+    }
+  }
+}
+
+.x-panel-nx-drilldown-message.nx-drilldown-warning {
+  .x-panel-header {
+    border-color: $color-sun !important;
+    background-color: $color-light-smoke;
+  }
+}
+
+.x-panel-nx-drilldown-message.nx-drilldown-info {
+  .x-panel-header {
+    border-color: $color-cerulean-blue !important;
+    background-color: $color-light-smoke;
+  }
+}

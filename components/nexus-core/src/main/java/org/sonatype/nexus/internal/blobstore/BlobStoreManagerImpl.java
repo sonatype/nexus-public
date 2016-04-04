@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.blobstore;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -152,6 +153,7 @@ public class BlobStoreManagerImpl
 
   @Override
   @Guarded(by = STARTED)
+  @Nullable
   public BlobStore get(final String name) {
     checkNotNull(name);
 

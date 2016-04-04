@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
@@ -71,6 +72,9 @@ class RawHostedRecipe
   Provider<StorageFacet> storageFacet
 
   @Inject
+  Provider<AttributesFacet> attributesFacet
+
+  @Inject
   Provider<SingleAssetComponentMaintenance> componentMaintenance
 
   @Inject
@@ -117,6 +121,7 @@ class RawHostedRecipe
     repository.attach(configure(viewFacet.get()))
     repository.attach(rawContentFacet.get())
     repository.attach(storageFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get());
   }

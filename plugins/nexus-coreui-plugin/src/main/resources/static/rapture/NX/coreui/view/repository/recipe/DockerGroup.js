@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.DockerGroup', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-docker-group',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.GroupFacet',
     'NX.coreui.view.repository.facet.DockerConnectorFacet',
@@ -42,6 +40,6 @@ Ext.define('NX.coreui.view.repository.recipe.DockerGroup', {
       {xtype: 'nx-coreui-repository-group-facet', format: 'docker'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

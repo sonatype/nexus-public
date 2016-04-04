@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Proxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-maven2-proxy',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.Maven2Facet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
@@ -44,6 +42,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Proxy', {
       { xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

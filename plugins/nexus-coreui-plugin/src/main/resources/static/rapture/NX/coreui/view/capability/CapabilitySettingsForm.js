@@ -58,7 +58,7 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
 
     me.editableCondition = me.editableCondition || NX.Conditions.isPermitted('nexus:capabilities:update');
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   /**

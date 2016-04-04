@@ -81,9 +81,7 @@ Ext.define('NX.coreui.view.ssl.SslCertificateList', {
     ];
 
     me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless',
+      xtype: 'nx-actions',
       items: [
         {
           xtype: 'button',

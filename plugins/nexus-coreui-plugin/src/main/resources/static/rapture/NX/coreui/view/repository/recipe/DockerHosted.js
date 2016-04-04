@@ -21,8 +21,6 @@ Ext.define('NX.coreui.view.repository.recipe.DockerHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-docker-hosted',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted',
     'NX.coreui.view.repository.facet.DockerConnectorFacet',
@@ -42,6 +40,6 @@ Ext.define('NX.coreui.view.repository.recipe.DockerHosted', {
       {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

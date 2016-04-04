@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.6.4</jackson2.version>
+    <jackson2.version>2.7.1</jackson2.version>
     <resteasy.version>3.0.14.Final</resteasy.version>
   </properties>
 
@@ -165,6 +165,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.fasterxml.jackson.jaxrs</groupId>
+        <artifactId>jackson-jaxrs-smile-provider</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.fasterxml.jackson.module</groupId>
         <artifactId>jackson-module-jaxb-annotations</artifactId>
         <version>${jackson2.version}</version>
@@ -178,7 +184,19 @@
 
       <dependency>
         <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-cbor</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-smile</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
         <version>${jackson2.version}</version>
       </dependency>
 

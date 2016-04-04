@@ -1,0 +1,28 @@
+/**
+ * Fonts
+ */
+
+$font-regular: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif !default;
+$font-monospace: "Courier New", Courier, monospace;
+
+/**
+ * Type styles
+ */
+
+$font-size-h1:          20px;
+$font-size-h2:          26px;
+$font-size-h3:          22px;
+$font-size-h4:          18px;
+$font-size-h5:          13px;
+$font-size-body:        13px; // Should be 16px eventually, work towards that end
+$font-size-code:        13px;
+$font-size-utility:     10px;
+
+$font-weight-h1:        100;
+$font-weight-h2:        bold;
+$font-weight-h3:        bold;
+$font-weight-h4:        bold;
+$font-weight-h5:        bold;
+$font-weight-body:      normal;
+$font-weight-code:      normal;
+$font-weight-utility:   normal;

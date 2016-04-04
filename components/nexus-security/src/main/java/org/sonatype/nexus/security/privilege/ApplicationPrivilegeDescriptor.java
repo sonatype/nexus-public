@@ -17,10 +17,15 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.i18n.I18N;
+import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 /**
@@ -40,8 +45,45 @@ public class ApplicationPrivilegeDescriptor
 
   public static final String P_ACTIONS = "actions";
 
+  private interface Messages
+      extends MessageBundle
+  {
+    @DefaultMessage("Application")
+    String name();
+
+    @DefaultMessage("Domain")
+    String domain();
+
+    @DefaultMessage("The domain for the privilege")
+    String domainHelp();
+
+    @DefaultMessage("Actions")
+    String actions();
+
+    @DefaultMessage("The comma-delimited list of actions")
+    String actionsHelp();
+  }
+
+  private static final Messages messages = I18N.create(Messages.class);
+
+  private final List<FormField> formFields;
+
   public ApplicationPrivilegeDescriptor() {
     super(TYPE);
+    this.formFields = ImmutableList.of(
+        new StringTextFormField(
+            P_DOMAIN,
+            messages.domain(),
+            messages.domainHelp(),
+            FormField.MANDATORY
+        ),
+        new StringTextFormField(
+            P_ACTIONS,
+            messages.actions(),
+            messages.actionsHelp(),
+            FormField.MANDATORY
+        )
+    );
   }
 
   @Override
@@ -50,6 +92,16 @@ public class ApplicationPrivilegeDescriptor
     String domain = readProperty(privilege, P_DOMAIN, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
     return new ApplicationPermission(domain, actions);
+  }
+
+  @Override
+  public List<FormField> getFormFields() {
+    return formFields;
+  }
+
+  @Override
+  public String getName() {
+    return messages.name();
   }
 
   //

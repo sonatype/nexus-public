@@ -14,10 +14,6 @@ package org.sonatype.nexus.internal.script;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.SimpleScriptContext;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
@@ -25,6 +21,7 @@ import org.sonatype.nexus.common.script.ScriptService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -49,8 +46,6 @@ public class ScriptTask
 
   private final ScriptService scripts;
 
-  private ScriptEngine engine;
-
   private String source;
 
   @Inject
@@ -61,10 +56,6 @@ public class ScriptTask
   @Override
   public void configure(final TaskConfiguration configuration) {
     super.configure(configuration);
-
-    String lang = configuration.getString(ScriptTaskDescriptor.LANGUAGE);
-    this.engine = scripts.engineForLanguage(lang);
-
     this.source = configuration.getString(ScriptTaskDescriptor.SOURCE);
   }
 
@@ -77,19 +68,14 @@ public class ScriptTask
   protected Object execute() throws Exception {
     log.debug("Executing script");
 
-    // construct new context for execution
-    ScriptContext context = new SimpleScriptContext();
-    context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
-
-    // customize scope for execution
-    Bindings scope = context.getBindings(ScriptContext.ENGINE_SCOPE);
-    scripts.applyDefaultBindings(scope);
-    scope.put("log", LoggerFactory.getLogger(ScriptTask.class));
-    scope.put("task", this);
-
+    ImmutableMap<String, Object> customBindings = ImmutableMap.<String, Object>builder()
+        .put("log", LoggerFactory.getLogger(ScriptTask.class))
+        .put("task", this)
+        .build();
+    
     // execution script
     log.debug("Evaluating source: {}", source);
-    Object result = engine.eval(source, scope);
+    Object result = scripts.eval(getConfiguration().getString(ScriptTaskDescriptor.LANGUAGE), source, customBindings);
     log.trace("Result: {}", result);
 
     return result;

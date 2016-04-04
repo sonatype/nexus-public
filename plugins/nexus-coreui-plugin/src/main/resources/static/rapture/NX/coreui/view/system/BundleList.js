@@ -97,13 +97,10 @@ Ext.define('NX.coreui.view.system.BundleList', {
         }
       ],
 
-      dockedItems: [
-        {
-          xtype: 'toolbar',
-          dock: 'top',
-          cls: 'nx-actions nx-borderless'
-        }
-      ],
+      // filter will install into toolbar, ensure its properly styled for drilldown
+      tbar: {
+        xtype: 'nx-actions'
+      },
 
       plugins: [
         {ptype: 'gridfilterbox', emptyText: NX.I18n.get('System_BundleList_Filter_EmptyText')}

@@ -19,8 +19,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.goodies.common.Locks;
 import org.sonatype.goodies.common.Loggers;
-import org.sonatype.nexus.common.concurrent.Locks;
 
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;

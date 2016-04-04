@@ -29,8 +29,6 @@ import org.sonatype.nexus.capability.condition.LogicalConditions;
 import org.sonatype.nexus.capability.condition.NexusConditions;
 import org.sonatype.nexus.capability.condition.NexusIsActiveCondition;
 import org.sonatype.nexus.capability.condition.crypto.CryptoConditions;
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventBusImpl;
 
@@ -62,6 +60,8 @@ public class DefaultCapabilityReferenceTest
 
   private EventBus eventBus;
 
+  private NexusIsActiveCondition activeCondition;
+
   @Mock
   private Capability capability;
 
@@ -86,14 +86,16 @@ public class DefaultCapabilityReferenceTest
   public void setUp() {
     eventBus = new EventBusImpl(new ReentrantEventBus());
 
+    activeCondition = new NexusIsActiveCondition(eventBus);
+
     final Conditions conditions = new Conditions(
         new LogicalConditions(eventBus),
         new CapabilityConditions(eventBus, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
-        new NexusConditions(new NexusIsActiveCondition(eventBus)),
+        new NexusConditions(activeCondition),
         mock(CryptoConditions.class)
     );
 
-    eventBus.post(new NexusStartedEvent(this));
+    activeCondition.start();
 
     when(activationCondition.isSatisfied()).thenReturn(true);
     when(capability.activationCondition()).thenReturn(activationCondition);
@@ -441,7 +443,8 @@ public class DefaultCapabilityReferenceTest
   public void passivateWhenNexusIsShutdown() throws Exception {
     underTest.enable();
     underTest.activate();
-    eventBus.post(new NexusStoppedEvent(this));
+
+    activeCondition.stop();
 
     verify(capability).onPassivate();
   }

@@ -31,25 +31,21 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-common</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-scheduling</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-thread</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -82,30 +78,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <forkMode>always</forkMode>
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>mvn-coordinates</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>execute</goal>
-            </goals>
-            <configuration>
-              <source>
-                project.artifactMap.each{k,v->
-                  // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
-                  project.properties['mvn:'+v.artifactId]='mvn:'+v.groupId+'/'+v.artifactId+'/'+v.version
-                }
-              </source>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

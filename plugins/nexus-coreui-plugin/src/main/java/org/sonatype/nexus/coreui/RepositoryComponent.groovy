@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.search.RebuildIndexTask
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
-import org.sonatype.nexus.repository.security.BreadActions
+import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
@@ -125,9 +125,11 @@ class RepositoryComponent
 
   @DirectMethod
   @RequiresAuthentication
-  @RequiresPermissions('nexus:repository-admin:*:*:add')
   @Validate(groups = [Create.class, Default.class])
   RepositoryXO create(final @NotNull @Valid RepositoryXO repositoryXO) {
+    securityHelper.ensurePermitted(
+        new RepositoryAdminPermission(repositoryXO.format, repositoryXO.name, [BreadActions.ADD])
+    )
     return asRepository(repositoryManager.create(new Configuration(
         repositoryName: repositoryXO.name,
         recipeName: repositoryXO.recipe,

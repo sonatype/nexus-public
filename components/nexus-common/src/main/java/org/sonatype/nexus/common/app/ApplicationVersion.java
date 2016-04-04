@@ -32,6 +32,11 @@ public interface ApplicationVersion
   String getEdition();
 
   /**
+   * Returns the edition and version suitable for branded display.
+   */
+  String getBrandedEditionAndVersion();
+
+  /**
    * Returns the build revision.
    */
   String getBuildRevision();

@@ -39,9 +39,6 @@ Ext.define('NX.coreui.view.browse.BrowseComponentFeature', {
           xtype: 'nx-coreui-component-details'
         },
         {
-          xtype: 'nx-actions'
-        },
-        {
           xtype: 'nx-coreui-component-asset-list',
           flex: 1
         }

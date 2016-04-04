@@ -65,7 +65,6 @@ class RepositoryXOTest
     then:
       validations.size() == 1
       validations[0].propertyPath.toString() == 'attributes'
-      validations[0].message == 'may not be empty'
 
     where:
       attributes << [null, [:]]

@@ -1,0 +1,78 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+body {
+  margin: 0;
+}
+
+#loading-mask {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: black;
+  z-index: 20000;
+}
+
+#loading {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: black;
+  margin: auto;
+  z-index: 20001;
+}
+
+#loading-background {
+  width: 1024px;
+  height: 768px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 30%;
+  margin: auto;
+  background-image: url('images/loading-background.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+#loading-logo {
+  position: absolute;
+  bottom: 100px;
+  left: 120px;
+}
+
+#loading-product {
+  position: absolute;
+  bottom: 150px;
+  left: 260px;
+}
+
+#loading .loading-indicator {
+  position: absolute;
+  bottom: 110px;
+  left: 260px;
+  display: table;
+}
+
+#loading-spinner {
+  vertical-align: text-bottom;
+}
+
+#loading-msg {
+  color: white;
+  font: normal 18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin-left: 10px;
+}

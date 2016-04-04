@@ -104,6 +104,6 @@ Ext.define('NX.coreui.view.ssl.SslCertificateDetailsForm', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

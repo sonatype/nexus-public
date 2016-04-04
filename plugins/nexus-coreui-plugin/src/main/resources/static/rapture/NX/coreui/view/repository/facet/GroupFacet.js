@@ -91,7 +91,7 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

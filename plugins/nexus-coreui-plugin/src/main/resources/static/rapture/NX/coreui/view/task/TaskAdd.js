@@ -42,6 +42,6 @@ Ext.define('NX.coreui.view.task.TaskAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

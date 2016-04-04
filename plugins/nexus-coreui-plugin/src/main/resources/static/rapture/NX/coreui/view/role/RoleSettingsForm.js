@@ -143,7 +143,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

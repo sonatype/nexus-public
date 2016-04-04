@@ -30,7 +30,7 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-core</artifactId>
+      <artifactId>nexus-common</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

@@ -20,6 +20,7 @@
 Ext.define('NX.coreui.controller.Assets', {
   extend: 'NX.app.Controller',
   requires: [
+    'NX.Bookmarks',
     'NX.I18n',
     'Ext.util.Format'
   ],
@@ -36,7 +37,10 @@ Ext.define('NX.coreui.controller.Assets', {
     {ref: 'assetContainer', selector: 'nx-coreui-component-assetcontainer'},
     {ref: 'assetList', selector: 'grid[assetContainerSource=true]'},
     {ref: 'assetInfo', selector: 'nx-coreui-component-assetinfo'},
-    {ref: 'deleteAssetButton', selector: 'nx-coreui-component-assetcontainer button[action=deleteAsset]'}
+    {ref: 'deleteAssetButton', selector: 'nx-coreui-component-assetcontainer button[action=deleteAsset]'},
+    {ref: 'componentList', selector: 'grid[componentList=true]'},
+    {ref: 'componentDetails', selector: 'nx-coreui-component-details'},
+    {ref: 'deleteComponentButton', selector: 'nx-coreui-component-details button[action=deleteComponent]'}
   ],
 
   /**
@@ -77,6 +81,9 @@ Ext.define('NX.coreui.controller.Assets', {
         },
         'nx-coreui-component-assetcontainer button[action=deleteAsset]': {
           click: me.deleteAsset
+        },
+        'nx-coreui-component-details button[action=deleteComponent]': {
+          click: me.deleteComponent
         }
       }
     });
@@ -117,6 +124,7 @@ Ext.define('NX.coreui.controller.Assets', {
             title: NX.I18n.get('Component_AssetInfo_Attributes_Title'),
             itemId: 'attributeInfo',
             weight: 20,
+            autoScroll: true,
             items: [
               {xtype: 'nx-coreui-component-assetattributes'}
             ]
@@ -141,6 +149,8 @@ Ext.define('NX.coreui.controller.Assets', {
 
       container.down('#repositoryInfo').showInfo(repositoryInfo);
       container.down('#componentInfo').showInfo(componentInfo);
+
+      this.bindDeleteComponentButton(this.getDeleteComponentButton());
     }
   },
 
@@ -201,34 +211,91 @@ Ext.define('NX.coreui.controller.Assets', {
   /**
    * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
    *
-   * @protected
+   * @private
    */
-  bindDeleteAssetButton: function (button) {
-    var me = this, assetModel = me.getAssetContainer().assetModel,
-        repositoryName = assetModel.get('repositoryName'),
-        repositoryStore = me.repositoryStore;
+  bindDeleteComponentButton: function(button) {
+    this.bindDeleteButton(button, this.getComponentDetails().componentModel.get('repositoryName'));
+  },
+
+  /**
+   * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
+   *
+   * @private
+   */
+  bindDeleteAssetButton: function(button) {
+    this.bindDeleteButton(button, this.getAssetContainer().assetModel.get('repositoryName'));
+  },
+
+  /**
+   * Bind/Hide delete button.
+   *
+   * @param button to be shown/hidden
+   * @param repositoryName name of repository
+   *
+   * @private
+   */
+  bindDeleteButton: function(button, repositoryName) {
+    var repositoryStore = this.repositoryStore,
+        repository,
+        showButtonFunction = function(repository) {
+          if (repository && repository.get('type') !== 'group') {
+            button.show();
+            button.mon(
+                NX.Conditions.isPermitted(
+                    'nexus:repository-view:' + repository.get('format') + ':' + repository.get('name') + ':delete'
+                ),
+                {
+                  satisfied: button.enable,
+                  unsatisfied: button.disable,
+                  scope: button
+                }
+            );
+          }
+        };
 
     //check for repositoryName in RepositoryStore and conditionally hide button for groups
-    var repository = repositoryStore.getAt(repositoryStore.find('name', repositoryName));
-    if (repository && repository.get('type') === 'group') {
-      //<if debug>
-      this.logDebug("Hiding asset delete button for group");
-      //</if>
-      button.hide();
-      return;
+    button.hide();
+    repository = repositoryStore.getAt(repositoryStore.find('name', repositoryName));
+    if (repository) {
+      showButtonFunction(repository);
     }
+    else {
+      repositoryStore.load(function() {
+        showButtonFunction(repositoryStore.getAt(repositoryStore.find('name', repositoryName)));
+      });
+    }
+  },
 
-    button.show();
-    button.mon(
-        NX.Conditions.isPermitted(
-            'nexus:repository-view:' + assetModel.get('format') + ':' + repositoryName + ':delete'
-        ),
-        {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
-        }
-    );
+  /**
+   * Remove selected component.
+   *
+   * @private
+   */
+  deleteComponent: function() {
+    var me = this,
+        componentList = me.getComponentList(),
+        componentDetails = me.getComponentDetails(),
+        componentModel, componentId, repositoryName;
+
+    if (componentDetails) {
+      componentModel = componentDetails.componentModel;
+      componentId = componentModel.get('name') + '/' + componentModel.get('version');
+      repositoryName = componentModel.get('repositoryName');
+      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), componentId, function() {
+        NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
+          if (Ext.isObject(response) && response.success) {
+            componentList.getSelectionModel().deselectAll();
+            NX.Bookmarks.navigateTo(NX.Bookmarks.fromSegments(NX.Bookmarks.getBookmark().getSegments().slice(0, -1)));
+            // delay refresh of component list because in case of search results it takes a while till removal is
+            // propagated to elastic search results. Not 100% but better then still showing
+            setTimeout(function() {
+              componentList.getStore().load();
+            }, 1000);
+            NX.Messages.add({text: NX.I18n.format('ComponentDetails_Delete_Success', componentId), type: 'success'});
+          }
+        });
+      });
+    }
   },
 
   /**

@@ -19,17 +19,15 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.NexusInitializedEvent;
-import org.sonatype.nexus.common.app.NexusStoppingEvent;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
-import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 
 /**
  * Orient {@link EmailConfigurationStore}.
@@ -37,10 +35,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Named("orient")
+@ManagedLifecycle(phase = STORAGE)
 @Singleton
 public class OrientEmailConfigurationStore
   extends LifecycleSupport
-  implements EmailConfigurationStore, EventAware
+  implements EmailConfigurationStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -59,16 +58,6 @@ public class OrientEmailConfigurationStore
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       entityAdapter.register(db);
     }
-  }
-
-  @Subscribe
-  public void on(final NexusInitializedEvent event) throws Exception {
-    start();
-  }
-
-  @Subscribe
-  public void on(final NexusStoppingEvent event) throws Exception {
-    stop();
   }
 
   private ODatabaseDocumentTx openDb() {

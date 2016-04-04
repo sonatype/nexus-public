@@ -65,11 +65,10 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
       markDirty: false
     };
 
-    me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless'
-    }];
+    // filter will install into toolbar, ensure its properly styled for drilldown
+    me.tbar = {
+      xtype: 'nx-actions'
+    };
 
     me.plugins = [
       {
@@ -83,7 +82,7 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
       { property: 'applyPermissions', value: true }
     ], false);
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

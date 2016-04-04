@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui.search;
 
-import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 
 /**
@@ -24,21 +23,12 @@ public interface SearchContribution
 {
 
   /**
-   * Contribute to search query.
+   * Contribute to search query/filter.
    *
    * @param query to contribute to
    * @param type   type of filter
    * @param value  value of filter
    */
   void contribute(BoolQueryBuilder query, String type, String value);
-
-  /**
-   * Contribute to search filter.
-   *
-   * @param filter to contribute to
-   * @param type   type of filter
-   * @param value  value of filter
-   */
-  void contribute(BoolFilterBuilder filter, String type, String value);
 
 }

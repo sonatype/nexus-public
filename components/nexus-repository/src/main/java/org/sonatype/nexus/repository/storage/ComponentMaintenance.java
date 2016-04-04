@@ -24,8 +24,13 @@ import org.sonatype.nexus.repository.Facet;
 public interface ComponentMaintenance
     extends Facet
 {
-    /**
-     * Deletes an asset from storage.
-     */
-    void deleteAsset(EntityId assetId);
+  /**
+   * Deletes a component from storage.
+   */
+  void deleteComponent(EntityId componentId);
+
+  /**
+   * Deletes an asset from storage.
+   */
+  void deleteAsset(EntityId assetId);
 }

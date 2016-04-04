@@ -74,7 +74,7 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       })
     );
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   /**

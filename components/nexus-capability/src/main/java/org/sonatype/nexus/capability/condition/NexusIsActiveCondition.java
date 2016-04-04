@@ -12,19 +12,19 @@
  */
 package org.sonatype.nexus.capability.condition;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.app.NexusStartedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.Subscribe;
-import org.eclipse.sisu.EagerSingleton;
+
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
  * A condition that is satisfied when nexus is active.
@@ -32,32 +32,32 @@ import org.eclipse.sisu.EagerSingleton;
  * @since capabilities 2.0
  */
 @Named
-@EagerSingleton
+@ManagedLifecycle(phase = TASKS)
+@Priority(Integer.MAX_VALUE) // make sure this starts first
+@Singleton
 public class NexusIsActiveCondition
     extends ConditionSupport
-    implements Condition, EventAware
+    implements Lifecycle
 {
   @VisibleForTesting
   public NexusIsActiveCondition(final EventBus eventBus) {
     super(eventBus, false);
     bind();
-    getEventBus().register(this);
   }
 
   @Inject
   public NexusIsActiveCondition(final Provider<EventBus> eventBus) {
     super(eventBus, false);
     bind();
-    // eventBus registration handled by container due to EventAware
   }
 
-  @Subscribe
-  public void handle(final NexusStartedEvent event) {
+  @Override
+  public void start() {
     setSatisfied(true);
   }
 
-  @Subscribe
-  public void handle(final NexusStoppedEvent event) {
+  @Override
+  public void stop() {
     setSatisfied(false);
   }
 

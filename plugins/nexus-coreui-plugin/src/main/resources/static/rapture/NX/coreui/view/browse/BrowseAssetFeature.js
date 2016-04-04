@@ -29,9 +29,9 @@ Ext.define('NX.coreui.view.browse.BrowseAssetFeature', {
   ],
 
   detail: {
-      xtype: 'nx-coreui-component-assetcontainer',
-      header: false,
-      flex: 1
+    xtype: 'nx-coreui-component-assetcontainer',
+    header: false,
+    flex: 1
   }
 
 });

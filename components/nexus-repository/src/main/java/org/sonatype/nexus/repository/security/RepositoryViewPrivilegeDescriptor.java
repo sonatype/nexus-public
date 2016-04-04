@@ -17,12 +17,18 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.i18n.I18N;
+import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.RepositoryCombobox;
+import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -46,8 +52,57 @@ public class RepositoryViewPrivilegeDescriptor
 
   public static final String P_ACTIONS = "actions";
 
+  private interface Messages
+      extends MessageBundle
+  {
+    @DefaultMessage("Repository View")
+    String name();
+
+    @DefaultMessage("Format")
+    String format();
+
+    @DefaultMessage("The format(s) for the repository")
+    String formatHelp();
+
+    @DefaultMessage("Repository")
+    String repository();
+
+    @DefaultMessage("The repository name")
+    String repositoryHelp();
+
+    @DefaultMessage("Actions")
+    String actions();
+
+    @DefaultMessage("The comma-delimited list of actions")
+    String actionsHelp();
+  }
+
+  private static final Messages messages = I18N.create(Messages.class);
+
+  private final List<FormField> formFields;
+
   public RepositoryViewPrivilegeDescriptor() {
     super(TYPE);
+    this.formFields = ImmutableList.of(
+        new StringTextFormField(
+            P_FORMAT,
+            messages.format(),
+            messages.formatHelp(),
+            FormField.MANDATORY
+        ),
+        new RepositoryCombobox(
+            P_REPOSITORY,
+            messages.repository(),
+            messages.repositoryHelp(),
+            true
+        ).includeAnEntryForAllRepositories(),
+        new StringTextFormField(
+            P_ACTIONS,
+            messages.actions(),
+            messages.actionsHelp(),
+            FormField.MANDATORY
+        )
+    );
   }
 
   @Override
@@ -57,6 +112,16 @@ public class RepositoryViewPrivilegeDescriptor
     String name = readProperty(privilege, P_REPOSITORY, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
     return new RepositoryViewPermission(format, name, actions);
+  }
+
+  @Override
+  public List<FormField> getFormFields() {
+    return formFields;
+  }
+
+  @Override
+  public String getName() {
+    return messages.name();
   }
 
   //

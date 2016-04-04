@@ -34,15 +34,17 @@ Ext.define('NX.coreui.view.support.SupportZipCreated', {
     me.fileIcon = NX.Icons.img('supportzip-zip', 'x32');
     me.fileType = NX.I18n.get('Support_SupportZipCreated_FileType_Text'),
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.truncatedWarning = Ext.widget({
+      // FIXME: use container instead of panel
       xtype: 'panel',
       layout: {
         type: 'hbox',
         align: 'middle'
       },
       style: {
+        // FIXME: sort out common style here for dialogs
         marginBottom: '10px'
       },
       // TODO Style

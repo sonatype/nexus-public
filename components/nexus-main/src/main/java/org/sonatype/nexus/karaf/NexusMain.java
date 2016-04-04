@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.karaf;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,7 +26,12 @@ import org.osgi.framework.Version;
 public class NexusMain
     extends org.apache.karaf.main.Main
 {
+
   private static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
+
+  private static final String KARAF_INSTANCES = "karaf.instances";
+
+  private static final String KARAF_DATA = "karaf.data";
 
   Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -89,6 +95,20 @@ public class NexusMain
   @Override
   public void launch() throws Exception {
     requireMinimumJavaVersion();
+
+    // ensure karaf.data is set
+    String dataDir = System.getProperty(KARAF_DATA);
+    if (dataDir == null) {
+      throw new RuntimeException("Missing required system-property: " + KARAF_DATA);
+    }
+
+    // if karaf.instances is not set, automatically set it under karaf.data
+    String instancesDir = System.getProperty(KARAF_INSTANCES);
+    if (instancesDir == null) {
+      instancesDir = new File(new File(dataDir), "instances").getAbsolutePath();
+      System.setProperty(KARAF_INSTANCES, instancesDir);
+    }
+
     log.info("Launching Nexus..."); // temporary logging just to show custom launcher is being used in ITs
     super.launch();
     log.info("...launched Nexus!");

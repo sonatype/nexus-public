@@ -1,9 +1,0 @@
-{
-  "name": "baseapp",
-
-  "requires": [
-    "rapture-theme"
-  ],
-
-  "id": "7ab894a2-c860-4858-81fe-e27ac87611e2"
-}

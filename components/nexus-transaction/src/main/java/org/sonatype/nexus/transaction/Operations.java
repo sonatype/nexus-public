@@ -54,6 +54,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * });
  * </pre>
  *
+ * If your lambda throws a checked exception then you need to explicitly declare this:
+ *
+ * <pre>
+ * Operations.transactional().throwing(PersistenceException.class).call(() -> {
+ *   // do transactional work
+ * });
+ * </pre>
+ *
  * @since 3.0
  */
 public final class Operations
@@ -67,16 +75,16 @@ public final class Operations
   /**
    * Builds a {@link Transactional} specification that can be applied to {@link Operation}s.
    */
-  public static TransactionalBuilder transactional() {
-    return new TransactionalBuilder(null);
+  public static TransactionalBuilder<RuntimeException> transactional() {
+    return new TransactionalBuilder<>(null);
   }
 
   /**
    * Builds a {@link Transactional} specification that can be applied to {@link Operation}s;
    * uses the given supplier to acquire {@link Transaction}s.
    */
-  public static TransactionalBuilder transactional(final Supplier<? extends Transaction> db) {
-    return new TransactionalBuilder(checkNotNull(db));
+  public static TransactionalBuilder<RuntimeException> transactional(final Supplier<? extends Transaction> db) {
+    return new TransactionalBuilder<>(checkNotNull(db));
   }
 
   /**
@@ -85,7 +93,7 @@ public final class Operations
   public static <T, E extends Exception> T transactional(final Operation<T, E> operation)
       throws E
   {
-    return transactional(operation, null, null);
+    return transactional(operation, null, null, null);
   }
 
   /**
@@ -94,7 +102,8 @@ public final class Operations
   @SuppressWarnings("unchecked")
   static <T, E extends Exception> T transactional(final Operation<T, E> operation,
                                                   @Nullable final Transactional withSpec,
-                                                  @Nullable final Supplier<? extends Transaction> db)
+                                                  @Nullable final Supplier<? extends Transaction> db,
+                                                  @Nullable final Class<E> throwing)
       throws E
   {
     final Method method;
@@ -141,6 +150,9 @@ public final class Operations
       }).proceedWithTransaction(tx);
     }
     catch (final Throwable e) {
+      if (throwing != null) {
+        Throwables.propagateIfPossible(e, throwing);
+      }
       final Class<?>[] thrownExceptions = method.getExceptionTypes();
       if (thrownExceptions != null && thrownExceptions.length > 0) {
         Throwables.propagateIfPossible(e, (Class<E>) thrownExceptions[0]);

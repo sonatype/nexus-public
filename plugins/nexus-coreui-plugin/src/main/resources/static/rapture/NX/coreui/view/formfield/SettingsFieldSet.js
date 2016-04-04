@@ -43,7 +43,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
       items: []
     });
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   /**

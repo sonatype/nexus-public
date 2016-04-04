@@ -50,7 +50,7 @@ Ext.define('NX.coreui.view.user.UserAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.down('#userId').setReadOnly(false);
 

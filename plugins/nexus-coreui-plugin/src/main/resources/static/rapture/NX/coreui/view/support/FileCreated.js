@@ -23,8 +23,11 @@ Ext.define('NX.coreui.view.support.FileCreated', {
   requires: [
     'NX.I18n'
   ],
+
+  // FIXME: remove use of nx-inset
   ui: 'nx-inset',
 
+  // FIXME: convert to config{} block
   /**
    * @cfg Icon to show (img)
    */
@@ -53,9 +56,11 @@ Ext.define('NX.coreui.view.support.FileCreated', {
           },
           items: [
             {
+              // FIXME: use container instead of panel
               xtype: 'panel',
               layout: 'hbox',
               style: {
+                // FIXME: sort out common style here for dialogs
                 marginBottom: '10px'
               },
               // TODO Style
@@ -118,7 +123,7 @@ Ext.define('NX.coreui.view.support.FileCreated', {
       ]
     });
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   /**

@@ -18,8 +18,8 @@ import javax.inject.Singleton
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
-import org.sonatype.nexus.repository.maven.policy.LayoutPolicy
-import org.sonatype.nexus.repository.maven.policy.VersionPolicy
+import org.sonatype.nexus.repository.maven.LayoutPolicy
+import org.sonatype.nexus.repository.maven.VersionPolicy
 import org.sonatype.nexus.repository.storage.WritePolicy
 
 /**
@@ -51,7 +51,8 @@ class MavenDefaultRepositoriesContributor
                 ],
                 storage: [
                     blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                    writePolicy: WritePolicy.ALLOW_ONCE.toString()
+                    writePolicy: WritePolicy.ALLOW_ONCE.toString(),
+                    strictContentTypeValidation: false
                 ]
             ]
         ),
@@ -63,7 +64,8 @@ class MavenDefaultRepositoriesContributor
                 ],
                 storage: [
                     blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                    writePolicy: WritePolicy.ALLOW.toString()
+                    writePolicy: WritePolicy.ALLOW.toString(),
+                    strictContentTypeValidation: false
                 ]
             ]
         ),
@@ -81,15 +83,15 @@ class MavenDefaultRepositoriesContributor
                 ],
                 proxy        : [
                     remoteUrl                  : 'https://repo1.maven.org/maven2/',
-                    contentMaxAge              : 1440,
-                    strictContentTypeValidation: true
+                    contentMaxAge              : -1
                 ],
                 negativeCache: [
                     enabled   : true,
                     timeToLive: 1440
                 ],
                 storage      : [
-                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME
+                    blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                    strictContentTypeValidation: false
                 ]
             ]
         ),

@@ -68,7 +68,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacetHosted', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

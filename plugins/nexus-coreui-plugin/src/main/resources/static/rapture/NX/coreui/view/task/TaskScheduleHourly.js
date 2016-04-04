@@ -54,7 +54,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleHourly', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

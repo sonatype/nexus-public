@@ -70,7 +70,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     //map repository attributes raw map structure to/from a flattened representation
     Ext.override(me.getForm(), {

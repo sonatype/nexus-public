@@ -1,0 +1,57 @@
+/**
+ * @class NX.view.header.Panel
+ */
+
+.nx-header-panel {
+  .x-toolbar {
+    background-color: $color-black;
+    padding: 0 0 0 16px;
+  }
+
+  .productname {
+    color: $color-white;
+    font-family: 'Proxima Nova Thin', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 20px;
+    line-height: 1.2em;
+  }
+
+  .productspec {
+    color: $color-white;
+    font-family: 'Proxima Nova Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.1em;
+    letter-spacing: 0.05em;
+  }
+}
+
+@include extjs-button-toolbar-medium-ui(
+    $ui: 'nx-header',
+    $background-color: transparent,
+    $background-color-over: $color-salem,
+    $background-color-focus: $color-salem,
+    $background-color-pressed: $color-jewel,
+    $background-color-disabled: transparent,
+    $color: $color-white,
+    $color-over: $color-white,
+    $color-focus: $color-white,
+    $color-pressed: $color-white,
+    $color-disabled: $color-white,
+    $border-width: 0,
+    $background-gradient: transparent,
+    $background-gradient-over: transparent,
+    $background-gradient-focus: transparent,
+    $background-gradient-pressed: transparent,
+    $background-gradient-disabled: transparent,
+    $glyph-color: $color-white,
+    $glyph-opacity: 1
+);
+
+.x-btn-nx-header-toolbar-medium {
+  height: 39px;
+  border-radius: 0;
+  padding: 3px 6px;
+
+  .x-btn-wrap {
+    margin-top: 4px;
+  }
+}

@@ -39,7 +39,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerChangeOrder', {
     });
     me.store.load();
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

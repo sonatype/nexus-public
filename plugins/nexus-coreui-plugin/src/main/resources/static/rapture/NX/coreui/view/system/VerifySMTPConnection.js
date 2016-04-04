@@ -56,6 +56,7 @@ Ext.define('NX.coreui.view.system.VerifySMTPConnection', {
             xtype: 'panel',
             layout: 'hbox',
             style: {
+              // FIXME: sort out common style here for dialogs
               marginBottom: '10px'
             },
             items: [

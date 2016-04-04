@@ -51,20 +51,20 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-rapture-plugin</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-rapture</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-extdirect-plugin</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-extdirect</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-siesta-plugin</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-siesta</artifactId>
       <scope>provided</scope>
     </dependency>
 

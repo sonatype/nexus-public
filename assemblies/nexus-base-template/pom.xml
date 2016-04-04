@@ -71,7 +71,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-base-edition</artifactId>
+      <artifactId>nexus-base-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -117,18 +117,13 @@
         <artifactId>gmaven-plugin</artifactId>
         <executions>
           <execution>
-            <id>mvn-coordinates</id>
+            <id>pax-url-settings</id>
             <phase>initialize</phase>
             <goals>
               <goal>execute</goal>
             </goals>
             <configuration>
               <source>
-                project.artifactMap.each{k,v->
-                  // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
-                  project.properties['mvn:'+v.artifactId]='mvn\:'+v.groupId+'/'+v.artifactId+'/'+v.baseVersion
-                }
-
                 // workaround https://issues.apache.org/jira/browse/KARAF-4288
                 def settingsFile = session.request.userSettingsFile
                 if (settingsFile?.isFile()) {
@@ -200,10 +195,8 @@
                 </copy>
 
                 <!-- disable log4j backend so we can use logback -->
-                <replace file="${project.build.directory}/assembly/etc/startup.properties">
-                  <replacefilter token="${mvn:pax-logging-service}"
-                                 value="# ${mvn:pax-logging-service}"/>
-                </replace>
+                <replaceregexp file="${project.build.directory}/assembly/etc/startup.properties"
+                               match="(.*pax-logging-service.*)" replace="# \1"/>
 
                 <!-- disable automatic updates and retries -->
                 <concat destfile="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" append="true">

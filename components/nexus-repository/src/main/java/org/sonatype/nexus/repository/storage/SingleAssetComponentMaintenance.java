@@ -15,14 +15,10 @@ package org.sonatype.nexus.repository.storage;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * A component maintenance facet that assumes that Components have the same lifecycle as their
@@ -37,37 +33,21 @@ public class SingleAssetComponentMaintenance
   /**
    * Deletes both the asset and its component.
    */
-  @Override
-  @Guarded(by = STARTED)
-  public void deleteAsset(final EntityId assetId) {
-    checkNotNull(assetId);
-    UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try {
-      deleteAssetTx(assetId);
-    }
-    finally {
-      UnitOfWork.end();
-    }
-  }
-
   @Transactional(retryOn = ONeedRetryException.class)
   protected void deleteAssetTx(final EntityId assetId) {
     StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
+    if (asset == null) {
+      return;
+    }
     final EntityId componentId = asset.componentId();
     if (componentId == null) {
       // Assets without components should be deleted on their own
       super.deleteAssetTx(assetId);
     }
     else {
-      // Otherwise, delete the comopnent, which in turn cascades down to the asset
-      deleteComponent(tx, componentId);
+      // Otherwise, delete the component, which in turn cascades down to the asset
+      deleteComponentTx(componentId);
     }
-  }
-
-  private void deleteComponent(final StorageTx tx, final EntityId componentId) {
-    final Component component = tx.findComponent(componentId, tx.findBucket(getRepository()));
-    log.info("Deleting component: {}", component);
-    tx.deleteComponent(component); // This in turn cascades back down to the asset
   }
 }

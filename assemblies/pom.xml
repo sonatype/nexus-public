@@ -31,7 +31,7 @@
   <modules>
     <module>nexus-system-feature</module>
     <module>nexus-jetty-feature</module>
-    <module>nexus-base-edition</module>
+    <module>nexus-base-feature</module>
     <module>nexus-core-feature</module>
     <module>nexus-base-template</module>
   </modules>

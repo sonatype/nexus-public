@@ -24,20 +24,21 @@ Ext.define('NX.coreui.view.privilege.PrivilegeFeature', {
     'NX.I18n'
   ],
 
+  iconName: 'privilege-default',
+
+  masters: [
+    { xtype: 'nx-coreui-privilege-list' }
+  ],
+
   /**
    * @override
    */
   initComponent: function() {
     Ext.apply(this, {
-      iconName: 'privilege-default',
-
-      masters: [
-        { xtype: 'nx-coreui-privilege-list' }
-      ],
-
       tabs: {
-        xtype: 'nx-info-panel',
-        title: NX.I18n.get('Privilege_PrivilegeFeature_Details_Tab')
+        xtype: 'nx-coreui-privilege-settings',
+        title: NX.I18n.get('Privilege_PrivilegeFeature_Settings_Title'),
+        weight: 10
       },
 
       actions: [

@@ -76,7 +76,7 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

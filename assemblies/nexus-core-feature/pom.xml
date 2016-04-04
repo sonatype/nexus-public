@@ -27,30 +27,48 @@
   <packaging>feature</packaging>
 
   <dependencies>
+
+    <!-- mark these as provided by nexus-base-feature (avoids duplication in feature.xml) -->
+
     <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-siesta-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-bootstrap</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-commands</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-orient</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-security</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- bundles and sub-features belonging to nexus-core-feature -->
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-quartz</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-ssl-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-rapture-plugin</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-extdirect-plugin</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
@@ -79,6 +97,13 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-raw</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-script-plugin</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

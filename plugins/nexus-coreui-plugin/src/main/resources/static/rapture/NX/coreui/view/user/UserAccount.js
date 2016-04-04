@@ -35,6 +35,7 @@ Ext.define('NX.coreui.view.user.UserAccount', {
           load: 'NX.direct.coreui_User.readAccount',
           submit: 'NX.direct.coreui_User.updateAccount'
         },
+        editableMarker: NX.I18n.get('User_UserAccount_Update_Error'),
         items: [
           {
             name: 'userId',
@@ -55,15 +56,40 @@ Ext.define('NX.coreui.view.user.UserAccount', {
             xtype: 'nx-email',
             name: 'email',
             fieldLabel: NX.I18n.get('User_UserAccount_Email_FieldLabel')
+          },
+          {
+            xtype: 'hidden',
+            name: 'external',
+            listeners: {
+              change: function(field, value) {
+                var form = field.up('nx-settingsform'),
+                    external = value && value.trim().toLowerCase() === 'true'; // hidden fields values are always strings
+
+                form.getForm().external = external;
+                form.setEditable(!external);
+              }
+            }
           }
         ]
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.down('nx-settingsform').getDockedItems('toolbar[dock="bottom"]')[0].add({
       xtype: 'button', text: NX.I18n.get('User_UserAccount_Password_Button'), action: 'changepassword', glyph: 'xf023@FontAwesome' /* fa-lock */, disabled: true
+    });
+
+    // do not perform any validity check if we have an external user
+    Ext.override(me.down('nx-settingsform').getForm(), {
+      isValid: function() {
+        if (this.external) {
+          this.clearInvalid();
+        }
+        else {
+          this.callParent();
+        }
+      }
     });
   }
 

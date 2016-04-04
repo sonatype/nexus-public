@@ -57,6 +57,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupLoginCredentials', {
             xtype: 'panel',
             layout: 'hbox',
             style: {
+              // FIXME: sort out common style here for dialogs
               marginBottom: '10px'
             },
             items: [

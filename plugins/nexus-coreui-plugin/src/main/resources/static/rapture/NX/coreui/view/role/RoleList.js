@@ -60,9 +60,7 @@ Ext.define('NX.coreui.view.role.RoleList', {
     ];
 
     me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless',
+      xtype: 'nx-actions',
       items: [
         { xtype: 'button', text: NX.I18n.get('Role_RoleList_New_Button'), glyph: 'xf055@FontAwesome' /* fa-plus-circle */, action: 'new', disabled: true,
           menu: [

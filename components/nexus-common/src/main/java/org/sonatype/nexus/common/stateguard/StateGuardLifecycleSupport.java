@@ -31,11 +31,6 @@ public class StateGuardLifecycleSupport
     extends ComponentSupport
     implements Lifecycle, StateGuardAware
 {
-  @Override
-  public Lifecycle getLifecycle() {
-    return this;
-  }
-
   /**
    * State constants.
    */

@@ -77,7 +77,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleWeekly', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

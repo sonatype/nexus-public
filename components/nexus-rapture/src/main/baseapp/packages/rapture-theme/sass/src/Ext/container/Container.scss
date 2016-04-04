@@ -1,0 +1,26 @@
+/**
+ * @class Ext.container.Container
+ */
+
+/**
+ * Styles a scrollable container which contains multiple nx-subsection containers
+ *
+ * cls: 'nx-inset'
+ */
+.nx-inset {
+  padding: 12px 12px 12px 12px;
+}
+
+/**
+ * Styles a subsection inside an nx-inset
+ *
+ * cls: 'nx-subsection'
+ */
+.nx-subsection {
+  padding: 12px 12px 12px 12px;
+  background-color: $color-white;
+  border-top: 1px solid $color-gainsboro !important;
+  border-right: 1px solid $color-gainsboro !important;
+  border-bottom: 1px solid $color-gainsboro !important;
+  border-left: 1px solid $color-gainsboro !important;
+}

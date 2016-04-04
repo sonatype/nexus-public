@@ -12,16 +12,24 @@
  */
 package org.sonatype.nexus.internal.script;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.script.Bindings;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
+import org.sonatype.nexus.common.script.ScriptApi;
 import org.sonatype.nexus.common.script.ScriptService;
 
 import org.eclipse.sisu.inject.BeanLocator;
@@ -45,15 +53,19 @@ public class ScriptServiceImpl
   private final BeanLocator beanLocator;
 
   private final GlobalComponentLookupHelper lookupHelper;
+  
+  private final List<ScriptApi> scriptApis;
 
   @Inject
   public ScriptServiceImpl(final ScriptEngineManager engineManager,
                            final BeanLocator beanLocator,
-                           final GlobalComponentLookupHelper lookupHelper)
+                           final GlobalComponentLookupHelper lookupHelper,
+                           final List<ScriptApi> scriptApis)
   {
     this.engineManager = checkNotNull(engineManager);
     this.beanLocator = checkNotNull(beanLocator);
     this.lookupHelper = checkNotNull(lookupHelper);
+    this.scriptApis = checkNotNull(scriptApis);
   }
 
   @Override
@@ -109,5 +121,44 @@ public class ScriptServiceImpl
 
     bindings.put("beanLocator", beanLocator);
     bindings.put("container", lookupHelper);
+    for (ScriptApi scriptApi : scriptApis) {
+      bindings.put(scriptApi.getName(), scriptApi);
+    }
+  }
+
+  @Nonnull
+  @Override
+  public ScriptContext createContext(final String language) {
+    ScriptContext context = new SimpleScriptContext();
+    context.setBindings(engineForLanguage(language).createBindings(), ScriptContext.ENGINE_SCOPE);
+    return context;
+  }
+  
+  @Override
+  public void customizeBindings(final ScriptContext context, final int scope, final Map<String, Object> customizations) {
+    Bindings bindings = context.getBindings(scope);
+    applyDefaultBindings(bindings);
+    for (Entry<String, Object> entry : customizations.entrySet()) {
+      bindings.put(entry.getKey(), entry.getValue());  
+    }
+  }
+  
+  @Override
+  public void customizeBindings(final ScriptContext context, final Map<String, Object> customizations) {
+    customizeBindings(context, ScriptContext.ENGINE_SCOPE, customizations);
+  }
+
+  @Override
+  public Object eval(final String language, final String script, final ScriptContext context) throws ScriptException {
+    return engineForLanguage(checkNotNull(language)).eval(checkNotNull(script), checkNotNull(context));
+  }
+
+  @Override
+  public Object eval(final String language, final String script, final Map<String, Object> customBindings)
+      throws ScriptException
+  {
+    ScriptContext context = createContext(language);
+    customizeBindings(context, customBindings);
+    return eval(language, script, context);
   }
 }

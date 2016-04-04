@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkState;
 public abstract class GeneratedContentSourceSupport
     extends ContentSourceSupport
 {
-  private File file;
+  protected File file;
 
   public GeneratedContentSourceSupport(final Type type, final String path) {
     super(type, path);

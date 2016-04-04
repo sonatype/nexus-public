@@ -29,6 +29,8 @@ class FormFieldXO
   Boolean required
   String regexValidation
   String initialValue
+  String minValue
+  String maxValue
 
   String storeApi
   Map<String, String> storeFilters

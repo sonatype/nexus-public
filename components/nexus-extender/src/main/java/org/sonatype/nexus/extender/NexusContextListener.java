@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.extender;
 
+import java.lang.management.ManagementFactory;
 import java.util.Dictionary;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -27,26 +28,24 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.log.LogManager;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
-
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Provider;
-import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceFilter;
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
 import org.apache.karaf.features.FeaturesService.Option;
+import org.eclipse.sisu.bean.BeanManager;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.Constants;
@@ -65,6 +64,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonMap;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.BOOT;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.EVENTS;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.LOGGING;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
  * {@link ServletContextListener} that bootstraps the core Nexus application.
@@ -113,11 +117,7 @@ public class NexusContextListener
 
   private Injector injector;
 
-  private LogManager logManager;
-
-  private LocalNodeAccess localNodeAccess;
-
-  private Lifecycle application;
+  private NexusLifecycleManager lifecycleManager;
 
   private ServiceRegistration<Filter> registration;
 
@@ -145,21 +145,12 @@ public class NexusContextListener
     injector = Guice.createInjector(new WireModule( //
         new NexusContextModule(bundleContext, servletContext, nexusProperties)));
 
-    log.debug("Injector: {}", injector);
-
     extender.doStart(); // start tracking nexus bundles
 
     try {
-      logManager = injector.getInstance(LogManager.class);
-      log.debug("Log manager: {}", logManager);
-      logManager.start();
+      lifecycleManager = injector.getInstance(NexusLifecycleManager.class);
 
-      localNodeAccess = injector.getInstance(LocalNodeAccess.class);
-      log.debug("Local-node access: {}", localNodeAccess);
-      localNodeAccess.start();
-
-      application = injector.getInstance(Key.get(Lifecycle.class, Names.named("NxApplication")));
-      log.debug("Application: {}", application);
+      lifecycleManager.to(EVENTS);
 
       // assign higher start level to any bundles installed after this point to hold back activation
       bundleContext.addBundleListener((SynchronousBundleListener) (e) -> {
@@ -168,13 +159,19 @@ public class NexusContextListener
         }
       });
 
-      installFeatures(getFeatures((String) nexusProperties.get("nexus-features")));
-
-      // feature bundles have all been installed, so raise framework start level to finish activation
-      bundleContext.getBundle(0).adapt(FrameworkStartLevel.class).setStartLevel(NEXUS_PLUGIN_START_LEVEL, this);
+      // if we know what to install go ahead and continue activation then register filter when done
+      String featureNames = (String) nexusProperties.get("nexus-features");
+      if (!Strings.isNullOrEmpty(featureNames)) {
+        installNexusFeatures(featureNames);
+      }
+      // otherwise just activate security and register the filter to support install/upgrade wizard
+      else {
+        lifecycleManager.to(SECURITY);
+        registerNexusFilter();
+      }
     }
     catch (final Exception e) {
-      log.error("Failed to lookup application", e);
+      log.error("Failed to initialize context", e);
       Throwables.propagate(e);
     }
   }
@@ -182,6 +179,7 @@ public class NexusContextListener
   /**
    * Receives property changes from OSGi and updates the bound {@code nexusProperties}.
    */
+  @Override
   public void updated(final Dictionary<String, ?> properties) {
     if (properties != null) {
       for (Enumeration<String> e = properties.keys(); e.hasMoreElements();) {
@@ -190,8 +188,22 @@ public class NexusContextListener
       }
       System.getProperties().putAll(nexusProperties);
     }
+
+    // post-wizard installation: apply the chosen configuration
+    String featureNames = (String) nexusProperties.get("nexus-features");
+    if (!Strings.isNullOrEmpty(featureNames) && lifecycleManager != null
+        && lifecycleManager.getCurrentPhase() == SECURITY) {
+      try {
+        installNexusFeatures(featureNames);
+      }
+      catch (final Exception e) {
+        log.error("Failed to update context", e);
+        Throwables.propagate(e);
+      }
+    }
   }
 
+  @Override
   public void frameworkEvent(final FrameworkEvent event) {
     checkNotNull(event);
 
@@ -199,17 +211,14 @@ public class NexusContextListener
       // feature bundles have all been activated at this point
 
       try {
-        application.start();
+        lifecycleManager.to(TASKS);
       }
       catch (final Exception e) {
-        log.error("Failed to start application", e);
+        log.error("Failed to start nexus", e);
         Throwables.propagate(e);
       }
 
-      // register our dynamic filter with the surrounding bootstrap code
-      final Filter filter = injector.getInstance(GuiceFilter.class);
-      final Dictionary<String, ?> filterProperties = new Hashtable<>(singletonMap("name", "nexus"));
-      registration = bundleContext.registerService(Filter.class, filter, filterProperties);
+      registerNexusFilter();
 
       if (HAS_PAX_EXAM) {
         registerLocatorWithPaxExam(injector.getProvider(BeanLocator.class));
@@ -227,34 +236,20 @@ public class NexusContextListener
       registration = null;
     }
 
-    if (application != null) {
-      try {
-        application.stop();
-      }
-      catch (final Exception e) {
-        log.error("Failed to stop application", e);
-      }
-      application = null;
-    }
+    // log uptime before triggering activity which may run into problems
+    long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
+    log.info("Uptime: {}", PeriodFormat.getDefault().print(new Period(uptime)));
 
-    if (localNodeAccess != null) {
-      try {
-        localNodeAccess.stop();
-      }
-      catch (final Exception e) {
-        log.error("Failed to stop local-node-access", e);
-      }
-      localNodeAccess = null;
-    }
+    try {
+      lifecycleManager.to(LOGGING);
 
-    if (logManager != null) {
-      try {
-        logManager.stop();
-      }
-      catch (final Exception e) {
-        log.error("Failed to stop log-manager", e);
-      }
-      logManager = null;
+      // dispose of JSR-250 components before logging goes
+      injector.getInstance(BeanManager.class).unmanage();
+
+      lifecycleManager.to(BOOT);
+    }
+    catch (final Exception e) {
+      log.error("Failed to stop nexus", e);
     }
 
     extender.doStop(); // stop tracking bundles
@@ -273,27 +268,23 @@ public class NexusContextListener
     return injector;
   }
 
-  private Set<Feature> getFeatures(final String featureNames) throws Exception {
+  /**
+   * Install all features listed under "nexus-features".
+   */
+  private void installNexusFeatures(final String featureNames) throws Exception {
     final Set<Feature> features = new LinkedHashSet<>();
-    if (featureNames != null) {
-      log.info("Selecting features by name...");
 
-      for (final String name : Splitter.on(',').trimResults().omitEmptyStrings().split(featureNames)) {
-        final Feature feature = featuresService.getFeature(name);
-        if (feature != null) {
-          log.info("Adding {}", name);
-          features.add(feature);
-        }
-        else {
-          log.warn("Missing {}", name);
-        }
+    for (final String name : Splitter.on(',').trimResults().omitEmptyStrings().split(featureNames)) {
+      final Feature feature = featuresService.getFeature(name);
+      if (feature != null) {
+        features.add(feature);
+      }
+      else {
+        log.warn("Missing: {}", name);
       }
     }
-    return features;
-  }
 
-  private void installFeatures(final Set<Feature> features) throws Exception {
-    log.info("Installing selected features...");
+    log.info("Installing: {}", features);
 
     Set<String> featureIds = new HashSet<>(features.size());
     for (final Feature f : features) {
@@ -309,7 +300,25 @@ public class NexusContextListener
       featuresService.installFeatures(featureIds, options);
     }
 
-    log.info("Installed {} features", features.size());
+    log.info("Installed: {}", features);
+
+    // feature bundles have all been installed, so raise framework start level to finish activation
+    FrameworkStartLevel frameworkStartLevel = bundleContext.getBundle(0).adapt(FrameworkStartLevel.class);
+    if (frameworkStartLevel.getStartLevel() < NEXUS_PLUGIN_START_LEVEL) {
+      frameworkStartLevel.setStartLevel(NEXUS_PLUGIN_START_LEVEL, this);
+      // activation continues asynchronously in frameworkEvent method...
+    }
+  }
+
+  /**
+   * Register our dynamic filter with the bootstrap listener.
+   */
+  private void registerNexusFilter() {
+    if (registration == null) {
+      final Filter filter = injector.getInstance(GuiceFilter.class);
+      final Dictionary<String, ?> filterProperties = new Hashtable<>(singletonMap("name", "nexus"));
+      registration = bundleContext.registerService(Filter.class, filter, filterProperties);
+    }
   }
 
   /**
@@ -323,6 +332,7 @@ public class NexusContextListener
 
     bundleContext.registerService(org.ops4j.pax.exam.util.Injector.class, new org.ops4j.pax.exam.util.Injector()
     {
+      @Override
       public void injectFields(final Object target) {
         Guice.createInjector(new WireModule(new AbstractModule()
         {

@@ -48,7 +48,7 @@ Ext.define('NX.coreui.view.role.RoleAdd', {
       ]
     };
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.down('#id').setReadOnly(false);
   }

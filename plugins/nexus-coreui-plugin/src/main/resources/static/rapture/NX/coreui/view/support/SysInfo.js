@@ -33,12 +33,9 @@ Ext.define('NX.coreui.view.support.SysInfo', {
     var me = this;
 
     me.layout = 'fit';
-    me.autoScroll = true;
 
     me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions',
+      xtype: 'nx-actions',
       items: [
         {
           xtype: 'button',
@@ -48,6 +45,8 @@ Ext.define('NX.coreui.view.support.SysInfo', {
         }
       ]
     }];
+
+    // FIXME: clean up style, can reduce lots of complexity here with some better naming + scss nesting
 
     // simple named section with list of key-value properties
     me.sectionTpl = Ext.create('Ext.XTemplate',
@@ -110,7 +109,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
 
     // Main template renders all sections
     me.mainTpl = Ext.create('Ext.XTemplate',
-        '<div class="nx-atlas-view-sysinfo-body">',
+        '<div class="nx-atlas-view-sysinfo-body nx-hr" style="height: 100%; overflow-y: scroll;">',
         '<div class="x-panel x-panel-nx-inset">',
         // nexus details
         '{[ this.section("nexus-status", values) ]}',
@@ -165,7 +164,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
         }
     );
 
-    me.callParent(arguments);
+    me.callParent();
   },
 
   /**

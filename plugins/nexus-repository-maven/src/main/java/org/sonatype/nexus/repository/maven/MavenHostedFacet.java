@@ -43,4 +43,9 @@ public interface MavenHostedFacet
    * Rebuilds archetype catalog for given repository. Returns the number of archetypes hosted.
    */
   int rebuildArchetypeCatalog() throws IOException;
+
+  /**
+   * Delete metadata associated with the Maven artifact, and rebuild metadata to account for the deletion.
+   */
+  void deleteMetadata(String groupId, String artifactId, String baseVersion);
 }

@@ -54,7 +54,7 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKey', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

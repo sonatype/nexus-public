@@ -36,6 +36,8 @@ Ext.define('NX.coreui.view.component.AssetList', {
     Ext.apply(this, {
       store: 'ComponentAsset',
 
+      cls: 'nx-hr',
+
       // Marker for source of targets to be shown in container assets
       assetContainerSource: true,
 

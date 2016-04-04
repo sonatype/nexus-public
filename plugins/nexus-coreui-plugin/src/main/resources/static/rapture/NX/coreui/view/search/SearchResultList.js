@@ -34,15 +34,13 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
     Ext.apply(this, {
       // Mark grid as health check columns target
       healthCheckColumnsTarget: true,
+      // Mark grid as a component list
+      componentList: true,
 
       store: 'SearchResult',
 
       // Prevent the store from automatically loading
       loadStore: Ext.emptyFn,
-
-      style: {
-        'background-color': '#F4F4F4'
-      },
 
       viewConfig: {
         emptyText: NX.I18n.get('Search_SearchResultList_EmptyText'),

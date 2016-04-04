@@ -43,6 +43,12 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldNumberFieldFactory', {
     if (formField.initialValue) {
       item.value = Number(formField.initialValue);
     }
+    if(formField.minValue) {
+      item.minValue = Number(formField.minValue);
+    }
+    if(formField.maxValue) {
+      item.maxValue = Number(formField.maxValue);
+    }
     return item;
   }
 

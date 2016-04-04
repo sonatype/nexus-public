@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,7 +28,10 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.google.common.hash.HashCode;
+import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +69,37 @@ class BlobTx
     Blob blob = blobStore.create(hashingStream, headers);
     BlobRef blobRef = new BlobRef(localNodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
     AssetBlob assetBlob = new AssetBlob(blobRef, blob, hashingStream.count(), contentType, hashingStream.hashes());
+    newlyCreatedBlobs.add(assetBlob);
+    return assetBlob;
+  }
+
+  /**
+   * Create an asset blob by hard linking to the {@code sourceFile}.
+   *
+   * @param sourceFile the file to be hard linked
+   * @param headers a map of headers to be applied to the resulting blob
+   * @param hashAlgorithms the algorithms used to create hashes of the content
+   * @param contentType content type
+   * @return {@link AssetBlob}
+   */
+  public AssetBlob createByHardLinking(final Path sourceFile,
+                                       final Map<String, String> headers,
+                                       final Iterable<HashAlgorithm> hashAlgorithms,
+                                       final String contentType)
+  {
+    Blob blob = blobStore.create(sourceFile, headers);
+    BlobRef blobRef = new BlobRef(localNodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
+    Map<HashAlgorithm, HashCode> hashes = Collections.emptyMap();
+    long bytes = 0;
+    try (MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, blob.getInputStream())) {
+      ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());
+      hashes = hashingStream.hashes();
+      bytes = hashingStream.count();
+    }
+    catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes);
     newlyCreatedBlobs.add(assetBlob);
     return assetBlob;
   }

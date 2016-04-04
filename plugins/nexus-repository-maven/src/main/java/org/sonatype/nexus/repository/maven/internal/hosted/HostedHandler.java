@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
-import org.sonatype.nexus.repository.maven.policy.LayoutPolicy;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;

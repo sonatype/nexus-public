@@ -17,15 +17,14 @@ import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Mutex;
-import org.sonatype.nexus.common.app.NexusInitializedEvent;
-import org.sonatype.nexus.common.app.NexusStoppedEvent;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -38,7 +37,6 @@ import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.eventbus.Subscribe;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -53,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -61,10 +60,12 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.0
  */
 @Named
+@ManagedLifecycle(phase = SERVICES)
+@Priority(Integer.MAX_VALUE) // make sure this starts early
 @Singleton
 public class HttpClientManagerImpl
     extends StateGuardLifecycleSupport
-    implements HttpClientManager, EventAware
+    implements HttpClientManager
 {
   static final String HTTPCLIENT_OUTBOUND_LOGGER_NAME = "org.sonatype.nexus.httpclient.outbound";
 
@@ -119,16 +120,6 @@ public class HttpClientManagerImpl
   @Override
   protected void doStop() throws Exception {
     sharedConnectionManager.stop();
-  }
-
-  @Subscribe
-  public void on(final NexusInitializedEvent event) throws Exception {
-    start();
-  }
-
-  @Subscribe
-  public void on(final NexusStoppedEvent event) throws Exception {
-    stop();
   }
 
   //

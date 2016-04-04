@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.1.8</orientdb.version>
+    <orientdb.version>2.1.10</orientdb.version>
   </properties>
 
   <dependencyManagement>

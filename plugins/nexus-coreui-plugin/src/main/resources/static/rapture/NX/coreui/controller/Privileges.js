@@ -31,16 +31,27 @@ Ext.define('NX.coreui.controller.Privileges', {
     'nx-coreui-privilege-list'
   ],
   stores: [
-    'Privilege'
+    'Privilege',
+    'PrivilegeType'
+  ],
+  models: [
+    'Privilege',
+    'PrivilegeType'
   ],
   views: [
+    'privilege.PrivilegeAdd',
     'privilege.PrivilegeFeature',
-    'privilege.PrivilegeList'
+    'privilege.PrivilegeList',
+    'privilege.PrivilegeSelectType',
+    'privilege.PrivilegeSettings',
+    'privilege.PrivilegeSettingsForm',
+    'formfield.SettingsFieldSet'
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-privilege-feature'},
+    {ref: 'content', selector: 'nx-feature-content' },
     {ref: 'list', selector: 'nx-coreui-privilege-list'},
-    {ref: 'info', selector: 'nx-coreui-privilege-feature nx-info-panel'}
+    {ref: 'settings', selector: 'nx-coreui-privilege-feature nx-coreui-privilege-settings'}
   ],
   icons: {
     'privilege-default': {
@@ -63,8 +74,16 @@ Ext.define('NX.coreui.controller.Privileges', {
       file: 'database_red.png',
       variants: ['x16', 'x32']
     },
+    'privilege-repository-content': {
+      file: 'content_selector.png',
+      variants: ['x16', 'x32']
+    },
     'privilege-repository-view': {
       file: 'database.png',
+      variants: ['x16', 'x32']
+    },
+    'privilege-script': {
+      file: 'script_text.png',
       variants: ['x16', 'x32']
     }
   },
@@ -104,6 +123,23 @@ Ext.define('NX.coreui.controller.Privileges', {
         '#Privilege': {
           load: me.reselect
         }
+      },
+      component: {
+        'nx-coreui-privilege-list': {
+          beforerender: me.loadStores
+        },
+        'nx-coreui-privilege-list button[action=new]': {
+          click: me.showSelectTypePanel
+        },
+        'nx-coreui-privilege-selecttype': {
+          cellclick: me.showAddPanel
+        },
+        'nx-coreui-privilege-add button[action=add]': {
+          click: me.createPrivilege
+        },
+        'nx-coreui-privilege-settings button[action=save]': {
+          click: me.updatePrivilege
+        }
       }
     });
   },
@@ -115,23 +151,47 @@ Ext.define('NX.coreui.controller.Privileges', {
     return model.get('name');
   },
 
+  /**
+   * @override
+   */
   onSelection: function (list, model) {
-    var me = this,
-        info = {};
-
+    var settingsPanel = this.getSettings();
     if (Ext.isDefined(model)) {
-      info[NX.I18n.get('Privileges_Summary_ID')] = model.getId();
-      info[NX.I18n.get('Privileges_Summary_Type')] = model.get('type');
-      info[NX.I18n.get('Privileges_Summary_Name')] = model.get('name');
-      info[NX.I18n.get('Privileges_Summary_Description')] = model.get('description');
-      info[NX.I18n.get('Privileges_Summary_Permission')] = model.get('permission');
-
-      Ext.iterate(model.get('properties'), function (key, value) {
-        info[NX.I18n.format('Privileges_Summary_Property', key)] = value;
-      });
-
-      me.getInfo().showInfo(info);
+      settingsPanel.loadRecord(model);
     }
+  },
+
+  /**
+   * @private
+   */
+  showAddPanel: function(list, td, cellIndex, model) {
+    var me = this,
+        panel;
+
+    // Show the first panel in the create wizard, and set the breadcrumb
+    me.setItemName(2, NX.I18n.format('Privileges_Create_Title', model.get('name')));
+    me.loadCreateWizard(2, true, panel = Ext.create('widget.nx-coreui-privilege-add'));
+    var m = me.getPrivilegeModel().create({ type: model.getId(), readonly: false });
+    panel.down('nx-settingsform').loadRecord(m);
+  },
+
+  /**
+   * @override
+   * @protected
+   * Enable 'New' button when user has 'create' permission and there is at least one privilege type.
+   */
+  bindNewButton: function(button) {
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted(this.permission + ':create'),
+            NX.Conditions.storeHasRecords('PrivilegeType')
+        ),
+        {
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
+        }
+    );
   },
 
   /**
@@ -158,12 +218,69 @@ Ext.define('NX.coreui.controller.Privileges', {
 
   /**
    * @private
+   * Creates a privlege.
+   */
+  createPrivilege: function(button) {
+    var me = this,
+        form = button.up('form'),
+        values = form.getValues();
+
+    NX.direct.coreui_Privilege.create(values, function(response) {
+      if (Ext.isObject(response)) {
+        if (response.success) {
+          NX.Messages.add({
+            text: NX.I18n.format('Privileges_Create_Success',
+                me.getDescription(me.getPrivilegeModel().create(response.data))),
+            type: 'success'
+          });
+          me.getStore('Privilege').load();
+        }
+        else if (Ext.isDefined(response.errors)) {
+          form.markInvalid(response.errors);
+        }
+      }
+    });
+  },
+
+  /**
+   * @private
+   * Updates privilege.
+   */
+  updatePrivilege: function(button) {
+    var me = this,
+        form = button.up('form'),
+        values = form.getValues();
+
+    me.getContent().getEl().mask(NX.I18n.get('Privileges_Update_Mask'));
+    NX.direct.coreui_Privilege.update(values, function(response) {
+      me.getContent().getEl().unmask();
+      if (Ext.isObject(response)) {
+        if (response.success) {
+          NX.Messages.add({
+            text: NX.I18n.format('Privileges_Update_Success',
+                me.getDescription(me.getPrivilegeModel().create(response.data))),
+            type: 'success'
+          });
+          form.fireEvent('submitted', form);
+          me.getStore('Privilege').load();
+        }
+        else if (Ext.isDefined(response.errors)) {
+          form.markInvalid(response.errors);
+        }
+      }
+    });
+  },
+
+  /**
+   * @private
    * @override
    * Deletes a privilege.
    * @param model privilege to be deleted
    */
   deleteModel: function (model) {
+    var me = this;
     NX.direct.coreui_Privilege.remove(model.getId(), function (response) {
+      me.getStore('Privilege').load();
       if (Ext.isObject(response) && response.success) {
         NX.Messages.add({
           text: NX.I18n.format('Privileges_Delete_Success', model.get('name')),
@@ -171,6 +288,30 @@ Ext.define('NX.coreui.controller.Privileges', {
         });
       }
     });
+  },
+
+  /**
+   * @private
+   */
+  showSelectTypePanel: function() {
+    var me = this;
+
+    // Show the first panel in the create wizard, and set the breadcrumb
+    me.setItemName(1, NX.I18n.get('Privileges_Select_Title'));
+    me.loadCreateWizard(1, true, Ext.widget({
+      xtype: 'panel',
+      layout: {
+        type: 'vbox',
+        align: 'stretch',
+        pack: 'start'
+      },
+      items: [
+        {
+          xtype: 'nx-coreui-privilege-selecttype',
+          flex: 1
+        }
+      ]
+    }));
   }
 
 });

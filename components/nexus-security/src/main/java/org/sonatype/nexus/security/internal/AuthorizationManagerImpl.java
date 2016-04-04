@@ -126,7 +126,7 @@ public class AuthorizationManagerImpl
     Privilege target = new Privilege();
     target.setId(source.getId());
     target.setVersion(source.getVersion());
-    target.setName(source.getName());
+    target.setName(source.getName() == null ? source.getId() : source.getName());
     target.setDescription(source.getDescription());
     target.setReadOnly(source.isReadOnly());
     target.setType(source.getType());

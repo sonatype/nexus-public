@@ -119,7 +119,7 @@ Ext.define('NX.coreui.view.user.UserSettingsExternalForm', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     Ext.override(me.down('#externalRoles'), {
       /**

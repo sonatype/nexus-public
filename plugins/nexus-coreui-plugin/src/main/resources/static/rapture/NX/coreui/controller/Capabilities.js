@@ -265,7 +265,6 @@ Ext.define('NX.coreui.controller.Capabilities', {
         pack: 'start'
       },
       items: [
-        { xtype: 'nx-actions' },
         {
           xtype: 'nx-coreui-capability-selecttype',
           flex: 1
@@ -551,7 +550,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
     Ext.Array.sort(tags);
 
     //<if debug>
-    this.logDebug('Discovered dynamic tags: ', tags);
+    this.logDebug('Discovered dynamic tags:', tags);
     //</if>
 
     return tags;

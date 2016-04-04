@@ -68,6 +68,10 @@ public class MetadataUpdater
 
   private final RepositoryMetadataMerger repositoryMetadataMerger;
 
+  /**
+   * @param update Determines whether existing content should be updated or replaced.
+   * @param repository The {@link Repository} to update.
+   */
   public MetadataUpdater(final boolean update, final Repository repository) {
     this.update = update;
     this.repository = checkNotNull(repository);
@@ -77,7 +81,7 @@ public class MetadataUpdater
 
   /**
    * Processes metadata, depending on {@link #update} value and input value of metadata parameter. If input is
-   * non-null, will update or replace depending on value of {@link #update}. If update is null, will delete if {@link
+   * non-null, will update or replace depending on value of {@link #update}. If input is null, will delete if {@link
    * #update} is {@code false}.
    */
   public void processMetadata(final MavenPath metadataPath, final Maven2Metadata metadata) {
@@ -100,11 +104,11 @@ public class MetadataUpdater
   @VisibleForTesting
   void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
     try {
-      transactional().retryOn(ONeedRetryException.class).call(() -> {
+      transactional().retryOn(ONeedRetryException.class).throwing(IOException.class).call(() -> {
         checkNotNull(mavenPath);
         checkNotNull(metadata);
 
-        final Metadata oldMetadata = read(mavenPath);
+        final Metadata oldMetadata = MetadataUtils.read(repository, mavenPath);
         if (oldMetadata == null) {
           // old does not exists, just write it
           write(mavenPath, toMetadata(metadata));
@@ -146,13 +150,7 @@ public class MetadataUpdater
    */
   @VisibleForTesting
   void delete(final MavenPath mavenPath) {
-    checkNotNull(mavenPath);
-    try {
-      MavenFacetUtils.deleteWithHashes(mavenFacet, mavenPath);
-    }
-    catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    MetadataUtils.delete(repository, mavenPath);
   }
 
   /**
@@ -209,38 +207,16 @@ public class MetadataUpdater
    * Reads up existing metadata and parses it, or {@code null}. If metadata unparseable (corrupted) also {@code null}.
    */
   @Nullable
-  private Metadata read(final MavenPath mavenPath) throws IOException {
-    final Content content = mavenFacet.get(mavenPath);
-    if (content == null) {
-      return null;
-    }
-    else {
-      Metadata metadata = MavenModels.readMetadata(content.openInputStream());
-      if (metadata == null) {
-        log.warn("Corrupted metadata {} @ {}", repository.getName(), mavenPath.getPath());
-      }
-      return metadata;
-    }
+  public Metadata read(final MavenPath mavenPath) throws IOException {
+    return MetadataUtils.read(repository, mavenPath);
   }
 
   /**
    * Writes passed in metadata as XML.
    */
-  private void write(final MavenPath mavenPath, final Metadata metadata)
+  public void write(final MavenPath mavenPath, final Metadata metadata)
       throws IOException
   {
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    MavenModels.writeMetadata(byteArrayOutputStream, metadata);
-    mavenFacet.put(mavenPath, new BytesPayload(byteArrayOutputStream.toByteArray(),
-        MavenMimeRulesSource.METADATA_TYPE));
-    final Map<HashAlgorithm, HashCode> hashCodes = mavenFacet.get(mavenPath).getAttributes()
-        .require(Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
-    checkState(hashCodes != null, "hashCodes");
-    for (HashType hashType : HashType.values()) {
-      final MavenPath checksumPath = mavenPath.hash(hashType);
-      final HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
-      checkState(hashCode != null, "hashCode: type=%s", hashType);
-      mavenFacet.put(checksumPath, new StringPayload(hashCode.toString(), Constants.CHECKSUM_CONTENT_TYPE));
-    }
+    MetadataUtils.write(repository, mavenPath, metadata);
   }
 }

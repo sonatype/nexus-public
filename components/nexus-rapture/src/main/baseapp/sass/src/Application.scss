@@ -1,0 +1,37 @@
+//
+// Ordered application SCSS files to include.
+//
+
+@import 'NX/ext/form/OptionalFieldSet';
+
+@import 'NX/view/AboutWindow';
+@import 'NX/view/Authenticate';
+@import 'NX/view/Unlicensed';
+@import 'NX/view/ExpireSession';
+@import 'NX/view/UnsupportedBrowser';
+@import 'NX/view/dashboard/Welcome';
+@import 'NX/view/header/Mode';
+@import 'NX/view/header/QuickSearch';
+@import 'NX/view/header/Panel';
+@import 'NX/view/footer/Panel';
+@import 'NX/view/feature/Menu';
+@import 'NX/view/feature/Content';
+@import 'NX/view/feature/Group';
+@import 'NX/view/feature/NotFound';
+@import 'NX/view/feature/NotVisible';
+@import 'NX/view/dev/Panel';
+@import 'NX/view/info/Entry';
+@import 'NX/view/drilldown/Actions';
+@import 'NX/view/drilldown/Details';
+@import 'NX/view/drilldown/Drilldown';
+@import 'NX/wizard/Panel';
+
+@import 'NX/coreui/view/capability/CapabilityList';
+@import 'NX/coreui/view/component/ComponentDetails';
+@import 'NX/coreui/view/component/AssetAttributes';
+@import 'NX/coreui/view/logging/LogViewer';
+@import 'NX/coreui/view/search/SearchFeature';
+@import 'NX/coreui/view/support/Metrics';
+
+@import 'NX/proui/view/usertoken/UserTokenDetails';
+

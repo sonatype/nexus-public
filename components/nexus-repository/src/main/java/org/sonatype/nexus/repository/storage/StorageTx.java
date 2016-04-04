@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -244,6 +245,11 @@ public interface StorageTx
   Component createComponent(Bucket bucket, Format format);
 
   /**
+   * Updates an existing bucket.
+   */
+  void saveBucket(Bucket bucket);
+
+  /**
    * Updates an existing component.
    */
   void saveComponent(Component component);
@@ -277,7 +283,7 @@ public interface StorageTx
    * The old blob, if any, will be deleted.
    *
    * @param asset                   the {@link Asset} that should reference newly created blob.
-   * @param blobName                blob name (must not be unique), but it will be used also in content validation.
+   * @param blobName                blob name (may not be unique), but it will be used also in content validation.
    *                                See {@link ContentValidator}.
    * @param streamSupplier          the content being stored as a blob
    * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, will be set
@@ -301,10 +307,32 @@ public interface StorageTx
                     boolean skipContentVerification) throws IOException;
 
   /**
+   * Creates a new Blob by hard linking to {@code sourceFile} and updates the given asset with a reference to it,
+   * hash metadata, size, and content type. The old blob, if any, will be deleted.
+   *
+   * @param asset                   the {@link Asset} that should reference newly created blob.
+   * @param blobName                blob name (may not be unique), but it will be used also in content validation.
+   *                                See {@link ContentValidator}.
+   * @param sourceFile              the source file path of the content being stored as a blob
+   * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, will be set
+   *                                in {@link Asset} attributes.
+   * @param headers                 optional, custom headers for blob, if any.
+   * @param declaredContentType     the declared MIME type of the blob. See {@link ContentValidator}.
+   * @return Attached instance of {@link AssetBlob} of the newly created blob. As side effect, passed in {@link Asset}
+   * is modified too, but is unsaved. Caller must ensure {@link #saveAsset(Asset)} is invoked before this TX ends.
+   */
+  AssetBlob setBlob(Asset asset,
+                    String blobName,
+                    Path sourceFile,
+                    Iterable<HashAlgorithm> hashAlgorithms,
+                    @Nullable Map<String, String> headers,
+                    String declaredContentType) throws IOException;
+
+  /**
    * Creates a new Blob and returns its {@link AssetBlob}. Blobs created but not attached in a scope of a TX to any
    * asset are considered as "orphans", and they will be deleted from blob store at the end of a TX.
    *
-   * @param blobName                blob name (must not be unique), but it will be used also in content validation. See
+   * @param blobName                blob name (may not be unique), but it will be used also in content validation. See
    *                                {@link ContentValidator}.
    * @param streamSupplier          the content to be streamed into blob store.
    * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, returned in
@@ -326,6 +354,28 @@ public interface StorageTx
                        @Nullable Map<String, String> headers,
                        @Nullable String declaredContentType,
                        boolean skipContentVerification) throws IOException;
+
+  /**
+   * Creates a new Blob by hard linking to {@code sourceFile} and returns its {@link AssetBlob}. Blobs created but not
+   * attached in a scope of a TX to any asset are considered as "orphans", and they will be deleted from blob store at
+   * the end of a TX.
+   *
+   * @param blobName                blob name (may not be unique), but it will be used also in content validation. See
+   *                                {@link ContentValidator}.
+   * @param sourceFile              the source file path of the content to be included in blob store.
+   * @param hashAlgorithms          {@link HashAlgorithm}s to be applied while streaming to blob store, returned in
+   *                                {@link
+   *                                AssetBlob}.
+   * @param headers                 optional, custom headers for blob, if any.
+   * @param declaredContentType     the declared MIME type of the blob. See {@link ContentValidator}.
+   * @return Unattached instance of {@link AssetBlob} that should be attached to some {@link Asset} during this
+   * transaction using {@link #attachBlob(Asset, AssetBlob)} method.
+   */
+  AssetBlob createBlob(String blobName,
+                       Path sourceFile,
+                       Iterable<HashAlgorithm> hashAlgorithms,
+                       @Nullable Map<String, String> headers,
+                       String declaredContentType) throws IOException;
 
   /**
    * Attaches a Blob to asset and updates the given asset with a reference to it, hash metadata, size, and content

@@ -30,6 +30,7 @@
   <modules>
     <module>google-guava-eventbus</module>
     <module>nexus-analytics-api</module>
+    <module>nexus-base</module>
     <module>nexus-blobstore-api</module>
     <module>nexus-blobstore-file</module>
     <module>nexus-bootstrap</module>
@@ -41,6 +42,7 @@
     <module>nexus-cache</module>
     <module>nexus-elasticsearch</module>
     <module>nexus-email</module>
+    <module>nexus-extdirect</module>
     <module>nexus-extender</module>
     <module>nexus-httpclient</module>
     <module>nexus-jmx</module>
@@ -55,13 +57,16 @@
     <module>nexus-pax-logging</module>
     <module>nexus-plugin-api</module>
     <module>nexus-quartz</module>
+    <module>nexus-rapture</module>
     <module>nexus-repository</module>
     <module>nexus-rest</module>
     <module>nexus-rest-client</module>
     <module>nexus-rest-jackson2</module>
+    <module>nexus-script</module>
     <module>nexus-security</module>
     <module>nexus-selector</module>
     <module>nexus-servlet</module>
+    <module>nexus-siesta</module>
     <module>nexus-ssl</module>
     <module>nexus-supportzip-api</module>
     <module>nexus-test-common</module>

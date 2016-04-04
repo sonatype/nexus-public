@@ -87,6 +87,13 @@ public abstract class ApplicationVersionSupport
   }
 
   @Override
+  public String getBrandedEditionAndVersion() {
+    String edition = getEdition();
+    String version = getVersion();
+    return ("OSS".equals(edition) ? edition + " " : "") + version;
+  }
+
+  @Override
   public String getBuildRevision() {
     return property(BUILD_REVISION);
   }

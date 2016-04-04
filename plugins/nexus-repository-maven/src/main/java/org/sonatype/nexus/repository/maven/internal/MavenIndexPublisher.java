@@ -209,7 +209,7 @@ public final class MavenIndexPublisher
    */
   public static void publishHostedIndex(final Repository repository) throws IOException {
     checkNotNull(repository);
-    transactional().call(
+    transactional().throwing(IOException.class).call(
         () -> {
           final StorageTx tx = UnitOfWork.currentTx();
           try (Maven2WritableResourceHandler resourceHandler = new Maven2WritableResourceHandler(repository)) {

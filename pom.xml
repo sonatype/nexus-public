@@ -119,6 +119,8 @@
 
     <!-- including installers in the process significantly increases time required for staging -->
     <staging.progressTimeout>60</staging.progressTimeout>
+
+    <it.includes>**/*IT.*</it.includes>
   </properties>
 
   <modules>
@@ -147,6 +149,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-analytics-api</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-base</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
@@ -219,6 +227,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-email</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-extdirect</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
@@ -304,6 +318,19 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-rapture</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-rapture</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+        <classifier>sources</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
@@ -328,6 +355,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-script</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
@@ -341,6 +374,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-servlet</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-siesta</artifactId>
         <version>3.0.0-SNAPSHOT</version>
       </dependency>
 
@@ -414,7 +453,7 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
-        <artifactId>nexus-base-edition</artifactId>
+        <artifactId>nexus-base-feature</artifactId>
         <version>3.0.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
@@ -503,7 +542,8 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-            <forkMode>once</forkMode>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
             <argLine>
               -Xmx300m
               -XX:+HeapDumpOnOutOfMemoryError
@@ -523,7 +563,8 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
           <configuration>
-            <forkMode>always</forkMode>
+            <forkCount>1</forkCount>
+            <reuseForks>false</reuseForks>
             <argLine>
               -Xmx300m
               -XX:+HeapDumpOnOutOfMemoryError
@@ -533,6 +574,9 @@
               <exclude>**/Abstract*</exclude>
               <exclude>**/*$*</exclude>
             </excludes>
+            <includes>
+              <include>${it.includes}</include>
+            </includes>
           </configuration>
         </plugin>
 
@@ -650,6 +694,7 @@
               <id>bcprov-jdk15on</id>
               <id>bcpkix-jdk15on</id>
               <id>bcpg-jdk15on</id>
+              <id>directjngine</id>
               <!--
               Need special wrapping/fragments
               -->
@@ -658,6 +703,15 @@
               <id>paranamer</id>
               <id>httpcore</id>
               <id>httpclient</id>
+              <id>jaxb-core</id>
+              <id>jaxb-impl</id>
+              <id>resteasy-jaxrs</id>
+              <id>resteasy-atom-provider</id>
+              <id>resteasy-jackson2-provider</id>
+              <id>resteasy-jaxb-provider</id>
+              <id>resteasy-multipart-provider</id>
+              <id>resteasy-validator-provider-11</id>
+              <id>resteasy-client</id>
             </excludedArtifactIds>
           </configuration>
         </plugin>
@@ -755,7 +809,7 @@
               Exclude top-level helper scripts.
               -->
               <exclude>*.sh</exclude>
-              <exclude>*.bat</exclude>
+              <exclude>*.cmd</exclude>
 
               <!--
               Exclude maven-wrapper configuration.
@@ -780,18 +834,18 @@
               <exclude>**/src/test/it-resources/**</exclude>
 
               <!--
-              Exclude third-party resources.
+              Exclude rapture configuration, generated and thirdparty resources.
               -->
-              <exclude>**/nexus-rapture-baseapp/src/main/resources/**</exclude>
-              <exclude>**/nexus-rapture-baseapp/src/main/baseapp/**</exclude>
-              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/Ext/ux/**</exclude>
-              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/Ext/patch/**</exclude>
-              <exclude>**/nexus-rapture-plugin/src/main/resources/static/rapture/resources/fonts/**</exclude>
+              <exclude>**/nexus-rapture/src/main/baseapp/**</exclude>
+              <exclude>**/nexus-rapture/src/main/resources/static/rapture/baseapp-*.js</exclude>
+              <exclude>**/nexus-rapture/src/main/resources/static/rapture/resources/baseapp-*.css</exclude>
+              <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/ux/**</exclude>
+              <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/patch/**</exclude>
 
               <!--
               Excludes for specific classes which have compatible, yet different licences.
               -->
-              <exclude>**/nexus-extdirect-plugin/**/com/softwarementors/**</exclude>
+              <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
             </excludes>
           </configuration>
@@ -1204,6 +1258,13 @@
       <build>
         <pluginManagement>
           <plugins>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>yuicompressor-maven-plugin</artifactId>
+              <configuration>
+                <required>false</required>
+              </configuration>
+            </plugin>
             <plugin>
               <groupId>org.eclipse.m2e</groupId>
               <artifactId>lifecycle-mapping</artifactId>

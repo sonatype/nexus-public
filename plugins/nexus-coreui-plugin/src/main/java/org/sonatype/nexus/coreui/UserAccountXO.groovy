@@ -34,4 +34,6 @@ class UserAccountXO
 
   @NotEmpty
   String email
+
+  Boolean external
 }

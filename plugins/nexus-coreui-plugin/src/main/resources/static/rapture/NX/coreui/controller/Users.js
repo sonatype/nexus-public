@@ -407,7 +407,7 @@ Ext.define('NX.coreui.controller.Users', {
    * @private
    */
   onSettingsSubmitted: function(form, action) {
-    this.getStore('User').load();
+    this.loadStore();
   },
 
   /**

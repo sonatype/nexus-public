@@ -59,6 +59,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
@@ -99,6 +100,56 @@ public class MetadataRebuilder
     }
     finally {
       UnitOfWork.end();
+    }
+  }
+
+  /**
+   * Delete metadata for the given GAbV and rebuild metadata for the GA. If Group level metadata is present, rebuild
+   * at that level to account for plugin deletion.
+   * 
+   * @param repository  The repository whose metadata needs rebuild (Maven2 format, Hosted type only).
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
+   */
+  public void deleteAndRebuild(final Repository repository, final String groupId, final String artifactId,
+                               final String baseVersion)
+  {
+    checkNotNull(repository);
+    checkNotNull(groupId);
+    checkNotNull(artifactId);
+    checkNotNull(baseVersion);
+
+    final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    UnitOfWork.beginBatch(tx);
+    boolean groupChange = false;
+    try {
+      // Delete the specific GAV
+      MetadataUtils.delete(repository, metadataPath(groupId, artifactId, baseVersion));
+      // Delete the GA; will be rebuilt as necessary but may hold the last GAV in which case rebuild would ignore it
+      MetadataUtils.delete(repository, metadataPath(groupId, artifactId, null));
+
+      // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
+      // is potentially the most expensive possible path to take.
+      MavenPath groupPath = metadataPath(groupId, null, null);
+      if (MetadataUtils.read(repository, groupPath) != null) {
+        MetadataUtils.delete(repository, groupPath);
+        // we have metadata for plugins at the Group level so we should build that as well
+        groupChange = true;
+      }
+    }
+    catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    finally {
+      UnitOfWork.end();
+    }
+
+    if (groupChange) {
+      rebuild(repository, true, groupId, null, null);
+    }
+    else {
+      rebuild(repository, true, groupId, artifactId, null);
     }
   }
 

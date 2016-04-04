@@ -19,7 +19,9 @@ import javax.inject.Singleton
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.supportzip.FileContentSourceSupport
+import org.sonatype.nexus.supportzip.SanitizedXmlSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
+import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 
 import static com.google.common.base.Preconditions.checkNotNull
@@ -52,7 +54,12 @@ class InstallConfigurationCustomizer
     def maybeIncludeFile = { File file, String prefix, Priority priority = DEFAULT ->
       if (file.isFile()) {
         log.debug 'Including file: {}', file
-        supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
+        if (file.name == 'jetty-https.xml') {
+          supportBundle << new SanitizedJettyFileSource(CONFIG, "$prefix/${file.name}", file, priority)
+        }
+        else {
+          supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
+        }
       }
       else {
         log.warn 'Skipping: {}', file
@@ -64,6 +71,45 @@ class InstallConfigurationCustomizer
       new File(installDir, 'etc').eachFile {
         maybeIncludeFile it, 'install/etc', HIGH
       }
+    }
+  }
+
+  /**
+   * Ad-hoc subclass that encapsulates the XSLT transformation of a Jetty configuration file, removing passwords.
+   */
+  static class SanitizedJettyFileSource
+      extends SanitizedXmlSourceSupport
+  {
+    static final STYLESHEET = '''
+      <xsl:stylesheet version="1.0"
+       xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+       <xsl:output omit-xml-declaration="no"
+                   indent="yes"
+                   doctype-public="-//Jetty//Configure//EN"
+                   doctype-system="http://www.eclipse.org/jetty/configure_9_0.dtd"/>
+
+       <xsl:template match="node()|@*">
+        <xsl:copy>
+         <xsl:apply-templates select="node()|@*"/>
+        </xsl:copy>
+       </xsl:template>
+
+       <xsl:template match="Set[@name='KeyStorePassword']/text()">
+        <xsl:text></xsl:text>
+       </xsl:template>
+       <xsl:template match="Set[@name='KeyManagerPassword']/text()">
+        <xsl:text></xsl:text>
+       </xsl:template>
+       <xsl:template match="Set[@name='TrustStorePassword']/text()">
+        <xsl:text></xsl:text>
+       </xsl:template>
+      </xsl:stylesheet>'''.stripMargin()
+
+    /**
+     * Constructor.
+     */
+    SanitizedJettyFileSource(final Type type, final String path, final File file, final Priority priority) {
+      super(type, path, file, priority, STYLESHEET)
     }
   }
 }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -31,17 +31,15 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Maps;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
 /**
- * Default {@link SearchFacet} implementation. It depends on presence of a {@link StorageFacet} attached to {@link
- * Repository}.
+ * Default {@link SearchFacet} implementation.
+ *
+ * Depends on presence of a {@link StorageFacet} attached to {@link Repository}.
  *
  * @since 3.0
  */
@@ -118,17 +116,11 @@ public class SearchFacetImpl
     searchService.deleteIndex(getRepository());
   }
 
-  Supplier<StorageTx> txSupplier() {
-    return getRepository().facet(StorageFacet.class).txSupplier();
-  }
-
   /**
    * Extracts metadata from passed in {@link Component} and {@link Asset}s, and PUTs it into the repository's index.
-   *
-   * @throws IOException if some problem happens during metadata production.
    */
   private void put(final Component component, final Iterable<Asset> assets) {
-    Map<String, Object> additional = Maps.newHashMap();
+    Map<String, Object> additional = new HashMap<>();
     additional.put(REPOSITORY_NAME, getRepository().getName());
     String json = producer(component).getMetadata(component, assets, additional);
     searchService.put(getRepository(), EntityHelper.id(component).getValue(), json);
@@ -145,7 +137,7 @@ public class SearchFacetImpl
     if (producer == null) {
       producer = componentMetadataProducers.get("default");
     }
-    checkState(producer != null, "Could not find a component metadata producer for format: {}", format);
+    checkState(producer != null, "Could not find a component metadata producer for format: %s", format);
     return producer;
   }
 }

@@ -77,9 +77,7 @@ Ext.define('NX.coreui.view.repository.RepositoryList', {
 
       dockedItems: [
         {
-          xtype: 'toolbar',
-          dock: 'top',
-          cls: 'nx-actions nx-borderless',
+          xtype: 'nx-actions',
           items: [
             {
               xtype: 'button',

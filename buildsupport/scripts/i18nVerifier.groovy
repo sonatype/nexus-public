@@ -186,7 +186,7 @@ class LabelHelpVisitor
 def targetFolders = args ?: [
     'plugins/nexus-coreui-plugin/src/main/resources/static/rapture/NX/coreui',
     'private/plugins/nexus-proui-plugin/src/main/resources/static/rapture/NX/proui',
-    'plugins/nexus-rapture-plugin/src/main/resources/static/rapture/NX'
+    'components/nexus-rapture/src/main/resources/static/rapture/NX'
 ]
 println JsonOutput.
     prettyPrint(JsonOutput.

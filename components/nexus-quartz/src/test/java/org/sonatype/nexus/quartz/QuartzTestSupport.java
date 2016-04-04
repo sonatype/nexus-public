@@ -33,7 +33,7 @@ public abstract class QuartzTestSupport
     extends TestSupport
 {
   //max time to wait for task completion
-  public static final int RUN_TIMEOUT = 500;
+  public static final int RUN_TIMEOUT = 1000;
   
   public static final String RESULT = "This is the expected result";
 

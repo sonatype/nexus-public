@@ -60,7 +60,7 @@ Ext.define('NX.coreui.view.repository.facet.NegativeCacheFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

@@ -1,0 +1,38 @@
+/**
+ * @class NX.view.feature.Group
+ */
+
+.nx-feature-group {
+  margin-top: 16px;
+  margin-left: 16px;
+
+  .item-wrap {
+    border: 1px solid $color-none;
+    float: left;
+    width: 200px;
+    height: 42px;
+    margin: 5px;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  .x-item-over {
+    border: 1px solid $color-light-gray;
+    background: $color-smoke;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+  }
+
+  .x-item-selected {
+    border: 1px solid $color-gray;
+    background: $color-light-gray;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+  }
+
+  img {
+    height: 32px;
+    width: 32px;
+    margin-right: 5px;
+  }
+}

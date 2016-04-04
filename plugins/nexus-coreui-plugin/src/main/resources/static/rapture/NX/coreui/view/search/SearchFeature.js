@@ -21,10 +21,12 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
   extend: 'NX.view.drilldown.Drilldown',
   alias: 'widget.nx-coreui-searchfeature',
 
+  cls: 'nx-coreui-searchfeature',
   iconName: 'search-default',
 
   masters: [
     {
+      // FIXME: change to container
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -33,23 +35,13 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
       },
       items: [
         {
+          // FIXME: change to container
           xtype: 'panel',
+          cls: 'criteria',
           itemId: 'criteria',
 
           header: false,
-
-          style: {
-            'border-bottom': '1px solid #DDDDDD',
-            'background-color': '#FFFFFF'
-          },
-
-          layout: 'column',
-          defaults: {
-            style: {
-              margin: '10px 0 0 0'
-            }
-          },
-          bodyPadding: '0 10px 10px 10px'
+          layout: 'column'
 
           // disable saving for now
           //tbar: [
@@ -64,6 +56,7 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
       ]
     },
     {
+      // FIXME: change to container?
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -75,9 +68,6 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
           xtype: 'nx-coreui-component-details'
         },
         {
-          xtype: 'nx-actions'
-        },
-        {
           xtype: 'nx-coreui-component-asset-list',
           flex: 1
         }
@@ -86,21 +76,9 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
   ],
 
   detail: {
-    xtype: 'panel',
-
-    layout: {
-      type: 'vbox',
-      align: 'stretch',
-      pack: 'start'
-    },
-
-    items: [
-      {
-        xtype: 'nx-coreui-component-assetcontainer',
-        header: false,
-        flex: 1
-      }
-    ]
+    xtype: 'nx-coreui-component-assetcontainer',
+    header: false,
+    flex: 1
   }
 
 });

@@ -133,7 +133,10 @@ public class OperationsTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
-    Operations.transactional().retryOn(IOException.class).call(() -> methods.retryOnCheckedException());
+    Operations.transactional()
+        .retryOn(IOException.class)
+        .throwing(IOException.class)
+        .call(() -> methods.retryOnCheckedException());
 
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
@@ -149,6 +152,30 @@ public class OperationsTest
     order.verify(tx).commit();
     order.verify(tx).close();
     verifyNoMoreInteractions(tx);
+  }
+
+  @Test(expected = IOException.class)
+  public void testLambdaRetryFailure() throws Exception {
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
+
+    methods.setCountdownToSuccess(100);
+    try {
+      Operations.transactional()
+          .retryOn(IOException.class)
+          .throwing(IOException.class)
+          .call(() -> methods.retryOnCheckedException());
+    }
+    finally {
+      InOrder order = inOrder(tx);
+      order.verify(tx).begin();
+      order.verify(tx).rollback();
+      order.verify(tx).allowRetry(any(IOException.class));
+      order.verify(tx).begin();
+      order.verify(tx).rollback();
+      order.verify(tx).allowRetry(any(IOException.class));
+      order.verify(tx).close();
+      verifyNoMoreInteractions(tx);
+    }
   }
 
   @Test

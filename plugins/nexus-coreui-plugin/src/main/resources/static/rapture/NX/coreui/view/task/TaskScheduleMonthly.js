@@ -91,7 +91,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleMonthly', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

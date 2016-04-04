@@ -251,6 +251,13 @@ public abstract class CapabilitySupport<ConfigT>
     return templateHelper.render(url, params);
   }
 
+  /**
+   * @since 3.0
+   */
+  protected String render(final String template, final Map<String,Object> params) {
+    return render(template, new TemplateParameters(params));
+  }
+
   protected String render(final String template) {
     return render(template, new TemplateParameters());
   }

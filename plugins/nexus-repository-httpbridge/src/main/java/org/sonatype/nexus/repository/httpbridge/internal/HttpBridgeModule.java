@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
@@ -34,6 +35,9 @@ public class HttpBridgeModule
 {
   public static final String MOUNT_POINT = "/repository";
 
+  static final boolean SUPPORT_LEGACY_CONTENT = SystemPropertiesHelper
+      .getBoolean(HttpBridgeModule.class.getName() + ".legacy", false);
+
   @Override
   protected void configure() {
     install(new ServletModule()
@@ -43,6 +47,13 @@ public class HttpBridgeModule
         bind(ViewServlet.class);
         serve(MOUNT_POINT + "/*").with(ViewServlet.class);
         filter(MOUNT_POINT + "/*").through(SecurityFilter.class);
+
+        if (SUPPORT_LEGACY_CONTENT) {
+          // this technically makes non-group repositories visible under /content/groups,
+          // but this is acceptable since their IDs are unique and it keeps things simple
+          serve("/content/groups/*", "/content/repositories/*").with(ViewServlet.class);
+          filter("/content/groups/*", "/content/repositories/*").through(SecurityFilter.class);
+        }
       }
     });
 
@@ -54,6 +65,13 @@ public class HttpBridgeModule
             NexusBasicHttpAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME);
+
+        if (SUPPORT_LEGACY_CONTENT) {
+          addFilterChain("/content/**",
+              NexusBasicHttpAuthenticationFilter.NAME,
+              ApiKeyAuthenticationFilter.NAME,
+              AnonymousFilter.NAME);
+        }
       }
     });
   }

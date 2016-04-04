@@ -181,6 +181,18 @@ public abstract class NexusPaxExamSupport
   // -------------------------------------------------------------------------
 
   /**
+   * @return Timeout to apply when waiting for Nexus to start
+   */
+  public static int examTimeout() {
+    try {
+      return Integer.parseInt(System.getProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY));
+    }
+    catch (final Exception e) {
+      return NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
+    }
+  }
+
+  /**
    * Periodically polls function until it returns {@code true} or 30 seconds have elapsed.
    *
    * @throws InterruptedException if the thread is interrupted or the timeout exceeded
@@ -316,7 +328,7 @@ public abstract class NexusPaxExamSupport
 
         vmOptions("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
 
-        systemTimeout(getExamTimeout()),
+        systemTimeout(examTimeout()),
 
         propagateSystemProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY),
 
@@ -479,17 +491,5 @@ public abstract class NexusPaxExamSupport
     }
 
     return result;
-  }
-
-  /**
-   * @return Timeout to apply when waiting for Nexus to start
-   */
-  private static int getExamTimeout() {
-    try {
-      return Integer.parseInt(System.getProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY));
-    }
-    catch (final Exception e) {
-      return NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
-    }
   }
 }

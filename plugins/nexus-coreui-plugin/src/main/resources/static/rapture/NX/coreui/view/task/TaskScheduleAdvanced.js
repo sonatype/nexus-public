@@ -39,7 +39,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleAdvanced', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

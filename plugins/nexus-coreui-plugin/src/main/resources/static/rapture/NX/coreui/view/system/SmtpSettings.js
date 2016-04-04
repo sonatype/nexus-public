@@ -127,7 +127,7 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
 
     me.down('nx-settingsform').getDockedItems('toolbar[dock="bottom"]')[0].add({
       xtype: 'button',

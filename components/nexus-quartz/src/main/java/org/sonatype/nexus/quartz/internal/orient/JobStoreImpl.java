@@ -170,16 +170,10 @@ public class JobStoreImpl
   private <T> T execute(final Operation<T> operation) throws JobPersistenceException {
     try {
       synchronized (monitor) {
-        return transactional(txSupplier(databaseInstance.get())).retryOn(ONeedRetryException.class).call(
-            // no lambda here, as we need to explicitly state exception we throw, otherwise Tx will propagate/wrap it
-            new org.sonatype.nexus.transaction.Operation<T, JobPersistenceException>()
-            {
-              @Override
-              public T call() throws JobPersistenceException {
-                return operation.execute(currentDb());
-              }
-            }
-        );
+        return transactional(txSupplier(databaseInstance.get()))
+            .retryOn(ONeedRetryException.class)
+            .throwing(JobPersistenceException.class)
+            .call(() -> operation.execute(currentDb()));
       }
     }
     catch (Exception e) {

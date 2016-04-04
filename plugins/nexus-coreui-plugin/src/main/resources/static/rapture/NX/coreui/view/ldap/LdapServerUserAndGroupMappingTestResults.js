@@ -43,7 +43,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
     me.constrain = true;
     me.buttonAlign = 'left';
     me.buttons = [
-      { text: NX.I18n.get('Close_Button'), handler: function () {
+      { text: NX.I18n.get('Button_Close'), handler: function () {
         this.up('window').close();
       }}
     ];
@@ -65,7 +65,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
     me.width = NX.view.ModalDialog.LARGE_MODAL;
     me.maxHeight = me.height = Ext.getBody().getViewSize().height - 100;
 
-    me.callParent(arguments);
+    me.callParent();
     me.center();
   }
 

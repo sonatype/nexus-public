@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @SuppressWarnings("rawtypes")
-public final class TransactionalBuilder
+public final class TransactionalBuilder<E extends Exception>
 {
   private static final Class[] NOTHING = {};
 
@@ -42,6 +42,8 @@ public final class TransactionalBuilder
 
   private Class[] swallow = NOTHING;
 
+  private Class<E> throwing;
+
   TransactionalBuilder(@Nullable final Supplier<? extends Transaction> db) {
     this.db = db;
   }
@@ -50,7 +52,7 @@ public final class TransactionalBuilder
    * @see Transactional#commitOn()
    */
   @SafeVarargs
-  public final TransactionalBuilder commitOn(Class<? extends Exception>... exceptionTypes) {
+  public final TransactionalBuilder<E> commitOn(Class<? extends Exception>... exceptionTypes) {
     commitOn = deepCheckNotNull(exceptionTypes).clone();
     return this;
   }
@@ -59,7 +61,7 @@ public final class TransactionalBuilder
    * @see Transactional#retryOn()
    */
   @SafeVarargs
-  public final TransactionalBuilder retryOn(Class<? extends Exception>... exceptionTypes) {
+  public final TransactionalBuilder<E> retryOn(Class<? extends Exception>... exceptionTypes) {
     retryOn = deepCheckNotNull(exceptionTypes).clone();
     return this;
   }
@@ -68,16 +70,22 @@ public final class TransactionalBuilder
    * @see Transactional#swallow()
    */
   @SafeVarargs
-  public final TransactionalBuilder swallow(Class<? extends Exception>... exceptionTypes) {
+  public final TransactionalBuilder<E> swallow(Class<? extends Exception>... exceptionTypes) {
     swallow = deepCheckNotNull(exceptionTypes).clone();
     return this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public final <X extends Exception> TransactionalBuilder<X> throwing(Class<X> exceptionType) {
+    throwing = (Class<E>) checkNotNull(exceptionType);
+    return (TransactionalBuilder<X>) this;
   }
 
   /**
    * Calls the given operation in the context of the current {@link Transactional} settings.
    */
-  public <T, E extends Exception> T call(final Operation<T, E> operation) throws E {
-    return Operations.transactional(operation, build(), db);
+  public <T> T call(final Operation<T, E> operation) throws E {
+    return Operations.transactional(operation, build(), db, throwing);
   }
 
   /**

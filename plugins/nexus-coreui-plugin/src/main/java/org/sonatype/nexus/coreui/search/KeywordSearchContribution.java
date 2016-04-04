@@ -32,7 +32,7 @@ public class KeywordSearchContribution
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      query.must(QueryBuilders.queryString(value));
+      query.must(QueryBuilders.queryStringQuery(value));
     }
   }
 

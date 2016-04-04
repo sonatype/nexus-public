@@ -18,12 +18,11 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.component.ComponentDetails', {
+  // FIXME: change to container
   extend: 'Ext.panel.Panel',
   alias: 'widget.nx-coreui-component-details',
-  requires: [
-    'NX.Icons'
-  ],
-  ui: 'nx-inset',
+
+  cls: 'nx-coreui-component-details',
 
   /**
    * Currently shown component model.
@@ -35,30 +34,40 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
     align: 'stretch'
   },
 
-  style: {
-    'background-color': '#FFFFFF'
-  },
-
   /**
    * @override
    */
   initComponent: function() {
-    var me = this;
+    Ext.apply(this, {
+      dockedItems: {
+        xtype: 'nx-actions',
+        dock: 'bottom',
+        items: [
+          {
+            xtype: 'button',
+            text: NX.I18n.get('ComponentDetails_Delete_Button'),
+            glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+            action: 'deleteComponent',
+            disabled: true
+          }
+        ]
+      },
 
-    me.items = [
-      {xtype: 'nx-info', itemId: 'repositoryInfo'},
-      {xtype: 'nx-info', itemId: 'componentInfo'},
-      {xtype: 'nx-info', itemId: 'extraInfo'}
-    ];
+      items: [
+        {xtype: 'nx-info', itemId: 'repositoryInfo'},
+        {xtype: 'nx-info', itemId: 'componentInfo'},
+        {xtype: 'nx-info', itemId: 'extraInfo'}
+      ]
+    });
 
-    me.callParent();
+    this.callParent();
   },
 
   /**
-   * @public
-   *
    * Sets component.
-   * @param {NX.coreui.model.Component} componentModel component
+   *
+   * @public
+   * @param {NX.coreui.model.Component} componentModel
    */
   setComponentModel: function(componentModel) {
     var me = this;
@@ -66,5 +75,4 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
     me.componentModel = componentModel;
     me.fireEvent('updated', me, me.componentModel);
   }
-
 });

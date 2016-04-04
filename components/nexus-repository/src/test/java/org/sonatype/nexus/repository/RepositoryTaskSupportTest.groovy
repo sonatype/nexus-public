@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository
 
+import org.sonatype.goodies.common.MultipleFailures
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.throwables.MultipleFailures.MultipleFailuresException
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.scheduling.TaskConfiguration
 
@@ -188,7 +188,7 @@ class RepositoryTaskSupportTest
     task.install(repositoryManager)
     task.configure(configuration)
 
-    thrown.expect(MultipleFailuresException)
+    thrown.expect(MultipleFailures.MultipleFailuresException)
     task.execute()
     assert [testRepository1, testRepository2] == actualRepositories
   }

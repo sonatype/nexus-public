@@ -139,7 +139,7 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

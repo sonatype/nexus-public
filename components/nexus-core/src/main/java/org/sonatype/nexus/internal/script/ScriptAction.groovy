@@ -14,10 +14,7 @@ package org.sonatype.nexus.internal.script
 
 import javax.inject.Inject
 import javax.inject.Named
-import javax.script.Bindings
 import javax.script.ScriptContext
-import javax.script.ScriptEngine
-import javax.script.SimpleScriptContext
 
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.commands.SessionAware
@@ -97,32 +94,29 @@ class ScriptAction
       source = expression
     }
     // should never happen due to assert above
-    checkState(source != null, 'No source available')      
-
-    // resolve engine for language
-    if (language == null) {
-      language = ScriptEngineManagerProvider.DEFAULT_LANGUAGE
-    }
-    ScriptEngine engine = scripts.engineForLanguage(language)
-
+    checkState(source != null, 'No source available')
+    
+    language = language ?: ScriptEngineManagerProvider.DEFAULT_LANGUAGE
+    
     // construct new context for execution
-    ScriptContext context = new SimpleScriptContext()
-    context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE)
+    ScriptContext context = scripts.createContext(language)
 
     // adapt to session streams
     context.reader = session.keyboard.newReader()
     context.writer = context.errorWriter = session.console.newWriter()
 
     // customize scope for execution
-    Bindings scope = context.getBindings(ScriptContext.ENGINE_SCOPE)
-    scripts.applyDefaultBindings(scope)
-    scope.put('log', LoggerFactory.getLogger(ScriptAction.class))
-    scope.put('session', session)
-    scope.put('args', args)
+    scripts.customizeBindings(context, 
+        [
+            log: LoggerFactory.getLogger(ScriptAction),
+            session: session,
+            args: args
+        ]
+    )
 
     // execution script
     log.debug "Evaluating script: $source"
-    def result = engine.eval(source, context)
+    def result = scripts.eval(language, source, context)
     log.debug "Result: $result"
 
     return result

@@ -65,6 +65,6 @@ Ext.define('NX.coreui.view.security.AnonymousSettings', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 });

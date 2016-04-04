@@ -61,7 +61,7 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
       }
     ];
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

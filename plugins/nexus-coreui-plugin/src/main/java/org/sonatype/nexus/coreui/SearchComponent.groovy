@@ -19,7 +19,6 @@ import javax.inject.Singleton
 import javax.validation.ValidationException
 
 import org.sonatype.nexus.coreui.search.SearchContribution
-import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
@@ -29,10 +28,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.index.query.BoolFilterBuilder
 import org.elasticsearch.index.query.BoolQueryBuilder
-import org.elasticsearch.index.query.FilterBuilders
-import org.elasticsearch.index.query.FilteredQueryBuilder
 import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.SortOrder
@@ -124,26 +120,18 @@ class SearchComponent
    * @param parameters store parameters
    */
   private QueryBuilder buildQuery(final StoreLoadParameters parameters) {
-    BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
-    BoolFilterBuilder filterBuilder = FilterBuilders.boolFilter()
+    BoolQueryBuilder query = QueryBuilders.boolQuery()
     parameters.filters?.each { filter ->
       SearchContribution contribution = searchContributions[filter.property]
       if (!contribution) {
         contribution = searchContributions['default']
       }
-      contribution.contribute(queryBuilder, filter.property, filter.value)
-      contribution.contribute(filterBuilder, filter.property, filter.value)
+      contribution.contribute(query, filter.property, filter.value)
     }
-
-    if (!queryBuilder.hasClauses() && !filterBuilder.hasClauses()) {
-      return null
+    if (!query.hasClauses()) {
+      return null;
     }
-    FilteredQueryBuilder query = QueryBuilders.filteredQuery(
-        queryBuilder.hasClauses() ? queryBuilder : null,
-        filterBuilder.hasClauses() ? filterBuilder : null
-    )
     log.debug('Query: {}', query)
-
     return query
   }
 

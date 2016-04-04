@@ -1,0 +1,37 @@
+/**
+ * @class NX.view.info.Entry
+ */
+
+.nx-info {
+  table {
+    border-spacing: 5px;
+  }
+}
+
+// FIXME: refine scss syntax
+
+.nx-info {
+  overflow: auto;
+}
+
+.nx-info-entry td {
+  padding-bottom: 4px;
+  vertical-align: top;
+}
+
+.nx-info-entry-name {
+  padding-left: 0;
+  padding-right: 6px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.nx-info-entry-value {
+  padding-left: 0;
+  padding-right: 25px;
+  word-break: break-all;
+}
+
+.nx-info-entry-value pre {
+  margin: 0;
+}

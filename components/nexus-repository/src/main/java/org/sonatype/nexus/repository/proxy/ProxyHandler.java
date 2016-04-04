@@ -49,7 +49,7 @@ public class ProxyHandler
       if (payload != null) {
         return buildPayloadResponse(context, payload);
       }
-      return HttpResponses.notFound();
+      return buildNotFoundResponse(context);
     }
     catch (ProxyServiceException e) {
       return HttpResponses.serviceUnavailable();
@@ -61,6 +61,10 @@ public class ProxyHandler
 
   protected Response buildPayloadResponse(final Context context, final Payload payload) {
     return HttpResponses.ok(payload);
+  }
+  
+  protected Response buildNotFoundResponse(final Context context) {
+    return HttpResponses.notFound();
   }
 
   private ProxyFacet proxyFacet(final Context context) {

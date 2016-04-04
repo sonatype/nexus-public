@@ -1,0 +1,60 @@
+/**
+ * @class NX.view.header.Mode
+ */
+
+.nx-modebutton {
+  padding: 6px 0 0 0;
+  color: $color-white;
+
+  .x-btn-glyph {
+    font-size: 24px;
+  }
+
+  &.x-icon-text-left {
+    .x-btn-inner {
+      line-height: 25px !important;
+      font-size: 15px;
+      padding-left: 36px;
+      padding-right: 10px;
+    }
+
+    .x-btn-glyph {
+      text-align: left;
+      padding-left: 10px;
+    }
+  }
+}
+
+.nx-modebutton + .nx-caret {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.nx-modebutton:hover,
+.nx-modebutton:focus {
+  background-color: $color-gainsboro;
+
+  .x-btn-inner {
+    color: $color-navy-blue;
+  }
+
+  .x-btn-glyph {
+    color: $color-navy-blue;
+  }
+}
+
+.nx-modebutton.x-pressed {
+  background-color: $color-navy-blue;
+
+  .x-btn-inner {
+    color: $color-white;
+  }
+
+  .x-btn-glyph {
+    color: $color-white;
+  }
+}
+
+.nx-modebutton.x-pressed + .nx-caret {
+  border-bottom: 5px solid $color-white;
+}

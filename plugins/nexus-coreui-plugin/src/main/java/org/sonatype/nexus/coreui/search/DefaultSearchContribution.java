@@ -15,8 +15,8 @@ package org.sonatype.nexus.coreui.search;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.elasticsearch.index.query.BoolFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
  * "default" {@link SearchContribution} (adds filter as an ES term filter).
@@ -30,9 +30,9 @@ public class DefaultSearchContribution
 {
 
   @Override
-  public void contribute(final BoolFilterBuilder filter, final String type, final String value) {
+  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      filter.must(FilterBuilders.termFilter(type, value));
+      query.filter(QueryBuilders.termQuery(type, value));
     }
   }
 

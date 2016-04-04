@@ -35,7 +35,7 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
   /**
    * @override
    */
-  initComponent: function (config) {
+  initComponent: function () {
     var me = this;
 
     me.store = 'Capability';
@@ -80,9 +80,7 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
     };
 
     me.dockedItems = [{
-      xtype: 'toolbar',
-      dock: 'top',
-      cls: 'nx-actions nx-borderless',
+      xtype: 'nx-actions',
       items: [
         {
           xtype: 'button',
@@ -107,7 +105,7 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
 
     me.originalColumns = me.columns;
 
-    me.callParent(arguments);
+    me.callParent();
   }
 
 });

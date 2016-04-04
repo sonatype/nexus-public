@@ -107,12 +107,7 @@ public class SharedHttpClientConnectionManager
   // Lifecycle
   //
 
-  // TODO: Maybe better to delegate to use lifecycle framework?
-
-  @Override
-  public Lifecycle getLifecycle() {
-    return this;
-  }
+  // TODO: Maybe better to delegate to use lifecycle framework as LifecycleAware
 
   @Override
   public void start() throws Exception {

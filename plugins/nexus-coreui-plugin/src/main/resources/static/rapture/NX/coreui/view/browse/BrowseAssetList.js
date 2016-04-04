@@ -40,10 +40,6 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
       // Prevent the store from automatically loading
       loadStore: Ext.emptyFn,
 
-      style: {
-        'background-color': '#F4F4F4'
-      },
-
       selModel: {
         pruneRemoved: false
       },
@@ -81,10 +77,8 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
         }
       ],
 
-      dockedItems: [{
-        xtype: 'toolbar',
-        dock: 'top',
-        cls: 'nx-actions nx-borderless',
+      tbar: {
+        xtype: 'nx-actions',
         items: [
           '->',
           {
@@ -94,7 +88,7 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
             width: 200
           }
         ]
-      }],
+      },
 
       plugins: {
         ptype: 'bufferedrenderer',
