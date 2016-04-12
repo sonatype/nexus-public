@@ -12,13 +12,17 @@
  */
 package org.sonatype.nexus.plugins.ruby.proxy;
 
+import java.io.File;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.plugins.ruby.NexusRubygemsFacade;
+import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.LocalStorageException;
+import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
 import org.sonatype.nexus.proxy.item.LinkPersister;
 import org.sonatype.nexus.proxy.item.StorageItem;
@@ -61,10 +65,50 @@ public class RubyFSLocalRepositoryStorage
       RubygemsFile file = fileSystem.file(item.getResourceStoreRequest());
 
       if (file.type() != FileType.NOT_FOUND) {
-          item.getResourceStoreRequest().setRequestPath(file.storagePath());
-          ((AbstractStorageItem) item).setPath(file.storagePath());
+        item.getResourceStoreRequest().setRequestPath(file.storagePath());
+        ((AbstractStorageItem) item).setPath(file.storagePath());
       }
     }
     super.storeItem(repository, item);
+  }
+
+  @Override
+  public AbstractStorageItem retrieveItem(final Repository repository, final ResourceStoreRequest request)
+      throws ItemNotFoundException, LocalStorageException
+  {
+    if (!request.getRequestPath().startsWith("/.nexus")) {
+      RubygemsFile file = fileSystem.file(request);
+
+      if (file.type() == FileType.BUNDLER_API || file.type() == FileType.DEPENDENCY) {
+        request.pushRequestPath(file.storagePath());
+        try {
+          return super.retrieveItem(repository, request);
+        }
+        finally {
+          request.popRequestPath();
+        }
+      }
+    }
+    return super.retrieveItem(repository, request);
+  }
+
+  @Override
+  public boolean containsItem(final Repository repository, final ResourceStoreRequest request)
+      throws LocalStorageException
+  {
+    if (!request.getRequestPath().startsWith("/.nexus")) {
+      RubygemsFile file = fileSystem.file(request);
+
+      if (file.type() == FileType.BUNDLER_API || file.type() == FileType.DEPENDENCY) {
+        request.pushRequestPath(file.storagePath());
+        try {
+          return super.containsItem(repository, request);
+        }
+        finally {
+          request.popRequestPath();
+        }
+      }
+    }
+    return super.containsItem(repository, request);
   }
 }

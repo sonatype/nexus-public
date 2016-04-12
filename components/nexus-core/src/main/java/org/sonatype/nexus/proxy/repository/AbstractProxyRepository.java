@@ -1479,7 +1479,7 @@ public abstract class AbstractProxyRepository
             if (log.isDebugEnabled()) {
               logFailedUrl(remoteUrl, e);
             }
-            // not debug, only print the message
+            // not debug, print root stacktrace
             else {
               Throwable t = ExceptionUtils.getRootCause(e);
 
@@ -1488,10 +1488,11 @@ public abstract class AbstractProxyRepository
               }
 
               log.error(
-                  "Got LocalStorageException in proxy repository {} while caching retrieved artifact \"{}\" got from URL {}, will attempt next mirror",
+                  "Got LocalStorageException in proxy repository {} while caching retrieved artifact \"{}\" got from URL {}, this is {} (re)try",
                   RepositoryStringUtils.getHumanizedNameString(this),
                   request,
                   remoteUrl,
+                  String.valueOf(i + 1),
                   t
               );
             }

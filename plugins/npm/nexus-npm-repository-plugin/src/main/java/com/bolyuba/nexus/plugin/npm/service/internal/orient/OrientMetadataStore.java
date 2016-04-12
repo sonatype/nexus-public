@@ -267,17 +267,25 @@ public class OrientMetadataStore
     checkNotNull(repository);
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     try (ODatabaseDocumentTx db = db()) {
-      db.begin();
-      try {
-        int recordsDeleted = db.command(
-            new OCommandSQL(
-                "delete from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() + "'"
-            )
-        ).execute();
-        return recordsDeleted > 0;
-      }
-      finally {
-        db.commit();
+      int recordsDeleted = 0, totalDeleted = 0;
+      while (true) {
+        db.begin();
+        try {
+          recordsDeleted = db.command(
+              new OCommandSQL(
+                  "delete from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() + "' limit 1000"
+              )
+          ).execute();
+        }
+        finally {
+          db.commit();
+        }
+        if (recordsDeleted > 0) {
+          totalDeleted += recordsDeleted;
+        }
+        else {
+          return totalDeleted > 0;
+        }
       }
     }
   }

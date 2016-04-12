@@ -137,12 +137,12 @@ public class ProxiedBundleIT
     scheduler().run("ExpireCacheTask", null);
     scheduler().waitForAllTasksToStop(); // wait for it
 
-    // expect single GET of expired dependencies list
+    // expect HEAD+GET to re-fetch expired dependencies list
     proxyRecord.clear();
     requestGemDependencies();
     requestGemDependencies();
     requestGemDependencies();
-    assertThat(proxyRecord.getRequests(), hasSize(1));
+    assertThat(proxyRecord.getRequests(), hasSize(2));
   }
 
   private void requestGemDependencies() throws IOException {
