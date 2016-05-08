@@ -33,11 +33,14 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.io.LimitedInputStream;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
+import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
 import org.sonatype.nexus.common.log.LoggerOverrides;
+import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
@@ -70,6 +73,8 @@ public class LogbackLogManager
     extends StateGuardLifecycleSupport
     implements LogManager
 {
+  private final EventBus eventBus;
+
   private final BeanLocator beanLocator;
 
   private final Map<String, LoggerLevel> customizations;
@@ -77,9 +82,11 @@ public class LogbackLogManager
   private final LoggerOverrides overrides;
 
   @Inject
-  public LogbackLogManager(final BeanLocator beanLocator,
+  public LogbackLogManager(final EventBus eventBus,
+                           final BeanLocator beanLocator,
                            final LoggerOverrides overrides)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.beanLocator = checkNotNull(beanLocator);
     this.overrides = checkNotNull(overrides);
     this.customizations = new HashMap<>();
@@ -246,6 +253,8 @@ public class LogbackLogManager
     // re-apply customizations
     applyCustomizations();
 
+    eventBus.post(new LoggersResetEvent());
+
     log.debug("Loggers reset to default levels");
   }
 
@@ -294,6 +303,8 @@ public class LogbackLogManager
     if (calculated != null) {
       setLogbackLoggerLevel(name, LogbackLevels.convert(calculated));
     }
+
+    eventBus.post(new LoggerLevelChangedEvent(name, level));
   }
 
   @Override
@@ -311,6 +322,8 @@ public class LogbackLogManager
     else {
       setLogbackLoggerLevel(name, null);
     }
+
+    eventBus.post(new LoggerLevelChangedEvent(name, null));
   }
 
   @Override

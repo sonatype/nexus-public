@@ -42,7 +42,7 @@ public class Request
 
   private final boolean multipart;
 
-  private final Iterable<Payload> multiPayloads;
+  private final Iterable<PartPayload> multiPayloads;
 
   private Request(final AttributesMap attributes,
                   final Headers headers,
@@ -51,7 +51,7 @@ public class Request
                   final Parameters parameters,
                   @Nullable final Payload payload,
                   final boolean multipart,
-                  @Nullable final Iterable<Payload> multiPayloads)
+                  @Nullable final Iterable<PartPayload> multiPayloads)
   {
     this.attributes = checkNotNull(attributes);
     this.headers = checkNotNull(headers);
@@ -93,7 +93,7 @@ public class Request
   }
 
   @Nullable
-  public Iterable<Payload> getMultiparts() {
+  public Iterable<PartPayload> getMultiparts() {
     return multiPayloads;
   }
 
@@ -131,7 +131,7 @@ public class Request
 
     private boolean multipart;
 
-    private Iterable<Payload> multiparts;
+    private Iterable<PartPayload> multiparts;
 
     public Builder attributes(final AttributesMap attributes) {
       this.attributes = attributes;
@@ -207,7 +207,7 @@ public class Request
       return this;
     }
 
-    public Builder multiparts(final Iterable<Payload> multiparts) {
+    public Builder multiparts(final Iterable<PartPayload> multiparts) {
       this.multiparts = multiparts;
       this.multipart = multiparts != null;
       return this;

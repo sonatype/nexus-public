@@ -41,6 +41,14 @@ public interface FileOperations
     public String getSha1() {
       return sha1;
     }
+
+    @Override
+    public String toString() {
+      return "StreamMetrics{" +
+          "size=" + size +
+          ", sha1='" + sha1 + '\'' +
+          '}';
+    }
   }
 
   /**
@@ -53,8 +61,6 @@ public interface FileOperations
 
   /**
    * Creates a hard link.
-   *
-   * @throws UnsupportedOperationException if a hard link can't be established
    */
   void hardLink(Path source, Path newLink) throws IOException;
 

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -79,8 +80,10 @@ public class EntityHook
   }
 
   public void onOpen(final ODatabaseInternal db) {
-    // ignore operations which have a null user, such as index repair
-    if (db instanceof ODatabaseDocumentTx && db.getUser() != null) {
+    if (db instanceof ODatabaseDocumentTx) {
+      if (OSecurityNull.class.equals(db.getProperty(ODatabase.OPTIONS.SECURITY.toString()))) {
+        return; // ignore maintenance operations which run without security, such as index repair
+      }
       for (final EntityAdapter<?> adapter : adapters) {
         if (adapter.sendEvents() && adapter.isRegistered((ODatabaseDocumentTx) db)) {
           db.registerListener(this);
@@ -130,6 +133,7 @@ public class EntityHook
           final EntityEvent event = newEntityEvent(entry.getKey(), entry.getValue());
           if (event != null) {
             eventBus.post(event);
+            db.activateOnCurrentThread();
             if (event instanceof Batchable) {
               batchedEvents.add(event);
             }
@@ -137,10 +141,10 @@ public class EntityHook
         }
         if (!batchedEvents.isEmpty()) {
           eventBus.post(new EntityBatchEvent(batchedEvents));
+          db.activateOnCurrentThread();
         }
       }
       finally {
-        db.activateOnCurrentThread();
         UnitOfWork.resume(work);
       }
     }

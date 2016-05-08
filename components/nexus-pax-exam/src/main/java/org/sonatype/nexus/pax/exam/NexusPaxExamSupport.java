@@ -207,22 +207,27 @@ public abstract class NexusPaxExamSupport
    * @throws InterruptedException if the thread is interrupted or the timeout exceeded
    */
   public static void waitFor(final Callable<Boolean> function, final long millis) throws InterruptedException {
+    Exception functionEvaluationException = null;
+
     Thread.yield();
     for (int i = 0; i < millis / 100; i++) {
       try {
         if (Boolean.TRUE.equals(function.call())) {
           return; // success
         }
+        // The condition was false, so any preserved exception from earlier calls is now irrelevant
+        functionEvaluationException = null;
         Thread.sleep(100);
       }
       catch (final InterruptedException e) {
         throw e; // cancelled
       }
       catch (final Exception e) {
+        functionEvaluationException = e;
         Thread.sleep(100);
       }
     }
-    throw new InterruptedException();
+    throw (InterruptedException) new InterruptedException().initCause(functionEvaluationException);
   }
 
   /**

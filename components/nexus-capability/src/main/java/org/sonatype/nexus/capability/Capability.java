@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.capability;
 
+import javax.annotation.Nullable;
+
 /**
  * A capability is a stateful representation of configuration and lifecycle exposed for generalized management.
  */
@@ -29,6 +31,7 @@ public interface Capability
    *
    * @return description. Can be null.
    */
+  @Nullable
   String description();
 
   /**
@@ -36,6 +39,7 @@ public interface Capability
    *
    * @return status. Can be null. Can be an html chunk.
    */
+  @Nullable
   String status();
 
   /**
@@ -47,7 +51,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be create
    */
-  void onCreate()  throws Exception;
+  void onCreate() throws Exception;
 
   /**
    * Callback when a capability configuration is loaded from persisted store (configuration file).
@@ -91,8 +95,7 @@ public interface Capability
    *
    * @throws Exception If capability cannot be activated
    */
-  void onActivate()
-      throws Exception;
+  void onActivate() throws Exception;
 
   /**
    * Callback when capability is passivated. Passivation will be triggered before a capability is removed, on
@@ -111,6 +114,7 @@ public interface Capability
    *
    * @return activation condition. If null, it considers that condition is always activatable.
    */
+  @Nullable
   Condition activationCondition();
 
   /**
@@ -124,5 +128,6 @@ public interface Capability
    *
    * @return activation condition. If null, it considers that condition is always valid.
    */
+  @Nullable
   Condition validityCondition();
 }

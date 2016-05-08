@@ -12,13 +12,21 @@
  */
 package org.sonatype.nexus.security.anonymous;
 
+import java.util.Date;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
+import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.security.ClientInfo;
+
+import com.google.common.collect.EvictingQueue;
+import com.google.common.net.HttpHeaders;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
@@ -41,26 +49,47 @@ public class AnonymousFilter
 {
   public static final String NAME = "nx-anonymous";
 
+  private static final int CACHE_SIZE = 100;
+
   private static final String ORIGINAL_SUBJECT = AnonymousFilter.class.getName() + ".originalSubject";
 
   private static final Logger log = LoggerFactory.getLogger(AnonymousFilter.class);
 
   private final Provider<AnonymousManager> anonymousManager;
+  
+  private final EventBus eventBus;
+  
+  // keep a record of the most recent accesses
+  private final EvictingQueue<ClientInfo> cache = EvictingQueue.create(CACHE_SIZE);
 
   @Inject
-  public AnonymousFilter(final Provider<AnonymousManager> anonymousManager) {
+  public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final EventBus eventBus) {
     this.anonymousManager = checkNotNull(anonymousManager);
+    this.eventBus = checkNotNull(eventBus);
   }
 
   @Override
   protected boolean preHandle(final ServletRequest request, final ServletResponse response) throws Exception {
     Subject subject = SecurityUtils.getSubject();
-
-    if (subject.getPrincipal() == null && anonymousManager.get().isEnabled()) {
+    AnonymousManager manager = anonymousManager.get();
+   
+    if (subject.getPrincipal() == null && manager.isEnabled()) {
       request.setAttribute(ORIGINAL_SUBJECT, subject);
-      subject = anonymousManager.get().buildSubject();
+      subject = manager.buildSubject();
       ThreadContext.bind(subject);
       log.trace("Bound anonymous subject: {}", subject);
+      
+      // fire an event if we haven't already seen this ClientInfo since the server started
+      if (request instanceof HttpServletRequest) {
+        String userId = manager.getConfiguration().getUserId();
+        ClientInfo clientInfo = new ClientInfo(userId, request.getRemoteAddr(),
+            ((HttpServletRequest) request).getHeader(HttpHeaders.USER_AGENT));
+        if(!cache.contains(clientInfo)) {
+          log.trace("Tracking new anonymous access from: {}", clientInfo);
+          eventBus.post(new AnonymousAccessEvent(clientInfo, new Date()));
+          cache.add(clientInfo);
+        }
+      }
     }
 
     return true;

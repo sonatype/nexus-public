@@ -22,10 +22,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -64,10 +70,20 @@ public class SanitizedXmlSourceSupport
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       try (OutputStream output = new BufferedOutputStream(stream)) {
+
         StreamSource styleSource = new StreamSource(new StringReader(stylesheet));
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer(styleSource);
-        transformer.transform(new StreamSource(input), new StreamResult(output));
+
+        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+        parserFactory.setNamespaceAware(true);
+
+        SAXParser parser = parserFactory.newSAXParser();
+        XMLReader reader = parser.getXMLReader();
+        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
+        reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+        transformer.transform(new SAXSource(reader, new InputSource(input)), new StreamResult(output));
       }
     }
     content = stream.toByteArray();

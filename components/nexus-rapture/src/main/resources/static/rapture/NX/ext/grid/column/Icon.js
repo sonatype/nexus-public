@@ -22,6 +22,10 @@
 Ext.define('NX.ext.grid.column.Icon', {
   extend: 'Ext.grid.column.Column',
   alias: 'widget.nx-iconcolumn',
+  requires: [
+    'Ext.DomHelper',
+    'NX.Icons'
+  ],
 
   hideable: false,
   sortable: false,

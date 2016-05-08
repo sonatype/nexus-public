@@ -36,6 +36,9 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
       'button[action=abort]': {
         click: me.doAbort
       },
+      'button[action=continue]': {
+        click: me.doContinue
+      },
       'button[action=finish]': {
         click: me.doFinish
       }
@@ -52,6 +55,9 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
         screen = me.getScreenCmp();
 
     if (screen) {
+      screen.down('button[action=continue]').setVisible(true);
+      screen.down('button[action=continue]').disable();
+      screen.down('button[action=finish]').setVisible(false);
       screen.down('button[action=finish]').disable();
       screen.down('button[action=abort]').enable();
     }
@@ -61,9 +67,25 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
   /**
    * @override
    */
+  doInputNeeded: function() {
+    this.getScreenCmp().down('button[action=continue]').enable();
+  },
+
+  /**
+   * @override
+   */
   doComplete: function() {
-    this.getScreenCmp().down('button[action=finish]').enable();
-    this.getScreenCmp().down('button[action=abort]').disable();
+    var screen = this.getScreenCmp(),
+        selectedRepos = this.controller.getContext().get('selected-repositories') || [];
+
+    // if there are no repositories configured for migration, hide the 'Stop Monitoring' button
+    if (!selectedRepos.length) {
+      screen.down('button[action=continue]').setVisible(false);
+      screen.down('button[action=finish]').setVisible(true);
+    }
+
+    screen.down('button[action=finish]').enable();
+    screen.down('button[action=abort]').disable();
   },
 
   /**
@@ -90,6 +112,39 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
             }
           });
         }
+    );
+  },
+
+  /**
+   * @private
+   */
+  doContinue: function() {
+    var me = this;
+
+    NX.Dialogs.askConfirmation(
+      'Stop waiting for changes',
+      'Any future changes to repositories will not be migrated. Proceed?',
+      function () {
+        me.mask('Finalizing changes');
+
+        me.autoRefresh(false);
+        me.getScreenCmp().down('button[action=continue]').disable();
+
+        NX.direct.migration_Assistant.stopWaiting(function (response, event) {
+          me.unmask();
+
+          if (event.status && response.success && response.data) {
+            me.getScreenCmp().down('button[action=continue]').setVisible(false);
+            me.getScreenCmp().down('button[action=finish]').setVisible(true);
+            NX.Messages.success('Changes finalized');
+          }
+          else {
+            me.getScreenCmp().down('button[action=continue]').enable();
+          }
+
+          me.autoRefresh(true);
+        });
+      }
     );
   },
 

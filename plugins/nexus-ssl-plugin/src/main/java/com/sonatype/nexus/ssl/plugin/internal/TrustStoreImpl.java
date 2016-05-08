@@ -32,6 +32,9 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.ssl.CertificateCreatedEvent;
+import org.sonatype.nexus.ssl.CertificateDeletedEvent;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
@@ -55,6 +58,8 @@ public class TrustStoreImpl
 {
   public static final SecureRandom DEFAULT_RANDOM = null;
 
+  private final EventBus eventBus;
+
   private final KeyManager[] keyManagers;
 
   private final TrustManager[] trustManagers;
@@ -64,10 +69,13 @@ public class TrustStoreImpl
   private volatile SSLContext sslcontext;
 
   @Inject
-  public TrustStoreImpl(@Named("ssl") final KeyStoreManager keyStoreManager) throws Exception {
+  public TrustStoreImpl(final EventBus eventBus,
+                        @Named("ssl")final KeyStoreManager keyStoreManager) throws Exception
+  {
+    this.eventBus = checkNotNull(eventBus);
     this.keyStoreManager = checkNotNull(keyStoreManager);
-    keyManagers = getSystemKeyManagers();
-    trustManagers = getTrustManagers(keyStoreManager);
+    this.keyManagers = getSystemKeyManagers();
+    this.trustManagers = getTrustManagers(keyStoreManager);
   }
 
   @Override
@@ -75,6 +83,9 @@ public class TrustStoreImpl
       throws KeystoreException
   {
     keyStoreManager.importTrustCertificate(certificate, alias);
+
+    eventBus.post(new CertificateCreatedEvent(alias, certificate));
+
     return certificate;
   }
 
@@ -84,6 +95,9 @@ public class TrustStoreImpl
   {
     final Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(certificateInPEM);
     keyStoreManager.importTrustCertificate(certificate, alias);
+
+    eventBus.post(new CertificateCreatedEvent(alias, certificate));
+
     return certificate;
   }
 
@@ -99,8 +113,11 @@ public class TrustStoreImpl
 
   @Override
   public void removeTrustCertificate(final String alias) throws KeystoreException {
+    Certificate certificate = getTrustedCertificate(alias);
     keyStoreManager.removeTrustCertificate(alias);
     sslcontext = null;
+
+    eventBus.post(new CertificateDeletedEvent(alias, certificate));
   }
 
   @Override

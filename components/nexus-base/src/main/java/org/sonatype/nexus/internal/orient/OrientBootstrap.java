@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.goodies.lifecycle.Lifecycles;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 
@@ -44,16 +45,20 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 public class OrientBootstrap
     extends LifecycleSupport
 {
+  private final Provider<LocalNodeAccess> localNodeAccess;
+
   private final Provider<DatabaseServer> databaseServer;
 
   private final Provider<DatabaseManager> databaseManager;
 
   @Inject
-  public OrientBootstrap(final Provider<DatabaseServer> databaseServer,
+  public OrientBootstrap(final Provider<LocalNodeAccess> localNodeAccess,
+                         final Provider<DatabaseServer> databaseServer,
                          final Provider<DatabaseManager> databaseManager,
                          final Iterable<OCompression> managedCompressions,
                          final Iterable<OSQLFunctionAbstract> functions)
   {
+    this.localNodeAccess = checkNotNull(localNodeAccess);
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
     registerCompressions(checkNotNull(managedCompressions));
@@ -63,6 +68,7 @@ public class OrientBootstrap
 
   @Override
   protected void doStart() throws Exception {
+    localNodeAccess.get().start();
     databaseServer.get().start();
 
     Lifecycles.start(databaseManager.get());
@@ -73,6 +79,7 @@ public class OrientBootstrap
     Lifecycles.stop(databaseManager.get());
 
     databaseServer.get().stop();
+    localNodeAccess.get().stop();
   }
 
   private void registerCompressions(final Iterable<OCompression> compressions) {

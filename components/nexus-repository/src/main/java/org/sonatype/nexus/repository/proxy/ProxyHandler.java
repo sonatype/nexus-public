@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.proxy;
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -39,9 +40,9 @@ public class ProxyHandler
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
 
-    final String action = context.getRequest().getAction();
-    if (!GET.equals(action) && !HEAD.equals(action)) {
-      return HttpResponses.methodNotAllowed(action, GET, HEAD);
+    final Response response = buildMethodNotAllowedResponse(context);
+    if (response != null) {
+      return response;
     }
 
     try {
@@ -57,6 +58,18 @@ public class ProxyHandler
     catch (IOException e) {
       return HttpResponses.badGateway();
     }
+  }
+
+  /**
+   * Builds a not-allowed response if the specified method is unsupported under the specified context, null otherwise.
+   */
+  @Nullable
+  protected Response buildMethodNotAllowedResponse(final Context context) {
+    final String action = context.getRequest().getAction();
+    if (!GET.equals(action) && !HEAD.equals(action)) {
+      return HttpResponses.methodNotAllowed(action, GET, HEAD);
+    }
+    return null;
   }
 
   protected Response buildPayloadResponse(final Context context, final Payload payload) {

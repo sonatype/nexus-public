@@ -71,7 +71,14 @@ public class SimpleFileOperations
   @Override
   public void hardLink(final Path source, final Path newLink) throws IOException {
     DirectoryHelper.mkdir(newLink.getParent());
-    Files.createLink(newLink, source);
+    try {
+      Files.createLink(newLink, source);
+    }
+    catch (UnsupportedOperationException e) {
+      // In some situations, an unsupported file link actually throws FileSystemException rather than
+      // UnsupportedException, so wrap USEs here to narrow the range of exceptions that need catching.
+      throw new IOException(e);
+    }
     log.debug("Hard link created from {} to {}", newLink, source);
   }
 

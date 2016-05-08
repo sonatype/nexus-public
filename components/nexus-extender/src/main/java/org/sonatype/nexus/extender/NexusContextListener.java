@@ -65,7 +65,6 @@ import static java.util.Collections.singletonMap;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.BOOT;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.EVENTS;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.LOGGING;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -150,7 +149,7 @@ public class NexusContextListener
     try {
       lifecycleManager = injector.getInstance(NexusLifecycleManager.class);
 
-      lifecycleManager.to(EVENTS);
+      lifecycleManager.to(LOGGING);
 
       // assign higher start level to any bundles installed after this point to hold back activation
       bundleContext.addBundleListener((SynchronousBundleListener) (e) -> {

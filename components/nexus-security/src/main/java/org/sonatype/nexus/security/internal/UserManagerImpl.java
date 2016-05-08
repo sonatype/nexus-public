@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
@@ -32,13 +33,18 @@ import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.RoleMappingUserManager;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserCreatedEvent;
+import org.sonatype.nexus.security.user.UserDeletedEvent;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
+import org.sonatype.nexus.security.user.UserUpdatedEvent;
 
 import org.apache.shiro.authc.credential.PasswordService;
 import org.eclipse.sisu.Description;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Default {@link UserManager}.
@@ -50,6 +56,8 @@ public class UserManagerImpl
     extends AbstractUserManager
     implements RoleMappingUserManager
 {
+  private final EventBus eventBus;
+
   private final SecurityConfigurationManager configuration;
 
   private final SecuritySystem securitySystem;
@@ -57,10 +65,12 @@ public class UserManagerImpl
   private final PasswordService passwordService;
 
   @Inject
-  public UserManagerImpl(final SecurityConfigurationManager configuration,
+  public UserManagerImpl(final EventBus eventBus,
+                         final SecurityConfigurationManager configuration,
                          final SecuritySystem securitySystem,
                          final PasswordService passwordService)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.configuration = configuration;
     this.securitySystem = securitySystem;
     this.passwordService = passwordService;
@@ -170,6 +180,8 @@ public class UserManagerImpl
 
     configuration.createUser(secUser, getRoleIdsFromUser(user));
 
+    eventBus.post(new UserCreatedEvent(user));
+
     // TODO: i am starting to feel we shouldn't return a user.
     return user;
   }
@@ -179,6 +191,9 @@ public class UserManagerImpl
     final CUser secUser = configuration.readUser(userId);
     secUser.setPassword(hashPassword(newPassword));
     configuration.updateUser(secUser);
+
+    User user = getUser(userId);
+    eventBus.post(new UserUpdatedEvent(user));
   }
 
   @Override
@@ -189,12 +204,18 @@ public class UserManagerImpl
     newSecUser.setPassword(oldSecUser.getPassword());
 
     configuration.updateUser(newSecUser, getRoleIdsFromUser(user));
+
+    eventBus.post(new UserUpdatedEvent(user));
+
     return user;
   }
 
   @Override
   public void deleteUser(final String userId) throws UserNotFoundException {
+    User user = getUser(userId);
     configuration.deleteUser(userId);
+
+    eventBus.post(new UserDeletedEvent(user));
   }
 
   @Override
@@ -273,6 +294,8 @@ public class UserManagerImpl
     if (roleIdentifiers == null || roleIdentifiers.isEmpty()) {
       try {
         configuration.deleteUserRoleMapping(userId, userSource);
+
+        // TODO: fire event?
       }
       catch (NoSuchRoleMappingException e) {
         log.debug("User role mapping for user: {} source: {} could not be deleted because it does not exist.",
@@ -302,6 +325,8 @@ public class UserManagerImpl
             userId, userSource);
         configuration.createUserRoleMapping(roleMapping);
       }
+
+      // TODO: fire event?
     }
   }
 

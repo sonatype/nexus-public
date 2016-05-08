@@ -61,7 +61,7 @@ public interface BlobStore
   Blob create(InputStream blobData, Map<String, String> headers);
 
   /**
-   * Imports a blob by creating a hard link, throwing {@link UnsupportedOperationException} if that's not supported
+   * Imports a blob by creating a hard link, throwing {@link BlobStoreException} if that's not supported
    * from the source file's location.
    *
    * Otherwise behaves as {@link #create(InputStream, Map)}.

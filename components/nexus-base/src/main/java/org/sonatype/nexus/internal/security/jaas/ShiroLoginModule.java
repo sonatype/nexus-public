@@ -128,7 +128,18 @@ public class ShiroLoginModule
     if (user != null) {
       principals.add(new UserPrincipal(user.getUserId()));
       for (RoleIdentifier role : user.getRoles()) {
-        principals.add(new RolePrincipal(role.getRoleId()));
+        String roleId = role.getRoleId();
+        if (Roles.ADMIN_ROLE_ID.equals(roleId)) {
+          // Karaf default roles implied by nx-admin
+          principals.add(new RolePrincipal("admin"));
+          principals.add(new RolePrincipal("manager"));
+          principals.add(new RolePrincipal("viewer"));
+        }
+        else if (roleId.startsWith("karaf-")) {
+          // flatten Karaf name-spaced roles by removing prefix
+          principals.add(new RolePrincipal(roleId.substring(6)));
+        }
+        // ignore non-admin/non-karaf roles...
       }
       jaasSubject.getPrincipals().addAll(principals);
       return true;

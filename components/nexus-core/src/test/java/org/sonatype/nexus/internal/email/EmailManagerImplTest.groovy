@@ -15,10 +15,10 @@ package org.sonatype.nexus.internal.email
 import javax.inject.Provider
 import javax.net.ssl.SSLContext
 
-import org.sonatype.nexus.ssl.TrustStore
-
+import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.email.EmailConfiguration
 import org.sonatype.nexus.email.EmailConfigurationStore
+import org.sonatype.nexus.ssl.TrustStore
 
 import org.apache.commons.mail.Email
 import org.apache.commons.mail.SimpleEmail
@@ -34,7 +34,7 @@ class EmailManagerImplTest
     given: 'A configured EmailManagerImpl instance'
       TrustStore trustStore = Mock(TrustStore)
       trustStore.getSSLContext() >> SSLContext.getDefault()
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EmailConfigurationStore), trustStore, Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventBus), Mock(EmailConfigurationStore), trustStore, Mock(Provider))
     when: 'the specified email configuration is applied to the email instance'
       Email email = impl.apply(
           new EmailConfiguration(

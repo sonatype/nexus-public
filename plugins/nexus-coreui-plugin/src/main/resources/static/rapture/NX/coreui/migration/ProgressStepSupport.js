@@ -101,7 +101,7 @@ Ext.define('NX.coreui.migration.ProgressStepSupport', {
       //</if>
 
       me.refreshTask = Ext.util.TaskManager.start({
-        interval: 5000,
+        interval: 1000,
         fireOnStart: true,
         run: function() {
           me.refresh();
@@ -145,7 +145,25 @@ Ext.define('NX.coreui.migration.ProgressStepSupport', {
         }
       }
     });
+
+    if (me.doInputNeeded) {
+      NX.direct.migration_Assistant.syncStatus(function (response, event) {
+        if (event.status && response.success) {
+          if (response.data.waitingForChanges) {
+            me.doInputNeeded();
+          }
+        }
+      });
+    }
   },
+
+  /**
+   * Extension-point to inform when user feedback is needed.
+   *
+   * @protected
+   * @template
+   */
+  doInputNeeded: null,
 
   /**
    * Extension-point to inform when progress has indicated completion.

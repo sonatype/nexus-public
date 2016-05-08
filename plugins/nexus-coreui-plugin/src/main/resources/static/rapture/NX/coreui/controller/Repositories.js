@@ -57,12 +57,15 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.NugetHosted',
     'repository.recipe.NugetProxy',
     'repository.recipe.NugetGroup',
+    'repository.recipe.RubygemsHosted',
     'repository.recipe.RawHosted',
     'repository.recipe.RawProxy',
     'repository.recipe.RawGroup',
     'repository.recipe.DockerHosted',
     'repository.recipe.DockerGroup',
-    'repository.recipe.DockerProxy'
+    'repository.recipe.DockerProxy',
+    'repository.recipe.PyPiHosted',
+    'repository.recipe.PyPiProxy'
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},

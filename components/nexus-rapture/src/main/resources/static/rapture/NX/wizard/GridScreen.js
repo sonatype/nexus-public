@@ -169,11 +169,21 @@ Ext.define('NX.wizard.GridScreen', {
       return hf + (hf - hc) + m;
     }
 
+    //Object.is replacement, as not supported in all browsers, derived from
+    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
+    function is(x, y) {
+      if (x === y) {
+        return x !== 0 || 1 / x === 1 / y;
+      } else {
+        return x !== x && y !== y;
+      }
+    };
+
     // calculate the height of all fields (except the grid)
     var grid = me.getGrid();
     var fieldsHeight = 0;
     me.down('#fields').items.each(function(item) {
-      if (!Object.is(item, grid)) {
+      if (!is(item, grid)) {
         //logheight('field', item);
 
         fieldsHeight += h(item);

@@ -29,9 +29,15 @@ import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
+import org.sonatype.nexus.security.privilege.PrivilegeCreatedEvent;
+import org.sonatype.nexus.security.privilege.PrivilegeDeletedEvent;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
+import org.sonatype.nexus.security.privilege.PrivilegeUpdatedEvent;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleCreatedEvent;
+import org.sonatype.nexus.security.role.RoleDeletedEvent;
+import org.sonatype.nexus.security.role.RoleUpdatedEvent;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -180,6 +186,8 @@ public class AuthorizationManagerImpl
 
     configuration.createRole(secRole);
 
+    eventBus.post(new RoleCreatedEvent(role));
+
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
 
@@ -192,6 +200,8 @@ public class AuthorizationManagerImpl
 
     configuration.updateRole(secRole);
 
+    eventBus.post(new RoleUpdatedEvent(role));
+
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
 
@@ -200,7 +210,10 @@ public class AuthorizationManagerImpl
 
   @Override
   public void deleteRole(final String roleId) throws NoSuchRoleException {
+    Role role = getRole(roleId);
     configuration.deleteRole(roleId);
+
+    eventBus.post(new RoleDeletedEvent(role));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -232,6 +245,8 @@ public class AuthorizationManagerImpl
     final CPrivilege secPriv = this.convert(privilege);
     configuration.createPrivilege(secPriv);
 
+    eventBus.post(new PrivilegeCreatedEvent(privilege));
+
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
 
@@ -244,6 +259,8 @@ public class AuthorizationManagerImpl
 
     configuration.updatePrivilege(secPriv);
 
+    eventBus.post(new PrivilegeUpdatedEvent(privilege));
+
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
 
@@ -252,7 +269,10 @@ public class AuthorizationManagerImpl
 
   @Override
   public void deletePrivilege(final String privilegeId) throws NoSuchPrivilegeException {
+    Privilege privilege = getPrivilege(privilegeId);
     configuration.deletePrivilege(privilegeId);
+
+    eventBus.post(new PrivilegeDeletedEvent(privilege));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.web;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -20,12 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.net.HttpHeaders;
 import com.google.inject.OutOfScopeException;
 import com.google.inject.ProvisionException;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,12 +47,12 @@ public class ClientInfoProviderImpl
   }
 
   @Override
+  @Nullable
   public ClientInfo getCurrentThreadClientInfo() {
     try {
       HttpServletRequest request = httpRequestProvider.get();
-      Subject subject = SecurityUtils.getSubject();
       return new ClientInfo(
-          subject != null && subject.getPrincipal() != null ? subject.getPrincipal().toString() : null,
+          UserIdHelper.get(),
           request.getRemoteAddr(),
           request.getHeader(HttpHeaders.USER_AGENT)
       );

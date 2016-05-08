@@ -20,6 +20,7 @@
 Ext.define('NX.Icons', {
   singleton: true,
   requires: [
+    'Ext.DomHelper',
     'NX.util.Url'
   ],
   mixins: {
@@ -32,7 +33,8 @@ Ext.define('NX.Icons', {
    * @public
    */
   cls: function (name, variant) {
-    var cls = 'nx-icon-' + name;
+    // translate . -> _ to avoid problems with CSS selector syntax muck
+    var cls = 'nx-icon-' + name.replace('.', '_');
     if (variant) {
       cls += '-' + variant;
     }

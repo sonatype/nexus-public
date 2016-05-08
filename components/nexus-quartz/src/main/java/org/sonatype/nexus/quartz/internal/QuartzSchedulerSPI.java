@@ -232,7 +232,7 @@ public class QuartzSchedulerSPI
   }
 
   private void applyActive() throws SchedulerException {
-    if (!active && scheduler.isStarted()) {
+    if (!active && !scheduler.isInStandbyMode()) {
       scheduler.standby();
       log.info("Scheduler put into stand-by mode");
     }

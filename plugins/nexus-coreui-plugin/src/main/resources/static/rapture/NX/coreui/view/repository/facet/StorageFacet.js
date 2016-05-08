@@ -30,6 +30,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
   initComponent: function() {
     var me = this;
 
+
     me.items = [
       {
         xtype: 'fieldset',
@@ -54,7 +55,17 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
             queryMode: 'local',
             displayField: 'name',
             valueField: 'name',
-            readOnlyOnUpdate: true
+            readOnlyOnUpdate: true,
+            listeners: {
+              afterrender: function (combo) {
+                if (!combo.getValue()) {
+                  var store = combo.getStore();
+                  if (store.getTotalCount() === 1) {
+                    combo.setValue(store.getAt(0).get('name'));
+                  }
+                }
+              }
+            }
           },
           {
             xtype: 'checkbox',
@@ -70,5 +81,4 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
 
     me.callParent();
   }
-
 });

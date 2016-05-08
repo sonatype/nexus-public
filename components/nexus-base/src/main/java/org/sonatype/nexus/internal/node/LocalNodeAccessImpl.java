@@ -15,19 +15,16 @@ package org.sonatype.nexus.internal.node;
 import java.security.cert.Certificate;
 import java.util.UUID;
 
-import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 /**
  * Default {@link LocalNodeAccess}.
@@ -35,8 +32,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
  * @since 3.0
  */
 @Named
-@ManagedLifecycle(phase = SERVICES)
-@Priority(Integer.MAX_VALUE) // make sure this starts early
 @Singleton
 public class LocalNodeAccessImpl
     extends LifecycleSupport

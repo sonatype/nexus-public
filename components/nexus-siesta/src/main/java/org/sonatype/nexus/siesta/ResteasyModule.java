@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.siesta;
 
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.siesta.internal.resteasy.ComponentContainerImpl;
 
 import com.google.inject.AbstractModule;
@@ -30,7 +28,8 @@ public class ResteasyModule
 {
   @Override
   protected void configure() {
-    bind(ComponentContainer.class).to(ComponentContainerImpl.class).in(Singleton.class);
+    // eager binding so we can register RESTEasy with JAX-RS as early as possible
+    bind(ComponentContainer.class).to(ComponentContainerImpl.class).asEagerSingleton();
   }
 
   /**

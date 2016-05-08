@@ -19,9 +19,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.anonymous.AnonymousConfigurationChangedEvent;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
@@ -43,6 +45,8 @@ public class AnonymousManagerImpl
   extends ComponentSupport
   implements AnonymousManager
 {
+  private final EventBus eventBus;
+
   private final AnonymousConfigurationStore store;
 
   private final Provider<AnonymousConfiguration> defaults;
@@ -52,9 +56,11 @@ public class AnonymousManagerImpl
   private AnonymousConfiguration configuration;
 
   @Inject
-  public AnonymousManagerImpl(final AnonymousConfigurationStore store,
+  public AnonymousManagerImpl(final EventBus eventBus,
+                              final AnonymousConfigurationStore store,
                               @Named("initial") final Provider<AnonymousConfiguration> defaults)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);
     this.defaults = checkNotNull(defaults);
@@ -121,6 +127,8 @@ public class AnonymousManagerImpl
       store.save(model);
       this.configuration = model;
     }
+
+    eventBus.post(new AnonymousConfigurationChangedEvent(model));
   }
 
   //

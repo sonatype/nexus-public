@@ -19,6 +19,7 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 
 import com.google.common.base.Throwables;
@@ -37,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 class HttpPartIteratorAdapter
-    implements Iterable<Payload>
+    implements Iterable<PartPayload>
 {
   private final HttpServletRequest httpRequest;
 
@@ -46,7 +47,7 @@ class HttpPartIteratorAdapter
   }
 
   @Override
-  public Iterator<Payload> iterator() {
+  public Iterator<PartPayload> iterator() {
     try {
       final FileItemIterator itemIterator = new ServletFileUpload().getItemIterator(httpRequest);
       return new PayloadIterator(itemIterator);
@@ -60,7 +61,7 @@ class HttpPartIteratorAdapter
    * {@link FileItemStream} payload.
    */
   private static class FileItemStreamPayload
-      implements Payload
+      implements PartPayload
   {
     private final FileItemStream next;
 
@@ -83,13 +84,29 @@ class HttpPartIteratorAdapter
     public String getContentType() {
       return next.getContentType();
     }
+
+    @Nullable
+    @Override
+    public String getName() {
+      return next.getName();
+    }
+
+    @Override
+    public String getFieldName() {
+      return next.getFieldName();
+    }
+
+    @Override
+    public boolean isFormField() {
+      return next.isFormField();
+    }
   }
 
   /**
    * {@link Payload} iterator.
    */
   private static class PayloadIterator
-      implements Iterator<Payload>
+      implements Iterator<PartPayload>
   {
     private final FileItemIterator itemIterator;
 
@@ -108,7 +125,7 @@ class HttpPartIteratorAdapter
     }
 
     @Override
-    public Payload next() {
+    public PartPayload next() {
       try {
         return new FileItemStreamPayload(itemIterator.next());
       }

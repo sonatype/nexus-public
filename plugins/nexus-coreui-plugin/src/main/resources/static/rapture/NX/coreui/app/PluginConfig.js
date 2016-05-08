@@ -54,6 +54,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.audit.AuditController',
+      active: function () {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-audit-plugin');
+      }
+    },
+    {
       id: 'NX.coreui.controller.BrowseAssets',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
@@ -211,6 +217,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.SearchNuget',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-nuget');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.SearchPyPi',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-pypi');
       }
     },
     {

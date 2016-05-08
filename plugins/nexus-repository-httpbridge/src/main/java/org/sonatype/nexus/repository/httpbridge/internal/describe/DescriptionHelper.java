@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.StringMultimap;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
@@ -54,7 +55,7 @@ public class DescriptionHelper
     desc.addTable("Attributes", toMap(request.getAttributes()));
 
     if (request.isMultipart()) {
-      Iterable<Payload> parts = request.getMultiparts();
+      Iterable<PartPayload> parts = request.getMultiparts();
       checkState(parts != null);
       for (Payload payload : parts) {
         desc.addTable("Payload", toMap(payload));

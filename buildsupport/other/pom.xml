@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-other</artifactId>
@@ -72,9 +72,9 @@
       </dependency>
 
       <dependency>
-        <groupId>bitwalker</groupId>
+        <groupId>eu.bitwalker</groupId>
         <artifactId>UserAgentUtils</artifactId>
-        <version>1.12</version>
+        <version>1.19</version>
       </dependency>
 
       <dependency>

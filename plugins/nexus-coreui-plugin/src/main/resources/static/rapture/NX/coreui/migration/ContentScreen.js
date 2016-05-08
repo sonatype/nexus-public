@@ -52,6 +52,12 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                 },
                 {
                   xtype: 'checkbox',
+                  name: 'security.realms',
+                  boxLabel: 'Realms',
+                  checked: false
+                },
+                {
+                  xtype: 'checkbox',
                   name: 'security.users',
                   boxLabel: 'Users',
                   checked: false

@@ -598,4 +598,9 @@ public class FileBlobStore
   {
     StreamMetrics ingestTo(final Path destination) throws IOException;
   }
+
+  @VisibleForTesting
+  void setLiveBlobs(final LoadingCache<BlobId, FileBlob> liveBlobs) {
+    this.liveBlobs = liveBlobs;
+  }
 }

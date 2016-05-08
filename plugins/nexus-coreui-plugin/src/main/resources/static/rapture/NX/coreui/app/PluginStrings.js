@@ -92,6 +92,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchMaven_Group: 'Maven Repositories',
     SearchNpm_Group: 'npm Repositories',
     SearchNuget_Group: 'NuGet Repositories',
+    SearchPyPi_Group: 'PyPI Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
     SearchCriteria_SHA256_FieldLabel: 'SHA-256',
@@ -113,6 +114,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchNpm_Version_FieldLabel: 'Version',
     SearchNuget_ID_FieldLabel: 'ID',
     SearchNuget_Tags_FieldLabel: 'Tags',
+    SearchPyPi_Classifiers_FieldLabel: 'Classifiers',
+    SearchPyPi_Description_FieldLabel: 'Description',
+    SearchPyPi_Keywords_FieldLabel: 'PyPI Keywords',
+    SearchPyPi_PyVersion_FieldLabel: 'Python Version',
+    SearchPyPi_Summary_FieldLabel: 'Summary',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -149,6 +155,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Nuget
     SearchNuget_Text: 'NuGet',
     SearchNuget_Description: 'Search for components in NuGet repositories',
+
+    // Browse -> Search -> PyPI
+    SearchPyPi_Text: 'PyPI',
+    SearchPyPi_Description: 'Search for components in PyPI repositories',
 
     // Browse -> Search -> Custom
     Search_Custom_Text: 'Custom',
@@ -1100,7 +1110,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     },
 
     'NX.coreui.migration.PreviewStep': {
-      Begin_Confirm_Title: 'Being Migration',
+      Begin_Confirm_Title: 'Begin Migration',
       Begin_Confirm_Text: 'Do you want to begin migration?',
       Begin_Mask: 'Migration beginning',
       Begin_Message: 'Migration begun'
@@ -1143,6 +1153,28 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
       Done_Mask: 'Confirming',
       Done_Message: 'Migration done'
+    },
+
+    'NX.coreui.audit.AuditController': {
+      Text: 'Audit',
+      Description: 'System audit information',
+      Clear_Title: 'Clear Audit Data',
+      Clear_Body: 'Clear audit data?',
+      Clear_Mask: 'Clearing audit data',
+      Clear_Success: 'Audit data cleared'
+    },
+
+    'NX.coreui.audit.AuditList': {
+      EmptyText: 'No audit data',
+      Filter_EmptyText: 'No audit data matching "$filter"',
+      Domain: 'Domain',
+      Type: 'Type',
+      Context: 'Context',
+      Timestamp: 'Timestamp',
+      NodeId: 'Node ID',
+      Initiator: 'Initiator',
+      Attribute: 'Attribute: {0}',
+      Clear_Button: 'Clear'
     }
   }
 }, function(self) {

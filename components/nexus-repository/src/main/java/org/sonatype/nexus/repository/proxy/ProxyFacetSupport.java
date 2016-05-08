@@ -206,7 +206,7 @@ public abstract class ProxyFacetSupport
     HttpClient client = httpClient.getHttpClient();
 
     URI uri = config.remoteUrl.resolve(url);
-    HttpGet request = new HttpGet(uri);
+    HttpRequestBase request = buildFetchHttpRequest(uri, context);
     if (stale != null) {
       final DateTime lastModified = stale.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);
       if (lastModified != null) {
@@ -283,10 +283,17 @@ public abstract class ProxyFacetSupport
   }
 
   /**
+   * Builds the {@link HttpRequestBase} for a particular set of parameters (mapping to GET by default).
+   */
+  protected HttpRequestBase buildFetchHttpRequest(URI uri, Context context) {
+    return new HttpGet(uri);
+  }
+
+  /**
    * Extract Last-Modified date from response if possible, or {@code null}.
    */
   @Nullable
-  private DateTime extractLastModified(final HttpGet request, final HttpResponse response) {
+  private DateTime extractLastModified(final HttpRequestBase request, final HttpResponse response) {
     final Header lastModifiedHeader = response.getLastHeader(HttpHeaders.LAST_MODIFIED);
     if (lastModifiedHeader != null) {
       try {

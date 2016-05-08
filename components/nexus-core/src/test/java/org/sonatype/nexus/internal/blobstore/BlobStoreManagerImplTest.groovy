@@ -19,6 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore
 import org.sonatype.nexus.blobstore.file.PeriodicJobService
+import org.sonatype.nexus.common.event.EventBus
 
 import com.google.common.collect.Lists
 import org.junit.Before
@@ -44,6 +45,9 @@ class BlobStoreManagerImplTest
   public TemporaryFolder temporaryFolder = new TemporaryFolder()
 
   @Mock
+  EventBus eventBus
+
+  @Mock
   BlobStoreConfigurationStore store
   
   @Mock
@@ -56,7 +60,7 @@ class BlobStoreManagerImplTest
 
   @Before
   void setup() {
-    underTest = spy(new BlobStoreManagerImpl(store, jobService, [test: provider, File: provider]))
+    underTest = spy(new BlobStoreManagerImpl(eventBus, store, jobService, [test: provider, File: provider]))
   }
 
   @Test

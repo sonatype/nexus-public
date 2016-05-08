@@ -15,6 +15,7 @@ package org.sonatype.nexus.capability;
 import java.net.URL;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -76,6 +77,7 @@ public abstract class CapabilitySupport<ConfigT>
     return null;
   }
 
+  @Nullable
   protected String renderStatus() throws Exception {
     return null;
   }
@@ -94,6 +96,7 @@ public abstract class CapabilitySupport<ConfigT>
     return null;
   }
 
+  @Nullable
   protected String renderDescription() throws Exception {
     return null;
   }

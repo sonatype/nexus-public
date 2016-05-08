@@ -57,6 +57,7 @@ Ext.define('NX.app.Application', {
     'NX.ext.form.field.Base',
     'NX.ext.form.field.Checkbox',
     'NX.ext.form.field.Display',
+    'NX.ext.form.field.Number',
 
     // custom form fields
     'NX.ext.form.OptionalFieldSet',

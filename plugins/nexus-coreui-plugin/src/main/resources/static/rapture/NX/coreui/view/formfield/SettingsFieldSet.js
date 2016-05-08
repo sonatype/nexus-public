@@ -98,6 +98,9 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
           properties[formField.id] = String(value);
           delete values['property_' + formField.id];
         }
+        else {
+          properties[formField.id] = null;  
+        }
       });
     }
 

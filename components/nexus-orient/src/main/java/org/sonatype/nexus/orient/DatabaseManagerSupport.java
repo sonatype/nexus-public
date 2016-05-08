@@ -211,7 +211,9 @@ public abstract class DatabaseManagerSupport
     // TODO: refine more control over how pool settings are configured per-database or globally
 
     String uri = connectionUri(name);
-    OPartitionedDatabasePool underlying = new OPartitionedDatabasePool(uri, SYSTEM_USER, SYSTEM_PASSWORD, 25);
+    OPartitionedDatabasePool underlying = new OPartitionedDatabasePool(uri, SYSTEM_USER, SYSTEM_PASSWORD, //
+        25, // max connections per partition
+        25); // max connections in the pool
 
     // TODO: Do not allow shared pool() to be closed by users, only by ourselves
     DatabasePoolImpl pool = new DatabasePoolImpl(underlying, name);

@@ -21,13 +21,14 @@ import javax.inject.Singleton;
 import javax.mail.Session;
 import javax.net.ssl.SSLContext;
 
-import org.sonatype.nexus.ssl.TrustStore;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.email.EmailConfiguration;
+import org.sonatype.nexus.email.EmailConfigurationChangedEvent;
 import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.email.EmailManager;
+import org.sonatype.nexus.ssl.TrustStore;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.mail.Email;
@@ -48,6 +49,8 @@ public class EmailManagerImpl
     extends ComponentSupport
     implements EmailManager
 {
+  private final EventBus eventBus;
+
   private final EmailConfigurationStore store;
 
   private final TrustStore trustStore;
@@ -59,10 +62,12 @@ public class EmailManagerImpl
   private EmailConfiguration configuration;
 
   @Inject
-  public EmailManagerImpl(final EmailConfigurationStore store,
+  public EmailManagerImpl(final EventBus eventBus,
+                          final EmailConfigurationStore store,
                           final TrustStore trustStore,
                           @Named("initial") final Provider<EmailConfiguration> defaults)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.store = checkNotNull(store);
     this.trustStore = checkNotNull(trustStore);
     this.defaults = checkNotNull(defaults);
@@ -125,6 +130,8 @@ public class EmailManagerImpl
       store.save(model);
       this.configuration = model;
     }
+
+    eventBus.post(new EmailConfigurationChangedEvent(model));
   }
 
   //

@@ -10,24 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
-
-import java.util.Map;
-
-import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+package org.sonatype.nexus.script;
 
 /**
- * Configuration adapter for {@link IdentityCapability}.
+ * Emitted when a {@link Script} is updated.
  *
- * @since 3.0
+ * @since 3.1
  */
-public class IdentityCapabilityConfiguration
-    extends CapabilityConfigurationSupport
+public class ScriptUpdatedEvent
+  extends ScriptEvent
 {
-  public IdentityCapabilityConfiguration(final Map<String, String> properties) {
-    checkNotNull(properties);
-    // No specific configuration
+  public ScriptUpdatedEvent(final Script script) {
+    super(script);
   }
 }

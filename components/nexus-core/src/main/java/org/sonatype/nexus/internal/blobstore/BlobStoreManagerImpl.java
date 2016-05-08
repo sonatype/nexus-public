@@ -24,9 +24,12 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.file.PeriodicJobService;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -51,6 +54,7 @@ public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
     implements BlobStoreManager
 {
+  private final EventBus eventBus;
 
   private final Map<String, BlobStore> stores = Maps.newHashMap();
 
@@ -61,10 +65,12 @@ public class BlobStoreManagerImpl
   private final PeriodicJobService jobService;
 
   @Inject
-  public BlobStoreManagerImpl(final BlobStoreConfigurationStore store,
+  public BlobStoreManagerImpl(final EventBus eventBus,
+                              final BlobStoreConfigurationStore store,
                               final PeriodicJobService jobService,
                               Map<String, Provider<BlobStore>> blobstorePrototypes)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
     this.jobService = checkNotNull(jobService);
@@ -113,6 +119,8 @@ public class BlobStoreManagerImpl
       BlobStore store = entry.getValue();
       log.debug("Stopping blob-store: {}", name);
       store.stop();
+
+      // TODO - event publishing
     }
 
     stores.clear();
@@ -146,7 +154,8 @@ public class BlobStoreManagerImpl
     track(configuration.getName(), blobStore);
 
     blobStore.start();
-    //TODO - event publishing
+
+    eventBus.post(new BlobStoreCreatedEvent(blobStore));
 
     return blobStore;
   }
@@ -171,7 +180,7 @@ public class BlobStoreManagerImpl
     untrack(name);
     store.delete(blobStore.getBlobStoreConfiguration());
 
-    //TODO - event publishing
+    eventBus.post(new BlobStoreDeletedEvent(blobStore));
   }
 
   private BlobStore newBlobStore(final BlobStoreConfiguration blobStoreConfiguration) throws Exception {

@@ -12,17 +12,15 @@
  */
 package org.sonatype.nexus.security;
 
-import javax.annotation.Nullable;
-
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.security.UserIdHelper.SYSTEM;
+import static org.sonatype.nexus.security.UserIdHelper.UNKNOWN;
 
 /**
  * Helper to set the {@code userId} MDC attribute.
@@ -39,18 +37,6 @@ public class UserIdMdcHelper
 
   public static final String KEY = "userId";
 
-  /**
-   * Value for {@link #KEY} when subject principal is not known.
-   */
-  public static final String UNKNOWN = "*UNKNOWN";
-
-  /**
-   * Value for {@link #KEY} for privileged system execution.
-   *
-   * @since 3.0
-   */
-  public static final String SYSTEM = "*SYSTEM";
-
   public static boolean isSet() {
     String userId = MDC.get(KEY);
     return !(Strings.isNullOrEmpty(userId) || UNKNOWN.equals(userId));
@@ -64,30 +50,13 @@ public class UserIdMdcHelper
 
   public static void set(final Subject subject) {
     checkNotNull(subject);
-    String userId = userId(subject);
+    String userId = UserIdHelper.get(subject);
     log.trace("Set: {}", userId);
     MDC.put(KEY, userId);
   }
 
-  @VisibleForTesting
-  static String userId(@Nullable final Subject subject) {
-    if (subject != null) {
-      Object principal = subject.getPrincipal();
-      if (principal != null) {
-        return principal.toString();
-      }
-    }
-    return UNKNOWN;
-  }
-
   public static void set() {
-    Subject subject = SecurityUtils.getSubject();
-    if (subject == null) {
-      MDC.put(KEY, UNKNOWN);
-    }
-    else {
-      set(subject);
-    }
+    MDC.put(KEY, UserIdHelper.get());
   }
 
   /**

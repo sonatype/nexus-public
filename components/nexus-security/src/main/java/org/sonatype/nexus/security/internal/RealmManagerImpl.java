@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.SecurityConfigurationChanged;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
+import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.RealmManager;
 
@@ -177,6 +178,8 @@ public class RealmManagerImpl
     }
 
     installRealms();
+
+    eventBus.post(new RealmConfigurationChangedEvent(model));
   }
 
   //

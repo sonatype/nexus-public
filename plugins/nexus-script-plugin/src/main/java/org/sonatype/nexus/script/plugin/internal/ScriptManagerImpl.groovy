@@ -17,11 +17,15 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.common.app.ManagedLifecycle
+import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.common.stateguard.Guarded
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport
 import org.sonatype.nexus.script.Script
+import org.sonatype.nexus.script.ScriptCreatedEvent
+import org.sonatype.nexus.script.ScriptDeletedEvent
 import org.sonatype.nexus.script.ScriptManager
 import org.sonatype.nexus.script.ScriptStore
+import org.sonatype.nexus.script.ScriptUpdatedEvent
 
 import com.google.common.collect.ImmutableList
 import groovy.transform.CompileStatic
@@ -43,6 +47,9 @@ class ScriptManagerImpl
     implements ScriptManager
 {
   @Inject
+  EventBus eventBus
+
+  @Inject
   ScriptStore scriptStore
 
   @Override
@@ -62,6 +69,7 @@ class ScriptManagerImpl
   Script create(final String name, final String content, final String type) {
     Script script = new Script(name, content, type)
     scriptStore.create(script)
+    eventBus.post(new ScriptCreatedEvent(script))
     return script
   }
 
@@ -74,6 +82,7 @@ class ScriptManagerImpl
     }
     script.content = content
     scriptStore.update(script)
+    eventBus.post(new ScriptUpdatedEvent(script))
     return script
   }
 
@@ -83,6 +92,7 @@ class ScriptManagerImpl
     Script script = scriptStore.get(name)
     if (script != null) {
       scriptStore.delete(script)
+      eventBus.post(new ScriptDeletedEvent(script))
     }
   }
 

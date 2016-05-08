@@ -67,7 +67,7 @@ public class SecurityFacetSupport
   /**
    * Returns BREAD action for request action.
    */
-  private String action(final Request request) {
+  protected String action(final Request request) {
     switch (request.getAction()) {
       case HttpMethods.OPTIONS:
       case HttpMethods.GET:

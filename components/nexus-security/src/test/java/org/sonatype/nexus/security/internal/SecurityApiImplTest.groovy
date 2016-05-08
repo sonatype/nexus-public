@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.internal
 
 import javax.inject.Provider
 
+import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.security.SecurityApi
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration
@@ -33,11 +34,13 @@ import spock.lang.Specification
 class SecurityApiImplTest
     extends Specification
 {
+  EventBus eventBus = Mock()
+
   AnonymousConfigurationStore store = Mock()
 
   Provider<AnonymousConfiguration> defaults = Mock()
 
-  AnonymousManager anonymousManager = Spy(AnonymousManagerImpl, constructorArgs: [store, defaults])
+  AnonymousManager anonymousManager = Spy(AnonymousManagerImpl, constructorArgs: [eventBus, store, defaults])
 
   SecuritySystem securitySystem = Mock()
 

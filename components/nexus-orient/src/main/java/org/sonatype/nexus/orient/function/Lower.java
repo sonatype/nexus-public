@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.function;
 
+import java.util.Locale;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -22,7 +24,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Custom LOWER function for OrientDB.
+ * Custom LOWER function for OrientDB, using the {@link Locale#ENGLISH english} locale.
  *
  * @since 3.0
  */
@@ -52,7 +54,7 @@ public class Lower
 
     checkArgument(param instanceof String, "lower() parameter must be a string");
 
-    return ((String) param).toLowerCase();
+    return ((String) param).toLowerCase(Locale.ENGLISH);
   }
 
 

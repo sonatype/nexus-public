@@ -19,6 +19,7 @@ package org.sonatype.nexus.repository.view;
  */
 public class ContentTypes
 {
+
   private ContentTypes() {
     // empty
   }
@@ -36,4 +37,6 @@ public class ContentTypes
   public static final String APPLICATION_ZIP = "application/zip";
 
   public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+
+  public static final String APPLICATION_TAR = "application/x-tar";
 }

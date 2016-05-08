@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 import org.sonatype.nexus.security.PasswordHelper;
@@ -48,11 +49,22 @@ public class HttpClientConfigurationObjectMapperCustomizer
   public void customize(final ObjectMapper objectMapper) {
     objectMapper.registerModule(
         new SimpleModule()
+            .addSerializer(
+                Time.class,
+                new SecondsSerializer()
+            )
+            .addDeserializer(
+                Time.class,
+                new SecondsDeserializer()
+            )
+            .addSerializer(
+                AuthenticationConfiguration.class,
+                new AuthenticationConfigurationSerializer(passwordHelper)
+            )
             .addDeserializer(
                 AuthenticationConfiguration.class,
                 new AuthenticationConfigurationDeserializer(passwordHelper)
             )
     );
-
   }
 }

@@ -10,34 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.node;
+package org.sonatype.nexus.security.user;
 
-import java.util.Collections;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.capability.CapabilityBooterSupport;
-import org.sonatype.nexus.capability.CapabilityRegistry;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Node capability booter.
+ * {@link User} event.
  *
- * @since 3.0
+ * @since 3.1
  */
-@Named
-@Singleton
-public class NodeCapabilitiesBooter
-    extends CapabilityBooterSupport
+public abstract class UserEvent
 {
+  private final User user;
+
+  public UserEvent(final User user) {
+    this.user = checkNotNull(user);
+  }
+
+  public User getUser() {
+    return user;
+  }
+
   @Override
-  protected void boot(final CapabilityRegistry registry) throws Exception {
-    maybeAddCapability(
-        registry,
-        IdentityCapabilityDescriptor.TYPE,
-        true, // enabled
-        null, // no notes
-        Collections.<String, String>emptyMap()
-    );
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+        "user=" + user +
+        '}';
   }
 }

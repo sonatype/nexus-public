@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.UserIdHelper.UNKNOWN;
 import static org.sonatype.nexus.security.UserIdMdcHelper.KEY;
-import static org.sonatype.nexus.security.UserIdMdcHelper.UNKNOWN;
 
 /**
  * Tests for {@link UserIdMdcHelper}.
@@ -56,21 +56,6 @@ public class UserIdMdcHelperTest
     Subject subject = mock(Subject.class);
     when(subject.getPrincipal()).thenReturn(principal);
     return subject;
-  }
-
-  @Test
-  public void userId_subject() {
-    assertThat(UserIdMdcHelper.userId(subject("test")), is("test"));
-  }
-
-  @Test
-  public void userId_nullSubject() {
-    assertThat(UserIdMdcHelper.userId(null), is(UNKNOWN));
-  }
-
-  @Test
-  public void userId_nullPrincipal() {
-    assertThat(UserIdMdcHelper.userId(subject(null)), is(UNKNOWN));
   }
 
   @Test

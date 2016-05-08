@@ -35,6 +35,7 @@ import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.HttpClientPlan.Customizer;
 import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
 
 import com.google.common.base.Stopwatch;
 import org.apache.http.HttpHost;
@@ -183,7 +184,9 @@ public class HttpClientManagerImpl
       this.configuration = model;
     }
 
-    // fire event to inform that the global configuration changed
+    eventBus.post(new HttpClientConfigurationChangedEvent(model));
+
+    // FIXME: drop this event in favor of ^^^ which cares updated data
     eventBus.post(new GlobalHttpClientConfigurationChanged());
   }
 
