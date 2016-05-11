@@ -14,45 +14,31 @@ package org.sonatype.nexus.repository.httpclient;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URI;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.sequence.FibonacciNumberSequence;
 import org.sonatype.nexus.common.sequence.NumberSequence;
 
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.HttpContext;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// FIXME: Describe what this class is for in javadocs instead of leaving it empty!
-
 /**
+ * Wraps an {@link HttpClient} with manual and automatic blocking functionality.
+ *
  * @since 3.0
  */
-public class FilteredHttpClient
-    extends ComponentSupport
+public class BlockingHttpClient
+    extends FilteredHttpClientSupport
     implements HttpClient, Closeable
 {
-
-  private final HttpClient delegate;
-
   private final boolean blocked;
 
   private HttpHost mainTarget;
@@ -67,10 +53,10 @@ public class FilteredHttpClient
 
   private RemoteConnectionStatus status;
 
-  public FilteredHttpClient(final HttpClient delegate,
+  public BlockingHttpClient(final HttpClient delegate,
                             final HttpClientFacetImpl.Config config)
   {
-    this.delegate = checkNotNull(delegate);
+    super(delegate);
     checkNotNull(config);
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
@@ -79,7 +65,7 @@ public class FilteredHttpClient
     autoBlockSequence = new FibonacciNumberSequence(Time.seconds(40).toMillis());
   }
 
-  private <T> T filter(final HttpHost target, final Filterable<T> filterable) throws IOException {
+  protected <T> T filter(final HttpHost target, final Filterable<T> filterable) throws IOException {
     // main target is the first accessed target
     if (mainTarget == null) {
       mainTarget = target;
@@ -164,158 +150,11 @@ public class FilteredHttpClient
   }
 
   @Override
-  public HttpParams getParams() {
-    return delegate.getParams();
-  }
-
-  @Override
-  public ClientConnectionManager getConnectionManager() {
-    return delegate.getConnectionManager();
-  }
-
-  @Override
-  public HttpResponse execute(final HttpUriRequest request) throws IOException {
-    return filter(determineTarget(request), new Filterable<HttpResponse>()
-    {
-      @Override
-      public HttpResponse call() throws IOException {
-        return delegate.execute(request);
-      }
-    });
-  }
-
-  @Override
-  public HttpResponse execute(final HttpUriRequest request,
-                              final HttpContext context)
-      throws IOException
-  {
-    return filter(determineTarget(request), new Filterable<HttpResponse>()
-    {
-      @Override
-      public HttpResponse call() throws IOException {
-        return delegate.execute(request, context);
-      }
-    });
-  }
-
-  @Override
-  public HttpResponse execute(final HttpHost target,
-                              final HttpRequest request)
-      throws IOException
-  {
-    return filter(target, new Filterable<HttpResponse>()
-    {
-      @Override
-      public HttpResponse call() throws IOException {
-        return delegate.execute(target, request);
-      }
-    });
-  }
-
-  @Override
-  public HttpResponse execute(final HttpHost target,
-                              final HttpRequest request,
-                              final HttpContext context)
-      throws IOException
-  {
-    return filter(target, new Filterable<HttpResponse>()
-    {
-      @Override
-      public HttpResponse call() throws IOException {
-        return delegate.execute(target, request, context);
-      }
-    });
-  }
-
-  @Override
-  public <T> T execute(final HttpUriRequest request,
-                       final ResponseHandler<? extends T> responseHandler)
-      throws IOException
-  {
-    return filter(determineTarget(request), new Filterable<T>()
-    {
-      @Override
-      public T call() throws IOException {
-        return delegate.execute(request, responseHandler);
-      }
-    });
-  }
-
-  @Override
-  public <T> T execute(final HttpUriRequest request,
-                       final ResponseHandler<? extends T> responseHandler,
-                       final HttpContext context)
-      throws IOException
-  {
-    return filter(determineTarget(request), new Filterable<T>()
-    {
-      @Override
-      public T call() throws IOException {
-        return delegate.execute(request, responseHandler, context);
-      }
-    });
-  }
-
-  @Override
-  public <T> T execute(final HttpHost target,
-                       final HttpRequest request,
-                       final ResponseHandler<? extends T> responseHandler)
-      throws IOException
-  {
-    return filter(target, new Filterable<T>()
-    {
-      @Override
-      public T call() throws IOException {
-        return delegate.execute(target, request, responseHandler);
-      }
-    });
-  }
-
-  @Override
-  public <T> T execute(final HttpHost target,
-                       final HttpRequest request,
-                       final ResponseHandler<? extends T> responseHandler,
-                       final HttpContext context) throws IOException
-  {
-    return filter(target, new Filterable<T>()
-    {
-      @Override
-      public T call() throws IOException {
-        return delegate.execute(target, request, responseHandler, context);
-      }
-    });
-  }
-
-  private static HttpHost determineTarget(final HttpUriRequest request) throws ClientProtocolException {
-    HttpHost target = null;
-    final URI requestURI = request.getURI();
-    if (requestURI.isAbsolute()) {
-      target = URIUtils.extractHost(requestURI);
-      if (target == null) {
-        throw new ClientProtocolException("URI does not specify a valid host name: " + requestURI);
-      }
-    }
-    return target;
-  }
-
-  @Override
   public void close() throws IOException {
     if (checkThread != null) {
       checkThread.interrupt();
     }
-    if (delegate instanceof Closeable) {
-      ((Closeable) delegate).close();
-    }
-  }
-
-  @Override
-  public String toString() {
-    return delegate.toString();
-  }
-
-  private interface Filterable<T>
-  {
-    T call() throws IOException;
+    super.close();
   }
 
   private class CheckStatus

@@ -74,6 +74,7 @@
     <module>nexus-thread</module>
     <module>nexus-transaction</module>
     <module>nexus-validation</module>
+    <module>nexus-webhooks</module>
     <module>nexus-webresources-api</module>
   </modules>
 

@@ -21,7 +21,6 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.formfields.Selectable
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.authz.AuthorizationManager
 import org.sonatype.nexus.security.privilege.Privilege
@@ -80,24 +79,7 @@ class PrivilegeComponent
       new PrivilegeTypeXO(
           id: descriptor.type,
           name: descriptor.name,
-          formFields: descriptor.formFields?.collect { formField ->
-            def formFieldXO = new org.sonatype.nexus.coreui.capability.FormFieldXO(
-                id: formField.id,
-                type: formField.type,
-                label: formField.label,
-                helpText: formField.helpText,
-                required: formField.required,
-                regexValidation: formField.regexValidation,
-                initialValue: formField.initialValue
-            )
-            if (formField instanceof Selectable) {
-              formFieldXO.storeApi = formField.storeApi
-              formFieldXO.storeFilters = formField.storeFilters
-              formFieldXO.idMapping = formField.idMapping
-              formFieldXO.nameMapping = formField.nameMapping
-            }
-            return formFieldXO
-          }
+          formFields: descriptor.formFields?.collect { FormFieldXO.create(it) }
       )
     }
   }

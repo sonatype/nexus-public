@@ -25,10 +25,15 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
     'NX.coreui.view.formfield.factory.FormfieldCheckboxFactory',
     'NX.coreui.view.formfield.factory.FormfieldComboFactory',
     'NX.coreui.view.formfield.factory.FormfieldDateFieldFactory',
+    'NX.coreui.view.formfield.factory.FormfieldItemselectFactory',
     'NX.coreui.view.formfield.factory.FormfieldNumberFieldFactory',
     'NX.coreui.view.formfield.factory.FormfieldTextAreaFactory',
     'NX.coreui.view.formfield.factory.FormfieldTextFieldFactory'
   ],
+
+  mixins: {
+    logAware: 'NX.LogAware'
+  },
 
   /**
    * @override
@@ -67,6 +72,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
       Ext.Array.each(me.formFields, function (formField) {
         var factory = Ext.ClassManager.getByAlias('nx.formfield.factory.' + formField.type);
         if (!factory) {
+          me.logWarn('Missing factory for form-field type:', formField.type);
           factory = Ext.ClassManager.getByAlias('nx.formfield.factory.string');
         }
         if (factory) {

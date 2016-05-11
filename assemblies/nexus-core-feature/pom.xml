@@ -107,13 +107,14 @@
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
-
+    
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-script-plugin</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
+    
   </dependencies>
 
   <build>

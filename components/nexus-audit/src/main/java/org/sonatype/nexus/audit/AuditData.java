@@ -15,11 +15,11 @@ package org.sonatype.nexus.audit;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 
 import com.google.common.base.Throwables;
@@ -140,12 +140,21 @@ public class AuditData
   public AuditData copy() {
     try {
       AuditData copy = (AuditData) clone();
-      copy.attributes = new HashMap<>(this.attributes);
+      copy.attributes = new LinkedHashMap<>(this.attributes);
       return copy;
     }
     catch (CloneNotSupportedException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Returns deeply cloned copy detached from {@link EntityMetadata}.
+   */
+  public AuditData detach() {
+    AuditData copy = copy();
+    copy.setEntityMetadata(null);
+    return copy;
   }
 
   @Override

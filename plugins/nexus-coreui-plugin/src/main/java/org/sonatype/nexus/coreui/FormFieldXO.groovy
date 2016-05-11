@@ -12,10 +12,18 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.annotation.Nullable
+
+import org.sonatype.nexus.formfields.FormField
+import org.sonatype.nexus.formfields.NumberTextFormField
+import org.sonatype.nexus.formfields.Selectable
+
 import groovy.transform.ToString
 
+import static com.google.common.base.Preconditions.checkNotNull
+
 /**
- * Form field exchange object.
+ * {@link FormField} exchange object.
  *
  * @since 3.0
  */
@@ -23,17 +31,98 @@ import groovy.transform.ToString
 class FormFieldXO
 {
   String id
+
   String type
+
   String label
+
   String helpText
+
   Boolean required
+
+  @Nullable
   String regexValidation
+
+  @Nullable
   String initialValue
+
+  /**
+   * @since 3.1
+   */
+  Map<String,Object> attributes
+
+  // NumberTextFormField extensions; before attributes were introduced.  Use attributes for future extensions.
+
+  /**
+   * @see NumberTextFormField
+   */
+  @Nullable
   String minValue
+
+  /**
+   * @see NumberTextFormField
+   */
+  @Nullable
   String maxValue
 
+  // Selectable extensions; before attributes were introduced.  Use attributes for future extensions.
+
+  /**
+   * @see Selectable
+   */
+  @Nullable
   String storeApi
+
+  /**
+   * @see Selectable
+   */
+  @Nullable
   Map<String, String> storeFilters
+
+  /**
+   * @see Selectable
+   */
+  @Nullable
   String idMapping
+
+  /**
+   * @see Selectable
+   */
+  @Nullable
   String nameMapping
+
+  /**
+   * Create transfer object from field source.
+   *
+   * @since 3.1
+   */
+  static FormFieldXO create(final FormField<?> source) {
+    checkNotNull(source)
+
+    FormFieldXO result = new FormFieldXO(
+        id: source.id,
+        type: source.type,
+        label: source.label,
+        helpText: source.helpText,
+        required: source.required,
+        regexValidation: source.regexValidation,
+        initialValue: source.initialValue,
+        attributes: source.attributes
+    )
+
+    // FIXME: transfer objects really should not change the field names; adds unneeded confusion and complexity
+    if (source instanceof NumberTextFormField) {
+      result.minValue = source.minimumValue
+      result.maxValue = source.maximumValue
+    }
+
+    if (source instanceof Selectable) {
+      result.storeApi = source.storeApi
+      result.storeFilters = source.storeFilters
+      result.idMapping = source.idMapping
+      result.nameMapping = source.nameMapping
+    }
+
+    return result
+  }
 }

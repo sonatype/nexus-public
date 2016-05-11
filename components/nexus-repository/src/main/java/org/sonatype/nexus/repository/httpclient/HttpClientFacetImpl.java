@@ -72,7 +72,7 @@ public class HttpClientFacetImpl
 
   private Config config;
 
-  private FilteredHttpClient httpClient;
+  private BlockingHttpClient httpClient;
 
   @Inject
   public HttpClientFacetImpl(final HttpClientManager httpClientManager) {
@@ -128,7 +128,7 @@ public class HttpClientFacetImpl
     HttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
     // wrap delegate with auto-block aware client
-    httpClient = new FilteredHttpClient(delegate, config);
+    httpClient = new BlockingHttpClient(delegate, config);
     log.debug("Created HTTP client: {}", httpClient);
   }
 

@@ -140,6 +140,20 @@ Ext.define('NX.ext.form.field.ItemSelector', {
     });
   },
 
+  /**
+   * Ext.ux.form.ItemSelector defers setting value if store is not loaded,
+   * which messes up the logic in Ext.form.Basic.setValues()
+   * when Ext.form.Basic.trackResetOnLoad is true.
+   *
+   * @override
+   */
+  setValue: function(value) {
+    this.callParent(arguments);
+
+    // HACK: force original value to reset, to prevent always dirty forms when store has not loaded when form initially sets values.
+    this.resetOriginalValue();
+  },
+
   // HACK: avoid exceptions when the store is reloaded
   populateFromStore: function (store) {
     var me = this,

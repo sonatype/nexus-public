@@ -48,6 +48,23 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
   },
 
   /**
+   * @private
+   * @type {boolean}
+   */
+  checkSyncStatus: true,
+
+  /**
+   * @override
+   */
+  prepare: function () {
+    var me = this,
+        selectedRepos = me.controller.getContext().get('selected-repositories');
+
+    me.checkSyncStatus = selectedRepos && selectedRepos.length;
+    me.callParent();
+  },
+
+  /**
    * @override
    */
   reset: function() {
@@ -67,19 +84,29 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
   /**
    * @override
    */
-  doInputNeeded: function() {
-    this.getScreenCmp().down('button[action=continue]').enable();
+  refresh: function() {
+    var me = this;
+
+    me.callParent();
+
+    if (me.checkSyncStatus) {
+      NX.direct.migration_Assistant.syncStatus(function (response, event) {
+        if (event.status && response.success && response.data.waitingForChanges) {
+          me.getScreenCmp().down('button[action=continue]').enable();
+        }
+      });
+    }
   },
 
   /**
    * @override
    */
   doComplete: function() {
-    var screen = this.getScreenCmp(),
-        selectedRepos = this.controller.getContext().get('selected-repositories') || [];
+    var me = this,
+        screen = me.getScreenCmp();
 
     // if there are no repositories configured for migration, hide the 'Stop Monitoring' button
-    if (!selectedRepos.length) {
+    if (!me.checkSyncStatus) {
       screen.down('button[action=continue]').setVisible(false);
       screen.down('button[action=finish]').setVisible(true);
     }

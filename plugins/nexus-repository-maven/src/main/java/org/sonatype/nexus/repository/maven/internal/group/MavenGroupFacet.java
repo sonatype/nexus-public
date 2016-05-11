@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.transaction.UnitOfWork;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -64,9 +65,10 @@ public class MavenGroupFacet
 
   @Inject
   public MavenGroupFacet(final RepositoryManager repositoryManager,
+                         final ConstraintViolationFactory constraintViolationFactory,
                          @Named(GroupType.NAME) final Type groupType)
   {
-    super(repositoryManager, groupType);
+    super(repositoryManager, constraintViolationFactory, groupType);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
     this.archetypeCatalogMerger = new ArchetypeCatalogMerger();
   }

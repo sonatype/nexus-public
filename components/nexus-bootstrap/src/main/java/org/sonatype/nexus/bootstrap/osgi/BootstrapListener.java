@@ -34,6 +34,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 
@@ -51,12 +52,15 @@ public class BootstrapListener
 
   private FilterTracker filterTracker;
 
+  private static final boolean SKIP_FEATURE_CHECK = Boolean
+      .valueOf(System.getProperty("nexus.skipFeatureCheck", "false"));
+
   @Override
   public void contextInitialized(final ServletContextEvent event) {
     log.info("Initializing");
 
     ServletContext servletContext = event.getServletContext();
-
+    
     try {
       Map<String, String> properties = ConfigurationHolder.get();
       if (properties == null) {
@@ -66,6 +70,12 @@ public class BootstrapListener
       // Ensure required properties exist
       requireProperty(properties, "karaf.base");
       requireProperty(properties, "karaf.data");
+
+      if (shouldSwitchToOss()) {
+        log.info("Loading OSS Edition");
+        properties.put("nexus-edition", "nexus-oss-edition");
+        properties.put("nexus-features", "nexus-oss-feature");  
+      }
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("org.sonatype.nexus.cfg", properties);
@@ -85,6 +95,7 @@ public class BootstrapListener
       }
 
       // bootstrap our chosen Nexus edition
+      requireProperty(properties, "nexus-edition");
       installNexusEdition(bundleContext, properties.get("nexus-edition"));
 
       // watch out for the real Nexus listener
@@ -104,6 +115,17 @@ public class BootstrapListener
     }
 
     log.info("Initialized");
+  }
+
+  /**
+   * Determine whether or not we should be booting the OSS edition or not, based on the presence of a license or
+   * a System property that can be used to override the behaviour.
+   */
+  private static boolean shouldSwitchToOss() {
+    if (SKIP_FEATURE_CHECK) {
+      return false;
+    }
+    return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
   }
 
   private static void installNexusEdition(final BundleContext ctx, @Nullable final String editionName)

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.group;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.ConstraintViolation;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -33,6 +35,7 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.annotations.VisibleForTesting;
@@ -41,6 +44,9 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
  * Default {@link GroupFacet} implementation.
@@ -55,6 +61,8 @@ public class GroupFacetImpl
   private final RepositoryManager repositoryManager;
 
   private final Type groupType;
+
+  private final ConstraintViolationFactory constraintViolationFactory;
 
   @VisibleForTesting
   static final String CONFIG_KEY = "group";
@@ -80,15 +88,48 @@ public class GroupFacetImpl
 
   @Inject
   public GroupFacetImpl(final RepositoryManager repositoryManager,
+                        final ConstraintViolationFactory constraintViolationFactory,
                         @Named(GroupType.NAME) final Type groupType)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.groupType = checkNotNull(groupType);
+    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
   }
 
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
     facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
+
+    if (getStateGuard().is(STARTED)) {
+      Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+
+      Set<ConstraintViolation<?>> violations = new HashSet<>();
+      maybeAdd(violations, validateGroupDoesNotContainItself(configuration.getRepositoryName(), configToValidate));
+      maybePropagate(violations, log);
+    }
+  }
+
+  private boolean containsGroup(Repository root, String repositoryName, Set<Repository> checkedGroups) {
+    return root.facet(GroupFacet.class).members().stream().anyMatch((repository) -> {
+      return checkedGroups.add(repository) &&
+          (repository.getName().equals(repositoryName) ||
+              (groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups)));
+    });
+  }
+
+  ConstraintViolation<?> validateGroupDoesNotContainItself(String repositoryName, Config config) {
+    Set<Repository> checkedGroups = new HashSet<>();
+    for (String memberName : config.memberNames) {
+      Repository repository = repositoryManager.get(memberName);
+      if (repository.getName().equals(repositoryName) ||
+          (groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups))) {
+        return constraintViolationFactory.createViolation(P_ATTRIBUTES + "." + CONFIG_KEY + ".memberNames",
+            "Group '" + repository.getName() + "' has a member repository '" + repositoryName +
+                "' and cannot be added to this list.");
+      }
+    }
+
+    return null;
   }
 
   @Override

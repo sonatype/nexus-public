@@ -27,9 +27,9 @@ import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder
 import org.sonatype.nexus.capability.CapabilityRegistry
 import org.sonatype.nexus.capability.Tag
 import org.sonatype.nexus.capability.Taggable
+import org.sonatype.nexus.coreui.FormFieldXO
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.formfields.Selectable
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -92,24 +92,7 @@ extends DirectComponentSupport
           id: descriptor.type(),
           name: descriptor.name(),
           about: descriptor.about(),
-          formFields: descriptor.formFields()?.collect { formField ->
-            def formFieldXO = new FormFieldXO(
-                id: formField.id,
-                type: formField.type,
-                label: formField.label,
-                helpText: formField.helpText,
-                required: formField.required,
-                regexValidation: formField.regexValidation,
-                initialValue: formField.initialValue
-            )
-            if (formField instanceof Selectable) {
-              formFieldXO.storeApi = formField.storeApi
-              formFieldXO.storeFilters = formField.storeFilters
-              formFieldXO.idMapping = formField.idMapping
-              formFieldXO.nameMapping = formField.nameMapping
-            }
-            return formFieldXO
-          }
+          formFields: descriptor.formFields()?.collect { FormFieldXO.create(it) }
       )
     }
   }

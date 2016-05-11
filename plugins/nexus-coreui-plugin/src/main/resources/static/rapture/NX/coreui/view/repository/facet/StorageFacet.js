@@ -61,7 +61,9 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
                 if (!combo.getValue()) {
                   var store = combo.getStore();
                   if (store.getTotalCount() === 1) {
-                    combo.setValue(store.getAt(0).get('name'));
+                    var value = store.getAt(0).get('name');
+                    combo.originalValue = value;
+                    combo.setValue(value);
                   }
                 }
               }

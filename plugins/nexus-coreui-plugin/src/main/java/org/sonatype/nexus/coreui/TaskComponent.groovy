@@ -23,8 +23,6 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.formfields.NumberTextFormField
-import org.sonatype.nexus.formfields.Selectable
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState
@@ -94,28 +92,7 @@ class TaskComponent
           id: descriptor.id,
           name: descriptor.name,
           exposed: descriptor.exposed,
-          formFields: descriptor.formFields?.collect {formField ->
-            def formFieldXO = new FormFieldXO(
-                id: formField.id,
-                type: formField.type,
-                label: formField.label,
-                helpText: formField.helpText,
-                required: formField.required,
-                regexValidation: formField.regexValidation,
-                initialValue: formField.initialValue
-            )
-            if (formField instanceof Selectable) {
-              formFieldXO.storeApi = formField.storeApi
-              formFieldXO.storeFilters = formField.storeFilters
-              formFieldXO.idMapping = formField.idMapping
-              formFieldXO.nameMapping = formField.nameMapping
-            }
-            if (formField instanceof NumberTextFormField) {
-              formFieldXO.minValue = formField.minimumValue
-              formFieldXO.maxValue = formField.maximumValue
-            }
-            return formFieldXO
-          }
+          formFields: descriptor.formFields?.collect { FormFieldXO.create(it) }
       )
       return result
     }

@@ -69,7 +69,8 @@ Ext.define('NX.controller.Unlicensed', {
       me.logDebug('Showing unlicensed view');
       //</if>
 
-      viewport.add({ xtype: 'nx-unlicensed' });
+      viewport.add({ xtype: 'nx-coreui-licensing-details' });
+      viewport.down('nx-settingsform').setVisible(false);
     }
   },
 

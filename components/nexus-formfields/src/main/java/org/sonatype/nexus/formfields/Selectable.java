@@ -14,8 +14,11 @@ package org.sonatype.nexus.formfields;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 /**
- * Implemented by {@link FormField}s whose value should be selected from a data store (combobox).
+ * Implemented by {@link FormField}s whose value should be selected from a data store.
+ *
  * The data store should return collections of records that have "id" and "name" fields.
  *
  * @since 2.7
@@ -35,6 +38,7 @@ public interface Selectable
    * @return Filters to be applied to store
    * @since 3.0
    */
+  @Nullable
   Map<String, String> getStoreFilters();
 
   /**

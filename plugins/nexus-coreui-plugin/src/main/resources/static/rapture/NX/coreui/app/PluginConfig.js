@@ -165,6 +165,16 @@ Ext.define('NX.coreui.app.PluginConfig', {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
+    { id: 'NX.coreui.controller.Licensing',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-licensing-plugin');
+      }
+    },
+    { id: 'NX.coreui.controller.LicenseUsers',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-licensing-plugin');
+      }
+    },
     {
       id: 'NX.coreui.controller.Privileges',
       active: function () {

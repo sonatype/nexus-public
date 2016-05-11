@@ -70,12 +70,6 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                 },
                 {
                   xtype: 'checkbox',
-                  name: 'security.privileges',
-                  boxLabel: 'Privileges',
-                  checked: false
-                },
-                {
-                  xtype: 'checkbox',
                   name: 'ldap',
                   boxLabel: 'LDAP Configuration',
                   checked: false

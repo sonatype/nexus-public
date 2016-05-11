@@ -69,6 +69,20 @@ public class ConstraintViolations
   }
 
   /**
+   * If any non-null violations are passed in, will add them to the provided violations set
+   *
+   * @param violations set to add items to
+   * @param toAdd list of potential items to add
+   */
+  public static void maybeAdd(final Set<ConstraintViolation<?>> violations, final ConstraintViolation<?>... toAdd) {
+    for (ConstraintViolation<?> violation : toAdd) {
+      if (violation != null) {
+        violations.add(violation);
+      }
+    }
+  }
+
+  /**
    * Propagate {@link ConstraintViolationException} if there are any violations.
    *
    * @throws ConstraintViolationException

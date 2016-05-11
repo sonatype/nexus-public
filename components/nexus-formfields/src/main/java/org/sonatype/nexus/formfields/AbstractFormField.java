@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.formfields;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 /**
  * Support for {@link FormField} implementations.
  */
@@ -22,38 +27,56 @@ public abstract class AbstractFormField<T>
 
   private String id;
 
+  @Nullable
   private String regexValidation;
 
   private boolean required;
 
   private String label;
 
+  @Nullable
   private T initialValue;
+
+  /**
+   * @since 3.1
+   */
+  private Map<String,Object> attributes;
+
+  // NOTE: avoid adding anymore constructors
 
   public AbstractFormField(final String id,
                            final String label,
                            final String helpText,
                            final boolean required,
-                           final String regexValidation,
-                           final T initialValue)
+                           @Nullable final String regexValidation,
+                           @Nullable final T initialValue)
   {
     this(id, label, helpText, required, regexValidation);
     this.initialValue = initialValue;
   }
 
-  public AbstractFormField(String id, String label, String helpText, boolean required, String regexValidation) {
+  public AbstractFormField(final String id,
+                           final String label,
+                           final String helpText,
+                           final boolean required,
+                           @Nullable final String regexValidation)
+  {
     this(id, label, helpText, required);
     this.regexValidation = regexValidation;
   }
 
-  public AbstractFormField(String id, String label, String helpText, boolean required) {
+  public AbstractFormField(final String id,
+                           final String label,
+                           final String helpText,
+                           final boolean required)
+  {
     this(id);
     this.label = label;
     this.helpText = helpText;
     this.required = required;
   }
 
-  public AbstractFormField(String id) {
+  public AbstractFormField(final String id) {
     this.id = id;
   }
 
@@ -69,6 +92,7 @@ public abstract class AbstractFormField<T>
     return this.id;
   }
 
+  @Nullable
   public String getRegexValidation() {
     return this.regexValidation;
   }
@@ -77,31 +101,43 @@ public abstract class AbstractFormField<T>
     return this.required;
   }
 
+  @Nullable
   public T getInitialValue() {
     return initialValue;
   }
 
-  public void setHelpText(String helpText) {
+  public void setHelpText(final String helpText) {
     this.helpText = helpText;
   }
 
-  public void setId(String id) {
+  public void setId(final String id) {
     this.id = id;
   }
 
-  public void setRegexValidation(String regex) {
+  public void setRegexValidation(@Nullable final String regex) {
     this.regexValidation = regex;
   }
 
-  public void setRequired(boolean required) {
+  public void setRequired(final boolean required) {
     this.required = required;
   }
 
-  public void setLabel(String label) {
+  public void setLabel(final String label) {
     this.label = label;
   }
 
-  public void setInitialValue(T value) {
+  public void setInitialValue(@Nullable final T value) {
     this.initialValue = value;
+  }
+
+  /**
+   * @since 3.1
+   */
+  @Override
+  public Map<String, Object> getAttributes() {
+    if (attributes == null) {
+      attributes = new HashMap<>();
+    }
+    return attributes;
   }
 }

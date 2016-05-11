@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui.capability
 
+import org.sonatype.nexus.coreui.FormFieldXO
+
 import groovy.transform.ToString
 import org.hibernate.validator.constraints.NotEmpty
 

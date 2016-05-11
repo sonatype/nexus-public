@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.formfields;
 
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 /**
  * Form field.
  *
@@ -20,48 +24,69 @@ package org.sonatype.nexus.formfields;
 public interface FormField<T>
 {
   /**
-   * Required {@code true} symbol.
+   * Mandatory ({@code true}) symbol.
+   *
+   * @see #isRequired()
    */
   boolean MANDATORY = true;
 
   /**
-   * Required {@code false} symbol.
+   * Optional ({@code false}) symbol.
+   *
+   * @see #isRequired()
    */
   boolean OPTIONAL = false;
 
   /**
-   * Get the type of this form field
+   * Field type.
+   *
+   * This is a symbolic type to match up the widget implementation for the field in the UI.
    */
   String getType();
 
   /**
-   * Get the label of this form field
+   * Field label.
    */
   String getLabel();
 
   /**
-   * Get the ID of this form field
+   * Field identifier.
    */
   String getId();
 
   /**
-   * get the required flag of this field
+   * True if field is required.
    */
   boolean isRequired();
 
   /**
-   * Get the help text of this field
+   * Help text of field.
    */
   String getHelpText();
 
   /**
-   * Get the regex validation of this field
+   * Optional regular-expression to validate field.
    */
+  @Nullable
   String getRegexValidation();
 
   /**
-   * @return initial value of this field (can be null - no initial value)
+   * Optional initial value of the field.
+   *
    * @since 2.3
    */
+  @Nullable
   T getInitialValue();
+
+  /**
+   * Optional field attributes.
+   *
+   * Used to encode additional data to widget implementation in UI.
+   *
+   * Care must be used to ensure that values are transferable, and likely should remain simple values,
+   * collections of simple values or simple transfer objects.
+   *
+   * @since 3.1
+   */
+  Map<String,Object> getAttributes();
 }

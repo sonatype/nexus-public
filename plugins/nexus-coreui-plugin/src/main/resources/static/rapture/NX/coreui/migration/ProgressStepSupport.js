@@ -46,7 +46,7 @@ Ext.define('NX.coreui.migration.ProgressStepSupport', {
   },
 
   /**
-   * @private
+   * @override
    */
   prepare: function () {
     var me = this;
@@ -145,25 +145,7 @@ Ext.define('NX.coreui.migration.ProgressStepSupport', {
         }
       }
     });
-
-    if (me.doInputNeeded) {
-      NX.direct.migration_Assistant.syncStatus(function (response, event) {
-        if (event.status && response.success) {
-          if (response.data.waitingForChanges) {
-            me.doInputNeeded();
-          }
-        }
-      });
-    }
   },
-
-  /**
-   * Extension-point to inform when user feedback is needed.
-   *
-   * @protected
-   * @template
-   */
-  doInputNeeded: null,
 
   /**
    * Extension-point to inform when progress has indicated completion.
