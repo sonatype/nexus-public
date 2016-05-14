@@ -336,9 +336,49 @@ class RepositoryApiImpl
     createRepository(createGroup(name, 'bower-group', blobStoreName, members as String[]))
   }
 
+  @Nonnull
+  Repository createPyPiHosted(final String name, final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                              final boolean strictContentTypeValidation = true,
+                              final WritePolicy writePolicy = WritePolicy.ALLOW)
+  {
+    createRepository(createHosted(name, 'pypi-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
+  }
 
-  private Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
-                             final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
+  @Nonnull
+  Repository createPyPiProxy(final String name, final String remoteUrl,
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                             final boolean strictContentTypeValidation = true)
+  {
+    createRepository(createProxy(name, 'pypi-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
+  }
+
+  @Nonnull
+  Repository createPyPiGroup(final String name, final List<String> members,
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+  {
+    createRepository(createGroup(name, 'pypi-group', blobStoreName, members as String[]))
+  }
+
+  @Nonnull
+  Repository createRubygemsHosted(final String name, 
+                                  final String blobStoreName  = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                                  final boolean strictContentTypeValidation = true,
+                                  final WritePolicy writePolicy = WritePolicy.ALLOW)
+  {
+    return createRepository(createHosted(name, 'rubygems-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
+  }
+
+  @Nonnull
+  Repository createRubygemsProxy(final String name,
+                                 final String remoteUrl,
+                                 final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                                 final boolean strictContentTypeValidation = true)
+  {
+    return createRepository(createProxy(name, 'rubygems-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
+  }
+
+  private static Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
+                                    final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
   {
     [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy]
   }
@@ -385,5 +425,4 @@ class RepositoryApiImpl
       throw new IllegalArgumentException("No blobStore found with name $name")
     }
   }
-
 }

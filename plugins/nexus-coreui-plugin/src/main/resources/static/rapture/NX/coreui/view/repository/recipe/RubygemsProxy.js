@@ -13,18 +13,18 @@
 /*global Ext, NX*/
 
 /**
- * Repository "Settings" form for a Rubygems Hosted repository.
+ * Repository "Settings" form for a Rubygems Proxy repository
  *
  * @since 3.1
  */
-Ext.define('NX.coreui.view.repository.recipe.RubygemsHosted', {
+Ext.define('NX.coreui.view.repository.recipe.RubygemsProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-rubygems-hosted',
+  alias: 'widget.nx-coreui-repository-rubygems-proxy',
   requires: [
-    'NX.Conditions',
-    'NX.I18n',
+    'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted'
+    'NX.coreui.view.repository.facet.HttpClientFacet',
+    'NX.coreui.view.repository.facet.NegativeCacheFacet'
   ],
 
   /**
@@ -34,8 +34,10 @@ Ext.define('NX.coreui.view.repository.recipe.RubygemsHosted', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet'}
+      {xtype: 'nx-coreui-repository-negativecache-facet'},
+      {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
     me.callParent();

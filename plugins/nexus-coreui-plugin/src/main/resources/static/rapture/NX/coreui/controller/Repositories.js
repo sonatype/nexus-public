@@ -58,6 +58,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.NugetProxy',
     'repository.recipe.NugetGroup',
     'repository.recipe.RubygemsHosted',
+    'repository.recipe.RubygemsProxy',
     'repository.recipe.RawHosted',
     'repository.recipe.RawProxy',
     'repository.recipe.RawGroup',

@@ -58,7 +58,7 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
           return Ext.DomHelper.markup({
             tag: 'div',
             cls: 'attribute-value',
-            html: val
+            html: Ext.util.Format.htmlEncode(val)
           });
         }
       }

@@ -61,7 +61,6 @@ class InstallConfigurationCustomizerTest
 </Configure>
 '''
 
-    assert expected == source.content.text
-    assert expected.size() == source.size
+    assert expected == source.content.text.replace('\r\n', '\n')
   }
 }

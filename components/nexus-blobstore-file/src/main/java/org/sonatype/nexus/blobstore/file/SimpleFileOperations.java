@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -100,7 +99,7 @@ public class SimpleFileOperations
   @Override
   public InputStream openInputStream(final Path path) throws IOException {
     checkNotNull(path);
-    return new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ));
+    return Files.newInputStream(path, StandardOpenOption.READ);
   }
 
   @Override

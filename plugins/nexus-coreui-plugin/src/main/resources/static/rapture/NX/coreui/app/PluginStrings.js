@@ -93,6 +93,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchNpm_Group: 'npm Repositories',
     SearchNuget_Group: 'NuGet Repositories',
     SearchPyPi_Group: 'PyPI Repositories',
+    SearchRubygems_Group: 'RubyGems Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
     SearchCriteria_SHA256_FieldLabel: 'SHA-256',
@@ -119,6 +120,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchPyPi_Keywords_FieldLabel: 'PyPI Keywords',
     SearchPyPi_PyVersion_FieldLabel: 'Python Version',
     SearchPyPi_Summary_FieldLabel: 'Summary',
+    SearchRubygems_Name_FieldLabel: 'Name',
+    SearchRubygems_Version_FieldLabel: 'Version',
+    SearchRubygems_Platform_FieldLabel: 'Platform',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -159,6 +163,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> PyPI
     SearchPyPi_Text: 'PyPI',
     SearchPyPi_Description: 'Search for components in PyPI repositories',
+
+    // Browse -> Search -> Rubygems
+    SearchRubygems_Text: 'RubyGems',
+    SearchRubygems_Description: 'Search for components in RubyGems repositories',
 
     // Browse -> Search -> Custom
     Search_Custom_Text: 'Custom',

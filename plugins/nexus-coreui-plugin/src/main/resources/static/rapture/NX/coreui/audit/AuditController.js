@@ -78,6 +78,10 @@ Ext.define('NX.coreui.audit.AuditController', {
         file: 'email.png',
         variants: ['x16', 'x32']
       },
+      'audit-license': {
+        file: 'license_key.png',
+        variants: ['x16', 'x32']
+      },
       'audit-security.anonymous': {
         file: 'user_silhouette.png',
         variants: ['x16', 'x32']
