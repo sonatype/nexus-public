@@ -66,9 +66,6 @@ public class ConfigImpl
   private static final int PREFIX_FILE_MAX_LINE_LENGTH = SystemPropertiesHelper.getInteger(Config.class.getName()
       + ".prefixFileMaxLineLength", 250); // 250 chars
 
-  private static final int PREFIX_FILE_MAX_SIZE = SystemPropertiesHelper.getInteger(Config.class.getName()
-      + ".prefixFileMaxSize", 100000); // 100 KB
-
   private final boolean featureActive;
 
   /**
@@ -119,10 +116,4 @@ public class ConfigImpl
   public int getPrefixFileMaxLineLength() {
     return PREFIX_FILE_MAX_LINE_LENGTH;
   }
-
-  @Override
-  public int getPrefixFileMaxSize() {
-    return PREFIX_FILE_MAX_SIZE;
-  }
-
 }
