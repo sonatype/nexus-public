@@ -10,27 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.webapp.metrics;
+package org.sonatype.nexus.bootstrap.jetty;
 
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
+import com.codahale.metrics.SharedMetricRegistries;
+import org.eclipse.jetty.server.Handler;
 
 /**
- * {@link ThreadDeadlockHealthCheck} provider.
- *
- * @since 2.8
+ * Extension of {@link com.codahale.metrics.jetty9.InstrumentedHandler} that restores the delegate constructor.
+ * 
+ * @since 3.0
  */
-@Named
-@Singleton
-public class DeadlockHealthCheckProvider
-  implements Provider<HealthCheck>
+public final class InstrumentedHandler
+    extends com.codahale.metrics.jetty9.InstrumentedHandler
 {
-  @Override
-  public HealthCheck get() {
-    return new ThreadDeadlockHealthCheck();
+  public InstrumentedHandler(Handler delegate) {
+    super(SharedMetricRegistries.getOrCreate("nexus"));
+    setHandler(delegate);
   }
 }

@@ -31,8 +31,8 @@
     Prevent Servlet API from being included in the WAR.
     -->
     <dependency>
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -83,17 +83,17 @@
     </dependency>
 
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
+      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-servlet</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
-      <artifactId>metrics-web</artifactId>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-servlets</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
+      <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-logback</artifactId>
     </dependency>
 

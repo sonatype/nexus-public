@@ -13,19 +13,10 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
-
-<!-- =============================================================== -->
-<!-- Force HTTP connections to redirect to the HTTPS connector       -->
-<!-- REQUIRES jetty-https.xml or connector with application-port-ssl -->
-<!-- =============================================================== -->
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Ref id="HTTPConnector">
-    <Set name="confidentialPort"><Property name="application-port-ssl"/></Set>
-  </Ref>
-
-  <Ref id="NexusWebAppContext">
+  <Ref refid="NexusWebAppContext">
     <!-- enforce use of the confidential port -->
     <Set name="securityHandler">
       <New class="org.eclipse.jetty.security.ConstraintSecurityHandler">

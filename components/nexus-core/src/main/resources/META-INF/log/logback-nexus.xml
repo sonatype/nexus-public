@@ -34,7 +34,7 @@
     </rollingPolicy>
   </appender>
 
-  <appender name="metrics" class="com.yammer.metrics.logback.InstrumentedAppender"/>
+  <appender name="metrics" class="org.sonatype.nexus.bootstrap.log.InstrumentedAppender"/>
 
   <root level="${root.level}">
     <appender-ref ref="console"/>

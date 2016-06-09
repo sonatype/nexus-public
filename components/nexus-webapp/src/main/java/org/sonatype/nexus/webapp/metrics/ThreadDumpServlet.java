@@ -12,25 +12,31 @@
  */
 package org.sonatype.nexus.webapp.metrics;
 
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import java.io.IOException;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
 
 /**
- * {@link ThreadDeadlockHealthCheck} provider.
+ * Customized {@link com.codahale.metrics.servlets.ThreadDumpServlet} to support download.
  *
- * @since 2.8
+ * @since 3.0
  */
-@Named
-@Singleton
-public class DeadlockHealthCheckProvider
-  implements Provider<HealthCheck>
+public class ThreadDumpServlet
+  extends com.codahale.metrics.servlets.ThreadDumpServlet
 {
   @Override
-  public HealthCheck get() {
-    return new ThreadDeadlockHealthCheck();
+  protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
+      throws ServletException, IOException
+  {
+    boolean download = Boolean.parseBoolean(req.getParameter("download"));
+    if (download) {
+      resp.addHeader(CONTENT_DISPOSITION, "attachment; filename='threads.txt'");
+    }
+
+    super.doGet(req, resp);
   }
 }

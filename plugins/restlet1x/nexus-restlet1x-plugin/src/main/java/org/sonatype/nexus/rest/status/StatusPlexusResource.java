@@ -35,7 +35,7 @@ import org.sonatype.plexus.rest.resource.PathProtectionDescriptor;
 import org.sonatype.security.rest.authentication.AbstractUIPermissionCalculatingPlexusResource;
 import org.sonatype.security.rest.model.AuthenticationClientPermissions;
 
-import com.yammer.metrics.annotation.Timed;
+import com.codahale.metrics.annotation.Timed;
 import org.codehaus.enunciate.contract.jaxrs.ResourceMethodSignature;
 import org.restlet.Context;
 import org.restlet.data.Form;

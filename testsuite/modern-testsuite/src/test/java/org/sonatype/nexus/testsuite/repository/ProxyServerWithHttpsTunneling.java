@@ -25,12 +25,10 @@ import org.sonatype.tests.http.server.jetty.impl.ProxyServlet;
 
 import com.google.common.collect.Sets;
 import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.proxy.ConnectHandler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ConnectHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -57,10 +55,7 @@ public class ProxyServerWithHttpsTunneling
   }
 
   public void initialize() {
-    Server proxy = new Server();
-    Connector connector = new SelectChannelConnector();
-    connector.setPort(getPort());
-    proxy.addConnector(connector);
+    Server proxy = new Server(getPort());
 
     final HandlerCollection handlers = new HandlerCollection();
     proxy.setHandler(handlers);
@@ -125,7 +120,7 @@ public class ProxyServerWithHttpsTunneling
     public void service(final ServletRequest req, final ServletResponse res)
         throws ServletException, IOException
     {
-      final HttpURI uri = ((Request) req).getUri();
+      final HttpURI uri = ((Request) req).getHttpURI();
       proxiedHosts.add(uri.getHost() + ":" + uri.getPort());
       super.service(req, res);
     }

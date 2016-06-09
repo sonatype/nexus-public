@@ -10,27 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.webapp.metrics;
+package org.sonatype.nexus.bootstrap.log;
 
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
+import com.codahale.metrics.SharedMetricRegistries;
 
 /**
- * {@link ThreadDeadlockHealthCheck} provider.
- *
- * @since 2.8
+ * Extension of {@link com.codahale.metrics.logback.InstrumentedAppender} that restores the default constructor.
+ * 
+ * @since 3.0
  */
-@Named
-@Singleton
-public class DeadlockHealthCheckProvider
-  implements Provider<HealthCheck>
+public final class InstrumentedAppender
+    extends com.codahale.metrics.logback.InstrumentedAppender
 {
-  @Override
-  public HealthCheck get() {
-    return new ThreadDeadlockHealthCheck();
+  public InstrumentedAppender() {
+    super(SharedMetricRegistries.getOrCreate("nexus"));
   }
 }

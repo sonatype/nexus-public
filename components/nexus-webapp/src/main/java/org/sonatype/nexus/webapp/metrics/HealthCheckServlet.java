@@ -12,25 +12,23 @@
  */
 package org.sonatype.nexus.webapp.metrics;
 
-import javax.inject.Named;
-import javax.inject.Provider;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
 
 /**
- * {@link ThreadDeadlockHealthCheck} provider.
+ * Customized {@link com.codahale.metrics.servlets.HealthCheckServlet} to support injection.
  *
- * @since 2.8
+ * @see HealthCheckMediator
+ * @since 3.0
  */
-@Named
 @Singleton
-public class DeadlockHealthCheckProvider
-  implements Provider<HealthCheck>
+public class HealthCheckServlet
+    extends com.codahale.metrics.servlets.HealthCheckServlet
 {
-  @Override
-  public HealthCheck get() {
-    return new ThreadDeadlockHealthCheck();
+  @Inject
+  public HealthCheckServlet(final HealthCheckRegistry registry) {
+    super(registry);
   }
 }

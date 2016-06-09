@@ -28,7 +28,7 @@ import org.sonatype.security.web.guice.SecurityWebModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
-import com.yammer.metrics.guice.InstrumentationModule;
+import com.palominolabs.metrics.guice.InstrumentationModule;
 import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.eclipse.sisu.inject.DefaultRankingFunction;
