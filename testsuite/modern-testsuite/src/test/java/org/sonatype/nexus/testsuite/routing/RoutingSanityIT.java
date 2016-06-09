@@ -23,6 +23,10 @@ import org.sonatype.nexus.client.core.subsystem.routing.Status.Outcome;
 import org.sonatype.sisu.litmus.testsupport.group.External;
 import org.sonatype.sisu.litmus.testsupport.group.Slow;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingInputStream;
+import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import org.junit.Before;
@@ -129,27 +133,18 @@ public class RoutingSanityIT
     final Status centralStatus = routing().getStatus("central");
     // let's verify that Nexus did not modify the prefix file got from Central (req: Nexus must publish prefix file
     // as-is, as it was received from remote). both should be equal on byte level.
-    try (final InputStream nexusPrefixFile = getPrefixFileFrom(centralStatus.getPublishedUrl());
-         final InputStream centralPrefixFile =
-             getPrefixFileFrom("http://repo1.maven.org/maven2/.meta/prefixes.txt");) {
-      ByteStreams.equal(new InputSupplier<InputStream>()
-                        {
-                          @Override
-                          public InputStream getInput()
-                              throws IOException
-                          {
-                            return nexusPrefixFile;
-                          }
-                        }, new InputSupplier<InputStream>()
-                        {
-                          @Override
-                          public InputStream getInput()
-                              throws IOException
-                          {
-                            return centralPrefixFile;
-                          }
-                        }
-      );
-    }
+    ByteSource nexusPrefixFile = new ByteSource() {
+      @Override
+      public InputStream openStream() throws IOException {
+        return getPrefixFileFrom(centralStatus.getPublishedUrl());
+      }
+    };
+    ByteSource centralPrefixFile = new ByteSource() {
+      @Override
+      public InputStream openStream() throws IOException {
+        return getPrefixFileFrom("http://repo1.maven.org/maven2/.meta/prefixes.txt");
+      }
+    };
+    assertThat("nx and central prefix files must be equal", nexusPrefixFile.contentEquals(centralPrefixFile), is(true));
   }
 }

@@ -28,8 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <eclipse-sisu.version>0.2.0</eclipse-sisu.version>
-    <sisu-guice.version>3.1.10</sisu-guice.version>
+    <eclipse-sisu.version>0.3.3</eclipse-sisu.version>
+    <guice.version>4.0</guice.version>
   </properties>
 
   <dependencyManagement>
@@ -61,27 +61,27 @@
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu</groupId>
-        <artifactId>sisu-guice</artifactId>
-        <version>${sisu-guice.version}</version>
+        <groupId>com.google.inject</groupId>
+        <artifactId>guice</artifactId>
+        <version>${guice.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu.inject</groupId>
+        <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-servlet</artifactId>
-        <version>${sisu-guice.version}</version>
+        <version>${guice.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu.inject</groupId>
+        <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
-        <version>${sisu-guice.version}</version>
+        <version>${guice.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu.inject</groupId>
+        <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-assistedinject</artifactId>
-        <version>${sisu-guice.version}</version>
+        <version>${guice.version}</version>
       </dependency>
 
       <dependency>

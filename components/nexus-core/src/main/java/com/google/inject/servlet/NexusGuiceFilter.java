@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web.internal;
+package com.google.inject.servlet;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -22,9 +22,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-
-import com.google.inject.servlet.FilterPipeline;
-import com.google.inject.servlet.GuiceFilter;
 
 public final class NexusGuiceFilter
     extends GuiceFilter
