@@ -162,7 +162,7 @@ public class ContentServlet
       resourceStorePath = "/";
     }
     final ResourceStoreRequest result = new ResourceStoreRequest(resourceStorePath);
-    result.getRequestContext().put(STOPWATCH_KEY, new Stopwatch().start());
+    result.getRequestContext().put(STOPWATCH_KEY, Stopwatch.createStarted());
 
     // stuff in the user id if we have it in request
     final Subject subject = SecurityUtils.getSubject();

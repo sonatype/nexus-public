@@ -26,7 +26,7 @@
   
   <filter>
     <filter-name>guiceFilter</filter-name>
-    <filter-class>org.sonatype.nexus.web.internal.NexusGuiceFilter</filter-class>
+    <filter-class>com.google.inject.servlet.NexusGuiceFilter</filter-class>
   </filter>
 
   <filter-mapping>

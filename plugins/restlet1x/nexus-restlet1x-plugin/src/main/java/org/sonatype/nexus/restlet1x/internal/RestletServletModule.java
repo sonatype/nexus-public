@@ -16,9 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.web.internal.CookieFilter;
-import org.sonatype.nexus.web.internal.NexusGuiceFilter;
 import org.sonatype.nexus.web.internal.SecurityFilter;
 
+import com.google.inject.servlet.NexusGuiceFilter;
 import com.google.inject.servlet.ServletModule;
 
 /**
