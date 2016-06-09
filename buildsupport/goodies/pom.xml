@@ -98,6 +98,20 @@
         <groupId>org.sonatype.sisu.goodies</groupId>
         <artifactId>goodies-inject</artifactId>
         <version>${goodies.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.sonatype.sisu</groupId>
+            <artifactId>sisu-guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.sonatype.sisu.inject</groupId>
+            <artifactId>guice-assistedinject</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.sonatype.sisu.inject</groupId>
+            <artifactId>guice-multibindings</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
     </dependencies>
