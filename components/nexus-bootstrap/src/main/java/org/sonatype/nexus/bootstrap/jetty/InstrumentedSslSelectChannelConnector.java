@@ -21,6 +21,8 @@ import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.Timer;
 import org.eclipse.jetty.io.Connection;
+import org.eclipse.jetty.io.EndPoint;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
@@ -38,6 +40,8 @@ public final class InstrumentedSslSelectChannelConnector
   private static final Logger log = LoggerFactory.getLogger(InstrumentedSslSelectChannelConnector.class);
 
   private final MetricsRegistry registry;
+
+  private RequestCustomizer requestCustomizer;
 
   private Timer duration;
 
@@ -113,5 +117,17 @@ public final class InstrumentedSslSelectChannelConnector
     final long duration = System.currentTimeMillis() - connection.getTimeStamp();
     this.duration.update(duration, TimeUnit.MILLISECONDS);
     connections.dec();
+  }
+
+  public void setRequestCustomizer(final RequestCustomizer requestCustomizer) {
+    this.requestCustomizer = requestCustomizer;
+  }
+
+  @Override
+  public void customize(final EndPoint endpoint, final Request request) throws IOException {
+    super.customize(endpoint, request);
+    if (requestCustomizer != null) {
+      requestCustomizer.customize(endpoint, request);
+    }
   }
 }
