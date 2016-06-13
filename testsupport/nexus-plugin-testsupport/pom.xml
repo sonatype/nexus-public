@@ -45,11 +45,6 @@
       <artifactId>server-provider</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.sonatype.plexus</groupId>
-      <artifactId>plexus-jetty-testsuite</artifactId>
-    </dependency>
-
     <!--
     FIXME: These 'tests' classifier artifacts mess up mavens dependency resolution and causes IDEA to build incorrect module dependency defs
     HACK: exclude all transitive deps using * globs.

@@ -50,12 +50,6 @@
       <artifactId>nexus-plugin-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.plexus</groupId>
-      <artifactId>plexus-jetty-testsuite</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>

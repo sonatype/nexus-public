@@ -69,12 +69,6 @@
       <artifactId>nexus-test-common</artifactId>
     </dependency>
 
-    <!-- Starting up Jetty "fake remote" -->
-    <dependency>
-      <groupId>org.sonatype.plexus</groupId>
-      <artifactId>plexus-jetty-testsuite</artifactId>
-    </dependency>
-
     <!-- We use Wagon to deploy WagonUtil etc -->
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>

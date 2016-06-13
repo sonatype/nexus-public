@@ -49,12 +49,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.sonatype.plexus</groupId>
-      <artifactId>plexus-jetty-testsuite</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!--
     FIXME: Sort this out; used by ResourceMergingManagerThreadedTest
     -->
