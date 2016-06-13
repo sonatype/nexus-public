@@ -16,7 +16,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.plugins.capabilities.internal.storage.CapabilityStorage;
-import org.sonatype.nexus.plugins.capabilities.internal.storage.KazukiCapabilityStorageConverter;
 import org.sonatype.nexus.proxy.events.NexusInitializedEvent;
 import org.sonatype.nexus.proxy.events.NexusStoppingEvent;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
@@ -40,17 +39,13 @@ public class CapabilityRegistryBooter
 
   private final Provider<CapabilityStorage> capabilityStorage;
 
-  private final Provider<KazukiCapabilityStorageConverter> storageConverter;
-
   @Inject
   public CapabilityRegistryBooter(final EventBus eventBus,
                                   final Provider<DefaultCapabilityRegistry> capabilityRegistry,
-                                  final Provider<CapabilityStorage> capabilityStorage,
-                                  final Provider<KazukiCapabilityStorageConverter> storageConverter)
+                                  final Provider<CapabilityStorage> capabilityStorage)
   {
     this.capabilityRegistry = capabilityRegistry;
     this.capabilityStorage = checkNotNull(capabilityStorage);
-    this.storageConverter = checkNotNull(storageConverter);
     checkNotNull(eventBus).register(this);
   }
 
@@ -58,8 +53,6 @@ public class CapabilityRegistryBooter
   public void handle(final NexusInitializedEvent event) {
     try {
       capabilityStorage.get().start();
-
-      storageConverter.get().maybeConvert();
 
       capabilityRegistry.get().load();
     }
