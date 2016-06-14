@@ -19,6 +19,8 @@ import org.eclipse.jetty.server.Request;
 
 /**
  * Jetty {@link Request} customizer.
+ *
+ * @since 2.13.1
  */
 public interface RequestCustomizer
 {

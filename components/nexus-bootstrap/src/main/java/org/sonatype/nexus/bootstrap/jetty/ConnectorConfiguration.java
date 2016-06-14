@@ -18,6 +18,8 @@ import javax.annotation.Nullable;
 /**
  * Connector configuration should be registered as service by plugin requesting dedicated connectors, and unregistered
  * once the connector is not needed.
+ *
+ * @since 2.13.1
  */
 public class ConnectorConfiguration
 {

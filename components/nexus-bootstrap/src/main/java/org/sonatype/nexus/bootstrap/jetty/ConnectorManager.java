@@ -30,6 +30,8 @@ import static java.util.Collections.unmodifiableList;
  * <p/>
  * Note: This class relies on "id" properties in Jetty XML configuration! Hence, the existing beans in Jetty XML
  * should NOT be renamed, while adding new (with unique, non-clashing) IDs is okay thing to do.
+ *
+ * @since 2.13.1
  */
 public class ConnectorManager
 {

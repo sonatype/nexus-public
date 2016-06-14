@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+/**
+ * Thrown by {@link ConnectorRegistrar} if unsupported (unconfigured) scheme connector is about to be added.
+ *
+ * @since 2.13.1
+ */
 public class UnsupportedHttpSchemeException
     extends IllegalArgumentException
 {

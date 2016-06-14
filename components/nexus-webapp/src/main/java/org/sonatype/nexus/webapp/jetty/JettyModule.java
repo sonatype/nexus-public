@@ -20,6 +20,8 @@ import com.google.inject.AbstractModule;
 
 /**
  * Jetty module.
+ *
+ * @since 2.13.1
  */
 @Named
 public class JettyModule
@@ -27,7 +29,8 @@ public class JettyModule
 {
   @Override
   protected void configure() {
-    // HACK:
+    // HACK: not very nice thing to use static member here, should find better way to pass over server
+    // instance from bootstrap to this module to have it installed.
     bind(JettyServer.class).toInstance(JettyServer.jettyServer);
   }
 }

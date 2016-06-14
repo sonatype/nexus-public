@@ -16,6 +16,8 @@ import java.util.List;
 
 /**
  * Connector registrar component.
+ *
+ * @since 2.13.1
  */
 public interface ConnectorRegistrar
 {
