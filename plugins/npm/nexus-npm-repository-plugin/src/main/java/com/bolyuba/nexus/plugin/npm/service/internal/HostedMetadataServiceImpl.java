@@ -58,10 +58,10 @@ public class HostedMetadataServiceImpl
       throws IOException
   {
     checkArgument(request.isPackageRoot(), "Package root request expected, but got %s",
-        request.getPath());
+        request.getCoordinates().getPath());
     final PackageRoot packageRoot = metadataParser.parsePackageRoot(getNpmRepository().getId(), contentLocator);
-    checkArgument(request.getName().equals(packageRoot.getName()),
-        "Package root name '%s' and parsed content name '%s' mismatch", request.getName(), packageRoot.getName());
+    checkArgument(request.getCoordinates().getPackageName().equals(packageRoot.getName()),
+        "Package root name '%s' and parsed content name '%s' mismatch", request.getCoordinates().getPackageName(), packageRoot.getName());
     checkArgument(!packageRoot.isIncomplete(), "Incomplete package root parsed");
     return packageRoot;
   }
@@ -87,6 +87,6 @@ public class HostedMetadataServiceImpl
   @Nullable
   @Override
   protected PackageRoot doGeneratePackageRoot(final PackageRequest request) throws IOException {
-    return metadataStore.getPackageByName(getNpmRepository(), request.getName());
+    return metadataStore.getPackageByName(getNpmRepository(), request.getCoordinates().getPackageName());
   }
 }

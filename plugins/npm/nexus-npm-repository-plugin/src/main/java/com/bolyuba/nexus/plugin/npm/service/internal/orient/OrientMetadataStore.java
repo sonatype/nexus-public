@@ -194,7 +194,7 @@ public class OrientMetadataStore
 
   // == API
 
-  @Override
+  //@Override
   public synchronized void startOnce() {
     if (startException != null) {
       throw startException;
@@ -366,7 +366,7 @@ public class OrientMetadataStore
     }
   }
 
-  @Override
+  //@Override
   public int updatePackages(final NpmRepository repository,
                             final Predicate<PackageRoot> predicate,
                             final Function<PackageRoot, PackageRoot> function)

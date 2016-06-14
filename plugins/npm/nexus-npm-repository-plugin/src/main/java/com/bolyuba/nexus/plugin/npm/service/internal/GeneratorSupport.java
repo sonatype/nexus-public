@@ -20,6 +20,7 @@ import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
+import org.sonatype.nexus.proxy.repository.HostedRepository;
 import org.sonatype.nexus.web.BaseUrlHolder;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 import org.sonatype.sisu.goodies.common.SimpleFormat;
@@ -105,7 +106,7 @@ public abstract class GeneratorSupport<R extends NpmRepository>
   @Override
   public PackageRoot generatePackageRoot(final PackageRequest request) throws IOException {
     checkArgument(request.isPackageRoot(), "Package root request expected, but got %s",
-        request.getPath());
+        request.getCoordinates().getPath());
     final PackageRoot root = doGeneratePackageRoot(request);
     if (root == null) {
       return null;
@@ -121,7 +122,7 @@ public abstract class GeneratorSupport<R extends NpmRepository>
   @Override
   public PackageVersion generatePackageVersion(final PackageRequest request) throws IOException {
     checkArgument(request.isPackageVersion(), "Package version request expected, but got %s",
-        request.getPath());
+        request.getCoordinates().getPath());
     final PackageVersion version = doGeneratePackageVersion(request);
     if (version == null) {
       return null;
@@ -133,12 +134,12 @@ public abstract class GeneratorSupport<R extends NpmRepository>
   @Nullable
   protected PackageVersion doGeneratePackageVersion(final PackageRequest request) throws IOException {
     checkArgument(request.isPackageVersion(), "Package version request expected, but got %s",
-        request.getPath());
+        request.getCoordinates().getPath());
     final PackageRoot root = doGeneratePackageRoot(request);
     if (root == null || root.isUnpublished()) {
       return null;
     }
-    final PackageVersion version = root.getVersions().get(request.getVersion());
+    final PackageVersion version = root.getVersions().get(request.getCoordinates().getVersion());
     if (version == null || version.isIncomplete()) {
       return null;
     }
@@ -183,14 +184,23 @@ public abstract class GeneratorSupport<R extends NpmRepository>
    * sent for downstream consumption only!
    */
   protected void filterPackageVersionDist(final PackageRequest packageRequest, final PackageVersion packageVersion) {
+    // HACK: fix for '%2f' percent encoded slash that makes NX/Jetty confused (and results in baseUrl ending with '/c')
+    // as BaseUrlDetector#detect() method will use decoded vs non-decoded paths to calculate sub-paths
+    String baseUrl = BaseUrlHolder.get();
+    checkNotNull(baseUrl);
+    if (baseUrl.endsWith("/c")) {
+      baseUrl = baseUrl.substring(0, baseUrl.length() - 2);
+    }
+
     if (npmRepository.adaptToFacet(GroupRepository.class) != null) {
+      // redirect to group
       packageVersion.setDistTarball(SimpleFormat
-          .format("%s/content/groups/%s/%s/-/%s", BaseUrlHolder.get(), npmRepository.getId(),
+          .format("%s/content/groups/%s/%s/-/%s", baseUrl, npmRepository.getId(),
               packageVersion.getName(), packageVersion.getDistTarballFilename()));
     }
     else {
       packageVersion.setDistTarball(SimpleFormat
-          .format("%s/content/repositories/%s/%s/-/%s", BaseUrlHolder.get(), npmRepository.getId(),
+          .format("%s/content/repositories/%s/%s/-/%s", baseUrl, npmRepository.getId(),
               packageVersion.getName(), packageVersion.getDistTarballFilename()));
     }
     final String versionTarballShasum = PackageVersion.createShasumVersionKey(packageVersion.getVersion());

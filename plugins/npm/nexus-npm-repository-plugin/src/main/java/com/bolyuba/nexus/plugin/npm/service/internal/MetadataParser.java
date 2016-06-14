@@ -104,6 +104,17 @@ public class MetadataParser
     }
   }
 
+  public PackageRoot parsePackageRootAny(final String repositoryId, final ContentLocator contentLocator)
+      throws IOException
+  {
+    checkNotNull(repositoryId);
+    checkNotNull(contentLocator);
+    checkArgument(NpmRepository.JSON_MIME_TYPE.equals(contentLocator.getMimeType()), "JSON is expected inout!");
+    try (final JsonParser parser = objectMapper.getFactory().createParser(contentLocator.getContent())) {
+      return parsePackageRoot(repositoryId, parser);
+    }
+  }
+
   // Produce API
 
   public RegistryRootContentLocator produceRegistryRoot(final PackageRootIterator packageRootIterator)

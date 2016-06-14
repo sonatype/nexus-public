@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
@@ -86,8 +84,7 @@ public class GroupMetadataServiceImpl
   @Nullable
   @Override
   protected PackageRoot doGeneratePackageRoot(final PackageRequest request) throws IOException {
-    final List<NpmRepository> members = (request.isScoped() &&
-        !npmGroupRepository.getId().equals(request.getScope())) ? getScopeMembers(request.getScope()) : getMembers();
+    final List<NpmRepository> members = getMembers();
     if (isMergeMetadata()) {
       PackageRoot root = null;
       String latestVersion = null;
@@ -149,8 +146,7 @@ public class GroupMetadataServiceImpl
   @Nullable
   @Override
   protected PackageVersion doGeneratePackageVersion(final PackageRequest request) throws IOException {
-    final List<NpmRepository> members = (request.isScoped() &&
-        !npmGroupRepository.getId().equals(request.getScope())) ? getScopeMembers(request.getScope()) : getMembers();
+    final List<NpmRepository> members = getMembers();
     for (NpmRepository member : members) {
       final PackageVersion version = member.getMetadataService().generatePackageVersion(request);
       if (version != null) {
@@ -159,17 +155,6 @@ public class GroupMetadataServiceImpl
     }
     return null;
   }
-
-  // ==
-
-  @Override
-  protected void filterPackageVersionDist(final PackageRequest packageRequest, final PackageVersion packageVersion) {
-    // this is a group, and if request is scoped, do nothing with dist URL as it was already set by a member repo
-    if (!packageRequest.isScoped()) {
-      super.filterPackageVersionDist(packageRequest, packageVersion);
-    }
-  }
-
 
   // ==
 
@@ -186,25 +171,6 @@ public class GroupMetadataServiceImpl
       }
     }
     return npmMembers;
-  }
-
-  /**
-   * Returns group members belonging to given scope, that are for certain NPM repositories.
-   */
-  private List<NpmRepository> getScopeMembers(final String scope) {
-    // TODO: this should probably be a "scope"->repositories mapping
-    // TODO: also consider fixed scopes like "public"!
-    // TODO: consider "local" and "global" scope setting (ie. group local or instance global)
-    // TODO: currently the "naive" implementation does scope-repoId mapping
-    final List<Repository> members = npmGroupRepository.getMemberRepositories();
-    final List<NpmRepository> scopeMembers = Lists.newArrayList();
-    for (Repository member : members) {
-      final NpmRepository npmMember = member.adaptToFacet(NpmRepository.class);
-      if (npmMember != null && member.getId().equals(scope)) {
-        scopeMembers.add(npmMember);
-      }
-    }
-    return scopeMembers;
   }
 
   // ==

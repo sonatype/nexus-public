@@ -35,8 +35,8 @@ public class PackageCoordinatesTest
     PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/");
 
     assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.REGISTRY_ROOT));
-    assertThat(coordinates.getPackageName(), nullValue());
-    assertThat(coordinates.getPackageVersion(), nullValue());
+    assertThat(coordinates.getName(), nullValue());
+    assertThat(coordinates.getVersion(), nullValue());
   }
 
   @Test
@@ -44,8 +44,19 @@ public class PackageCoordinatesTest
     PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/gonogo");
 
     assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.PACKAGE_ROOT));
-    assertThat(coordinates.getPackageName(), equalTo("gonogo"));
-    assertThat(coordinates.getPackageVersion(), nullValue());
+    assertThat(coordinates.getScope(), nullValue());
+    assertThat(coordinates.getName(), equalTo("gonogo"));
+    assertThat(coordinates.getVersion(), nullValue());
+  }
+
+  @Test
+  public void coordinatesFromUrl_ScopedPackageRoot() throws IllegalArgumentException {
+    PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/@scope/gonogo");
+
+    assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.PACKAGE_ROOT));
+    assertThat(coordinates.getScope(), equalTo("scope"));
+    assertThat(coordinates.getName(), equalTo("gonogo"));
+    assertThat(coordinates.getVersion(), nullValue());
   }
 
   @Test
@@ -53,9 +64,19 @@ public class PackageCoordinatesTest
     PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/gonogo/1.42.0");
 
     assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.PACKAGE_VERSION));
-    assertThat(coordinates.getPackageName(), equalTo("gonogo"));
-    assertThat(coordinates.getPackageVersion(), equalTo("1.42.0"));
+    assertThat(coordinates.getScope(), nullValue());
+    assertThat(coordinates.getName(), equalTo("gonogo"));
+    assertThat(coordinates.getVersion(), equalTo("1.42.0"));
+  }
 
+  @Test
+  public void coordinatesFromUrl_ScopedPackageVersion() throws IllegalArgumentException {
+    PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/@scope/gonogo/1.42.0");
+
+    assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.PACKAGE_VERSION));
+    assertThat(coordinates.getScope(), equalTo("scope"));
+    assertThat(coordinates.getName(), equalTo("gonogo"));
+    assertThat(coordinates.getVersion(), equalTo("1.42.0"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -70,8 +91,8 @@ public class PackageCoordinatesTest
     PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/-/all/");
 
     assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.REGISTRY_SPECIAL));
-    assertThat(coordinates.getPackageVersion(), nullValue());
-    assertThat(coordinates.getPackageName(), nullValue());
+    assertThat(coordinates.getName(), nullValue());
+    assertThat(coordinates.getVersion(), nullValue());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -116,8 +137,8 @@ public class PackageCoordinatesTest
     PackageCoordinates coordinates = PackageCoordinates.coordinatesFromUrl("/GoNoGO/1.42.Rc1");
 
     assertThat(coordinates.getType(), equalTo(PackageCoordinates.Type.PACKAGE_VERSION));
-    assertThat(coordinates.getPackageName(), equalTo("GoNoGO"));
-    assertThat(coordinates.getPackageVersion(), equalTo("1.42.Rc1"));
+    assertThat(coordinates.getName(), equalTo("GoNoGO"));
+    assertThat(coordinates.getVersion(), equalTo("1.42.Rc1"));
     assertThat(coordinates.getPath(), equalTo("/GoNoGO/1.42.Rc1"));
   }
 }

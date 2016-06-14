@@ -17,6 +17,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 import com.bolyuba.nexus.plugin.npm.proxy.NpmProxyRepository;
+import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 
 /**
@@ -37,6 +38,6 @@ public interface ProxyMetadataTransport
    * is returned. If package not found or cannot be fetched for any reason, {@code null} is returned.
    */
   @Nullable
-  PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
+  PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final PackageRequest.PackageCoordinates packageCoordinates,
                                final @Nullable PackageRoot expired) throws IOException;
 }

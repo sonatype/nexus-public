@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import org.sonatype.nexus.apachehttpclient.Hc4Provider;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.FileContentLocator;
@@ -156,13 +157,16 @@ public class HttpProxyMetadataTransport
    * package root from this method is guaranteed to be present in the store too.
    */
   @Override
-  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
+  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository,
+                                      final PackageRequest.PackageCoordinates packageCoordinates,
                                       final PackageRoot expired) throws IOException
   {
     final HttpClient httpClient = httpClientManager.create(npmProxyRepository,
         npmProxyRepository.getRemoteStorageContext());
     try {
-      final HttpGet get = new HttpGet(buildUri(npmProxyRepository, packageName));
+      final HttpGet get = packageCoordinates.isScoped() ? // the slash mush be manually escaped!
+              new HttpGet(buildUri(npmProxyRepository, '@' + packageCoordinates.getScope() + "%2f" + packageCoordinates.getName())) :
+              new HttpGet(buildUri(npmProxyRepository, packageCoordinates.getName()));
       get.addHeader("accept", NpmRepository.JSON_MIME_TYPE);
       if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
         get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));

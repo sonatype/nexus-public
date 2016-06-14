@@ -43,11 +43,6 @@ public interface ProxyMetadataService
   boolean deletePackage(String packageName);
 
   /**
-   * Expires proxy metadata cache. On next request of an expired metadata, re-fetch will be done from registry.
-   */
-  boolean expireMetadataCaches(PackageRequest request);
-
-  /**
    * Updates package root in metadata store. To be used mostly by proxy mechanism to store some extra properties,
    * not to modify actual metadata.
    */

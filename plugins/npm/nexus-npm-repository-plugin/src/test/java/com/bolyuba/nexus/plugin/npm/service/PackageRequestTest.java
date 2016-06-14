@@ -48,7 +48,7 @@ public class PackageRequestTest
     Mockito.when(mockRequest.getRequestPath()).thenReturn("/-/all");
     PackageRequest packageRequest = new PackageRequest(mockRequest);
 
-    assertThat(packageRequest.getPath(), equalTo("/-/all"));
+    assertThat(packageRequest.getCoordinates().getPath(), equalTo("/-/all"));
   }
 
   @Test
@@ -103,13 +103,31 @@ public class PackageRequestTest
     PackageRequest packageRequest = new PackageRequest(mockRequest);
 
     assertThat(packageRequest.isPackage(), is(true));
-    assertThat(packageRequest.isScoped(), is(true));
     assertThat(packageRequest.isPackageRoot(), is(true));
     assertThat(packageRequest.isPackageVersion(), is(false));
     assertThat(packageRequest.isRegistrySpecial(), is(false));
 
-    assertThat(packageRequest.getName(), equalTo("@sonatype/package"));
-    assertThat(packageRequest.getScope(), equalTo("sonatype"));
+    assertThat(packageRequest.getCoordinates().isScoped(), is(true));
+    assertThat(packageRequest.getCoordinates().getScope(), equalTo("sonatype"));
+    assertThat(packageRequest.getCoordinates().getName(), equalTo("package"));
+    assertThat(packageRequest.getCoordinates().getPackageName(), equalTo("@sonatype/package"));
+  }
+
+  @Test
+  public void scopedPackageVersion() throws IllegalArgumentException {
+    Mockito.when(mockRequest.getRequestPath()).thenReturn("/@sonatype/package/1.0.0");
+    PackageRequest packageRequest = new PackageRequest(mockRequest);
+
+    assertThat(packageRequest.isPackage(), is(true));
+    assertThat(packageRequest.isPackageRoot(), is(false));
+    assertThat(packageRequest.isPackageVersion(), is(true));
+    assertThat(packageRequest.isRegistrySpecial(), is(false));
+
+    assertThat(packageRequest.getCoordinates().isScoped(), is(true));
+    assertThat(packageRequest.getCoordinates().getPackageName(), equalTo("@sonatype/package"));
+    assertThat(packageRequest.getCoordinates().getScope(), equalTo("sonatype"));
+    assertThat(packageRequest.getCoordinates().getName(), equalTo("package"));
+    assertThat(packageRequest.getCoordinates().getVersion(), equalTo("1.0.0"));
   }
 
 

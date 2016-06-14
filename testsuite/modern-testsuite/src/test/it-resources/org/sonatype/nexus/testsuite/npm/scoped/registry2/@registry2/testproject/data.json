@@ -7,8 +7,8 @@
             "version": "0.0.1",
             "description": "Test project",
             "dist": {
-                "shasum": "5867692cd12b0062dbb23c987f0a8f5ed43003e1",
-                "tarball": "${npmRegistryUrl}/testproject/-/testproject-0.0.1.tgz"
+                "shasum": "5986ac445ec17754322512d104ba32c8a63e938e",
+                "tarball": "${npmRegistryUrl}/@registry2/testproject/-/testproject-0.0.1.tgz"
             }
         }
     }

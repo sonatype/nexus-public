@@ -63,4 +63,23 @@ public class SmokeNpmIT
     assertThat(commonjsTarballDescribe, containsString("storageItem-remoteUrl"));
     assertThat(commonjsTarballDescribe, containsString(mockRegistryServerUrl() + "/commonjs/-/commonjs-0.0.1.tgz"));
   }
+
+  @Test
+  public void smokeScoped() throws Exception {
+    // create a NPM Proxy repository that proxies mock NPM registry
+    createNpmProxyRepository(testMethodName());
+
+    // download package root of @scoped/test
+    final File localDirectory = util.createTempDir();
+    final File packageRootFile = new File(localDirectory, "test.json");
+    content().download(Location.repositoryLocation(testMethodName(), "@scoped/test"), packageRootFile);
+    final String packageRoot = Files.toString(packageRootFile, Charsets.UTF_8);
+
+    // check are the URLs rewritten and point back to NX
+    assertThat(packageRoot, containsString(
+            nexus().getUrl() + "content/repositories/" + testMethodName() + "/@scoped/test/-/test-0.6.0.tgz"));
+
+    // check that there are not traces of proxied registry URL
+    assertThat(packageRoot, not(containsString(mockRegistryServerUrl())));
+  }
 }

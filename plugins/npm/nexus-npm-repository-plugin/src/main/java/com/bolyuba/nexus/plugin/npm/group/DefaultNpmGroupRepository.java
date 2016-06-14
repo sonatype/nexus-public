@@ -139,11 +139,11 @@ public class DefaultNpmGroupRepository
             contentLocator = groupMetadataService.produceRegistryRoot(packageRequest);
           }
           else if (packageRequest.isPackageRoot()) {
-            log.debug("Serving package {} root...", packageRequest.getName());
+            log.debug("Serving package {} root...", packageRequest.getCoordinates().getPackageName());
             contentLocator = groupMetadataService.producePackageRoot(packageRequest);
           }
           else {
-            log.debug("Serving package {} version {}...", packageRequest.getName(), packageRequest.getVersion());
+            log.debug("Serving package {} version {}...", packageRequest.getCoordinates().getPackageName(), packageRequest.getCoordinates().getVersion());
             contentLocator = groupMetadataService.producePackageVersion(packageRequest);
           }
           if (contentLocator != null) {
@@ -152,12 +152,12 @@ public class DefaultNpmGroupRepository
         }
         else {
           // registry special
-          if (packageRequest.isRegistrySpecial() && packageRequest.getPath().startsWith("/-/all")) {
+          if (packageRequest.isRegistrySpecial() && packageRequest.getCoordinates().getPath().startsWith("/-/all")) {
             log.debug("Serving registry root from /-/all...");
             return new DefaultStorageFileItem(this, storeRequest, true, true,
                 groupMetadataService.produceRegistryRoot(packageRequest));
           }
-          log.debug("Unknown registry special {}", packageRequest.getPath());
+          log.debug("Unknown registry special {}", packageRequest.getCoordinates().getPath());
         }
       }
       log.debug("No NPM metadata for path {}", storeRequest.getRequestPath());

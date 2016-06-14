@@ -15,7 +15,9 @@ package org.sonatype.nexus.testsuite.npm.scoped;
 import java.io.File;
 import java.util.List;
 
+import com.sun.jersey.api.client.ClientResponse;
 import org.sonatype.nexus.client.core.subsystem.content.Location;
+import org.sonatype.nexus.client.rest.jersey.JerseyNexusClient;
 import org.sonatype.nexus.testsuite.npm.MockNpmRegistry;
 import org.sonatype.nexus.testsuite.npm.NpmITSupport;
 import org.sonatype.sisu.litmus.testsupport.TestData;
@@ -31,10 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 
 /**
  * IT for scoped packages, ensuring that NX will obey "scoped" package requests. In this IT we have two proxies that
@@ -95,38 +94,19 @@ public class ScopedPackagesIT
   public void scopedRequest() throws Exception {
     final File localDirectory = util.createTempDir();
 
-    final File testprojectPlain = new File(localDirectory, testMethodName() + "-testproject-plain");
-    content().download(Location.repositoryLocation(npmGroupRepository.id(), "/testproject"), testprojectPlain);
-
     final File testprojectScoped = new File(localDirectory, testMethodName() + "-testproject-scoped");
     content()
         .download(Location.repositoryLocation(npmGroupRepository.id(), "/@registry2/testproject"), testprojectScoped);
 
-    final String testProjectPlainString = Files.toString(testprojectPlain, Charsets.UTF_8);
     final String testProjectScopedString = Files.toString(testprojectScoped, Charsets.UTF_8);
 
-    assertThat(testProjectPlainString, containsString("from registry1"));
     assertThat(testProjectScopedString, containsString("from registry2"));
 
-    JSONObject registryPlainDoc = new JSONObject(testProjectPlainString);
     JSONObject registryScopedDoc = new JSONObject(testProjectScopedString);
+    String tarballUrl = (String) registryScopedDoc.getJSONObject("versions").getJSONObject("0.0.1").getJSONObject("dist").get("tarball");
+    assertThat(tarballUrl, endsWith("/nexus/content/groups/npmgroup/@registry2/testproject/-/testproject-0.0.1.tgz"));
 
-    assertThat(
-        (String) registryPlainDoc.getJSONObject("versions").getJSONObject("0.0.1").getJSONObject("dist").get("tarball"),
-        endsWith("/nexus/content/groups/npmgroup/testproject/-/testproject-0.0.1.tgz"));
-    assertThat(
-        (String) registryScopedDoc.getJSONObject("versions").getJSONObject("0.0.1").getJSONObject("dist")
-            .get("tarball"),
-        endsWith("/nexus/content/repositories/registry2/@registry2/testproject/-/testproject-0.0.1.tgz"));
-
-    // registry1 should been asked for metadata
-    final List<String> registry1Paths = mockNpmRegistry1.getPathRecorder().getPathsForVerb("GET");
-    assertThat(registry1Paths, hasSize(1));
-    assertThat(registry1Paths, containsInAnyOrder("/testproject"));
-
-    // registry2 should been asked for metadata 2 times (scoped req did not touch reg1)
-    final List<String> registry2Paths = mockNpmRegistry2.getPathRecorder().getPathsForVerb("GET");
-    assertThat(registry2Paths, hasSize(2));
-    assertThat(registry2Paths, containsInAnyOrder("/testproject", "/@registry2/testproject"));
+    ClientResponse response = ((JerseyNexusClient) client()).getClient().resource(tarballUrl).get(ClientResponse.class);
+    assertThat(response.getStatus(), equalTo(200));
   }
 }
