@@ -14,7 +14,6 @@ package org.sonatype.nexus.proxy;
 
 import java.io.IOException;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.Repository;
@@ -32,8 +31,8 @@ public class RepositoryRedeployTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder().repo("repo1", "target/test-classes/repo1").build();
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     return jettyTestsuiteEnvironmentBuilder;
   }
 

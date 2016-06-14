@@ -17,12 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.jettytestsuite.ServletServer;
-import org.sonatype.jettytestsuite.WebappContext;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRemoteStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
+import org.sonatype.nexus.proxy.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.proxy.maven.ChecksumPolicy;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.maven.maven1.M1GroupRepository;
@@ -45,8 +44,8 @@ public class M1TestsuiteEnvironmentBuilder
     extends AbstractJettyEnvironmentBuilder
 {
 
-  public M1TestsuiteEnvironmentBuilder(ServletServer servletServer) {
-    super(servletServer);
+  public M1TestsuiteEnvironmentBuilder(RemoteRepositories remoteRepositories) {
+    super(remoteRepositories);
   }
 
   @Override
@@ -58,7 +57,7 @@ public class M1TestsuiteEnvironmentBuilder
     PlexusContainer container = env.getPlexusContainer();
 
     List<String> reposes = new ArrayList<String>();
-    for (WebappContext remoteRepo : getServletServer().getWebappContexts()) {
+    for (RemoteRepository remoteRepo : getRemoteRepositories().getRepositoryMap().values()) {
       M1Repository repo = (M1Repository) container.lookup(Repository.class, "maven1");
 
       CRepository repoConf = new DefaultCRepository();
@@ -82,7 +81,7 @@ public class M1TestsuiteEnvironmentBuilder
 
       repoConf.setRemoteStorage(new CRemoteStorage());
       repoConf.getRemoteStorage().setProvider(env.getRemoteProviderHintFactory().getDefaultHttpRoleHint());
-      repoConf.getRemoteStorage().setUrl(getServletServer().getUrl(remoteRepo.getName()));
+      repoConf.getRemoteStorage().setUrl(getRemoteRepositories().getUrl(remoteRepo.getName()));
       repoConf.setIndexable(false);
 
       repo.configure(repoConf);

@@ -25,7 +25,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
  */
 public interface EnvironmentBuilder
 {
-  public void buildEnvironment(AbstractProxyTestEnvironment abstractProxyTestEnvironment)
+  void buildEnvironment(AbstractProxyTestEnvironment abstractProxyTestEnvironment)
       throws ConfigurationException,
              IOException,
              ComponentLookupException;

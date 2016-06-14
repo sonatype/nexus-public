@@ -22,7 +22,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
@@ -68,8 +67,12 @@ public class SimplePullTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .repo("repo2", "target/test-classes/repo2")
+        .repo("repo3", "target/test-classes/repo3")
+        .build();
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     return jettyTestsuiteEnvironmentBuilder;
   }
 
@@ -520,7 +523,7 @@ public class SimplePullTest
   public void testNXCM4852EofFromRemote()
       throws Exception
   {
-    final int port = jettyTestsuiteEnvironmentBuilder.getServletServer().getPort();
+    final int port = jettyTestsuiteEnvironmentBuilder.getRemoteRepositories().getPort();
     jettyTestsuiteEnvironmentBuilder.stopService();
 
     final Server server = Server.withPort(port);

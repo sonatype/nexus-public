@@ -14,7 +14,6 @@ package org.sonatype.nexus.proxy;
 
 import java.util.Collection;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.item.StorageCollectionItem;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
@@ -30,9 +29,8 @@ public abstract class M2ResourceStoreTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-
-    return new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder().repo("repo1", "target/test-classes/repo1").build();
+    return new M2TestsuiteEnvironmentBuilder(remoteRepositories);
   }
 
   protected abstract ResourceStore getResourceStore()

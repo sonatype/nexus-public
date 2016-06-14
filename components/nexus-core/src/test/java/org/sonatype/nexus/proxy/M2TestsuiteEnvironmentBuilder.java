@@ -17,12 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.jettytestsuite.ServletServer;
-import org.sonatype.jettytestsuite.WebappContext;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRemoteStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
+import org.sonatype.nexus.proxy.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.proxy.maven.ChecksumPolicy;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.maven.maven2.M2GroupRepository;
@@ -45,8 +44,8 @@ public class M2TestsuiteEnvironmentBuilder
     extends AbstractJettyEnvironmentBuilder
 {
 
-  public M2TestsuiteEnvironmentBuilder(ServletServer servletServer) {
-    super(servletServer);
+  public M2TestsuiteEnvironmentBuilder(RemoteRepositories remoteRepositories) {
+    super(remoteRepositories);
   }
 
   @Override
@@ -58,7 +57,7 @@ public class M2TestsuiteEnvironmentBuilder
     PlexusContainer container = env.getPlexusContainer();
 
     List<String> reposes = new ArrayList<String>();
-    for (WebappContext remoteRepo : getServletServer().getWebappContexts()) {
+    for (RemoteRepository remoteRepo : getRemoteRepositories().getRepositoryMap().values()) {
       M2Repository repo = (M2Repository) container.lookup(Repository.class, "maven2");
 
       CRepository repoConf = new DefaultCRepository();
@@ -90,7 +89,7 @@ public class M2TestsuiteEnvironmentBuilder
 
       repoConf.setRemoteStorage(new CRemoteStorage());
       repoConf.getRemoteStorage().setProvider(env.getRemoteProviderHintFactory().getDefaultHttpRoleHint());
-      repoConf.getRemoteStorage().setUrl(getServletServer().getUrl(remoteRepo.getName()));
+      repoConf.getRemoteStorage().setUrl(getRemoteRepositories().getUrl(remoteRepo.getName()));
 
       repo.configure(repoConf);
 
