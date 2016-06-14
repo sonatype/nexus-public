@@ -14,7 +14,6 @@ package org.sonatype.nexus.proxy;
 
 import java.util.Collection;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.item.StorageCollectionItem;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
@@ -25,15 +24,6 @@ import org.junit.Test;
 public abstract class M1ResourceStoreTest
     extends AbstractProxyTestEnvironment
 {
-
-  @Override
-  protected EnvironmentBuilder getEnvironmentBuilder()
-      throws Exception
-  {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-
-    return new M2TestsuiteEnvironmentBuilder(ss);
-  }
 
   protected abstract ResourceStore getResourceStore()
       throws NoSuchResourceStoreException, Exception;

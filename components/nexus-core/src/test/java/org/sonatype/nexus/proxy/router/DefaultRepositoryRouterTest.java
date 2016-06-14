@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.sonatype.nexus.NexusAppTestSupport;
 import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
@@ -37,13 +39,17 @@ import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.ShadowRepository;
+import org.sonatype.nexus.proxy.security.PlexusConfiguredRealm;
 import org.sonatype.nexus.proxy.targets.Target;
 import org.sonatype.nexus.proxy.targets.TargetRegistry;
 import org.sonatype.nexus.security.WebSecurityUtil;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.security.authentication.AuthenticationException;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -64,6 +70,25 @@ public class DefaultRepositoryRouterTest
   private ApplicationConfiguration applicationConfiguration;
 
   private TargetRegistry targetRegistry;
+
+  protected void customizeModules(final List<Module> modules) {
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        Map<String, String> userPrivileges = new HashMap<>();
+        userPrivileges.put("repo1user", "nexus:target:*:repo1:*,nexus:view:repository:repo1");
+        userPrivileges.put("repo1userNoView", "nexus:target:*:repo1:*");
+        userPrivileges.put("admin", "nexus:target:*:*:*,nexus:view:repository:*");
+        // Have "maven2-all" perm, and that targets all ALL in maven2 reposes
+        userPrivileges.put("nxcm4999user", "nexus:view:repository:group1,nexus:target:maven2-all:group1:*");
+        // Have "nxcm4999" perm, that targets allow ALL except sources in maven2 reposes
+        userPrivileges.put("nxcm4999userNoSources", "nexus:view:repository:group1,nexus:target:nxcm4999:group1:*");
+        PlexusConfiguredRealm realm = new PlexusConfiguredRealm();
+        realm.getUserPrivilageMap().putAll(userPrivileges);
+        bind(Realm.class).toInstance(realm);
+      }
+    });
+  }
 
   @Override
   protected void setUp()

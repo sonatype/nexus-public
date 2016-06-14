@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repositories.metadata;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.NexusAppTestSupport;
+import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.repository.metadata.model.RepositoryMetadata;
 
 import org.junit.Assert;
@@ -22,13 +22,13 @@ import org.junit.Test;
 public class RemoteMirrorDownloadTest
     extends NexusAppTestSupport
 {
-  private ServletServer server;
+  private RemoteRepositories remoteRepositories;
 
   @Test
   public void testRemoteMetadataDownload() throws Exception {
     NexusRepositoryMetadataHandler repoMetadata = this.lookup(NexusRepositoryMetadataHandler.class);
 
-    String url = this.server.getUrl("repo-with-mirror" + "/");
+    String url = remoteRepositories.getUrl("repo-with-mirror");
 
     RepositoryMetadata metadata = repoMetadata.readRemoteRepositoryMetadata(url);
 
@@ -41,16 +41,20 @@ public class RemoteMirrorDownloadTest
   {
     super.setUp();
 
-    server = this.lookup(ServletServer.class);
-    server.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .repo("repo-with-mirror", "target/test-classes/repo-with-mirror")
+        .repo("repo-mirror", "target/test-classes/repo-mirror")
+        .build();
+
+    remoteRepositories.start();
   }
 
   @Override
   protected void tearDown()
       throws Exception
   {
-    if (server != null) {
-      server.stop();
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
     }
 
     super.tearDown();
