@@ -15,7 +15,6 @@ package org.sonatype.nexus.proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.events.RepositoryItemEventDelete;
 import org.sonatype.nexus.proxy.events.RepositoryItemEventDeleteItem;
 import org.sonatype.nexus.proxy.events.RepositoryItemEventDeleteRoot;
@@ -44,8 +43,10 @@ public class DeleteEventsTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .build();
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     return jettyTestsuiteEnvironmentBuilder;
   }
 

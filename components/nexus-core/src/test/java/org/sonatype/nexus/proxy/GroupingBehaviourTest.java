@@ -14,7 +14,6 @@ package org.sonatype.nexus.proxy;
 
 import java.io.File;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.configuration.ConfigurationChangeEvent;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
@@ -36,8 +35,12 @@ public class GroupingBehaviourTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .repo("repo2", "target/test-classes/repo2")
+        .repo("repo3", "target/test-classes/repo3")
+        .build();
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     return jettyTestsuiteEnvironmentBuilder;
   }
 

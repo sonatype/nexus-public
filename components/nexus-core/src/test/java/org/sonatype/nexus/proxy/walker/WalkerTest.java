@@ -15,11 +15,11 @@ package org.sonatype.nexus.proxy.walker;
 import java.util.Comparator;
 import java.util.List;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.AbstractProxyTestEnvironment;
 import org.sonatype.nexus.proxy.EnvironmentBuilder;
 import org.sonatype.nexus.proxy.M2TestsuiteEnvironmentBuilder;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
+import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.item.StorageCollectionItem;
@@ -38,7 +38,6 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.fail;
 
 public class WalkerTest
     extends AbstractProxyTestEnvironment
@@ -62,8 +61,13 @@ public class WalkerTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .repo("repo2", "target/test-classes/repo2")
+        .repo("repo3", "target/test-classes/repo3")
+        .build();
+
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     return jettyTestsuiteEnvironmentBuilder;
   }
 

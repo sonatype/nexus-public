@@ -16,10 +16,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.AbstractProxyTestEnvironment;
 import org.sonatype.nexus.proxy.EnvironmentBuilder;
 import org.sonatype.nexus.proxy.M2TestsuiteEnvironmentBuilder;
+import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.StorageException;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
@@ -42,9 +42,16 @@ public class GroupMetadataMergeTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .repo("repo2", "target/test-classes/repo2")
+        .repo("repo3", "target/test-classes/repo3")
+        .repo("repo1-snapshot", "target/test-classes/repo1-snapshot")
+        .repo("repo2-snapshot", "target/test-classes/repo2-snapshot")
+        .repo("repo3-snapshot", "target/test-classes/repo3-snapshot")
+        .build();
 
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
 
     return jettyTestsuiteEnvironmentBuilder;
   }

@@ -16,22 +16,29 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.AbstractProxyTestEnvironment;
 import org.sonatype.nexus.proxy.AccessDeniedException;
 import org.sonatype.nexus.proxy.EnvironmentBuilder;
 import org.sonatype.nexus.proxy.M2TestsuiteEnvironmentBuilder;
+import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.maven.maven2.Maven2ContentClass;
+import org.sonatype.nexus.proxy.security.PlexusConfiguredRealm;
 import org.sonatype.nexus.proxy.targets.Target;
 import org.sonatype.nexus.proxy.targets.TargetRegistry;
 import org.sonatype.nexus.security.WebSecurityUtil;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.security.authentication.AuthenticationException;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.Assert;
@@ -90,13 +97,35 @@ public class AccessTest
     }
   }
 
+  protected void customizeModules(final List<Module> modules) {
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        Map<String, String> userPrivileges = new HashMap<>();
+        userPrivileges.put("allrepo3", "nexus:target:*:repo3:*,nexus:view:repository:repo3,nexus:view:repository:test");
+        userPrivileges.put("allrepo1", "nexus:target:*:repo1:*,nexus:view:repository:repo1,nexus:view:repository:test");
+        userPrivileges.put("alltest", "nexus:target:*:test:*,nexus:view:repository:test,nexus:view:repository:repo3,nexus:view:repository:repo1");
+        userPrivileges.put("repo3-noview", "nexus:target:*:repo3:*");
+        userPrivileges.put("repo1-noview", "nexus:target:*:repo1:*");
+        userPrivileges.put("test-noview", "nexus:target:*:test:*");
+        PlexusConfiguredRealm realm = new PlexusConfiguredRealm();
+        realm.getUserPrivilageMap().putAll(userPrivileges);
+        bind(Realm.class).toInstance(realm);
+      }
+    });
+  }
+
   @Override
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
     if (this.jettyTestsuiteEnvironmentBuilder == null) {
-      ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-      this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
+      RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+          .repo("repo1", "target/test-classes/repo1")
+          .repo("repo2", "target/test-classes/repo2")
+          .repo("repo3", "target/test-classes/repo3")
+          .build();
+      this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories);
     }
     return this.jettyTestsuiteEnvironmentBuilder;
   }

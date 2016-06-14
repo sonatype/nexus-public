@@ -15,7 +15,6 @@ package org.sonatype.nexus.proxy;
 import java.io.IOException;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
@@ -34,9 +33,11 @@ public class M2LayoutedM1ShadowRepositoryTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1-m1", "target/test-classes/repo1-m1")
+        .build();
 
-    return new M1TestsuiteEnvironmentBuilder(ss);
+    return new M1TestsuiteEnvironmentBuilder(remoteRepositories);
   }
 
   private void addShadowReposes()

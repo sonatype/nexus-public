@@ -13,6 +13,7 @@
 package org.sonatype.nexus.proxy.security;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +31,17 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.codehaus.plexus.util.StringUtils;
 
+/**
+ * Used solely in tests.
+ */
 public class PlexusConfiguredRealm
     extends AuthorizingRealm
 {
+  private Map<String, String> userPrivilageMap = new HashMap<>();
 
-  private Map<String, String> userPrivilageMap;
+  public Map<String, String> getUserPrivilageMap() {
+    return userPrivilageMap;
+  }
 
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
