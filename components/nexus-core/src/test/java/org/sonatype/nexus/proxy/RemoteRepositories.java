@@ -104,7 +104,7 @@ public class RemoteRepositories
     for (RemoteRepository remoteRepository : repositoryMap.values()) {
       ServerProvider serverProvider = server.getServerProvider();
       File baseDir = new File(remoteRepository.getResourceBase()).getAbsoluteFile();
-      String pathSpec = "/" + remoteRepository.getName() + "/**";
+      String pathSpec = "/" + remoteRepository.getName() + "/*";
       FileContext fileContext = new FileContext(
           baseDir,
           remoteRepository.isIndexEnabled()
