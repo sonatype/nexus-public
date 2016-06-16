@@ -219,6 +219,7 @@ public class GroupMetadataMergeTest
   public void testChecksum()
       throws Exception
   {
+    Thread.sleep(100000);
     String mdPath = "/md-merge/checksum/maven-metadata.xml";
 
     StorageItem item = getRootRouter().retrieveItem(new ResourceStoreRequest("/groups/test" + mdPath, false));

@@ -15,15 +15,16 @@ package org.sonatype.nexus.proxy;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.internal.ErrorServlet;
 import org.sonatype.nexus.proxy.item.DefaultStorageFileItem;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientRemoteStorage;
+import org.sonatype.tests.http.server.jetty.behaviour.Content;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.tika.mime.MediaType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -52,11 +53,12 @@ public class RemoteErrorPageWith200Test
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.baseUrl = ss.getUrl("200ErrorTest");
-    return new M2TestsuiteEnvironmentBuilder(ss);
-
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .behave("/**", new Content("<html>some content</html>", MediaType.TEXT_HTML.toString()))
+        .repo("200ErrorTest")
+        .build();
+    this.baseUrl = remoteRepositories.getUrl("200ErrorTest");
+    return new M2TestsuiteEnvironmentBuilder(remoteRepositories);
   }
 
   @Test
