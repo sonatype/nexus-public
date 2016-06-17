@@ -23,13 +23,15 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.jettytestsuite.ControlledServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
+import org.sonatype.nexus.integrationtests.TestContext;
 import org.sonatype.nexus.proxy.repository.ProxyMode;
 import org.sonatype.nexus.proxy.repository.RemoteStatus;
 import org.sonatype.nexus.rest.model.RepositoryStatusResource;
 import org.sonatype.nexus.test.utils.GavUtil;
 import org.sonatype.nexus.test.utils.RepositoryMessageUtil;
+import org.sonatype.nexus.test.utils.TestProperties;
+import org.sonatype.tests.http.server.fluent.Server;
 
 import com.google.common.collect.Lists;
 import org.apache.maven.index.artifact.Gav;
@@ -57,7 +59,7 @@ public abstract class AutoBlockITSupport
 
   protected static final String REPO = "basic";
 
-  protected ControlledServer server;
+  protected Server server;
 
   protected Integer sleepTime;
 
@@ -71,14 +73,13 @@ public abstract class AutoBlockITSupport
 
   @SuppressWarnings("serial")
   @Before
-  public void setup()
-      throws Exception
+  public void setup() throws Exception
   {
     sleepTime = -1;
     pathsTouched = Lists.newArrayList();
 
-    server = lookup(ControlledServer.class);
-    server.getProxyingContext().addServlet(new ServletHolder(new GenericServlet()
+    server = Server.withPort(TestProperties.getInteger("webproxy-server-port"));
+    server.serve("/*").withServlet(new GenericServlet()
     {
       @Override
       public void service(ServletRequest req, ServletResponse res)
@@ -95,15 +96,14 @@ public abstract class AutoBlockITSupport
           resp.sendError(Status.CLIENT_ERROR_REQUEST_TIMEOUT.getCode());
         }
       }
-    }), "/*");
+    });
     server.start();
 
     this.repoUtil = new RepositoryMessageUtil(this, getXMLXStream(), MediaType.APPLICATION_XML);
   }
 
   @After
-  public void shutdown()
-      throws StoppingException
+  public void shutdown() throws Exception
   {
     pathsTouched = null;
     server.stop();
