@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;

@@ -19,6 +19,7 @@ import org.sonatype.nexus.proxy.events.RepositoryItemEventDelete;
 import org.sonatype.nexus.proxy.events.RepositoryItemEventDeleteItem;
 import org.sonatype.nexus.proxy.events.RepositoryItemEventDeleteRoot;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import com.google.common.eventbus.Subscribe;
 import org.junit.Test;

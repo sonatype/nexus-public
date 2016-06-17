@@ -61,6 +61,12 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-http-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Deps needed by some ITs (they use classes from these below) -->
     <dependency>
       <groupId>org.sonatype.nexus</groupId>

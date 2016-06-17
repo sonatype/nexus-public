@@ -19,6 +19,7 @@ import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.maven.AbstractMavenGroupRepository;
 import org.sonatype.nexus.proxy.maven.MavenGroupRepository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.codehaus.plexus.digest.Md5Digester;

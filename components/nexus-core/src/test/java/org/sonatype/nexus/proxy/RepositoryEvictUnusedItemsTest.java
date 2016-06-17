@@ -17,6 +17,7 @@ import java.util.Collection;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.repository.Repository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Test;
 

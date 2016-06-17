@@ -21,6 +21,7 @@ import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.item.StorageLinkItem;
 import org.sonatype.nexus.proxy.item.StringContentLocator;
 import org.sonatype.nexus.proxy.repository.Repository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Test;
 

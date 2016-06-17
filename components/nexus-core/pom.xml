@@ -345,8 +345,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.http-testing-harness</groupId>
-      <artifactId>server-provider</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-http-common</artifactId>
       <scope>test</scope>
     </dependency>
 

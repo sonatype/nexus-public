@@ -18,12 +18,13 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.nexus.proxy.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.proxy.item.DefaultStorageFileItem;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientRemoteStorage;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 import org.sonatype.tests.http.server.api.Behaviour;
 
 import com.google.common.collect.ArrayListMultimap;

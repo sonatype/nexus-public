@@ -28,6 +28,7 @@ import org.sonatype.nexus.proxy.maven.maven1.M1Repository;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;

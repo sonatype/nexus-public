@@ -69,6 +69,11 @@
       <artifactId>nexus-test-common</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-http-common</artifactId>
+    </dependency>
+
     <!-- We use Wagon to deploy WagonUtil etc -->
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>

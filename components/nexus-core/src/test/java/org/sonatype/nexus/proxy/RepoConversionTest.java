@@ -21,6 +21,7 @@ import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
 import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Test;
 

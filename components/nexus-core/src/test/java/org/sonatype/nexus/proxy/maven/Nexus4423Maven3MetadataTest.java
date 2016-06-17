@@ -20,8 +20,8 @@ import java.util.TimeZone;
 import org.sonatype.nexus.proxy.AbstractProxyTestEnvironment;
 import org.sonatype.nexus.proxy.EnvironmentBuilder;
 import org.sonatype.nexus.proxy.M2TestsuiteEnvironmentBuilder;
-import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.maven.gav.Gav;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Assert;
 import org.junit.Test;

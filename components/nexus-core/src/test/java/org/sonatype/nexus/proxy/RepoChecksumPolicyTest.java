@@ -17,6 +17,7 @@ import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.maven.ChecksumContentValidator;
 import org.sonatype.nexus.proxy.maven.ChecksumPolicy;
 import org.sonatype.nexus.proxy.maven.maven2.M2Repository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Assert;
 import org.junit.Test;

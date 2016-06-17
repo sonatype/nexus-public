@@ -15,6 +15,7 @@ package org.sonatype.nexus.proxy;
 import java.io.IOException;
 
 import org.sonatype.configuration.ConfigurationException;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 

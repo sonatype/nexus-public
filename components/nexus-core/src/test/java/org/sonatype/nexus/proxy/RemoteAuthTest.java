@@ -16,11 +16,12 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.nexus.proxy.RemoteRepositories.AuthInfo;
-import org.sonatype.nexus.proxy.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.UsernamePasswordRemoteAuthenticationSettings;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

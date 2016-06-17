@@ -19,8 +19,8 @@ import java.util.Date;
 
 import org.sonatype.nexus.index.DefaultIndexerManager;
 import org.sonatype.nexus.index.IndexerManager;
-import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.maven.MavenProxyRepository;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;

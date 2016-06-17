@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repositories.metadata;
 
 import org.sonatype.nexus.NexusAppTestSupport;
-import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.repository.metadata.model.RepositoryMetadata;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Assert;
 import org.junit.Test;

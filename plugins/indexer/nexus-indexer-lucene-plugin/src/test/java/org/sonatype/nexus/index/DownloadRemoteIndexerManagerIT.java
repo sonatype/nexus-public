@@ -24,9 +24,9 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
-import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.repository.ProxyMode;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.index.context.IndexingContext;
