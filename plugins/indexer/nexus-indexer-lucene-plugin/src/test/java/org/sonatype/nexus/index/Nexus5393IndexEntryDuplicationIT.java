@@ -14,15 +14,10 @@ package org.sonatype.nexus.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.sonatype.jettytestsuite.BlockingServer;
+import org.sonatype.nexus.proxy.RemoteRepositories;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 
@@ -31,12 +26,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.maven.index.ArtifactInfo;
 import org.apache.maven.index.context.IndexingContext;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,8 +48,7 @@ import org.junit.Test;
 public class Nexus5393IndexEntryDuplicationIT
     extends AbstractIndexerManagerTest
 {
-
-  private Server server;
+  private RemoteRepositories remoteRepositories;
 
   private File fakeCentral;
 
@@ -73,35 +61,14 @@ public class Nexus5393IndexEntryDuplicationIT
     fakeCentral = new File(getBasedir(), "target/test-classes/nexus-5393/remote-repository");
 
     // create proxy server
-    ServerSocket s = new ServerSocket(0);
-    int port = s.getLocalPort();
-    s.close();
-
-    server = new BlockingServer(port);
-
-    ResourceHandler resource_handler = new ResourceHandler()
-    {
-      @Override
-      public void handle(String target, Request baseRequest, HttpServletRequest request,
-                         HttpServletResponse response)
-          throws IOException, ServletException
-      {
-        System.out.print("JETTY: " + target);
-        super.handle(target, baseRequest, request, response);
-        System.out.println("  ::  " + response.getStatus());
-      }
-    };
-    resource_handler.setResourceBase(fakeCentral.getAbsolutePath());
-    HandlerList handlers = new HandlerList();
-    handlers.setHandlers(new Handler[]{resource_handler, new DefaultHandler()});
-    server.setHandler(handlers);
-
-    System.out.print("JETTY Started on port: " + port);
-    server.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .repo("central", fakeCentral.getAbsolutePath())
+        .build();
+    remoteRepositories.start();
 
     // update central to use proxy server
     central.setDownloadRemoteIndexes(false);
-    central.setRemoteUrl("http://localhost:" + port);
+    central.setRemoteUrl(remoteRepositories.getUrl("central"));
     central.setRepositoryPolicy(RepositoryPolicy.RELEASE);
     nexusConfiguration().saveConfiguration();
 
@@ -113,7 +80,7 @@ public class Nexus5393IndexEntryDuplicationIT
   protected void tearDown()
       throws Exception
   {
-    server.stop();
+    remoteRepositories.stop();
     super.tearDown();
   }
 
