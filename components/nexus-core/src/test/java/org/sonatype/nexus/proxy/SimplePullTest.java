@@ -47,8 +47,10 @@ import org.sonatype.tests.http.server.fluent.Server;
 import com.google.common.base.Strings;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.jetty.server.Response;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -557,7 +559,6 @@ public class SimplePullTest
   public static class DropConnection
       implements Behaviour
   {
-
     @Override
     public boolean execute(HttpServletRequest request, HttpServletResponse response, Map<Object, Object> ctx)
         throws Exception
@@ -568,6 +569,8 @@ public class SimplePullTest
       response.getOutputStream().write("partialcontent".getBytes());
       response.flushBuffer();
       response.getOutputStream().close();
+      // forcibly close the _socket_, to induce EOF on NX/client side
+      ((Response) response).getHttpOutput().getHttpChannel().getEndPoint().close();
       return false;
     }
   }

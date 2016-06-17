@@ -12,17 +12,22 @@
  */
 package org.sonatype.nexus.proxy;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
-import org.sonatype.nexus.proxy.internal.ErrorServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.sonatype.nexus.proxy.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.proxy.item.DefaultStorageFileItem;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.storage.remote.RemoteRepositoryStorage;
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientRemoteStorage;
-import org.sonatype.tests.http.server.jetty.behaviour.Content;
+import org.sonatype.tests.http.server.api.Behaviour;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.mime.MediaType;
 import org.junit.Assert;
@@ -38,6 +43,8 @@ public class RemoteErrorPageWith200Test
 
   private String baseUrl;
 
+  private Content content;
+
   @Override
   public void setUp()
       throws Exception
@@ -46,29 +53,28 @@ public class RemoteErrorPageWith200Test
     this.remoteStorage =
         this.lookup(RemoteRepositoryStorage.class, HttpClientRemoteStorage.PROVIDER_STRING);
     aProxyRepository =
-        lookup(RepositoryRegistry.class).getRepositoryWithFacet("200ErrorTest", ProxyRepository.class);
+        lookup(RepositoryRegistry.class).getRepositoryWithFacet("RemoteErrorPageWith200Test", ProxyRepository.class);
   }
 
   @Override
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
+    this.content = new Content();
     RemoteRepositories remoteRepositories = RemoteRepositories.builder()
-        .behave("/**", new Content("<html>some content</html>", MediaType.TEXT_HTML.toString()))
-        .repo("200ErrorTest")
+        .repo(RemoteRepository.repo("RemoteErrorPageWith200Test").behave(content).build())
         .build();
-    this.baseUrl = remoteRepositories.getUrl("200ErrorTest");
+    this.baseUrl = remoteRepositories.getUrl("RemoteErrorPageWith200Test");
     return new M2TestsuiteEnvironmentBuilder(remoteRepositories);
   }
 
   @Test
   public void testRemoteReturnsErrorWith200StatusHeadersNotSet()
-      throws ItemNotFoundException, IOException
+      throws Exception
   {
-
     String expectedContent = "my cool expected content";
-    ErrorServlet.CONTENT = expectedContent;
-    ErrorServlet.clearHeaders();
+    content.body = expectedContent;
+    content.headers.clear();
 
     // remote request
     ResourceStoreRequest storeRequest = new ResourceStoreRequest("random/file.txt");
@@ -86,10 +92,10 @@ public class RemoteErrorPageWith200Test
   public void testRemoteReturnsErrorWith200StatusHeadersSet()
       throws RemoteAccessException, StorageException, ItemNotFoundException
   {
-
     String expectedContent = "error page";
-    ErrorServlet.CONTENT = expectedContent;
-    ErrorServlet.addHeader(HttpClientRemoteStorage.NEXUS_MISSING_ARTIFACT_HEADER, "true");
+    content.body = expectedContent;
+    content.headers.clear();
+    content.headers.put(HttpClientRemoteStorage.NEXUS_MISSING_ARTIFACT_HEADER, "true");
 
     // remote request
     ResourceStoreRequest storeRequest = new ResourceStoreRequest("random/file.txt");
@@ -104,4 +110,29 @@ public class RemoteErrorPageWith200Test
     }
   }
 
+  public static class Content
+      implements Behaviour
+  {
+    public Multimap<String, String> headers = ArrayListMultimap.create();
+
+    public String body = "<html>some content</html>";
+
+    public String bodyContentType = MediaType.TEXT_HTML.toString();
+
+    @Override
+    public boolean execute(final HttpServletRequest request,
+                           final HttpServletResponse response,
+                           final Map<Object, Object> ctx)
+        throws Exception
+    {
+      if (!headers.isEmpty()) {
+        for (Map.Entry<String, String> entry : headers.entries()) {
+          response.addHeader(entry.getKey(), entry.getValue());
+        }
+      }
+      response.setContentType(bodyContentType);
+      response.getWriter().write(body);
+      return false;
+    }
+  }
 }
