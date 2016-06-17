@@ -18,11 +18,9 @@ import java.util.Properties;
 
 import com.sonatype.security.realms.kenai.config.model.Configuration;
 
-import org.sonatype.jettytestsuite.ServletInfo;
-import org.sonatype.jettytestsuite.ServletServer;
-import org.sonatype.jettytestsuite.WebappContext;
 import org.sonatype.nexus.NexusAppTestSupport;
 import org.sonatype.security.realms.kenai.config.KenaiRealmConfiguration;
+import org.sonatype.tests.http.server.fluent.Server;
 
 public abstract class AbstractKenaiRealmTest
     extends NexusAppTestSupport
@@ -36,34 +34,13 @@ public abstract class AbstractKenaiRealmTest
 
   protected static final String AUTH_APP_NAME = "auth_app";
 
-  protected ServletServer server;
+  protected Server server;
 
-  protected ServletServer getServletServer()
+  protected Server getServletServer()
       throws Exception
   {
-    ServletServer server = new ServletServer();
-
-    ServerSocket socket = new ServerSocket(0);
-    int freePort = socket.getLocalPort();
-    socket.close();
-
-    server.setPort(freePort);
-
-    WebappContext webapp = new WebappContext();
-    server.setWebappContexts(Arrays.asList(webapp));
-
-    webapp.setName("auth_app");
-
-    ServletInfo servletInfoAuthc = new ServletInfo();
-    servletInfoAuthc.setName("authc");
-    servletInfoAuthc.setMapping("/api/login/*");
-    servletInfoAuthc.setServletClass(KenaiMockAuthcServlet.class.getName());
-    servletInfoAuthc.setParameters(new Properties());
-
-    webapp.setServletInfos(Arrays.asList(servletInfoAuthc));
-
-    server.initialize();
-
+    Server server = Server.server();
+    server.serve("/" + AUTH_APP_NAME + "/api/login/*").withServlet(new KenaiMockAuthcServlet());
     return server;
   }
 
@@ -75,7 +52,7 @@ public abstract class AbstractKenaiRealmTest
     Configuration configuration = kenaiRealmConfiguration.getConfiguration();
     configuration.setDefaultRole(DEFAULT_ROLE);
     configuration.setEmailDomain("sonatype.org");
-    configuration.setBaseUrl(server.getUrl(AUTH_APP_NAME) + "/"); // add the '/' to the end
+    configuration.setBaseUrl("http://localhost:" + server.getPort() + "/" + AUTH_APP_NAME + "/"); // add the '/' to the end
     // kenaiRealmConfiguration.updateConfiguration( configuration );
     return kenaiRealmConfiguration;
   }

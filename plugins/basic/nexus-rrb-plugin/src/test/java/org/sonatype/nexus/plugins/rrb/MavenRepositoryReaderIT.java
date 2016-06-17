@@ -16,13 +16,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ServerSocket;
 import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.jettytestsuite.BlockingServer;
 import org.sonatype.nexus.proxy.repository.DefaultRemoteConnectionSettings;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.RemoteProxySettings;
@@ -62,9 +62,9 @@ public class MavenRepositoryReaderIT
 
   Server server; // An embedded Jetty server
 
-  String localUrl = "http://local"; // This URL doesn't matter for the tests
+  int port;
 
-  String nameOfConnector; // This is the host:portnumber of the Jetty connector
+  String localUrl = "http://local"; // This URL doesn't matter for the tests
 
   @Mock
   private QueryStringBuilder queryStringBuilder;
@@ -124,17 +124,13 @@ public class MavenRepositoryReaderIT
       }
     };
 
-    server = new BlockingServer(0); // We choose an arbitrary server port
+    try (ServerSocket ss = new ServerSocket(0)) {
+      port = ss.getLocalPort();
+    }
+
+    server = new Server(port); // We choose an arbitrary server port
     server.setHandler(handler); // Assign the handler of incoming requests
     server.start();
-
-    // After starting we must find out the host:port, so we know how to
-    // connect to the server in the tests
-    for (Connector connector : server.getConnectors()) {
-      nameOfConnector = connector.getName();
-      break; // We only need one connector name (and there should only be
-      // one...)
-    }
   }
 
   @After
@@ -148,7 +144,7 @@ public class MavenRepositoryReaderIT
    * Auxiliary methods
    */
   private String getRemoteUrl() {
-    return "http://" + nameOfConnector + "/";
+    return "http://localhost:" + port + "/";
   }
 
   private ProxyRepository getFakeProxyRepository(final String remoteUrl) {

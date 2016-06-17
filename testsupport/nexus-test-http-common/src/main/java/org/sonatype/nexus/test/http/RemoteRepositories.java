@@ -43,6 +43,11 @@ public class RemoteRepositories
   public static class Builder
   {
     /**
+     * Port, default is "random".
+     */
+    private int port = -1;
+
+    /**
      * path spec -> Behaviour w/ order
      */
     private final LinkedHashMap<String, Behaviour[]> behaviourMap = new LinkedHashMap<>();
@@ -53,7 +58,12 @@ public class RemoteRepositories
     private final LinkedHashMap<String, RemoteRepository> repositoryMap = new LinkedHashMap<>();
 
     public RemoteRepositories build() throws Exception {
-      return new RemoteRepositories(behaviourMap, repositoryMap);
+      return new RemoteRepositories(port, behaviourMap, repositoryMap);
+    }
+
+    public Builder port(int port) {
+      this.port = port;
+      return this;
     }
 
     public Builder behave(String pathspec, Behaviour... behaviour) {
@@ -81,15 +91,19 @@ public class RemoteRepositories
     return new Builder();
   }
 
+  private final int port;
+
   private final Map<String, Behaviour[]> behaviourMap;
 
   private final Map<String, RemoteRepository> repositoryMap;
 
   private Server server;
 
-  private RemoteRepositories(final LinkedHashMap<String, Behaviour[]> behaviourMap,
+  private RemoteRepositories(final int port,
+                             final LinkedHashMap<String, Behaviour[]> behaviourMap,
                              final LinkedHashMap<String, RemoteRepository> repositoryMap) throws Exception
   {
+    this.port = port;
     this.behaviourMap = Collections.unmodifiableMap(behaviourMap);
     this.repositoryMap = Collections.unmodifiableMap(repositoryMap);
     startServer();
@@ -97,6 +111,9 @@ public class RemoteRepositories
 
   private void startServer() throws Exception {
     server = Server.server();
+    if (port != -1) {
+      server.port(port);
+    }
     for (RemoteRepository remoteRepository : repositoryMap.values()) {
       ServerProvider serverProvider = server.getServerProvider();
       File baseDir = new File(remoteRepository.getResourceBase()).getAbsoluteFile();
@@ -110,7 +127,7 @@ public class RemoteRepositories
       if (remoteRepository.getAuthInfo() != null) {
         AuthInfo authInfo = remoteRepository.getAuthInfo();
         serverProvider.addAuthentication("/" + remoteRepository.getName() + "/*", authInfo.getName());
-        for (Map.Entry<String, Object> user : authInfo.getUsers().entrySet()) {
+        for (Map.Entry<String, ? extends Object> user : authInfo.getUsers().entrySet()) {
           serverProvider.addUser(user.getKey(), user.getValue());
         }
       }
@@ -269,9 +286,9 @@ public class RemoteRepositories
   {
     private final String name;
 
-    private final Map<String, Object> users;
+    private final Map<String, ? extends Object> users;
 
-    public AuthInfo(final String name, final Map<String, Object> users) {
+    public AuthInfo(final String name, final Map<String, ? extends Object> users) {
       this.name = name;
       this.users = ImmutableMap.copyOf(users);
     }
@@ -280,7 +297,7 @@ public class RemoteRepositories
       return name;
     }
 
-    public Map<String, Object> getUsers() {
+    public Map<String, ? extends Object> getUsers() {
       return users;
     }
   }

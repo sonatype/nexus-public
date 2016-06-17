@@ -14,8 +14,8 @@ package org.sonatype.nexus.plugins.rrb;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.HashMap;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.AbstractPluginTestCase;
 import org.sonatype.nexus.proxy.maven.maven2.M2Repository;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
@@ -23,8 +23,12 @@ import org.sonatype.nexus.proxy.repository.UsernamePasswordRemoteAuthenticationS
 import org.sonatype.nexus.templates.TemplateProvider;
 import org.sonatype.nexus.templates.repository.DefaultRepositoryTemplateProvider;
 import org.sonatype.nexus.templates.repository.maven.Maven2ProxyRepositoryTemplate;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 import org.sonatype.plexus.rest.resource.PlexusResource;
 
+import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.codehaus.plexus.context.Context;
 import org.junit.Test;
@@ -35,54 +39,29 @@ import org.restlet.data.Request;
 public class RemoteBrowserResourceAuthTest
     extends AbstractPluginTestCase
 {
-  private ServletServer server = null;
+  private RemoteRepositories remoteRepositories = null;
 
   @Override
   protected void setUp()
       throws Exception
   {
     super.setUp();
-
-    this.server = this.lookup(ServletServer.class);
+    HashMap<String, Object> users = new HashMap<>();
+    this.remoteRepositories = RemoteRepositories.builder()
+        .repo(RemoteRepository.repo("auth-test").resourceBase("target")
+            .authInfo(new AuthInfo("BASIC", ImmutableMap.of("admin", "admin"))).build())
+        .build();
+    this.remoteRepositories.start();
 
     // ping nexus to wake up
     startNx();
-  }
-
-  @Override
-  protected void customizeContext(Context context) {
-    super.customizeContext(context);
-
-    int port = 0;
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
-      port = socket.getLocalPort();
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-      Assert.fail("Could not find free port: " + e.getMessage());
-    }
-    finally {
-      try {
-        socket.close();
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        Assert.fail("Could not close socket: " + e.getMessage());
-      }
-    }
-
-    context.put("jetty-port", Integer.toString(port));
-    context.put("resource-base", "target");
-
   }
 
   @Test
   public void testSiteWithAuth()
       throws Exception
   {
-    String remoteUrl = server.getUrl("auth-test/");
+    String remoteUrl = remoteRepositories.getUrl("auth-test");
 
     String repoId = "testSiteWithAuth";
     RepositoryRegistry repoRegistry = this.lookup(RepositoryRegistry.class);
@@ -132,12 +111,9 @@ public class RemoteBrowserResourceAuthTest
   protected void tearDown()
       throws Exception
   {
-
-    if (this.server != null) {
-      this.server.stop();
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
     }
-
     super.tearDown();
   }
-
 }

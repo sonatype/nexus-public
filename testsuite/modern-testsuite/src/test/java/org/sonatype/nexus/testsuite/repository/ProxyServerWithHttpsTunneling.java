@@ -21,11 +21,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.tests.http.server.jetty.impl.ProxyServlet;
-
 import com.google.common.collect.Sets;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.proxy.ConnectHandler;
+import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
