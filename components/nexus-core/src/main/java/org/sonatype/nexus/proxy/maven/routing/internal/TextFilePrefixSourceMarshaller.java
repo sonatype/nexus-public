@@ -72,8 +72,6 @@ public class TextFilePrefixSourceMarshaller
    */
   protected static final String UNSUPPORTED = "@ unsupported";
 
-  private final int prefixFileMaxSize;
-
   private final int prefixFileMaxLineLength;
 
   private final int prefixFileMaxEntryCount;
@@ -104,10 +102,8 @@ public class TextFilePrefixSourceMarshaller
    * @param config the autorouting config.
    */
   public TextFilePrefixSourceMarshaller(final Config config) {
-    checkArgument(config.getPrefixFileMaxSize() > 0);
     checkArgument(config.getPrefixFileMaxLineLength() > 0);
     checkArgument(config.getPrefixFileMaxEntriesCount() > 0);
-    this.prefixFileMaxSize = config.getPrefixFileMaxSize();
     this.prefixFileMaxLineLength = config.getPrefixFileMaxLineLength();
     this.prefixFileMaxEntryCount = config.getPrefixFileMaxEntriesCount();
   }
@@ -137,10 +133,6 @@ public class TextFilePrefixSourceMarshaller
   public final Result read(final StorageFileItem file)
       throws InvalidInputException, IOException
   {
-    if (file.getLength() > prefixFileMaxSize) {
-      throw new InvalidInputException("Prefix file size exceeds maximum allowed size (" + prefixFileMaxSize
-          + "), refusing to load it.");
-    }
     Closer closer = Closer.create();
     try {
       final BufferedReader reader =

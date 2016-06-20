@@ -209,4 +209,11 @@ public interface RubygemsFileFactory
    * @return Sha1File
    */
   Sha1File sha1(RubygemsFile file);
+
+  /**
+   * Create a <code>NoContentFile</code> for /api/v1/dependencies and /api/v1/dependencies?gems=
+   * @param path for this <code>RubygemsFile</code>
+   * @return NoContentFile
+   */
+  NoContentFile noContent(String path);
 }

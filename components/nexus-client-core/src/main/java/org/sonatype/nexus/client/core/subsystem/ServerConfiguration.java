@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.client.core.subsystem;
 
+import org.sonatype.nexus.client.core.subsystem.config.RemoteConnection;
 import org.sonatype.nexus.client.core.subsystem.config.RemoteProxy;
 import org.sonatype.nexus.client.core.subsystem.config.RestApi;
 import org.sonatype.nexus.client.core.subsystem.config.Security;
@@ -23,6 +24,11 @@ import org.sonatype.nexus.client.core.subsystem.config.Security;
  */
 public interface ServerConfiguration
 {
+  /**
+   * @return Remote connection configuration segment.
+   * @since 2.14
+   */
+  RemoteConnection remoteConnection();
 
   /**
    * @return Remote Proxy configuration segment.

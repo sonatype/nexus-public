@@ -15,6 +15,7 @@ package org.sonatype.nexus.ruby.layout;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.zip.GZIPInputStream;
 
 import org.sonatype.nexus.ruby.ApiV1File;
 import org.sonatype.nexus.ruby.DependencyFile;
@@ -31,8 +32,6 @@ import org.sonatype.nexus.ruby.SpecsIndexType;
 import org.sonatype.nexus.ruby.SpecsIndexZippedFile;
 
 import org.jruby.runtime.builtin.IRubyObject;
-
-import com.jcraft.jzlib.GZIPInputStream;
 
 /**
  * to make a HTTP POST to hosted repository allows only two path:
