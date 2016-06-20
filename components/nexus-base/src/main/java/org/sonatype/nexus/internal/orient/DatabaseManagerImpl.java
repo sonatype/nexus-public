@@ -30,6 +30,7 @@ import org.sonatype.nexus.orient.DatabaseManagerSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -80,7 +81,10 @@ public class DatabaseManagerImpl
       File dir = directory(name);
       DirectoryHelper.mkdir(dir);
 
-      return "plocal:" + dir.toURI().getPath();
+      // OHazelcastPlugin.onOpen() assumes that dbUri.startsWith("plocal:" + dbDirectory)
+      // We're well advised to meet that assumption or clustering won't work, more specifically we need to form
+      // plocal:/data/dbName for Unix/OSX and plocal:D:/data/dbName for Win (no slash before drive letter)
+      return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
     }
     catch (IOException e) {
       throw Throwables.propagate(e);

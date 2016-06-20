@@ -26,6 +26,7 @@ import org.sonatype.nexus.scheduling.events.TaskEventStarted;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedCanceled;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedFailed;
+import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
@@ -82,9 +83,10 @@ public class ScheduledTaskEventsTest
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
     // started, stoppedDone
-    assertThat(listener.arrivedEvents, hasSize(2));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStoppedDone.class));
+    assertThat(listener.arrivedEvents, hasSize(3));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedDone.class));
   }
 
   @Test
@@ -112,11 +114,11 @@ public class ScheduledTaskEventsTest
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
     // started, stoppedDone
-    assertThat(listener.arrivedEvents, hasSize(2));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStoppedFailed.class));
-    assertThat(((TaskEventStoppedFailed) listener.arrivedEvents.get(1)).getFailureCause(),
-        instanceOf(IOException.class));
+    assertThat(listener.arrivedEvents, hasSize(3));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedFailed.class));
+    assertThat(((TaskEventStoppedFailed) listener.arrivedEvents.get(2)).getFailureCause(), instanceOf(IOException.class));
   }
 
   @Test
@@ -144,11 +146,11 @@ public class ScheduledTaskEventsTest
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
     // started, stoppedFailed
-    assertThat(listener.arrivedEvents, hasSize(2));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStoppedFailed.class));
-    assertThat(((TaskEventStoppedFailed) listener.arrivedEvents.get(1)).getFailureCause(),
-        instanceOf(IllegalArgumentException.class));
+    assertThat(listener.arrivedEvents, hasSize(3));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedFailed.class));
+    assertThat(((TaskEventStoppedFailed) listener.arrivedEvents.get(2)).getFailureCause(), instanceOf(IllegalArgumentException.class));
   }
 
   @Test
@@ -180,9 +182,10 @@ public class ScheduledTaskEventsTest
 
     // started, stoppedDone: task is not cancelable, hence, is "unaware" it was
     // attempted to be canceled at all
-    assertThat(listener.arrivedEvents, hasSize(2));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStoppedDone.class));
+    assertThat(listener.arrivedEvents, hasSize(3));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedDone.class));
   }
 
   @Test
@@ -203,9 +206,10 @@ public class ScheduledTaskEventsTest
 
     // started, stoppedDone: task is not cancelable, but it was canceled by framework
     // even before it was started
-    assertThat(listener.arrivedEvents, hasSize(2));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStoppedCanceled.class));
+    assertThat(listener.arrivedEvents, hasSize(3));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedCanceled.class));
   }
   
   @Test
@@ -260,10 +264,11 @@ public class ScheduledTaskEventsTest
     // started, stoppedDone: task is not cancelable, hence, is "unaware" it was
     // attempted to be canceled at all (no canceled events), still, end state is canceled
     // as thread was interrupted
-    assertThat(listener.arrivedEvents, hasSize(3));
-    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskEventStarted.class));
-    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventCanceled.class));
-    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedCanceled.class));
+    assertThat(listener.arrivedEvents, hasSize(4));
+    assertThat(listener.arrivedEvents.get(0), instanceOf(TaskScheduledEvent.class));
+    assertThat(listener.arrivedEvents.get(1), instanceOf(TaskEventStarted.class));
+    assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventCanceled.class));
+    assertThat(listener.arrivedEvents.get(3), instanceOf(TaskEventStoppedCanceled.class));
   }
 
   static class Listener

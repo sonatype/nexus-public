@@ -20,6 +20,9 @@
 Ext.define('NX.coreui.migration.ContentScreen', {
   extend: 'NX.wizard.FormScreen',
   alias: 'widget.nx-coreui-migration-content',
+  requires: [
+    'NX.I18n'
+  ],
 
   /**
    * @override
@@ -28,9 +31,9 @@ Ext.define('NX.coreui.migration.ContentScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Content',
+      title: NX.I18n.render(me, 'Title'),
 
-      description: '<p>Select the contents to migrate from remote server.</p>',
+      description: NX.I18n.render(me, 'Description'),
 
       fields: [
         {
@@ -40,52 +43,92 @@ Ext.define('NX.coreui.migration.ContentScreen', {
           items: [
             {
               xtype: 'checkboxgroup',
-              fieldLabel: 'Security',
-              columns: 1,
-              allowBlank: true,
-              items: [
-                {
-                  xtype: 'checkbox',
-                  name: 'security.anonymous',
-                  boxLabel: 'Anonymous',
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.realms',
-                  boxLabel: 'Realms',
-                  checked: false
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.users',
-                  boxLabel: 'Users',
-                  checked: false
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.roles',
-                  boxLabel: 'Roles',
-                  checked: false
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'ldap',
-                  boxLabel: 'LDAP Configuration',
-                  checked: false
-                }
-              ]
-            },
-            {
-              xtype: 'checkboxgroup',
-              fieldLabel: 'Repositories',
+              fieldLabel: NX.I18n.render(me, 'Repositories_FieldLabel'),
               columns: 1,
               allowBlank: true,
               items: [
                 {
                   xtype: 'checkbox',
                   name: 'repositories.usermanaged',
-                  boxLabel: 'User-managed repositories',
+                  boxLabel: NX.I18n.render(me, 'Repositories_BoxLabel'),
+                  checked: true
+                }
+              ]
+            },
+            {
+              xtype: 'checkboxgroup',
+              fieldLabel: NX.I18n.render(me, 'Security_FieldLabel'),
+              columns: 1,
+              allowBlank: true,
+              items: [
+                {
+                  xtype: 'checkbox',
+                  name: 'security.anonymous',
+                  boxLabel: NX.I18n.render(me, 'Security_Anonymous_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: (NX.State.requiresLicense() && NX.State.isLicenseValid()) ? 'ldapPro' : 'ldap',
+                  boxLabel: NX.I18n.render(me, 'Security_LDAP_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'nuget.apikey',
+                  boxLabel: NX.I18n.render(me, 'Security_NuGet_API_Key_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'security.realms',
+                  boxLabel: NX.I18n.render(me, 'Security_Realms_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'security.roles',
+                  boxLabel: NX.I18n.render(me, 'Security_Roles_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'security.trust',
+                  boxLabel: NX.I18n.render(me, 'Security_SSL_Certificates_BoxLabel'),
+                  checked: true,
+                  hidden: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'security.user-tokens',
+                  boxLabel: NX.I18n.render(me, 'Security_User_Tokens_BoxLabel'),
+                  checked: true,
+                  hidden: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'security.users',
+                  boxLabel: NX.I18n.render(me, 'Security_Users_BoxLabel'),
+                  checked: true
+                }
+              ]
+            },
+            {
+              xtype: 'checkboxgroup',
+              fieldLabel: NX.I18n.render(me, 'System_FieldLabel'),
+              columns: 1,
+              allowBlank: true,
+              items: [
+                {
+                  xtype: 'checkbox',
+                  name: 'system.email',
+                  boxLabel: NX.I18n.render(me, 'System_Email_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'system.http',
+                  boxLabel: NX.I18n.render(me, 'System_HTTP_BoxLabel'),
                   checked: true
                 }
               ]

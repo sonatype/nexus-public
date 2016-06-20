@@ -12,7 +12,13 @@
  */
 package org.sonatype.nexus.orient;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.inject.Provider;
+
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -69,6 +75,33 @@ public class OrientTransaction
     catch (final Exception e) {
       throw new IllegalArgumentException("Transaction " + tx + " has no public 'getDb' method", e);
     }
+  }
+
+  /**
+   * Executes the operation in the context of an {@link OrientTransaction}.
+   *
+   * @since 3.1
+   */
+  public static void inTxNoReturn(final Provider<DatabaseInstance> databaseInstance,
+                                  final Consumer<ODatabaseDocumentTx> operation)
+  {
+    inTx(databaseInstance, db -> {
+      operation.accept(db);
+      return (Void) null;
+    });
+  }
+
+  /**
+   * Executes the operation in the context of an {@link OrientTransaction} and returns a result.
+   *
+   * @return the result of the operation
+   *
+   * @since 3.1
+   */
+  public static <T> T inTx(final Provider<DatabaseInstance> databaseInstance,
+                           final Function<ODatabaseDocumentTx, T> operation)
+  {
+    return Operations.transactional(txSupplier(databaseInstance.get())).call(() -> operation.apply(currentDb()));
   }
 
   @Override

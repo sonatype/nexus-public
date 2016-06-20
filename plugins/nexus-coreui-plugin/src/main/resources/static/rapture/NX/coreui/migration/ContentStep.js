@@ -20,6 +20,7 @@
 Ext.define('NX.coreui.migration.ContentStep', {
   extend: 'NX.wizard.Step',
   requires: [
+    'NX.State',
     'NX.coreui.migration.ContentScreen'
   ],
 
@@ -57,6 +58,23 @@ Ext.define('NX.coreui.migration.ContentStep', {
 
     me.unset('content-options');
     me.callParent();
+  },
+
+  /**
+   * @override
+   */
+  doActivate: function() {
+    var me = this,
+        screen = me.getScreenCmp();
+
+    me.callParent();
+
+    if (screen && NX.State.requiresLicense() && NX.State.isLicenseValid()) {
+      //don't show the ssl plugin when a license is not installed, as nx2 oss did not support ssl plugin
+      screen.down('checkbox[name=security.trust]').show();
+      // user-tokens are a pro feature
+      screen.down('checkbox[name=security.user-tokens]').show();
+    }
   },
 
   /**

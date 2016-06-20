@@ -56,14 +56,6 @@ Ext.define('NX.coreui.controller.SearchPyPi', {
         }
       },
       {
-        id: 'assets.attributes.pypi.pyversion',
-        group: NX.I18n.get('SearchPyPi_Group'),
-        config: {
-          fieldLabel: NX.I18n.get('SearchPyPi_PyVersion_FieldLabel'),
-          width: 250
-        }
-      },
-      {
         id: 'assets.attributes.pypi.summary',
         group: NX.I18n.get('SearchPyPi_Group'),
         config: {
@@ -84,7 +76,6 @@ Ext.define('NX.coreui.controller.SearchPyPi', {
         { id: 'assets.attributes.pypi.classifiers' },
         { id: 'assets.attributes.pypi.description' },
         { id: 'assets.attributes.pypi.keywords' },
-        { id: 'assets.attributes.pypi.pyversion' },
         { id: 'assets.attributes.pypi.summary' }
       ]
     }, me);

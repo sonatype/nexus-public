@@ -299,11 +299,11 @@ public class QuartzSchedulerSPI
       );
     }
 
-    QuartzTaskJobListener listener = new QuartzTaskJobListener<>(
+    QuartzTaskJobListener listener = new QuartzTaskJobListener(
         listenerName(jobDetail.getKey()),
         eventBus,
         this,
-        new QuartzTaskInfo(this, jobDetail.getKey(), taskState, future)
+        new QuartzTaskInfo(eventBus, this, jobDetail.getKey(), taskState, future)
     );
 
     scheduler.getListenerManager().addJobListener(listener, keyEquals(jobDetail.getKey()));
@@ -572,7 +572,7 @@ public class QuartzSchedulerSPI
 
       Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
       for (JobKey jobKey : jobKeys) {
-        QuartzTaskJobListener<?> listener = findJobListener(jobKey);
+        QuartzTaskJobListener listener = findJobListener(jobKey);
         if (listener != null) {
           result.put(jobKey, listener.getTaskInfo());
         }

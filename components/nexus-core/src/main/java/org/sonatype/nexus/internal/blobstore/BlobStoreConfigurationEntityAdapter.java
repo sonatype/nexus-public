@@ -14,12 +14,18 @@ package org.sonatype.nexus.internal.blobstore;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationCreatedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationDeletedEvent;
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
@@ -98,5 +104,27 @@ public class BlobStoreConfigurationEntityAdapter
     document.field(P_NAME, entity.getName());
     document.field(P_TYPE, entity.getType());
     document.field(P_ATTRIBUTES, entity.getAttributes());
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, final boolean isLocal) {
+    final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    final String name = document.field(P_NAME);
+
+    log.trace("newEvent: eventKind: {}, name: {}, metadata: {}", eventKind, name, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new BlobStoreConfigurationCreatedEvent(metadata, isLocal, name);
+      case DELETE:
+        return new BlobStoreConfigurationDeletedEvent(metadata, isLocal, name);
+      default:
+        return null;
+    }
   }
 }

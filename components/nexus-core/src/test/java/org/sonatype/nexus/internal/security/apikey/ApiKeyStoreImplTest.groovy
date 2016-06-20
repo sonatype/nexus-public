@@ -74,6 +74,16 @@ class ApiKeyStoreImplTest
   }
 
   @Test
+  void 'Can persist and read an API key with provided value'() {
+    PrincipalCollection p = makePrincipals("name")
+    char[] key = ['a', 'b', 'c', 'd'] as char[]
+    underTest.persistApiKey('foo', p, key)
+    char[] fetchedKey = underTest.getApiKey('foo', p)
+
+    assertThat(fetchedKey, equalTo(key))
+  }
+
+  @Test
   void 'Cannot read cross-domain API key'() {
     PrincipalCollection p = makePrincipals("name")
     underTest.createApiKey('foo', p)

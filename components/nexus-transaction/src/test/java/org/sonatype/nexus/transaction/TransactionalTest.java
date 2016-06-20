@@ -507,4 +507,27 @@ public class TransactionalTest
       verifyNoMoreInteractions(tx);
     }
   }
+
+  @Test
+  public void testCanUseStereotypeAnnotation() throws Exception {
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
+
+    methods.setCountdownToSuccess(3);
+    methods.canUseStereotypeAnnotation();
+
+    InOrder order = inOrder(tx);
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).commit();
+    order.verify(tx).close();
+    verifyNoMoreInteractions(tx);
+  }
 }

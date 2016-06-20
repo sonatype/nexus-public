@@ -50,6 +50,8 @@ class AssetXO
   
   @NotEmpty
   String blobRef
+  
+  String componentId
 
   @NotEmpty
   Map<String, Map<String, Object>> attributes

@@ -87,12 +87,28 @@ Ext.define('NX.controller.Message', {
     message.timestamp = new Date();
 
     // show transient message notification
-    var cfg = Ext.clone(this.windowOptions);
-    this.getView('message.Notification').create(Ext.apply(cfg, {
-      ui: 'nx-message-' + message.type,
-      iconCls: NX.Icons.cls('message-' + message.type, 'x16'),
-      title: Ext.String.capitalize(message.type),
-      html: message.text
-    }));
+    if (!this.messageExists(message)) {
+      var cfg = Ext.clone(this.windowOptions);
+      this.getView('message.Notification').create(Ext.apply(cfg, {
+        ui: 'nx-message-' + message.type,
+        iconCls: NX.Icons.cls('message-' + message.type, 'x16'),
+        title: Ext.String.capitalize(message.type),
+        html: message.text
+      }));
+    }
+  },
+
+  /**
+   * Query to see if the message is already displayed so that we can prevent duplicates.
+   * @private
+   * @param message
+   */
+  messageExists: function (message) {
+    var selector = 'nx-message-notification[title=' + Ext.String.capitalize(message.type) + ']';
+    var existingMessage = Ext.Array.filter(Ext.ComponentQuery.query(selector), function (foundMessage) {
+          return Ext.String.trim(foundMessage.body.el.dom.innerText) == message.text;
+        }
+    );
+    return existingMessage.length > 0;
   }
 });

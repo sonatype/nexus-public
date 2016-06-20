@@ -20,6 +20,9 @@
 Ext.define('NX.coreui.migration.PreviewScreen', {
   extend: 'NX.wizard.GridScreen',
   alias: 'widget.nx-coreui-migration-preview',
+  requires: [
+    'NX.I18n'
+  ],
 
   /**
    * @override
@@ -28,9 +31,9 @@ Ext.define('NX.coreui.migration.PreviewScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Preview',
+      title: NX.I18n.render(me, 'Title'),
 
-      description: '<p>Here is a preview of the migration configuration.</p>',
+      description: NX.I18n.render(me, 'Description'),
 
       grid: {
         xtype: 'grid',
@@ -58,12 +61,12 @@ Ext.define('NX.coreui.migration.PreviewScreen', {
             }
           },
           {
-            header: 'Name',
+            header: NX.I18n.render(me, 'Name_Column'),
             dataIndex: 'name',
             flex: 1
           },
           {
-            header: 'State',
+            header: NX.I18n.render(me, 'State_Column'),
             dataIndex: 'state'
           }
         ],
@@ -82,7 +85,7 @@ Ext.define('NX.coreui.migration.PreviewScreen', {
       buttons: [
         'back',
         {
-          text: 'Begin',
+          text: NX.I18n.render(me, 'Begin_Button'),
           action: 'begin',
           ui: 'nx-primary',
           disabled: true

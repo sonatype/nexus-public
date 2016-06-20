@@ -118,11 +118,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchPyPi_Classifiers_FieldLabel: 'Classifiers',
     SearchPyPi_Description_FieldLabel: 'Description',
     SearchPyPi_Keywords_FieldLabel: 'PyPI Keywords',
-    SearchPyPi_PyVersion_FieldLabel: 'Python Version',
     SearchPyPi_Summary_FieldLabel: 'Summary',
     SearchRubygems_Name_FieldLabel: 'Name',
     SearchRubygems_Version_FieldLabel: 'Version',
     SearchRubygems_Platform_FieldLabel: 'Platform',
+    SearchRubygems_Summary_FieldLabel: 'Summary',
+    SearchRubygems_Description_FieldLabel: 'Description',
+    SearchRubygems_Licenses_FieldLabel: 'Licenses',
+    SearchRubygems_Homepage_FieldLabel: 'Homepage',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -284,7 +287,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_ArtifactAge_HelpText: 'How long (in minutes) to cache artifacts before rechecking the remote repository. Release repositories should use -1.',
     Repository_Facet_ProxyFacet_MetadataAge_HelpText: 'How long (in minutes) to cache metadata before rechecking the remote repository.',
     Repository_Facet_HttpClientFacet_ConnectionRetries_FieldLabel: 'Connection retries',
-    Repository_Facet_HttpClientFacet_ConnectionRetries_HelpText: 'How many times to try to connect before giving up',
+    Repository_Facet_HttpClientFacet_ConnectionRetries_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
     Repository_Facet_HttpClientFacet_ConnectionTimeout_FieldLabel: 'Connection timeout',
     Repository_Facet_HttpClientFacet_ConnectionTimeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection. Leave blank to use the globally defined HTTP timeout.',
     Repository_Facet_StorageFacet_BlobStore_FieldLabel: 'Blob store',
@@ -1057,7 +1060,40 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Nuget_NuGetApiKey_Access_Button: 'Access API Key',
     Nuget_NuGetApiKey_Access_HelpText: 'Accessing NuGet API Key requires validation of your credentials.',
     Nuget_NuGetApiKey_Reset_Button: 'Reset API Key',
-    Nuget_NuGetApiKey_Reset_HelpText: 'Resetting NuGet API Key requires validation of your credentials.'
+    Nuget_NuGetApiKey_Reset_HelpText: 'Resetting NuGet API Key requires validation of your credentials.',
+
+    // Admin -> System -> Licensing
+    Licensing_Text: 'Licensing',
+    Licensing_Description: 'A valid license is required for PRO features. Manage it here.',
+    Licensing_LicensingDetails_Company_FieldLabel: 'Company',
+    Licensing_LicensingDetails_Name_FieldLabel: 'Name',
+    Licensing_LicensingDetails_Email_FieldLabel: 'Email',
+    Licensing_LicensingDetails_EffectiveDate_FieldLabel: 'Effective date',
+    Licensing_LicensingDetails_ExpirationDate_FieldLabel: 'Expiration date',
+    Licensing_LicensingDetails_Type_FieldLabel: 'License type',
+    Licensing_LicensingDetails_LicensedUsers_FieldLabel: 'Number of licensed users',
+    Licensing_LicensingDetails_Connections_FieldLabel: 'Number of unique IP addresses that have connected in the last 7 days',
+    Licensing_LicensingDetails_Fingerprint_FieldLabel: 'Fingerprint',
+    Licensing_LicensingDetails_InstallLicense_Title: 'Install license',
+    Licensing_LicensingDetails_InstallLicense_Html: '<p>Installing a new license requires restarting the server to take effect</p>',
+    Licensing_LicensingDetails_LicenseSelect_Button: 'Select license&hellip;',
+    Licensing_LicensingDetails_LicenseInstall_Button: 'Install license',
+    Licensing_LicenseAgreement_Title: 'Nexus Repository Manager License Agreement',
+    Licensing_LicenseAgreement_Yes_Button: 'I agree',
+    Licensing_LicenseAgreement_No_Button: 'I do not agree',
+    Licensing_LicenseAgreement_Download_Button: 'Download a copy of the license.',
+    Licensing_Install_Success: 'License installed. Restart is only required if you are enabling new PRO features.',
+    Licensing_Authentication_Validation: '{0} a license requires validation of your credentials.',
+
+    // Admin -> System -> Licensing -> Recent Connections
+    LicenseUsers_Title: 'Recent Connections',
+    LicenseUsers_Description: 'Reports active users in the last 7 days',
+    Licensing_LicenseUserList_Download_Button: 'Download',
+    Licensing_LicenseUserList_IP_Header: 'IP',
+    Licensing_LicenseUserList_Date_Header: 'Date',
+    Licensing_LicenseUserList_User_Header: 'User',
+    Licensing_LicenseUserList_Agent_Header: 'User agent',
+    Licensing_LicenseUserList_EmptyText: 'No active users in the last 7 days.'
   },
 
   /**
@@ -1087,13 +1123,72 @@ Ext.define('NX.coreui.app.PluginStrings', {
       PlanStepDetail_Mask: 'Fetching details'
     },
 
+    'NX.coreui.migration.AgentScreen': {
+      Title: 'Agent Connection',
+      Description: "<p>Configure the connection to remote server's migration-agent.<br/>" +
+      'The remote server must have a migration-agent previously configured and enabled.</p>',
+      Endpoint_FieldLabel: 'URL',
+      Endpoint_HelpText: "The URL of the remote server's migration-agent endpoint (e.g. http://localhost:8082/nexus/service/siesta/migrationagent)",
+      Token_FieldLabel: 'Access Token',
+      Token_HelpText: "The access token copied from the remote server's migration-agent settings."
+    },
+
     'NX.coreui.migration.AgentStep': {
       Connect_Mask: 'Connecting',
       Connect_Message: 'Connected'
     },
 
+    'NX.coreui.migration.ContentScreen': {
+      Title: 'Content',
+      Description: '<p>Select the contents to migrate from remote server.</p>',
+      Security_FieldLabel: 'Security',
+      Security_Anonymous_BoxLabel: 'Anonymous',
+      Security_Realms_BoxLabel: 'Realms',
+      Security_Users_BoxLabel: 'Users',
+      Security_User_Tokens_BoxLabel: 'User Tokens',
+      Security_Roles_BoxLabel: 'Roles',
+      Security_LDAP_BoxLabel: 'LDAP Configuration',
+      Security_SSL_Certificates_BoxLabel: 'SSL Certificates',
+      Security_NuGet_API_Key_BoxLabel: 'NuGet API-Key',
+      System_FieldLabel: 'System',
+      System_Email_BoxLabel: 'Email',
+      System_HTTP_BoxLabel: 'HTTP Configuration',
+      Repositories_FieldLabel: 'Repositories',
+      Repositories_BoxLabel: 'User-managed repositories'
+    },
+
+    'NX.coreui.migration.OverviewScreen': {
+      Title: 'Overview',
+      Description: '<p>This wizard will help you setup migration from a remote server.</p>' +
+      '<p>Many aspects of a server can be migrated <strong>automatically</strong>:' +
+      '<ul>' +
+      '<li>Security: users, roles and privileges</li>' +
+      '<li>Repositories in supported formats: maven2, nuget, npm, site</li>' +
+      '</ul>' +
+      '</p>' +
+      '<p>Some aspects are <strong>incompatible</strong> and can not be automatically migrated:' +
+      '<ul>' +
+      '<li>Unsupported repository formats: yum, p2, obr</li>' +
+      '<li>Scheduled tasks</li>' +
+      '<li>Capabilities</li>' +
+      '</ul>' +
+      '</p>' +
+      '<p>Migration is incremental. We recommend migrating one or two repositories first to ensure that the process works, then repeat the process and migrate the rest. Keep in mind that repository migration could take <strong>considerable time</strong> and needs <strong>special consideration</strong> for finalization upon completion.' +
+      '</p>'
+    },
+
+    'NX.coreui.migration.PhaseFinishScreen': {
+      Title: 'Finishing',
+      Description: '<p>Migration is finishing.</p>',
+      Done_Button: 'Done'
+    },
+
     'NX.coreui.migration.RepositoryDefaultsScreen': {
       $extend: 'NX.coreui.migration.RepositoryCustomizeWindow',
+
+      Title: 'Repository Defaults',
+      Description: '<p>Configure the default settings used for repository migration.<br/>' +
+      'Per-repository settings may be customized when selecting repositories to migrate.</p>',
       IngestMethod_HelpText: 'Choose how the repository should be migrated. The method you choose may not be supported by all repositories.'
     },
 
@@ -1114,7 +1209,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.PlanStepDetailWindow': {
       Title: '{0}',
-      EmptyLog: 'No progress'
+      EmptyLog: 'No progress',
+      Timestamp_Column: 'Timestamp',
+      Message_Column: 'Message'
+    },
+
+    'NX.coreui.migration.PreviewScreen': {
+      Title: 'Preview',
+      Description: '<p>Here is a preview of the migration configuration.</p>',
+      Name_Column: 'Name',
+      State_Column: 'State',
+      Begin_Button: 'Begin'
     },
 
     'NX.coreui.migration.PreviewStep': {
@@ -1124,8 +1229,44 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Begin_Message: 'Migration begun'
     },
 
+    'NX.coreui.migration.ProgressScreenSupport': {
+      Name_Column: 'Name',
+      Status_Column: 'Status',
+      State_Column: 'State',
+      Complete_Column: 'Complete'
+    },
+
     'NX.coreui.migration.ProgressStepSupport': {
       Loading_Mask: 'Loading'
+    },
+
+    'NX.coreui.migration.RepositoriesScreen': {
+      Title: 'Repositories',
+      Description: '<p>Select the repositories to be migrated.<br/>' +
+      'Customize advanced configuration of the migration per-repository as needed.</p>',
+      Repository_Column: 'Repository',
+      Type_Column: 'Type',
+      Format_Column: 'Format',
+      Supported_Column: 'Supported',
+      Status_Column: 'Status',
+      Destination_Column: 'Destination',
+      Method_Column: 'Method',
+      Action_Tooltip: 'Customize repository options'
+    },
+
+    'NX.coreui.migration.RepositoriesStep': {
+      $extend: 'NX.coreui.migration.ProgressStepSupport'
+    },
+
+    'NX.coreui.migration.RepositoryDefaultsStep': {
+      $extend: 'NX.coreui.migration.ProgressStepSupport'
+    },
+
+    'NX.coreui.migration.PhasePrepareScreen': {
+      Title: 'Preparing',
+      Description: '<p>Preparing for migration.</p>',
+      Abort_Button: 'Abort',
+      Continue_Button: 'Continue'
     },
 
     'NX.coreui.migration.PhasePrepareStep': {
@@ -1142,6 +1283,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Continue_Message: 'Migration continuing'
     },
 
+    'NX.coreui.migration.PhaseSyncScreen': {
+      Title: 'Synchronizing',
+      Description: '<p>Migration is synchronizing changes.</p>',
+      Abort_Button: 'Abort',
+      Stop_Monitoring_Button: 'Stop Monitoring',
+      Finish_Button: 'Finish'
+    },
+
     'NX.coreui.migration.PhaseSyncStep': {
       $extend: 'NX.coreui.migration.ProgressStepSupport',
 
@@ -1149,6 +1298,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Abort_Confirm_Text: 'Do you want to abort migration?',
       Abort_Mask: 'Migration aborting',
       Abort_Message: 'Migration aborted',
+
+      Stop_Waiting_Confirm_Title: 'Stop waiting for changes',
+      Stop_Waiting_Confirm_Text: 'Any future changes to repositories will not be migrated. Proceed?',
+      Stop_Waiting_Confirm_Mask: 'Finalizing changes',
+      Stop_Waiting_Confirm_Message: 'Changes finalized',
 
       Finish_Confirm_Title: 'Finish Migration',
       Finish_Confirm_Text: 'Do you want to finish migration?',

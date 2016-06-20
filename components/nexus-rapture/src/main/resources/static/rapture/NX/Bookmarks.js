@@ -53,6 +53,17 @@ Ext.define('NX.Bookmarks', {
   },
 
   /**
+   * Navigate back by removing one or more segments from the given bookmark.
+   * @param bookmark
+   * @param segments
+   * @param caller
+   * @returns {*}
+   */
+  navigateBackSegments: function(bookmark, segments, caller) {
+    return this.controller().navigateTo(NX.Bookmarks.fromSegments(bookmark.getSegments().slice(0, -segments)), caller);
+  },
+
+  /**
    * Creates a new bookmark.
    *
    * @public

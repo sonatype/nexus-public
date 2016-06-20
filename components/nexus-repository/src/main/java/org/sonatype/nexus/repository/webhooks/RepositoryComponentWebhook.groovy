@@ -74,21 +74,23 @@ class RepositoryComponentWebhook
    * Maybe queue {@link WebhookRequest} for event matching subscriptions.
    */
   private void maybeQueue(final ComponentEvent event, final EventType eventType) {
-    Component component = event.component
-    for (WebhookSubscription subscription in subscriptions) {
-      def configuration = subscription.configuration as RepositoryWebhook.Configuration
-      if (configuration.repository == event.repositoryName) {
-        // TODO: discriminate on content-selector
-        queue(subscription, [
-            timestamp: new Date(),
-            userId: UserIdHelper.get(),
-            repositoryName: event.repositoryName,
-            componentFormat: component.format(),
-            componentName: component.name(),
-            componentGroup: component.group(),
-            componentVersion: component.version(),
-            eventType: eventType
-        ])
+    if (event.local) {
+      Component component = event.component
+      for (WebhookSubscription subscription in subscriptions) {
+        def configuration = subscription.configuration as RepositoryWebhook.Configuration
+        if (configuration.repository == event.repositoryName) {
+          // TODO: discriminate on content-selector
+          queue(subscription, [
+              timestamp: new Date(),
+              userId: UserIdHelper.get(),
+              repositoryName: event.repositoryName,
+              componentFormat: component.format(),
+              componentName: component.name(),
+              componentGroup: component.group(),
+              componentVersion: component.version(),
+              eventType: eventType
+          ])
+        }
       }
     }
   }

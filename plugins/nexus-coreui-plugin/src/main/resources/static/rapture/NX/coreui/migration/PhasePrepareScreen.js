@@ -20,6 +20,9 @@
 Ext.define('NX.coreui.migration.PhasePrepareScreen', {
   extend: 'NX.coreui.migration.ProgressScreenSupport',
   alias: 'widget.nx-coreui-migration-phaseprepare',
+  requires: [
+    'NX.I18n'
+  ],
 
   /**
    * @override
@@ -28,16 +31,16 @@ Ext.define('NX.coreui.migration.PhasePrepareScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Preparing',
-      description: '<p>Preparing for migration.</p>',
+      title: NX.I18n.render(me, 'Title'),
+      description: NX.I18n.render(me, 'Description'),
       buttons: [
         {
-          text: 'Abort',
+          text: NX.I18n.render(me, 'Abort_Button'),
           action: 'abort',
           ui: 'default'
         },
         {
-          text: 'Continue',
+          text: NX.I18n.render(me, 'Continue_Button'),
           action: 'continue',
           ui: 'nx-primary',
           disabled: true

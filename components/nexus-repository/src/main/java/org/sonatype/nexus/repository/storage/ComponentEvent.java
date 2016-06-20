@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.orient.entity.EntityBatchEvent.Batchable;
+import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
 
 /**
  * Component event.
@@ -23,6 +23,11 @@ import org.sonatype.nexus.orient.entity.EntityBatchEvent.Batchable;
 public interface ComponentEvent
     extends Batchable
 {
+  /**
+   * @since 3.1
+   */
+  boolean isLocal();
+
   String getRepositoryName();
 
   EntityId getComponentId();

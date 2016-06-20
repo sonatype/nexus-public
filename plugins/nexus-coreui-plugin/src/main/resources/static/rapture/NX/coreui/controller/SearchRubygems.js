@@ -15,7 +15,7 @@
 /**
  * Rubygems repository search contribution.
  *
- * @since 3.0
+ * @since 3.1
  */
 Ext.define('NX.coreui.controller.SearchRubygems', {
   extend: 'NX.app.Controller',
@@ -32,26 +32,26 @@ Ext.define('NX.coreui.controller.SearchRubygems', {
 
     search.registerCriteria([
       {
-        id: 'name',
-        group: NX.I18n.get('SearchRubygems_Group'),
-        config: {
-          fieldLabel: NX.I18n.get('SearchRubygems_Name_FieldLabel'),
-          width: 250
-        }
-      },
-      {
-        id: 'version',
-        group: NX.I18n.get('SearchRubygems_Group'),
-        config: {
-          fieldLabel: NX.I18n.get('SearchRubygems_Version_FieldLabel'),
-          width: 250
-        }
-      },
-      {
         id: 'assets.attributes.rubygems.platform',
         group: NX.I18n.get('SearchRubygems_Group'),
         config: {
           fieldLabel: NX.I18n.get('SearchRubygems_Platform_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.rubygems.summary',
+        group: NX.I18n.get('SearchRubygems_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchRubygems_Summary_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.rubygems.description',
+        group: NX.I18n.get('SearchRubygems_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchRubygems_Description_FieldLabel'),
           width: 250
         }
       }
@@ -65,9 +65,11 @@ Ext.define('NX.coreui.controller.SearchRubygems', {
       readOnly: true,
       criterias: [
         { id: 'format', value: 'rubygems', hidden: true },
-        { id: 'name' },
+        { id: 'name.raw' },
         { id: 'version' },
-        { id: 'assets.attributes.rubygems.platform' }
+        { id: 'assets.attributes.rubygems.platform' },
+        { id: 'assets.attributes.rubygems.summary' },
+        { id: 'assets.attributes.rubygems.description' }
       ]
     }, me);
   }

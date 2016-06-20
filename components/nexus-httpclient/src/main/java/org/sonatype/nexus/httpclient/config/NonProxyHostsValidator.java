@@ -74,8 +74,10 @@ public class NonProxyHostsValidator
   /**
    * Returns {@code true} if value is considered as valid nonProxyHosts expression. This is NOT validating the
    * single-string used to set system property (where expressions are delimited with "|")!
+   * 
+   * @since 3.1
    */
-  private static boolean isValid(String value) {
+  public static boolean isValid(String value) {
     // A value should be a non-empty string optionally prefixed or suffixed with an asterisk
     // must be non-empty, non-blank
     if (Strings2.isBlank(value)) {

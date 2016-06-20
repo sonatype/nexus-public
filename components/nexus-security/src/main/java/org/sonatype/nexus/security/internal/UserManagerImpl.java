@@ -37,6 +37,9 @@ import org.sonatype.nexus.security.user.UserCreatedEvent;
 import org.sonatype.nexus.security.user.UserDeletedEvent;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.security.user.UserRoleMappingCreatedEvent;
+import org.sonatype.nexus.security.user.UserRoleMappingDeletedEvent;
+import org.sonatype.nexus.security.user.UserRoleMappingUpdatedEvent;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.security.user.UserUpdatedEvent;
@@ -295,7 +298,7 @@ public class UserManagerImpl
       try {
         configuration.deleteUserRoleMapping(userId, userSource);
 
-        // TODO: fire event?
+        eventBus.post(new UserRoleMappingDeletedEvent(userId, userSource));
       }
       catch (NoSuchRoleMappingException e) {
         log.debug("User role mapping for user: {} source: {} could not be deleted because it does not exist.",
@@ -318,15 +321,17 @@ public class UserManagerImpl
       // try to update first
       try {
         configuration.updateUserRoleMapping(roleMapping);
+
+        eventBus.post(new UserRoleMappingUpdatedEvent(userId, userSource, roleMapping.getRoles()));
       }
       catch (NoSuchRoleMappingException e) {
         // update failed try create
         log.debug("Update of user role mapping for user: {} source: {} did not exist, creating new one.",
             userId, userSource);
         configuration.createUserRoleMapping(roleMapping);
-      }
 
-      // TODO: fire event?
+        eventBus.post(new UserRoleMappingCreatedEvent(userId, userSource, roleMapping.getRoles()));
+      }
     }
   }
 

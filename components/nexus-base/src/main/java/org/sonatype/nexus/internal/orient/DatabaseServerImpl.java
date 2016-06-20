@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
+import org.sonatype.nexus.orient.entity.EntityHook;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;

@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import org.sonatype.nexus.common.entity.EntityDeletedEvent;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.orient.entity.EntityDeletedEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,8 +29,8 @@ public class ComponentDeletedEvent
 {
   private final String repositoryName;
 
-  public ComponentDeletedEvent(final EntityMetadata metadata, final String repositoryName) {
-    super(metadata);
+  public ComponentDeletedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
+    super(metadata, isLocal);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

@@ -20,7 +20,8 @@
 Ext.define('NX.coreui.migration.RepositoryDefaultsStep', {
   extend: 'NX.wizard.Step',
   requires: [
-    'NX.coreui.migration.RepositoryDefaultsScreen'
+    'NX.coreui.migration.RepositoryDefaultsScreen',
+    'NX.I18n'
   ],
 
   screen: 'NX.coreui.migration.RepositoryDefaultsScreen',
@@ -59,7 +60,7 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsStep', {
   prepare: function () {
     var me = this;
 
-    me.mask('Loading');
+    me.mask(NX.I18n.render(me, 'Loading_Mask'));
 
     me.getStore('Blobstore').load();
 

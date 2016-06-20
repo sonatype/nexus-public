@@ -46,7 +46,7 @@ public class ComponentAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final ComponentEvent event) {
-    if (isEnabled()) {
+    if (isEnabled() && event.isLocal()) {
       Component component = event.getComponent();
 
       AuditData data = new AuditData();

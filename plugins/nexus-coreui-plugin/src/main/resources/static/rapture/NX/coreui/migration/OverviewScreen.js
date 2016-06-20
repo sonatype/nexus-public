@@ -28,25 +28,9 @@ Ext.define('NX.coreui.migration.OverviewScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Overview',
+      title: NX.I18n.render(me, 'Title'),
 
-      description: '<p>This wizard will help you setup migration from a remote server.</p>' +
-      '<p>Many aspects of a server can be migrated <strong>automatically</strong>:' +
-      '<ul>' +
-      '<li>Security: users, roles, privileges</li>' +
-      '<li>Repositories in supported formats: maven2, nuget, npm, site</li>' +
-      '</ul>' +
-      '</p>' +
-      '<p>Some aspects are <strong>incompatible</strong> and can not be automatically migrated:' +
-      '<ul>' +
-      '<li>Unsupported repository formats: yum, p2, obr</li>' +
-      '<li>Unsupported security: roles and privileges</li>' +
-      '<li>Scheduled tasks</li>' +
-      '<li>Capabilities</li>' +
-      '</ul>' +
-      '</p>' +
-      '<p>Migration is incremental. We recommend migrating one or two things first to ensure that the process works, then repeat the process and migrate the rest. Keep in mind that repository migration could take <strong>considerable time</strong> and needs <strong>special consideration</strong> for finalization upon completion.' +
-      '</p>',
+      description: NX.I18n.render(me, 'Description'),
 
       buttons: ['next']
     });

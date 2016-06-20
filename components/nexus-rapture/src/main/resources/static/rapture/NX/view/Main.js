@@ -29,7 +29,23 @@ Ext.define('NX.view.Main', {
 
   items: [
     {
-      xtype: 'nx-header-panel',
+      xtype: 'panel',
+      layout: {
+        type: 'vbox',
+        align: 'stretch'
+      },
+      items: [
+        {
+          xtype: 'panel',
+          ui: 'nx-license-warning',
+          id: 'nx-license-warning',
+          iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+          hidden: true
+        },
+        {
+          xtype: 'nx-header-panel'
+        }
+      ],
       region: 'north',
       collapsible: false
     },

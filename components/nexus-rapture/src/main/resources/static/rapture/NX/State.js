@@ -80,6 +80,22 @@ Ext.define('NX.State', {
   },
 
   /**
+   * @public 
+   * @returns {boolean} true, if license is installed and valid
+   */
+  isLicenseValid: function() {
+    return this.isLicenseInstalled() && this.getValue('license', {})['valid'] === true;
+  },
+
+  /**
+   * @public
+   * @returns {number}  of days until license expires, may be null
+   */
+  getDaysToLicenseExpiry: function() {
+    return this.getValue('license', {})['daysToExpiry'];  
+  },
+  
+  /**
    * @public
    * @returns {Object} current user, if any
    */

@@ -112,6 +112,9 @@ Ext.define('NX.app.PluginStrings', {
     // License
     State_Installed_Message: 'License installed',
     State_Uninstalled_Message: 'License uninstalled',
+    State_License_Expiry: 'Your license will expire in {0} days. <a href="http://links.sonatype.com/products/nexus/pro/store">Contact us to renew.</a>',
+    State_License_Expired: 'Your license has expired. <a href="http://links.sonatype.com/products/nexus/pro/store">Contact us to renew.</a>',
+    State_License_Invalid_Message: 'Your license has been detected as missing or invalid. Upload a valid license to proceed.',
 
     // About modal
     AboutWindow_Title: 'About Nexus Repository Manager',

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.common.entity;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -26,4 +28,14 @@ public interface EntityMetadata
 
   @Nonnull
   EntityVersion getVersion();
+
+  /**
+   * @since 3.1
+   */
+  <T> Optional<Class<T>> getEntityType();
+
+  /**
+   * @since 3.1
+   */
+  <T extends Entity> Optional<T> getEntity();
 }

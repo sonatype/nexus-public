@@ -74,7 +74,7 @@ Ext.define('NX.coreui.controller.Privileges', {
       file: 'database_red.png',
       variants: ['x16', 'x32']
     },
-    'privilege-repository-content': {
+    'privilege-repository-content-selector': {
       file: 'content_selector.png',
       variants: ['x16', 'x32']
     },

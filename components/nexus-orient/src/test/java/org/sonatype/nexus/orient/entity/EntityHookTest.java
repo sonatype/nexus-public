@@ -10,25 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.orient;
+package org.sonatype.nexus.orient.entity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventBusImpl;
 import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.entity.EntityEvent;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
@@ -117,19 +117,23 @@ public class EntityHookTest
   @Before
   public void setup() throws Exception {
     EventBus eventBus = new EventBusImpl("reentrant");
-    entityHook = new EntityHook(eventBus, Arrays.asList(entityAdapter));
+    entityHook = new EntityHook(eventBus);
+    entityAdapter.enableEntityHook(entityHook);
     eventBus.register(subscriber);
   }
 
   @Test
-  public void test() {
+  public void testEntityEventsAreSent() {
     EntityEvent event;
 
     try (ODatabaseDocumentTx db = sendingDatabase.getInstance().acquire()) {
 
+      // take a copy of the default listeners/hooks before adding our own
+      List<ODatabaseListener> listeners = ImmutableList.copyOf(db.getListeners());
+      List<ORecordHook> hooks = ImmutableList.copyOf(db.getHooks().keySet());
+
       // connect up the entity hook (this is normally done in the server, but we're using a test instance here)
-      db.registerListener(entityHook);
-      db.registerHook(entityHook, HOOK_POSITION.LAST);
+      entityHook.onOpen(db);
 
       entityAdapter.register(db);
 
@@ -180,6 +184,12 @@ public class EntityHookTest
       event = subscriber.events.get(5);
       assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+
+      entityHook.onClose(db);
+
+      // make sure we're back to just the default listeners/hooks
+      assertThat(ImmutableList.copyOf(db.getListeners()), is(listeners));
+      assertThat(ImmutableList.copyOf(db.getHooks().keySet()), is(hooks));
     }
   }
 }

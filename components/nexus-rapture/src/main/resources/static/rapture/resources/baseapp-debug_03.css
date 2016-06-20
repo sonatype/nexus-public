@@ -1,3 +1,243 @@
+/**
+ * @class NX.view.Unlicensed
+ */
+.nx-unlicensed {
+  background-color: white;
+}
+.nx-unlicensed .title {
+  color: #333333;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px;
+}
+.nx-unlicensed .description {
+  font-size: 16px;
+}
+
+/**
+ * @class NX.view.ExpireSession
+ */
+.nx-expire-session #expire {
+  color: #db2852;
+  font-size: 20px;
+  margin: 12px;
+}
+
+/**
+ * @class NX.view.UnsupportedBrowser
+ */
+.nx-unsupported-browser {
+  background-color: white;
+}
+.nx-unsupported-browser .title {
+  color: #333333;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px;
+}
+.nx-unsupported-browser .description {
+  font-size: 16px;
+}
+.nx-unsupported-browser .icons {
+  padding: 20px 0 50px 0;
+}
+
+/**
+ * @class NX.view.dashboard.Welcome
+ */
+.nx-dashboard-welcome {
+  background-color: white;
+}
+.nx-dashboard-welcome .logo {
+  text-align: center;
+  vertical-align: middle;
+  margin: 40px 0 0 0;
+}
+
+/**
+ * @class NX.view.header.Mode
+ */
+.nx-modebutton {
+  padding: 6px 0 0 0;
+  color: white;
+}
+.nx-modebutton .x-btn-glyph {
+  font-size: 24px;
+}
+.nx-modebutton.x-icon-text-left .x-btn-inner {
+  line-height: 25px !important;
+  font-size: 15px;
+  padding-left: 36px;
+  padding-right: 10px;
+}
+.nx-modebutton.x-icon-text-left .x-btn-glyph {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.nx-modebutton + .nx-caret {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.nx-modebutton:hover,
+.nx-modebutton:focus {
+  background-color: #dddddd;
+}
+.nx-modebutton:hover .x-btn-inner,
+.nx-modebutton:focus .x-btn-inner {
+  color: #006bbf;
+}
+.nx-modebutton:hover .x-btn-glyph,
+.nx-modebutton:focus .x-btn-glyph {
+  color: #006bbf;
+}
+
+.nx-modebutton.x-pressed {
+  background-color: #006bbf;
+}
+.nx-modebutton.x-pressed .x-btn-inner {
+  color: white;
+}
+.nx-modebutton.x-pressed .x-btn-glyph {
+  color: white;
+}
+
+.nx-modebutton.x-pressed + .nx-caret {
+  border-bottom: 5px solid white;
+}
+
+/**
+ * @class NX.view.header.QuickSearch
+ */
+/**
+ * Style for the main header search field.
+ */
+.nx-quicksearch .x-form-trigger-wrap {
+  border-radius: 11px;
+  padding-left: 3px;
+  padding-right: 0px;
+  background-color: #444444;
+  border-color: #333333;
+}
+.nx-quicksearch .x-form-trigger-wrap input.x-form-field,
+.nx-quicksearch .x-form-trigger-wrap .x-trigger-cell,
+.nx-quicksearch .x-form-trigger-wrap .x-form-trigger,
+.nx-quicksearch .x-form-trigger-wrap .x-form-trigger-input-cell {
+  background-color: rgba(0, 0, 0, 0);
+}
+.nx-quicksearch .x-form-trigger-wrap input.x-form-field,
+.nx-quicksearch .x-form-trigger-wrap .x-trigger-cell,
+.nx-quicksearch .x-form-trigger-wrap .x-form-trigger,
+.nx-quicksearch .x-form-trigger-wrap .x-form-text {
+  color: white;
+}
+
+/**
+ * @class NX.view.header.Panel
+ */
+.nx-header-panel .x-toolbar {
+  background-color: black;
+  padding: 0 0 0 16px;
+}
+.nx-header-panel .productname {
+  color: white;
+  font-family: 'Proxima Nova Thin', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.2em;
+}
+.nx-header-panel .productspec {
+  color: white;
+  font-family: 'Proxima Nova Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.1em;
+  letter-spacing: 0.05em;
+}
+
+.x-btn-nx-header-toolbar-medium {
+  border-color: #e1e1e1;
+}
+
+.x-btn-nx-header-toolbar-medium {
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -o-border-radius: 3px;
+  border-radius: 3px;
+  padding: 3px 3px 3px 3px;
+  border-width: 0;
+  border-style: solid;
+  background-image: none;
+  background-color: transparent;
+}
+
+.x-btn-nx-header-toolbar-medium-mc {
+  background-image: url(images/btn/btn-nx-header-toolbar-medium-fbg.gif);
+  background-position: 0 top;
+  background-color: transparent;
+}
+
+.x-nlg .x-btn-nx-header-toolbar-medium {
+  background-image: url(images/btn/btn-nx-header-toolbar-medium-bg.gif);
+  background-position: 0 top;
+}
+
+.x-nbr .x-btn-nx-header-toolbar-medium {
+  padding: 0 !important;
+  border-width: 0 !important;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  -ms-border-radius: 0px;
+  -o-border-radius: 0px;
+  border-radius: 0px;
+  background-color: transparent;
+  background-image: none;
+}
+
+.x-btn-nx-header-toolbar-medium-frameInfo {
+  font-family: th-3-3-3-3-0-0-0-0-3-3-3-3;
+}
+
+.x-btn-nx-header-toolbar-medium-tl {
+  background-position: 0 -6px;
+}
+
+.x-btn-nx-header-toolbar-medium-tr {
+  background-position: right -9px;
+}
+
+.x-btn-nx-header-toolbar-medium-bl {
+  background-position: 0 -12px;
+}
+
+.x-btn-nx-header-toolbar-medium-br {
+  background-position: right -15px;
+}
+
+.x-btn-nx-header-toolbar-medium-ml {
+  background-position: 0 top;
+}
+
+.x-btn-nx-header-toolbar-medium-mr {
+  background-position: right top;
+}
+
+.x-btn-nx-header-toolbar-medium-tc {
+  background-position: 0 0;
+}
+
+.x-btn-nx-header-toolbar-medium-bc {
+  background-position: 0 -3px;
+}
+
+.x-btn-nx-header-toolbar-medium-tr,
+.x-btn-nx-header-toolbar-medium-br,
+.x-btn-nx-header-toolbar-medium-mr {
+  padding-right: 3px;
+}
+
 .x-btn-nx-header-toolbar-medium-tl,
 .x-btn-nx-header-toolbar-medium-bl,
 .x-btn-nx-header-toolbar-medium-ml {

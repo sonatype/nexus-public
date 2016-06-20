@@ -93,7 +93,6 @@
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>
     <it.test.log.level>INFO</it.test.log.level>
-    <it.nexus.log.level>INFO</it.nexus.log.level>
 
     <!--
     Default compile support for Java8+
@@ -410,6 +409,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-transaction</artifactId>
+        <version>3.1.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-upgrade</artifactId>
         <version>3.1.0-SNAPSHOT</version>
       </dependency>
 
@@ -1158,7 +1163,6 @@
       <properties>
         <test.log.level>DEBUG</test.log.level>
         <it.test.log.level>DEBUG</it.test.log.level>
-        <it.nexus.log.level>DEBUG</it.nexus.log.level>
       </properties>
       <build>
         <pluginManagement>
@@ -1170,7 +1174,6 @@
                 <systemPropertyVariables>
                   <test.log.level>${test.log.level}</test.log.level>
                   <it.test.log.level>${it.test.log.level}</it.test.log.level>
-                  <it.nexus.log.level>${it.nexus.log.level}</it.nexus.log.level>
                 </systemPropertyVariables>
               </configuration>
             </plugin>

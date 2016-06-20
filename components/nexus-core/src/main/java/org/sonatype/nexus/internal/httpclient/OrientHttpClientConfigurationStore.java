@@ -27,7 +27,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 
 /**
  * Orient {@link HttpClientConfigurationStore}.
@@ -35,7 +35,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
  * @since 3.0
  */
 @Named("orient")
-@ManagedLifecycle(phase = STORAGE)
+@ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientHttpClientConfigurationStore
   extends LifecycleSupport

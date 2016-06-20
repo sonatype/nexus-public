@@ -85,14 +85,15 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
    * @override
    */
   refresh: function() {
-    var me = this;
+    var me = this,
+        screen = me.getScreenCmp();
 
     me.callParent();
 
-    if (me.checkSyncStatus) {
+    if (screen && (me.checkSyncStatus || me.controller.getContext().get('checkSyncStatus'))) {
       NX.direct.migration_Assistant.syncStatus(function (response, event) {
         if (event.status && response.success && response.data.waitingForChanges) {
-          me.getScreenCmp().down('button[action=continue]').enable();
+          screen.down('button[action=continue]').enable();
         }
       });
     }
@@ -149,10 +150,10 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
     var me = this;
 
     NX.Dialogs.askConfirmation(
-      'Stop waiting for changes',
-      'Any future changes to repositories will not be migrated. Proceed?',
+      NX.I18n.render(me, 'Stop_Waiting_Confirm_Title'),
+      NX.I18n.render(me, 'Stop_Waiting_Confirm_Text'),
       function () {
-        me.mask('Finalizing changes');
+        me.mask(NX.I18n.render(me, 'Stop_Waiting_Confirm_Mask'));
 
         me.autoRefresh(false);
         me.getScreenCmp().down('button[action=continue]').disable();
@@ -163,7 +164,7 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
           if (event.status && response.success && response.data) {
             me.getScreenCmp().down('button[action=continue]').setVisible(false);
             me.getScreenCmp().down('button[action=finish]').setVisible(true);
-            NX.Messages.success('Changes finalized');
+            NX.Messages.success(NX.I18n.render(me, 'Stop_Waiting_Confirm_Message'));
           }
           else {
             me.getScreenCmp().down('button[action=continue]').enable();

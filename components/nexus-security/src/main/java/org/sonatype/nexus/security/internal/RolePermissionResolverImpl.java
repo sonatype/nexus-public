@@ -34,6 +34,8 @@ import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Sets;
@@ -67,13 +69,20 @@ public class RolePermissionResolverImpl
    */
   private final Map<String, Collection<Permission>> rolePermissionsCache = new MapMaker().weakValues().makeMap();
 
+  /**
+   * role not found cache.
+   */
+  private final Cache<String,String> roleNotFoundCache;
+
   @Inject
   public RolePermissionResolverImpl(final SecurityConfigurationManager configuration,
                                     final List<PrivilegeDescriptor> privilegeDescriptors,
-                                    final EventBus eventBus)
+                                    final EventBus eventBus,
+                                    @Named("${security.roleNotFoundCacheSize:-100000}") final int roleNotFoundCacheSize)
   {
     this.configuration = checkNotNull(configuration);
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
     eventBus.register(this);
   }
 
@@ -83,6 +92,7 @@ public class RolePermissionResolverImpl
   private void invalidate() {
     permissionsCache.clear();
     rolePermissionsCache.clear();
+    roleNotFoundCache.invalidateAll();
     log.trace("Cache invalidated");
   }
 
@@ -112,6 +122,12 @@ public class RolePermissionResolverImpl
     while (!rolesToProcess.isEmpty()) {
       final String roleId = rolesToProcess.removeFirst();
       if (processedRoleIds.add(roleId)) {
+
+        if (roleNotFoundCache.getIfPresent(roleId) != null) {
+          log.trace("Role {} found in NFC, role check skipped", roleId);
+          continue; // use cached results
+        }
+
         try {
           final CRole role = configuration.readRole(roleId);
 
@@ -135,6 +151,7 @@ public class RolePermissionResolverImpl
         }
         catch (NoSuchRoleException e) {
           log.trace("Ignoring missing role: {}", roleId, e);
+          roleNotFoundCache.put(roleId, "");
         }
       }
     }

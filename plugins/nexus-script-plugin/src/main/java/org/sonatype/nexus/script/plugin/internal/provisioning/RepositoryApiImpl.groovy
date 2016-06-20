@@ -360,12 +360,12 @@ class RepositoryApiImpl
   }
 
   @Nonnull
-  Repository createRubygemsHosted(final String name, 
-                                  final String blobStoreName  = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+  Repository createRubygemsHosted(final String name,
+                                  final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                   final boolean strictContentTypeValidation = true,
                                   final WritePolicy writePolicy = WritePolicy.ALLOW)
   {
-    return createRepository(createHosted(name, 'rubygems-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
+    createRepository(createHosted(name, 'rubygems-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
   }
 
   @Nonnull
@@ -374,7 +374,14 @@ class RepositoryApiImpl
                                  final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                  final boolean strictContentTypeValidation = true)
   {
-    return createRepository(createProxy(name, 'rubygems-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
+    createRepository(createProxy(name, 'rubygems-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
+  }
+
+  @Nonnull
+  Repository createRubygemsGroup(final String name, final List<String> members,
+                                 final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+  {
+    createRepository(createGroup(name, 'rubygems-group', blobStoreName, members as String[]))
   }
 
   private static Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,

@@ -59,4 +59,30 @@ public interface ApplicationLicense
    */
   @Nullable
   String getFingerprint();
+
+  /**
+   * Keys for Attribute values associated with this license.
+   */
+  enum Attributes {
+    EVAL("evaluation"),
+    USERS("users"),
+    FEATURES("features"),
+    EFFECTIVE_FEATURES("effectiveFeatures"),
+    EFFECTIVE_DATE("effectiveDate"),
+    EXPIRATION_DATE("expirationDate"),
+    CONTACT_NAME("contactName"),
+    CONTACT_EMAIL("contactEmail"),
+    CONTACT_COMPANY("contactCompany"),
+    CONTACT_COUNTRY("contactCountry");
+
+    private final String key;
+
+    Attributes(final String key) {
+      this.key = key;
+    }
+
+    public String getKey() {
+      return key;
+    }
+  }
 }

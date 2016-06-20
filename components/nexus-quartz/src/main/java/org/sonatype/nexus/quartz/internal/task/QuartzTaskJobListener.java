@@ -48,7 +48,7 @@ import static org.quartz.TriggerKey.triggerKey;
  *
  * @since 3.0
  */
-public class QuartzTaskJobListener<T>
+public class QuartzTaskJobListener
     extends ComponentSupport
     implements JobListener
 {

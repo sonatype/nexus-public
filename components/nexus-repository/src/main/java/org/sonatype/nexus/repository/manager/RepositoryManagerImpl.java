@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.manager;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -21,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -29,12 +31,17 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
+import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
+import org.sonatype.nexus.repository.config.ConfigurationEvent;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
+import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -55,10 +62,10 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 )
 public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
-    implements RepositoryManager
+    implements RepositoryManager, EventAware
 {
   private static final boolean SKIP_DEFAULT_REPOSITORIES =
-      SystemPropertiesHelper.getBoolean(RepositoryManagerImpl.class + ".skipDefaultRepositories", false);
+      SystemPropertiesHelper.getBoolean("nexus.skipDefaultRepositories", false);
 
   private final EventBus eventBus;
 
@@ -137,9 +144,6 @@ public class RepositoryManagerImpl
     // initialize repository
     repository.init(configuration);
 
-    // configure security
-    securityResource.add(repository);
-
     return repository;
   }
 
@@ -147,6 +151,9 @@ public class RepositoryManagerImpl
    * Track repository.
    */
   private void track(final Repository repository) {
+    // configure security
+    securityResource.add(repository);
+
     log.debug("Tracking: {}", repository);
     repositories.put(repository.getName(), repository);
   }
@@ -157,6 +164,9 @@ public class RepositoryManagerImpl
   private void untrack(final Repository repository) {
     log.debug("Untracking: {}", repository);
     repositories.remove(repository.getName());
+
+    // tear down security
+    securityResource.remove(repository);
   }
 
   // TODO: Generally need to consider exception handling to ensure proper state is maintained always
@@ -299,7 +309,6 @@ public class RepositoryManagerImpl
     repository.delete();
     repository.destroy();
     store.delete(configuration);
-    securityResource.remove(repository);
     untrack(repository);
 
     eventBus.post(new RepositoryDeletedEvent(repository));
@@ -312,8 +321,83 @@ public class RepositoryManagerImpl
       .map(Configuration::getAttributes)
       .map(a -> a.get("storage"))
       .map(s -> s.get("blobStoreName"))
-      .filter(b -> blobStoreName.equals(b))
+      .filter(blobStoreName::equals)
       .findAny()
       .isPresent();
+  }
+
+  @Subscribe
+  public void on(final ConfigurationDeletedEvent event) {
+    handleRemoteOnly(event, repositoryName -> {
+      // only delete if the repository is tracked
+      if (repositories.containsKey(repositoryName)) {
+        try {
+          log.trace("delete: {}", repositoryName);
+          Repository repository = repository(repositoryName);
+          repository.destroy();
+          untrack(repository);
+        }
+        catch (Exception e) {
+          log.warn("delete failed: {}", repositoryName, e);
+        }
+      }
+    });
+  }
+
+  @Subscribe
+  public void on(final ConfigurationUpdatedEvent event) {
+    handleRemoteOnly(event, repositoryName -> {
+      // only update if the repository is tracked
+      if (repositories.containsKey(repositoryName)) {
+        withConfiguration(repositoryName, c -> {
+          try {
+            log.trace("update: {} -- {}", repositoryName, c);
+            Repository repository = repository(repositoryName);
+            repository.stop();
+            repository.update(c);
+            repository.start();
+          }
+          catch (Exception e) {
+            log.warn("update failed: {}", repositoryName, e);
+          }
+        });
+      }
+    });
+  }
+
+  @Subscribe
+  public void on(final ConfigurationCreatedEvent event) {
+    handleRemoteOnly(event, repositoryName -> {
+      // only create if the repository is not tracked
+      if (!repositories.containsKey(repositoryName)) {
+        withConfiguration(repositoryName, c -> {
+          try {
+            log.trace("create: {} -- {}", repositoryName, c);
+            Repository repository = newRepository(c);
+            track(repository);
+            repository.start();
+          }
+          catch (Exception e) {
+            log.warn("create failed: {}", repositoryName, e);
+          }
+        });
+      }
+    });
+  }
+
+  private void handleRemoteOnly(final ConfigurationEvent event, final Consumer<String> consumer) {
+    log.trace("handling: {}", event);
+    // skip local events
+    if (!event.isLocal()) {
+      String repositoryName = event.getRepositoryName();
+      consumer.accept(repositoryName);
+    }
+  }
+
+  private void withConfiguration(final String repositoryName, final Consumer<Configuration> consumer) {
+    store.list().stream()
+        .filter(c -> c.getRepositoryName().equals(repositoryName))
+        .findFirst()
+        .ifPresent(consumer);
   }
 }

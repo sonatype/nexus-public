@@ -17,10 +17,12 @@ import java.util.Date;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
+import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
@@ -48,6 +50,8 @@ public class QuartzTaskInfo
    */
   static final String TASK_INFO_KEY = QuartzTaskInfo.class.getName();
 
+  private final EventBus eventBus;
+
   private final QuartzSchedulerSPI scheduler;
 
   private final JobKey jobKey;
@@ -60,11 +64,13 @@ public class QuartzTaskInfo
 
   private volatile boolean removed;
 
-  public QuartzTaskInfo(final QuartzSchedulerSPI scheduler,
+  public QuartzTaskInfo(final EventBus eventBus,
+                        final QuartzSchedulerSPI scheduler,
                         final JobKey jobKey,
                         final QuartzTaskState taskState,
                         @Nullable final QuartzTaskFuture taskFuture)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.scheduler = checkNotNull(scheduler);
     this.jobKey = checkNotNull(jobKey);
     this.removed = false;
@@ -221,6 +227,9 @@ public class QuartzTaskInfo
     boolean result = scheduler.removeTask(jobKey);
     if (result) {
       log.info("Task {} removed", config.getTaskLogName());
+
+      // HACK: does not seem to be a better place to fire an event when a task (with context of TaskInfo) is deleted
+      eventBus.post(new TaskDeletedEvent(this));
     }
     else {
       log.warn("Task {} vanished", config.getTaskLogName());

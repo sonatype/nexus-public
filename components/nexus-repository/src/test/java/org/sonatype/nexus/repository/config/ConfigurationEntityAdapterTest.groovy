@@ -38,7 +38,7 @@ class ConfigurationEntityAdapterTest
   @Before
   void setUp() {
     underTest = new ConfigurationEntityAdapter(new PasswordHelper(new CryptoHelperImpl()))
-    underTest.installDependencies(new HexRecordIdObfuscator())
+    underTest.enableObfuscation(new HexRecordIdObfuscator())
   }
 
   @After

@@ -10,19 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.entity;
+package org.sonatype.nexus.common.upgrade;
 
-import org.sonatype.nexus.common.entity.EntityMetadata;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Entity deleted event.
- *
- * @since 3.0
+ * Marks an {@link Upgrade} that upgrades the given model from version "from" to version "to".
+ * 
+ * @since 3.1
  */
-public class EntityDeletedEvent
-    extends EntityEvent
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Upgrades
 {
-  public EntityDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
+  String model();
+
+  String from();
+
+  String to();
 }

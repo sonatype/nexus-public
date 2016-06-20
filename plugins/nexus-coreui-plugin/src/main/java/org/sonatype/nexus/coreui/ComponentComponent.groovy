@@ -83,6 +83,7 @@ class ComponentComponent
         lastUpdated: asset.lastUpdated().toDate(),
         lastAccessed: asset.lastAccessed()?.toDate(),
         blobRef: asset.blobRef() ? asset.blobRef().toString() : '',
+        componentId: asset.componentId?.value,
         attributes: asset.attributes().backing()
     )
   }

@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -23,12 +24,16 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationCreatedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationDeletedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.file.PeriodicJobService;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -37,6 +42,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -52,7 +58,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
-    implements BlobStoreManager
+    implements BlobStoreManager, EventAware
 {
   private final EventBus eventBus;
 
@@ -204,5 +210,56 @@ public class BlobStoreManagerImpl
   private void untrack(final String name) {
     log.debug("Untracking: {}", name);
     stores.remove(name);
+  }
+
+  @Subscribe
+  public void on(final BlobStoreConfigurationCreatedEvent event) {
+    handleRemoteOnly(event, evt -> {
+      // only create if not tracked
+      String name = evt.getName();
+      if (!stores.containsKey(name)) {
+        store.list().stream()
+            .filter(c -> c.getName().equals(name))
+            .findFirst()
+            .ifPresent(c -> {
+              try {
+                BlobStore blobStore = newBlobStore(c);
+                track(name, blobStore);
+                blobStore.start();
+              }
+              catch (Exception e) {
+                log.warn("create blob store from remote event failed: {}", name, e);
+              }
+            });
+      }
+    });
+  }
+
+  @Subscribe
+  public void on(final BlobStoreConfigurationDeletedEvent event) {
+    handleRemoteOnly(event, evt -> {
+      try {
+        // only delete if tracked
+        String name = evt.getName();
+        if (stores.containsKey(name)) {
+          BlobStore blobStore = blobStore(name);
+          blobStore.stop();
+          blobStore.remove();
+          untrack(name);
+        }
+      }
+      catch (Exception e) {
+        log.warn("delete blob store from remote event failed: {}", evt.getName(), e);
+      }
+    });
+  }
+
+  private void handleRemoteOnly(final BlobStoreConfigurationEvent event,
+                                final Consumer<BlobStoreConfigurationEvent> consumer) {
+    log.trace("handling: {}", event);
+    // skip local events
+    if (!event.isLocal()) {
+      consumer.accept(event);
+    }
   }
 }

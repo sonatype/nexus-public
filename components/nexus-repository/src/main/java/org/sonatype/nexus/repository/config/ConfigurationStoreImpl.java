@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
 
 /**
  * Orient {@link ConfigurationStore} implementation.
@@ -59,16 +61,10 @@ public class ConfigurationStoreImpl
     }
   }
 
-  private ODatabaseDocumentTx openDb() {
-    return databaseInstance.get().acquire();
-  }
-
   @Override
   @Guarded(by = STARTED)
   public List<Configuration> list() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return Lists.newArrayList(entityAdapter.browse.execute(db));
-    }
+    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse.execute(db)));
   }
 
   @Override
@@ -76,9 +72,7 @@ public class ConfigurationStoreImpl
   public void create(final Configuration configuration) {
     checkNotNull(configuration);
 
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.addEntity(db, configuration);
-    }
+    inTx(databaseInstance, db -> entityAdapter.addEntity(db, configuration));
   }
 
   @Override
@@ -86,9 +80,7 @@ public class ConfigurationStoreImpl
   public void update(final Configuration configuration) {
     checkNotNull(configuration);
 
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.editEntity(db, configuration);
-    }
+    inTx(databaseInstance, db -> entityAdapter.editEntity(db, configuration));
   }
 
   @Override
@@ -96,8 +88,6 @@ public class ConfigurationStoreImpl
   public void delete(final Configuration configuration) {
     checkNotNull(configuration);
 
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.deleteEntity(db, configuration);
-    }
+    inTxNoReturn(databaseInstance, db -> entityAdapter.deleteEntity(db, configuration));
   }
 }

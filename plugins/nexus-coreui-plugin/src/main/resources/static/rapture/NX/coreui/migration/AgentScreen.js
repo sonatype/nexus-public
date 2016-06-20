@@ -28,31 +28,24 @@ Ext.define('NX.coreui.migration.AgentScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Agent Connection',
+      title: NX.I18n.render(me, "Title"),
 
-      description: "<p>Configure the connection to remote server's migration-agent.<br/>" +
-      'The remote server must have a migration-agent previously configured and enabled.</p>',
+      description: NX.I18n.render(me, "Description"),
 
       fields: [
         {
           xtype: 'nx-url',
           name: 'url',
-          fieldLabel: 'URL',
-          helpText: "The URL of the remote server's migration-agent endpoint.",
-          allowBlank: false,
-
-          // HACK: testing, avoid retyping this all the time
-          value: 'http://localhost:8082/nexus/service/siesta/migrationagent'
+          fieldLabel: NX.I18n.render(me, "Endpoint_FieldLabel"),
+          helpText: NX.I18n.render(me, "Endpoint_HelpText"),
+          allowBlank: false
         },
         {
           xtype: 'textfield',
           name: 'accessToken',
-          fieldLabel: 'Access Token',
-          helpText: "The access token copied from remote server's migration-agent settings.",
-          allowBlank: false,
-
-          // HACK: testing, avoid retyping this all the time
-          value: 'test'
+          fieldLabel: NX.I18n.render(me, "Token_FieldLabel"),
+          helpText: NX.I18n.render(me, "Token_HelpText"),
+          allowBlank: false
         }
       ],
 

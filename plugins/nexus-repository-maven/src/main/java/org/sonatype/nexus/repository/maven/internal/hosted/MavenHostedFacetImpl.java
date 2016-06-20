@@ -23,9 +23,9 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.entity.EntityBatchEvent;
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.entity.EntityBatchEvent;
-import org.sonatype.nexus.orient.entity.EntityEvent;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.MavenFacet;

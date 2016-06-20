@@ -128,7 +128,7 @@ Ext.define('NX.app.Application', {
       return true;
     },
     defaultActivation: function () {
-      return NX.app.Application.supportedBrowser() && NX.app.Application.licensed();
+      return NX.app.Application.supportedBrowser();
     },
     supportedBrowser: function () {
       return NX.State.isBrowserSupported();
@@ -137,10 +137,14 @@ Ext.define('NX.app.Application', {
       return !NX.app.Application.supportedBrowser();
     },
     licensed: function () {
-      return !NX.State.requiresLicense() || NX.State.isLicenseInstalled();
+      return !NX.State.requiresLicense() || NX.State.isLicenseValid();
     },
     unlicensed: function () {
       return !NX.app.Application.licensed();
+    },
+    licenseExpired: function() {
+      var daysToLicenseExpiry = NX.State.getDaysToLicenseExpiry();
+      return NX.app.Application.licensed() && daysToLicenseExpiry ? daysToLicenseExpiry < 0 : false; 
     },
     debugMode: function () {
       return NX.State.getValue('debug') === true;

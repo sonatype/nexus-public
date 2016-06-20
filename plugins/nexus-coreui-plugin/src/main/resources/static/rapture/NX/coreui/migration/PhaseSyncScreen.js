@@ -20,6 +20,9 @@
 Ext.define('NX.coreui.migration.PhaseSyncScreen', {
   extend: 'NX.coreui.migration.ProgressScreenSupport',
   alias: 'widget.nx-coreui-migration-phasesync',
+  requires: [
+    'NX.I18n'
+  ],
 
   /**
    * @override
@@ -28,22 +31,22 @@ Ext.define('NX.coreui.migration.PhaseSyncScreen', {
     var me = this;
 
     Ext.apply(me, {
-      title: 'Synchronizing',
-      description: '<p>Migration is synchronizing changes.</p>',
+      title: NX.I18n.render(me, 'Title'),
+      description: NX.I18n.render(me, 'Description'),
       buttons: [
         {
-          text: 'Abort',
+          text: NX.I18n.render(me, 'Abort_Button'),
           action: 'abort',
           ui: 'default'
         },
         {
-          text: 'Stop Monitoring',
+          text: NX.I18n.render(me, 'Stop_Monitoring_Button'),
           action: 'continue',
           ui: 'nx-primary',
           disabled: true
         },
         {
-          text: 'Finish',
+          text: NX.I18n.render(me, 'Finish_Button'),
           action: 'finish',
           ui: 'nx-primary',
           disabled: true,

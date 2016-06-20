@@ -46,14 +46,14 @@ import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshMana
 public class BootstrapListener
     implements ServletContextListener
 {
+
+  private static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
+
   private static final Logger log = LoggerFactory.getLogger(BootstrapListener.class);
 
   private ListenerTracker listenerTracker;
 
   private FilterTracker filterTracker;
-
-  private static final boolean SKIP_FEATURE_CHECK = Boolean
-      .valueOf(System.getProperty("nexus.skipFeatureCheck", "false"));
 
   @Override
   public void contextInitialized(final ServletContextEvent event) {
@@ -72,9 +72,7 @@ public class BootstrapListener
       requireProperty(properties, "karaf.data");
 
       if (shouldSwitchToOss()) {
-        log.info("Loading OSS Edition");
-        properties.put("nexus-edition", "nexus-oss-edition");
-        properties.put("nexus-features", "nexus-oss-feature");  
+        adjustEditionProperties(properties);  
       }
 
       // pass bootstrap properties to embedded servlet listener
@@ -118,12 +116,24 @@ public class BootstrapListener
   }
 
   /**
+   * Ensure that the oss edition is loaded, regardless of what the configuration specifies.
+   * @param properties
+   */
+  private void adjustEditionProperties(final Map<String, String> properties) {
+    log.info("Loading OSS Edition");
+    //override to load nexus-oss-edition
+    properties.put("nexus-edition", "nexus-oss-edition");
+    properties
+        .put("nexus-features", properties.get("nexus-features").replace("nexus-pro-feature", "nexus-oss-feature"));
+  }
+
+  /**
    * Determine whether or not we should be booting the OSS edition or not, based on the presence of a license or
    * a System property that can be used to override the behaviour.
    */
   private static boolean shouldSwitchToOss() {
-    if (SKIP_FEATURE_CHECK) {
-      return false;
+    if (null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
+      return Boolean.valueOf(System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME));
     }
     return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
   }

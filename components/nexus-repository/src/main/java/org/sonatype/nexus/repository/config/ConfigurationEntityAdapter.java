@@ -15,18 +15,22 @@ package org.sonatype.nexus.repository.config;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
-import com.google.common.base.Function;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -157,5 +161,29 @@ public class ConfigurationEntityAdapter
    */
   private boolean isSensitiveEntry(final Entry<String, Object> entry) {
     return entry.getKey().toLowerCase(Locale.ENGLISH).endsWith("password") && entry.getValue() instanceof String;
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, boolean isLocal) {
+    final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    final String repositoryName = document.field(P_REPOSITORY_NAME);
+
+    log.trace("newEvent: eventKind: {}, repositoryName: {}, metadata: {}", eventKind, repositoryName, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new ConfigurationCreatedEvent(metadata, isLocal, repositoryName);
+      case UPDATE:
+        return new ConfigurationUpdatedEvent(metadata, isLocal, repositoryName);
+      case DELETE:
+        return new ConfigurationDeletedEvent(metadata, isLocal, repositoryName);
+      default:
+        return null;
+    }
   }
 }

@@ -93,14 +93,23 @@ public class ApiKeyStoreImpl
     checkNotNull(domain);
     checkNotNull(principals);
     final char[] apiKeyCharArray = makeApiKey(domain, principals);
+    persistApiKey(domain, principals, apiKeyCharArray);
+    return apiKeyCharArray;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
+    checkNotNull(domain);
+    checkNotNull(principals);
+    checkNotNull(apiKey);
     final ApiKey entity = new ApiKey();
     entity.setDomain(domain);
-    entity.setApiKey(apiKeyCharArray);
+    entity.setApiKey(apiKey);
     entity.setPrincipals(principals);
     try (ODatabaseDocumentTx db = openDb()) {
       entityAdapter.addEntity(db, entity);
     }
-    return apiKeyCharArray;
   }
 
   @Nullable

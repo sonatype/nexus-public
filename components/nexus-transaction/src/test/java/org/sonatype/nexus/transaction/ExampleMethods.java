@@ -129,4 +129,12 @@ public class ExampleMethods
   public void endWorkInTransaction() {
     UnitOfWork.end();
   }
+
+  @RetryOnIOException
+  public String canUseStereotypeAnnotation() throws IOException {
+    if (countdown-- > 0) {
+      throw new IOException();
+    }
+    return "success";
+  }
 }

@@ -322,11 +322,12 @@ public abstract class NexusPaxExamSupport
       frameworkZip.classifier(System.getProperty("it.nexus.bundle.classifier"));
     }
 
+    // enable JDWP debugging which will suspend the IT and wait on port 5005
     boolean debugging = Boolean.parseBoolean(System.getProperty("it.debug"));
 
     // allow overriding of the out-of-the-box logback configuration
-    File logbackProperties = resolveBaseFile("target/test-classes/logback.properties");
-    File logbackNexusXml = resolveBaseFile("target/test-classes/logback-nexus.xml");
+    File logbackXml = resolveBaseFile("target/test-classes/logback-test.xml");
+    String logLevel = System.getProperty("it.test.log.level", "INFO");
 
     return composite(
         vmOptions("-Xmx400m"), // taken from testsuite config
@@ -368,10 +369,10 @@ public abstract class NexusPaxExamSupport
         wrappedBundle(maven("org.hamcrest", "hamcrest-library").versionAsInProject()) //
             .instructions("Fragment-Host=org.ops4j.pax.tipi.hamcrest.core"),
 
-        when(logbackProperties.canRead()).useOptions( //
-            replaceConfigurationFile("data/logback/logback.properties", logbackProperties)),
-        when(logbackNexusXml.canRead()).useOptions( //
-            replaceConfigurationFile("data/logback/logback-nexus.xml", logbackNexusXml)),
+        when(logbackXml.canRead()).useOptions( //
+            replaceConfigurationFile("data/logback/logback.xml", logbackXml)),
+
+        systemProperty("root.level").value(logLevel),
 
         // randomize ports...
         editConfigurationFilePut("etc/org.sonatype.nexus.cfg", //

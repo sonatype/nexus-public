@@ -24,6 +24,32 @@
 }
 
 /**
+ * Style for the global "license warning" header
+ */
+@include extjs-panel-ui(
+        $ui: 'nx-license-warning',
+        $ui-header-background-color: $color-charcoal
+);
+
+.x-panel-nx-license-warning .x-panel-header {
+  padding: 5px 16px;
+}
+.x-panel-nx-license-warning {
+  color: $color-white;
+}
+
+.x-panel-nx-license-warning a,
+.x-panel-nx-license-warning a:visited,
+.x-panel-nx-license-warning a:active {
+  color: $color-gainsboro;
+}
+
+.x-panel-nx-license-warning a:hover {
+  color: $color-white;
+  text-decoration: underline;
+}
+
+/**
 * Style for the "transparent" inter-page panels
 *
 * ui: 'subsection'

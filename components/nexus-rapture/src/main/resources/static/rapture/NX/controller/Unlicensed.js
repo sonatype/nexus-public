@@ -19,59 +19,25 @@
  */
 Ext.define('NX.controller.Unlicensed', {
   extend: 'NX.app.Controller',
-
-  views: [
-    'Unlicensed',
-    'header.Panel',
-    'header.Branding',
-    'header.Logo',
-    'footer.Panel',
-    'footer.Branding'
+  requires: [
+    'NX.Bookmarks',
+    'NX.Messages',
+    'NX.I18n'
   ],
-
-  refs: [
-    {
-      ref: 'viewport',
-      selector: 'viewport'
-    },
-    {
-      ref: 'unlicensed',
-      selector: 'nx-unlicensed'
-    }
-  ],
-
-  /**
-   * @override
-   */
-  init: function () {
-    var me = this;
-
-    me.listen({
-      component: {
-        'viewport': {
-          afterrender: me.onLaunch
-        }
-      }
-    });
-  },
-
+  
+  
   /**
    * Show {@link NX.view.Unlicensed} view from {@link Ext.container.Viewport}.
    *
    * @override
    */
   onLaunch: function () {
-    var me = this,
-        viewport = me.getViewport();
-
-    if (viewport) {
-      //<if debug>
-      me.logDebug('Showing unlicensed view');
-      //</if>
-
-      viewport.add({ xtype: 'nx-coreui-licensing-details' });
-      viewport.down('nx-settingsform').setVisible(false);
-    }
+    var me = this;
+    //<if debug>
+    me.logDebug('Adding unlicensed listeners');
+    //</if>
+    Ext.History.on('change', me.forceLicensing);
+    me.forceLicensing();
   },
 
   /**
@@ -80,16 +46,19 @@ Ext.define('NX.controller.Unlicensed', {
    * @override
    */
   onDestroy: function () {
-    var me = this,
-        viewport = me.getViewport();
+    var me = this;
+    //<if debug>
+    me.logDebug('Removing unlicensed listeners');
+    //</if>
+    Ext.History.un('change', me.forceLicensing);
+  },
 
-    if (viewport) {
-      //<if debug>
-      me.logDebug('Removing unlicensed view');
-      //</if>
-
-      viewport.remove(me.getUnlicensed());
-    }
+  /**
+   * Show a message and force navigation to the Licensing page, preventing all other navigation in the UI.
+   */
+  forceLicensing: function () {
+    NX.Messages.add({text: NX.I18n.get('State_License_Invalid_Message'), type: 'danger'});
+    NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken('admin/system/licensing'));
   }
 
 });

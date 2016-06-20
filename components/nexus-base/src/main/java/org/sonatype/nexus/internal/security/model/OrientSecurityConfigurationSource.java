@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.valueOf;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 
 /**
  * Default {@link SecurityConfigurationSource} implementation using Orient db as store.
@@ -52,7 +52,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
  * @since 3.0
  */
 @Named
-@ManagedLifecycle(phase = STORAGE)
+@ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientSecurityConfigurationSource
     extends LifecycleSupport

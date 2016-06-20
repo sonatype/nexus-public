@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.orient.entity.EntityUpdatedEvent;
+import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,8 +29,8 @@ public class ComponentUpdatedEvent
 {
   private final String repositoryName;
 
-  public ComponentUpdatedEvent(final EntityMetadata metadata, final String repositoryName) {
-    super(metadata);
+  public ComponentUpdatedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
+    super(metadata, isLocal);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

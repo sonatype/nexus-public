@@ -285,7 +285,7 @@ Ext.define('NX.coreui.controller.Assets', {
         NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
           if (Ext.isObject(response) && response.success) {
             componentList.getSelectionModel().deselectAll();
-            NX.Bookmarks.navigateTo(NX.Bookmarks.fromSegments(NX.Bookmarks.getBookmark().getSegments().slice(0, -1)));
+            NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 1);
             // delay refresh of component list because in case of search results it takes a while till removal is
             // propagated to elastic search results. Not 100% but better then still showing
             setTimeout(function() {
@@ -313,12 +313,45 @@ Ext.define('NX.coreui.controller.Assets', {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             assetList.getSelectionModel().deselectAll();
-            assetList.getStore().load();
-            Ext.util.History.back();
+            var assetStore = assetList.getStore();
+            if (assetStore.getCount() === 1) {
+              //ExtJs won't trigger the 'load' callback if there's no data????
+              assetStore.load();
+              me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
+            }
+            else {
+              assetStore.load(function () {
+                me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
+              });
+            }
+            
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });
       });
+    }
+  },
+
+  /**
+   * Decide whether or not we should navigate back to a parent Component or to the prior page.
+   * @private
+   * @param {String} componentId
+   * @param {Ext.data.Store} assetStore 
+   */
+  navigateBackOnAssetDelete: function(componentId, assetStore) {
+    var me = this;
+    if (!me.getComponentDetails() || !componentId || assetStore.find('componentId', componentId) > -1) {
+      // Asset being deleted either does not have an associated component in scope, or is not the last Asset
+      //<if debug>
+      me.logDebug('Asset deleted with no component in scope or as last remaining asset');
+      //</if>
+      Ext.util.History.back();
+    }
+    else {
+      //<if debug>
+      me.logDebug('Asset deleted with component in scope');
+      //</if>
+      NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 2);
     }
   }
 

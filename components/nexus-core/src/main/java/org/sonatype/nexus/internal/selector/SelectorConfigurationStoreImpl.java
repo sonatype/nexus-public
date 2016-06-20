@@ -31,7 +31,7 @@ import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -41,7 +41,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @Named
 @Singleton
-@ManagedLifecycle(phase = STORAGE)
+@ManagedLifecycle(phase = SCHEMAS)
 public class SelectorConfigurationStoreImpl
     extends StateGuardLifecycleSupport
     implements SelectorConfigurationStore

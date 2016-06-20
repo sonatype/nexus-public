@@ -32,6 +32,13 @@ public interface ApiKeyStore
   char[] createApiKey(String domain, PrincipalCollection principals);
 
   /**
+   * Persists an API-Key with a predetermined value.
+   *
+   * @since 3.1
+   */
+  void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey);
+
+  /**
    * Gets the current API-Key assigned to the given principals in given domain.
    *
    * @return {@code null} if no key has been assigned

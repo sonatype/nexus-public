@@ -56,14 +56,6 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         }
       },
       {
-        id: 'attributes.maven2.version',
-        group: NX.I18n.get('SearchMaven_Group'),
-        config: {
-          fieldLabel: NX.I18n.get('SearchMaven_Version_FieldLabel'),
-          width: 250
-        }
-      },
-      {
         id: 'assets.attributes.maven2.classifier',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
@@ -89,7 +81,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         { id: 'format', value: 'maven2', hidden: true },
         { id: 'attributes.maven2.groupId' },
         { id: 'attributes.maven2.artifactId' },
-        { id: 'attributes.maven2.version' },
+        { id: 'version' },
         { id: 'attributes.maven2.baseVersion' },
         { id: 'assets.attributes.maven2.classifier'},
         { id: 'assets.attributes.maven2.extension' }

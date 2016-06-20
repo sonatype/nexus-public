@@ -49,7 +49,7 @@ public class OrientCapabilityStorageTest
   @Before
   public void setUp() throws Exception {
     CapabilityStorageItemEntityAdapter entityAdapter = new CapabilityStorageItemEntityAdapter();
-    entityAdapter.installDependencies(new HexRecordIdObfuscator());
+    entityAdapter.enableObfuscation(new HexRecordIdObfuscator());
 
     this.underTest = new OrientCapabilityStorage(
         Providers.of(database.getInstance()),

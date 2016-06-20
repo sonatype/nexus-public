@@ -22,11 +22,13 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskFactory;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
@@ -46,14 +48,18 @@ public class TaskSchedulerImpl
     extends ComponentSupport
     implements TaskScheduler
 {
+  private final EventBus eventBus;
+
   private final TaskFactory taskFactory;
 
   private final Provider<SchedulerSPI> scheduler;
 
   @Inject
-  public TaskSchedulerImpl(final TaskFactory taskFactory,
+  public TaskSchedulerImpl(final EventBus eventBus,
+                           final TaskFactory taskFactory,
                            final Provider<SchedulerSPI> scheduler)
   {
+    this.eventBus = checkNotNull(eventBus);
     this.taskFactory = checkNotNull(taskFactory);
     this.scheduler = checkNotNull(scheduler);
   }
@@ -131,10 +137,13 @@ public class TaskSchedulerImpl
     config.setUpdated(now);
 
     TaskInfo taskInfo = getScheduler().scheduleTask(config, schedule);
+
     log.info("Task {} scheduled: {}",
         taskInfo.getConfiguration().getTaskLogName(),
         taskInfo.getSchedule().getType()
     );
+
+    eventBus.post(new TaskScheduledEvent(taskInfo));
 
     return taskInfo;
   }

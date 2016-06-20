@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.transaction;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -34,7 +35,7 @@ final class TransactionInterceptor
   public Object invoke(final MethodInvocation mi) throws Throwable {
 
     final Method method = mi.getMethod();
-    final Transactional spec = method.getAnnotation(Transactional.class);
+    final Transactional spec = findSpec(method);
 
     log.trace("Invoking: {} -> {}", spec, method);
 
@@ -55,5 +56,20 @@ final class TransactionInterceptor
     finally {
       work.releaseTransaction();
     }
+  }
+
+  private static final Transactional findSpec(final Method method) {
+    Transactional spec = method.getAnnotation(Transactional.class);
+    if (spec != null) {
+      return spec;
+    }
+    // look for stereotypes; annotations marked with @Transactional
+    for (final Annotation ann : method.getDeclaredAnnotations()) {
+      spec = ann.annotationType().getAnnotation(Transactional.class);
+      if (spec != null) {
+        return spec;
+      }
+    }
+    throw new IllegalStateException("Missing @Transactional on: " + method);
   }
 }

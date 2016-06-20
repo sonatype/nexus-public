@@ -78,6 +78,10 @@ Ext.define('NX.coreui.audit.AuditController', {
         file: 'email.png',
         variants: ['x16', 'x32']
       },
+      'audit-tasks': {
+        file: 'time.png',
+        variants: ['x16', 'x32']
+      },
       'audit-license': {
         file: 'license_key.png',
         variants: ['x16', 'x32']
@@ -111,6 +115,10 @@ Ext.define('NX.coreui.audit.AuditController', {
         variants: ['x16', 'x32']
       },
       'audit-security.user': {
+        file: 'user.png',
+        variants: ['x16', 'x32']
+      },
+      'audit-security.user-role-mapping': {
         file: 'user.png',
         variants: ['x16', 'x32']
       }

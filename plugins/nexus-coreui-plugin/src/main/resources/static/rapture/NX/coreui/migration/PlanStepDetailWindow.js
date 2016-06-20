@@ -67,7 +67,7 @@ Ext.define('NX.coreui.migration.PlanStepDetailWindow', {
         hideHeaders: true,
         columns: [
           {
-            header: 'Timestamp',
+            header: NX.I18n.render('Timestamp_Column'),
             dataIndex: 'timestamp',
             width: 150,
             renderer: function (value) {
@@ -75,7 +75,7 @@ Ext.define('NX.coreui.migration.PlanStepDetailWindow', {
             }
           },
           {
-            header: 'Message',
+            header: NX.I18n.render('Message_Column'),
             dataIndex: 'message',
             flex: 1
           }

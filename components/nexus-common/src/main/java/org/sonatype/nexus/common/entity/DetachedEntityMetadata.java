@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.entity;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
@@ -55,5 +56,15 @@ public class DetachedEntityMetadata
         "id=" + id +
         ", version=" + version +
         '}';
+  }
+
+  @Override
+  public <T> Optional<Class<T>> getEntityType() {
+    return Optional.empty();
+  }
+
+  @Override
+  public <T extends Entity> Optional<T> getEntity() {
+    return Optional.empty();
   }
 }

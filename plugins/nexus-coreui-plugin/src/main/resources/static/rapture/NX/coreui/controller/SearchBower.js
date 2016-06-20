@@ -38,7 +38,7 @@ Ext.define('NX.coreui.controller.SearchBower', {
       readOnly: true,
       criterias: [
         { id: 'format', value: 'bower', hidden: true },
-        { id: 'name' },
+        { id: 'name.raw' },
         { id: 'version' }
       ]
     }, me);

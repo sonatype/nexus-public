@@ -148,6 +148,8 @@ Ext.define('NX.coreui.migration.Controller', {
             break;
 
           case 'PHASE_SYNC':
+            //at this point we don't have a list of repositories, but we need to check the status anyway
+            me.getContext().add('checkSyncStatus', true);
             me.moveToStepNamed('NX.coreui.migration.PhaseSyncStep');
             break;
 
@@ -261,7 +263,7 @@ Ext.define('NX.coreui.migration.Controller', {
               // invoke super, callParent() unavailable in callback
               me.self.superclass.cancel.call(me);
 
-              NX.Messages.warning(NX.I18n.render(me, 'Cancel_Message'));
+              NX.Messages.success(NX.I18n.render(me, 'Cancel_Message'));
             }
           });
         }

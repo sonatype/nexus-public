@@ -10,41 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.entity;
+package org.sonatype.nexus.upgrade.plan;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 /**
- * Batched sequence of {@link EntityEvent}s.
+ * {@link Dependency} source.
  *
- * @since 3.0
+ * @since 3.1
  */
-public class EntityBatchEvent
+public interface DependencySource<T>
 {
   /**
-   * Marker for {@link EntityEvent}s which can be batched together in a {@link EntityBatchEvent} as well
-   * as being sent individually. Useful if subscribers want to receive a group of events at the same time.
+   * Returns a list of dependencies.
    */
-  public interface Batchable
+  List<Dependency<T>> getDependencies();
+
+  /**
+   * Allow {@link DependencySource} to become aware of what it depends on.
+   */
+  interface DependsOnAware<T>
   {
-    // empty
+    void setDependsOn(Collection<T> dependsOn);
   }
 
-  private final List<EntityEvent> events;
-
-  public EntityBatchEvent(final List<EntityEvent> events) {
-    this.events = Collections.unmodifiableList(events);
-  }
-
-  public List<EntityEvent> getEvents() {
-    return events;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "events=" + events +
-        '}';
+  /**
+   * Allow {@link DependencySource} to become aware of unresolved dependencies.
+   */
+  interface UnresolvedDependencyAware<T>
+  {
+    void setUnresolvedDependencies(Collection<Dependency<T>> unresolved);
   }
 }

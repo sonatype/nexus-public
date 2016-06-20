@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.rapture.internal.state
 
+import javax.annotation.Nullable
+
 import groovy.transform.ToString
 
 /**
@@ -25,4 +27,9 @@ class LicenseXO
   boolean required
 
   boolean installed
+  
+  boolean valid
+
+  @Nullable
+  int daysToExpiry
 }

@@ -16,13 +16,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
-import org.sonatype.nexus.orient.entity.EntityEvent;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -116,17 +116,18 @@ public class ComponentEntityAdapter
   }
 
   @Override
-  public EntityEvent newEvent(ODocument document, TYPE eventType) {
-    final AttachedEntityMetadata metadata = new AttachedEntityMetadata(this, document);
-    final String repositoryName = ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
+  public EntityEvent newEvent(ODocument document, EventKind eventKind, boolean isLocal) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
 
-    switch (eventType) {
-      case AFTER_CREATE:
-        return new ComponentCreatedEvent(metadata, repositoryName);
-      case AFTER_UPDATE:
-        return new ComponentUpdatedEvent(metadata, repositoryName);
-      case AFTER_DELETE:
-        return new ComponentDeletedEvent(metadata, repositoryName);
+    String repositoryName = ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
+
+    switch (eventKind) {
+      case CREATE:
+        return new ComponentCreatedEvent(metadata, isLocal, repositoryName);
+      case UPDATE:
+        return new ComponentUpdatedEvent(metadata, isLocal, repositoryName);
+      case DELETE:
+        return new ComponentDeletedEvent(metadata, isLocal, repositoryName);
       default:
         return null;
     }

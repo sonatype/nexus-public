@@ -74,19 +74,21 @@ class RepositoryAssetWebhook
    * Maybe queue {@link WebhookRequest} for event matching subscriptions.
    */
   private void maybeQueue(final AssetEvent event, final EventType eventType) {
-    Asset asset = event.asset
-    for (WebhookSubscription subscription in subscriptions) {
-      def configuration = subscription.configuration as RepositoryWebhook.Configuration
-      if (configuration.repository == event.repositoryName) {
-        // TODO: discriminate on content-selector
-        queue(subscription, [
-            timestamp: new Date(),
-            userId: UserIdHelper.get(),
-            repositoryName: event.repositoryName,
-            assetFormat: asset.format(),
-            assetName: asset.name(),
-            eventType: eventType
-        ])
+    if (event.local) {
+      Asset asset = event.asset
+      for (WebhookSubscription subscription in subscriptions) {
+        def configuration = subscription.configuration as RepositoryWebhook.Configuration
+        if (configuration.repository == event.repositoryName) {
+          // TODO: discriminate on content-selector
+          queue(subscription, [
+              timestamp: new Date(),
+              userId: UserIdHelper.get(),
+              repositoryName: event.repositoryName,
+              assetFormat: asset.format(),
+              assetName: asset.name(),
+              eventType: eventType
+          ])
+        }
       }
     }
   }

@@ -10,19 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.entity;
+package org.sonatype.nexus.scheduling.events;
 
-import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.scheduling.TaskInfo;
 
 /**
- * Entity updated event.
+ * Emitted when a task has been scheduled.
  *
- * @since 3.0
+ * @since 3.1
  */
-public class EntityUpdatedEvent
-    extends EntityEvent
+public class TaskScheduledEvent
+    extends TaskEvent
 {
-  public EntityUpdatedEvent(final EntityMetadata metadata) {
-    super(metadata);
+  public TaskScheduledEvent(final TaskInfo taskInfo) {
+    super(taskInfo);
   }
 }

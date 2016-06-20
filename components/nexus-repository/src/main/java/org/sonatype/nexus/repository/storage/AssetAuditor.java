@@ -46,7 +46,7 @@ public class AssetAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetEvent event) {
-    if (isEnabled()) {
+    if (isEnabled() && event.isLocal()) {
       Asset asset = event.getAsset();
 
       AuditData data = new AuditData();

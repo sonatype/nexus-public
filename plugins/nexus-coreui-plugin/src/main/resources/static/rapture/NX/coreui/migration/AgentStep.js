@@ -20,7 +20,8 @@
 Ext.define('NX.coreui.migration.AgentStep', {
   extend: 'NX.wizard.Step',
   requires: [
-    'NX.coreui.migration.AgentScreen'
+    'NX.coreui.migration.AgentScreen',
+    'NX.I18n'
   ],
 
   screen: 'NX.coreui.migration.AgentScreen',

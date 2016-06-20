@@ -102,11 +102,11 @@ public class StorageFacetImplIT
     when(mockBlobStoreManager.get(anyString())).thenReturn(mock(BlobStore.class));
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     HexRecordIdObfuscator recordIdObfuscator = new HexRecordIdObfuscator();
-    bucketEntityAdapter.installDependencies(recordIdObfuscator);
+    bucketEntityAdapter.enableObfuscation(recordIdObfuscator);
     ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
-    componentEntityAdapter.installDependencies(recordIdObfuscator);
+    componentEntityAdapter.enableObfuscation(recordIdObfuscator);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
-    assetEntityAdapter.installDependencies(recordIdObfuscator);
+    assetEntityAdapter.enableObfuscation(recordIdObfuscator);
     ContentValidatorSelector contentValidatorSelector = new ContentValidatorSelector(Collections.<String, ContentValidator>emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
     MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.<String, MimeRulesSource>emptyMap());
     underTest = new StorageFacetImpl(

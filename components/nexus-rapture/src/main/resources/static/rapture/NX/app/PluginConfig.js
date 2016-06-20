@@ -44,7 +44,8 @@ Ext.define('NX.app.PluginConfig', {
     {
       id: 'Unlicensed',
       active: function () {
-        return NX.app.Application.supportedBrowser() && NX.app.Application.unlicensed();
+        return NX.app.Application.supportedBrowser() &&
+            (NX.app.Application.unlicensed() || NX.app.Application.licenseExpired());
       }
     },
     {

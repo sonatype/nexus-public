@@ -75,9 +75,7 @@ class TaskComponent
   @DirectMethod
   @RequiresPermissions('nexus:tasks:read')
   List<TaskXO> read() {
-    return scheduler.listsTasks().findAll {TaskInfo task ->
-      return task.configuration.visible ? task : null
-    }.collect { TaskInfo task -> asTaskXO(task) }
+    return scheduler.listsTasks().findAll { it.configuration.visible }.collect { TaskInfo task -> asTaskXO(task) }
   }
 
   /**

@@ -19,13 +19,17 @@ import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.EntityCreatedEvent;
+import org.sonatype.nexus.common.entity.EntityDeletedEvent;
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
 import org.sonatype.nexus.orient.RecordIdObfuscator;
 
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -43,11 +47,23 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 public abstract class EntityAdapter<T extends Entity>
     extends ComponentSupport
 {
+  /**
+   * @since 3.1
+   */
+  public enum EventKind
+  {
+    CREATE, UPDATE, DELETE
+  }
+
   private final String typeName;
 
   private final Class<T> entityType;
 
   private RecordIdObfuscator recordIdObfuscator;
+
+  private EntityHook entityHook;
+
+  private String dbName;
 
   private OClass schemaType;
 
@@ -69,8 +85,13 @@ public abstract class EntityAdapter<T extends Entity>
   }
 
   @Inject
-  public void installDependencies(final RecordIdObfuscator recordIdObfuscator) {
+  public void enableObfuscation(final RecordIdObfuscator recordIdObfuscator) {
     this.recordIdObfuscator = checkNotNull(recordIdObfuscator);
+  }
+
+  @Inject
+  public void enableEntityHook(final EntityHook entityHook) {
+    this.entityHook = checkNotNull(entityHook);
   }
 
   protected RecordIdObfuscator getRecordIdObfuscator() {
@@ -109,15 +130,17 @@ public abstract class EntityAdapter<T extends Entity>
         initializer.run();
       }
     }
+
+    this.dbName = db.getName();
     this.schemaType = type;
+
+    if (sendEvents() && entityHook != null) {
+      entityHook.enableEvents(this);
+    }
   }
 
   public void register(final ODatabaseDocumentTx db) {
     register(db, null);
-  }
-
-  public boolean isRegistered(final ODatabaseDocumentTx db) {
-    return db.getMetadata().getSchema().existsClass(typeName);
   }
 
   protected void defineType(final ODatabaseDocumentTx db, final OClass type) {
@@ -125,6 +148,11 @@ public abstract class EntityAdapter<T extends Entity>
   }
 
   protected abstract void defineType(final OClass type);
+
+  public String getDbName() {
+    checkState(dbName != null, "Not registered");
+    return dbName;
+  }
 
   public OClass getSchemaType() {
     checkState(schemaType != null, "Not registered");
@@ -285,15 +313,16 @@ public abstract class EntityAdapter<T extends Entity>
    * Override this method to customize {@link EntityEvent}s for this adapter.
    */
   @Nullable
-  public EntityEvent newEvent(final ODocument document, final TYPE eventType) {
-    final AttachedEntityMetadata metadata = new AttachedEntityMetadata(this, document);
-    switch (eventType) {
-      case AFTER_CREATE:
-        return new EntityCreatedEvent(metadata);
-      case AFTER_UPDATE:
-        return new EntityUpdatedEvent(metadata);
-      case AFTER_DELETE:
-        return new EntityDeletedEvent(metadata);
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, final boolean isLocal) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+
+    switch (eventKind) {
+      case CREATE:
+        return new EntityCreatedEvent(metadata, isLocal);
+      case UPDATE:
+        return new EntityUpdatedEvent(metadata, isLocal);
+      case DELETE:
+        return new EntityDeletedEvent(metadata, isLocal);
       default:
         return null;
     }

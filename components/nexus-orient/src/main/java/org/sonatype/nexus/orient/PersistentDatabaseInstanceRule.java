@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.orientechnologies.common.io.OFileUtils;
 import org.junit.rules.ExternalResource;
 import org.junit.runners.model.MultipleFailureException;
 import org.slf4j.Logger;
@@ -160,7 +161,7 @@ public class PersistentDatabaseInstanceRule
         File dir = directory(name);
         DirectoryHelper.mkdir(dir);
 
-        return "plocal:" + dir.toURI().getPath();
+        return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
       }
       catch (IOException e) {
         throw Throwables.propagate(e);

@@ -42,7 +42,7 @@ class ConfigurationStoreImplTest
   @Before
   void setUp() {
     def entityAdapter = new ConfigurationEntityAdapter(new PasswordHelper(new CryptoHelperImpl()))
-    entityAdapter.installDependencies(new HexRecordIdObfuscator())
+    entityAdapter.enableObfuscation(new HexRecordIdObfuscator())
 
     underTest = new ConfigurationStoreImpl(
         Providers.of(database.instance),
