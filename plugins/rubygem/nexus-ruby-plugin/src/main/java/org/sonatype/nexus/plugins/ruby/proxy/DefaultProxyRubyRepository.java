@@ -195,7 +195,6 @@ public class DefaultProxyRubyRepository
     if (request.getRequestPath().startsWith("/.nexus")) {
       return super.retrieveItem(request);
     }
-
     return facade.handleRetrieve(this, request, facade.get(request));
   }
 

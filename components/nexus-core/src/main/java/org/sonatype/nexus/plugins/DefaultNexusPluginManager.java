@@ -286,6 +286,9 @@ public class DefaultNexusPluginManager
       final PluginManagerResponse dependencyActivationResponse = activatePlugin(
           gav, false, installedPluginsFilteredByGA
       );
+      if (pd.isOptional() && !dependencyActivationResponse.isSuccessful()) {
+        continue; // ignore optional plugin dependency when missing
+      }
       response.addPluginManagerResponse(dependencyActivationResponse);
       importList.add(dependencyActivationResponse.getOriginator());
       resolvedList.add(dependencyActivationResponse.getOriginator());

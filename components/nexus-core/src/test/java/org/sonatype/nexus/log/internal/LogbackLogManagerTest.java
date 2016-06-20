@@ -57,7 +57,7 @@ public class LogbackLogManagerTest
     super.customizeContext(ctx);
 
     try {
-      System.setProperty("plexus." + WORK_CONFIGURATION_KEY, (String) ctx.get(WORK_CONFIGURATION_KEY));
+      System.setProperty(WORK_CONFIGURATION_KEY, (String) ctx.get(WORK_CONFIGURATION_KEY));
     }
     catch (Exception e) {
       throw new RuntimeException(e);

@@ -15,6 +15,8 @@ package org.sonatype.nexus.client.internal.rest.jersey.subsystem.repository;
 import org.sonatype.nexus.client.core.subsystem.repository.ProxyRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.ProxyRepositoryStatus;
 import org.sonatype.nexus.client.rest.jersey.JerseyNexusClient;
+import org.sonatype.nexus.rest.model.AuthenticationSettings;
+import org.sonatype.nexus.rest.model.RemoteConnectionSettings;
 import org.sonatype.nexus.rest.model.RepositoryProxyResource;
 import org.sonatype.nexus.rest.model.RepositoryResourceRemoteStorage;
 import org.sonatype.nexus.rest.model.RepositoryStatusResource;
@@ -98,13 +100,64 @@ public class JerseyProxyRepository<T extends ProxyRepository>
 
   @Override
   public T asProxyOf(final String remoteUri) {
+    getRemoteStorage().setRemoteStorageUrl(remoteUri);
+    return me();
+  }
+
+  @Override
+  public T withUsernameAuthentication(final String username, final String password) {
+    getAuthenticationSettings().setUsername(username);
+    getAuthenticationSettings().setPassword(password);
+    return me();
+  }
+
+  @Override
+  public T withNtlmAuthentication(final String username,
+                                  final String password,
+                                  final String host,
+                                  final String domain)
+  {
+    getAuthenticationSettings().setUsername(username);
+    getAuthenticationSettings().setPassword(password);
+    getAuthenticationSettings().setNtlmHost(host);
+    getAuthenticationSettings().setNtlmDomain(domain);
+    return me();
+  }
+
+  @Override
+  public T withRemoteConnectionSettings(int timeout, int retryCount, String query, String userAgent) {
+    getRemoteConnectionSettings().setConnectionTimeout(timeout);
+    getRemoteConnectionSettings().setRetrievalRetryCount(retryCount);
+    getRemoteConnectionSettings().setQueryString(query);
+    getRemoteConnectionSettings().setUserAgentString(userAgent);
+    return me();
+  }
+
+  private RemoteConnectionSettings getRemoteConnectionSettings() {
+    RemoteConnectionSettings conn = getRemoteStorage().getConnectionSettings();
+    if (conn == null) {
+      conn = new RemoteConnectionSettings();
+      getRemoteStorage().setConnectionSettings(conn);
+    }
+    return conn;
+  }
+
+  private RepositoryResourceRemoteStorage getRemoteStorage() {
     RepositoryResourceRemoteStorage remoteStorage = settings().getRemoteStorage();
     if (remoteStorage == null) {
       remoteStorage = new RepositoryResourceRemoteStorage();
       settings().setRemoteStorage(remoteStorage);
     }
-    remoteStorage.setRemoteStorageUrl(remoteUri);
-    return me();
+    return remoteStorage;
+  }
+
+  private AuthenticationSettings getAuthenticationSettings() {
+    AuthenticationSettings auth = getRemoteStorage().getAuthentication();
+    if (auth == null) {
+      auth = new AuthenticationSettings();
+      getRemoteStorage().setAuthentication(auth);
+    }
+    return auth;
   }
 
   @Override

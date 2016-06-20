@@ -97,4 +97,35 @@ public interface ProxyRepository<T extends ProxyRepository>
    * @since 2.5
    */
   int itemMaxAge();
+
+  /**
+   * Configure username authentication for remote proxy
+   *
+   * @param username username to access the remote url
+   * @param password password to access the remote url
+   * @return itself, for fluent api usage
+   */
+  T withUsernameAuthentication(final String username, final String password);
+
+  /**
+   * Configure NTLM authentication for remote proxy
+   *
+   * @param username username to access the remote url
+   * @param password password to access the remote url
+   * @param host the ntlm host
+   * @param domain the ntlm domain
+   * @return itself, for fluent api usage
+   */
+  T withNtlmAuthentication(final String username, final String password, final String host, final String domain);
+
+  /**
+   * Configure the remote proxy connection settings
+   *
+   * @param timeout connection timeout (in seconds)
+   * @param retryCount number of times to retry requests
+   * @param query custom query string to be added to outgoing requests
+   * @param userAgent string to customize the user agent in requests
+   * @return itself, for fluent api usage
+   */
+  T withRemoteConnectionSettings(int timeout, int retryCount, String query, String userAgent);
 }

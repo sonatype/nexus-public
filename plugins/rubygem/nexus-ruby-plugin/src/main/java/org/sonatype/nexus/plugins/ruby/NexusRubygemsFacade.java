@@ -29,7 +29,9 @@ import org.sonatype.nexus.proxy.RemoteAccessException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.StorageException;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
+import org.sonatype.nexus.proxy.item.ByteArrayContentLocator;
 import org.sonatype.nexus.proxy.item.DefaultStorageCollectionItem;
+import org.sonatype.nexus.proxy.item.DefaultStorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
@@ -214,6 +216,10 @@ public class NexusRubygemsFacade
           // handle directories
           req.setRequestPath(file.storagePath());
           return new DirectoryStoreageItem(repository, req, (Directory) file);
+        }
+        if (file.type() == FileType.NO_CONTENT) {
+          return new DefaultStorageFileItem(repository, req, true, false,
+              new ByteArrayContentLocator(new byte[0], file.type().mime()));
         }
       case NOT_EXISTS:
         throw new ItemNotFoundException(

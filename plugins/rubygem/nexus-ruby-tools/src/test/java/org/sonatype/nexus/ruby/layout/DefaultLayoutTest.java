@@ -464,11 +464,9 @@ public class DefaultLayoutTest
     file2 = fileSystem.get("/api/v1/");
     assertThat(file, equalTo(file2));
 
-    file = fileSystem.get("/api/v1/dependencies");
+    file = fileSystem.get("/api/v1/dependencies/");
     assertThat(file, notNullValue());
     assertThat(file.type(), equalTo(FileType.DIRECTORY));
-    file2 = fileSystem.get("/api/v1/dependencies/");
-    assertThat(file, equalTo(file2));
 
     file = fileSystem.get("/api/v1/dependencies/a/");
     assertThat(file, notNullValue());
@@ -511,5 +509,19 @@ public class DefaultLayoutTest
     assertThat(file.type(), equalTo(FileType.DIRECTORY));
     file2 = fileSystem.get("/quick/Marshal.4.8/-/");
     assertThat(file, equalTo(file2));
+  }
+
+
+  @Test
+  public void testNoContent() throws Exception {
+    RubygemsFile file = fileSystem.get("/api/v1/dependencies");
+    assertThat(file, notNullValue());
+    assertThat(file.type(), equalTo(FileType.NO_CONTENT));
+    assertThat(file.get(), nullValue());
+
+    file = fileSystem.get("/api/v1/dependencies?gems=");
+    assertThat(file, notNullValue());
+    assertThat(file.type(), equalTo(FileType.NO_CONTENT));
+    assertThat(file.get(), nullValue());
   }
 }
