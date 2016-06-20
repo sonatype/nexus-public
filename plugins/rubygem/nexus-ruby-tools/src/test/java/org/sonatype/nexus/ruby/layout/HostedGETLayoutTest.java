@@ -296,7 +296,7 @@ public class HostedGETLayoutTest
   public void testDirectory() throws Exception {
     String[] pathes = {
         "/", "/api", "/api/", "/api/v1", "/api/v1/",
-        "/api/v1/dependencies", "/gems/", "/gems",
+        "/api/v1/dependencies/", "/gems/", "/gems",
         "/maven/releases/rubygems/zip",
         "/maven/releases/rubygems/zip/2.0.2",
         "/maven/prereleases/rubygems/pre",
@@ -309,7 +309,7 @@ public class HostedGETLayoutTest
         "specs.4.8.gz", "latest_specs.4.8.gz", "prerelease_specs.4.8.gz");
     assertDirectory("/api", "v1", "quick", "gems");
     assertDirectory("/api/v1", "api_key", "dependencies");
-    assertDirectory("/api/v1/dependencies");//"hufflepuf.ruby", "pre.ruby", "zip.ruby" );
+    assertDirectory("/api/v1/dependencies/");//"hufflepuf.ruby", "pre.ruby", "zip.ruby" );
     assertDirectory("/api/quick", "Marshal.4.8");
     assertDirectory("/api/quick/Marshal.4.8");
     assertDirectory("/api/gems");
@@ -356,6 +356,14 @@ public class HostedGETLayoutTest
     // normalize to cope with file-system listing order issues.
     Collections.sort(list);
     return list;
+  }
+
+  @Test
+  public void testNoContent() throws Exception {
+    String[] pathes = {
+        "/api/v1/dependencies", "/api/v1/dependencies?gems=",
+    };
+    assertFiletypeWithNullPayload(pathes, FileType.NO_CONTENT);
   }
 
   @Test

@@ -132,7 +132,7 @@ public class MetadataServiceIT
     when(httpClientManager.create(any(ProxyRepository.class), any(RemoteStorageContext.class))).thenReturn(
         httpClient);
 
-    metadataStore = new OrientMetadataStore(applicationDirectories, 10);
+    metadataStore = new OrientMetadataStore(applicationDirectories, 10, 100);
     metadataParser = new MetadataParser(applicationDirectories.getTemporaryDirectory());
     // proxy transport but without root fetch, to not harrass registry and make tests dead slow
     proxyMetadataTransport = new HttpProxyMetadataTransport(metadataParser, httpClientManager)
