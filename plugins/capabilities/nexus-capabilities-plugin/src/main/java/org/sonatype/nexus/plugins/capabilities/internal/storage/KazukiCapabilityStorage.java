@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 import org.sonatype.nexus.plugins.capabilities.CapabilityIdentity;
@@ -47,8 +46,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.8
  */
-@Named("kazuki")
-@Singleton
 public class KazukiCapabilityStorage
     extends LifecycleSupport
     implements CapabilityStorage

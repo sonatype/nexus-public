@@ -13,8 +13,6 @@
 package org.sonatype.nexus.plugins.capabilities.internal.storage;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
@@ -25,10 +23,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.8
  */
-@Named
-@Singleton
 public class KazukiCapabilityStorageConverter
     extends ComponentSupport
+    implements CapabilityStorageConverter
 {
   private final KazukiCapabilityStorage kazukiCapabilityStorage;
 
@@ -42,12 +39,13 @@ public class KazukiCapabilityStorageConverter
     this.capabilityStorage = checkNotNull(capabilityStorage);
   }
 
+  @Override
   public void maybeConvert() throws Exception {
     if (kazukiCapabilityStorage.exists()) {
       log.info("Converting KZ-based storage to default implementation");
       kazukiCapabilityStorage.start();
 
-      int count=0;
+      int count = 0;
       for (CapabilityStorageItem item : kazukiCapabilityStorage.getAll().values()) {
         capabilityStorage.add(item);
         count++;
