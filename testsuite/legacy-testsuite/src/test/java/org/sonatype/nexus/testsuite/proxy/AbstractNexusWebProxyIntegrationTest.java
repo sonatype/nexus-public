@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.proxy;
 
-import org.sonatype.jettytestsuite.ProxyServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
+import org.sonatype.nexus.test.http.HttpProxyServer;
 import org.sonatype.nexus.test.utils.TestProperties;
 
 import org.junit.After;
@@ -25,7 +25,7 @@ public abstract class AbstractNexusWebProxyIntegrationTest
 
   protected static final int webProxyPort;
 
-  protected ProxyServer server;
+  protected HttpProxyServer httpProxyServer;
 
   static {
     webProxyPort = TestProperties.getInteger("webproxy.server.port");
@@ -35,17 +35,13 @@ public abstract class AbstractNexusWebProxyIntegrationTest
   public void startWebProxy()
       throws Exception
   {
-    server = lookup(ProxyServer.class);
-    server.start();
+    httpProxyServer = new HttpProxyServer(webProxyPort);
   }
 
   @After
   public void stopWebProxy()
       throws Exception
   {
-    if (server != null) {
-      server.stop();
-    }
+    httpProxyServer.stop();
   }
-
 }
