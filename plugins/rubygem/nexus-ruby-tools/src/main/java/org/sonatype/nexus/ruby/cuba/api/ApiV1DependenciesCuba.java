@@ -49,11 +49,16 @@ public class ApiV1DependenciesCuba
         if (state.context.query.contains(",") || state.context.query.contains("%2C")) {
           return state.context.factory.bundlerApiFile(state.context.query.substring(5));
         }
-        else {
+        else if (state.context.query.length() > 5) {
           return state.context.factory.dependencyFile(state.context.query.substring(5));
         }
       }
-      return state.context.factory.directory(state.context.original);
+      if (state.context.original.endsWith("/")) {
+        return state.context.factory.directory(state.context.original);
+      }
+      else {
+        return state.context.factory.noContent(state.context.original);
+      }
     }
     Matcher m;
     if (state.name.length() == 1) {

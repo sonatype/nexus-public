@@ -37,7 +37,8 @@ public enum FileType
   SHA1("text/plain", "ASCII"),
   NOT_FOUND(null),
   FORBIDDEN(null),
-  TEMP_UNAVAILABLE(null);
+  TEMP_UNAVAILABLE(null),
+  NO_CONTENT("text/plain");
 
   private final String encoding;
 

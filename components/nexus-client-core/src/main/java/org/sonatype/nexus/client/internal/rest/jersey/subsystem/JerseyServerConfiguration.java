@@ -14,9 +14,11 @@ package org.sonatype.nexus.client.internal.rest.jersey.subsystem;
 
 import org.sonatype.nexus.client.core.spi.SubsystemSupport;
 import org.sonatype.nexus.client.core.subsystem.ServerConfiguration;
+import org.sonatype.nexus.client.core.subsystem.config.RemoteConnection;
 import org.sonatype.nexus.client.core.subsystem.config.RemoteProxy;
 import org.sonatype.nexus.client.core.subsystem.config.RestApi;
 import org.sonatype.nexus.client.core.subsystem.config.Security;
+import org.sonatype.nexus.client.internal.rest.jersey.subsystem.config.JerseyRemoteConnection;
 import org.sonatype.nexus.client.internal.rest.jersey.subsystem.config.JerseyRemoteProxy;
 import org.sonatype.nexus.client.internal.rest.jersey.subsystem.config.JerseyRestApi;
 import org.sonatype.nexus.client.internal.rest.jersey.subsystem.config.JerseySecurity;
@@ -29,6 +31,11 @@ public class JerseyServerConfiguration
     extends SubsystemSupport<JerseyNexusClient>
     implements ServerConfiguration
 {
+  /**
+   * HTTP connection configuration segment.
+   * Lazy initialized on first request.
+   */
+  private RemoteConnection remoteConnection;
 
   /**
    * Http Proxy configuration segment.
@@ -50,6 +57,17 @@ public class JerseyServerConfiguration
 
   public JerseyServerConfiguration(final JerseyNexusClient nexusClient) {
     super(nexusClient);
+  }
+
+  /**
+   * @since 2.14
+   */
+  @Override
+  public RemoteConnection remoteConnection() {
+    if (remoteConnection == null) {
+      remoteConnection = new JerseyRemoteConnection(getNexusClient());
+    }
+    return remoteConnection;
   }
 
   /**

@@ -73,13 +73,5 @@ public interface Config
    *
    * @return the maximum allowed prefix file entry length.
    */
-  public int getPrefixFileMaxLineLength();
-
-  /**
-   * Returns the maximum allowed file size for prefix file (in bytes). File being bigger than allowed file size will
-   * be refused to be loaded up.
-   *
-   * @return the maximum allowed file size for prefix file, in bytes.
-   */
-  public int getPrefixFileMaxSize();
+  int getPrefixFileMaxLineLength();
 }

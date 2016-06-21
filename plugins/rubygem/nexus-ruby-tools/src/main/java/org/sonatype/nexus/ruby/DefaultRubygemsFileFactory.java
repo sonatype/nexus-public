@@ -49,7 +49,7 @@ public class DefaultRubygemsFileFactory
 
   private final static SecureRandom random = new SecureRandom();
 
-  {
+  static {
     random.setSeed(System.currentTimeMillis());
   }
 
@@ -71,6 +71,11 @@ public class DefaultRubygemsFileFactory
   @Override
   public Sha1File sha1(RubygemsFile file) {
     return new Sha1File(this, file.storagePath() + ".sha1", file.remotePath() + ".sha1", file);
+  }
+
+  @Override
+  public NoContentFile noContent(final String path) {
+    return new NoContentFile(this, path);
   }
 
   @Override

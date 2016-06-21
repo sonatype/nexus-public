@@ -80,19 +80,23 @@ public class OrientMetadataStore
 
   private final int poolMaxSize;
 
+  private final int pageSize;
+
   private RuntimeException startException = null;
 
   private OPartitionedDatabasePool pool;
 
   @Inject
   public OrientMetadataStore(final ApplicationDirectories applicationDirectories,
-                             final @Named("${nexus.npm.poolMaxSize:-100}") int poolMaxSize)
+                             final @Named("${nexus.npm.poolMaxSize:-100}") int poolMaxSize,
+                             final @Named("${nexus.npm.pageSize:-100}") int pageSize)
   {
     checkArgument(poolMaxSize >= 1, "Pool max size must be greater or equal to 1");
     this.databaseDirectory = applicationDirectories.getWorkDirectory(DB_LOCATION);
     this.backupDirectory = applicationDirectories.getWorkDirectory(BACKUP_LOCATION);
     this.entityHandlers = Maps.newHashMap();
     this.poolMaxSize = poolMaxSize;
+    this.pageSize = pageSize;
   }
 
   // Lifecycle
@@ -220,7 +224,7 @@ public class OrientMetadataStore
       try {
         final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
             "select from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-                "' and @rid > ? limit 1000");
+                "' and @rid > ? limit " + pageSize);
         ORID last = new ORecordId();
         final List<String> result = Lists.newArrayList();
         List<ODocument> resultset = db.query(query, last);
@@ -273,7 +277,8 @@ public class OrientMetadataStore
         try {
           recordsDeleted = db.command(
               new OCommandSQL(
-                  "delete from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() + "' limit 1000"
+                  "delete from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
+                      "' limit " + pageSize
               )
           ).execute();
         }
@@ -371,7 +376,6 @@ public class OrientMetadataStore
                             final Predicate<PackageRoot> predicate,
                             final Function<PackageRoot, PackageRoot> function)
   {
-    final int pageSize = 1000;
     final int retries = 3;
 
     checkNotNull(repository);

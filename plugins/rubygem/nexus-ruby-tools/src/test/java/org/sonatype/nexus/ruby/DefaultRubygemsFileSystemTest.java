@@ -134,13 +134,21 @@ public class DefaultRubygemsFileSystemTest
   public void testDirectory() throws Exception {
     String[] pathes = {
         "/", "/api", "/api/", "/api/v1", "/api/v1/",
-        "/api/v1/dependencies", "/gems/", "/gems",
+        "/api/v1/dependencies/", "/gems/", "/gems",
         "/maven/releases/rubygems/jbundler",
         "/maven/releases/rubygems/jbundler/1.2.3",
         "/maven/prereleases/rubygems/jbundler",
         "/maven/prereleases/rubygems/jbundler/1.2.3-SNAPSHOT",
     };
     assertFiletype(pathes, FileType.DIRECTORY);
+  }
+
+  @Test
+  public void testNoContent() throws Exception {
+    String[] pathes = {
+        "/api/v1/dependencies", "/api/v1/dependencies?gems=",
+    };
+    assertFiletype(pathes, FileType.NO_CONTENT);
   }
 
   @Test
