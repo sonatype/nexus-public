@@ -48,9 +48,9 @@ public class CapabilityRegistryBooter
                                   final Provider<CapabilityStorage> capabilityStorage,
                                   final Provider<CapabilityStorageConverter> storageConverter)
   {
-    this.capabilityRegistry = capabilityRegistry;
+    this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.capabilityStorage = checkNotNull(capabilityStorage);
-    this.storageConverter = storageConverter;
+    this.storageConverter = checkNotNull(storageConverter);
     checkNotNull(eventBus).register(this);
   }
 
