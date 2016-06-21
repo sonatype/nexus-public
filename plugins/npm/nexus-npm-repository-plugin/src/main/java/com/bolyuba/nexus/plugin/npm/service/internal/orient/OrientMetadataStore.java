@@ -63,7 +63,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * OrientDB backed {@link MetadataStore} implementation.
  */
 @Singleton
-@Named("default")
+@Named
 public class OrientMetadataStore
     extends LifecycleSupport
     implements MetadataStore, EventSubscriber
