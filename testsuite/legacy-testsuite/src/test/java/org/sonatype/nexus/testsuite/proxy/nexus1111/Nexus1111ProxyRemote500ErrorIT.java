@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.proxy.nexus1111;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
 import org.sonatype.nexus.integrationtests.ITGroups.PROXY;
 import org.sonatype.nexus.proxy.repository.ProxyMode;
@@ -50,10 +49,8 @@ public class Nexus1111ProxyRemote500ErrorIT
     downloadArtifact("nexus1111", "artifact", "1.0", "jar", null, "target/downloads");
 
     // stop the healthy server
-    ServletServer server = lookup(ServletServer.class);
-    server.stop();
-
-    int port = server.getPort();
+    int port = remoteRepositories.getPort();
+    remoteRepositories.stop();
 
     // start a server which always return HTTP-500 for get
     Server return500Server = Server.withPort(port).serve("/*").withBehaviours(error(500));
@@ -112,7 +109,7 @@ public class Nexus1111ProxyRemote500ErrorIT
 
     // stop the error server, start the healthy server
     return500Server.stop();
-    server.start();
+    remoteRepositories.start();
 
     // unblock it manually
     // NEXUS-4410: since this issue is implemented, the lines below are not enough,

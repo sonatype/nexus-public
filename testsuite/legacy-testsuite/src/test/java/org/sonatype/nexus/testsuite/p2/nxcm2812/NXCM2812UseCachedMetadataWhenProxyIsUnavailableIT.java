@@ -12,19 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.p2.nxcm2812;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.sonatype.nexus.integrationtests.RequestFacade;
-import org.sonatype.nexus.plugins.p2.repository.P2Constants;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.junit.Test;
 import org.restlet.data.Method;
 import org.restlet.data.Response;
@@ -33,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.sonatype.tests.http.server.fluent.Behaviours.error;
 
 /**
  * This IT checks that previously retrieved P2 metadata is used from cache, even when the proxied P2 repository is
@@ -86,24 +78,11 @@ public class NXCM2812UseCachedMetadataWhenProxyIsUnavailableIT
   private void replaceProxy()
       throws Exception
   {
-    final Handler handler = proxyServer.getServer().getHandler();
-    proxyServer.stop();
-    proxyServer.getServer().setHandler(new AbstractHandler()
-    {
-      @Override
-      public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-          throws IOException, ServletException
-      {
-        for (final String path : P2Constants.METADATA_FILE_PATHS) {
-          if (target.endsWith(path)) {
-            response.sendError(503);
-            return;
-          }
-        }
-        handler.handle(target, baseRequest, request, response);
-      }
-    });
-    proxyServer.start();
+    int port = remoteRepositories.getPort();
+    remoteRepositories.stop();
+
+    remoteRepositories = RemoteRepositories.builder().port(port).behave("/*", error(503)).build();
+    remoteRepositories.start();
   }
 
 }

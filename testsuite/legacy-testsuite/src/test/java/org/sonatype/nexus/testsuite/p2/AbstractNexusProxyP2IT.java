@@ -44,7 +44,6 @@ public abstract class AbstractNexusProxyP2IT
     super(testRepositoryId);
   }
 
-  @SuppressWarnings("deprecation")
   @Before
   public void startProxy()
       throws Exception

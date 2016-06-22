@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.p2;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.test.http.RemoteRepositories;
 import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
 import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;

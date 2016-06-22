@@ -13,11 +13,18 @@
 package org.sonatype.nexus.testsuite.p2.nxcm0794;
 
 import java.net.URL;
+import java.util.List;
 
-import org.sonatype.jettytestsuite.ProxyServer;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
+import org.sonatype.nexus.test.http.HttpProxyServer;
+import org.sonatype.nexus.test.http.HttpProxyServer.RequestResponseListener;
 import org.sonatype.nexus.test.utils.TestProperties;
 import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
 
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.server.Request;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +39,9 @@ public class NXCM0794WebProxiedP2IT
 
   private static String baseProxyURL;
 
-  protected ProxyServer webProxyServer;
+  private List<String> accessedUris;
+
+  protected HttpProxyServer httpProxyServer;
 
   static {
     baseProxyURL = TestProperties.getString("proxy.repo.base.url");
@@ -45,8 +54,18 @@ public class NXCM0794WebProxiedP2IT
   @Before
   public void startWebProxy() throws Exception {
     try {
-      webProxyServer = lookup(ProxyServer.class);
-      webProxyServer.start();
+      httpProxyServer = new HttpProxyServer(
+          TestProperties.getInteger("webproxy.server.port"),
+          new RequestResponseListener()
+          {
+            @Override
+            public void servicing(final ServletRequest req, final ServletResponse res) {
+              final HttpURI uri = ((Request) req).getHttpURI();
+              accessedUris.add(uri.toString());
+            }
+          }
+      );
+      httpProxyServer.start();
     }
     catch (Exception e) {
       throw new Exception("Current properties:\n" + TestProperties.getAll(), e);
@@ -66,9 +85,9 @@ public class NXCM0794WebProxiedP2IT
   public void stopWebProxy()
       throws Exception
   {
-    if (webProxyServer != null) {
-      webProxyServer.stop();
-      webProxyServer = null;
+    if (httpProxyServer != null) {
+      httpProxyServer.stop();
+      httpProxyServer = null;
     }
   }
 
@@ -79,12 +98,12 @@ public class NXCM0794WebProxiedP2IT
     installAndVerifyP2Feature();
 
     assertThat(
-        webProxyServer.getAccessedUris(),
+        accessedUris,
         hasItem(baseProxyURL + "nxcm0794/features/com.sonatype.nexus.p2.its.feature_1.0.0.jar")
     );
 
     assertThat(
-        webProxyServer.getAccessedUris(),
+        accessedUris,
         hasItem(baseProxyURL + "nxcm0794/plugins/com.sonatype.nexus.p2.its.bundle_1.0.0.jar")
     );
   }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.test.http;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
@@ -20,12 +21,11 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
+import org.sonatype.tests.http.server.fluent.Server;
 
+import com.google.common.collect.ImmutableMap;
 import org.eclipse.jetty.proxy.ProxyServlet;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -47,6 +47,8 @@ public class HttpProxyServer
 
   private final RequestResponseListener listener;
 
+  private final Map<String, Object> authentication;
+
   private Server server;
 
   public HttpProxyServer(final int port) throws Exception {
@@ -54,23 +56,28 @@ public class HttpProxyServer
   }
 
   public HttpProxyServer(final int port, @Nullable final RequestResponseListener listener) throws Exception {
+    this(port, listener, null);
+  }
+
+  public HttpProxyServer(final int port, @Nullable final RequestResponseListener listener, @Nullable final Map<String, ? extends Object> authentication) throws Exception {
     checkArgument(port > 1024);
     this.port = port;
     this.listener = listener;
+    this.authentication = ImmutableMap.copyOf(authentication);
     startServer();
   }
 
   private void startServer() throws Exception {
-    Server proxy = new Server(port);
-    final HandlerCollection handlers = new HandlerCollection();
-    proxy.setHandler(handlers);
+    Server server = new Server();
+    if (authentication != null) {
+      server.getServerProvider().addAuthentication("/*", "BASIC");
+      for (Map.Entry<String, Object> user : authentication.entrySet()) {
+        server.getServerProvider().addUser(user.getKey(), user.getValue());
+      }
+    }
+    server.serve("/*").withServlet(new ProxyServlet());
 
-    final ServletContextHandler context = new ServletContextHandler(
-        handlers, "/", ServletContextHandler.SESSIONS
-    );
-    context.addServlet(new ServletHolder(new ProxyServlet()), "/*");
-
-    this.server = proxy;
+    this.server = server;
   }
 
   private void stopServer() throws Exception {
