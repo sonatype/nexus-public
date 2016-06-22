@@ -15,12 +15,9 @@ package org.sonatype.nexus.testsuite.repository;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import javax.inject.Inject;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.sonatype.nexus.bundle.launcher.NexusBundleConfiguration;
 import org.sonatype.nexus.client.core.subsystem.ServerConfiguration;
@@ -30,15 +27,12 @@ import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepos
 import org.sonatype.nexus.rest.model.RemoteHttpProxySettingsDTO;
 import org.sonatype.nexus.rest.model.RemoteProxySettingsDTO;
 import org.sonatype.nexus.test.http.HttpProxyServer;
-import org.sonatype.nexus.test.http.HttpProxyServer.RequestResponseListener;
 import org.sonatype.nexus.testsuite.support.NexusRunningParametrizedITSupport;
 import org.sonatype.nexus.testsuite.support.NexusStartAndStopStrategy;
 import org.sonatype.sisu.bl.support.port.PortReservationService;
 import org.sonatype.tests.http.server.fluent.Behaviours;
 import org.sonatype.tests.http.server.fluent.Server;
 
-import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.server.Request;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
@@ -64,10 +58,6 @@ public class HttpAndHttpsProxyIT
 
   private int globalHttpsProxyPort;
 
-  private Set<String> globalHttpProxiedHosts;
-
-  private Set<String> globalHttpsProxiedHosts;
-
   private HttpProxyServer globalHttpProxy;
 
   private HttpProxyServer globalHttpsProxy;
@@ -92,29 +82,12 @@ public class HttpAndHttpsProxyIT
   public void initWebProxiesAndRemoteServer()
       throws Exception
   {
-    globalHttpProxiedHosts = new HashSet<>();
-    globalHttpsProxiedHosts = new HashSet<>();
-
     globalHttpProxy = new HttpProxyServer(
-        globalHttpProxyPort = portReservationService.reservePort(),
-        new RequestResponseListener() {
-          @Override
-          public void servicing(final ServletRequest req, final ServletResponse res) {
-            final HttpURI uri = ((Request) req).getHttpURI();
-            globalHttpProxiedHosts.add(uri.getHost() + ":" + uri.getPort());
-          }
-        }
+        globalHttpProxyPort = portReservationService.reservePort()
     );
 
     globalHttpsProxy = new HttpProxyServer(
-        globalHttpsProxyPort = portReservationService.reservePort(),
-        new RequestResponseListener() {
-          @Override
-          public void servicing(final ServletRequest req, final ServletResponse res) {
-            final HttpURI uri = ((Request) req).getHttpURI();
-            globalHttpsProxiedHosts.add(uri.getHost() + ":" + uri.getPort());
-          }
-        }
+        globalHttpsProxyPort = portReservationService.reservePort()
     );
 
     httpRemoteServer = Server
@@ -199,7 +172,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxiedHosts);
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedUris());
   }
 
   /**
@@ -218,7 +191,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxiedHosts);
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxy.getAccessedUris());
   }
 
   /**
@@ -237,7 +210,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxiedHosts);
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedUris());
   }
 
   /**
@@ -256,7 +229,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxiedHosts);
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxy.getAccessedUris());
   }
 
   private void enableGlobalHttpProxy()
@@ -316,7 +289,7 @@ public class HttpAndHttpsProxyIT
   }
 
   private void assertRemoteServerAccessViaProxy(final Server remoteServer,
-                                                final Set<String> proxiedHosts)
+                                                final List<String> proxiedHosts)
   {
     MatcherAssert.assertThat(proxiedHosts, hasItem("localhost:" + remoteServer.getPort()));
   }
