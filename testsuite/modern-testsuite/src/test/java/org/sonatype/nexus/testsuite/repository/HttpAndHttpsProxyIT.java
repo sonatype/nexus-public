@@ -105,7 +105,6 @@ public class HttpAndHttpsProxyIT
           }
         }
     );
-    globalHttpProxy.start();
 
     globalHttpsProxy = new HttpProxyServer(
         globalHttpsProxyPort = portReservationService.reservePort(),
@@ -117,7 +116,6 @@ public class HttpAndHttpsProxyIT
           }
         }
     );
-    globalHttpsProxy.start();
 
     httpRemoteServer = Server
         .withPort(0)

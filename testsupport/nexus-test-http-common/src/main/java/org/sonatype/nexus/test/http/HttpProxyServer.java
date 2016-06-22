@@ -59,16 +59,23 @@ public class HttpProxyServer
     this(port, listener, null);
   }
 
-  public HttpProxyServer(final int port, @Nullable final RequestResponseListener listener, @Nullable final Map<String, ? extends Object> authentication) throws Exception {
+  public HttpProxyServer(final int port,
+                         @Nullable final RequestResponseListener listener,
+                         @Nullable final Map<String, ? extends Object> authentication) throws Exception {
     checkArgument(port > 1024);
     this.port = port;
     this.listener = listener;
-    this.authentication = ImmutableMap.copyOf(authentication);
+    if (authentication != null) {
+      this.authentication = ImmutableMap.copyOf(authentication);
+    }
+    else {
+      this.authentication = null;
+    }
     startServer();
   }
 
   private void startServer() throws Exception {
-    Server server = new Server();
+    Server server = Server.withPort(port);
     if (authentication != null) {
       server.getServerProvider().addAuthentication("/*", "BASIC");
       for (Map.Entry<String, Object> user : authentication.entrySet()) {
@@ -77,7 +84,7 @@ public class HttpProxyServer
     }
     server.serve("/*").withServlet(new ProxyServlet());
 
-    this.server = server;
+    this.server = server.start();
   }
 
   private void stopServer() throws Exception {
