@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.client.core.subsystem.repository;
 
-import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepository;
-
 /**
  * A Nexus proxy {@link Repository}.
  *
