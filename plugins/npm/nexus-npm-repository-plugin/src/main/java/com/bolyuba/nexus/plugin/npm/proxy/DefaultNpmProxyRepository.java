@@ -166,6 +166,8 @@ public class DefaultNpmProxyRepository
   protected AbstractStorageItem doRetrieveLocalItem(ResourceStoreRequest storeRequest)
       throws ItemNotFoundException, LocalStorageException
   {
+    maintainNotFoundCache(storeRequest); // bring it to lower level too
+
     try {
       if (!getMetadataService().isNpmMetadataServiced(storeRequest)) {
         // shut down NPM MD+tarball service completely
@@ -195,6 +197,10 @@ public class DefaultNpmProxyRepository
             contentLocator = proxyMetadataService.producePackageVersion(packageRequest);
           }
           if (contentLocator == null) {
+            // NFC handling, as npm imple loops on lower levels than NFC handling
+            if (shouldAddToNotFoundCache(storeRequest)) {
+              addToNotFoundCache(storeRequest);
+            }
             log.debug("No NPM metadata for path {}", storeRequest.getRequestPath());
             throw new ItemNotFoundException(
                 reasonFor(storeRequest, this, "No content for path %s", storeRequest.getRequestPath()));
@@ -278,16 +284,11 @@ public class DefaultNpmProxyRepository
     }
   }
 
-  /**
-   * Beside original behavior, only add to NFC non-metadata requests.
-   */
   @Override
-  protected boolean shouldAddToNotFoundCache(final ResourceStoreRequest request) {
-    boolean shouldAddToNFC = super.shouldAddToNotFoundCache(request);
-    if (shouldAddToNFC) {
-      return !request.getRequestContext().containsKey(NpmRepository.NPM_METADATA_SERVICED);
-    }
-    return shouldAddToNFC;
+  protected boolean doCheckRemoteItemExistence(StorageItem localItem, ResourceStoreRequest request)
+      throws RemoteAccessException, RemoteStorageException
+  {
+    return true; // npm own transport will perform conditional GET anyway, no need for extra HEAD+GET only to check remote
   }
 
   @Override
