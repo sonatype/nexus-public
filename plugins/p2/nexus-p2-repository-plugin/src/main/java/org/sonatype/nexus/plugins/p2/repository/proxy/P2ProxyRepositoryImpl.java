@@ -598,26 +598,6 @@ public class P2ProxyRepositoryImpl
   }
 
   @Override
-  public int getArtifactMaxAge() {
-    return getExternalConfiguration(false).getArtifactMaxAge();
-  }
-
-  @Override
-  public void setArtifactMaxAge(final int maxAge) {
-    getExternalConfiguration(true).setArtifactMaxAge(maxAge);
-  }
-
-  @Override
-  public int getMetadataMaxAge() {
-    return getExternalConfiguration(false).getMetadataMaxAge();
-  }
-
-  @Override
-  public void setMetadataMaxAge(final int metadataMaxAge) {
-    getExternalConfiguration(true).setMetadataMaxAge(metadataMaxAge);
-  }
-
-  @Override
   public boolean isMetadataOld(final StorageItem metadataItem) {
     return isOld(metadataItem);
   }

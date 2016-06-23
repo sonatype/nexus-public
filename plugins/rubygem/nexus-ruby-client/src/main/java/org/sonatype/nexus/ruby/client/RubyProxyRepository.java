@@ -17,29 +17,5 @@ import org.sonatype.nexus.client.core.subsystem.repository.ProxyRepository;
 public interface RubyProxyRepository
     extends ProxyRepository<RubyProxyRepository>
 {
-  /**
-   * Configures number of minutes artifacts will be cached.
-   *
-   * @param minutes to be cached
-   * @return itself, for fluent api usage
-   */
-  RubyProxyRepository withArtifactMaxAge(int minutes);
 
-  /**
-   * Configures number of minutes artifact metadata will be cached.
-   *
-   * @param minutes to be cached
-   * @return itself, for fluent api usage
-   */
-  RubyProxyRepository withMetadataMaxAge(int minutes);
-
-  /**
-   * @return the repository's max artifact age.
-   */
-  int artifactMaxAge();
-
-  /**
-   * @return the repository's max metadata age.
-   */
-  int metadataMaxAge();
 }

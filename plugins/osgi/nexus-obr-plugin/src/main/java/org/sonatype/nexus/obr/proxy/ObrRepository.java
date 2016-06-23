@@ -159,14 +159,6 @@ public class ObrRepository
     getExternalConfiguration(true).setObrPath(obrPath);
   }
 
-  public int getMetadataMaxAge() {
-    return getExternalConfiguration(false).getMetadataMaxAge();
-  }
-
-  public void setMetadataMaxAge(final int metadataMaxAge) {
-    getExternalConfiguration(true).setMetadataMaxAge(metadataMaxAge);
-  }
-
   @Override
   public Collection<StorageItem> list(final boolean fromTask, final StorageCollectionItem item)
       throws IllegalOperationException, ItemNotFoundException, StorageException

@@ -93,6 +93,14 @@ public interface ProxyRepository
    */
   void setItemMaxAge(int itemMaxAge);
 
+  int getArtifactMaxAge();
+
+  void setArtifactMaxAge(int maxAge);
+
+  int getMetadataMaxAge();
+
+  void setMetadataMaxAge(int metadataMaxAge);
+
   /**
    * Gets the content validation setting.
    */

@@ -30,22 +30,6 @@ public class P2ProxyRepositoryConfiguration
     super(configuration);
   }
 
-  public int getArtifactMaxAge() {
-    return Integer.parseInt(getNodeValue(getRootNode(), ARTIFACT_MAX_AGE, "1440"));
-  }
-
-  public void setArtifactMaxAge(final int age) {
-    setNodeValue(getRootNode(), ARTIFACT_MAX_AGE, String.valueOf(age));
-  }
-
-  public int getMetadataMaxAge() {
-    return Integer.parseInt(getNodeValue(getRootNode(), METADATA_MAX_AGE, "1440"));
-  }
-
-  public void setMetadataMaxAge(final int age) {
-    setNodeValue(getRootNode(), METADATA_MAX_AGE, String.valueOf(age));
-  }
-
   public ChecksumPolicy getChecksumPolicy() {
     return ChecksumPolicy.valueOf(getNodeValue(getRootNode(), CHECKSUM_POLICY,
         ChecksumPolicy.STRICT_IF_EXISTS.toString()));

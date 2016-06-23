@@ -27,14 +27,4 @@ public interface ObrProxyRepository
    * Sets the OBR metadata path.
    */
   void setObrPath(String obrPath);
-
-  /**
-   * Returns the max age of the OBR metadata. Default is 1440 (1 day).
-   */
-  int getMetadataMaxAge();
-
-  /**
-   * Sets the max age of the OBR metadata in minutes. Default is 1440 (1 day).
-   */
-  void setMetadataMaxAge(int metadataMaxAge);
 }

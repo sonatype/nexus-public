@@ -25,14 +25,6 @@ public interface MavenProxyRepository
 
   void setChecksumPolicy(ChecksumPolicy checksumPolicy);
 
-  int getArtifactMaxAge();
-
-  void setArtifactMaxAge(int maxAge);
-
-  int getMetadataMaxAge();
-
-  void setMetadataMaxAge(int metadataMaxAge);
-
   boolean isDownloadRemoteIndexes();
 
   void setDownloadRemoteIndexes(boolean download);

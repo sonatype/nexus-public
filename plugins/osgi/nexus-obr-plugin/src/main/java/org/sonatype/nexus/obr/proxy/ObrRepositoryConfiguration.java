@@ -21,8 +21,6 @@ public class ObrRepositoryConfiguration
 {
   private final static String OBR_PATH_KEY = "obrPath";
 
-  public static final String METADATA_MAX_AGE_KEY = "metadataMaxAge";
-
   public ObrRepositoryConfiguration(final Xpp3Dom configuration) {
     super(configuration);
   }
@@ -37,13 +35,5 @@ public class ObrRepositoryConfiguration
 
   public void setObrPath(final String val) {
     setNodeValue(getRootNode(), OBR_PATH_KEY, val);
-  }
-
-  public int getMetadataMaxAge() {
-    return Integer.parseInt(getNodeValue(getRootNode(), METADATA_MAX_AGE_KEY, "1440"));
-  }
-
-  public void setMetadataMaxAge(final int age) {
-    setNodeValue(getRootNode(), METADATA_MAX_AGE_KEY, String.valueOf(age));
   }
 }

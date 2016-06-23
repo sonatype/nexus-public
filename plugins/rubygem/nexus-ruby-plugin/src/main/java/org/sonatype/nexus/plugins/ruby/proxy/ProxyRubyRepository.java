@@ -28,14 +28,6 @@ import org.sonatype.nexus.proxy.repository.ProxyRepository;
 public interface ProxyRubyRepository
     extends RubyRepository, ProxyRepository
 {
-  int getArtifactMaxAge();
-
-  void setArtifactMaxAge(int maxAge);
-
-  int getMetadataMaxAge();
-
-  void setMetadataMaxAge(int metadataMaxAge);
-
   boolean isOld(StorageItem item);
 
   void syncMetadata() throws IllegalOperationException, ItemNotFoundException, IOException;
