@@ -64,7 +64,7 @@ public class RemoteErrorPageWith200Test
     this.content = new Content();
     RemoteRepositories remoteRepositories = RemoteRepositories.builder()
         .repo(RemoteRepository.repo("RemoteErrorPageWith200Test").behave(content).build())
-        .build();
+        .build().start();
     this.baseUrl = remoteRepositories.getUrl("RemoteErrorPageWith200Test");
     return new M2TestsuiteEnvironmentBuilder(remoteRepositories);
   }

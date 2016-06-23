@@ -52,10 +52,10 @@ public class RemoteAuthTest
     this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories)
     {
       @Override
-      public void buildEnvironment(AbstractProxyTestEnvironment env)
-          throws ConfigurationException, IOException, ComponentLookupException
+      public void doBuildEnvironment(AbstractProxyTestEnvironment env)
+          throws Exception
       {
-        super.buildEnvironment(env);
+        super.doBuildEnvironment(env);
 
         // setting up auths before test starts: reason is that repo with wrong auth
         // settings will become auto blocked (and that's okay), but since NEXUS-5472 reposes

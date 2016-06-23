@@ -22,7 +22,6 @@ import org.sonatype.nexus.test.utils.TestProperties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.index.artifact.Gav;
-import org.apache.regexp.RE;
 import org.junit.After;
 import org.junit.Before;
 import org.restlet.data.MediaType;
@@ -59,8 +58,7 @@ public abstract class AbstractNexusProxyIntegrationTest
   public void startProxy() throws Exception {
     remoteRepositories = RemoteRepositories.builder()
         .repo("remote", TestProperties.getString("proxy-repo-target-dir"))
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @After

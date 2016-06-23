@@ -42,8 +42,7 @@ public abstract class AbstractNexusProxyP2SecureIT
                       )
                   ).build()
           )
-          .build();
-      remoteRepositories.start();
+          .build().start();
     }
   }
 

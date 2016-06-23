@@ -50,8 +50,7 @@ public class Nexus1089SecureProxyIT
                     )
                 ).build()
         )
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @Override

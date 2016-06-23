@@ -32,10 +32,9 @@ import com.google.common.collect.ImmutableMap;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Test helper to build remote repositories and serve them with Jetty.
+ * Helper to build remote repositories and serve them with Jetty.
  *
- * @author cstamas
- * @since 2.13.1
+ * @since 2.14.0
  */
 public class RemoteRepositories
     extends ComponentSupport
@@ -97,7 +96,7 @@ public class RemoteRepositories
 
   private final Map<String, RemoteRepository> repositoryMap;
 
-  private Server server;
+  private final Server server;
 
   private RemoteRepositories(final int port,
                              final LinkedHashMap<String, Behaviour[]> behaviourMap,
@@ -106,11 +105,11 @@ public class RemoteRepositories
     this.port = port;
     this.behaviourMap = Collections.unmodifiableMap(behaviourMap);
     this.repositoryMap = Collections.unmodifiableMap(repositoryMap);
-    startServer();
+    this.server = createServer();
   }
 
-  private void startServer() throws Exception {
-    server = Server.server();
+  private Server createServer() throws Exception {
+    Server server = Server.server();
     if (port != -1) {
       server.port(port);
     }
@@ -141,32 +140,37 @@ public class RemoteRepositories
       log.info("Behavior: {} with {}", behaviourEntry.getKey(), behaviourEntry.getValue());
       server.serve(behaviourEntry.getKey()).withBehaviours(behaviourEntry.getValue());
     }
-
-    server.start();
-    log.info("Started RemoteRepositories on port {}", server.getPort());
+    return server;
   }
 
-  private void stopServer() throws Exception {
-    if (server != null) {
-      server.stop();
-      server = null;
+  public boolean isStarted() {
+    return server.getServerProvider().isStarted();
+  }
+
+  public RemoteRepositories start() throws Exception {
+    if (!isStarted()) {
+      server.start();
+      log.info("Started RemoteRepositories on port {}", server.getPort());
     }
+    return this;
+  }
+
+  public RemoteRepositories stop() throws Exception {
+    if (isStarted()) {
+      server.stop();
+      log.info("Stopped RemoteRepositories on port {}", server.getPort());
+    }
+    return this;
   }
 
   public Map<String, RemoteRepository> getRepositoryMap() {
     return repositoryMap;
   }
 
-  public void start() throws Exception {
-  }
-
-  public void stop() throws Exception {
-    stopServer();
-  }
 
   public String getUrl(String repoName) {
-    checkArgument(repositoryMap.containsKey(repoName), "no repository with name %s", repoName);
     checkArgument(server != null, "Server not started");
+    checkArgument(repositoryMap.containsKey(repoName), "no repository with name %s", repoName);
     try {
       return server.getUrl().toExternalForm() + "/" + repoName + "/";
     }

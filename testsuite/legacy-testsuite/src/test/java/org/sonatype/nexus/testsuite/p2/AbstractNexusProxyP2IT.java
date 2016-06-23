@@ -50,8 +50,7 @@ public abstract class AbstractNexusProxyP2IT
   {
     remoteRepositories = RemoteRepositories.builder()
         .repo("remote", TestProperties.getString("proxy-repo-target-dir"))
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @After

@@ -50,8 +50,7 @@ public class RemoteBrowserResourceAuthTest
     this.remoteRepositories = RemoteRepositories.builder()
         .repo(RemoteRepository.repo("auth-test").resourceBase("target")
             .authInfo(new AuthInfo("BASIC", ImmutableMap.of("admin", "admin"))).build())
-        .build();
-    this.remoteRepositories.start();
+        .build().start();
 
     // ping nexus to wake up
     startNx();

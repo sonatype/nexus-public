@@ -48,8 +48,7 @@ public class Nexus3638IndexProxiedMavenPluginIT
     remoteRepositories = RemoteRepositories.builder()
         .port(TestProperties.getInteger("webproxy-server-port"))
         .repo("nexus3638", getTestFile("repo").getAbsolutePath())
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @After

@@ -81,8 +81,7 @@ public class NXCM2812UseCachedMetadataWhenProxyIsUnavailableIT
     int port = remoteRepositories.getPort();
     remoteRepositories.stop();
 
-    remoteRepositories = RemoteRepositories.builder().port(port).behave("/*", error(503)).build();
-    remoteRepositories.start();
+    remoteRepositories = RemoteRepositories.builder().port(port).behave("/*", error(503)).build().start();
   }
 
 }

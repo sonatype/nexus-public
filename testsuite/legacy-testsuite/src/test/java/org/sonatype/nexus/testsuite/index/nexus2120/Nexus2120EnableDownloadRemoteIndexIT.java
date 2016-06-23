@@ -92,8 +92,7 @@ public class Nexus2120EnableDownloadRemoteIndexIT
     remoteRepositories = RemoteRepositories.builder()
         .port(webProxyPort)
         .repo(RemoteRepository.repo("repository").behave(pathRecorderBehaviour).resourceBase(basicRemoteRepo.getAbsolutePath()).build())
-        .build();
-    remoteRepositories.start();
+        .build().start();
 
     // reindex once
     RepositoryMessageUtil.updateIndexes("basic");

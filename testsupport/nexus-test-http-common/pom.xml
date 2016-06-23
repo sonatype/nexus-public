@@ -29,11 +29,6 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.http-testing-harness</groupId>
-      <artifactId>junit-runner</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.http-testing-harness</groupId>
       <artifactId>server-provider</artifactId>
     </dependency>
   </dependencies>

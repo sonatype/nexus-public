@@ -36,7 +36,7 @@ public abstract class AbstractNexusWebProxyIntegrationTest
   public void startWebProxy()
       throws Exception
   {
-    httpProxyServer = new HttpProxyServer(webProxyPort);
+    httpProxyServer = new HttpProxyServer(webProxyPort).start();
   }
 
   @After

@@ -12,11 +12,9 @@
  */
 package org.sonatype.nexus.proxy;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.configuration.ConfigurationException;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRemoteStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
@@ -33,7 +31,6 @@ import org.sonatype.nexus.test.http.RemoteRepositories;
 import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /**
@@ -50,10 +47,8 @@ public class M1TestsuiteEnvironmentBuilder
   }
 
   @Override
-  public void buildEnvironment(AbstractProxyTestEnvironment env)
-      throws ConfigurationException,
-             IOException,
-             ComponentLookupException
+  protected void doBuildEnvironment(AbstractProxyTestEnvironment env)
+      throws Exception
   {
     PlexusContainer container = env.getPlexusContainer();
 

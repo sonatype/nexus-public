@@ -49,8 +49,14 @@ public abstract class AbstractJettyEnvironmentBuilder
     return remoteRepositories;
   }
 
-  public abstract void buildEnvironment(AbstractProxyTestEnvironment env)
-      throws ConfigurationException,
-             IOException,
-             ComponentLookupException;
+  public final void buildEnvironment(AbstractProxyTestEnvironment env)
+      throws Exception {
+    if (!remoteRepositories.isStarted()) {
+      remoteRepositories.start();
+    }
+    doBuildEnvironment(env);
+  }
+
+  protected abstract void doBuildEnvironment(AbstractProxyTestEnvironment env)
+      throws Exception;
 }

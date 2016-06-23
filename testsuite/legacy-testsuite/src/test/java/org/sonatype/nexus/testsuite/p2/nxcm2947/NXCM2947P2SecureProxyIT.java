@@ -46,8 +46,7 @@ public class NXCM2947P2SecureProxyIT
                     )
                 ).build()
         )
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @Test

@@ -37,8 +37,7 @@ public class Nexus1113WebProxyWithAuthenticationIT
     httpProxyServer = new HttpProxyServer(
         webProxyPort,
         ImmutableMap.of("admin", "123")
-    );
-    httpProxyServer.start();
+    ).start();
   }
 
   @Test

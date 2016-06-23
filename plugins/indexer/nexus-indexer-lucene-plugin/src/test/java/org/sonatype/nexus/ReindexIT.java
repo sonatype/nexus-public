@@ -73,9 +73,7 @@ public class ReindexIT
         .repo("central-inc1-v1", "target/test-classes/reposes-remote/central-inc1-v1")
         .repo("central-inc2-v1", "target/test-classes/reposes-remote/central-inc2-v1")
         .repo("central-inc3-v1", "target/test-classes/reposes-remote/central-inc3-v1")
-        .build();
-
-    remoteRepositories.start();
+        .build().start();
   }
 
   @Override

@@ -33,8 +33,9 @@ import org.eclipse.jetty.util.StringUtil;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A real HTTP proxy servlet with ability to gather
- * accessed URIs accessed via this proxy.
+ * A real HTTP proxy servlet with ability to gather accessed hosts accessed via this proxy.
+ *
+ * @since 2.14.0
  */
 public class MonitorableProxyServlet
     extends org.eclipse.jetty.proxy.ProxyServlet

@@ -63,8 +63,7 @@ public class Nexus5393IndexEntryDuplicationIT
     // create proxy server
     remoteRepositories = RemoteRepositories.builder()
         .repo("central", fakeCentral.getAbsolutePath())
-        .build();
-    remoteRepositories.start();
+        .build().start();
 
     // update central to use proxy server
     central.setDownloadRemoteIndexes(false);

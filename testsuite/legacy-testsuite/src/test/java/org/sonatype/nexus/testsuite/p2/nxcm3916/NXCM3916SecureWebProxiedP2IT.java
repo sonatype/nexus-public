@@ -49,7 +49,7 @@ public class NXCM3916SecureWebProxiedP2IT
       httpProxyServer = new HttpProxyServer(
           TestProperties.getInteger("webproxy.server.port"),
           ImmutableMap.of("admin", "123")
-      );
+      ).start();
     }
     catch (Exception e) {
       throw new Exception("Current properties:\n" + TestProperties.getAll(), e);

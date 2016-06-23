@@ -26,7 +26,9 @@ import org.eclipse.jetty.server.Request;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * HTTP CONNECT Handler that recods hosts it connects to.
+ * Jetty handler for HTTP CONNECT proxy command, and it also records hosts it connects to.
+ *
+ * @since 2.14.0
  */
 public class MonitorableConnectHandler
     extends ConnectHandler

@@ -28,10 +28,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Test helper to build plain Http Proxy server.
+ * Helper to build fully functional Http Proxy server.
  *
- * @author cstamas
- * @since 2.13.1
+ * @since 2.14.0
  */
 public class HttpProxyServer
     extends ComponentSupport
@@ -44,7 +43,7 @@ public class HttpProxyServer
 
   private final MonitorableConnectHandler monitorableConnectHandler;
 
-  private Server server;
+  private final Server server;
 
   public HttpProxyServer(final int port) throws Exception {
     this(port, null);
@@ -58,37 +57,40 @@ public class HttpProxyServer
     this.port = port;
     this.monitorableProxyServlet = new MonitorableProxyServlet(this.accessedUris, authentication);
     this.monitorableConnectHandler = new MonitorableConnectHandler(this.accessedUris);
-    startServer();
+    this.server = createServer();
   }
 
-  private void startServer() throws Exception {
-    server = new Server(port);
-
+  private Server createServer() throws Exception {
+    Server server = new Server(port);
     final HandlerCollection handlers = new HandlerCollection();
     server.setHandler(handlers);
-
     handlers.addHandler(monitorableConnectHandler);
-
     final ServletContextHandler context = new ServletContextHandler(
         handlers, "/", ServletContextHandler.SESSIONS
     );
     context.addServlet(new ServletHolder(monitorableProxyServlet), "/*");
-
-    server.start();
+    return server;
   }
 
-  private void stopServer() throws Exception {
-    if (server != null) {
-      server.stop();
-      server = null;
+  public boolean isStarted() {
+    return server.isStarted();
+  }
+
+  public HttpProxyServer start() throws Exception {
+    if (!server.isStarted()) {
+      accessedUris.clear();
+      server.start();
+      log.info("Started HttpProxyServer on port {}", port);
     }
+    return this;
   }
 
-  public void start() throws Exception {
-  }
-
-  public void stop() throws Exception {
-    stopServer();
+  public HttpProxyServer stop() throws Exception {
+    if (server.isStarted()) {
+      server.stop();
+      log.info("Stopped HttpProxyServer on port {}", port);
+    }
+    return this;
   }
 
   public int getPort() {

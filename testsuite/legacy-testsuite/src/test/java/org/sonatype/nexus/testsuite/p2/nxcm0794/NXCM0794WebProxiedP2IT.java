@@ -45,7 +45,7 @@ public class NXCM0794WebProxiedP2IT
   @Before
   public void startWebProxy() throws Exception {
     try {
-      httpProxyServer = new HttpProxyServer(TestProperties.getInteger("webproxy.server.port"));
+      httpProxyServer = new HttpProxyServer(TestProperties.getInteger("webproxy.server.port")).start();
     }
     catch (Exception e) {
       throw new Exception("Current properties:\n" + TestProperties.getAll(), e);

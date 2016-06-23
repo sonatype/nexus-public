@@ -42,8 +42,7 @@ public abstract class NXCM1898P2ProxyTimeoutIT
   public void startProxy() throws Exception {
     remoteRepositories = RemoteRepositories.builder()
         .repo(RemoteRepository.repo("remote").behave(Behaviours.pause(Time.millis(500))).resourceBase(TestProperties.getString("proxy-repo-target-dir")).build())
-        .build();
-    remoteRepositories.start();
+        .build().start();
   }
 
   @Test
