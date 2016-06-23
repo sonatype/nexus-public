@@ -70,6 +70,6 @@ public class Nexus4780NonProxyHostsRemoteStorage
 
     assertThat(createSHA1FromFile(pomArtifact), equalTo(createSHA1FromFile(pomFile)));
     assertThat(createSHA1FromFile(jarArtifact), equalTo(createSHA1FromFile(jarFile)));
-    assertThat("proxy was used", accessedUris, hasSize(0));
+    assertThat("proxy was used", getAccessedUris(), hasSize(0));
   }
 }

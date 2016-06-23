@@ -14,28 +14,19 @@ package org.sonatype.nexus.testsuite.proxy;
 
 import java.util.List;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
 import org.sonatype.nexus.test.http.HttpProxyServer;
-import org.sonatype.nexus.test.http.HttpProxyServer.RequestResponseListener;
 import org.sonatype.nexus.test.utils.TestProperties;
 
-import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.server.Request;
 import org.junit.After;
 import org.junit.Before;
 
 public abstract class AbstractNexusWebProxyIntegrationTest
     extends AbstractNexusProxyIntegrationTest
 {
-
   protected static final int webProxyPort;
 
   protected HttpProxyServer httpProxyServer;
-
-  protected List<String> accessedUris;
 
   static {
     webProxyPort = TestProperties.getInteger("webproxy.server.port");
@@ -45,18 +36,7 @@ public abstract class AbstractNexusWebProxyIntegrationTest
   public void startWebProxy()
       throws Exception
   {
-    httpProxyServer = new HttpProxyServer(
-        webProxyPort,
-        new RequestResponseListener()
-        {
-          @Override
-          public void servicing(final ServletRequest req, final ServletResponse res) {
-            final HttpURI uri = ((Request) req).getHttpURI();
-            accessedUris.add(uri.toString());
-          }
-        }
-    );
-    httpProxyServer.start();
+    httpProxyServer = new HttpProxyServer(webProxyPort);
   }
 
   @After
@@ -64,5 +44,9 @@ public abstract class AbstractNexusWebProxyIntegrationTest
       throws Exception
   {
     httpProxyServer.stop();
+  }
+
+  protected List<String> getAccessedUris() {
+    return httpProxyServer.getAccessedUris();
   }
 }

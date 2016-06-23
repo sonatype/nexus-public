@@ -45,7 +45,7 @@ public class ProxyIT
     for (int i = 0; i < 100; i++) {
       Thread.sleep(200);
 
-      List<String> uris = accessedUris;
+      List<String> uris = getAccessedUris();
       for (String uri : uris) {
         if (uri.contains("google.com")) {
           return;

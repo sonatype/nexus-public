@@ -56,7 +56,7 @@ public class HttpProxyServer
     checkArgument(port > 1024);
     this.accessedUris = new ArrayList<>();
     this.port = port;
-    this.monitorableProxyServlet = new MonitorableProxyServlet(this.accessedUris, null);
+    this.monitorableProxyServlet = new MonitorableProxyServlet(this.accessedUris, authentication);
     this.monitorableConnectHandler = new MonitorableConnectHandler(this.accessedUris);
     startServer();
   }
