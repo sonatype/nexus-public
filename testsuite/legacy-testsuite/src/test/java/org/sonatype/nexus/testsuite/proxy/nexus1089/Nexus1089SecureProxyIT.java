@@ -40,6 +40,7 @@ public class Nexus1089SecureProxyIT
       throws Exception
   {
     remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
         .repo(
             RemoteRepository.repo("remote")
                 .resourceBase(TestProperties.getString("proxy-repo-target-dir"))
