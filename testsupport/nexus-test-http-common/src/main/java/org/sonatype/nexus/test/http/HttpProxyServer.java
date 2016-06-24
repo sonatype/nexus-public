@@ -12,16 +12,24 @@
  */
 package org.sonatype.nexus.test.http;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.proxy.ConnectHandler;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
@@ -35,13 +43,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class HttpProxyServer
     extends ComponentSupport
 {
-  private final List<String> accessedUris;
+  private final List<String> accessedUris; // URIs
+
+  private final List<String> accessedHosts; // host:port
 
   private final int port;
 
-  private final MonitorableProxyServlet monitorableProxyServlet;
-
-  private final MonitorableConnectHandler monitorableConnectHandler;
+  private final Map<String, String> authentication;
 
   private final Server server;
 
@@ -52,11 +60,11 @@ public class HttpProxyServer
   public HttpProxyServer(final int port,
                          @Nullable final Map<String, String> authentication) throws Exception
   {
-    checkArgument(port > 1024);
+    checkArgument(port > 1024 && port < 65536, "Invalid port %s", port);
     this.accessedUris = new ArrayList<>();
+    this.accessedHosts = new ArrayList<>();
     this.port = port;
-    this.monitorableProxyServlet = new MonitorableProxyServlet(this.accessedUris, authentication);
-    this.monitorableConnectHandler = new MonitorableConnectHandler(this.accessedUris);
+    this.authentication = authentication;
     this.server = createServer();
   }
 
@@ -64,11 +72,31 @@ public class HttpProxyServer
     Server server = new Server(port);
     final HandlerCollection handlers = new HandlerCollection();
     server.setHandler(handlers);
-    handlers.addHandler(monitorableConnectHandler);
+
+    // handler to log requests
+    handlers.addHandler(new HandlerWrapper()
+    {
+      @Override
+      public void handle(final String target,
+                         final Request baseRequest,
+                         final HttpServletRequest request,
+                         final HttpServletResponse response)
+          throws IOException, ServletException
+      {
+        final HttpURI uri = ((Request) request).getHttpURI();
+        accessedUris.add(uri.toString());
+        accessedHosts.add(uri.getHost() + ":" + uri.getPort());
+        super.handle(target, baseRequest, request, response);
+      }
+    });
+    // handler for HTTP CONNECT
+    handlers.addHandler(new ConnectHandler());
+    // proxy servlet
     final ServletContextHandler context = new ServletContextHandler(
         handlers, "/", ServletContextHandler.SESSIONS
     );
-    context.addServlet(new ServletHolder(monitorableProxyServlet), "/*");
+    context.addServlet(new ServletHolder(new ProxyServlet(authentication)), "/*");
+
     return server;
   }
 
@@ -79,6 +107,7 @@ public class HttpProxyServer
   public HttpProxyServer start() throws Exception {
     if (!server.isStarted()) {
       accessedUris.clear();
+      accessedHosts.clear();
       server.start();
       log.info("Started HttpProxyServer on port {}", port);
     }
@@ -99,5 +128,9 @@ public class HttpProxyServer
 
   public List<String> getAccessedUris() {
     return accessedUris;
+  }
+
+  public List<String> getAccessedHosts() {
+    return accessedHosts;
   }
 }

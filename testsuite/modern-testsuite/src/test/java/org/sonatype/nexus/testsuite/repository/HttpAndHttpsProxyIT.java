@@ -172,7 +172,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedUris());
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -191,7 +191,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxy.getAccessedUris());
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -210,7 +210,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedUris());
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -229,7 +229,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxy.getAccessedUris());
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxy.getAccessedHosts());
   }
 
   private void enableGlobalHttpProxy()

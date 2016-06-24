@@ -13,8 +13,6 @@
 package org.sonatype.nexus.test.http;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -25,8 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.collect.ImmutableMap;
-import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.B64Code;
 import org.eclipse.jetty.util.StringUtil;
 
@@ -37,29 +33,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.14.0
  */
-public class MonitorableProxyServlet
+public class ProxyServlet
     extends org.eclipse.jetty.proxy.ProxyServlet
 {
-  private final List<String> accessedUris;
-
   private final Map<String, String> authentications;
 
-  public MonitorableProxyServlet() {
-    this(new ArrayList<String>(), null);
+  public ProxyServlet() {
+    this(null);
   }
 
-  public MonitorableProxyServlet(final List<String> accessedUris, @Nullable final Map<String, String> authentications) {
-    this.accessedUris = checkNotNull(accessedUris);
+  public ProxyServlet(@Nullable final Map<String, String> authentications) {
     if (authentications != null) {
       this.authentications = ImmutableMap.copyOf(authentications);
     }
     else {
       this.authentications = null;
     }
-  }
-
-  public List<String> getAccessedUris() {
-    return accessedUris;
   }
 
   @Override
@@ -88,8 +77,6 @@ public class MonitorableProxyServlet
         }
       }
     }
-    final HttpURI uri = ((Request) req).getHttpURI();
-    accessedUris.add(uri.getHost() + ":" + uri.getPort());
     super.service(req, res);
   }
 }
