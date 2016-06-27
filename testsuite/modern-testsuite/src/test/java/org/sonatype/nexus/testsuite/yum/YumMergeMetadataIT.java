@@ -19,6 +19,7 @@ import org.sonatype.nexus.client.core.subsystem.repository.GroupRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.Repository;
 import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepository;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -46,6 +47,7 @@ public class YumMergeMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void shouldRegenerateRepoAfterUpload()
       throws Exception
   {
@@ -57,6 +59,7 @@ public class YumMergeMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void shouldRegenerateGroupRepoWhenMemberRepoIsRemoved()
       throws Exception
   {
@@ -111,6 +114,7 @@ public class YumMergeMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void shouldReFetchProxyMetadata()
       throws Exception
   {
@@ -161,6 +165,7 @@ public class YumMergeMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void shouldGenerateGroupRepo()
       throws Exception
   {
