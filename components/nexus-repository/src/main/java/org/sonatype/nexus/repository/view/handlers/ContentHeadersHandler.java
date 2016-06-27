@@ -50,11 +50,9 @@ public class ContentHeadersHandler
       if (lastModified != null) {
         response.getHeaders().set(HttpHeaders.LAST_MODIFIED, DateUtils.formatDate(lastModified.toDate()));
       }
-      if (response.getStatus().isSuccessful()) {
-        final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
-        if (etag != null) {
-          response.getHeaders().set(HttpHeaders.ETAG, "\"" + etag + "\"");
-        }
+      final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
+      if (etag != null) {
+        response.getHeaders().set(HttpHeaders.ETAG, "\"" + etag + "\"");
       }
     }
     return response;

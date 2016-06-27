@@ -74,4 +74,13 @@ public interface TaskScheduler
    * Returns the count of currently running tasks.
    */
   int getRunningTaskCount();
+
+  /**
+   * Returns the state of a given task across the nodes in a clustered environment or {@code null} if clustering isn't
+   * enabled.
+   * 
+   * @since 3.1
+   */
+  @Nullable
+  List<ClusteredTaskState> getClusteredTaskStateById(String taskId);
 }

@@ -113,16 +113,16 @@ public class BlobStoreConfigurationEntityAdapter
 
   @Nullable
   @Override
-  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, final boolean isLocal) {
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
     final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
     final String name = document.field(P_NAME);
 
     log.trace("newEvent: eventKind: {}, name: {}, metadata: {}", eventKind, name, metadata);
     switch (eventKind) {
       case CREATE:
-        return new BlobStoreConfigurationCreatedEvent(metadata, isLocal, name);
+        return new BlobStoreConfigurationCreatedEvent(metadata, name);
       case DELETE:
-        return new BlobStoreConfigurationDeletedEvent(metadata, isLocal, name);
+        return new BlobStoreConfigurationDeletedEvent(metadata, name);
       default:
         return null;
     }

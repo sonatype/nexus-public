@@ -46,6 +46,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -175,8 +176,8 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointWibble).begin();
+    order.verify(checkpointFoo).begin("1.1");
+    order.verify(checkpointWibble).begin("1.0");
 
     order.verify(upgradeFoo_1_2).apply();
     order.verify(upgradeWibble_2_0).apply();
@@ -222,9 +223,9 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointBar).begin();
-    order.verify(checkpointWibble).begin();
+    order.verify(checkpointFoo).begin("1.0");
+    order.verify(checkpointBar).begin("1.0");
+    order.verify(checkpointWibble).begin("1.0");
 
     order.verify(upgradeFoo_1_1).apply();
     order.verify(upgradeBar_1_1).apply();
@@ -272,9 +273,9 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointBar).begin();
-    order.verify(checkpointWibble).begin();
+    order.verify(checkpointFoo).begin("1.0");
+    order.verify(checkpointBar).begin("1.0");
+    order.verify(checkpointWibble).begin("1.0");
 
     order.verify(upgradeFoo_1_1).apply();
     order.verify(upgradeBar_1_1).apply();
@@ -297,7 +298,7 @@ public class UpgradeServiceTest
   public void testBadCheckpointStopsUpgrade() throws Exception {
     FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
 
-    doThrow(new IOException()).when(checkpointBar).begin();
+    doThrow(new IOException()).when(checkpointBar).begin(anyString());
 
     assertThat(modelProperties.exists(), is(false));
 
@@ -320,8 +321,8 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointBar).begin();
+    order.verify(checkpointFoo).begin("1.0");
+    order.verify(checkpointBar).begin("1.0");
 
     verifyNoMoreInteractions(
         checkpointFoo,
@@ -360,9 +361,9 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointBar).begin();
-    order.verify(checkpointWibble).begin();
+    order.verify(checkpointFoo).begin("1.0");
+    order.verify(checkpointBar).begin("1.0");
+    order.verify(checkpointWibble).begin("1.0");
 
     order.verify(upgradeFoo_1_1).apply();
     order.verify(upgradeBar_1_1).apply();
@@ -414,9 +415,9 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
 
-    order.verify(checkpointFoo).begin();
-    order.verify(checkpointBar).begin();
-    order.verify(checkpointWibble).begin();
+    order.verify(checkpointFoo).begin("1.0");
+    order.verify(checkpointBar).begin("1.0");
+    order.verify(checkpointWibble).begin("1.0");
 
     order.verify(upgradeFoo_1_1).apply();
     order.verify(upgradeBar_1_1).apply();

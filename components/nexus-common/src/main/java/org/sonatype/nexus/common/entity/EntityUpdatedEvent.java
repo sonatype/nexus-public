@@ -20,7 +20,7 @@ package org.sonatype.nexus.common.entity;
 public class EntityUpdatedEvent
     extends EntityEvent
 {
-  public EntityUpdatedEvent(final EntityMetadata metadata, final boolean isLocal) {
-    super(metadata, isLocal);
+  public EntityUpdatedEvent(final EntityMetadata metadata) {
+    super(metadata);
   }
 }

@@ -29,8 +29,8 @@ public class ComponentDeletedEvent
 {
   private final String repositoryName;
 
-  public ComponentDeletedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
-    super(metadata, isLocal);
+  public ComponentDeletedEvent(final EntityMetadata metadata, final String repositoryName) {
+    super(metadata);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

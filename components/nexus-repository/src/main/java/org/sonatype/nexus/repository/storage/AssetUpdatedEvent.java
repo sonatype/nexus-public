@@ -33,10 +33,10 @@ public class AssetUpdatedEvent
 
   private final EntityId componentId;
 
-  public AssetUpdatedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName,
+  public AssetUpdatedEvent(final EntityMetadata metadata, final String repositoryName,
       @Nullable final EntityId componentId)
   {
-    super(metadata, isLocal);
+    super(metadata);
     this.repositoryName = checkNotNull(repositoryName);
     this.componentId = componentId;
   }

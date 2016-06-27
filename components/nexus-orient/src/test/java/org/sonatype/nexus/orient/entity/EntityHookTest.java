@@ -35,9 +35,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link EntityHook}.
@@ -148,26 +151,36 @@ public class EntityHookTest
       event = subscriber.events.get(0);
       assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertTrue(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is(nullValue()));
 
       event = subscriber.events.get(1);
       assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertTrue(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is(nullValue()));
 
       // UPDATE
-      db.begin();
-      entityAdapter.writeEntity(firstEntity, new TestEntity());
-      entityAdapter.writeEntity(secondEntity, new TestEntity());
-      db.commit();
+      EntityHook.asRemote("REMOTE-NODE", () -> {
+        db.begin();
+        entityAdapter.writeEntity(firstEntity, new TestEntity());
+        entityAdapter.writeEntity(secondEntity, new TestEntity());
+        db.commit();
+      });
 
       assertThat(subscriber.events, hasSize(4));
 
       event = subscriber.events.get(2);
       assertThat(event.getClass().getSimpleName(), is("EntityUpdatedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertFalse(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is("REMOTE-NODE"));
 
       event = subscriber.events.get(3);
       assertThat(event.getClass().getSimpleName(), is("EntityUpdatedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertFalse(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is("REMOTE-NODE"));
 
       // DELETE
       db.begin();
@@ -180,10 +193,14 @@ public class EntityHookTest
       event = subscriber.events.get(4);
       assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertTrue(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is(nullValue()));
 
       event = subscriber.events.get(5);
       assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
       assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertTrue(event.isLocal());
+      assertThat(event.getRemoteNodeId(), is(nullValue()));
 
       entityHook.onClose(db);
 

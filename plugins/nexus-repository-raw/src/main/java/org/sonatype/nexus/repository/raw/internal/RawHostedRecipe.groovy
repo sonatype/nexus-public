@@ -40,6 +40,7 @@ import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.SuffixMatcher
@@ -107,6 +108,8 @@ class RawHostedRecipe
   @Inject
   ContentHeadersHandler contentHeadersHandler
 
+  @Inject
+  HandlerContributor handlerContributor
 
   @Inject
   RawHostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -145,8 +148,9 @@ class RawHostedRecipe
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
-        .handler(partialFetchHandler)
+        .handler(handlerContributor)
         .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(rawContentHandler)

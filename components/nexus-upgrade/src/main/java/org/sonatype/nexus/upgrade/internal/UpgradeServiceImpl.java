@@ -51,13 +51,10 @@ public class UpgradeServiceImpl
     extends LifecycleSupport
     implements UpgradeService
 {
-  private static final String BEGIN_BANNER = banner("Begin upgrade");
-
-  private static final String APPLY_BANNER = banner("Apply upgrade");
-
-  private static final String COMMIT_BANNER = banner("Commit upgrade");
-
-  private static final String ROLLBACK_BANNER = banner("Rolling back upgrade");
+  private static final String BANNER =
+      "\n- - - - - - - - - - - - - - - - - - - - - - - - -\n" +
+      "{}" +
+      "\n- - - - - - - - - - - - - - - - - - - - - - - - -";
 
   private final UpgradeManager upgradeManager;
 
@@ -112,7 +109,7 @@ public class UpgradeServiceImpl
    */
   private void doInventory(List<Upgrade> upgrades) {
     upgrades.stream().map(UpgradeManager::upgrades)
-        .forEach(upgrade -> modelProperties.put(upgrade.model(), upgrade.to()));
+        .forEach(upgrade -> modelProperties.setProperty(upgrade.model(), upgrade.to()));
   }
 
   /**
@@ -121,31 +118,33 @@ public class UpgradeServiceImpl
   private void doUpgrade(List<Upgrade> upgrades) {
     List<Checkpoint> checkpoints = upgradeManager.prepare(upgrades);
 
-    log.info(BEGIN_BANNER);
+    log.info(BANNER, "Begin upgrade");
     checkpoints.forEach(begin());
     try {
-      log.info(APPLY_BANNER);
+      log.info(BANNER, "Apply upgrade");
       upgrades.forEach(apply());
-
-      log.info(COMMIT_BANNER);
+      log.info(BANNER, "Commit upgrade");
       checkpoints.forEach(commit());
+      log.info(BANNER, "Upgrade complete");
     }
     catch (Throwable e) {
-      log.warn(ROLLBACK_BANNER, e);
+      log.warn(BANNER, "Rollback upgrade");
       checkpoints.forEach(rollback());
+      log.warn(BANNER, "Upgrade failed");
+
       throw Throwables.propagate(e);
     }
   }
 
   private Consumer<Checkpoint> begin() {
     return checkpoint -> {
-      String detail = checkpoints(checkpoint).model();
+      String model = checkpoints(checkpoint).model();
       try {
-        log.info("Checkpoint {}", detail);
-        checkpoint.begin();
+        log.info("Checkpoint {}", model);
+        checkpoint.begin(modelProperties.getProperty(model, "1.0"));
       }
       catch (Throwable e) {
-        log.warn("Problem checkpointing {}", detail, e);
+        log.warn("Problem checkpointing {}", model, e);
         throw Throwables.propagate(e);
       }
     };
@@ -160,7 +159,7 @@ public class UpgradeServiceImpl
         upgrade.apply();
 
         // keep track of which upgrades we've applied so far
-        modelProperties.put(upgrades.model(), upgrades.to());
+        modelProperties.setProperty(upgrades.model(), upgrades.to());
       }
       catch (Throwable e) {
         log.warn("Problem upgrading {}", detail, e);
@@ -171,13 +170,13 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> commit() {
     return checkpoint -> {
-      String detail = checkpoints(checkpoint).model();
+      String model = checkpoints(checkpoint).model();
       try {
-        log.info("Commit {}", detail);
+        log.info("Commit {}", model);
         checkpoint.commit();
       }
       catch (Throwable e) {
-        log.warn("Problem committing {}", detail, e);
+        log.warn("Problem committing {}", model, e);
         throw Throwables.propagate(e);
       }
     };
@@ -185,23 +184,15 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> rollback() {
     return checkpoint -> {
-      String detail = checkpoints(checkpoint).model();
+      String model = checkpoints(checkpoint).model();
       try {
-        log.info("Rolling back {}", detail);
+        log.info("Rolling back {}", model);
         checkpoint.rollback();
       }
       catch (Throwable e) {
-        log.warn("Problem rolling back {}", detail, e);
+        log.warn("Problem rolling back {}", model, e);
         // continue rolling back other checkpoints...
       }
     };
-  }
-
-  private static String banner(final String message) {
-    return new StringBuilder()
-        .append("\n- - - - - - - - - - - - - - - - - - - - - - - - -\n")
-        .append(message)
-        .append("\n- - - - - - - - - - - - - - - - - - - - - - - - -")
-        .toString();
   }
 }

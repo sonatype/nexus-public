@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.util.ArrayList;
 import java.util.ListIterator;
 
 import javax.annotation.Nonnull;
@@ -86,6 +87,16 @@ public class Context
     }
   }
 
+  /**
+   * Add an additional handler to the context, immediately after the current handler.
+   */
+  public void insertHandler(final Handler handler) {
+    checkNotNull(handler);
+    // Insert the handler so that the next proceed() call will encounter it
+    handlers.add(handler);
+    handlers.previous();
+  }
+
   //
   // Framework internal
   //
@@ -98,7 +109,8 @@ public class Context
     checkNotNull(route);
     checkState(handlers == null, "Already started");
     log.debug("Starting: {}", route);
-    handlers = route.getHandlers().listIterator();
+    // Copy the handler list to allow modification
+    this.handlers = new ArrayList<>(route.getHandlers()).listIterator();
     return proceed();
   }
 }

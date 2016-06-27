@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
@@ -73,6 +74,9 @@ class RawGroupRecipe
   GroupHandler groupHandler
 
   @Inject
+  HandlerContributor handlerContributor
+
+  @Inject
   RawGroupRecipe(@Named(GroupType.NAME) Type type,
                  @Named(RawFormat.NAME) Format format)
   {
@@ -98,6 +102,7 @@ class RawGroupRecipe
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
+        .handler(handlerContributor)
         .handler(groupHandler)
         .create())
 

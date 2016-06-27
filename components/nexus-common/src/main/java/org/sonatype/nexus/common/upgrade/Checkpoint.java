@@ -13,16 +13,16 @@
 package org.sonatype.nexus.common.upgrade;
 
 /**
- * Checkpoints data/resources for a specific model/schema.
+ * Checkpoints data/resources for a specific model/schema before upgrade starts.
  * 
  * @since 3.1
  */
 public interface Checkpoint
 {
   /**
-   * Creates a new checkpoint.
+   * Creates a new checkpoint for the installed version.
    */
-  void begin() throws Exception;
+  void begin(String version) throws Exception;
 
   /**
    * Commits the current checkpoint.

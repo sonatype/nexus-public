@@ -170,18 +170,18 @@ public class ConfigurationEntityAdapter
 
   @Nullable
   @Override
-  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, boolean isLocal) {
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
     final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
     final String repositoryName = document.field(P_REPOSITORY_NAME);
 
     log.trace("newEvent: eventKind: {}, repositoryName: {}, metadata: {}", eventKind, repositoryName, metadata);
     switch (eventKind) {
       case CREATE:
-        return new ConfigurationCreatedEvent(metadata, isLocal, repositoryName);
+        return new ConfigurationCreatedEvent(metadata, repositoryName);
       case UPDATE:
-        return new ConfigurationUpdatedEvent(metadata, isLocal, repositoryName);
+        return new ConfigurationUpdatedEvent(metadata, repositoryName);
       case DELETE:
-        return new ConfigurationDeletedEvent(metadata, isLocal, repositoryName);
+        return new ConfigurationDeletedEvent(metadata, repositoryName);
       default:
         return null;
     }

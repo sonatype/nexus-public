@@ -22,11 +22,13 @@ import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.node.ClusteredNodeAccess;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -72,6 +74,8 @@ public class TaskSchedulerHelper
 
   private LocalNodeAccess localNodeAccess;
 
+  private ClusteredNodeAccess clusteredNodeAccess;
+
   private final DatabaseInstance databaseInstance;
 
   public TaskSchedulerHelper(final DatabaseInstance databaseInstance) {
@@ -82,6 +86,7 @@ public class TaskSchedulerHelper
     applicationDirectories = mock(ApplicationDirectories.class);
     baseUrlManager = mock(BaseUrlManager.class);
     localNodeAccess = mock(LocalNodeAccess.class);
+    clusteredNodeAccess = mock(ClusteredNodeAccess.class);
 
     Module module = binder -> {
       Properties properties = new Properties();
@@ -107,6 +112,9 @@ public class TaskSchedulerHelper
       when(localNodeAccess.getId()).thenReturn("test-12345");
       binder.bind(LocalNodeAccess.class)
           .toInstance(localNodeAccess);
+      when(clusteredNodeAccess.getMemberIds()).thenReturn(ImmutableSet.of("test-12345"));
+      binder.bind(ClusteredNodeAccess.class)
+          .toInstance(clusteredNodeAccess);
       if (factory != null) {
         binder.bind(JobFactory.class).toInstance(factory);
       }

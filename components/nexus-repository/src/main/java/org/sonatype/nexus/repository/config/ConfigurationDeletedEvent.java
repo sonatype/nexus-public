@@ -28,8 +28,8 @@ public class ConfigurationDeletedEvent
 {
   private final String repositoryName;
 
-  public ConfigurationDeletedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
-    super(metadata, isLocal);
+  public ConfigurationDeletedEvent(final EntityMetadata metadata, final String repositoryName) {
+    super(metadata);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

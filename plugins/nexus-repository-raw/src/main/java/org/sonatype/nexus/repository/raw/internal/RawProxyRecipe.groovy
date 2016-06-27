@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
@@ -120,6 +121,9 @@ class RawProxyRecipe
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
+  HandlerContributor handlerContributor
+
+  @Inject
   public RawProxyRecipe(final @Named(ProxyType.NAME) Type type,
                         final @Named(RawFormat.NAME) Format format)
   {
@@ -152,9 +156,10 @@ class RawProxyRecipe
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
+        .handler(handlerContributor)
         .handler(negativeCacheHandler)
-        .handler(partialFetchHandler)
         .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(proxyHandler)

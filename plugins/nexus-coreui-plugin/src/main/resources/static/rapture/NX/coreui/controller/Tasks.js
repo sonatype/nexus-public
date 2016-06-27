@@ -51,6 +51,8 @@ Ext.define('NX.coreui.controller.Tasks', {
     'task.TaskScheduleMonthly',
     'task.TaskScheduleOnce',
     'task.TaskScheduleWeekly',
+    'task.TaskSummary',
+    'task.TaskStatus',
     'task.TaskSettings',
     'task.TaskSettingsForm',
     'formfield.SettingsFieldSet'
@@ -59,7 +61,7 @@ Ext.define('NX.coreui.controller.Tasks', {
     { ref: 'feature', selector: 'nx-coreui-task-feature' },
     { ref: 'content', selector: 'nx-feature-content' },
     { ref: 'list', selector: 'nx-coreui-task-list' },
-    { ref: 'info', selector: 'nx-coreui-task-feature nx-info-panel' },
+    { ref: 'summary', selector: 'nx-coreui-task-summary' },
     { ref: 'settings', selector: 'nx-coreui-task-settings' }
   ],
   icons: {
@@ -174,7 +176,9 @@ Ext.define('NX.coreui.controller.Tasks', {
    * @param {NX.coreui.model.Task} model task model
    */
   showSummary: function(model) {
-    var info = {};
+    var info = {},
+        me = this,
+        summary = me.getSummary();
 
     info[NX.I18n.get('Tasks_ID_Info')] = model.getId();
     info[NX.I18n.get('Tasks_Name_Info')] = model.get('name');
@@ -184,7 +188,25 @@ Ext.define('NX.coreui.controller.Tasks', {
     info[NX.I18n.get('Tasks_LastRun_Info')] = model.get('lastRun');
     info[NX.I18n.get('Tasks_LastResult_Info')] = model.get('lastRunResult');
 
-    this.getInfo().showInfo(info);
+    summary.showInfo(info);
+    me.maybeShowSummaryStatuses(model);
+  },
+
+  /**
+   * @private
+   * Displays task status summary if there are clustered task states.
+   * @param model the task model to get states from
+   */
+  maybeShowSummaryStatuses: function(model) {
+    var me = this;
+
+    if (!model.clusteredTaskStatesStore) {
+      me.getSummary().getStatuses().hide();
+    }
+    else {
+      me.getSummary().getStatuses().show();
+      me.getSummary().getStatuses().getGrid().reconfigure(model.clusteredTaskStatesStore);
+    }
   },
 
   /**

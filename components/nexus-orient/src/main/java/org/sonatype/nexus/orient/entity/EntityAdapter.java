@@ -313,16 +313,16 @@ public abstract class EntityAdapter<T extends Entity>
    * Override this method to customize {@link EntityEvent}s for this adapter.
    */
   @Nullable
-  public EntityEvent newEvent(final ODocument document, final EventKind eventKind, final boolean isLocal) {
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind)  {
     EntityMetadata metadata = new AttachedEntityMetadata(this, document);
 
     switch (eventKind) {
       case CREATE:
-        return new EntityCreatedEvent(metadata, isLocal);
+        return new EntityCreatedEvent(metadata);
       case UPDATE:
-        return new EntityUpdatedEvent(metadata, isLocal);
+        return new EntityUpdatedEvent(metadata);
       case DELETE:
-        return new EntityDeletedEvent(metadata, isLocal);
+        return new EntityDeletedEvent(metadata);
       default:
         return null;
     }

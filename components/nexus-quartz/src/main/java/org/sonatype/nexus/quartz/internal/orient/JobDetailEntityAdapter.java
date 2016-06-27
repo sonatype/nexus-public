@@ -17,8 +17,11 @@ import java.util.function.Predicate;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesWithPredicateAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 import org.sonatype.nexus.orient.entity.marshal.FieldObjectMapper;
@@ -137,4 +140,25 @@ public class JobDetailEntityAdapter
    * Delete all entities.
    */
   public final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+
+    switch (eventKind) {
+      case CREATE:
+        return new JobCreatedEvent(metadata);
+      case UPDATE:
+        return new JobUpdatedEvent(metadata);
+      case DELETE:
+        return new JobDeletedEvent(metadata);
+      default:
+        return null;
+    }
+  }
 }

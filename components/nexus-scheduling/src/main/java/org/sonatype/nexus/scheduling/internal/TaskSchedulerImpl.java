@@ -23,6 +23,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.scheduling.ClusteredTaskState;
+import org.sonatype.nexus.scheduling.ClusteredTaskStateStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskFactory;
@@ -52,15 +54,19 @@ public class TaskSchedulerImpl
 
   private final TaskFactory taskFactory;
 
+  private final ClusteredTaskStateStore clusteredTaskStateStore;
+
   private final Provider<SchedulerSPI> scheduler;
 
   @Inject
   public TaskSchedulerImpl(final EventBus eventBus,
                            final TaskFactory taskFactory,
+                           final ClusteredTaskStateStore clusteredTaskStateStore,
                            final Provider<SchedulerSPI> scheduler)
   {
     this.eventBus = checkNotNull(eventBus);
     this.taskFactory = checkNotNull(taskFactory);
+    this.clusteredTaskStateStore = checkNotNull(clusteredTaskStateStore);
     this.scheduler = checkNotNull(scheduler);
   }
 
@@ -146,5 +152,11 @@ public class TaskSchedulerImpl
     eventBus.post(new TaskScheduledEvent(taskInfo));
 
     return taskInfo;
+  }
+
+  @Override
+  public List<ClusteredTaskState> getClusteredTaskStateById(String taskId) {
+    checkNotNull(taskId);
+    return clusteredTaskStateStore.getClusteredState(taskId);
   }
 }

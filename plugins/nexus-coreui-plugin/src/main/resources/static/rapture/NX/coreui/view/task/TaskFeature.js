@@ -37,8 +37,7 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
 
       tabs: [
         {
-          xtype: 'nx-info-panel',
-          title: NX.I18n.get('TaskFeature_Summary_Title'),
+          xtype: 'nx-coreui-task-summary',
           weight: 10
         }
       ],

@@ -34,12 +34,15 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.node.ClusteredNodeAccess;
+import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.quartz.Calendar;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -61,6 +64,7 @@ import org.quartz.spi.TriggerFiredResult;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.node.ClusteredNodeAccess.NODE_ID;
 import static org.sonatype.nexus.orient.OrientTransaction.currentDb;
 import static org.sonatype.nexus.orient.OrientTransaction.txSupplier;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ACQUIRED;
@@ -91,6 +95,10 @@ public class JobStoreImpl
 
   private final CalendarEntityAdapter calendarEntityAdapter;
 
+  private final LocalNodeAccess localNodeAccess;
+
+  private final ClusteredNodeAccess clusteredNodeAccess;
+
   private SchedulerSignaler signaler;
 
   // TODO: Sort out instanceName and instanceId usage in persistence model (related to clustering?)
@@ -103,12 +111,16 @@ public class JobStoreImpl
   public JobStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
                       final JobDetailEntityAdapter jobDetailEntityAdapter,
                       final TriggerEntityAdapter triggerEntityAdapter,
-                      final CalendarEntityAdapter calendarEntityAdapter)
+                      final CalendarEntityAdapter calendarEntityAdapter,
+                      final LocalNodeAccess localNodeAccess,
+                      final ClusteredNodeAccess clusteredNodeAccess)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.jobDetailEntityAdapter = checkNotNull(jobDetailEntityAdapter);
     this.triggerEntityAdapter = checkNotNull(triggerEntityAdapter);
     this.calendarEntityAdapter = checkNotNull(calendarEntityAdapter);
+    this.localNodeAccess = checkNotNull(localNodeAccess);
+    this.clusteredNodeAccess = checkNotNull(clusteredNodeAccess);
   }
 
   /**
@@ -171,7 +183,7 @@ public class JobStoreImpl
     try {
       synchronized (monitor) {
         return transactional(txSupplier(databaseInstance.get()))
-            .retryOn(ONeedRetryException.class)
+            .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
             .throwing(JobPersistenceException.class)
             .call(() -> operation.execute(currentDb()));
       }
@@ -877,6 +889,9 @@ public class JobStoreImpl
   {
     log.debug("Acquire next triggers: noLaterThan={}, maxCount={}, timeWindow={}", noLaterThan, maxCount, timeWindow);
 
+    final String localNodeId = localNodeAccess.getId();
+    final Set<String> memberNodeIds = clusteredNodeAccess.getMemberIds();
+
     return execute(db -> {
       // find all triggers in WAITING state
       Iterator<TriggerEntity> matches = triggerEntityAdapter.browseByState.execute(db, WAITING).iterator();
@@ -912,6 +927,18 @@ public class JobStoreImpl
         if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
             trigger.getNextFireTime().getTime() < noEarlierThan) {
           continue;
+        }
+
+        // skip triggers restricted to another node
+        String triggerNodeId = trigger.getJobDataMap().getString(NODE_ID);
+        if (triggerNodeId != null) {
+          if (!memberNodeIds.contains(triggerNodeId)) {
+            // orphaned trigger, take over responsibility
+            trigger.getJobDataMap().put(NODE_ID, localNodeId);
+          }
+          else if (!localNodeId.equals(triggerNodeId)) {
+            continue;
+          }
         }
 
         // track result

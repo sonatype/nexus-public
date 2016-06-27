@@ -20,7 +20,7 @@ package org.sonatype.nexus.common.entity;
 public class EntityDeletedEvent
     extends EntityEvent
 {
-  public EntityDeletedEvent(final EntityMetadata metadata, final boolean isLocal) {
-    super(metadata, isLocal);
+  public EntityDeletedEvent(final EntityMetadata metadata) {
+    super(metadata);
   }
 }

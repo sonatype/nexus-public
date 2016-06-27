@@ -26,13 +26,12 @@ public abstract class EntityEvent
 {
   private final EntityMetadata metadata;
 
-  private final boolean isLocal;
+  private String remoteNodeId;
 
   private volatile Entity entity;
 
-  public EntityEvent(final EntityMetadata metadata, final boolean isLocal) {
+  public EntityEvent(final EntityMetadata metadata) {
     this.metadata = checkNotNull(metadata);
-    this.isLocal = isLocal;
   }
 
   public EntityId getId() {
@@ -49,7 +48,26 @@ public abstract class EntityEvent
    * @since 3.1
    */
   public boolean isLocal() {
-    return isLocal;
+    return remoteNodeId == null;
+  }
+
+  /**
+   * @param remoteNodeId the remote node that sent this event; {@code null} if event is local
+   *
+   * @since 3.1
+   */
+  public void setRemoteNodeId(@Nullable final String remoteNodeId) {
+    this.remoteNodeId = remoteNodeId;
+  }
+
+  /**
+   * @return the remote node that sent this event; {@code null} if event is local
+   *
+   * @since 3.1
+   */
+  @Nullable
+  public String getRemoteNodeId() {
+    return remoteNodeId;
   }
 
   /**
@@ -80,7 +98,7 @@ public abstract class EntityEvent
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "metadata=" + metadata +
-        ", isLocal=" + isLocal +
+        ", remoteNodeId=" + remoteNodeId +
         '}';
   }
 }

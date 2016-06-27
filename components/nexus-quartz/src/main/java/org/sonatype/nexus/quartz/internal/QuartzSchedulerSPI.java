@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.quartz.internal;
 
+import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -28,9 +29,16 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.common.thread.TcclBlock;
+import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent;
+import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent;
+import org.sonatype.nexus.quartz.internal.orient.JobUpdatedEvent;
+import org.sonatype.nexus.quartz.internal.orient.TriggerCreatedEvent;
+import org.sonatype.nexus.quartz.internal.orient.TriggerDeletedEvent;
+import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskFuture;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
@@ -47,6 +55,7 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -57,6 +66,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
 import org.quartz.UnableToInterruptJobException;
+import org.quartz.core.QuartzScheduler;
 import org.quartz.impl.DefaultThreadExecutor;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.SchedulerRepository;
@@ -71,6 +81,7 @@ import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.node.ClusteredNodeAccess.NODE_ID;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
 
 /**
@@ -83,7 +94,7 @@ import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.list
 @Singleton
 public class QuartzSchedulerSPI
     extends LifecycleSupport
-    implements SchedulerSPI
+    implements SchedulerSPI, EventAware
 {
   private static final String SCHEDULER_NAME = "nexus";
 
@@ -104,6 +115,8 @@ public class QuartzSchedulerSPI
   private final QuartzTriggerConverter triggerConverter;
 
   private Scheduler scheduler;
+
+  private QuartzScheduler quartzScheduler;
 
   private boolean active;
 
@@ -148,6 +161,17 @@ public class QuartzSchedulerSPI
   protected void doStart() throws Exception {
     // create new scheduler
     scheduler = createScheduler();
+
+    try {
+      // access internal scheduler to simulate signals for remote updates
+      Field schedField = scheduler.getClass().getDeclaredField("sched");
+      schedField.setAccessible(true);
+      quartzScheduler = (QuartzScheduler) schedField.get(scheduler);
+    }
+    catch (Exception | LinkageError e) {
+      log.error("Cannot find QuartzScheduler", e);
+      throw e;
+    }
 
     // re-attach listeners right after scheduler is available
     reattachJobListeners();
@@ -318,6 +342,38 @@ public class QuartzSchedulerSPI
   private QuartzTaskJobListener findJobListener(final JobKey jobKey) throws SchedulerException {
     String name = listenerName(jobKey);
     return (QuartzTaskJobListener) scheduler.getListenerManager().getJobListener(name);
+  }
+
+  private void updateJobListener(final JobDetail jobDetail) throws SchedulerException {
+    QuartzTaskJobListener toBeUpdated = findJobListener(jobDetail.getKey());
+    if (toBeUpdated != null) {
+      QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
+      taskInfo.setNexusTaskStateIfInState(
+          State.WAITING,
+          new QuartzTaskState(
+              QuartzTaskJob.configurationOf(jobDetail),
+              taskInfo.getSchedule(),
+              taskInfo.getCurrentState().getNextRun()
+          ),
+          taskInfo.getTaskFuture()
+      );
+    }
+  }
+
+  private void updateJobListener(final Trigger trigger) throws SchedulerException {
+    QuartzTaskJobListener toBeUpdated = findJobListener(trigger.getJobKey());
+    if (toBeUpdated != null) {
+      QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
+      taskInfo.setNexusTaskStateIfInState(
+          State.WAITING,
+          new QuartzTaskState(
+              taskInfo.getConfiguration(),
+              triggerConverter.convert(trigger),
+              trigger.getFireTimeAfter(new Date())
+          ),
+          taskInfo.getTaskFuture()
+      );
+    }
   }
 
   private void removeJobListener(final JobKey jobKey) throws SchedulerException {
@@ -525,6 +581,7 @@ public class QuartzSchedulerSPI
   private Trigger buildTrigger(final Schedule schedule, final JobKey jobKey) {
     return ensureStartsInTheFuture(triggerConverter.convert(schedule)
         .withIdentity(jobKey.getName(), jobKey.getGroup())
+        .usingJobData(NODE_ID, localNodeAccess.getId())
         .build());
   }
 
@@ -640,6 +697,7 @@ public class QuartzSchedulerSPI
       scheduler.triggerJob(
           jobKey,
           triggerConverter.convert(scheduleFactory().now())
+              .usingJobData(NODE_ID, localNodeAccess.getId())
               .build()
               .getJobDataMap()
       );
@@ -674,5 +732,97 @@ public class QuartzSchedulerSPI
     finally {
       tccl.restore();
     }
+  }
+
+  @Subscribe
+  public void on(JobCreatedEvent event) {
+    if (!event.isLocal() && isStarted()) {
+      JobDetail jobDetail = event.getJob().getValue();
+
+      // simulate signals Quartz would have sent
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+      quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
+    }
+  }
+
+  @Subscribe
+  public void on(JobUpdatedEvent event) throws SchedulerException {
+    if (!event.isLocal() && isStarted()) {
+      JobDetail jobDetail = event.getJob().getValue();
+
+      updateJobListener(jobDetail);
+
+      // simulate signals Quartz would have sent
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+      quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
+    }
+  }
+
+  @Subscribe
+  public void on(JobDeletedEvent event) throws SchedulerException {
+    if (!event.isLocal() && isStarted()) {
+      JobDetail jobDetail = event.getJob().getValue();
+
+      // simulate signals Quartz would have sent
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+      quartzScheduler.notifySchedulerListenersJobDeleted(jobDetail.getKey());
+
+      removeJobListener(jobDetail.getKey());
+    }
+  }
+
+  @Subscribe
+  public void on(TriggerCreatedEvent event) throws SchedulerException {
+    if (!event.isLocal() && isStarted()) {
+      Trigger trigger = event.getTrigger().getValue();
+      if (!isRunNow(trigger)) {
+
+        attachJobListener(jobStoreProvider.get().retrieveJob(trigger.getJobKey()), trigger);
+
+        // simulate signals Quartz would have sent
+        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
+        quartzScheduler.notifySchedulerListenersSchduled(trigger);
+      }
+    }
+  }
+
+  @Subscribe
+  public void on(TriggerUpdatedEvent event) throws SchedulerException {
+    if (!event.isLocal() && isStarted()) {
+      Trigger trigger = event.getTrigger().getValue();
+      if (!isRunNow(trigger)) {
+
+        updateJobListener(trigger);
+
+        // simulate signals Quartz would have sent
+        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
+        quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
+        quartzScheduler.notifySchedulerListenersSchduled(trigger);
+      }
+    }
+  }
+
+  @Subscribe
+  public void on(TriggerDeletedEvent event) throws SchedulerException {
+    if (!event.isLocal() && isStarted()) {
+      Trigger trigger = event.getTrigger().getValue();
+      if (!isRunNow(trigger)) {
+
+        // simulate signals Quartz would have sent
+        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+        quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
+
+        removeJobListener(trigger.getJobKey());
+      }
+    }
+  }
+
+  private boolean isRunNow(final Trigger trigger) {
+    return triggerConverter.convert(trigger) instanceof Now;
+  }
+
+  private static long getNextFireMillis(final Trigger trigger) {
+    Date nextFireTime = trigger.getNextFireTime();
+    return nextFireTime != null ? nextFireTime.getTime() : 0L;
   }
 }

@@ -23,9 +23,9 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.scheduling.ClusteredTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
-import org.sonatype.nexus.scheduling.TaskInfo.CurrentState
 import org.sonatype.nexus.scheduling.TaskInfo.EndState
 import org.sonatype.nexus.scheduling.TaskInfo.RunState
 import org.sonatype.nexus.scheduling.TaskInfo.State
@@ -172,13 +172,13 @@ class TaskComponent
   }
 
   @PackageScope
-  String getStatusDescription(final CurrentState currentState) {
-    switch (currentState.state) {
+  String getStatusDescription(final State state, final RunState runState) {
+    switch (state) {
       case State.WAITING:
         return 'Waiting'
 
       case State.RUNNING:
-        switch (currentState.runState) {
+        switch (runState) {
           case RunState.RUNNING:
             return 'Running'
 
@@ -234,11 +234,11 @@ class TaskComponent
   }
 
   @PackageScope
-  String getLastRunResult(final TaskInfo task) {
+  String getLastRunResult(final EndState endState, final Long runDuration) {
     String lastRunResult = null
 
-    if (task.lastRunState != null) {
-      switch (task.lastRunState.endState) {
+    if (endState) {
+      switch (endState) {
         case EndState.OK:
           lastRunResult = 'Ok'
           break
@@ -252,10 +252,10 @@ class TaskComponent
           break
 
         default:
-          lastRunResult = task.lastRunState.endState.name()
+          lastRunResult = endState.name()
       }
-      if (task.lastRunState.runDuration != 0) {
-        long milliseconds = task.lastRunState.runDuration
+      if (runDuration) {
+        long milliseconds = runDuration
 
         int hours = (int) ((milliseconds / 1000) / 3600)
         int minutes = (int) ((milliseconds / 1000) / 60 - hours * 60)
@@ -280,20 +280,35 @@ class TaskComponent
 
   @PackageScope
   TaskXO asTaskXO(final TaskInfo task) {
+    List<ClusteredTaskState> clusteredTaskStates = scheduler.getClusteredTaskStateById(task.id)
+    State state = task.currentState.state
+    RunState runState = task.currentState.runState
+    EndState endState = task.lastRunState?.endState
+    Date lastRun = task.lastRunState?.runStarted
+    Long runDuration = task.lastRunState?.runDuration
+    if (clusteredTaskStates) {
+      state = getAggregateState(clusteredTaskStates)
+      runState = getAggregateRunState(clusteredTaskStates)
+      endState = getAggregateEndState(clusteredTaskStates)
+      lastRun = getAggregateLastRun(clusteredTaskStates)
+      runDuration = getAggregateRunDuration(clusteredTaskStates)
+    }
+
     def result = new TaskXO(
         id: task.id,
         enabled: task.configuration.enabled,
         name: task.name,
         typeId: task.configuration.typeId,
         typeName: task.configuration.typeName,
-        status: task.currentState.state,
-        statusDescription: task.configuration.enabled ? getStatusDescription(task.currentState) : 'Disabled',
+        status: state,
+        statusDescription: task.configuration.enabled ? getStatusDescription(state, runState) : 'Disabled',
+        clusteredTaskStates: asTaskStates(clusteredTaskStates),
         schedule: getSchedule(task.schedule),
-        lastRun: task.lastRunState?.runStarted,
-        lastRunResult: getLastRunResult(task),
+        lastRun: lastRun,
+        lastRunResult: getLastRunResult(endState, runDuration),
         nextRun: getNextRun(task),
-        runnable: task.currentState.state in [State.WAITING],
-        stoppable: task.currentState.state in [State.RUNNING],
+        runnable: state in [State.WAITING],
+        stoppable: state in [State.RUNNING],
         alertEmail: task.configuration.alertEmail,
         properties: task.configuration.asMap()
     )
@@ -322,6 +337,62 @@ class TaskComponent
       result.cronExpression = schedule.cronExpression
     }
     result
+  }
+
+  @PackageScope
+  State getAggregateState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.state as Set, [State.RUNNING, State.WAITING, State.DONE])
+  }
+
+  @PackageScope
+  RunState getAggregateRunState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.runState as Set, [RunState.CANCELED, RunState.RUNNING,
+        RunState.BLOCKED, RunState.STARTING])
+  }
+
+  @PackageScope
+  EndState getAggregateEndState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.lastEndState as Set, [EndState.FAILED, EndState.CANCELED,
+        EndState.OK])
+  }
+
+  @PackageScope
+  Date getAggregateLastRun(final List<ClusteredTaskState> clusteredTaskStates) {
+    return clusteredTaskStates*.lastRunStarted.max()
+  }
+  
+  @PackageScope
+  Long getAggregateRunDuration(final List<ClusteredTaskState> clusteredTaskStates) {
+    return clusteredTaskStates*.lastRunDuration.max()
+  }
+
+  private <E> E findTopPriorityState(Set<E> states, List<E> priorities) {
+    for (E priority : priorities) {
+      if (states.contains(priority)) {
+        return priority
+      }
+    }
+  }
+
+  @PackageScope
+  List<TaskStateXO> asTaskStates(final List<ClusteredTaskState> clusteredTaskStates) {
+    List<TaskStateXO> xos = null
+    if (hasAnyNotCompletedSuccessfully(clusteredTaskStates)) {
+      xos = clusteredTaskStates.collect {
+        new TaskStateXO(
+          nodeId: it.nodeId,
+          status: it.state,
+          statusDescription: getStatusDescription(it.state, it.runState)
+        )
+      }
+    }
+    return xos
+  }
+
+  private boolean hasAnyNotCompletedSuccessfully(final List<ClusteredTaskState> clusteredTaskStates) {
+    return clusteredTaskStates.any {
+      it.state == State.RUNNING || it.lastEndState in [EndState.FAILED, EndState.CANCELED]
+    }
   }
 
   @PackageScope

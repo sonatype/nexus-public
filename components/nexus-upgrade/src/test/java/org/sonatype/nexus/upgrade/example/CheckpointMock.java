@@ -22,8 +22,8 @@ public abstract class CheckpointMock
   public final Checkpoint mock = mock(Checkpoint.class);
 
   @Override
-  public void begin() throws Exception {
-    mock.begin();
+  public void begin(String version) throws Exception {
+    mock.begin(version);
   }
 
   @Override

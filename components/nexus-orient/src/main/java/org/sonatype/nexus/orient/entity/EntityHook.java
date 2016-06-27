@@ -27,8 +27,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
-import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.orient.entity.EntityAdapter.EventKind;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -61,7 +61,7 @@ public final class EntityHook
 {
   private static final Logger log = LoggerFactory.getLogger(EntityHook.class);
 
-  private static final ThreadLocal<Boolean> isRemote = new ThreadLocal<>();
+  private static final ThreadLocal<String> isRemote = new ThreadLocal<>();
 
   private final Map<OClass, EntityAdapter<?>> recordingAdapters = new ConcurrentHashMap<>();
 
@@ -81,8 +81,8 @@ public final class EntityHook
   /**
    * Calls the given {@link Supplier} while flagged as remote.
    */
-  public static <T> T asRemote(final Supplier<T> supplier) {
-    isRemote.set(Boolean.TRUE);
+  public static <T> T asRemote(final String remoteNodeId, final Supplier<T> supplier) {
+    isRemote.set(remoteNodeId);
     try {
       return supplier.get();
     }
@@ -91,6 +91,18 @@ public final class EntityHook
     }
   }
 
+  /**
+   * Calls the given {@link Runnable} while flagged as remote.
+   */
+  public static void asRemote(final String remoteNodeId, final Runnable runnable) {
+    isRemote.set(remoteNodeId);
+    try {
+      runnable.run(); // NOSONAR
+    }
+    finally {
+      isRemote.remove();
+    }
+  }
   /**
    * Enables entity events for the given {@link EntityAdapter}.
    */
@@ -217,12 +229,13 @@ public final class EntityHook
   }
 
   private void postEvents(final ODatabase db, final Map<ODocument, EventKind> events) {
-    final boolean isLocal = !Boolean.TRUE.equals(isRemote.get()); // null also implies isLocal
+    final String remoteNodeId = isRemote.get();
 
     final List<EntityEvent> batchedEvents = new ArrayList<>();
     for (final Entry<ODocument, EventKind> entry : events.entrySet()) {
-      final EntityEvent event = newEntityEvent(entry.getKey(), entry.getValue(), isLocal);
+      final EntityEvent event = newEntityEvent(entry.getKey(), entry.getValue());
       if (event != null) {
+        event.setRemoteNodeId(remoteNodeId);
         eventBus.post(event);
         db.activateOnCurrentThread();
         if (event instanceof Batchable) {
@@ -238,8 +251,8 @@ public final class EntityHook
   }
 
   @Nullable
-  private EntityEvent newEntityEvent(final ODocument document, final EventKind eventKind, final boolean isLocal) {
-    return recordingAdapters.get(document.getSchemaClass()).newEvent(document, eventKind, isLocal);
+  private EntityEvent newEntityEvent(final ODocument document, final EventKind eventKind) {
+    return recordingAdapters.get(document.getSchemaClass()).newEvent(document, eventKind);
   }
 
   @Nullable

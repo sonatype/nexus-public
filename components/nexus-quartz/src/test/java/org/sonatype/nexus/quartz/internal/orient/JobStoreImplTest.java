@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.node.ClusteredNodeAccess;
+import org.sonatype.nexus.common.node.LocalNodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstanceRule;
 
 import com.google.inject.util.Providers;
@@ -68,6 +70,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link JobStoreImpl}. Based on original Quartz 2.2.2 AbstractJobStoreTest.
@@ -115,7 +118,9 @@ public class JobStoreImplTest
         Providers.of(database.getInstance()),
         jobDetailEntityAdapter,
         triggerEntityAdapter,
-        calendarEntityAdapter
+        calendarEntityAdapter,
+        mock(LocalNodeAccess.class),
+        mock(ClusteredNodeAccess.class)
     );
   }
 

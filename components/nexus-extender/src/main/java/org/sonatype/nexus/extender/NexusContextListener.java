@@ -203,6 +203,7 @@ public class NexusContextListener
   }
 
   @Override
+  @SuppressWarnings("finally")
   public void frameworkEvent(final FrameworkEvent event) {
     checkNotNull(event);
 
@@ -214,7 +215,16 @@ public class NexusContextListener
       }
       catch (final Exception e) {
         log.error("Failed to start nexus", e);
-        Throwables.propagate(e);
+        if (!HAS_PAX_EXAM) {
+          try {
+            // force container to shutdown early
+            bundleContext.getBundle(0).stop();
+          }
+          finally {
+            throw Throwables.propagate(e); // NOSONAR
+          }
+        }
+        // otherwise let Pax-Exam handle shutdown
       }
 
       registerNexusFilter();

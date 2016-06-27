@@ -29,8 +29,8 @@ public class ComponentUpdatedEvent
 {
   private final String repositoryName;
 
-  public ComponentUpdatedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
-    super(metadata, isLocal);
+  public ComponentUpdatedEvent(final EntityMetadata metadata, final String repositoryName) {
+    super(metadata);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

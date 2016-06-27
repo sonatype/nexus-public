@@ -41,7 +41,18 @@ public interface DatabaseExternalizer
    *
    * @see #backup(OutputStream)
    */
-  void restore(InputStream input) throws IOException;
+  default void restore(InputStream input) throws IOException {
+    restore(input, false);
+  }
+
+  /**
+   * Restore database.
+   *
+   * @see #backup(OutputStream)
+   * 
+   * @since 3.1
+   */
+  void restore(InputStream input, boolean overwrite) throws IOException;
 
   //
   // Export and Import
@@ -69,5 +80,16 @@ public interface DatabaseExternalizer
    *
    * @see #export(OutputStream)
    */
-  void import_(InputStream input) throws IOException;
+  default void import_(InputStream input) throws IOException {
+    import_(input, false);
+  }
+
+  /**
+   * Import database.
+   *
+   * @see #export(OutputStream)
+   * 
+   * @since 3.1
+   */
+  void import_(InputStream input, boolean overwrite) throws IOException;
 }

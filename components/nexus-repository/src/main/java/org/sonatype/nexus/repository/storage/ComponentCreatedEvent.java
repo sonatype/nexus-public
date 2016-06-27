@@ -29,8 +29,8 @@ public class ComponentCreatedEvent
 {
   private final String repositoryName;
 
-  public ComponentCreatedEvent(final EntityMetadata metadata, final boolean isLocal, final String repositoryName) {
-    super(metadata, isLocal);
+  public ComponentCreatedEvent(final EntityMetadata metadata, final String repositoryName) {
+    super(metadata);
     this.repositoryName = checkNotNull(repositoryName);
   }
 

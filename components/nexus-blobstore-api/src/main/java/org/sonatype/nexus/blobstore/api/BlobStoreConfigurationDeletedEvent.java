@@ -28,8 +28,8 @@ public class BlobStoreConfigurationDeletedEvent
 {
   private final String name;
 
-  public BlobStoreConfigurationDeletedEvent(final EntityMetadata metadata, final boolean isLocal, final String name) {
-    super(metadata, isLocal);
+  public BlobStoreConfigurationDeletedEvent(final EntityMetadata metadata, final String name) {
+    super(metadata);
     this.name = checkNotNull(name);
   }
 

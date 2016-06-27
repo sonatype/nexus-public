@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.orient.DatabaseManagerSupport.SYSTEM_PASSWORD;
+import static org.sonatype.nexus.orient.DatabaseManagerSupport.SYSTEM_USER;
 
 /**
  * Default {@link DatabaseExternalizer} implementation.
@@ -95,18 +97,27 @@ public class DatabaseExternalizerImpl
   }
 
   @Override
-  public void restore(final InputStream input) throws IOException {
+  public void restore(final InputStream input, final boolean overwrite) throws IOException {
     checkNotNull(input);
 
     log.debug("Restoring database: {}", name);
 
     try (ODatabaseDocumentTx db = openDb()) {
-      checkState(!db.exists(), "Database already exists: %s", name);
-      db.create();
+      if (db.exists()) {
+        checkState(overwrite, "Database already exists: %s", name);
+      }
+      else {
+        db.create();
+      }
 
       log.debug("Starting restore");
       db.restore(input, null, null, new LoggingCommandOutputListener("RESTORE"));
-      log.debug("Completed import");
+      log.debug("Completed restore");
+
+      if (db.getStorage().isClosed()) {
+        // restore can leave storage layer closed, so re-open it
+        db.getStorage().open(SYSTEM_USER, SYSTEM_PASSWORD, null);
+      }
     }
   }
 
@@ -127,14 +138,18 @@ public class DatabaseExternalizerImpl
   }
 
   @Override
-  public void import_(final InputStream input) throws IOException {
+  public void import_(final InputStream input, final boolean overwrite) throws IOException {
     checkNotNull(input);
 
     log.debug("Importing database: {}", name);
 
     try (ODatabaseDocumentTx db = openDb()) {
-      checkState(!db.exists(), "Database already exists: %s", name);
-      db.create();
+      if (db.exists()) {
+        checkState(overwrite, "Database already exists: %s", name);
+      }
+      else {
+        db.create();
+      }
 
       import_(db, input);
     }

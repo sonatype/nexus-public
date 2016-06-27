@@ -116,18 +116,18 @@ public class ComponentEntityAdapter
   }
 
   @Override
-  public EntityEvent newEvent(ODocument document, EventKind eventKind, boolean isLocal) {
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
     EntityMetadata metadata = new AttachedEntityMetadata(this, document);
 
     String repositoryName = ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
 
     switch (eventKind) {
       case CREATE:
-        return new ComponentCreatedEvent(metadata, isLocal, repositoryName);
+        return new ComponentCreatedEvent(metadata, repositoryName);
       case UPDATE:
-        return new ComponentUpdatedEvent(metadata, isLocal, repositoryName);
+        return new ComponentUpdatedEvent(metadata, repositoryName);
       case DELETE:
-        return new ComponentDeletedEvent(metadata, isLocal, repositoryName);
+        return new ComponentDeletedEvent(metadata, repositoryName);
       default:
         return null;
     }

@@ -28,8 +28,8 @@ public class BlobStoreConfigurationCreatedEvent
 {
   private final String name;
 
-  public BlobStoreConfigurationCreatedEvent(final EntityMetadata metadata, final boolean isLocal, final String name) {
-    super(metadata, isLocal);
+  public BlobStoreConfigurationCreatedEvent(final EntityMetadata metadata, final String name) {
+    super(metadata);
     this.name = checkNotNull(name);
   }
 

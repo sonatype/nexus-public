@@ -18,8 +18,11 @@ import java.util.function.Predicate;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesWithPredicateAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
@@ -236,5 +239,26 @@ public class TriggerEntityAdapter
     checkNotNull(jobKey);
 
     db.command(new OCommandSQL(DELETE_BY_JOB_KEY_QUERY)).execute(jobKey.getName(), jobKey.getGroup());
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+
+    switch (eventKind) {
+      case CREATE:
+        return new TriggerCreatedEvent(metadata);
+      case UPDATE:
+        return new TriggerUpdatedEvent(metadata);
+      case DELETE:
+        return new TriggerDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

@@ -228,7 +228,7 @@ public class AssetEntityAdapter
   }
 
   @Override
-  public EntityEvent newEvent(ODocument document, EventKind eventKind, boolean isLocal) {
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
     EntityMetadata metadata = new AttachedEntityMetadata(this, document);
 
     String repositoryName = ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
@@ -238,11 +238,11 @@ public class AssetEntityAdapter
 
     switch (eventKind) {
       case CREATE:
-        return new AssetCreatedEvent(metadata, isLocal, repositoryName, componentId);
+        return new AssetCreatedEvent(metadata, repositoryName, componentId);
       case UPDATE:
-        return new AssetUpdatedEvent(metadata, isLocal, repositoryName, componentId);
+        return new AssetUpdatedEvent(metadata, repositoryName, componentId);
       case DELETE:
-        return new AssetDeletedEvent(metadata, isLocal, repositoryName, componentId);
+        return new AssetDeletedEvent(metadata, repositoryName, componentId);
       default:
         return null;
     }
