@@ -32,6 +32,7 @@ public abstract class AbstractNexusProxyP2SecureIT
   public void startProxy() throws Exception {
     if (remoteRepositories == null) {
       remoteRepositories = RemoteRepositories.builder()
+          .port(TestProperties.getInteger("proxy-repo-port"))
           .repo(
               RemoteRepository.repo("remote")
                   .resourceBase(TestProperties.getString("proxy-repo-target-dir"))

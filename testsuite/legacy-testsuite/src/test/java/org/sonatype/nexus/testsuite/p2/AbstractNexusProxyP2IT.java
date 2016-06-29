@@ -49,6 +49,7 @@ public abstract class AbstractNexusProxyP2IT
       throws Exception
   {
     remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
         .repo("remote", TestProperties.getString("proxy-repo-target-dir"))
         .build().start();
   }
