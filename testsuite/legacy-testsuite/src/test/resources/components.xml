@@ -1,23 +1,6 @@
 <component-set>
   <components>
     <component>
-      <role>org.sonatype.jettytestsuite.ProxyServer</role>
-      <implementation>org.sonatype.jettytestsuite.ProxyServer</implementation>
-      <instantiation-strategy>singleton</instantiation-strategy>
-      <configuration>
-        <port>${webproxy-server-port}</port>
-      </configuration>
-    </component>
-
-    <component>
-      <role>org.sonatype.jettytestsuite.ControlledServer</role>
-      <implementation>org.sonatype.jettytestsuite.ControlledServer</implementation>
-      <configuration>
-        <port>${webproxy-server-port}</port>
-      </configuration>
-    </component>
-
-    <component>
       <role>org.sonatype.ldaptestsuite.LdapServer</role>
       <implementation>org.sonatype.ldaptestsuite.LdapServer</implementation>
       <configuration>
