@@ -25,7 +25,7 @@ import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.audit.AuditStore;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,7 +42,7 @@ public class AuditRecorderImpl
 {
   private final EventBus eventBus;
 
-  private final LocalNodeAccess localNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private final AuditStore auditStore;
 
@@ -52,12 +52,12 @@ public class AuditRecorderImpl
 
   @Inject
   public AuditRecorderImpl(final EventBus eventBus,
-                           final LocalNodeAccess localNodeAccess,
+                           final NodeAccess nodeAccess,
                            final AuditStore auditStore,
                            final InitiatorProvider initiatorProvider)
   {
     this.eventBus = eventBus;
-    this.localNodeAccess = localNodeAccess;
+    this.nodeAccess = nodeAccess;
     this.auditStore = auditStore;
     this.initiatorProvider = initiatorProvider;
   }
@@ -81,7 +81,7 @@ public class AuditRecorderImpl
         data.setTimestamp(new Date());
       }
       if (data.getNodeId() == null) {
-        data.setNodeId(localNodeAccess.getId());
+        data.setNodeId(nodeAccess.getId());
       }
       if (data.getInitiator() == null) {
         data.setInitiator(initiatorProvider.get());

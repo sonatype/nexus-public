@@ -18,11 +18,13 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.ClusteredTaskStateStore;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.events.TaskBlockedEvent;
 import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.events.TaskEventCanceled;
 import org.sonatype.nexus.scheduling.events.TaskEventStarted;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
+import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -64,7 +66,7 @@ public class LocalTaskStateTrackerTest
   @Test
   public void testOn_Deleted() {
     tracker.on(new TaskDeletedEvent(taskInfo));
-    verify(store).removeLocalState("task-id");
+    verify(store).removeClusteredState("task-id");
   }
 
   @Test
@@ -88,6 +90,18 @@ public class LocalTaskStateTrackerTest
   @Test
   public void testOn_Canceled() {
     tracker.on(new TaskEventCanceled(taskInfo));
+    verify(store).setLocalState(taskInfo);
+  }
+
+  @Test
+  public void testOn_Blocked() {
+    tracker.on(new TaskBlockedEvent(taskInfo));
+    verify(store).setLocalState(taskInfo);
+  }
+
+  @Test
+  public void testOn_StartedRunning() {
+    tracker.on(new TaskStartedRunningEvent(taskInfo));
     verify(store).setLocalState(taskInfo);
   }
 }

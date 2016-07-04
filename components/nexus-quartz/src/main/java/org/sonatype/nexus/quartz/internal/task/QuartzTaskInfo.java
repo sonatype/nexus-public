@@ -238,29 +238,31 @@ public class QuartzTaskInfo
   }
 
   @Override
-  public synchronized TaskInfo runNow() throws TaskRemovedException {
-    checkState(State.RUNNING != state, "Task already running");
-    checkState(getConfiguration().isEnabled(), "Task is disabled");
+  public TaskInfo runNow(final String triggerSource) throws TaskRemovedException {
+    synchronized (this) {
+      checkState(State.RUNNING != state, "Task already running");
+      checkState(getConfiguration().isEnabled(), "Task is disabled");
 
-    if (isRemovedOrDone()) {
-      throw new TaskRemovedException("Task removed: " + jobKey);
+      if (isRemovedOrDone()) {
+        throw new TaskRemovedException("Task removed: " + jobKey);
+      }
+
+      final TaskConfiguration config = taskState.getConfiguration();
+
+      log.info("Task {} runNow", config.getTaskLogName());
+      setNexusTaskState(
+          State.RUNNING,
+          taskState,
+          new QuartzTaskFuture(
+              scheduler,
+              jobKey,
+              config.getTaskLogName(),
+              new Date(),
+              scheduler.scheduleFactory().now(),
+              triggerSource
+          )
+      );
     }
-
-    final TaskConfiguration config = taskState.getConfiguration();
-
-    log.info("Task {} runNow", config.getTaskLogName());
-    setNexusTaskState(
-        State.RUNNING,
-        taskState,
-        new QuartzTaskFuture(
-            scheduler,
-            jobKey,
-            config.getTaskLogName(),
-            new Date(),
-            scheduler.scheduleFactory().now()
-        )
-    );
-
     try {
       // DONE jobs are removed, and here will fail
       scheduler.runNow(jobKey);
@@ -270,6 +272,12 @@ public class QuartzTaskInfo
       throw Throwables.propagate(e);
     }
     return this;
+  }
+
+  @Override
+  public String getTriggerSource() {
+    QuartzTaskFuture currentTaskFuture = taskFuture;
+    return currentTaskFuture != null ? currentTaskFuture.getTriggerSource() : null;
   }
 
   @Override

@@ -10,25 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
-
-import groovy.transform.ToString
-
+package org.sonatype.nexus.common.node;
 
 /**
- * Repository reference exchange object.
+ * Emitted when a node has been removed from the cluster.
  *
- * @since 3.0
+ * @since 3.1
  */
-@ToString(includePackage = false, includeNames = true)
-class RepositoryReferenceXO
-    extends ReferenceXO
+public class NodeRemovedEvent
+    extends NodeEvent
 {
-  String type
-  String format
-  /**
-   * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
-   * the top you will get
-   */
-  int sortOrder = 0
+  public NodeRemovedEvent(final String nodeId) {
+    super(nodeId);
+  }
 }

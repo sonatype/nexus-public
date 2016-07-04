@@ -20,7 +20,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.ssl.CertificateUtil;
 
@@ -44,11 +44,11 @@ public class IdentityCapability
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  private final LocalNodeAccess localNode;
+  private final NodeAccess nodeAccess;
 
   @Inject
-  public IdentityCapability(final LocalNodeAccess localNode) {
-    this.localNode = checkNotNull(localNode);
+  public IdentityCapability(final NodeAccess nodeAccess) {
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
@@ -65,16 +65,16 @@ public class IdentityCapability
 
   @Override
   protected String renderDescription() throws Exception {
-    return messages.description(localNode.getId());
+    return messages.description(nodeAccess.getId());
   }
 
   @Override
   protected String renderStatus() throws Exception {
     return render(IdentityCapabilityDescriptor.TYPE_ID + "-status.vm", new TemplateParameters()
-        .set("nodeId", localNode.getId())
-        .set("fingerprint", localNode.getFingerprint())
-        .set("pem", CertificateUtil.serializeCertificateInPEM(localNode.getCertificate()))
-        .set("detail", localNode.getCertificate().toString())
+        .set("nodeId", nodeAccess.getId())
+        .set("fingerprint", nodeAccess.getFingerprint())
+        .set("pem", CertificateUtil.serializeCertificateInPEM(nodeAccess.getCertificate()))
+        .set("detail", nodeAccess.getCertificate().toString())
     );
   }
 }

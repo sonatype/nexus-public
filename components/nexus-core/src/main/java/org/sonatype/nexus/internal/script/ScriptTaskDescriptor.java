@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.internal.script;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.formfields.TextAreaFormField;
@@ -65,7 +67,8 @@ public class ScriptTaskDescriptor
 
   // TODO: this task may expose a lot of potential for misuse, and may need to be optional enabled by system property
 
-  public ScriptTaskDescriptor() {
+  @Inject
+  public ScriptTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
         ScriptTask.class,
         messages.name(),
@@ -82,6 +85,7 @@ public class ScriptTaskDescriptor
             messages.sourceLabel(),
             messages.sourceHelpText(),
             FormField.MANDATORY
-        ));
+        ),
+        nodeAccess.isClustered() ? newMultinodeFormField() : null);
   }
 }

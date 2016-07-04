@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.node;
 
 import java.security.cert.Certificate;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -20,30 +21,32 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
+
+import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Default {@link LocalNodeAccess}.
+ * Local {@link NodeAccess}.
  *
  * @since 3.0
  */
-@Named
+@Named("local")
 @Singleton
 public class LocalNodeAccessImpl
     extends LifecycleSupport
-    implements LocalNodeAccess
+    implements NodeAccess
 {
   private final KeyStoreManager keyStoreManager;
 
   private Certificate certificate;
 
-  private String id;
-
   private String fingerprint;
+
+  private String id;
 
   @Inject
   public LocalNodeAccessImpl(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
@@ -70,18 +73,18 @@ public class LocalNodeAccessImpl
     certificate = keyStoreManager.getCertificate();
     log.trace("Certificate:\n{}", certificate);
 
-    id = NodeIdEncoding.nodeIdForCertificate(certificate);
-    log.info("ID: {}", id);
-
     fingerprint = CertificateUtil.calculateFingerprint(certificate);
     log.debug("Fingerprint: {}", fingerprint);
+
+    id = NodeIdEncoding.nodeIdForCertificate(certificate);
+    log.info("ID: {}", id);
   }
 
   @Override
   protected void doStop() throws Exception {
     certificate = null;
-    id = null;
     fingerprint = null;
+    id = null;
   }
 
   @Override
@@ -91,15 +94,25 @@ public class LocalNodeAccessImpl
   }
 
   @Override
+  public String getFingerprint() {
+    ensureStarted();
+    return fingerprint;
+  }
+
+  @Override
   public String getId() {
     ensureStarted();
     return id;
   }
 
   @Override
-  public String getFingerprint() {
-    ensureStarted();
-    return fingerprint;
+  public boolean isClustered() {
+    return false;
+  }
+
+  @Override
+  public Set<String> getMemberIds() {
+    return ImmutableSet.of(getId());
   }
 
   @Override

@@ -32,6 +32,8 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import org.junit.After;
 import org.junit.Before;
@@ -144,10 +146,13 @@ public class FileBlobStoreIT
 
   @Test
   public void hardLinkIngestion() throws Exception {
-    final Path sourceFile = testFile();
+
+    final byte[] content = testData();
+    final HashCode sha1 = Hashing.sha1().hashBytes(content);
+    final Path sourceFile = testFile(content);
 
     // Attempt to make a hard link to the file we're importing
-    final Blob blob = underTest.create(sourceFile, TEST_HEADERS);
+    final Blob blob = underTest.create(sourceFile, TEST_HEADERS, content.length, sha1);
 
     // Now append some telltale bytes to the end of the original file
     final byte[] appendMe = new byte[100];
@@ -158,10 +163,13 @@ public class FileBlobStoreIT
     assertThat("blob must have been modified", extractContent(blob), is(equalTo(extractContent(sourceFile))));
   }
 
-  private Path testFile() throws IOException {
+  private byte[] testData() {
     final byte[] content = new byte[TEST_DATA_LENGTH];
     new Random().nextBytes(content);
+    return content;
+  }
 
+  private Path testFile(byte[] content) throws IOException {
     Path tempFile = util.createTempFile().toPath();
     DirectoryHelper.mkdir(tempFile.getParent());
     Files.write(tempFile, content);

@@ -26,7 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -56,7 +56,7 @@ public class NodeProvider
 {
   private final ApplicationDirectories directories;
 
-  private final LocalNodeAccess localNodeAccess;
+  private final NodeAccess nodeAccess;
   
   private final List<String> plugins;
 
@@ -64,11 +64,11 @@ public class NodeProvider
 
   @Inject
   public NodeProvider(final ApplicationDirectories directories,
-                      final LocalNodeAccess localNodeAccess,
+                      final NodeAccess nodeAccess,
                       @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins)
   {
     this.directories = checkNotNull(directories);
-    this.localNodeAccess = checkNotNull(localNodeAccess);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.plugins = plugins == null ? new ArrayList<>() : Splitter.on(",").splitToList(plugins);
   }
 
@@ -100,7 +100,7 @@ public class NodeProvider
     Settings.Builder settings = Settings.builder().loadFromPath(file.toPath());
 
     // assign node.name to local node-id
-    settings.put("node.name", localNodeAccess.getId());
+    settings.put("node.name", nodeAccess.getId());
     settings.put("path.plugins", new File(directories.getInstallDirectory(), "plugins").getAbsolutePath());
     NodeBuilder builder = nodeBuilder().settings(settings);
 

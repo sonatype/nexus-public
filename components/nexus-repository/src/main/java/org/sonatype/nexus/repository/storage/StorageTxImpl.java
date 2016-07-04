@@ -47,6 +47,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -58,6 +59,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
+import static org.sonatype.nexus.repository.storage.Asset.HASHES_NOT_VERIFIED;
+import static org.sonatype.nexus.repository.storage.Asset.PROVENANCE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.ACTIVE;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.CLOSED;
@@ -563,13 +566,14 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public AssetBlob createBlob(final String blobName,
                               final Path sourceFile,
-                              final Iterable<HashAlgorithm> hashAlgorithms,
+                              final Map<HashAlgorithm, HashCode> hashes,
                               @Nullable final Map<String, String> headers,
-                              final String declaredContentType) throws IOException
+                              final String declaredContentType,
+                              final long size) throws IOException
   {
     checkNotNull(blobName);
     checkNotNull(sourceFile);
-    checkNotNull(hashAlgorithms);
+    checkNotNull(hashes);
     checkArgument(!Strings2.isBlank(declaredContentType), "no declaredContentType provided");
 
     if (!writePolicy.checkCreateAllowed()) {
@@ -587,8 +591,9 @@ public class StorageTxImpl
     return blobTx.createByHardLinking(
         sourceFile,
         storageHeaders.build(),
-        hashAlgorithms,
-        declaredContentType
+        hashes,
+        declaredContentType,
+        size
     );
   }
 
@@ -624,6 +629,9 @@ public class StorageTxImpl
     for (HashAlgorithm algorithm : assetBlob.getHashes().keySet()) {
       checksums.set(algorithm.name(), assetBlob.getHashes().get(algorithm).toString());
     }
+
+    // Mark assets whose checksums were not verified locally, for possible later verification
+    asset.attributes().child(PROVENANCE).set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
 
     assetBlob.setAttached(true);
   }
@@ -665,9 +673,10 @@ public class StorageTxImpl
   public AssetBlob setBlob(final Asset asset,
                            final String blobName,
                            final Path sourceFile,
-                           final Iterable<HashAlgorithm> hashAlgorithms,
+                           final Map<HashAlgorithm, HashCode> hashes,
                            @Nullable final Map<String, String> headers,
-                           String declaredContentType) throws IOException
+                           final String declaredContentType,
+                           final long size) throws IOException
   {
     checkNotNull(asset);
     checkArgument(!Strings2.isBlank(declaredContentType), "no declaredContentType provided");
@@ -683,9 +692,10 @@ public class StorageTxImpl
     final AssetBlob assetBlob = createBlob(
         blobName,
         sourceFile,
-        hashAlgorithms,
+        hashes,
         headers,
-        declaredContentType
+        declaredContentType,
+        size
     );
     attachBlob(asset, assetBlob);
     return assetBlob;

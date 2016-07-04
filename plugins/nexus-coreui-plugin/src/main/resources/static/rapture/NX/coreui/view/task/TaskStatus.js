@@ -28,8 +28,9 @@ Ext.define('NX.coreui.view.task.TaskStatus', {
   items: {
     xtype: 'grid',
     columns: [
-      { text: NX.I18n.get('TaskFeature_Status_Node_Column'), dataIndex: 'nodeId', width: 200},
-      { text: NX.I18n.get('TaskFeature_Status_Status_Column'), dataIndex: 'statusDescription', flex: 1 }
+      { text: NX.I18n.get('TaskFeature_Status_Node_Column'), dataIndex: 'nodeId', width: 400},
+      { text: NX.I18n.get('TaskFeature_Status_Status_Column'), dataIndex: 'statusDescription', width: 200 },
+      { text: NX.I18n.get('TaskFeature_Status_LastResult_Column'), dataIndex: 'lastRunResult', flex: 1 }
     ]
   },
 

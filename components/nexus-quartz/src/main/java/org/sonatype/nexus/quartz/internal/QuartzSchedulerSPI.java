@@ -31,7 +31,7 @@ import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent;
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent;
@@ -81,7 +81,6 @@ import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
-import static org.sonatype.nexus.common.node.ClusteredNodeAccess.NODE_ID;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
 
 /**
@@ -102,7 +101,7 @@ public class QuartzSchedulerSPI
 
   private final EventBus eventBus;
 
-  private final LocalNodeAccess localNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private final Provider<JobStore> jobStoreProvider;
 
@@ -122,14 +121,14 @@ public class QuartzSchedulerSPI
 
   @Inject
   public QuartzSchedulerSPI(final EventBus eventBus,
-                            final LocalNodeAccess localNodeAccess,
+                            final NodeAccess nodeAccess,
                             final Provider<JobStore> jobStoreProvider,
                             final JobFactory jobFactory,
                             @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize)
       throws Exception
   {
     this.eventBus = checkNotNull(eventBus);
-    this.localNodeAccess = checkNotNull(localNodeAccess);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStoreProvider = checkNotNull(jobStoreProvider);
     this.jobFactory = checkNotNull(jobFactory);
 
@@ -194,7 +193,7 @@ public class QuartzSchedulerSPI
     // create Scheduler (implicitly registers it with repository)
     DirectSchedulerFactory.getInstance().createScheduler(
         SCHEDULER_NAME,
-        localNodeAccess.getId(), // instance-id
+        nodeAccess.getId(), // instance-id
         new QuartzThreadPool(threadPoolSize),
         threadExecutor,
         jobStoreProvider.get(),
@@ -319,7 +318,8 @@ public class QuartzSchedulerSPI
           jobDetail.getKey(),
           taskConfiguration.getTaskLogName(),
           now,
-          schedule
+          schedule,
+          null
       );
     }
 
@@ -351,7 +351,7 @@ public class QuartzSchedulerSPI
       taskInfo.setNexusTaskStateIfInState(
           State.WAITING,
           new QuartzTaskState(
-              QuartzTaskJob.configurationOf(jobDetail),
+              taskInfo.getConfiguration().apply(QuartzTaskJob.configurationOf(jobDetail)),
               taskInfo.getSchedule(),
               taskInfo.getCurrentState().getNextRun()
           ),
@@ -581,7 +581,6 @@ public class QuartzSchedulerSPI
   private Trigger buildTrigger(final Schedule schedule, final JobKey jobKey) {
     return ensureStartsInTheFuture(triggerConverter.convert(schedule)
         .withIdentity(jobKey.getName(), jobKey.getGroup())
-        .usingJobData(NODE_ID, localNodeAccess.getId())
         .build());
   }
 
@@ -697,7 +696,6 @@ public class QuartzSchedulerSPI
       scheduler.triggerJob(
           jobKey,
           triggerConverter.convert(scheduleFactory().now())
-              .usingJobData(NODE_ID, localNodeAccess.getId())
               .build()
               .getJobDataMap()
       );
@@ -817,8 +815,8 @@ public class QuartzSchedulerSPI
     }
   }
 
-  private boolean isRunNow(final Trigger trigger) {
-    return triggerConverter.convert(trigger) instanceof Now;
+  private static boolean isRunNow(final Trigger trigger) {
+    return Now.TYPE.equals(trigger.getJobDataMap().getString(Schedule.SCHEDULE_TYPE));
   }
 
   private static long getNextFireMillis(final Trigger trigger) {

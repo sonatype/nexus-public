@@ -382,7 +382,8 @@ class TaskComponent
         new TaskStateXO(
           nodeId: it.nodeId,
           status: it.state,
-          statusDescription: getStatusDescription(it.state, it.runState)
+          statusDescription: getStatusDescription(it.state, it.runState),
+          lastRunResult: getLastRunResult(it.lastEndState, it.lastRunDuration)
         )
       }
     }

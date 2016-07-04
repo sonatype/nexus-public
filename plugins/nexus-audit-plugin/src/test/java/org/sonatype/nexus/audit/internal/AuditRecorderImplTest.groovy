@@ -18,7 +18,7 @@ import org.sonatype.nexus.audit.AuditDataRecordedEvent
 import org.sonatype.nexus.audit.AuditStore
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.event.EventBus
-import org.sonatype.nexus.common.node.LocalNodeAccess
+import org.sonatype.nexus.common.node.NodeAccess
 
 import org.junit.Before
 import org.junit.Test
@@ -40,7 +40,7 @@ class AuditRecorderImplTest
   EventBus eventBus
 
   @Mock
-  LocalNodeAccess localNodeAccess
+  NodeAccess nodeAccess
 
   @Mock
   AuditStore auditStore
@@ -57,9 +57,9 @@ class AuditRecorderImplTest
   @Before
   void setUp() {
     when(initiatorProvider.get()).thenReturn(initiator)
-    when(localNodeAccess.getId()).thenReturn(nodeId)
+    when(nodeAccess.getId()).thenReturn(nodeId)
 
-    underTest = new AuditRecorderImpl(eventBus, localNodeAccess, auditStore, initiatorProvider)
+    underTest = new AuditRecorderImpl(eventBus, nodeAccess, auditStore, initiatorProvider)
     underTest.enabled = true
   }
 

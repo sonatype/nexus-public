@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.base.Throwables;
 
@@ -66,7 +66,7 @@ public class AuditData
   /**
    * The node-id where the change occurred.
    *
-   * @see LocalNodeAccess#getId()
+   * @see NodeAccess#getId()
    */
   private String nodeId;
 

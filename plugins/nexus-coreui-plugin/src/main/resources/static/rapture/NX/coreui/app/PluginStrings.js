@@ -378,7 +378,16 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Name_FieldLabel: 'Name',
     Selector_SelectorSettingsForm_Description_FieldLabel: 'Description',
     Selector_SelectorSettingsForm_Expression_FieldLabel: 'Search expression',
-    Selector_SelectorSettingsForm_Expression_HelpText: 'Identify repositories, components or assets (JEXL query)',
+    Selector_SelectorSettingsForm_Expression_HelpText: 'Use JEXL query to identify repositories, components or assets',
+    Selector_SelectorSettingsForm_Expression_AfterBodyEl: '<div style="font-size: 11px"><br/>' +
+    '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
+    '<p>Select all \'raw\' format content<br/><i>format == \'raw\'</i></p>' +
+    '<p>Select all \'maven2\' content with a group that starts with \'org.sonatype.nexus\'<br/><i>format == \'maven\' and coordinate.group =^ \'org.sonatype.nexus.\'</i></p>' +
+    '<p>Select all \'nuget\' content in the \'mycompany\' namespace<br/><i>format == \'nuget\' and path =^ \'/MyCompany.\'</i></p>' +
+    '<p>Select all \'docker\' content with a tag of \'foo\'<br/><i>format == \'docker\' and coordinate.name == \'foo\'</i></p>' +
+    '<br/>' +
+    '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+    '</div>',
     Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
     Selector_SelectorSettingsForm_Specification_Title: 'Specification',
 
@@ -970,6 +979,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     TaskFeature_Summary_Status_Section_Title: 'Run Status',
     TaskFeature_Status_Node_Column: 'Node ID',
     TaskFeature_Status_Status_Column: 'Status',
+    TaskFeature_Status_LastResult_Column: 'Last result',
     Tasks_Settings_Title: 'Settings',
     Tasks_ID_Info: 'ID',
     Tasks_Name_Info: 'Name',

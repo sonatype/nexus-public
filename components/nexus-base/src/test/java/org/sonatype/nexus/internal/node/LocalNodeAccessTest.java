@@ -16,7 +16,7 @@ import java.io.File;
 import java.security.cert.Certificate;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
@@ -28,7 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 /**
- * Tests for {@link LocalNodeAccess}.
+ * Tests for local {@link NodeAccess}.
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class LocalNodeAccessTest
@@ -36,7 +36,7 @@ public class LocalNodeAccessTest
 {
   private KeyStoreManager keyStoreManager;
 
-  private LocalNodeAccess localNodeAccess;
+  private NodeAccess nodeAccess;
 
   @Before
   public void setUp() throws Exception {
@@ -47,20 +47,20 @@ public class LocalNodeAccessTest
     keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
-    localNodeAccess = new LocalNodeAccessImpl(keyStoreManager);
-    localNodeAccess.start();
+    nodeAccess = new LocalNodeAccessImpl(keyStoreManager);
+    nodeAccess.start();
   }
 
   @After
   public void tearDown() throws Exception {
-    if (localNodeAccess != null) {
-      localNodeAccess.stop();
+    if (nodeAccess != null) {
+      nodeAccess.stop();
     }
   }
 
   @Test
   public void idEqualToIdentityCertificate() throws Exception {
     Certificate cert = keyStoreManager.getCertificate();
-    assertThat(localNodeAccess.getId(), equalTo(NodeIdEncoding.nodeIdForCertificate(cert)));
+    assertThat(nodeAccess.getId(), equalTo(NodeIdEncoding.nodeIdForCertificate(cert)));
   }
 }

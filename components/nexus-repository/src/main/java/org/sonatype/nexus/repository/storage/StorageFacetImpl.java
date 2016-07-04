@@ -24,7 +24,7 @@ import javax.validation.groups.Default;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardAspect;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -56,7 +56,7 @@ public class StorageFacetImpl
     extends FacetSupport
     implements StorageFacet
 {
-  private final LocalNodeAccess localNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private final BlobStoreManager blobStoreManager;
 
@@ -106,7 +106,7 @@ public class StorageFacetImpl
   private WritePolicySelector writePolicySelector;
 
   @Inject
-  public StorageFacetImpl(final LocalNodeAccess localNodeAccess,
+  public StorageFacetImpl(final NodeAccess nodeAccess,
                           final BlobStoreManager blobStoreManager,
                           @Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider,
                           final BucketEntityAdapter bucketEntityAdapter,
@@ -116,7 +116,7 @@ public class StorageFacetImpl
                           final ContentValidatorSelector contentValidatorSelector,
                           final MimeRulesSourceSelector mimeRulesSourceSelector)
   {
-    this.localNodeAccess = checkNotNull(localNodeAccess);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.databaseInstanceProvider = checkNotNull(databaseInstanceProvider);
 
@@ -223,7 +223,7 @@ public class StorageFacetImpl
     return StateGuardAspect.around(
         new StorageTxImpl(
             createdBy(),
-            new BlobTx(localNodeAccess, blobStore),
+            new BlobTx(nodeAccess, blobStore),
             db,
             bucket,
             config.writePolicy == null ? WritePolicy.ALLOW : config.writePolicy,

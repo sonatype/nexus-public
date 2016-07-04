@@ -22,6 +22,7 @@ Ext.define('NX.coreui.model.ClusteredTaskState', {
   fields: [
     {name: 'nodeId', type: 'string', sortType: 'asUCText'},
     {name: 'status', type: 'string', sortType: 'asUCText'},
-    {name: 'statusDescription', type: 'string', sortType: 'asUCText'}
+    {name: 'statusDescription', type: 'string', sortType: 'asUCText'},
+    {name: 'lastRunResult', type: 'string', sortType: 'asUCText'}
   ]
 });

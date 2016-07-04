@@ -25,5 +25,7 @@ class TaskStateXO
   String status
   String statusDescription
 
+  String lastRunResult
+
   String nodeId
 }

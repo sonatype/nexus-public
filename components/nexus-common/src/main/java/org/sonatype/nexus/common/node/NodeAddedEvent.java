@@ -12,22 +12,15 @@
  */
 package org.sonatype.nexus.common.node;
 
-import java.util.Set;
-
-import org.sonatype.goodies.lifecycle.Lifecycle;
-
 /**
- * Provides access to clustered node information.
- * 
+ * Emitted when a node has been added to the cluster.
+ *
  * @since 3.1
  */
-public interface ClusteredNodeAccess
-    extends Lifecycle
+public class NodeAddedEvent
+    extends NodeEvent
 {
-  String NODE_ID = "node.identity";
-
-  /**
-   * Returns the node identifiers in the cluster.
-   */
-  Set<String> getMemberIds();
+  public NodeAddedEvent(final String nodeId) {
+    super(nodeId);
+  }
 }

@@ -44,6 +44,21 @@ public class Asset
    */
   public static final String CHECKSUM = "checksum";
 
+  /**
+   * Key of {@link Asset} nested map containing information regarding the provenance of the blob.
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   * @since 3.1
+   */
+  public static final String PROVENANCE = "provenance";
+
+  /**
+   * Key of {@link Asset} under {@link Asset#PROVENANCE} indicating if the hashes were not verified.
+   *
+   * @since 3.1
+   */
+  public static final String HASHES_NOT_VERIFIED = "hashes_not_verified";
+
   private EntityId componentId;
 
   private Long size;

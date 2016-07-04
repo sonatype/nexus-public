@@ -21,8 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.goodies.lifecycle.Lifecycles;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.node.ClusteredNodeAccess;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 
@@ -46,24 +45,20 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 public class OrientBootstrap
     extends LifecycleSupport
 {
-  private final LocalNodeAccess localNodeAccess;
-
-  private final ClusteredNodeAccess clusteredNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private final Provider<DatabaseServer> databaseServer;
 
   private final Provider<DatabaseManager> databaseManager;
 
   @Inject
-  public OrientBootstrap(final LocalNodeAccess localNodeAccess,
-                         final ClusteredNodeAccess clusteredNodeAccess,
+  public OrientBootstrap(final NodeAccess nodeAccess,
                          final Provider<DatabaseServer> databaseServer,
                          final Provider<DatabaseManager> databaseManager,
                          final Iterable<OCompression> managedCompressions,
                          final Iterable<OSQLFunctionAbstract> functions)
   {
-    this.localNodeAccess = checkNotNull(localNodeAccess);
-    this.clusteredNodeAccess = checkNotNull(clusteredNodeAccess);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
     registerCompressions(checkNotNull(managedCompressions));
@@ -73,8 +68,7 @@ public class OrientBootstrap
 
   @Override
   protected void doStart() throws Exception {
-    localNodeAccess.start();
-    clusteredNodeAccess.start();
+    nodeAccess.start();
 
     databaseServer.get().start();
 
@@ -87,8 +81,7 @@ public class OrientBootstrap
 
     databaseServer.get().stop();
 
-    clusteredNodeAccess.stop();
-    localNodeAccess.stop();
+    nodeAccess.stop();
   }
 
   private void registerCompressions(final Iterable<OCompression> compressions) {

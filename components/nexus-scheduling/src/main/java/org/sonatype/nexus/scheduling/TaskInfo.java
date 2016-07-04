@@ -198,8 +198,27 @@ public interface TaskInfo
    * For example: hourly schedule, has 30 minutes to run, and task is getting run now. When the task is done,
    * there will be still 30 minutes for it's original schedule to run (minus the task execution time).
    *
+   * @param triggerSource the source that triggered this task
+   *
    * @throws TaskRemovedException  if task with this ID has been removed from scheduler.
    * @throws IllegalStateException if task is already running, or, if is disabled.
+   *
+   * @since 3.1
    */
-  TaskInfo runNow() throws TaskRemovedException;
+  TaskInfo runNow(@Nullable String triggerSource) throws TaskRemovedException;
+
+  /**
+   * @see #runNow(String)
+   */
+  default TaskInfo runNow() throws TaskRemovedException {
+    return runNow(null);
+  }
+
+  /**
+   * Returns the source that triggered the current task execution, if known.
+   *
+   * @since 3.1
+   */
+  @Nullable
+  String getTriggerSource();
 }

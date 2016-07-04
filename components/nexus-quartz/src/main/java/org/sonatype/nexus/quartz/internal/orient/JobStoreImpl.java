@@ -34,12 +34,12 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
-import org.sonatype.nexus.common.node.ClusteredNodeAccess;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -64,7 +64,6 @@ import org.quartz.spi.TriggerFiredResult;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.common.node.ClusteredNodeAccess.NODE_ID;
 import static org.sonatype.nexus.orient.OrientTransaction.currentDb;
 import static org.sonatype.nexus.orient.OrientTransaction.txSupplier;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ACQUIRED;
@@ -87,6 +86,8 @@ public class JobStoreImpl
     extends ComponentSupport
     implements JobStore
 {
+  private static final String NODE_ID = "node.identity";
+
   private final Provider<DatabaseInstance> databaseInstance;
 
   private final JobDetailEntityAdapter jobDetailEntityAdapter;
@@ -95,13 +96,9 @@ public class JobStoreImpl
 
   private final CalendarEntityAdapter calendarEntityAdapter;
 
-  private final LocalNodeAccess localNodeAccess;
-
-  private final ClusteredNodeAccess clusteredNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private SchedulerSignaler signaler;
-
-  // TODO: Sort out instanceName and instanceId usage in persistence model (related to clustering?)
 
   private String instanceName;
 
@@ -112,31 +109,23 @@ public class JobStoreImpl
                       final JobDetailEntityAdapter jobDetailEntityAdapter,
                       final TriggerEntityAdapter triggerEntityAdapter,
                       final CalendarEntityAdapter calendarEntityAdapter,
-                      final LocalNodeAccess localNodeAccess,
-                      final ClusteredNodeAccess clusteredNodeAccess)
+                      final NodeAccess nodeAccess)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.jobDetailEntityAdapter = checkNotNull(jobDetailEntityAdapter);
     this.triggerEntityAdapter = checkNotNull(triggerEntityAdapter);
     this.calendarEntityAdapter = checkNotNull(calendarEntityAdapter);
-    this.localNodeAccess = checkNotNull(localNodeAccess);
-    this.clusteredNodeAccess = checkNotNull(clusteredNodeAccess);
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
-  /**
-   * Always returns {@code true}.
-   */
   @Override
   public boolean supportsPersistence() {
     return true;
   }
 
-  /**
-   * Always returns {@code false}.
-   */
   @Override
   public boolean isClustered() {
-    return false;
+    return nodeAccess.isClustered();
   }
 
   @Override
@@ -239,7 +228,9 @@ public class JobStoreImpl
   public void schedulerStarted() throws SchedulerException {
     execute(
         db -> {
-          for (TriggerEntity triggerEntity : triggerEntityAdapter.browse.execute(db)) {
+          // check state of local triggers
+          for (TriggerEntity triggerEntity : local(triggerEntityAdapter.browse.execute(db))) {
+
             // reset states
             switch (triggerEntity.getState()) {
               case ACQUIRED:
@@ -539,6 +530,11 @@ public class JobStoreImpl
   {
     log.debug("Store trigger: trigger={}, replaceExisting={}", trigger, replaceExisting);
 
+    if (isClustered()) {
+      // associate trigger with the node that created it
+      trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
+    }
+
     TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, trigger.getKey());
     if (entity == null) {
       // no existing entity, add new one
@@ -621,6 +617,11 @@ public class JobStoreImpl
       throws JobPersistenceException
   {
     log.debug("Replace trigger: triggerKey={}, trigger={}", triggerKey, trigger);
+
+    if (isClustered()) {
+      // associate trigger with the node that replaced it
+      trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
+    }
 
     return execute(db -> {
       TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
@@ -889,12 +890,9 @@ public class JobStoreImpl
   {
     log.debug("Acquire next triggers: noLaterThan={}, maxCount={}, timeWindow={}", noLaterThan, maxCount, timeWindow);
 
-    final String localNodeId = localNodeAccess.getId();
-    final Set<String> memberNodeIds = clusteredNodeAccess.getMemberIds();
-
     return execute(db -> {
-      // find all triggers in WAITING state
-      Iterator<TriggerEntity> matches = triggerEntityAdapter.browseByState.execute(db, WAITING).iterator();
+      // find all local triggers in WAITING state
+      Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState.execute(db, WAITING)).iterator();
 
       // short-circuit if no matches
       if (!matches.hasNext()) {
@@ -927,18 +925,6 @@ public class JobStoreImpl
         if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
             trigger.getNextFireTime().getTime() < noEarlierThan) {
           continue;
-        }
-
-        // skip triggers restricted to another node
-        String triggerNodeId = trigger.getJobDataMap().getString(NODE_ID);
-        if (triggerNodeId != null) {
-          if (!memberNodeIds.contains(triggerNodeId)) {
-            // orphaned trigger, take over responsibility
-            trigger.getJobDataMap().put(NODE_ID, localNodeId);
-          }
-          else if (!localNodeId.equals(triggerNodeId)) {
-            continue;
-          }
         }
 
         // track result
@@ -980,6 +966,10 @@ public class JobStoreImpl
         // TODO: Sort out if this is needed, maybe set to entity-id.value?
         // TODO: JDBC store impl uses this to do some validation on triggersFired()
         trigger.setFireInstanceId(UUID.randomUUID().toString());
+        if (isClustered()) {
+          // associate trigger with the node that acquired it
+          trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
+        }
         result.add(trigger);
         entity.setState(ACQUIRED);
         triggerEntityAdapter.editEntity(db, entity);
@@ -1398,5 +1388,21 @@ public class JobStoreImpl
       return calendarEntity.getValue();
     }
     return null;
+  }
+
+  /**
+   * Helper to get locally-owned (as well as orphaned) triggers.
+   */
+  private Iterable<TriggerEntity> local(final Iterable<TriggerEntity> triggers) {
+    if (isClustered()) {
+      String localId = nodeAccess.getId();
+      Set<String> memberIds = nodeAccess.getMemberIds();
+
+      return Iterables.filter(triggers, (entity) -> {
+        String owner = entity.getValue().getJobDataMap().getString(NODE_ID);
+        return localId.equals(owner) || !memberIds.contains(owner);
+      });
+    }
+    return triggers;
   }
 }

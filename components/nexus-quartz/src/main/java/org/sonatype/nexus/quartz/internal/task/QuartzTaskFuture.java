@@ -20,6 +20,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.Task;
@@ -59,6 +61,8 @@ public class QuartzTaskFuture
 
   private final Schedule startedBy;
 
+  private final String triggerSource;
+
   private final CountDownLatch countDownLatch;
 
   private volatile Thread jobExecutingThread;
@@ -73,13 +77,15 @@ public class QuartzTaskFuture
                           final JobKey jobKey,
                           final String taskLogName,
                           final Date startedAt,
-                          final Schedule startedBy)
+                          final Schedule startedBy,
+                          @Nullable final String triggerSource)
   {
     this.scheduler = checkNotNull(scheduler);
     this.jobKey = checkNotNull(jobKey);
     this.taskLogName = checkNotNull(taskLogName);
     this.startedAt = checkNotNull(startedAt);
     this.startedBy = checkNotNull(startedBy);
+    this.triggerSource = triggerSource;
     this.countDownLatch = new CountDownLatch(1);
     this.runState = RunState.STARTING;
   }
@@ -162,6 +168,16 @@ public class QuartzTaskFuture
   @Override
   public boolean isDone() {
     return countDownLatch.getCount() == 0;
+  }
+
+  /**
+   * Returns the source that triggered the current task execution, if known.
+   *
+   * @since 3.1
+   */
+  @Nullable
+  public String getTriggerSource() {
+    return triggerSource;
   }
 
   private void maybePropagateException() throws InterruptedException, ExecutionException {

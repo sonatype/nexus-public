@@ -10,25 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
+package org.sonatype.nexus.common.node;
 
-import groovy.transform.ToString
+import java.util.Set;
 
+import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
- * Repository reference exchange object.
- *
- * @since 3.0
+ * Provides access to node details.
+ * 
+ * @since 3.1
  */
-@ToString(includePackage = false, includeNames = true)
-class RepositoryReferenceXO
-    extends ReferenceXO
+public interface NodeAccess
+    extends Lifecycle, LocalNodeAccess
 {
-  String type
-  String format
   /**
-   * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
-   * the top you will get
+   * Returns true if the node is clustered.
    */
-  int sortOrder = 0
+  boolean isClustered();
+
+  /**
+   * Returns identifiers of clustered nodes.
+   */
+  Set<String> getMemberIds();
 }

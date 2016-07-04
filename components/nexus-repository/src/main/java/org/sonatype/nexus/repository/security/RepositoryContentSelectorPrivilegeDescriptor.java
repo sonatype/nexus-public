@@ -49,8 +49,6 @@ public class RepositoryContentSelectorPrivilegeDescriptor
 
   public static final String P_CONTENT_SELECTOR = "contentSelector";
 
-  public static final String P_FORMAT = "format";
-
   public static final String P_REPOSITORY = "repository";
 
   public static final String P_ACTIONS = "actions";
@@ -67,16 +65,10 @@ public class RepositoryContentSelectorPrivilegeDescriptor
     @DefaultMessage("The content selector for the repository")
     String contentSelectorHelp();
 
-    @DefaultMessage("Format")
-    String format();
-
-    @DefaultMessage("The format(s) for the repository")
-    String formatHelp();
-
     @DefaultMessage("Repository")
     String repository();
 
-    @DefaultMessage("The repository name")
+    @DefaultMessage("The repository or repositories to grant access")
     String repositoryHelp();
 
     @DefaultMessage("Actions")
@@ -99,18 +91,12 @@ public class RepositoryContentSelectorPrivilegeDescriptor
             messages.contentSelectorHelp(),
             FormField.MANDATORY
         ),
-        new StringTextFormField(
-            P_FORMAT,
-            messages.format(),
-            messages.formatHelp(),
-            FormField.MANDATORY
-        ),
         new RepositoryCombobox(
             P_REPOSITORY,
             messages.repository(),
             messages.repositoryHelp(),
             true
-        ).includeAnEntryForAllRepositories(),
+        ).includeEntriesForAllFormats(),
         new StringTextFormField(
             P_ACTIONS,
             messages.actions(),
@@ -124,10 +110,10 @@ public class RepositoryContentSelectorPrivilegeDescriptor
   public Permission createPermission(final CPrivilege privilege) {
     assert privilege != null;
     String contentSelector = readProperty(privilege, P_CONTENT_SELECTOR, ALL);
-    String format = readProperty(privilege, P_FORMAT, ALL);
     String name = readProperty(privilege, P_REPOSITORY, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
-    return new RepositoryContentSelectorPermission(contentSelector, format, name, actions);
+    RepositorySelector selector = RepositorySelector.fromSelector(name);
+    return new RepositoryContentSelectorPermission(contentSelector, selector.getFormat(), selector.getName(), actions);
   }
 
   @Override
@@ -144,7 +130,11 @@ public class RepositoryContentSelectorPrivilegeDescriptor
   // Helpers
   //
 
-  public static String id(final String contentSelector, final String format, final String name, final String... actions) {
+  public static String id(final String contentSelector,
+                          final String format,
+                          final String name,
+                          final String... actions)
+  {
     return String.format("nx-%s-%s-%s-%s-%s", TYPE, contentSelector, format, name, Joiner.on(',').join(actions));
   }
 
@@ -154,15 +144,15 @@ public class RepositoryContentSelectorPrivilegeDescriptor
                                      final String... actions)
   {
     checkArgument(actions.length > 0);
+    RepositorySelector selector = RepositorySelector.fromNameAndFormat(name, format);
     return new CPrivilegeBuilder()
         .type(TYPE)
         .id(id(contentSelector, format, name, actions))
         .description(String
-            .format("%s for %s repository content selector %s", humanizeActions(actions), humanizeName(name, format),
+            .format("%s for %s repository content selector %s", humanizeActions(actions), selector.humanizeSelector(),
                 contentSelector))
         .property(P_CONTENT_SELECTOR, contentSelector)
-        .property(P_FORMAT, format)
-        .property(P_REPOSITORY, name)
+        .property(P_REPOSITORY, selector.toSelector())
         .property(P_ACTIONS, actions)
         .create();
   }

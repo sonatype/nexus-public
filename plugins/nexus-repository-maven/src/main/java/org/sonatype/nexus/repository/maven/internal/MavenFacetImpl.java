@@ -27,6 +27,7 @@ import javax.validation.groups.Default;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -54,6 +55,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.hash.HashCode;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.apache.maven.model.Model;
@@ -205,12 +207,14 @@ public class MavenFacetImpl
   public Content put(final MavenPath path,
                      final Path sourceFile,
                      final String contentType,
-                     final AttributesMap contentAttributes)
+                     final AttributesMap contentAttributes,
+                     final Map<HashAlgorithm, HashCode> hashes,
+                     final long size)
       throws IOException
   {
     log.debug("PUT {} : {}", getRepository().getName(), path.getPath());
 
-    return doPut(path, sourceFile, contentType, contentAttributes);
+    return doPut(path, sourceFile, contentType, contentAttributes, hashes, size);
   }
 
   @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
@@ -246,7 +250,9 @@ public class MavenFacetImpl
   protected Content doPut(final MavenPath path,
                           final Path sourceFile,
                           final String contentType,
-                          final AttributesMap contentAttributes)
+                          final AttributesMap contentAttributes,
+                          final Map<HashAlgorithm, HashCode> hashes,
+                          final long size)
       throws IOException
   {
     final StorageTx tx = UnitOfWork.currentTx();
@@ -254,9 +260,10 @@ public class MavenFacetImpl
     final AssetBlob assetBlob = tx.createBlob(
         path.getPath(),
         sourceFile,
-        HashType.ALGORITHMS,
+        hashes,
         null,
-        contentType
+        contentType,
+        size
     );
 
     if (path.getCoordinates() != null) {

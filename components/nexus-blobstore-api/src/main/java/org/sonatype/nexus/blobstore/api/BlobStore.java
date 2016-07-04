@@ -21,6 +21,8 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.collect.AutoClosableIterable;
 
+import com.google.common.hash.HashCode;
+
 /**
  * A generic storage bin for binary objects of all sizes.
  *
@@ -64,9 +66,12 @@ public interface BlobStore
    * Imports a blob by creating a hard link, throwing {@link BlobStoreException} if that's not supported
    * from the source file's location.
    *
-   * Otherwise behaves as {@link #create(InputStream, Map)}.
+   * Otherwise similar to {@link #create(InputStream, Map)} with the difference that a known file size and sha1 are
+   * already provided.
+   *
+   * @since 3.1
    */
-  Blob create(Path sourceFile, Map<String, String> headers);
+  Blob create(Path sourceFile, Map<String, String> headers, long size, HashCode sha1);
 
   /**
    * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete

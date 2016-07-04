@@ -16,22 +16,24 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.file.FileBlobStore.FileBlob;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashCode;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -83,6 +85,20 @@ public class FileBlobStoreTest
 
     doThrow(new FileSystemException(null)).when(fileOperations).hardLink(any(), any());
 
-    underTest.create(path, TEST_HEADERS);
+    underTest.create(path, TEST_HEADERS, 0, HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
+  }
+
+  @Test
+  public void hardLinkWithPrecalculatedInformation() throws Exception {
+
+    long size = 100L;
+    HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
+
+    Path path = util.createTempFile().toPath();
+
+    Blob blob = underTest.create(path, TEST_HEADERS, size, sha1);
+
+    assertThat(blob.getMetrics().getContentSize(), is(size));
+    assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
   }
 }

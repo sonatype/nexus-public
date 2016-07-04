@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,16 +24,15 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
-import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * Keeps track of added and to-be-deleted blobs so they can be deleted as appropriate when the transaction ends,
@@ -47,7 +44,7 @@ class BlobTx
 {
   private static final Logger log = LoggerFactory.getLogger(BlobTx.class);
 
-  private final LocalNodeAccess localNodeAccess;
+  private final NodeAccess nodeAccess;
 
   private final BlobStore blobStore;
 
@@ -55,8 +52,8 @@ class BlobTx
 
   private final Set<BlobRef> deletionRequests = Sets.newHashSet();
 
-  public BlobTx(final LocalNodeAccess localNodeAccess, final BlobStore blobStore) {
-    this.localNodeAccess = checkNotNull(localNodeAccess);
+  public BlobTx(final NodeAccess nodeAccess, final BlobStore blobStore) {
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStore = checkNotNull(blobStore);
   }
 
@@ -67,8 +64,8 @@ class BlobTx
   {
     final MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
     Blob blob = blobStore.create(hashingStream, headers);
-    BlobRef blobRef = new BlobRef(localNodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
-    AssetBlob assetBlob = new AssetBlob(blobRef, blob, hashingStream.count(), contentType, hashingStream.hashes());
+    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
+    AssetBlob assetBlob = new AssetBlob(blobRef, blob, hashingStream.count(), contentType, hashingStream.hashes(), true);
     newlyCreatedBlobs.add(assetBlob);
     return assetBlob;
   }
@@ -78,28 +75,21 @@ class BlobTx
    *
    * @param sourceFile the file to be hard linked
    * @param headers a map of headers to be applied to the resulting blob
-   * @param hashAlgorithms the algorithms used to create hashes of the content
+   * @param hashes the algorithms and precalculated hashes of the content
    * @param contentType content type
+   * @param size precalculated size for the blob
    * @return {@link AssetBlob}
    */
   public AssetBlob createByHardLinking(final Path sourceFile,
                                        final Map<String, String> headers,
-                                       final Iterable<HashAlgorithm> hashAlgorithms,
-                                       final String contentType)
+                                       final Map<HashAlgorithm, HashCode> hashes,
+                                       final String contentType,
+                                       final long size)
   {
-    Blob blob = blobStore.create(sourceFile, headers);
-    BlobRef blobRef = new BlobRef(localNodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
-    Map<HashAlgorithm, HashCode> hashes = Collections.emptyMap();
-    long bytes = 0;
-    try (MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, blob.getInputStream())) {
-      ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());
-      hashes = hashingStream.hashes();
-      bytes = hashingStream.count();
-    }
-    catch (IOException e) {
-      Throwables.propagate(e);
-    }
-    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes);
+    Blob blob = blobStore.create(sourceFile, headers, size, hashes.get(SHA1));
+    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
+    long bytes = blob.getMetrics().getContentSize();
+    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes, false);
     newlyCreatedBlobs.add(assetBlob);
     return assetBlob;
   }

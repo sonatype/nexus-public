@@ -35,7 +35,9 @@ import org.sonatype.nexus.scheduling.TaskFactory;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
+import org.sonatype.nexus.scheduling.events.TaskBlockedEvent;
 import org.sonatype.nexus.scheduling.events.TaskEventCanceled;
+import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
 
 import com.google.common.base.Throwables;
 import org.quartz.DisallowConcurrentExecution;
@@ -137,6 +139,7 @@ public class QuartzTaskJob
 
           if (!taskFuture.isCancelled()) {
             taskFuture.setRunState(RUNNING);
+            eventBus.post(new TaskStartedRunningEvent(taskInfo));
             try {
               context.setResult(task.call());
             }
@@ -201,6 +204,7 @@ public class QuartzTaskJob
           return;
         }
         taskFuture.setRunState(BLOCKED);
+        eventBus.post(new TaskBlockedEvent(taskInfo));
       }
 
       log.trace("Task: {} is blocked by: {}", task, blockedBy);
@@ -253,7 +257,7 @@ public class QuartzTaskJob
 
   @Override
   public void interrupt() throws UnableToInterruptJobException {
-    if (task instanceof Cancelable) {
+    if (task instanceof Cancelable && !((Cancelable) task).isCanceled()) {
       ((Cancelable) task).cancel();
       eventBus.post(new TaskEventCanceled(taskInfo));
     }

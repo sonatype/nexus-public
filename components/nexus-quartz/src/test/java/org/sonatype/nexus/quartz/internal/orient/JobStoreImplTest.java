@@ -33,8 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.node.ClusteredNodeAccess;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstanceRule;
 
 import com.google.inject.util.Providers;
@@ -119,8 +118,7 @@ public class JobStoreImplTest
         jobDetailEntityAdapter,
         triggerEntityAdapter,
         calendarEntityAdapter,
-        mock(LocalNodeAccess.class),
-        mock(ClusteredNodeAccess.class)
+        mock(NodeAccess.class)
     );
   }
 

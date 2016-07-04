@@ -65,19 +65,19 @@ class GlobalWebhookCapability
     @DefaultMessage('Webhook')
     String category()
 
-    @DefaultMessage('Names')
+    @DefaultMessage('Event Types')
     String namesLabel()
 
-    @DefaultMessage('Names of webhooks to trigger')
+    @DefaultMessage('Event types which trigger this Webhook')
     String namesHelp()
 
     @DefaultMessage('URL')
     String urlLabel()
 
-    @DefaultMessage('Send a HTTP POST request to the URL with details of webhook as application/json body')
+    @DefaultMessage('Send an HTTP POST request to this URL')
     String urlHelp()
 
-    @DefaultMessage('Secret')
+    @DefaultMessage('Secret Key')
     String secretLabel()
 
     @DefaultMessage('Key to use for HMAC payload digest')

@@ -94,13 +94,14 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
         },
 
         fields: [
-          { name: 'id', mapping: formField['idMapping'] || 'id' },
-          { name: 'name', mapping: formField['nameMapping'] || 'name', sortType: ST.asUCString }
+          {name: 'id', mapping: formField['idMapping'] || 'id'},
+          {name: 'name', mapping: formField['nameMapping'] || 'name', sortType: ST.asUCString},
+          {name: 'sortOrder', sortType: ST.asInt}
         ],
 
         filters: filters,
         sortOnLoad: true,
-        sorters: { property: 'name', direction: 'ASC' },
+        sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: 'name', direction: 'ASC' }],
         remoteFilter: true,
         autoLoad: true
       });

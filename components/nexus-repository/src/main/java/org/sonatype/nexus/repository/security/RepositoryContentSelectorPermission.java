@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import com.google.common.base.Joiner;
@@ -60,18 +58,6 @@ public class RepositoryContentSelectorPermission
         name,
         Joiner.on(',').join(actions)
     ));
-  }
-
-  public RepositoryContentSelectorPermission(final String selector,
-                                             final String format,
-                                             final String name,
-                                             final String... actions)
-  {
-    this(selector, format, name, Arrays.asList(actions));
-  }
-
-  public RepositoryContentSelectorPermission(String selector, final Repository repository, final String... actions) {
-    this(selector, repository.getFormat().getValue(), repository.getName(), Arrays.asList(actions));
   }
 
   public String getFormat() {

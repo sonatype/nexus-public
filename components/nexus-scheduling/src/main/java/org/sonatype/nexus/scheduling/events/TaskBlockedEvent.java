@@ -10,25 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
+package org.sonatype.nexus.scheduling.events;
 
-import groovy.transform.ToString
-
+import org.sonatype.nexus.scheduling.TaskInfo;
 
 /**
- * Repository reference exchange object.
+ * Emitted when a task has been blocked waiting for other tasks to finish.
  *
- * @since 3.0
+ * @since 3.1
  */
-@ToString(includePackage = false, includeNames = true)
-class RepositoryReferenceXO
-    extends ReferenceXO
+public class TaskBlockedEvent
+    extends TaskEvent
 {
-  String type
-  String format
-  /**
-   * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
-   * the top you will get
-   */
-  int sortOrder = 0
+  public TaskBlockedEvent(final TaskInfo taskInfo) {
+    super(taskInfo);
+  }
 }

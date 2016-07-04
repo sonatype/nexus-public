@@ -46,11 +46,14 @@ public class AssetBlob
 
   private boolean attached;
 
+  private boolean hashesVerified;
+
   public AssetBlob(final BlobRef blobRef,
                    final Blob blob,
                    final long size,
                    final String contentType,
-                   final Map<HashAlgorithm, HashCode> hashes)
+                   final Map<HashAlgorithm, HashCode> hashes,
+                   final boolean hashesVerified)
   {
     this.blobRef = checkNotNull(blobRef);
     this.blob = checkNotNull(blob);
@@ -58,6 +61,7 @@ public class AssetBlob
     this.contentType = checkNotNull(contentType);
     this.hashes = checkNotNull(hashes);
     this.attached = false;
+    this.hashesVerified = hashesVerified;
   }
 
   /**
@@ -106,10 +110,20 @@ public class AssetBlob
   }
 
   /**
-   * Exact hashes calculated by storage subsystem while blob was getting saved.
+   * Exact hashes for the blob. Typically calculated by storage subsystem while blob was getting saved, but sometimes
+   * provided based on precalculated or known values.
    */
   @Nonnull
   public Map<HashAlgorithm, HashCode> getHashes() {
     return hashes;
+  }
+
+  /**
+   * Returns a boolean indicating whether the hashes associated with this blob have been verified.
+   *
+   * @since 3.1
+   */
+  public boolean getHashesVerified() {
+    return hashesVerified;
   }
 }

@@ -49,6 +49,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
 
@@ -202,13 +203,14 @@ public class FileBlobStore
   }
 
   @Override
-  public Blob create(final Path sourceFile, final Map<String, String> headers) {
+  public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
     checkNotNull(sourceFile);
+    checkNotNull(sha1);
     checkArgument(Files.exists(sourceFile));
 
     return create(headers, destination -> {
       fileOperations.hardLink(sourceFile, destination);
-      return fileOperations.computeMetrics(destination);
+      return new StreamMetrics(size, sha1.toString());
     });
   }
 

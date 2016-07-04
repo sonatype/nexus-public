@@ -22,8 +22,7 @@ import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.node.ClusteredNodeAccess;
-import org.sonatype.nexus.common.node.LocalNodeAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
@@ -72,9 +71,7 @@ public class TaskSchedulerHelper
 
   private BaseUrlManager baseUrlManager;
 
-  private LocalNodeAccess localNodeAccess;
-
-  private ClusteredNodeAccess clusteredNodeAccess;
+  private NodeAccess nodeAccess;
 
   private final DatabaseInstance databaseInstance;
 
@@ -85,8 +82,7 @@ public class TaskSchedulerHelper
   public void init(@Nullable final Integer poolSize, @Nullable final JobFactory factory) throws Exception {
     applicationDirectories = mock(ApplicationDirectories.class);
     baseUrlManager = mock(BaseUrlManager.class);
-    localNodeAccess = mock(LocalNodeAccess.class);
-    clusteredNodeAccess = mock(ClusteredNodeAccess.class);
+    nodeAccess = mock(NodeAccess.class);
 
     Module module = binder -> {
       Properties properties = new Properties();
@@ -109,12 +105,10 @@ public class TaskSchedulerHelper
           .annotatedWith(Names.named("config"))
           .toInstance(databaseInstance);
 
-      when(localNodeAccess.getId()).thenReturn("test-12345");
-      binder.bind(LocalNodeAccess.class)
-          .toInstance(localNodeAccess);
-      when(clusteredNodeAccess.getMemberIds()).thenReturn(ImmutableSet.of("test-12345"));
-      binder.bind(ClusteredNodeAccess.class)
-          .toInstance(clusteredNodeAccess);
+      when(nodeAccess.getId()).thenReturn("test-12345");
+      when(nodeAccess.getMemberIds()).thenReturn(ImmutableSet.of("test-12345"));
+      binder.bind(NodeAccess.class)
+          .toInstance(nodeAccess);
       if (factory != null) {
         binder.bind(JobFactory.class).toInstance(factory);
       }

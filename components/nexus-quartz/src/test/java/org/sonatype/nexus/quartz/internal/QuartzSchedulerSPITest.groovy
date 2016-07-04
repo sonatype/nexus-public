@@ -17,7 +17,7 @@ import javax.inject.Provider
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.common.event.EventBusImpl
-import org.sonatype.nexus.common.node.LocalNodeAccess
+import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDetailEntity
@@ -71,15 +71,15 @@ class QuartzSchedulerSPITest
 
   @Before
   void before() {
-    def localNodeAccess = mock(LocalNodeAccess)
-    when(localNodeAccess.id).thenReturn('test')
+    def nodeAccess = mock(NodeAccess)
+    when(nodeAccess.id).thenReturn('test')
     def provider = mock(Provider)
     jobStore = mock(JobStore)
     when(provider.get()).thenReturn(jobStore)
     eventBus = new EventBusImpl('standard')
 
     underTest = new QuartzSchedulerSPI(
-        eventBus, localNodeAccess, provider, mock(JobFactoryImpl), 1
+        eventBus, nodeAccess, provider, mock(JobFactoryImpl), 1
     )
     underTest.start()
     eventBus.register(underTest)

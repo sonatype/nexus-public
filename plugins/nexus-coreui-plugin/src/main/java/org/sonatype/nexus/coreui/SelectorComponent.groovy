@@ -15,6 +15,7 @@ package org.sonatype.nexus.coreui
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.validation.ConstraintViolationException
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
@@ -26,6 +27,7 @@ import org.sonatype.nexus.repository.selector.SelectorPreview
 import org.sonatype.nexus.selector.JexlSelector
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorConfigurationStore
+import org.sonatype.nexus.validation.ConstraintViolationFactory
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -50,6 +52,9 @@ class SelectorComponent
 
   @Inject
   SelectorConfigurationStore store
+
+  @Inject
+  ConstraintViolationFactory constraintViolationFactory
 
   /**
    * @return a list of selectors
@@ -130,7 +135,13 @@ class SelectorComponent
   /**
    * Convenience method to validate a JEXL expression or throw an exception on error.
    */
-  static void validateExpressionOrThrow(String expression) {
-    new JexlSelector(expression)
+  void validateExpressionOrThrow(String expression) {
+    try {
+      new JexlSelector(expression)
+    }
+    catch (Exception e) {
+      throw new ConstraintViolationException(e.getMessage(),
+          Collections.singleton(constraintViolationFactory.createViolation("expression", e.getMessage())));
+    }
   }
 }

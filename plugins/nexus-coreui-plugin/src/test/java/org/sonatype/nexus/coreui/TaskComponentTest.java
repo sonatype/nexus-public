@@ -171,7 +171,7 @@ public class TaskComponentTest
     assertThat(component.asTaskStates(null), is(nullValue()));
     List<ClusteredTaskState> states = Arrays.asList(
         new ClusteredTaskState("node-a", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.BLOCKED, null, null, null));
+        new ClusteredTaskState("node-b", State.RUNNING, RunState.BLOCKED, EndState.OK, null, 10000L));
     List<TaskStateXO> xos = component.asTaskStates(states);
     assertThat(xos, hasSize(2));
     assertThat(xos.get(0).getNodeId(), is("node-a"));
@@ -180,6 +180,7 @@ public class TaskComponentTest
     assertThat(xos.get(1).getNodeId(), is("node-b"));
     assertThat(xos.get(1).getStatus(), is(State.RUNNING.name()));
     assertThat(xos.get(1).getStatusDescription(), is("Blocked"));
+    assertThat(xos.get(1).getLastRunResult(), is("Ok [10s]"));
   }
 
   @Test

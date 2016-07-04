@@ -105,10 +105,11 @@ public final class TaskConfiguration
   /**
    * Copy configuration from given to self.
    */
-  public void apply(final TaskConfiguration from) {
+  public TaskConfiguration apply(final TaskConfiguration from) {
     checkNotNull(from);
     from.validate();
     configuration.putAll(from.configuration);
+    return this;
   }
 
   public Map<String, String> asMap() {

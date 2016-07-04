@@ -32,7 +32,7 @@ public interface ClusteredTaskStateStore
   /**
    * Removes the state of the specified task from the store.
    */
-  void removeLocalState(String taskId);
+  void removeClusteredState(String taskId);
 
   /**
    * Returns the state of a given task across the nodes in a clustered environment or {@code null} if clustering isn't

@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.app.GlobalComponentLookupHelper
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
@@ -34,13 +35,14 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.search.RebuildIndexTask
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
-import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
+import org.sonatype.nexus.repository.security.RepositorySelector
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
+import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
@@ -51,7 +53,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
 import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
-import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
 /**
@@ -82,6 +83,9 @@ class RepositoryComponent
 
   @Inject
   ProxyType proxyType
+
+  @Inject
+  List<Format> formats
 
   @DirectMethod
   List<RepositoryXO> read() {
@@ -119,7 +123,24 @@ class RepositoryComponent
   @DirectMethod
   List<RepositoryReferenceXO> readReferencesAddingEntryForAll(final @Nullable StoreLoadParameters parameters) {
     def references = readReferences(parameters)
-    references << new RepositoryReferenceXO(id: '*', name: '(All Repositories)')
+    references <<
+        new RepositoryReferenceXO(id: RepositorySelector.all().toSelector(), name: '(All Repositories)', sortOrder: 1)
+    return references
+  }
+
+  /**
+   * Retrieve a list of available repositories references + add an entry for all repositories '*' and an entry for
+   * format 'All (format) repositories' '*(format)'".
+   */
+  @DirectMethod
+  List<RepositoryReferenceXO> readReferencesAddingEntriesForAllFormats(
+      final @Nullable StoreLoadParameters parameters)
+  {
+    def references = readReferencesAddingEntryForAll(parameters)
+    formats.each {
+      references << new RepositoryReferenceXO(id: RepositorySelector.allOfFormat(it.value).toSelector(),
+          name: '(All ' + it.value + ' Repositories)')
+    }
     return references
   }
 

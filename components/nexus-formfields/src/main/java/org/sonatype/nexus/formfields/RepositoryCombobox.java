@@ -57,6 +57,8 @@ public class RepositoryCombobox
 
   private boolean generateAllRepositoriesEntry;
 
+  private boolean includeEntriesForAllFormats;
+
   private interface Messages
       extends MessageBundle
   {
@@ -151,11 +153,28 @@ public class RepositoryCombobox
   }
 
   /**
+   * Will add an entry for "All Repositories" as well as "All nuget repositories", "All npm repositories", etc.
+   *
+   * @since 3.1
+   */
+  public RepositoryCombobox includeEntriesForAllFormats() {
+    this.includeEntriesForAllFormats = true;
+    return this;
+  }
+
+  /**
    * @since 3.0
    */
   @Override
   public String getStoreApi() {
-    return "coreui_Repository." + (generateAllRepositoriesEntry ? "readReferencesAddingEntryForAll" : "readReferences");
+    String method = "readReferences";
+    if (includeEntriesForAllFormats) {
+      method = "readReferencesAddingEntriesForAllFormats";
+    }
+    else if (generateAllRepositoriesEntry) {
+      method = "readReferencesAddingEntryForAll";
+    }
+    return "coreui_Repository." + method;
   }
 
   /**

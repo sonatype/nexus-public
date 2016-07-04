@@ -39,7 +39,7 @@ public class NonClusteredTaskStateStore
   }
 
   @Override
-  public void removeLocalState(String taskId) {
+  public void removeClusteredState(String taskId) {
     checkNotNull(taskId);
   }
 

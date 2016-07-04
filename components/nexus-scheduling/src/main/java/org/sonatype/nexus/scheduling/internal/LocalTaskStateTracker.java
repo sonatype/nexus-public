@@ -65,7 +65,7 @@ public class LocalTaskStateTracker
   public void on(TaskEvent event) {
     log.debug("Updating task state for event {}", event);
     if (event instanceof TaskDeletedEvent) {
-      clusteredTaskStateStore.removeLocalState(event.getTaskInfo().getId());
+      clusteredTaskStateStore.removeClusteredState(event.getTaskInfo().getId());
     }
     else {
       clusteredTaskStateStore.setLocalState(event.getTaskInfo());

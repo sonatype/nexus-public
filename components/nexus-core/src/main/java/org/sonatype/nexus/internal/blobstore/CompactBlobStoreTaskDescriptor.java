@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.internal.blobstore;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -34,7 +36,8 @@ public class CompactBlobStoreTaskDescriptor
 
   public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
-  public CompactBlobStoreTaskDescriptor() {
+  @Inject
+  public CompactBlobStoreTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
         CompactBlobStoreTask.class,
         "Compact blob store",
@@ -45,8 +48,9 @@ public class CompactBlobStoreTaskDescriptor
             "Blob store",
             "Select the blob store to compact",
             MANDATORY
-        ).withStoreApi("coreui_Blobstore.read")
-         .withIdMapping("name")
+        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+
+        nodeAccess.isClustered() ? newMultinodeFormField() : null
     );
   }
 }

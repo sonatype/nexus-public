@@ -129,7 +129,8 @@ public class QuartzTaskJobListener
           jobKey,
           taskInfo.getConfiguration().getTaskLogName(),
           context.getFireTime(),
-          scheduler.triggerConverter().convert(context.getTrigger())
+          scheduler.triggerConverter().convert(context.getTrigger()),
+          null
       );
 
       // set the future on taskinfo
