@@ -88,6 +88,7 @@ public class YumMergeMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void shouldRegenerateGroupRepoWhenMemberRepoIsAdded()
       throws Exception
   {
