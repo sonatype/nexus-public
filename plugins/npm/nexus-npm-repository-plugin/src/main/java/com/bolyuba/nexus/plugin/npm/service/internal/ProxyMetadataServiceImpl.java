@@ -214,15 +214,15 @@ public class ProxyMetadataServiceImpl
     final long now = System.currentTimeMillis();
     PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), packageCoordinates.getPackageName());
     if (isRemoteAccessAllowed() && !localOnly && (packageRoot == null || isExpired(packageRoot, now))) {
-      packageRoot = proxyMetadataTransport.fetchPackageRoot(getNpmRepository(), packageCoordinates, packageRoot);
-      if (packageRoot == null) {
-        return null;
+      PackageRoot remotePackageRoot = proxyMetadataTransport.fetchPackageRoot(getNpmRepository(), packageCoordinates, packageRoot);
+      if (remotePackageRoot == null) {
+        return packageRoot;
       }
       // On remote fetch of metadata, evict /packageName and children from NFC
       getNpmRepository().getNotFoundCache().removeWithChildren("/" + packageCoordinates.getPackageName());
-      packageRoot.getProperties().put(PROP_EXPIRED, Boolean.FALSE.toString());
-      packageRoot.getProperties().put(PROP_CACHED, Long.toString(now));
-      return metadataStore.replacePackage(getNpmRepository(), packageRoot);
+      remotePackageRoot.getProperties().put(PROP_EXPIRED, Boolean.FALSE.toString());
+      remotePackageRoot.getProperties().put(PROP_CACHED, Long.toString(now));
+      return metadataStore.replacePackage(getNpmRepository(), remotePackageRoot);
     }
     else {
       return packageRoot;

@@ -21,8 +21,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import org.sonatype.nexus.apachehttpclient.Hc4Provider;
+import org.sonatype.nexus.proxy.RemoteStorageTransportOverloadedException;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.FileContentLocator;
 import org.sonatype.nexus.proxy.item.PreparedContentLocator;
@@ -31,6 +31,7 @@ import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import com.bolyuba.nexus.plugin.npm.proxy.NpmProxyRepository;
+import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import com.bolyuba.nexus.plugin.npm.service.internal.PackageRootIterator;
@@ -47,6 +48,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +111,9 @@ public class HttpProxyMetadataTransport
       final HttpResponse httpResponse;
       try {
         httpResponse = httpClient.execute(get, context);
+      }
+      catch (ConnectionPoolTimeoutException e) {
+        throw new RemoteStorageTransportOverloadedException(npmProxyRepository, "npm HC overload: GET " + get.getURI(), e);
       }
       finally {
         timerContext.stop();
@@ -187,6 +192,9 @@ public class HttpProxyMetadataTransport
       try {
         httpResponse = httpClient.execute(get, context);
       }
+      catch (ConnectionPoolTimeoutException e) {
+        throw new RemoteStorageTransportOverloadedException(npmProxyRepository, "npm HC overload: GET " + get.getURI(), e);
+      }
       finally {
         timerContext.stop();
         if (stopwatch != null) {
@@ -213,6 +221,7 @@ public class HttpProxyMetadataTransport
           }
           return fresh;
         }
+        log.info("[{}] {} -> {}; unexpected response", npmProxyRepository.getId(), get, statusLine);
         return null;
       }
       finally {

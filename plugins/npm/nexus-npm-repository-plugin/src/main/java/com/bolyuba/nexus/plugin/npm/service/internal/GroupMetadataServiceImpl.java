@@ -21,6 +21,8 @@ import java.util.NoSuchElementException;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.proxy.NoSuchResourceStoreException;
+import org.sonatype.nexus.proxy.mapping.RequestRepositoryMapper;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.util.AlphanumComparator;
 import org.sonatype.nexus.util.SystemPropertiesHelper;
@@ -48,16 +50,20 @@ public class GroupMetadataServiceImpl
 
   private final AlphanumComparator comparator;
 
+  private final RequestRepositoryMapper requestRepositoryMapper;
+
   private boolean mergeMetadata = SystemPropertiesHelper.getBoolean(
       "nexus.npm.mergeGroupMetadata",
       true
   );
 
   public GroupMetadataServiceImpl(final NpmGroupRepository npmGroupRepository,
-                                  final MetadataParser metadataParser)
+                                  final MetadataParser metadataParser,
+                                  final RequestRepositoryMapper requestRepositoryMapper)
   {
     super(npmGroupRepository, metadataParser);
     this.npmGroupRepository = checkNotNull(npmGroupRepository);
+    this.requestRepositoryMapper = checkNotNull(requestRepositoryMapper);
     this.comparator = new AlphanumComparator();
   }
 
@@ -73,7 +79,7 @@ public class GroupMetadataServiceImpl
 
   @Override
   protected PackageRootIterator doGenerateRegistryRoot(final PackageRequest request) throws IOException {
-    final List<NpmRepository> members = getMembers();
+    final List<NpmRepository> members = getMappedMembers(request);
     final List<PackageRootIterator> iterators = Lists.newArrayList();
     for (NpmRepository member : members) {
       iterators.add(member.getMetadataService().generateRegistryRoot(request));
@@ -146,7 +152,7 @@ public class GroupMetadataServiceImpl
   @Nullable
   @Override
   protected PackageVersion doGeneratePackageVersion(final PackageRequest request) throws IOException {
-    final List<NpmRepository> members = getMembers();
+    final List<NpmRepository> members = getMappedMembers(request);
     for (NpmRepository member : members) {
       final PackageVersion version = member.getMetadataService().generatePackageVersion(request);
       if (version != null) {
@@ -159,10 +165,34 @@ public class GroupMetadataServiceImpl
   // ==
 
   /**
+   * Returns all group members using {@link RequestRepositoryMapper} for non-root requests.
+   */
+  private List<NpmRepository> getMappedMembers(final PackageRequest request) {
+    try {
+      return filterMembers(
+          requestRepositoryMapper.getMappedRepositories(
+              npmGroupRepository,
+              request.getStoreRequest(),
+              npmGroupRepository.getMemberRepositories()
+          )
+      );
+    } catch (NoSuchResourceStoreException e) {
+      // requestRepositoryMapper already logged: stale ref to non-existed repo in mapping, fallback
+      return getMembers();
+    }
+  }
+
+  /**
    * Returns all group members that are for certain NPM repositories.
    */
   private List<NpmRepository> getMembers() {
-    final List<Repository> members = npmGroupRepository.getMemberRepositories();
+    return filterMembers(npmGroupRepository.getMemberRepositories());
+  }
+
+  /**
+   * Returns all group members that are for certain NPM repositories.
+   */
+  private List<NpmRepository> filterMembers(final List<Repository> members) {
     final List<NpmRepository> npmMembers = Lists.newArrayList();
     for (Repository member : members) {
       final NpmRepository npmMember = member.adaptToFacet(NpmRepository.class);

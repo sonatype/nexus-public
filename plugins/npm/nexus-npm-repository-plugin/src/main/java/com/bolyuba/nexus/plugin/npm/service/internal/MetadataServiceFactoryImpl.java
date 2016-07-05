@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.proxy.mapping.RequestRepositoryMapper;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.bolyuba.nexus.plugin.npm.group.NpmGroupRepository;
@@ -44,14 +45,18 @@ public class MetadataServiceFactoryImpl
 
   private final ProxyMetadataTransport proxyMetadataTransport;
 
+  private final RequestRepositoryMapper requestRepositoryMapper;
+
   @Inject
   public MetadataServiceFactoryImpl(final MetadataStore metadataStore,
                                     final MetadataParser metadataParser,
-                                    final ProxyMetadataTransport proxyMetadataTransport)
+                                    final ProxyMetadataTransport proxyMetadataTransport,
+                                    final RequestRepositoryMapper requestRepositoryMapper)
   {
     this.metadataStore = checkNotNull(metadataStore);
     this.metadataParser = checkNotNull(metadataParser);
     this.proxyMetadataTransport = checkNotNull(proxyMetadataTransport);
+    this.requestRepositoryMapper = checkNotNull(requestRepositoryMapper);
   }
 
   @VisibleForTesting
@@ -72,6 +77,6 @@ public class MetadataServiceFactoryImpl
 
   @Override
   public GroupMetadataService createGroupMetadataService(final NpmGroupRepository npmGroupRepository) {
-    return new GroupMetadataServiceImpl(npmGroupRepository, metadataParser);
+    return new GroupMetadataServiceImpl(npmGroupRepository, metadataParser, requestRepositoryMapper);
   }
 }
