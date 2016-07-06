@@ -17,6 +17,7 @@ import java.util.Map;
 import org.sonatype.nexus.client.core.subsystem.repository.Repository;
 
 import com.google.common.collect.Maps;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.containsString;
@@ -76,6 +77,7 @@ public class YumGenerateMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void removeRpm()
       throws Exception
   {
@@ -99,6 +101,7 @@ public class YumGenerateMetadataIT
   }
 
   @Test
+  @Ignore("Ignoring test formerly quarantined on CI")
   public void removeDirWithRpm()
       throws Exception
   {
