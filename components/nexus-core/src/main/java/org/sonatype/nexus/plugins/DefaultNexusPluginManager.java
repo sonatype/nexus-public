@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.plugins;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -24,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -50,6 +55,7 @@ import org.sonatype.plugins.model.PluginDependency;
 import org.sonatype.plugins.model.PluginMetadata;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
@@ -316,6 +322,24 @@ public class DefaultNexusPluginManager
       throws NoSuchPluginRepositoryArtifactException
   {
     final String location = "reference:"+plugin.getFile().getParentFile().toURI();
+
+    try {
+      File manifestFile = new File(plugin.getFile().getParent(), "META-INF/MANIFEST.MF");
+      Manifest manifest;
+      try (FileInputStream manifestIn = new FileInputStream(manifestFile)) {
+        manifest = new Manifest(manifestIn);
+      }
+      Attributes attributes = manifest.getMainAttributes();
+      if (attributes.getValue("DynamicImport-Package") == null) {
+        attributes.putValue("DynamicImport-Package", "*");
+        try (FileOutputStream manifestOut = new FileOutputStream(manifestFile)) {
+          manifest.write(manifestOut);
+        }
+      }
+    }
+    catch (IOException e) {
+      Throwables.propagate(e);
+    }
 
     final Bundle pluginBundle;
     try {
