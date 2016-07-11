@@ -36,6 +36,12 @@ NX.define('Nexus.wonderland.AuthenticateButton', {
   message: 'You have requested an operation which requires validation of your credentials.',
 
   /**
+   * @cfg noPopUps
+   * @type Boolean
+   */
+  noPopUps: false,
+
+  /**
    * @override
    */
   initComponent: function () {
@@ -68,17 +74,23 @@ NX.define('Nexus.wonderland.AuthenticateButton', {
   showWindow: function () {
     var me = this;
 
-    var win = NX.create('Nexus.wonderland.view.AuthenticateWindow', {
-      message: me.message,
-      animateTarget: me.getEl(),
-      listeners: {
-        // HACK: propagate event from window to button, controller does not have context of the button
-        'authenticated': function(window, authticket) {
-          me.fireEvent('authenticated', me, authticket);
+    // bypass pop-up window for external users?
+    if (me.noPopUps === true && Sonatype.user.curr.loggedInUserSource !== 'default') {
+      me.fireEvent('authenticated', me, null);
+    }
+    else {
+      var win = NX.create('Nexus.wonderland.view.AuthenticateWindow', {
+        message: me.message,
+        animateTarget: me.getEl(),
+        listeners: {
+          // HACK: propagate event from window to button, controller does not have context of the button
+          'authenticated': function(window, authticket) {
+            me.fireEvent('authenticated', me, authticket);
+          }
         }
-      }
-    });
+      });
 
-    win.show();
+      win.show();
+    }
   }
 });
