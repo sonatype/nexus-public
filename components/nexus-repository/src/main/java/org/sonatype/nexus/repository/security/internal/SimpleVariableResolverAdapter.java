@@ -10,31 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal;
+package org.sonatype.nexus.repository.security.internal;
 
-import javax.inject.Inject;
+import java.util.Set;
+
 import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.SecurityFacetSupport;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
+import org.sonatype.nexus.repository.security.VariableResolverAdapterSupport;
+import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.selector.VariableResolver;
 
 /**
- * Maven 2 security facet.
+ * Simple implementation that will expose the path/format variable resolvers
  *
- * @since 3.0
+ * @since 3.1
  */
-@Named
-public class MavenSecurityFacet
-    extends SecurityFacetSupport
+@Named("simple")
+@Singleton
+public class SimpleVariableResolverAdapter
+    extends VariableResolverAdapterSupport
+    implements VariableResolverAdapter
 {
-  @Inject
-  public MavenSecurityFacet(final MavenFormatSecurityConfigurationResource securityResource,
-                            final SelectorConfigurationStore selectorConfigurationStore,
-                            @Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                            final ContentPermissionChecker contentPermissionChecker)
-  {
-    super(securityResource, selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);
+  @Override
+  protected void addFromRequest(final Set<VariableResolver> variableResolvers, final Request request) {
+    //no-op the simple impl just allows for the path/format variable resolvers in the support class
   }
 }

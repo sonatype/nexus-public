@@ -15,10 +15,11 @@ package org.sonatype.nexus.selector;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.jexl2.Expression;
-import org.apache.commons.jexl2.JexlContext;
-import org.apache.commons.jexl2.JexlEngine;
-import org.apache.commons.jexl2.MapContext;
+import org.apache.commons.jexl3.JexlBuilder;
+import org.apache.commons.jexl3.JexlContext;
+import org.apache.commons.jexl3.JexlEngine;
+import org.apache.commons.jexl3.JexlExpression;
+import org.apache.commons.jexl3.MapContext;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -26,17 +27,18 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  * {@link Selector} implementation that uses JEXL to evaluate expressions describing the selection criteria.
  *
  * @see <a href="http://commons.apache.org/proper/commons-jexl/">Commons Jexl</a>
- *
  * @since 3.0
  */
 public class JexlSelector
     implements Selector
 {
-  private static final JexlEngine engine = new JexlEngine();
-  private final Optional<Expression> expression;
+  private static final JexlEngine engine = new JexlBuilder().create();
+
+  private final Optional<JexlExpression> expression;
 
   public JexlSelector(final String expression) {
-    this.expression = isNullOrEmpty(expression) ? Optional.<Expression>empty() : Optional.of(engine.createExpression(expression));
+    this.expression = isNullOrEmpty(expression) ? Optional.<JexlExpression>empty()
+        : Optional.of(engine.createExpression(expression));
   }
 
   @Override
@@ -59,6 +61,6 @@ public class JexlSelector
 
   @Override
   public String toString() {
-    return expression.isPresent() ? expression.get().dump() : "";
+    return expression.isPresent() ? expression.get().getParsedText() : "";
   }
 }

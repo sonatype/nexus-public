@@ -154,7 +154,7 @@ Ext.define('NX.State', {
     var edition = this.getEdition(),
         version = this.getVersion();
 
-    return (edition === 'OSS' ? edition + ' ' : '') + version;
+    return edition + ' ' + version;
   },
 
   /**

@@ -122,7 +122,7 @@ class WebhookServiceImpl
     log.debug("Sending webhook request: {}", request)
 
     def webhook = request.webhook
-    def json = objectMapper.writeValueAsString(request.body)
+    def json = objectMapper.writeValueAsString(request.payload)
 
     httpClientProvider.get().withCloseable {CloseableHttpClient client ->
       HttpPost httpPost = new HttpPost(request.url)

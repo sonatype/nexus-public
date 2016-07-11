@@ -1167,7 +1167,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
       System_Email_BoxLabel: 'Email',
       System_HTTP_BoxLabel: 'HTTP Configuration',
       Repositories_FieldLabel: 'Repositories',
-      Repositories_BoxLabel: 'User-managed repositories'
+      Repositories_BoxLabel: 'User-Managed Repositories',
+      RepositoryTargets_BoxLabel: 'Repository Targets'
     },
 
     'NX.coreui.migration.OverviewScreen': {

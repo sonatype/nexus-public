@@ -18,7 +18,7 @@ import javax.inject.Singleton
 import org.sonatype.nexus.audit.AuditDataRecordedEvent
 import org.sonatype.nexus.webhooks.GlobalWebhook
 import org.sonatype.nexus.webhooks.Webhook
-import org.sonatype.nexus.webhooks.WebhookSubscription
+import org.sonatype.nexus.webhooks.WebhookPayload
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
@@ -43,11 +43,40 @@ class GlobalAuditWebhook
   @Subscribe
   @AllowConcurrentEvents
   void on(final AuditDataRecordedEvent event) {
-    // use detached copy to avoid including EntityMetadata
-    def body = event.data.detach()
 
-    for (WebhookSubscription subscription in subscriptions) {
-      queue(subscription, body)
+    // use detached copy to avoid including EntityMetadata
+    def auditData = event.data.detach()
+    def payload = new AuditWebhookPayload(
+        initiator: auditData.initiator,
+        nodeId: auditData.nodeId
+    )
+
+    payload.audit = new AuditWebhookPayload.Audit(
+        domain: auditData.domain,
+        context: auditData.context,
+        type: auditData.type,
+        attributes: auditData.attributes
+    )
+
+    subscriptions.each {
+      queue(it, payload)
+    }
+  }
+
+  static class AuditWebhookPayload
+      extends WebhookPayload
+  {
+    Audit audit
+
+    static class Audit
+    {
+      String domain
+
+      String type
+
+      String context
+
+      Map<String, String> attributes
     }
   }
 }

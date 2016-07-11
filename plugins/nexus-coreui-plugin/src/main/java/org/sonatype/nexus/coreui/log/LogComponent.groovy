@@ -18,9 +18,7 @@ import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
-import org.sonatype.nexus.common.log.LogManager
-import org.sonatype.nexus.common.log.LoggerLevel
-import org.sonatype.nexus.extdirect.DirectComponent
+import org.sonatype.nexus.common.log.LogMarker
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.Validate
 
@@ -42,7 +40,7 @@ extends DirectComponentSupport
 {
 
   @Inject
-  LogManager logManager
+  LogMarker logMarker
 
   /**
    * Logs a message at INFO level.
@@ -53,11 +51,7 @@ extends DirectComponentSupport
   @RequiresPermissions('nexus:logging:mark')
   @Validate
   void mark(final @NotNull @Valid MarkerXO markerXO) {
-    // ensure that level for marking logger is enabled
-    logManager.setLoggerLevel(log.getName(), LoggerLevel.INFO)
-
-    String asterixes = '*' * (markerXO.message.length() + 4)
-    log.info "\n${asterixes}\n* ${markerXO.message} *\n${asterixes}"
+    logMarker.markLog(markerXO.message)
   }
 
 }

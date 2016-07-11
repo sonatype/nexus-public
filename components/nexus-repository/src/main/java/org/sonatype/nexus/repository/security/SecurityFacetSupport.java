@@ -12,14 +12,16 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import javax.inject.Inject;
-
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.security.BreadActions;
-import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
+import org.sonatype.nexus.selector.VariableSource;
+
+import org.apache.shiro.authz.AuthorizationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,20 +30,27 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-public class SecurityFacetSupport
+public abstract class SecurityFacetSupport
     extends FacetSupport
     implements SecurityFacet
 {
-  private final SecurityHelper securityHelper;
-
   private final RepositoryFormatSecurityConfigurationResource securityResource;
 
-  @Inject
-  public SecurityFacetSupport(final SecurityHelper securityHelper,
-                              final RepositoryFormatSecurityConfigurationResource securityResource)
+  private final SelectorConfigurationStore selectorConfigurationStore;
+
+  private final VariableResolverAdapter variableResolverAdapter;
+
+  private final ContentPermissionChecker contentPermissionChecker;
+
+  public SecurityFacetSupport(final RepositoryFormatSecurityConfigurationResource securityResource,
+                              final SelectorConfigurationStore selectorConfigurationStore,
+                              final VariableResolverAdapter variableResolverAdapter,
+                              final ContentPermissionChecker contentPermissionChecker)
   {
-    this.securityHelper = checkNotNull(securityHelper);
     this.securityResource = checkNotNull(securityResource);
+    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
+    this.variableResolverAdapter = checkNotNull(variableResolverAdapter);
+    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
 
   @Override
@@ -61,7 +70,22 @@ public class SecurityFacetSupport
     // determine permission action from request
     String action = action(request);
 
-    securityHelper.ensurePermitted(new RepositoryViewPermission(getRepository(), action));
+    Repository repo = getRepository();
+
+    //check view perm first, if applicable, grant access
+    if (!contentPermissionChecker.isViewPermitted(repo.getName(), repo.getFormat().getValue(), action)) {
+      //othwerise check the content selector perms
+      ensureContentSelectorPermissions(action, variableResolverAdapter.fromRequest(request, getRepository()));
+    }
+  }
+
+  private void ensureContentSelectorPermissions(String action, VariableSource variableSource) {
+    Repository repo = getRepository();
+    selectorConfigurationStore.browse().stream()
+        .filter(c -> contentPermissionChecker
+            .isContentPermitted(repo.getName(), repo.getFormat().getValue(), action, c, variableSource))
+        .findAny()
+        .orElseThrow(() -> new AuthorizationException());
   }
 
   /**

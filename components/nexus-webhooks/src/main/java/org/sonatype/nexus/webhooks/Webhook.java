@@ -145,11 +145,11 @@ public abstract class Webhook
   /**
    * Create {@link WebhookRequest} for given body and emit {@link WebhookRequestSendEvent}.
    */
-  protected void queue(final WebhookSubscription subscription, final Object body) {
+  protected void queue(final WebhookSubscription subscription, final WebhookPayload body) {
     log.debug("Queuing request for {} -> {}", subscription, body);
     WebhookRequest request = new WebhookRequest();
     request.setWebhook(this);
-    request.setBody(body);
+    request.setPayload(body);
     WebhookConfiguration configuration = subscription.getConfiguration();
     request.setUrl(configuration.getUrl());
     request.setSecret(configuration.getSecret());

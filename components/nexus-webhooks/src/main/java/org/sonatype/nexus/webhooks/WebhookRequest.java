@@ -28,7 +28,7 @@ public class WebhookRequest
 
   private Webhook webhook;
 
-  private Object body;
+  private WebhookPayload payload;
 
   private URI url;
 
@@ -47,12 +47,12 @@ public class WebhookRequest
     this.webhook = webhook;
   }
 
-  public Object getBody() {
-    return body;
+  public WebhookPayload getPayload() {
+    return payload;
   }
 
-  public void setBody(final Object body) {
-    this.body = body;
+  public void setPayload(final WebhookPayload payload) {
+    this.payload = payload;
   }
 
   public URI getUrl() {
@@ -77,7 +77,7 @@ public class WebhookRequest
     return getClass().getSimpleName() + "{" +
         "id='" + id + '\'' +
         ", webhook=" + webhook +
-        ", body=" + body +
+        ", payload=" + payload +
         ", url=" + url +
         '}';
   }

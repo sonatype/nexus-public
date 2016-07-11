@@ -12,17 +12,19 @@
  */
 package org.sonatype.nexus.repository.webhooks
 
+import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.audit.InitiatorProvider
+import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent
-import org.sonatype.nexus.security.UserIdHelper
 import org.sonatype.nexus.webhooks.GlobalWebhook
 import org.sonatype.nexus.webhooks.Webhook
-import org.sonatype.nexus.webhooks.WebhookSubscription
+import org.sonatype.nexus.webhooks.WebhookPayload
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
@@ -39,12 +41,18 @@ class GlobalRepositoryWebhook
 {
   public static final String NAME = 'repository'
 
+  @Inject
+  NodeAccess nodeAccess
+
+  @Inject
+  InitiatorProvider initiatorProvider
+
   @Override
   String getName() {
     return NAME
   }
 
-  private static enum EventType
+  private static enum EventAction
   {
     CREATED,
     UPDATED,
@@ -54,33 +62,54 @@ class GlobalRepositoryWebhook
   @Subscribe
   @AllowConcurrentEvents
   void on(final RepositoryCreatedEvent event) {
-    queue(event.repository, EventType.CREATED)
+    queue(event.repository, EventAction.CREATED)
   }
 
   @Subscribe
   @AllowConcurrentEvents
   void on(final RepositoryUpdatedEvent event) {
-    queue(event.repository, EventType.UPDATED)
+    queue(event.repository, EventAction.UPDATED)
   }
 
   @Subscribe
   @AllowConcurrentEvents
   void on(final RepositoryDeletedEvent event) {
-    queue(event.repository, EventType.DELETED)
+    queue(event.repository, EventAction.DELETED)
   }
 
-  private void queue(final Repository repository, final EventType eventType) {
-    def body = [
+  private void queue(final Repository repository, final EventAction eventAction) {
+    def payload = new RepositoryWebhookPayload(
+        nodeId: nodeAccess.getId(),
         timestamp: new Date(),
-        userId: UserIdHelper.get(),
-        repositoryName: repository.name,
-        repositoryType: repository.type.value,
-        repositoryFormat: repository.format.value,
-        eventType: eventType
-    ]
+        initiator: initiatorProvider.get(),
+        action: eventAction
+    )
 
-    for (WebhookSubscription subscription in subscriptions) {
-      queue(subscription, body)
+    payload.repository = new RepositoryWebhookPayload.Repository(
+        format: repository.format.value,
+        name: repository.name,
+        type: repository.type.value
+    )
+
+    subscriptions.each {
+      queue(it, payload)
+    }
+  }
+
+  static class RepositoryWebhookPayload
+      extends WebhookPayload
+  {
+    EventAction action
+
+    Repository repository
+
+    static class Repository
+    {
+      String format
+
+      String name
+
+      String type
     }
   }
 }

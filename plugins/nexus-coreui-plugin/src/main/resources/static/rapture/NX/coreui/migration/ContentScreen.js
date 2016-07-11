@@ -52,6 +52,12 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                   name: 'repositories.usermanaged',
                   boxLabel: NX.I18n.render(me, 'Repositories_BoxLabel'),
                   checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'repository.targets',
+                  boxLabel: NX.I18n.render(me, 'RepositoryTargets_BoxLabel'),
+                  checked: true
                 }
               ]
             },
