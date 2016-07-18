@@ -12,15 +12,24 @@
  */
 package org.sonatype.nexus.proxy.item;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.Iterator;
+import java.util.Queue;
 
+import org.sonatype.nexus.util.SystemPropertiesHelper;
 import org.sonatype.nexus.util.WrappingInputStream;
 import org.sonatype.nexus.util.file.DirSupport;
+
+import com.google.common.collect.EvictingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,7 +42,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class FileContentLocator
     extends AbstractContentLocator
+    implements Closeable
 {
+  private static final Logger log = LoggerFactory.getLogger(FileContentLocator.class);
+
+  private static final boolean RETRY_DELETES = SystemPropertiesHelper.getBoolean(
+      FileContentLocator.class.getName() + ".retryDeletes", false);
+
+  // when retrying deletes only keep the most recent 1024 requests rather than allow endless growth
+  private static Queue<File> pendingDeletes = RETRY_DELETES ? EvictingQueue.<File>create(1024) : null;
+
   private final File file;
 
   private final boolean deleteOnCloseInput;
@@ -73,7 +91,7 @@ public class FileContentLocator
 
   public InputStream getInputStream() throws IOException {
     if (deleteOnCloseInput) {
-      return new DeleteOnCloseFileInputStream(getFile());
+      return new DeleteOnCloseFileInputStream();
     }
     else {
       return new FileInputStream(getFile());
@@ -99,6 +117,62 @@ public class FileContentLocator
     DirSupport.deleteIfExists(getFile().toPath());
   }
 
+  @Override
+  public void close() throws IOException {
+    if (deleteOnCloseInput) {
+      tryDelete();
+    }
+  }
+
+  @Override
+  protected void finalize() throws Throwable { // NOSONAR
+    if (deleteOnCloseInput && Files.exists(getFile().toPath())) {
+      log.warn("Temp file leak detected for {}", getFile());
+      tryDelete();
+    }
+  }
+
+  protected void tryDelete() {
+    if (RETRY_DELETES) {
+      retryPendingDeletes();
+    }
+    try {
+      delete();
+    }
+    catch (IOException e) { // NOSONAR
+      log.warn("Unable to delete {} ({})", getFile(), e.toString());
+      if (RETRY_DELETES) {
+        recordPendingDelete(getFile());
+      }
+    }
+  }
+
+  protected static void recordPendingDelete(File file) {
+    synchronized (pendingDeletes) {
+      pendingDeletes.add(file);
+    }
+  }
+
+  protected static void retryPendingDeletes() {
+    // check before locking to avoid bottleneck
+    if (pendingDeletes.isEmpty()) {
+      return;
+    }
+    synchronized (pendingDeletes) {
+      for (Iterator<File> itr = pendingDeletes.iterator(); itr.hasNext();) {
+        File file = itr.next();
+        try {
+          log.debug("Retrying delete for {}", file);
+          DirSupport.deleteIfExists(file.toPath());
+          itr.remove();
+        }
+        catch (IOException e) { // NOSONAR
+          log.warn("Still unable to delete {} ({})", file, e.toString());
+        }
+      }
+    }
+  }
+
   // ==
 
   @Override
@@ -108,21 +182,30 @@ public class FileContentLocator
 
   // ==
 
-  public static class DeleteOnCloseFileInputStream
+  // Inner class so locator is kept alive while stream is alive.
+  public class DeleteOnCloseFileInputStream
       extends WrappingInputStream
   {
-    private final File file;
-
-    public DeleteOnCloseFileInputStream(final File file) throws IOException {
-      super(new FileInputStream(file));
-      this.file = file;
+    public DeleteOnCloseFileInputStream() throws IOException {
+      super(new FileInputStream(getFile()));
     }
 
+    @Override
     public void close() throws IOException {
-      super.close();
-      // locator is used against files only, not directories
-      // but their existence is not enforced!
-      DirSupport.deleteIfExists(file.toPath());
+      try {
+        super.close();
+      }
+      finally {
+        tryDelete();
+      }
+    }
+
+    @Override
+    protected void finalize() throws Throwable { // NOSONAR
+      if (Files.exists(getFile().toPath())) {
+        log.warn("Temp file leak detected for {}", getFile());
+        tryDelete();
+      }
     }
   }
 }

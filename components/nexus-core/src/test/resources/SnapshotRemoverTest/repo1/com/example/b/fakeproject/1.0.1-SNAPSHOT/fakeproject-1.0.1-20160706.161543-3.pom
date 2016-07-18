@@ -1,0 +1,845 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2007-2013 Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example.b</groupId>
+  <artifactId>fakeproject</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+   <!-- for module testing see modules dir -->
+
+  <name>staging-test</name>
+  <description>This project represents a test project that can be used to help verify Nexus staging
+  suite features, as described in section 9.4 of the nexus-book.
+  </description>
+  <url>http://nexus.sonatype.org</url>
+  <!-- see modules dir -->
+  <!-- 
+    <modules>
+<module>modules/staging-test-m1</module>
+</modules> -->
+<!--
+<module>modules/staging-test-m2</module>
+<module>modules/staging-test-m3</module>
+<module>modules/staging-test-m4</module>
+<module>modules/staging-test-m5</module>
+<module>modules/staging-test-m6</module>
+<module>modules/staging-test-m7</module>
+<module>modules/staging-test-m8</module>
+<module>modules/staging-test-m9</module>
+<module>modules/staging-test-m10</module>
+<module>modules/staging-test-m11</module>
+<module>modules/staging-test-m12</module>
+<module>modules/staging-test-m13</module>
+<module>modules/staging-test-m14</module>
+<module>modules/staging-test-m15</module>
+<module>modules/staging-test-m16</module>
+<module>modules/staging-test-m17</module>
+<module>modules/staging-test-m18</module>
+<module>modules/staging-test-m19</module>
+<module>modules/staging-test-m20</module>
+<module>modules/staging-test-m21</module>
+<module>modules/staging-test-m22</module>
+<module>modules/staging-test-m23</module>
+<module>modules/staging-test-m24</module>
+<module>modules/staging-test-m25</module>
+<module>modules/staging-test-m26</module>
+<module>modules/staging-test-m27</module>
+<module>modules/staging-test-m28</module>
+<module>modules/staging-test-m29</module>
+<module>modules/staging-test-m30</module>
+<module>modules/staging-test-m31</module>
+<module>modules/staging-test-m32</module>
+<module>modules/staging-test-m33</module>
+<module>modules/staging-test-m34</module>
+<module>modules/staging-test-m35</module>
+<module>modules/staging-test-m36</module>
+<module>modules/staging-test-m37</module>
+<module>modules/staging-test-m38</module>
+<module>modules/staging-test-m39</module>
+<module>modules/staging-test-m40</module>
+<module>modules/staging-test-m41</module>
+<module>modules/staging-test-m42</module>
+<module>modules/staging-test-m43</module>
+<module>modules/staging-test-m44</module>
+<module>modules/staging-test-m45</module>
+<module>modules/staging-test-m46</module>
+<module>modules/staging-test-m47</module>
+<module>modules/staging-test-m48</module>
+<module>modules/staging-test-m49</module>
+<module>modules/staging-test-m50</module>
+</modules>
+ -->
+  
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <properties>
+  
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- release plugin using git -->
+    <!-- <localCheckout>true</localCheckout>
+    <pushChanges>false</pushChanges>
+    -->
+    <!-- may need to force this to IP if using a proxy server -->
+    <http>http</http>
+    <localhost>localhost</localhost>
+    <port>8081</port>
+    <path>/nexus/</path>
+
+    <nexusUrl>${http}://${localhost}:${port}${path}</nexusUrl>
+    <distReleaseId>dist-release</distReleaseId>
+    <altDistReleaseId>alt-dist-release</altDistReleaseId>
+    <distReleaseUrl>${http}://${localhost}:${port}${path}service/local/staging/deploy/maven2/</distReleaseUrl>
+    <distSnapshotId>dist-snapshot</distSnapshotId>
+    <distSnapshotUrl>${http}://${localhost}:${port}${path}content/repositories/snapshots</distSnapshotUrl>
+    <!-- <distSnapshotUrl>${http}://${localhost}:${port}/repository/maven-snapshots/</distSnapshotUrl> -->
+
+    <!-- if false, then activate nexus-staging-maven-plugin, if true, use deploy plugin -->
+    <skipStaging>false</skipStaging>
+    <!-- for Maven 2.x, control if SNAPSHOTs are deployed with unique versions -->
+    <!-- for Maven 3.x any value has no effect, unique versions are always used -->
+    <uniqueVersion>true</uniqueVersion>
+  </properties>
+  <!-- see make svnrepos.sh -->
+  <scm>
+    <connection>scm:svn:file:///Users/plynch/dev/sonatype/nexus-all/nexus-toolbox/staging-test-project/scm-svn-repos/staging-test-project/trunk</connection>
+    <developerConnection>scm:svn:file:///Users/plynch/dev/sonatype/nexus-all/nexus-toolbox/staging-test-project/scm-svn-repos/staging-test-project/trunk</developerConnection>
+    <url>http://localhost/staging-test-project</url>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>plynch</id>
+      <name>Peter Lynch</name>
+      <email>fake@example.com</email>
+      <url>http://sonatype.com</url>
+      <organization>Sonatype</organization>
+      <organizationUrl>http://sonatype.com</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-2.5</timezone>
+      <properties>
+        <wow>cool</wow>
+      </properties>
+    </developer>
+  </developers>
+  <build>
+
+  <!-- <finalName>bogusname</finalName> -->
+    <!--
+    Main filtered and unfiltered resources.
+    -->
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/resources</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+
+      <resource>
+        <directory>${project.basedir}/src/main/filtered-resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+
+    <pluginManagement>
+      <plugins>
+        <!--
+        See 'license-check' and 'license-format' profiles.
+        -->
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>2.5</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.sonatype.buildsupport</groupId>
+              <artifactId>licenses</artifactId>
+              <version>5</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <encoding>UTF-8</encoding>
+            <strictCheck>true</strictCheck>
+            <useDefaultExcludes>false</useDefaultExcludes>
+            <header>${project.basedir}/header.txt</header>
+            <includes>
+              <include>**/pom.xml</include>
+              <include>**/*.xml</include>
+              <include>**/*.xsd</include>
+              <include>**/*.xjb</include>
+              <include>**/*.properties</include>
+              <include>**/*.ini</include>
+              <include>**/*.java</include>
+              <include>**/*.groovy</include>
+              <include>**/*.scala</include>
+              <include>**/*.aj</include>
+              <include>**/*.js</include>
+              <include>**/*.css</include>
+              <include>**/*.help</include>
+              <include>**/*.proto</include>
+              <include>**/*.sm</include>
+              <include>**/*.bat</include>
+              <include>**/*.xsl</include>
+              <include>**/*.html</include>
+              <include>**/*.vm</include>
+              <include>**/*.md</include>
+            </includes>
+            <excludes>
+              <exclude>**/target/**</exclude>
+              <exclude>**/.*/**</exclude>
+              <exclude>**/dependency-reduced-pom.xml</exclude>
+              <exclude>**/nbactions*.xml</exclude>
+              <exclude>**/nb-configuration.xml</exclude>
+              <exclude>**/atlassian-ide-plugin.xml</exclude>
+              <exclude>**/release.properties</exclude>
+              <exclude>**/META-INF/services/**</exclude>
+            </excludes>
+            <mapping>
+              <aj>JAVADOC_STYLE</aj>
+              <groovy>JAVADOC_STYLE</groovy>
+              <help>SCRIPT_STYLE</help>
+              <ini>SCRIPT_STYLE</ini>
+              <java>SLASHSTAR_STYLE</java>
+              <md>XML_STYLE</md>
+              <proto>DOUBLESLASH_STYLE</proto>
+              <scala>SLASHSTAR_STYLE</scala>
+              <sm>DOUBLESLASH_STYLE</sm>
+              <vm>SHARPSTAR_STYLE</vm>
+              <xjb>XML_STYLE</xjb>
+            </mapping>
+            <aggregate>true</aggregate>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.2.1</version>
+          <configuration>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <goals>deploy</goals>
+            <!-- git pushChanges and localCheckout for dvcs and require a 'git push origin \-\-tags :' after release:perform -->
+            <!-- since we test with svn, suggest you do not mess with these -->
+            <!--
+            <localCheckout>${localCheckout}</localCheckout>
+            <pushChanges>${pushChanges}</pushChanges>
+            -->
+            <!--  forked path prevents hang see MGPG-9 -->
+            <mavenExecutorId>forked-path</mavenExecutorId>
+            <releaseProfiles>release</releaseProfiles>
+            <useReleaseProfile>false</useReleaseProfile>
+            <!-- maven 2.2.1 does not necessarily pick up bare -Darguments value, so you'll need to explicitly set it here -->
+            <!-- <arguments>-X -Dmaven.wagon.provider.http=httpclient</arguments> -->
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.1</version>
+          <!-- this bit required for interop with Maven 2.x, done automatically with Maven 3.x -->
+          <!--
+	  <configuration>
+            <skip>true</skip>
+          </configuration>
+          -->
+	      </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.4</version>
+          <configuration>
+            <createChecksum>true</createChecksum>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <!-- nexus 2.4+ requires staging-maven-plugin 1.4.4+ -->
+          <!-- remember 1.5+ is Maven 3.1 compatible -->
+          <version>1.6.7</version>
+	        <extensions>false</extensions>
+          <!--<executions>
+            <execution>
+              <id>default-deploy</id>
+              <phase>deploy</phase> -->
+              <!-- By default, this is the phase deploy goal will bind to, this is explicit Maven 2.x or 3.x friendly -->
+              <!-- <goals>
+                <goal>deploy</goal>
+              </goals>
+            </execution>
+          </executions> -->
+          <configuration>
+            <nexusUrl>${nexusUrl}</nexusUrl>
+            <!-- Profile Id override profile matching -->
+            <!-- <stagingProfileId>14e7615ceb759a</stagingProfileId> -->
+            <!-- By having none of those above, we actually use Staging V2 in "auto" mode, profile will be matched server side -->
+            <!-- <stagingProgressTimeoutMinutes>5</stagingProgressTimeoutMinutes> -->
+            <!-- <stagingProgressPauseDurationSeconds>3</stagingProgressPauseDurationSeconds> -->
+            <!-- <keepStagingRepositoryOnCloseRuleFailure>false</keepStagingRepositoryOnCloseRuleFailure> -->
+            <skipStagingRepositoryClose>false</skipStagingRepositoryClose>
+            <tags>
+              <localUsername>${env.USER}</localUsername>
+              <javaVersion>${java.version}</javaVersion>
+              <hacker>
+                <script>alert('hello');</script>
+              </hacker>
+            </tags>
+          </configuration>
+        </plugin>
+        <!-- old Staging V1 , call nexus-maven-plugin explicitly -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-maven-plugin</artifactId>
+          <version>2.1</version>
+          <configuration>
+            <!-- <verboseDebug>true</verboseDebug> -->
+            <!-- <nexusUrl>${http}://${localhost}:${port}${path}service/local/staging/deploy/maven2/</nexusUrl> --></configuration>
+        </plugin>
+        <!-- tool for creating repository bundles for manual upload into a repository manager, staging bundle uploads -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-repository-plugin</artifactId>
+          <version>2.3.1</version>
+        </plugin>
+        <!-- if using maven 2.2.1, override super-pom dumb defaults -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+          </configuration>
+        </plugin>
+        <!-- for uploading the source jar with the repository:bundle-create -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.1.2</version>
+        </plugin>
+        <!-- for including the javadoc jar with repository:bundle-create -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.9.1</version>
+        </plugin>
+        <!-- so that bundles can be signed -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.4</version>
+          <executions>
+            <execution>
+              <id>sign-artifacts</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <useAgent>true</useAgent>
+            <executable>/usr/local/MacGPG2/bin/gpg2</executable>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.3.1</version>
+          <configuration>
+            <finalName>bogus</finalName>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.7</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <!-- evil https://code.google.com/p/maven-deferred-deploy-plugin/ -->
+      <!-- <plugin>
+        <groupId> org.apache.maven.plugins</groupId>
+        <artifactId>maven-deferred-deploy-plugin</artifactId>
+        <version>1.0-beta-1</version>
+      </plugin> -->
+
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <configuration>
+          <!-- serverId is always needed, even though some staging plugin options don't seem to need it -->
+          <serverId>${distSnapshotId}</serverId>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-repository-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadoc</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-source</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
+    <extensions>
+      <!-- the order in which extensions are loaded can sometimes affect which wagons are used -->
+
+      <!-- loading slf4j here may be required if Maven detailed logging reports slf4j impl not found WARN -->
+      <!--
+      <extension>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>1.7.5</version>
+      </extension>
+      -->
+
+      <!-- test using WEBDAV by uncommenting this provider -->
+      <!--
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-webdav-jackrabbit</artifactId>
+        <version>2.4</version>
+      </extension>
+      -->
+
+     <!-- Maven 2.2.1 should use this Wagon version -->
+     <!--
+     <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-http</artifactId>
+        <version>2.1</version>
+      </extension>
+    --></extensions>
+
+  </build>
+  <dependencies>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.3</version>
+    </dependency>
+
+      <!-- core To override any version from transitive dependencies. -->
+
+      <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-core</artifactId>
+      <version>1.3</version>
+      
+    </dependency>
+
+    
+   <!--  <dependency>
+      <groupId>com.sonatype.sample</groupId>
+      <artifactId>staging-test-project</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    --> 
+  </dependencies>
+
+  <distributionManagement>
+    <repository>
+      <id>${distReleaseId}</id>
+      <url>${distReleaseUrl}</url>
+    </repository>
+    <snapshotRepository>
+      <id>${distSnapshotId}</id>
+      <url>${distSnapshotUrl}</url>
+      <uniqueVersion>${uniqueVersion}</uniqueVersion>
+    </snapshotRepository>
+    <site>
+      <id>nexus-site</id>
+      <!-- nexus book says use dav -->
+      <url>dav:${http}://${localhost}:${port}${path}content/sites/site</url>
+    </site>
+  </distributionManagement>
+
+  <profiles>
+
+  
+    <!--
+    Allow disabling of staging integration.
+    -->
+    <profile>
+      <id>buildsupport-staging</id>
+      <activation>
+        <property>
+          <name>!buildsupport-staging.skip</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>mvn2-staging</id>
+      <activation>
+        <file>
+          <missing>${basedir}</missing>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>default-deploy</id>
+                  <phase>deploy</phase>
+                  <goals>
+                    <goal>deploy</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>mvn3-staging</id>
+      <activation>
+        <property>
+          <name>!buildsupport-staging.skip</name>
+        </property>
+        <file>
+          <exists>${basedir}</exists>
+        </file>
+      </activation>
+      <build>
+        <pluginManagement>
+          
+          <plugins>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <extensions>true</extensions>
+              <configuration>
+                <skipStaging>${skipStaging}</skipStaging>
+              </configuration>
+            </plugin>
+          </plugins>
+          
+        </pluginManagement>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>mvn3</id>
+      <activation>
+        <file>
+          <exists>${basedir}</exists>
+        </file>
+      </activation>
+      <build>          
+        <plugins>
+          <!-- http://maven.apache.org/plugins/maven-site-plugin/maven-3.html -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <!-- use compatible plugin versions https://cwiki.apache.org/confluence/display/MAVEN/AetherClassNotFound -->
+            <version>3.3</version>
+            <executions>
+              <execution>
+                <id>attach-descriptor</id>
+                <goals>
+                  <goal>attach-descriptor</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-project-info-reports-plugin</artifactId>
+            <version>2.7</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- deploy plugin is left in case some project would like to use it instead of staging plugin -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+              <updateReleaseInfo>true</updateReleaseInfo>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <configuration>
+              <!-- FIXME as of 1.2 a bug in deferred deploy requires url to be explicitly set instead of reaping it from distMgt -->
+              <serverId>${distReleaseId}</serverId>
+              <updateReleaseInfo>true</updateReleaseInfo>
+            </configuration>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>lifecycle</id>
+      <build>
+        <plugins>
+        <plugin>
+          <groupId>com.sonatype.clm</groupId>
+          <artifactId>clm-maven-plugin</artifactId>
+          <version>2.1.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>index</goal>
+                <goal>attach</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+
+    <profile>
+      <!-- make jar with no classes nxcm-2185-->
+      <id>no-class</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <excludes>
+                <exclude>**/*.class</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- make extra classifier jar-->
+      <id>classifier</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <classifier>exeptions</classifier>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- make source jar with no .java nxcm-2200-->
+      <id>no-java</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-source</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <excludes>
+                    <exclude>**/*.java</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>sign</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>directdeploy</id>
+      <properties>
+        <distReleaseUrl>${http}://${localhost}:${port}${path}content/repositories/releases/</distReleaseUrl>
+      </properties>
+      <!-- override staging v2 deployment by using this profile -->
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-deploy-plugin</artifactId>
+              <configuration>
+                <skip>false</skip>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <configuration>
+                <!-- no Staging happens at all, act like maven deploy plugin -->
+                <skipStaging>${skipStaging}</skipStaging>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+
+    <profile>
+      <id>nosum</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-install-plugin</artifactId>
+            <configuration>
+              <createChecksum>false</createChecksum>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- deploys custom metadata https://support.sonatype.com/entries/21474027 -->
+    <profile>
+      <id>metadata</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-artifacts</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <artifacts>
+                    <artifact>
+                      <file>${project.build.outputDirectory}/metadata.n3</file>
+                      <type>n3</type>
+                      <classifier>metadata</classifier>
+                    </artifact>
+                  </artifacts>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
+</project>

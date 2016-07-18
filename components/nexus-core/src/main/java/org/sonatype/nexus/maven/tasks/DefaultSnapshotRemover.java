@@ -639,7 +639,7 @@ public class DefaultSnapshotRemover
               if (gavHasMoreTimestampedSnapshots) {
                 file.getItemContext().put(MORE_TS_SNAPSHOTS_EXISTS_FOR_GAV, Boolean.TRUE);
               }
-              repository.deleteItem(false, createResourceStoreRequest(file, context));
+              repository.deleteItemWithChecksums(true, createResourceStoreRequest(file, context));
               deletedFiles++;
             }
             catch (ItemNotFoundException e) {
