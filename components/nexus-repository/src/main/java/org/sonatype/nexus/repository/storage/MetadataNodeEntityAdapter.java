@@ -125,7 +125,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
         getTypeName(), P_BUCKET
     );
     Iterable<ODocument> docs = OrientAsyncHelper.asyncIterable(db, query, parameters);
-    return readEntities(docs);
+    return transform(docs);
   }
 
   T findByProperty(final ODatabaseDocumentTx db,
@@ -158,7 +158,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     String query = buildQuery(false, whereClause, buckets, querySuffix);
     log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
     Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
-    return readEntities(docs);
+    return transform(docs);
   }
 
   long countByQuery(final ODatabaseDocumentTx db,
@@ -226,17 +226,4 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
       }
     }
   }
-
-  protected Iterable<T> readEntities(final Iterable<ODocument> documents) {
-    return Iterables.transform(
-        documents,
-        new Function<ODocument, T>()
-        {
-          @Override
-          public T apply(final ODocument doc) {
-            return readEntity(doc);
-          }
-        });
-  }
-
 }

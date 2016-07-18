@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Type + name needs to be unique.
  *
  * This serves as a descriptor, but typically also will be an event-sink to listen for events and emit requests
- * to encodde and send webhook requests.
+ * to encode and send webhook requests.
  *
  * @since 3.1
  */
@@ -61,10 +61,10 @@ public abstract class Webhook
   public abstract String getName();
 
   /**
-   * Helper to return type:name.
+   * Helper to return rm:type:name.
    */
   public String getId() {
-    return getType() + ":" + getName();
+    return "rm:" + getType() + ":" + getName();
   }
 
   /**

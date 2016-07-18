@@ -18,7 +18,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.security.PasswordHelper
 
-import com.google.inject.util.Providers
 import com.orientechnologies.orient.core.exception.OValidationException
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException
 import org.junit.After
@@ -35,7 +34,7 @@ class ConfigurationStoreImplTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule('test')
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
   private ConfigurationStoreImpl underTest
 
@@ -45,7 +44,7 @@ class ConfigurationStoreImplTest
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator())
 
     underTest = new ConfigurationStoreImpl(
-        Providers.of(database.instance),
+        database.instanceProvider,
         entityAdapter
     )
 

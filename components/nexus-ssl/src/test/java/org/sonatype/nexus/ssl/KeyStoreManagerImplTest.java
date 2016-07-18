@@ -13,20 +13,28 @@
 package org.sonatype.nexus.ssl;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -42,13 +50,16 @@ import javax.net.ssl.X509TrustManager;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.goodies.testsupport.hamcrest.FileMatchers;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayWithSize;
@@ -76,24 +87,19 @@ public class KeyStoreManagerImplTest
 {
   private final CryptoHelper crypto = new CryptoHelperImpl();
 
-  private File keyStoreDir = util.createTempDir("keystores");
+  private KeyStoreStorageManager storageManager;
 
   private KeyStoreManager keyStoreManager;
 
   @Before
   public void setUp() throws Exception {
-    keyStoreManager = createKeyStoreManager(keyStoreDir);
+    storageManager = new MemKeyStoreStorageManager();
+    keyStoreManager = createKeyStoreManager(storageManager);
   }
 
-  private KeyStoreManager createKeyStoreManager(final File dir) {
-    return createKeyStoreManager(dir, null);
-  }
-
-  private KeyStoreManager createKeyStoreManager(final File dir, final String prefix) {
+  private KeyStoreManager createKeyStoreManager(final KeyStoreStorageManager storageManager) {
     KeyStoreManagerConfiguration config = mock(KeyStoreManagerConfiguration.class);
     // use lower strength for faster test execution
-    when(config.getBaseDir()).thenReturn(dir);
-    when(config.getFileNamesPrefix()).thenReturn(prefix);
     when(config.getKeyStoreType()).thenReturn("JKS");
     when(config.getKeyAlgorithm()).thenReturn("RSA");
     when(config.getKeyAlgorithmSize()).thenReturn(1024);
@@ -104,18 +110,7 @@ public class KeyStoreManagerImplTest
     when(config.getPrivateKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getTrustedKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getPrivateKeyPassword()).thenReturn("pwd".toCharArray());
-    return new KeyStoreManagerImpl(crypto, config);
-  }
-
-  @Test
-  public void testPrefixes() throws Exception {
-    assertThat(new File(keyStoreDir, "private.ks"), FileMatchers.exists());
-    assertThat(new File(keyStoreDir, "trusted.ks"), FileMatchers.exists());
-
-    createKeyStoreManager(keyStoreDir, "test");
-
-    assertThat(new File(keyStoreDir, "test-private.ks"), FileMatchers.exists());
-    assertThat(new File(keyStoreDir, "trusted.ks"), FileMatchers.exists());
+    return new KeyStoreManagerImpl(crypto, storageManager, config);
   }
 
   /**
@@ -435,7 +430,7 @@ public class KeyStoreManagerImplTest
 
     // now create a new KeyStoreManager using the same directory, isKeyPairInitialized should return true
     assertThat("Expected true after loading an existing KeystoreManager",
-        createKeyStoreManager(keyStoreDir).isKeyPairInitialized());
+        createKeyStoreManager(storageManager).isKeyPairInitialized());
   }
 
   /**
@@ -443,14 +438,11 @@ public class KeyStoreManagerImplTest
    */
   @Test
   public void testServerAndClientTrustManagers() throws Exception {
-    File serverSideKeyStoreDir = new File(keyStoreDir, "testSSLConnection/serverSideKeyStores/");
-    File clientSideKeyStoreDir = new File(keyStoreDir, "testSSLConnection/clientSideKeyStores/");
-
     // first setup the keystores
-    KeyStoreManager serverKeyStoreManager = createKeyStoreManager(serverSideKeyStoreDir);
+    KeyStoreManager serverKeyStoreManager = createKeyStoreManager(new MemKeyStoreStorageManager());
     serverKeyStoreManager.generateAndStoreKeyPair("Server Side", "dev", "codeSoft", "AnyTown", "state", "US");
 
-    KeyStoreManager clientKeyStoreManager = createKeyStoreManager(clientSideKeyStoreDir);
+    KeyStoreManager clientKeyStoreManager = createKeyStoreManager(new MemKeyStoreStorageManager());
     clientKeyStoreManager.generateAndStoreKeyPair("Client Side", "dev", "codeSoft", "AnyTown", "state", "US");
 
     // now grab the cert from the client and stick it in the server
@@ -494,12 +486,10 @@ public class KeyStoreManagerImplTest
   @Test
   public void testSSLConnection() throws Exception {
     // first setup the keystores
-    KeyStoreManager serverKeyStoreManager =
-        createKeyStoreManager(new File(keyStoreDir, "testSSLConnection/serverKeyStore"));
+    KeyStoreManager serverKeyStoreManager = createKeyStoreManager(new MemKeyStoreStorageManager());
     serverKeyStoreManager.generateAndStoreKeyPair("Server Side", "dev", "codeSoft", "AnyTown", "state", "US");
 
-    KeyStoreManager clientKeyStoreManager =
-        createKeyStoreManager(new File(keyStoreDir, "testSSLConnection/clientKeyStore"));
+    KeyStoreManager clientKeyStoreManager = createKeyStoreManager(new MemKeyStoreStorageManager());
     clientKeyStoreManager.generateAndStoreKeyPair("Client Side", "dev", "codeSoft", "AnyTown", "state", "US");
 
     // now grab the cert from the client and stick it in the pub
@@ -633,6 +623,55 @@ public class KeyStoreManagerImplTest
       catch (Exception exception) {
         log(exception.getMessage(), exception);
       }
+    }
+  }
+
+  static class MemKeyStoreStorageManager
+      implements KeyStoreStorageManager
+  {
+    class MemKeyStoreStorage
+        implements KeyStoreStorage
+    {
+      private final String keyStoreName;
+
+      MemKeyStoreStorage(final String keyStoreName) {
+        this.keyStoreName = checkNotNull(keyStoreName);
+      }
+
+      @Override
+      public boolean exists() {
+        return storages.get(keyStoreName) != null;
+      }
+
+      @Override
+      public boolean modified() {
+        return false;
+      }
+
+      @Override
+      public void load(final KeyStore keyStore, final char[] password)
+          throws NoSuchAlgorithmException, CertificateException, IOException
+      {
+        byte[] bytes = storages.get(keyStoreName);
+        checkState(bytes != null);
+        keyStore.load(new ByteArrayInputStream(bytes), password);
+      }
+
+      @Override
+      public void save(final KeyStore keyStore, final char[] password)
+          throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException
+      {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        keyStore.store(baos, password);
+        storages.put(keyStoreName, baos.toByteArray());
+      }
+    }
+
+    private final Map<String, byte[]> storages = new HashMap<>();
+
+    @Override
+    public KeyStoreStorage createStorage(final String keyStoreName) {
+      return new MemKeyStoreStorage(keyStoreName);
     }
   }
 }

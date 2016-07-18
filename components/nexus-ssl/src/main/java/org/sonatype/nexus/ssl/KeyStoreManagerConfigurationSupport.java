@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.ssl;
 
-import java.io.File;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -32,10 +30,6 @@ public class KeyStoreManagerConfigurationSupport
     implements KeyStoreManagerConfiguration
 {
   private static final String DEFAULT = "DEFAULT";
-
-  private File baseDir;
-
-  private String fileNamesPrefix;
 
   private String keyStoreType = "JKS";
 
@@ -56,25 +50,6 @@ public class KeyStoreManagerConfigurationSupport
   private char[] trustedKeyStorePassword;
 
   private char[] privateKeyPassword;
-
-  public void setBaseDir(final File baseDir) {
-    this.baseDir = checkNotNull(baseDir);
-    log.debug("Basedir: {}", baseDir);
-  }
-
-  @Override
-  public File getBaseDir() {
-    return baseDir;
-  }
-
-  public void setFileNamesPrefix(final String fileNamesPrefix) {
-    this.fileNamesPrefix = fileNamesPrefix;
-  }
-
-  @Override
-  public String getFileNamesPrefix() {
-    return fileNamesPrefix;
-  }
 
   public void setKeyStoreType(final String keyStoreType) {
     this.keyStoreType = checkNotNull(keyStoreType);
@@ -188,8 +163,7 @@ public class KeyStoreManagerConfigurationSupport
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "baseDir=" + baseDir +
-        ", keyStoreType='" + keyStoreType + '\'' +
+        "keyStoreType='" + keyStoreType + '\'' +
         ", keyAlgorithm='" + keyAlgorithm + '\'' +
         ", keyAlgorithmSize=" + keyAlgorithmSize +
         ", certificateValidity=" + certificateValidity +

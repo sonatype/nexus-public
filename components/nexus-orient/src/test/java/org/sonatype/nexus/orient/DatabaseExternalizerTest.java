@@ -42,7 +42,7 @@ public class DatabaseExternalizerTest
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Rule
-  public PersistentDatabaseInstanceRule database = new PersistentDatabaseInstanceRule("test");
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inFilesystem("test");
 
   @Test
   public void backupDatabase() throws Exception {

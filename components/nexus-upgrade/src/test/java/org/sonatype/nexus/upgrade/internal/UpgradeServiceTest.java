@@ -185,6 +185,9 @@ public class UpgradeServiceTest
     order.verify(checkpointFoo).commit();
     order.verify(checkpointWibble).commit();
 
+    order.verify(checkpointFoo).end();
+    order.verify(checkpointWibble).end();
+
     verifyNoMoreInteractions(
         checkpointFoo,
         checkpointBar,
@@ -235,6 +238,10 @@ public class UpgradeServiceTest
     order.verify(checkpointFoo).commit();
     order.verify(checkpointBar).commit();
     order.verify(checkpointWibble).commit();
+
+    order.verify(checkpointFoo).end();
+    order.verify(checkpointBar).end();
+    order.verify(checkpointWibble).end();
 
     verifyNoMoreInteractions(
         checkpointFoo,

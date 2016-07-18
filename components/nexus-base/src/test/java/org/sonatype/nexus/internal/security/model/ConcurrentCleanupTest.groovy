@@ -16,8 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.orient.MemoryDatabaseManager
-import org.sonatype.nexus.orient.MinimalDatabaseServer
+import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.CUserRoleMapping
@@ -26,9 +25,9 @@ import org.sonatype.nexus.security.config.SecurityConfigurationCleaner
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource
 import org.sonatype.nexus.security.internal.SecurityConfigurationCleanerImpl
 
-import com.google.inject.util.Providers
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -51,9 +50,8 @@ extends TestSupport
 
   private static final int NUMBER_OF_ROLE_UPDATE_THREADS = 3
 
-  private MinimalDatabaseServer databaseServer
-
-  private MemoryDatabaseManager databaseManager
+  @Rule
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('security')
 
   private OrientSecurityConfigurationSource source
 
@@ -63,12 +61,8 @@ extends TestSupport
 
   @Before
   public void prepare() throws Exception {
-    databaseServer = new MinimalDatabaseServer()
-    databaseServer.start()
-    databaseManager = new MemoryDatabaseManager()
-    databaseManager.start()
     source = new OrientSecurityConfigurationSource(
-        Providers.of(databaseManager.instance("security")),
+        database.instanceProvider,
         new StaticSecurityConfigurationSource(),
         new CUserEntityAdapter(),
         new CRoleEntityAdapter(),
@@ -85,12 +79,6 @@ extends TestSupport
   public void shutdown() throws Exception {
     if (source) {
       source.stop()
-    }
-    if (databaseManager) {
-      databaseManager.stop()
-    }
-    if (databaseServer) {
-      databaseServer.stop()
     }
   }
 

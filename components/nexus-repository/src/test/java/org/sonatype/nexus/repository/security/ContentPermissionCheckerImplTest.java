@@ -13,8 +13,7 @@
 package org.sonatype.nexus.repository.security;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.internal.ContentPermissionCheckerImpl;
@@ -24,6 +23,7 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluator;
 import org.sonatype.nexus.selector.VariableSource;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -46,10 +46,23 @@ public class ContentPermissionCheckerImplTest
   @Mock
   VariableSource variableSource;
 
+  SelectorConfiguration config;
+
+  ContentPermissionCheckerImpl impl;
+
+  @Before
+  public void setup() {
+    impl = new ContentPermissionCheckerImpl(securityHelper, selectorEvaluator);
+
+    config = new SelectorConfiguration();
+    config.setName("selector");
+    config.setDescription("selector");
+    config.setType("jexl");
+    config.setAttributes(Collections.singletonMap("expression", "true"));
+  }
+
   @Test
   public void testIsViewPermitted_permitted() throws Exception {
-    ContentPermissionCheckerImpl impl = new ContentPermissionCheckerImpl(securityHelper, selectorEvaluator);
-
     when(securityHelper
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
@@ -59,8 +72,6 @@ public class ContentPermissionCheckerImplTest
 
   @Test
   public void testIsViewPermitted_notPermitted() throws Exception {
-    ContentPermissionCheckerImpl impl = new ContentPermissionCheckerImpl(securityHelper, selectorEvaluator);
-
     assertThat(impl.isViewPermitted("repoName", "repoFormat", BreadActions.READ), is(false));
 
     //just to make sure it was actually called, since returning false is the default behaviour
@@ -70,42 +81,70 @@ public class ContentPermissionCheckerImplTest
 
   @Test
   public void testIsContentPermitted_permitted() throws Exception {
-    ContentPermissionCheckerImpl impl = new ContentPermissionCheckerImpl(securityHelper, selectorEvaluator);
-
     when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
 
     when(securityHelper.anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName",
         Arrays.asList(BreadActions.READ))))).thenReturn(true);
-
-    SelectorConfiguration config = new SelectorConfiguration();
-    config.setName("selector");
-    config.setDescription("selector");
-    config.setType("jexl");
-    Map<String, Object> attributes = new HashMap<>();
-    attributes.put("expression", "true");
-    config.setAttributes(attributes);
 
     assertThat(impl.isContentPermitted("repoName", "repoFormat", BreadActions.READ, config, variableSource), is(true));
   }
 
   @Test
   public void testIsContentPermitted_notPermitted() throws Exception {
-    ContentPermissionCheckerImpl impl = new ContentPermissionCheckerImpl(securityHelper, selectorEvaluator);
-
     when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
-
-    SelectorConfiguration config = new SelectorConfiguration();
-    config.setName("selector");
-    config.setDescription("selector");
-    config.setType("jexl");
-    Map<String, Object> attributes = new HashMap<>();
-    attributes.put("expression", "true");
-    config.setAttributes(attributes);
 
     assertThat(impl.isContentPermitted("repoName", "repoFormat", BreadActions.READ, config, variableSource), is(false));
 
     //just to make sure it was actually called, since returning false is the default behaviour
     verify(securityHelper).anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName",
         Arrays.asList(BreadActions.READ))));
+  }
+
+  @Test
+  public void testIsPermitted_viewPermittedContentPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, Arrays.asList(config), variableSource),
+        is(true));
+  }
+
+  @Test
+  public void testIsPermitted_viewPermittedContentNotPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorEvaluator.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, Arrays.asList(config), variableSource),
+        is(true));
+  }
+
+  @Test
+  public void testIsPermitted_viewNotPermittedContentPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(false);
+
+    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, Arrays.asList(config), variableSource),
+        is(false));
+  }
+
+  @Test
+  public void testIsPermitted_viewNotPermittedContentNotPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(false);
+
+    when(selectorEvaluator.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, Arrays.asList(config), variableSource),
+        is(false));
   }
 }

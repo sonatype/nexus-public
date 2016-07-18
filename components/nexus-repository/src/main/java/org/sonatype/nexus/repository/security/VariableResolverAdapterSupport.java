@@ -13,14 +13,20 @@
 package org.sonatype.nexus.repository.security;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.ConstantVariableResolver;
+import org.sonatype.nexus.selector.PropertiesResolver;
 import org.sonatype.nexus.selector.VariableResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Adapts different contexts to variable resolvers
@@ -30,11 +36,14 @@ import org.sonatype.nexus.selector.VariableSourceBuilder;
 public abstract class VariableResolverAdapterSupport
   implements VariableResolverAdapter
 {
+  private static final String PATH = "path";
+  private static final String FORMAT = "format";
+
   @Override
   public VariableSource fromRequest(Request request, Repository repository) {
     Set<VariableResolver> variableResolvers = new HashSet<>();
-    variableResolvers.add(new ConstantVariableResolver(request.getPath(), "path"));
-    variableResolvers.add(new ConstantVariableResolver(repository.getFormat().getValue(), "format"));
+    variableResolvers.add(new ConstantVariableResolver(request.getPath(), PATH));
+    variableResolvers.add(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
     addFromRequest(variableResolvers, request);
 
     VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
@@ -43,4 +52,39 @@ public abstract class VariableResolverAdapterSupport
   }
 
   protected abstract void addFromRequest(Set<VariableResolver> variableResolvers, Request request);
+
+  @Override
+  public VariableSource fromDocument(ODocument document) {
+    String path = document.field(AssetEntityAdapter.P_NAME, String.class);
+    String format = document.field(AssetEntityAdapter.P_FORMAT, String.class);
+
+    Set<VariableResolver> variableResolvers = new HashSet<>();
+    variableResolvers.add(new ConstantVariableResolver(path, PATH));
+    variableResolvers.add(new ConstantVariableResolver(format, FORMAT));
+    addFromDocument(variableResolvers, document);
+
+    VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
+    variableResolvers.forEach(variableSourceBuilder::addResolver);
+    return variableSourceBuilder.build();
+  }
+
+  protected abstract void addFromDocument(Set<VariableResolver> variableResolvers, ODocument document);
+
+  @Override
+  public VariableSource fromAsset(Asset asset) {
+    Set<VariableResolver> variableResolvers = new HashSet<>();
+    variableResolvers.add(new ConstantVariableResolver(asset.name(), PATH));
+    variableResolvers.add(new ConstantVariableResolver(asset.format(), FORMAT));
+    addFromAsset(variableResolvers, asset);
+
+    VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
+    variableResolvers.forEach(variableSourceBuilder::addResolver);
+    return variableSourceBuilder.build();
+  }
+
+  protected abstract void addFromAsset(Set<VariableResolver> variableResolvers, Asset asset);
+
+  protected void addCoordinates(Set<VariableResolver> resolvers, Map<String, String> coordinates) {
+    resolvers.add(new PropertiesResolver<>("coordinate", coordinates));
+  }
 }

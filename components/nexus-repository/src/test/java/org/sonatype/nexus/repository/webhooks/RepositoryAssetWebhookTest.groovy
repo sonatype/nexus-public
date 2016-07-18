@@ -91,6 +91,11 @@ class RepositoryAssetWebhookTest
   }
 
   @Test
+  public void 'has the correct event id'() {
+    assert repositoryAssetWebhook.id == "rm:repository:asset"
+  }
+
+  @Test
   public void 'queues local asset created events'() {
     testLocalAssetEvent(assetCreatedEvent, 'CREATED')
   }

@@ -12,14 +12,11 @@
  */
 package org.sonatype.nexus.internal.node;
 
-import java.io.File;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfigurationSupport;
 
@@ -54,7 +51,6 @@ public class KeyStoreManagerConfigurationImpl
 
   @Inject
   public KeyStoreManagerConfigurationImpl(
-      final ApplicationDirectories directories,
       @Named(CPREFIX + ".keyStoreType:-JKS}") final String keyStoreType,
       @Named(CPREFIX + ".keyAlgorithm:-RSA}") final String keyAlgorithm,
       @Named(CPREFIX + ".keyAlgorithmSize:-2048}") final int keyAlgorithmSize,
@@ -63,8 +59,6 @@ public class KeyStoreManagerConfigurationImpl
       @Named(CPREFIX + ".keyManagerAlgorithm:-DEFAULT}") final String keyManagerAlgorithm,
       @Named(CPREFIX + ".trustManagerAlgorithm:-DEFAULT}") final String trustManagerAlgorithm)
   {
-    setBaseDir(new File(directories.getWorkDirectory("keystores"), KeyStoreManagerImpl.NAME));
-
     setPrivateKeyStorePassword(PKSP);
     setTrustedKeyStorePassword(TKSP);
     setPrivateKeyPassword(PKP);
@@ -78,8 +72,7 @@ public class KeyStoreManagerConfigurationImpl
   }
 
   @VisibleForTesting
-  public KeyStoreManagerConfigurationImpl(final File baseDir) {
-    setBaseDir(baseDir);
+  public KeyStoreManagerConfigurationImpl() {
     setPrivateKeyStorePassword(PKSP);
     setTrustedKeyStorePassword(TKSP);
     setPrivateKeyPassword(PKP);

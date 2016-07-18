@@ -19,7 +19,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.security.UserPrincipalsHelper
 
 import com.google.common.collect.Maps
-import com.google.inject.util.Providers
 import org.apache.shiro.subject.PrincipalCollection
 import org.apache.shiro.subject.SimplePrincipalCollection
 import org.hamcrest.MatcherAssert
@@ -40,14 +39,14 @@ class ApiKeyStoreImplTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule('test')
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
   private ApiKeyStoreImpl underTest
 
   @Before
   void setup() {
     underTest = new ApiKeyStoreImpl(
-        Providers.of(database.instance),
+        database.instanceProvider,
         new ApiKeyEntityAdapter(),
         mock(UserPrincipalsHelper.class),
         Maps.newHashMap(),

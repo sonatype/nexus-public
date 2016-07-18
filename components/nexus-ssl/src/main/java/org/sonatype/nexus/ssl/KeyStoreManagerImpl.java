@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.ssl;
 
-import java.io.File;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.ssl.internal.ReloadableX509KeyManager;
 import org.sonatype.nexus.ssl.internal.ReloadableX509TrustManager;
 import org.sonatype.nexus.ssl.internal.geronimo.FileKeystoreInstance;
 import org.sonatype.nexus.ssl.internal.geronimo.KeystoreInstance;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -71,27 +72,14 @@ public class KeyStoreManagerImpl
   private ReloadableX509KeyManager reloadableX509KeyManager;
 
   public KeyStoreManagerImpl(final CryptoHelper crypto,
+                             final KeyStoreStorageManager storageManager,
                              final KeyStoreManagerConfiguration config)
   {
     this.crypto = checkNotNull(crypto);
     this.config = checkNotNull(config);
 
-    File dir = config.getBaseDir();
-    dir.mkdirs();
-
-    this.privateKeyStore = initializePrivateKeyStore(
-        new File(dir, getFileNamesPrefix(config) + PRIVATE_KEY_STORE_NAME)
-    );
-    this.trustedKeyStore = initializeTrustedKeyStore(
-        new File(dir, getFileNamesPrefix(config) + TRUSTED_KEY_STORE_NAME)
-    );
-  }
-
-  private String getFileNamesPrefix(final KeyStoreManagerConfiguration config) {
-    if (config.getFileNamesPrefix() == null || config.getFileNamesPrefix().trim().isEmpty()) {
-      return "";
-    }
-    return config.getFileNamesPrefix().trim() + "-";
+    this.privateKeyStore = initializePrivateKeyStore(storageManager.createStorage(PRIVATE_KEY_STORE_NAME));
+    this.trustedKeyStore = initializeTrustedKeyStore(storageManager.createStorage(TRUSTED_KEY_STORE_NAME));
   }
 
   /**
@@ -100,12 +88,12 @@ public class KeyStoreManagerImpl
    * <p/>
    * This key is never used by anything.  Its only here to prevent the key-store from being empty of keys.
    */
-  private KeystoreInstance initializePrivateKeyStore(final File file) {
-    log.debug("Initializing private key-store: {}", file);
+  private KeystoreInstance initializePrivateKeyStore(final KeyStoreStorage storage) {
+    log.debug("Initializing private key-store: {}", storage);
 
     FileKeystoreInstance ks = new FileKeystoreInstance(
         crypto,
-        file,
+        storage,
         PRIVATE_KEY_STORE_NAME,
         config.getPrivateKeyStorePassword(),
         config.getKeyStoreType(),
@@ -164,12 +152,12 @@ public class KeyStoreManagerImpl
     return ks;
   }
 
-  private KeystoreInstance initializeTrustedKeyStore(final File file) {
-    log.debug("Initializing trusted key-store: {}", file);
+  private KeystoreInstance initializeTrustedKeyStore(final KeyStoreStorage storage) {
+    log.debug("Initializing trusted key-store: {}", storage);
 
     FileKeystoreInstance ks = new FileKeystoreInstance(
         crypto,
-        file,
+        storage,
         TRUSTED_KEY_STORE_NAME,
         config.getTrustedKeyStorePassword(),
         config.getKeyStoreType(),

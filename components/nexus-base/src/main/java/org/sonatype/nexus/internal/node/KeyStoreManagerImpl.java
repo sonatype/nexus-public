@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
 /**
  * Node {@link KeyStoreManager}.
@@ -34,8 +35,9 @@ public class KeyStoreManagerImpl
 
   @Inject
   public KeyStoreManagerImpl(final CryptoHelper crypto,
+                             @Named(NAME) final KeyStoreStorageManager storageManager,
                              @Named(NAME) final KeyStoreManagerConfiguration config)
   {
-    super(crypto, config);
+    super(crypto, storageManager, config);
   }
 }

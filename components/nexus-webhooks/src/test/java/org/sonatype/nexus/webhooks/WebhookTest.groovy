@@ -76,6 +76,11 @@ class WebhookTest
   }
 
   @Test
+  void 'prepends rm: to event id'() {
+    assert underTest.id.startsWith("rm:")
+  }
+
+  @Test
   void 'listen for events on first subscription'() {
     assert underTest.subscriptions.size() == 0
 

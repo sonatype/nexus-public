@@ -19,8 +19,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterSupport;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableResolver;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Simple implementation that will expose the path/format variable resolvers
@@ -35,6 +38,16 @@ public class SimpleVariableResolverAdapter
 {
   @Override
   protected void addFromRequest(final Set<VariableResolver> variableResolvers, final Request request) {
+    //no-op the simple impl just allows for the path/format variable resolvers in the support class
+  }
+
+  @Override
+  protected void addFromDocument(final Set<VariableResolver> variableResolvers, final ODocument document) {
+    //no-op the simple impl just allows for the path/format variable resolvers in the support class
+  }
+
+  @Override
+  protected void addFromAsset(final Set<VariableResolver> variableResolvers, final Asset asset) {
     //no-op the simple impl just allows for the path/format variable resolvers in the support class
   }
 }

@@ -16,7 +16,6 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.orient.DatabaseInstanceRule
 
-import com.google.inject.util.Providers
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException
 import org.junit.After
 import org.junit.Before
@@ -32,14 +31,14 @@ class BlobStoreConfigurationStoreImplTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule('test')
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
   private BlobStoreConfigurationStoreImpl underTest
 
   @Before
   void setup() {
     underTest = new BlobStoreConfigurationStoreImpl(
-        Providers.of(database.instance),
+        database.instanceProvider,
         new BlobStoreConfigurationEntityAdapter()
     )
     underTest.start()

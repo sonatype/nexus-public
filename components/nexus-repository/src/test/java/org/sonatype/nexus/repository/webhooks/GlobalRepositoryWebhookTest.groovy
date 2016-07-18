@@ -92,6 +92,11 @@ class GlobalRepositoryWebhookTest
   }
 
   @Test
+  public void 'has the correct event id'() {
+    assert globalRepositoryWebhook.id == "rm:global:repository"
+  }
+
+  @Test
   public void 'queues repository created events'() {
     testRepositoryEvent(repositoryCreatedEvent, 'CREATED')
   }

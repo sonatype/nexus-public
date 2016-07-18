@@ -219,7 +219,7 @@ public class AssetEntityAdapter
         DB_CLASS, P_BUCKET, P_COMPONENT
     );
     Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
-    return readEntities(docs);
+    return transform(docs);
   }
 
   @Override

@@ -23,7 +23,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 
 import com.google.common.collect.Maps;
-import com.google.inject.util.Providers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,7 +41,7 @@ public class OrientCapabilityStorageTest
   extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule("test");
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
   private OrientCapabilityStorage underTest;
 
@@ -52,7 +51,7 @@ public class OrientCapabilityStorageTest
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator());
 
     this.underTest = new OrientCapabilityStorage(
-        Providers.of(database.getInstance()),
+        database.getInstanceProvider(),
         entityAdapter
     );
 

@@ -12,10 +12,18 @@
  */
 package org.sonatype.nexus.orient;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+
+import javax.inject.Provider;
+
+import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.orientechnologies.common.io.OFileUtils;
 import org.junit.rules.ExternalResource;
 import org.junit.runners.model.MultipleFailureException;
 import org.slf4j.Logger;
@@ -46,14 +54,35 @@ public class DatabaseInstanceRule
 
   private final String name;
 
+  private final boolean persistent;
+
   private MinimalDatabaseServer server;
 
-  private MemoryDatabaseManager manager;
+  private DatabaseManagerSupport manager;
 
   private DatabaseInstance instance;
 
-  public DatabaseInstanceRule(final String name) {
+  /**
+   * Provides an in-memory database.
+   * 
+   * @since 3.1
+   */
+  public static DatabaseInstanceRule inMemory(final String name) {
+    return new DatabaseInstanceRule(name, false);
+  }
+
+  /**
+   * Provides a persistent database.
+   * 
+   * @since 3.1
+   */
+  public static DatabaseInstanceRule inFilesystem(final String name) {
+    return new DatabaseInstanceRule(name, true);
+  }
+
+  private DatabaseInstanceRule(final String name, final boolean persistent) {
     this.name = checkNotNull(name);
+    this.persistent = persistent;
   }
 
   public MinimalDatabaseServer getServer() {
@@ -61,7 +90,7 @@ public class DatabaseInstanceRule
     return server;
   }
 
-  public MemoryDatabaseManager getManager() {
+  public DatabaseManager getManager() {
     checkState(manager != null);
     return manager;
   }
@@ -71,6 +100,13 @@ public class DatabaseInstanceRule
     return instance;
   }
 
+  /**
+   * @since 3.1
+   */
+  public Provider<DatabaseInstance> getInstanceProvider() {
+    return this::getInstance;
+  }
+
   @Override
   protected void before() throws Throwable {
     log.info("Preparing database instance: {}", name);
@@ -78,7 +114,7 @@ public class DatabaseInstanceRule
     server = new MinimalDatabaseServer();
     server.start();
 
-    manager = new MemoryDatabaseManager();
+    manager = persistent ? new PersistentDatabaseManager() : new MemoryDatabaseManager();
     manager.start();
 
     instance = manager.instance(name);
@@ -123,5 +159,37 @@ public class DatabaseInstanceRule
     }
 
     log.info("Database instance cleaned up");
+  }
+
+  static class PersistentDatabaseManager
+      extends DatabaseManagerSupport
+  {
+    private final File databasesDirectory;
+
+    PersistentDatabaseManager() {
+      File targetDir = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile();
+      databasesDirectory = new File(targetDir, "test-db." + UUID.randomUUID().toString().replace("-", ""));
+      log.info("Database dir: {}", databasesDirectory);
+    }
+
+    /**
+     * Returns the directory for the given named database.  Directory may or may not exist.
+     */
+    private File directory(final String name) throws IOException {
+      return new File(databasesDirectory, name).getCanonicalFile();
+    }
+
+    @Override
+    protected String connectionUri(final String name) {
+      try {
+        File dir = directory(name);
+        DirectoryHelper.mkdir(dir);
+
+        return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 }

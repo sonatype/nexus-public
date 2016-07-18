@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.VariableSource;
 
@@ -72,20 +75,12 @@ public abstract class SecurityFacetSupport
 
     Repository repo = getRepository();
 
-    //check view perm first, if applicable, grant access
-    if (!contentPermissionChecker.isViewPermitted(repo.getName(), repo.getFormat().getValue(), action)) {
-      //othwerise check the content selector perms
-      ensureContentSelectorPermissions(action, variableResolverAdapter.fromRequest(request, getRepository()));
+    List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse();
+    VariableSource variableSource = variableResolverAdapter.fromRequest(request, getRepository());
+    if (!contentPermissionChecker
+        .isPermitted(repo.getName(), repo.getFormat().getValue(), action, selectorConfigurations, variableSource)) {
+      throw new AuthorizationException();
     }
-  }
-
-  private void ensureContentSelectorPermissions(String action, VariableSource variableSource) {
-    Repository repo = getRepository();
-    selectorConfigurationStore.browse().stream()
-        .filter(c -> contentPermissionChecker
-            .isContentPermitted(repo.getName(), repo.getFormat().getValue(), action, c, variableSource))
-        .findAny()
-        .orElseThrow(() -> new AuthorizationException());
   }
 
   /**

@@ -15,10 +15,14 @@ package org.sonatype.nexus.selector;
 import java.util.Optional;
 import java.util.Set;
 
+import org.sonatype.nexus.common.text.Strings2;
+
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
+import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlExpression;
+import org.apache.commons.jexl3.JexlInfo;
 import org.apache.commons.jexl3.MapContext;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -56,6 +60,21 @@ public class JexlSelector
     }
     else {
       return true;
+    }
+  }
+
+  public static String prettyExceptionMsg(JexlException e) {
+    JexlInfo info = e.getInfo();
+    if (info != null) {
+      String detail = e.getMessage();
+      if (!Strings2.isBlank(detail)) {
+        detail = e.getMessage().substring(detail.indexOf('\'') + 1, detail.lastIndexOf('\''));
+      }
+      String parseMsg = detail.isEmpty() ? detail : String.format(" Error parsing string: '%s'.", detail);
+      return String.format("Invalid JEXL at line '%s' column '%s'.%s", info.getLine(), info.getColumn(), parseMsg);
+    }
+    else {
+      return e.getMessage();
     }
   }
 

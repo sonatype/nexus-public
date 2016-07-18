@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.ssl;
 
-import java.io.File;
-
 import org.sonatype.goodies.common.Time;
 
 /**
@@ -23,10 +21,6 @@ import org.sonatype.goodies.common.Time;
  */
 public interface KeyStoreManagerConfiguration
 {
-  File getBaseDir();
-
-  String getFileNamesPrefix();
-
   String getKeyStoreType();
 
   String getKeyAlgorithm();

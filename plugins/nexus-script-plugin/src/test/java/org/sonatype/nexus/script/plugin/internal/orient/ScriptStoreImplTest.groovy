@@ -17,7 +17,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.script.Script
 import org.sonatype.nexus.script.ScriptStore
 
-import com.google.inject.util.Providers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,13 +35,13 @@ public class ScriptStoreImplTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule('test')
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
   private ScriptStore underTest
 
   @Before
   void setUp() throws Exception {
-    underTest = new ScriptStoreImpl(Providers.of(database.getInstance()), new ScriptEntityAdapter())
+    underTest = new ScriptStoreImpl(database.getInstanceProvider(), new ScriptEntityAdapter())
     underTest.start()
   }
 

@@ -21,7 +21,6 @@ import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
@@ -35,6 +34,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 public class RawSecurityFacetTest
     extends TestSupport
@@ -79,24 +79,16 @@ public class RawSecurityFacetTest
   }
 
   @Test
-  public void testEnsurePermitted_viewPermitted() throws Exception {
-    when(contentPermissionChecker.isViewPermitted("RawSecurityFacetTest", "raw", BreadActions.READ)).thenReturn(true);
-
-    rawSecurityFacet.ensurePermitted(request);
-  }
-
-  @Test
-  public void testEnsurePermitted_viewNotPermittedSelectorPermitted() throws Exception {
-    when(contentPermissionChecker
-        .isContentPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(BreadActions.READ), any(), any()))
+  public void testEnsurePermitted_permitted() throws Exception {
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
         .thenReturn(true);
     rawSecurityFacet.ensurePermitted(request);
-
-    verify(contentPermissionChecker).isViewPermitted("RawSecurityFacetTest", "raw", BreadActions.READ);
   }
 
   @Test
-  public void testEnsurePermitted_viewNotPermittedSelectorNotPermitted() throws Exception {
+  public void testEnsurePermitted_notPermitted() throws Exception {
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
+        .thenReturn(false);
     try {
       rawSecurityFacet.ensurePermitted(request);
       fail("AuthorizationException should have been thrown");
@@ -105,8 +97,6 @@ public class RawSecurityFacetTest
       //expected
     }
 
-    verify(contentPermissionChecker).isViewPermitted("RawSecurityFacetTest", "raw", BreadActions.READ);
-    verify(contentPermissionChecker)
-        .isContentPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(BreadActions.READ), any(), any());
+    verify(contentPermissionChecker).isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any());
   }
 }

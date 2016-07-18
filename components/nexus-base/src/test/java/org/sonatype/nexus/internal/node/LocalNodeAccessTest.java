@@ -41,10 +41,10 @@ public class LocalNodeAccessTest
   @Before
   public void setUp() throws Exception {
     File dir = util.createTempDir("keystores");
-    KeyStoreManagerConfigurationImpl config = new KeyStoreManagerConfigurationImpl(dir);
+    KeyStoreManagerConfigurationImpl config = new KeyStoreManagerConfigurationImpl();
     // use lower strength for faster test execution
     config.setKeyAlgorithmSize(512);
-    keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), config);
+    keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
     nodeAccess = new LocalNodeAccessImpl(keyStoreManager);

@@ -12,12 +12,16 @@
  */
 package org.sonatype.nexus.selector;
 
+import org.apache.commons.jexl3.JexlBuilder;
+import org.apache.commons.jexl3.JexlException;
+import org.apache.commons.jexl3.JexlInfo;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 public class SelectorTest
 {
@@ -33,6 +37,53 @@ public class SelectorTest
         .addResolver(new ConstantVariableResolver("foobar", "someString"))
         .addResolver(new ConstantVariableResolver(of("a", "alfa", "b", "bravo"), "someMap"))
         .build();
+  }
+
+  @Test
+  public void testPrettyExceptionMsgOneLine() {
+    String expression = "&&INVALID";
+    testPrettyExceptionMsg(1, 1, "&&", expression);
+  }
+
+  @Test
+  public void testPrettyExceptionMsgMultiLine() {
+    String expression = "true\n #INVALID";
+    // For some reason JEXL thinks # is at column 3 in line 2
+    testPrettyExceptionMsg(2, 3, "#", expression);
+  }
+
+  private void testPrettyExceptionMsg(int line, int column, String detail, String expression) {
+    String expected = String.format("Invalid JEXL at line '%s' column '%s'. Error parsing string: '%s'.", line,
+        column, detail);
+    String returned = null;
+    System.out.println();
+    try {
+      new JexlBuilder().create().createExpression(expression);
+    }
+    catch (JexlException e) {
+      returned = JexlSelector.prettyExceptionMsg(e);
+    }
+    assertNotNull("Returned string was not set.", returned);
+    assertEquals(expected, returned);
+  }
+
+  @Test
+  public void testPrettyExceptionMsgNoDetail() {
+    // Setup
+    String expected = "Invalid JEXL at line '2' column '4'.";
+
+    JexlInfo info = new JexlInfo("", 2, 4);
+    // Mocked because JexlException modifies msg internally after construction
+    JexlException ex = mock(JexlException.class);
+    doReturn(info).when(ex).getInfo();
+    doReturn("").when(ex).getMessage();
+
+    // Execute
+    String returned = JexlSelector.prettyExceptionMsg(ex);
+
+    // Verify
+    assertNotNull("Returned string was not set.", returned);
+    assertEquals(expected, returned);
   }
 
   /*

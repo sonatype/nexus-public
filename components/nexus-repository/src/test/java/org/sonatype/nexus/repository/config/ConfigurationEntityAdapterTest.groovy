@@ -31,7 +31,7 @@ class ConfigurationEntityAdapterTest
   extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule('test')
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
   private ConfigurationEntityAdapter underTest
 

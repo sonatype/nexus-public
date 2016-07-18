@@ -32,7 +32,7 @@ public class MavenSecurityFacet
   @Inject
   public MavenSecurityFacet(final MavenFormatSecurityConfigurationResource securityResource,
                             final SelectorConfigurationStore selectorConfigurationStore,
-                            @Named("simple") final VariableResolverAdapter variableResolverAdapter,
+                            @Named(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,
                             final ContentPermissionChecker contentPermissionChecker)
   {
     super(securityResource, selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);

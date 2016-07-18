@@ -35,4 +35,9 @@ public abstract class CheckpointMock
   public void rollback() throws Exception {
     mock.rollback();
   }
+
+  @Override
+  public void end() {
+    mock.end();
+  }
 }

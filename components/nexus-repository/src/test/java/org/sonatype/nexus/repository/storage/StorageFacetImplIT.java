@@ -27,8 +27,8 @@ import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
+import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
-import org.sonatype.nexus.orient.PersistentDatabaseInstanceRule;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import com.google.inject.util.Providers;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -74,7 +73,7 @@ public class StorageFacetImplIT
     extends TestSupport
 {
   @Rule
-  public PersistentDatabaseInstanceRule database = new PersistentDatabaseInstanceRule("test");
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inFilesystem("test");
 
   protected StorageFacetImpl underTest;
 
@@ -112,7 +111,7 @@ public class StorageFacetImplIT
     underTest = new StorageFacetImpl(
         mockNodeAccess,
         mockBlobStoreManager,
-        Providers.of(database.getInstance()),
+        database.getInstanceProvider(),
         bucketEntityAdapter,
         componentEntityAdapter,
         assetEntityAdapter,

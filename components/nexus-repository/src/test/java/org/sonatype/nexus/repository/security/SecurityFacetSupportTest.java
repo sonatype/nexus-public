@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
@@ -33,6 +32,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 public class SecurityFacetSupportTest
     extends TestSupport
@@ -80,7 +80,7 @@ public class SecurityFacetSupportTest
     when(repository.getFormat()).thenReturn(new Format("test") { });
     when(repository.getName()).thenReturn("SecurityFacetSupportTest");
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(selectorConfiguration));
+    when(selectorConfigurationStore.browse()).thenReturn(Collections.singletonList(selectorConfiguration));
 
     testSecurityFacetSupport = new TestSecurityFacetSupport(repositoryFormatSecurityConfigurationResource,
         selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);
@@ -89,24 +89,17 @@ public class SecurityFacetSupportTest
   }
 
   @Test
-  public void testEnsurePermitted_viewPermitted() throws Exception {
-    when(contentPermissionChecker.isViewPermitted("SecurityFacetSupportTest", "test", BreadActions.READ)).thenReturn(true);
-
-    testSecurityFacetSupport.ensurePermitted(request);
-  }
-
-  @Test
-  public void testEnsurePermitted_viewNotPermittedSelectorPermitted() throws Exception {
-    when(contentPermissionChecker
-        .isContentPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(BreadActions.READ), any(), any()))
+  public void testEnsurePermitted_permitted() throws Exception {
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
         .thenReturn(true);
     testSecurityFacetSupport.ensurePermitted(request);
-
-    verify(contentPermissionChecker).isViewPermitted("SecurityFacetSupportTest", "test", BreadActions.READ);
   }
 
   @Test
-  public void testEnsurePermitted_viewNotPermittedSelectorNotPermitted() throws Exception {
+  public void testEnsurePermitted_notPermitted() throws Exception {
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
+        .thenReturn(false);
+
     try {
       testSecurityFacetSupport.ensurePermitted(request);
       fail("AuthorizationException should have been thrown");
@@ -115,8 +108,6 @@ public class SecurityFacetSupportTest
       //expected
     }
 
-    verify(contentPermissionChecker).isViewPermitted("SecurityFacetSupportTest", "test", BreadActions.READ);
-    verify(contentPermissionChecker)
-        .isContentPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(BreadActions.READ), any(), any());
+    verify(contentPermissionChecker).isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any());
   }
 }

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.Collection;
+
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.VariableSource;
 
@@ -23,16 +25,11 @@ import org.sonatype.nexus.selector.VariableSource;
 public interface ContentPermissionChecker
 {
   /**
-   * Ensure that the view permission for the desired repository/action is permitted
+   * Ensure that either the view permission or the content selector permission is permitted
    */
-  boolean isViewPermitted(String repositoryName, String repositoryFormat, String action);
-
-  /**
-   * Ensure that the content selector permission for the desired repository/action is permitted
-   */
-  boolean isContentPermitted(String repositoryName,
-                             String repositoryFormat,
-                             String action,
-                             SelectorConfiguration selectorConfiguration,
-                             VariableSource variableSource);
+  boolean isPermitted(String repositoryName,
+                      String repositoryFormat,
+                      String action,
+                      Collection<SelectorConfiguration> selectorConfigurations,
+                      VariableSource variableSource);
 }

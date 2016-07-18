@@ -93,6 +93,11 @@ class RepositoryComponentWebhookTest
   }
 
   @Test
+  public void 'has the correct event id'() {
+    assert repositoryComponentWebhook.id == "rm:repository:component"
+  }
+
+  @Test
   public void 'queues local component created events'() {
     testLocalComponentEvent(componentCreatedEvent, 'CREATED')
   }

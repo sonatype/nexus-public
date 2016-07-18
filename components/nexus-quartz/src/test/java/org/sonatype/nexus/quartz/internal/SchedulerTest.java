@@ -68,7 +68,7 @@ public class SchedulerTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule("test");
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
   public TaskSchedulerHelper taskSchedulerHelper;
 

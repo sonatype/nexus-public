@@ -125,7 +125,6 @@ public class UpgradeServiceImpl
       upgrades.forEach(apply());
       log.info(BANNER, "Commit upgrade");
       checkpoints.forEach(commit());
-      log.info(BANNER, "Upgrade complete");
     }
     catch (Throwable e) {
       log.warn(BANNER, "Rollback upgrade");
@@ -134,6 +133,8 @@ public class UpgradeServiceImpl
 
       throw Throwables.propagate(e);
     }
+    checkpoints.forEach(end());
+    log.info(BANNER, "Upgrade complete");
   }
 
   private Consumer<Checkpoint> begin() {
@@ -192,6 +193,20 @@ public class UpgradeServiceImpl
       catch (Throwable e) {
         log.warn("Problem rolling back {}", model, e);
         // continue rolling back other checkpoints...
+      }
+    };
+  }
+
+  private Consumer<Checkpoint> end() {
+    return checkpoint -> {
+      String model = checkpoints(checkpoint).model();
+      try {
+        log.info("Cleaning up {}", model);
+        checkpoint.end();
+      }
+      catch (Throwable e) { // NOSONAR
+        log.warn("Problem cleaning up {}", model, e);
+        // continue cleaning up other checkpoints...
       }
     };
   }

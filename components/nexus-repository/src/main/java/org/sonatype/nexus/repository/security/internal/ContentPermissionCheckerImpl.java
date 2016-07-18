@@ -1,3 +1,4 @@
+
 /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
@@ -13,6 +14,7 @@
 package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,6 +29,8 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorEvaluator;
 import org.sonatype.nexus.selector.VariableSource;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,12 +53,12 @@ public class ContentPermissionCheckerImpl
     this.selectorEvaluator = checkNotNull(selectorEvaluator);
   }
 
-  @Override
+  @VisibleForTesting
   public boolean isViewPermitted(final String repositoryName, final String repositoryFormat, final String action) {
     return securityHelper.anyPermitted(new RepositoryViewPermission(repositoryFormat, repositoryName, action));
   }
 
-  @Override
+  @VisibleForTesting
   public boolean isContentPermitted(final String repositoryName,
                                     final String repositoryFormat,
                                     final String action,
@@ -82,5 +86,21 @@ public class ContentPermissionCheckerImpl
     }
 
     return false;
+  }
+
+  @Override
+  public boolean isPermitted(final String repositoryName,
+                             final String repositoryFormat,
+                             final String action,
+                             final Collection<SelectorConfiguration> selectorConfigurations,
+                             final VariableSource variableSource)
+  {
+    //check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, action)) {
+      return true;
+    }
+    //otherwise check the content selector perms
+    return selectorConfigurations.stream()
+        .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
 }

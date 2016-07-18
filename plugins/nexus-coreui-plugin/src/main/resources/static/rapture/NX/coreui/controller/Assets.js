@@ -313,18 +313,11 @@ Ext.define('NX.coreui.controller.Assets', {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             assetList.getSelectionModel().deselectAll();
+            //Manually managing sync'ing the local AssetStore as AssetStore.load() won't run a callback if the load
+            //results in no data being returned.
             var assetStore = assetList.getStore();
-            if (assetStore.getCount() === 1) {
-              //ExtJs won't trigger the 'load' callback if there's no data????
-              assetStore.load();
-              me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
-            }
-            else {
-              assetStore.load(function () {
-                me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
-              });
-            }
-            
+            assetStore.remove(assetStore.findRecord('id', asset.getId()));
+            me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });

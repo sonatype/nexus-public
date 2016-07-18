@@ -49,10 +49,10 @@ public class EntityHookTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule sendingDatabase = new DatabaseInstanceRule("sender");
+  public DatabaseInstanceRule sendingDatabase = DatabaseInstanceRule.inMemory("sender");
 
   @Rule
-  public DatabaseInstanceRule receivingDatabase = new DatabaseInstanceRule("receiver");
+  public DatabaseInstanceRule receivingDatabase = DatabaseInstanceRule.inMemory("receiver");
 
   TestEntityAdapter entityAdapter = new TestEntityAdapter();
 

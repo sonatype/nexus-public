@@ -30,6 +30,17 @@ class GlobalAuditWebhookTest
     extends TestSupport
 {
   @Test
+  public void 'has the correct event id'() {
+    def eventBus = mock(EventBus.class)
+
+    def globalAuditWebhook = new GlobalAuditWebhook(
+        eventBus: eventBus
+    )
+
+    assert globalAuditWebhook.id == "rm:global:audit"
+  }
+
+  @Test
   public void 'queues audit webhook'() {
     def eventBus = mock(EventBus.class)
 

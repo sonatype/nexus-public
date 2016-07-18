@@ -12,14 +12,9 @@
  */
 package org.sonatype.nexus.ssl.internal.geronimo;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
@@ -56,6 +51,7 @@ import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyNotFoundException;
 import org.sonatype.nexus.ssl.KeystoreException;
+import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
 import org.apache.geronimo.crypto.asn1.ASN1InputStream;
 import org.apache.geronimo.crypto.asn1.ASN1Sequence;
@@ -84,9 +80,7 @@ public class FileKeystoreInstance
 
   private final CryptoHelper crypto;
 
-  private String keystorePath; // relative path
-
-  private File keystoreFile; // Only valid after startup
+  private KeyStoreStorage storage;
 
   private String keystoreName;
 
@@ -105,27 +99,15 @@ public class FileKeystoreInstance
 
   private KeyStore keystore;
 
-  private long keystoreReadDate = Long.MIN_VALUE;
-
   public FileKeystoreInstance(CryptoHelper crypto,
-                              File keystorePath,
-                              String keystoreName,
-                              char[] keystorePassword,
-                              String keystoreType,
-                              Map<String, char[]> keyPasswords)
-  {
-    this(crypto, keystorePath.getAbsolutePath(), keystoreName, keystorePassword, keystoreType, keyPasswords);
-  }
-
-  public FileKeystoreInstance(CryptoHelper crypto,
-                              String keystorePath,
+                              KeyStoreStorage storage,
                               String keystoreName,
                               char[] keystorePassword,
                               String keystoreType,
                               Map<String, char[]> keyPasswords)
   {
     this.crypto = crypto;
-    this.keystorePath = keystorePath;
+    this.storage = storage;
     this.keystoreName = keystoreName;
     this.keystoreType = keystoreType;
     this.keystorePassword = keystorePassword;
@@ -139,17 +121,13 @@ public class FileKeystoreInstance
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "keystoreFile=" + keystoreFile +
+        "storage=" + storage +
         ", keystoreType='" + keystoreType + '\'' +
         '}';
   }
 
   private void initializeKeystoreIfNotExist() {
-
-    keystoreFile = new File(keystorePath);
-    log.trace("loading keystore from: {}", keystoreFile);
-
-    if (!keystoreFile.exists()) {
+    if (!storage.exists()) {
 
       log.debug("keystore does not exist, creating new one of type: {}", keystoreType);
 
@@ -162,8 +140,7 @@ public class FileKeystoreInstance
         loadKeystoreData(keystorePassword);
       }
       catch (Exception e) {
-        throw new IllegalArgumentException(
-            "Invalid keystore file (" + keystorePath + " = " + keystoreFile.getAbsolutePath() + ")", e);
+        throw new IllegalArgumentException("Invalid keystore storage (" + storage + ")", e);
       }
     }
   }
@@ -755,16 +732,12 @@ public class FileKeystoreInstance
   private void loadKeystoreData(char[] password)
       throws KeystoreException
   {
-    InputStream in = null;
     try {
       // Make sure the keystore is loadable using the provided password before resetting the instance variables.
       KeyStore tempKeystore = crypto.createKeyStore(keystoreType);
-      in = new BufferedInputStream(new FileInputStream(keystoreFile));
-      long readDate = System.currentTimeMillis();
-      tempKeystore.load(in, password);
+      storage.load(tempKeystore, password);
       // Keystore could be loaded successfully.  Initialize the instance variables to reflect the new keystore.
       keystore = tempKeystore;
-      keystoreReadDate = readDate;
       privateKeys.clear();
       trustCerts.clear();
       openPassword = password;
@@ -791,23 +764,13 @@ public class FileKeystoreInstance
     catch (CertificateException e) {
       throw new KeystoreException("Unable to open keystore with provided password", e);
     }
-    finally {
-      if (in != null) {
-        try {
-          in.close();
-        }
-        catch (IOException e) {
-          log.error("Error while closing keystore file " + keystoreFile.getAbsolutePath(), e);
-        }
-      }
-    }
   }
 
   private boolean isLoaded(char[] password) {
     if (openPassword == null || openPassword.length != password.length) {
       return false;
     }
-    if (keystoreReadDate < keystoreFile.lastModified()) {
+    if (storage.modified()) {
       return false;
     }
     for (int i = 0; i < password.length; i++) {
@@ -851,11 +814,7 @@ public class FileKeystoreInstance
       throws KeystoreException
   {
     try {
-      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(keystoreFile));
-      keystore.store(out, password);
-      out.flush();
-      out.close();
-      keystoreReadDate = System.currentTimeMillis();
+      storage.save(keystore, password);
     }
     catch (KeyStoreException e) {
       throw new KeystoreException("Unable to save keystore '" + keystoreName + "'", e);

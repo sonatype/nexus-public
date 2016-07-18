@@ -21,7 +21,6 @@ import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
-import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.selector.SelectorPreview
 import org.sonatype.nexus.selector.JexlSelector
@@ -34,9 +33,12 @@ import org.sonatype.nexus.validation.group.Update
 
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import org.apache.commons.jexl3.JexlException
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
+
+import static org.sonatype.nexus.selector.JexlSelector.prettyExceptionMsg
 
 /**
  * Selector {@link DirectComponent}.
@@ -140,8 +142,9 @@ class SelectorComponent
       new JexlSelector(expression)
     }
     catch (Exception e) {
+      String msg = e instanceof JexlException ? prettyExceptionMsg(e) : e.getMessage()
       throw new ConstraintViolationException(e.getMessage(),
-          Collections.singleton(constraintViolationFactory.createViolation("expression", e.getMessage())));
+          Collections.singleton(constraintViolationFactory.createViolation("expression", msg)))
     }
   }
 }

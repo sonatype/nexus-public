@@ -36,7 +36,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstanceRule;
 
-import com.google.inject.util.Providers;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -80,7 +79,7 @@ public class JobStoreImplTest
     extends TestSupport
 {
   @Rule
-  public DatabaseInstanceRule database = new DatabaseInstanceRule("test");
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
   private JobStoreImpl jobStore;
 
@@ -114,7 +113,7 @@ public class JobStoreImplTest
     }
 
     return new JobStoreImpl(
-        Providers.of(database.getInstance()),
+        database.getInstanceProvider(),
         jobDetailEntityAdapter,
         triggerEntityAdapter,
         calendarEntityAdapter,

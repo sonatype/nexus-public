@@ -277,16 +277,18 @@ class RepositoryComponent
           return null
         }
       }
+      // TODO: Add application of permissions back once the browse permissions are rationalized
+      /*
       String applyPermissions = parameters.getFilter('applyPermissions')
       if (applyPermissions as boolean) {
         repositories = repositories.findResults { Repository repository ->
           securityHelper.allPermitted(new RepositoryViewPermission(repository, BreadActions.BROWSE)) ? repository : null
         }
       }
+      */
     }
     return repositories
   }
-
 
   Iterable<Repository> browse() {
     return repositoryManager.browse().findResults { Repository repository ->
