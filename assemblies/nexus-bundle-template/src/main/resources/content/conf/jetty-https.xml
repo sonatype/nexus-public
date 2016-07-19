@@ -29,7 +29,7 @@
     <Arg>
       <New id="HTTPSConnector" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedSslSelectChannelConnector">
         <Arg>
-          <New class="org.eclipse.jetty.util.ssl.SslContextFactory">
+          <New id="SSLContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory">
             <Set name="keyStore">./conf/ssl/keystore.jks</Set>
             <Set name="trustStore">./conf/ssl/keystore.jks</Set>
             <Set name="keyStorePassword">OBF:1v2j1uum1xtv1zej1zer1xtn1uvk1v1v</Set>

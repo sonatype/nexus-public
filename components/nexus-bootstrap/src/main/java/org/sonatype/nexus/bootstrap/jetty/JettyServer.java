@@ -29,6 +29,7 @@ import org.sonatype.nexus.bootstrap.PropertyMap;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ import org.slf4j.LoggerFactory;
  */
 public class JettyServer
 {
+  public static JettyServer jettyServer;
+
   private static final Logger log = LoggerFactory.getLogger(JettyServer.class);
 
   private final ClassLoader classLoader;
@@ -49,6 +52,10 @@ public class JettyServer
   private final String[] args;
 
   private JettyMainThread thread;
+
+  private ConnectorManager connectorManager;
+
+  private QueuedThreadPool queuedThreadPool;
 
   public JettyServer(final ClassLoader classLoader, final Map<String, String> properties, final String[] args) {
     if (classLoader == null) {
@@ -65,6 +72,22 @@ public class JettyServer
       throw new NullPointerException();
     }
     this.args = args;
+  }
+
+  public List<ConnectorConfiguration> defaultConnectors() {
+    return connectorManager.defaultConnectors();
+  }
+
+  public void addCustomConnector(final ConnectorConfiguration connectorConfiguration) {
+    connectorManager.addConnector(connectorConfiguration);
+  }
+
+  public void removeCustomConnector(final ConnectorConfiguration connectorConfiguration) {
+    connectorManager.removeConnector(connectorConfiguration);
+  }
+
+  public QueuedThreadPool getQueuedThreadPool() {
+    return queuedThreadPool;
   }
 
   private Exception propagateThrowable(final Throwable e) throws Exception {
@@ -155,6 +178,17 @@ public class JettyServer
       throw new Exception("Failed to configure any components");
     }
 
+    Server server = null;
+    for (Object object : components) {
+      if (object instanceof Server) {
+        server = (Server) object;
+        break;
+      }
+    }
+
+    connectorManager = new ConnectorManager(server, last.getIdMap());
+    queuedThreadPool = (QueuedThreadPool) last.getIdMap().get("threadPool");
+
     thread = new JettyMainThread(components);
     thread.setContextClassLoader(classLoader);
     thread.startComponents();
@@ -200,6 +234,7 @@ public class JettyServer
     log.info("Stopping");
 
     thread.stopComponents();
+    connectorManager = null;
     thread = null;
 
     log.info("Stopped");

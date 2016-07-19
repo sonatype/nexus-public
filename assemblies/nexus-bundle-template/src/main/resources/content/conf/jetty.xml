@@ -24,8 +24,13 @@
 <!-- ============================================================ -->
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
-  <Set name="threadPool">
-    <New class="com.yammer.metrics.jetty.InstrumentedQueuedThreadPool"/>
+  <Set name="ThreadPool">
+    <New id="threadPool" class="com.yammer.metrics.jetty.InstrumentedQueuedThreadPool">
+      <Set name="minThreads">10</Set>
+      <Set name="maxThreads">400</Set>
+      <Set name="maxQueued">4000</Set>
+      <Set name="detailedDump">false</Set>
+    </New>
   </Set>
 
   <Call name="addConnector">
@@ -45,6 +50,20 @@
         <Arg><Property name="nexus-webapp-context-path"/></Arg>
         <Set name="extractWAR">false</Set>
         <Set name="throwUnavailableOnStartupException">true</Set>
+        <Set name="serverClasses">
+          <Array type="String">
+            <Item>-org.eclipse.jetty.</Item>
+          </Array>
+        </Set>
+        <Set name="systemClasses">
+          <Array type="String">
+            <Item>java.</Item>
+            <Item>javax.</Item>
+            <Item>org.xml.</Item>
+            <Item>org.w3c.</Item>
+            <Item>org.eclipse.jetty.</Item>
+          </Array>
+        </Set>
       </New>
     </Arg>
   </New>

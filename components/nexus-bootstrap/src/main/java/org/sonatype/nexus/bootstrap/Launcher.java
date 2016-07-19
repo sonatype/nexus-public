@@ -114,6 +114,7 @@ public class Launcher
     log.info("TMP: {}", tmpdir);
 
     this.server = new JettyServer(cl, props, args);
+    JettyServer.jettyServer = this.server;
   }
 
   public void start() throws Exception {
