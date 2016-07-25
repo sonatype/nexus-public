@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.script.Script;
 import org.sonatype.nexus.script.ScriptStore;
 
@@ -49,7 +50,7 @@ public class ScriptStoreImpl
   private final ScriptEntityAdapter entityAdapter;
   
   @Inject
-  public ScriptStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public ScriptStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                          final ScriptEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

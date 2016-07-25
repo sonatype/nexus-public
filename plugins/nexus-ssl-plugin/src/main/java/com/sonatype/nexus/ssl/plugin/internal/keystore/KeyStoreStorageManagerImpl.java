@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
@@ -59,7 +60,7 @@ public class KeyStoreStorageManagerImpl
   private final Collection<OrientKeyStoreStorage> storages = new ConcurrentLinkedQueue<>();
 
   @Inject
-  public KeyStoreStorageManagerImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public KeyStoreStorageManagerImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                     final KeyStoreDataEntityAdapter entityAdapter,
                                     final EventBus eventBus)
   {

@@ -36,6 +36,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -105,7 +106,7 @@ public class JobStoreImpl
   private String instanceId;
 
   @Inject
-  public JobStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public JobStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                       final JobDetailEntityAdapter jobDetailEntityAdapter,
                       final TriggerEntityAdapter triggerEntityAdapter,
                       final CalendarEntityAdapter calendarEntityAdapter,

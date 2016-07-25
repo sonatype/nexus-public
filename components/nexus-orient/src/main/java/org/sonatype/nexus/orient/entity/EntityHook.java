@@ -103,6 +103,7 @@ public final class EntityHook
       isRemote.remove();
     }
   }
+
   /**
    * Enables entity events for the given {@link EntityAdapter}.
    */
@@ -209,20 +210,26 @@ public final class EntityHook
 
   private boolean recordEvent(final ODocument document, final EventKind eventKind) {
     final OClass schemaType = document.getSchemaClass();
-    if (schemaType == null || !recordingAdapters.containsKey(schemaType)) {
-      return false; // skip documents that shouldn't be recorded
-    }
-    final ODatabase db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db != null) {
-      Map<ODocument, EventKind> events = dbEvents.get(db);
-      if (events == null) {
-        events = new LinkedHashMap<>();
-        dbEvents.put(db, events);
-      }
-      // only record the first event on a given document
-      if (!events.containsKey(document)) {
-        events.put(document, eventKind);
-        return true;
+    if (schemaType != null) {
+      final EntityAdapter adapter = recordingAdapters.get(schemaType);
+      if (adapter != null) {
+        final ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (db != null) {
+          // workaround OrientDB 2.1 issue where in-TX dictionary updates are not replicated
+          if (db.getStorage().isDistributed() && adapter instanceof SingletonEntityAdapter) {
+            ((SingletonEntityAdapter) adapter).singleton.replicate(document, eventKind);
+          }
+          Map<ODocument, EventKind> events = dbEvents.get(db);
+          if (events == null) {
+            events = new LinkedHashMap<>();
+            dbEvents.put(db, events);
+          }
+          // only record the first event on a given document
+          if (!events.containsKey(document)) {
+            events.put(document, eventKind);
+            return true;
+          }
+        }
       }
     }
     return false;

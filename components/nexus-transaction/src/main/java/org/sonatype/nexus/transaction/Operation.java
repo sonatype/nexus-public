@@ -15,12 +15,12 @@ package org.sonatype.nexus.transaction;
 import java.util.concurrent.Callable;
 
 /**
- * Represents a {@link Callable} with a more specific throws clause.
+ * Like {@link Callable} but with a more specific throws clause.
  * 
  * @since 3.0
  */
+@FunctionalInterface
 public interface Operation<T, E extends Exception>
-    extends Callable<T>
 {
   T call() throws E;
 }

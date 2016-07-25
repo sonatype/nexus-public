@@ -10,34 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.orient;
 
 /**
- * Logger levels supported.
- *
- * @since 2.1
+ * Holds the names of commonly used databases.
+ * 
+ * @since 3.1
  */
-public enum LoggerLevel
+public class DatabaseInstanceNames
 {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
+  /**
+   * Name of the database storing component metadata.
+   */
+  public static final String COMPONENT = "component";
 
   /**
-   * @since 2.7
+   * Name of the database storing system configuration.
    */
-  ERROR,
+  public static final String CONFIG = "config";
 
   /**
-   * @since 2.7
+   * Name of the database storing security configuration.
    */
-  OFF,
+  public static final String SECURITY = "security";
 
-  /**
-   * Level will be calculated as effective level.
-   *
-   * @since 2.7
-   */
-  DEFAULT
+  private DatabaseInstanceNames() {
+    // no construction
+  }
 }

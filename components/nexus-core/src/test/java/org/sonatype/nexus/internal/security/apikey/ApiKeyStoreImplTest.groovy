@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.security.apikey
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
 import org.sonatype.nexus.crypto.internal.RandomBytesGeneratorImpl
-import org.sonatype.nexus.orient.DatabaseInstanceRule
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.UserPrincipalsHelper
 
 import com.google.common.collect.Maps

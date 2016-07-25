@@ -16,7 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.orient.DatabaseInstanceRule
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.CUserRoleMapping

@@ -15,9 +15,11 @@ package org.sonatype.nexus.repository.maven.internal;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,8 +32,28 @@ import static org.mockito.Mockito.when;
 public class MavenVariableResolverAdapterTest
     extends TestSupport
 {
+  private static final String FORMAT_VARIABLE = "format";
+
+  private static final String PATH_VARIABLE = "path";
+
+  private static final String COORDINATE_GROUP_ID_VARIABLE = "coordinate.groupId";
+
+  private static final String COORDINATE_ARTIFACT_ID_VARIABLE = "coordinate.artifactId";
+
+  private static final String COORDINATE_VERSION_VARIABLE = "coordinate.version";
+
+  private static final String COORDINATE_EXTENSION_VARIABLE = "coordinate.extension";
+
+  private static final String COORDINATE_CLASSIFIER_VARIABLE = "coordinate.classifier";
+
   @Mock
   Request request;
+
+  @Mock
+  ODocument document;
+
+  @Mock
+  Asset asset;
 
   @Mock
   Repository repository;
@@ -52,15 +74,16 @@ public class MavenVariableResolverAdapterTest
     VariableSource source = mavenVariableResolverAdapter.fromRequest(request, repository);
 
     assertThat(source.getVariableSet(),
-        containsInAnyOrder("format", "path", "coordinate.groupId", "coordinate.artifactId", "coordinate.version",
-            "coordinate.extension", "coordinate.classifier"));
-    assertThat(source.get("format").get(), is(Maven2Format.NAME));
-    assertThat(source.get("path").get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
-    assertThat(source.get("coordinate.groupId").get(), is("mygroupid"));
-    assertThat(source.get("coordinate.artifactId").get(), is("myartifactid"));
-    assertThat(source.get("coordinate.version").get(), is("1.0"));
-    assertThat(source.get("coordinate.extension").get(), is("jar"));
-    assertThat(source.get("coordinate.classifier").get(), is(""));
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
   }
 
   @Test
@@ -70,16 +93,17 @@ public class MavenVariableResolverAdapterTest
     VariableSource source = mavenVariableResolverAdapter.fromRequest(request, repository);
 
     assertThat(source.getVariableSet(),
-        containsInAnyOrder("format", "path", "coordinate.groupId", "coordinate.artifactId", "coordinate.version",
-            "coordinate.extension", "coordinate.classifier"));
-    assertThat(source.get("format").get(), is(Maven2Format.NAME));
-    assertThat(source.get("path").get(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(),
         is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
-    assertThat(source.get("coordinate.groupId").get(), is("mygroupid"));
-    assertThat(source.get("coordinate.artifactId").get(), is("myartifactid"));
-    assertThat(source.get("coordinate.version").get(), is("1.0-SNAPSHOT"));
-    assertThat(source.get("coordinate.extension").get(), is("jar"));
-    assertThat(source.get("coordinate.classifier").get(), is(""));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
   }
 
   @Test
@@ -89,14 +113,138 @@ public class MavenVariableResolverAdapterTest
     VariableSource source = mavenVariableResolverAdapter.fromRequest(request, repository);
 
     assertThat(source.getVariableSet(),
-        containsInAnyOrder("format", "path", "coordinate.groupId", "coordinate.artifactId", "coordinate.version",
-            "coordinate.extension", "coordinate.classifier"));
-    assertThat(source.get("format").get(), is(Maven2Format.NAME));
-    assertThat(source.get("path").get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
-    assertThat(source.get("coordinate.groupId").get(), is("mygroupid"));
-    assertThat(source.get("coordinate.artifactId").get(), is("myartifactid"));
-    assertThat(source.get("coordinate.version").get(), is("1.0"));
-    assertThat(source.get("coordinate.extension").get(), is("jar"));
-    assertThat(source.get("coordinate.classifier").get(), is("sources"));
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is("sources"));
+  }
+
+  @Test
+  public void testFromDocument() throws Exception {
+    when(document.field("name", String.class)).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
+    when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
+  }
+
+  @Test
+  public void testFromDocument_snapshot() throws Exception {
+    when(document.field("name", String.class))
+        .thenReturn("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
+    when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(),
+        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
+  }
+
+  @Test
+  public void testFromDocument_withClassifier() throws Exception {
+    when(document.field("name", String.class)).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
+    when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is("sources"));
+  }
+
+  @Test
+  public void testFromAsset() throws Exception {
+    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
+    when(asset.format()).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
+  }
+
+  @Test
+  public void testFromAsset_snapshot() throws Exception {
+    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
+    when(asset.format()).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(),
+        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is(""));
+  }
+
+  @Test
+  public void testFromAsset_withClassifier() throws Exception {
+    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
+    when(asset.format()).thenReturn(Maven2Format.NAME);
+
+    VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
+
+    assertThat(source.getVariableSet(),
+        containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE, COORDINATE_GROUP_ID_VARIABLE,
+            COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
+            COORDINATE_CLASSIFIER_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
+    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
+    assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
+    assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
+    assertThat(source.get(COORDINATE_EXTENSION_VARIABLE).get(), is("jar"));
+    assertThat(source.get(COORDINATE_CLASSIFIER_VARIABLE).get(), is("sources"));
   }
 }

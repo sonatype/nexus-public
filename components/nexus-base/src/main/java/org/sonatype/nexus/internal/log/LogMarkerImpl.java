@@ -52,7 +52,7 @@ public class LogMarkerImpl
   public void markLog(final String message) {
     // ensure that level for marking logger is enabled
     LoggerLevel loggerLevel = logManager.getLoggerEffectiveLevel(log.getName());
-    if (LoggerLevel.INFO.compareTo(loggerLevel) < 0 || LoggerLevel.OFF.equals(loggerLevel)) {
+    if (LoggerLevel.INFO.compareTo(loggerLevel) < 0) {
       logManager.setLoggerLevel(log.getName(), LoggerLevel.INFO);
     }
 

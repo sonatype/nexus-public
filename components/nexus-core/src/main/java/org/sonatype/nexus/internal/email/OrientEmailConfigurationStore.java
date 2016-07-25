@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -46,7 +47,7 @@ public class OrientEmailConfigurationStore
   private EmailConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public OrientEmailConfigurationStore(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public OrientEmailConfigurationStore(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                        final EmailConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

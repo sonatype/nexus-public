@@ -22,6 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -47,7 +48,7 @@ public class ConfigurationStoreImpl
   private final ConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public ConfigurationStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public ConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                 final ConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

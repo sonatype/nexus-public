@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
@@ -82,7 +83,7 @@ public class OrientSecurityConfigurationSource
   private SecurityConfiguration configuration;
 
   @Inject
-  public OrientSecurityConfigurationSource(@Named("security") final Provider<DatabaseInstance> databaseInstance,
+  public OrientSecurityConfigurationSource(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
                                            @Named("static") final SecurityConfigurationSource defaults,
                                            final CUserEntityAdapter userEntityAdapter,
                                            final CRoleEntityAdapter roleEntityAdapter,

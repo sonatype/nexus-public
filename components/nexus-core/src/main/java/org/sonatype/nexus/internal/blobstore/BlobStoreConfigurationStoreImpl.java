@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -49,7 +50,7 @@ public class BlobStoreConfigurationStoreImpl
   private final BlobStoreConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public BlobStoreConfigurationStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public BlobStoreConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                          final BlobStoreConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = databaseInstance;

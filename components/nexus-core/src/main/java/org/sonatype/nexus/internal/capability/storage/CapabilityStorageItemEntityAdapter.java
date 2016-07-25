@@ -15,8 +15,13 @@ package org.sonatype.nexus.internal.capability.storage;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -32,6 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
+@Named
+@Singleton
 public class CapabilityStorageItemEntityAdapter
   extends IterableEntityAdapter<CapabilityStorageItem>
 {
@@ -132,5 +139,26 @@ public class CapabilityStorageItemEntityAdapter
       return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+
+    switch (eventKind) {
+      case CREATE:
+        return new CapabilityStorageItemCreatedEvent(metadata);
+      case UPDATE:
+        return new CapabilityStorageItemUpdatedEvent(metadata);
+      case DELETE:
+        return new CapabilityStorageItemDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

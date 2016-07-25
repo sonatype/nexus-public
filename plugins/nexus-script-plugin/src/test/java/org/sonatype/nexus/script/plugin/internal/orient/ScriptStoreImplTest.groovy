@@ -13,7 +13,7 @@
 package org.sonatype.nexus.script.plugin.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.orient.DatabaseInstanceRule
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.script.Script
 import org.sonatype.nexus.script.ScriptStore
 

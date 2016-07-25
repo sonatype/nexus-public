@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.blobstore
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
-import org.sonatype.nexus.orient.DatabaseInstanceRule
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException
 import org.junit.After

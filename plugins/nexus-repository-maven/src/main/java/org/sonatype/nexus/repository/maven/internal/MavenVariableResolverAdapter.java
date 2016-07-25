@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,8 +23,9 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterSupport;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.selector.VariableResolver;
+import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -48,8 +48,27 @@ public class MavenVariableResolverAdapter
   }
 
   @Override
-  protected void addFromRequest(final Set<VariableResolver> variableResolvers, final Request request) {
-    Coordinates coords = mavenPathParser.parsePath(request.getPath()).getCoordinates();
+  protected void addFromRequest(final VariableSourceBuilder builder, final Request request) {
+    addMavenCoordinates(builder, request.getPath());
+  }
+
+  @Override
+  protected void addFromDocument(final VariableSourceBuilder builder, final ODocument document) {
+    addMavenCoordinates(builder, document.field(AssetEntityAdapter.P_NAME, String.class));
+  }
+
+  @Override
+  protected void addFromAsset(final VariableSourceBuilder builder, final Asset asset) {
+    addMavenCoordinates(builder, asset.name());
+  }
+
+  /**
+   * Adds the Maven coordinates extracted from the specified path, if available.
+   */
+  private void addMavenCoordinates(final VariableSourceBuilder builder, final String path) {
+    checkNotNull(builder);
+    checkNotNull(path);
+    Coordinates coords = mavenPathParser.parsePath(path).getCoordinates();
 
     if (coords != null) {
       Map<String, String> coordMap = new HashMap<>();
@@ -59,17 +78,7 @@ public class MavenVariableResolverAdapter
       coordMap.put("extension", coords.getExtension());
       coordMap.put("classifier", coords.getClassifier() == null ? "" : coords.getClassifier());
 
-      addCoordinates(variableResolvers, coordMap);
+      addCoordinates(builder, coordMap);
     }
-  }
-
-  @Override
-  protected void addFromDocument(final Set<VariableResolver> variableResolvers, final ODocument document) {
-    // TODO: Implement in subsequent story
-  }
-
-  @Override
-  protected void addFromAsset(final Set<VariableResolver> variableResolvers, final Asset asset) {
-    // TODO: Implement in subsequent story
   }
 }

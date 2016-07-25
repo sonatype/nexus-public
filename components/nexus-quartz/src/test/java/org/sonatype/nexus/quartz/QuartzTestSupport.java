@@ -15,7 +15,7 @@ package org.sonatype.nexus.quartz;
 import java.util.Date;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.orient.DatabaseInstanceRule;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;

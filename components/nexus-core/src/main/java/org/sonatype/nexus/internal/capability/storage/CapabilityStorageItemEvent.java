@@ -10,39 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package org.sonatype.nexus.internal.capability.storage;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
-
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
+import org.sonatype.nexus.capability.CapabilityIdentity;
+import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
 
 /**
- * Minimal {@link DatabaseServer}.
+ * {@link CapabilityStorageItem} event.
  *
- * @since 3.0
+ * @since 3.1
  */
-@Named("minimal")
-@Singleton
-public class MinimalDatabaseServer
-    extends LifecycleSupport
-    implements DatabaseServer
+public interface CapabilityStorageItemEvent
+    extends Batchable
 {
-  public MinimalDatabaseServer() {
-    log.info("OrientDB version: {}", OConstants.getVersion());
-  }
+  boolean isLocal();
 
-  @Override
-  protected void doStart() throws Exception {
-    Orient.instance().startup();
-    Orient.instance().removeShutdownHook();
-  }
+  CapabilityIdentity getCapabilityId();
 
-  @Override
-  protected void doStop() throws Exception {
-    Orient.instance().shutdown();
-  }
+  CapabilityStorageItem getCapabilityStorageItem();
 }

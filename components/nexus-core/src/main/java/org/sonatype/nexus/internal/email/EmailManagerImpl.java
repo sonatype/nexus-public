@@ -31,6 +31,7 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.ssl.TrustStore;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailConstants;
 import org.apache.commons.mail.EmailException;
@@ -145,7 +146,9 @@ public class EmailManagerImpl
   Email apply(final EmailConfiguration configuration, final Email mail) throws EmailException {
     mail.setHostName(configuration.getHost());
     mail.setSmtpPort(configuration.getPort());
-    mail.setAuthentication(configuration.getUsername(), configuration.getPassword());
+    if (!Strings.isNullOrEmpty(configuration.getUsername()) || !Strings.isNullOrEmpty(configuration.getPassword())) {
+      mail.setAuthentication(configuration.getUsername(), configuration.getPassword());
+    }
 
     mail.setStartTLSEnabled(configuration.isStartTlsEnabled());
     mail.setStartTLSRequired(configuration.isStartTlsRequired());

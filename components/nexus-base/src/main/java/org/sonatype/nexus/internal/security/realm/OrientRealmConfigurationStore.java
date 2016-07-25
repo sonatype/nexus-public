@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 
@@ -46,7 +47,7 @@ public class OrientRealmConfigurationStore
   private final RealmConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public OrientRealmConfigurationStore(@Named("security") final Provider<DatabaseInstance> databaseInstance,
+  public OrientRealmConfigurationStore(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
                                        final RealmConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

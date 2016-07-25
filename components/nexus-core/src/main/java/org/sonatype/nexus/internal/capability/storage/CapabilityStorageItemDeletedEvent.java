@@ -10,34 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.internal.capability.storage;
+
+import org.sonatype.nexus.capability.CapabilityIdentity;
+import org.sonatype.nexus.common.entity.EntityDeletedEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 
 /**
- * Logger levels supported.
+ * {@link CapabilityStorageItem} deleted event.
  *
- * @since 2.1
+ * @since 3.1
  */
-public enum LoggerLevel
+public class CapabilityStorageItemDeletedEvent
+    extends EntityDeletedEvent
+    implements CapabilityStorageItemEvent
 {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
+  public CapabilityStorageItemDeletedEvent(final EntityMetadata metadata) {
+    super(metadata);
+  }
 
-  /**
-   * @since 2.7
-   */
-  ERROR,
+  @Override
+  public CapabilityIdentity getCapabilityId() {
+    return CapabilityStorageItem.identity(getId());
+  }
 
-  /**
-   * @since 2.7
-   */
-  OFF,
-
-  /**
-   * Level will be calculated as effective level.
-   *
-   * @since 2.7
-   */
-  DEFAULT
+  @Override
+  public CapabilityStorageItem getCapabilityStorageItem() {
+    return getEntity();
+  }
 }

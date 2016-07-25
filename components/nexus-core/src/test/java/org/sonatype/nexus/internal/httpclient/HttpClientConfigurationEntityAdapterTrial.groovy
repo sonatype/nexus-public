@@ -17,7 +17,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
-import org.sonatype.nexus.orient.DatabaseInstanceRule
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 
 import org.junit.Before
 import org.junit.Rule

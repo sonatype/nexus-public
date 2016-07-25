@@ -10,34 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.orient.testsupport.internal;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.orient.DatabaseManager;
+import org.sonatype.nexus.orient.DatabaseManagerSupport;
 
 /**
- * Logger levels supported.
+ * In-memory {@link DatabaseManager} implementation.
  *
- * @since 2.1
+ * @since 3.1
  */
-public enum LoggerLevel
+@Named("memory")
+@Singleton
+public class MemoryDatabaseManager
+    extends DatabaseManagerSupport
 {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
-
-  /**
-   * @since 2.7
-   */
-  ERROR,
-
-  /**
-   * @since 2.7
-   */
-  OFF,
-
-  /**
-   * Level will be calculated as effective level.
-   *
-   * @since 2.7
-   */
-  DEFAULT
+  @Override
+  protected String connectionUri(final String name) {
+    return "memory:" + name;
+  }
 }

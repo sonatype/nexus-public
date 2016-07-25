@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
@@ -67,7 +68,7 @@ public class ApiKeyStoreImpl
   private final DefaultApiKeyFactory defaultApiKeyFactory;
 
   @Inject
-  public ApiKeyStoreImpl(@Named("security") final Provider<DatabaseInstance> databaseInstance,
+  public ApiKeyStoreImpl(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
                          final ApiKeyEntityAdapter entityAdapter,
                          final UserPrincipalsHelper principalsHelper,
                          final Map<String, ApiKeyFactory> apiKeyFactories,

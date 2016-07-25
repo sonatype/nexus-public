@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 
@@ -46,7 +47,7 @@ public class OrientAnonymousConfigurationStore
   private final AnonymousConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public OrientAnonymousConfigurationStore(@Named("security") final Provider<DatabaseInstance> databaseInstance,
+  public OrientAnonymousConfigurationStore(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
                                            final AnonymousConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

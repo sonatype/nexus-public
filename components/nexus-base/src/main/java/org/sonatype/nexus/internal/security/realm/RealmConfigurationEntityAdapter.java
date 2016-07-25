@@ -18,8 +18,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.entity.action.SingletonActions;
+import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -34,7 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Named
 @Singleton
 public class RealmConfigurationEntityAdapter
-    extends EntityAdapter<RealmConfiguration>
+    extends SingletonEntityAdapter<RealmConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("realm")
@@ -67,10 +66,4 @@ public class RealmConfigurationEntityAdapter
   protected void writeFields(final ODocument document, final RealmConfiguration entity) {
     document.field(P_REALM_NAMES, entity.getRealmNames());
   }
-
-  //
-  // Actions
-  //
-
-  public final SingletonActions<RealmConfiguration> singleton = new SingletonActions<>(this);
 }

@@ -14,8 +14,8 @@ package org.sonatype.nexus.quartz.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.entity.EntityHelper
-import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob
 
 import org.junit.Before

@@ -10,34 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.orient.entity;
+
+import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.orient.entity.action.SingletonActions;
 
 /**
- * Logger levels supported.
+ * Singleton record entity-adapter.
  *
- * @since 2.1
+ * @since 3.1
  */
-public enum LoggerLevel
+public abstract class SingletonEntityAdapter<T extends Entity>
+    extends EntityAdapter<T>
 {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
+  public SingletonEntityAdapter(final String typeName) {
+    super(typeName);
+  }
 
-  /**
-   * @since 2.7
-   */
-  ERROR,
+  @Override
+  public boolean sendEvents() {
+    return true; // enable replication workaround for all singleton entities
+  }
 
-  /**
-   * @since 2.7
-   */
-  OFF,
+  //
+  // Actions
+  //
 
-  /**
-   * Level will be calculated as effective level.
-   *
-   * @since 2.7
-   */
-  DEFAULT
+  public final SingletonActions<T> singleton = new SingletonActions<>(this);
 }

@@ -392,16 +392,18 @@ class ComponentComponent
     List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse()
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+    Component component;
+    List<Asset> assets;
     try {
       storageTx.begin()
-      Component component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repository))
-      Iterable<Asset> assets = storageTx.browseAssets(component)
-      ensurePermissions(repository, selectorConfigurations, assets, BreadActions.READ)
-      return component ? COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO : null
+      component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repository))
+      assets = Lists.newArrayList(storageTx.browseAssets(component))
     }
     finally {
       storageTx.close()
     }
+    ensurePermissions(repository, selectorConfigurations, assets, BreadActions.READ)
+    return component ? COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO : null
   }
 
   /**
@@ -416,15 +418,16 @@ class ComponentComponent
     List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse()
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+    Asset asset;
     try {
       storageTx.begin()
-      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
-      ensurePermissions(repository, selectorConfigurations, Collections.singletonList(asset), BreadActions.READ)
-      return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
+      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
     }
     finally {
       storageTx.close()
     }
+    ensurePermissions(repository, selectorConfigurations, Collections.singletonList(asset), BreadActions.READ)
+    return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
   }
 
   /**

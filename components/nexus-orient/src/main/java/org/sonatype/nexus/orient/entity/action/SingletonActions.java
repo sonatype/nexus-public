@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.EntityAdapter.EventKind;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -101,5 +102,25 @@ public class SingletonActions<T extends Entity>
       return true;
     }
     return false;
+  }
+
+  /**
+   * TEMP: workaround OrientDB 2.1 issue where in-TX dictionary updates are not replicated.
+   *
+   * @since 3.1
+   */
+  public void replicate(final ODocument document, final EventKind eventKind) {
+    ODictionary<ORecord> dictionary = document.getDatabase().getDictionary();
+    switch (eventKind) {
+      case CREATE:
+      case UPDATE:
+        dictionary.put(key, document);
+        break;
+      case DELETE:
+        dictionary.remove(key);
+        break;
+      default:
+        break;
+    }
   }
 }

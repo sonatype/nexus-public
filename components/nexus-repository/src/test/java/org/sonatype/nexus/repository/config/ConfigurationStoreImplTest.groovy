@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.config
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
-import org.sonatype.nexus.orient.DatabaseInstanceRule
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.orientechnologies.orient.core.exception.OValidationException

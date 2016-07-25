@@ -75,7 +75,7 @@ Ext.define('NX.coreui.migration.ProgressScreenSupport', {
         {
           header: NX.I18n.render(me, 'Status_Column'),
           dataIndex: 'status',
-          flex: 1,
+          flex: 2,
           renderer: function (value) {
             if (value === null) {
               return 'Pending';

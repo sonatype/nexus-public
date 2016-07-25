@@ -14,7 +14,9 @@ package org.sonatype.nexus.internal.capability.storage;
 
 import java.util.Map;
 
+import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.EntityId;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -120,6 +122,15 @@ public class CapabilityStorageItem
    */
   public void setProperties(final Map<String, String> properties) {
     this.properties = properties;
+  }
+
+  /**
+   * Returns the {@link CapabilityIdentity} for the persisted {@link EntityId}.
+   *
+   * @since 3.1
+   */
+  static CapabilityIdentity identity(EntityId entityId) {
+    return new CapabilityIdentity(entityId.getValue());
   }
 
 }

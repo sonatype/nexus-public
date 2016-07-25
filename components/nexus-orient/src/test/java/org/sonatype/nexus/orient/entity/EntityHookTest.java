@@ -20,8 +20,8 @@ import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventBusImpl;
-import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;

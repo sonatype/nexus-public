@@ -20,12 +20,12 @@ import javax.inject.Named;
 import javax.validation.Valid;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.httpclient.GlobalHttpClientConfigurationChanged;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -115,7 +115,7 @@ public class HttpClientFacetImpl
   }
 
   @Subscribe
-  public void on(final GlobalHttpClientConfigurationChanged event) throws IOException {
+  public void on(final HttpClientConfigurationChangedEvent event) throws IOException {
     closeHttpClient();
     createHttpClient();
   }

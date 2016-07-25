@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.httpclient.GlobalHttpClientConfigurationChanged;
 import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
@@ -185,9 +184,6 @@ public class HttpClientManagerImpl
     }
 
     eventBus.post(new HttpClientConfigurationChangedEvent(model));
-
-    // FIXME: drop this event in favor of ^^^ which cares updated data
-    eventBus.post(new GlobalHttpClientConfigurationChanged());
   }
 
   //

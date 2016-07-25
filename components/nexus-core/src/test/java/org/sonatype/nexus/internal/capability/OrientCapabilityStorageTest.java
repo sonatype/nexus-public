@@ -16,23 +16,36 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
+import org.sonatype.nexus.common.entity.EntityBatchEvent;
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreatedEvent;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDeletedEvent;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEntityAdapter;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemUpdatedEvent;
 import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
-import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.orient.entity.EntityHook;
 
 import com.google.common.collect.Maps;
+import com.orientechnologies.orient.core.Orient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link OrientCapabilityStorage}.
@@ -45,10 +58,20 @@ public class OrientCapabilityStorageTest
 
   private OrientCapabilityStorage underTest;
 
+  @Mock
+  private EventBus eventBus;
+
+  private EntityHook entityHook;
+
   @Before
   public void setUp() throws Exception {
+    entityHook = new EntityHook(eventBus);
+
+    Orient.instance().addDbLifecycleListener(entityHook);
+
     CapabilityStorageItemEntityAdapter entityAdapter = new CapabilityStorageItemEntityAdapter();
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator());
+    entityAdapter.enableEntityHook(entityHook);
 
     this.underTest = new OrientCapabilityStorage(
         database.getInstanceProvider(),
@@ -125,5 +148,36 @@ public class OrientCapabilityStorageTest
     log("Items: {}", items2);
     assertThat(items2, notNullValue());
     assertThat(items2.isEmpty(), is(true));
+
+    // events (entity + batch)
+    ArgumentCaptor<?> eventCaptor = ArgumentCaptor.forClass(Object.class);
+    verify(eventBus, times(6)).post(eventCaptor.capture());
+
+    Object[] events = eventCaptor.getAllValues().toArray();
+
+    assertThat(events[0], instanceOf(CapabilityStorageItemCreatedEvent.class));
+    checkEventDetails((CapabilityStorageItemEvent) events[0], id, item1);
+    assertThat(events[1], instanceOf(EntityBatchEvent.class));
+
+    assertThat(events[2], instanceOf(CapabilityStorageItemUpdatedEvent.class));
+    checkEventDetails((CapabilityStorageItemEvent) events[2], id, item3);
+    assertThat(events[3], instanceOf(EntityBatchEvent.class));
+
+    assertThat(events[4], instanceOf(CapabilityStorageItemDeletedEvent.class));
+    checkEventDetails((CapabilityStorageItemEvent) events[4], id, item3);
+    assertThat(events[5], instanceOf(EntityBatchEvent.class));
+  }
+
+  private static void checkEventDetails(CapabilityStorageItemEvent event,
+                                        CapabilityIdentity id,
+                                        CapabilityStorageItem item)
+  {
+    assertThat(event.getCapabilityId(), is(id));
+    CapabilityStorageItem eventItem = event.getCapabilityStorageItem();
+    assertThat(eventItem.getType(), is(item.getType()));
+    assertThat(eventItem.getVersion(), is(item.getVersion()));
+    assertThat(eventItem.getNotes(), is(item.getNotes()));
+    assertThat(eventItem.isEnabled(), is(item.isEnabled()));
+    assertThat(eventItem.getProperties(), is(item.getProperties()));
   }
 }

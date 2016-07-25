@@ -22,8 +22,7 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.entity.action.SingletonActions;
+import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,7 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Named
 @Singleton
 public class HttpClientConfigurationEntityAdapter
-    extends EntityAdapter<HttpClientConfiguration>
+    extends SingletonEntityAdapter<HttpClientConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("http_client")
@@ -120,10 +119,4 @@ public class HttpClientConfigurationEntityAdapter
     log.trace("Writing fields: {}", fields);
     document.fromMap(fields);
   }
-
-  //
-  // Actions
-  //
-
-  public final SingletonActions<HttpClientConfiguration> singleton = new SingletonActions<>(this);
 }

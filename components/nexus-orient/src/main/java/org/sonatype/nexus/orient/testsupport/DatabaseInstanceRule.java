@@ -10,20 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package org.sonatype.nexus.orient.testsupport;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import javax.inject.Provider;
 
-import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseManager;
+import org.sonatype.nexus.orient.DatabaseManagerSupport;
+import org.sonatype.nexus.orient.testsupport.internal.MemoryDatabaseManager;
+import org.sonatype.nexus.orient.testsupport.internal.MinimalDatabaseServer;
+import org.sonatype.nexus.orient.testsupport.internal.PersistentDatabaseManager;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.orientechnologies.common.io.OFileUtils;
 import org.junit.rules.ExternalResource;
 import org.junit.runners.model.MultipleFailureException;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * JUnit rule to provide {@link DatabaseInstance} and related components.
  *
- * @since 3.0
+ * @since 3.1
  */
 public class DatabaseInstanceRule
   extends ExternalResource
@@ -45,7 +46,7 @@ public class DatabaseInstanceRule
     try {
       SLF4JBridgeHandler.removeHandlersForRootLogger();
       SLF4JBridgeHandler.install();
-    } catch (LinkageError e) {
+    } catch (LinkageError e) { // NOSONAR
       // no-op, jul-to-slf4j not installed
     }
   }
@@ -64,8 +65,6 @@ public class DatabaseInstanceRule
 
   /**
    * Provides an in-memory database.
-   * 
-   * @since 3.1
    */
   public static DatabaseInstanceRule inMemory(final String name) {
     return new DatabaseInstanceRule(name, false);
@@ -73,8 +72,6 @@ public class DatabaseInstanceRule
 
   /**
    * Provides a persistent database.
-   * 
-   * @since 3.1
    */
   public static DatabaseInstanceRule inFilesystem(final String name) {
     return new DatabaseInstanceRule(name, true);
@@ -100,9 +97,6 @@ public class DatabaseInstanceRule
     return instance;
   }
 
-  /**
-   * @since 3.1
-   */
   public Provider<DatabaseInstance> getInstanceProvider() {
     return this::getInstance;
   }
@@ -159,37 +153,5 @@ public class DatabaseInstanceRule
     }
 
     log.info("Database instance cleaned up");
-  }
-
-  static class PersistentDatabaseManager
-      extends DatabaseManagerSupport
-  {
-    private final File databasesDirectory;
-
-    PersistentDatabaseManager() {
-      File targetDir = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile();
-      databasesDirectory = new File(targetDir, "test-db." + UUID.randomUUID().toString().replace("-", ""));
-      log.info("Database dir: {}", databasesDirectory);
-    }
-
-    /**
-     * Returns the directory for the given named database.  Directory may or may not exist.
-     */
-    private File directory(final String name) throws IOException {
-      return new File(databasesDirectory, name).getCanonicalFile();
-    }
-
-    @Override
-    protected String connectionUri(final String name) {
-      try {
-        File dir = directory(name);
-        DirectoryHelper.mkdir(dir);
-
-        return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
-      }
-      catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
   }
 }

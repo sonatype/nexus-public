@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -46,7 +47,7 @@ public class OrientHttpClientConfigurationStore
   private final HttpClientConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public OrientHttpClientConfigurationStore(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public OrientHttpClientConfigurationStore(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                             final HttpClientConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);

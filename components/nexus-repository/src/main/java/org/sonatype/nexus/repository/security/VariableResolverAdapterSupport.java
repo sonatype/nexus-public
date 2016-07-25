@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -22,7 +20,6 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.ConstantVariableResolver;
 import org.sonatype.nexus.selector.PropertiesResolver;
-import org.sonatype.nexus.selector.VariableResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
@@ -41,50 +38,44 @@ public abstract class VariableResolverAdapterSupport
 
   @Override
   public VariableSource fromRequest(Request request, Repository repository) {
-    Set<VariableResolver> variableResolvers = new HashSet<>();
-    variableResolvers.add(new ConstantVariableResolver(request.getPath(), PATH));
-    variableResolvers.add(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
-    addFromRequest(variableResolvers, request);
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(request.getPath(), PATH));
+    builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
+    addFromRequest(builder, request);
 
-    VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
-    variableResolvers.forEach(variableSourceBuilder::addResolver);
-    return variableSourceBuilder.build();
+    return builder.build();
   }
 
-  protected abstract void addFromRequest(Set<VariableResolver> variableResolvers, Request request);
+  protected abstract void addFromRequest(VariableSourceBuilder builder, Request request);
 
   @Override
   public VariableSource fromDocument(ODocument document) {
     String path = document.field(AssetEntityAdapter.P_NAME, String.class);
     String format = document.field(AssetEntityAdapter.P_FORMAT, String.class);
 
-    Set<VariableResolver> variableResolvers = new HashSet<>();
-    variableResolvers.add(new ConstantVariableResolver(path, PATH));
-    variableResolvers.add(new ConstantVariableResolver(format, FORMAT));
-    addFromDocument(variableResolvers, document);
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(path, PATH));
+    builder.addResolver(new ConstantVariableResolver(format, FORMAT));
+    addFromDocument(builder, document);
 
-    VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
-    variableResolvers.forEach(variableSourceBuilder::addResolver);
-    return variableSourceBuilder.build();
+    return builder.build();
   }
 
-  protected abstract void addFromDocument(Set<VariableResolver> variableResolvers, ODocument document);
+  protected abstract void addFromDocument(VariableSourceBuilder builder, ODocument document);
 
   @Override
   public VariableSource fromAsset(Asset asset) {
-    Set<VariableResolver> variableResolvers = new HashSet<>();
-    variableResolvers.add(new ConstantVariableResolver(asset.name(), PATH));
-    variableResolvers.add(new ConstantVariableResolver(asset.format(), FORMAT));
-    addFromAsset(variableResolvers, asset);
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(asset.name(), PATH));
+    builder.addResolver(new ConstantVariableResolver(asset.format(), FORMAT));
+    addFromAsset(builder, asset);
 
-    VariableSourceBuilder variableSourceBuilder = new VariableSourceBuilder();
-    variableResolvers.forEach(variableSourceBuilder::addResolver);
-    return variableSourceBuilder.build();
+    return builder.build();
   }
 
-  protected abstract void addFromAsset(Set<VariableResolver> variableResolvers, Asset asset);
+  protected abstract void addFromAsset(VariableSourceBuilder builder, Asset asset);
 
-  protected void addCoordinates(Set<VariableResolver> resolvers, Map<String, String> coordinates) {
-    resolvers.add(new PropertiesResolver<>("coordinate", coordinates));
+  protected void addCoordinates(VariableSourceBuilder builder, Map<String, String> coordinates) {
+    builder.addResolver(new PropertiesResolver<>("coordinate", coordinates));
   }
 }

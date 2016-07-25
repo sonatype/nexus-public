@@ -35,7 +35,7 @@ class StaticSecurityConfigurationResourceImpl
         privileges: [
             new CPrivilege(
                 id: 'nx-blobstores-all',
-                description: 'All permissions for Blobstores',
+                description: 'All permissions for Blob Stores',
                 type: 'application',
                 properties: [
                     domain : 'blobstores',
@@ -44,7 +44,7 @@ class StaticSecurityConfigurationResourceImpl
             ),
             new CPrivilege(
                 id: 'nx-blobstores-create',
-                description: 'Create permission for Blobstores',
+                description: 'Create permission for Blob Stores',
                 type: 'application',
                 properties: [
                     domain : 'blobstores',
@@ -53,7 +53,7 @@ class StaticSecurityConfigurationResourceImpl
             ),
             new CPrivilege(
                 id: 'nx-blobstores-read',
-                description: 'Read permission for Blobstores',
+                description: 'Read permission for Blob Stores',
                 type: 'application',
                 properties: [
                     domain : 'blobstores',
@@ -62,7 +62,7 @@ class StaticSecurityConfigurationResourceImpl
             ),
             new CPrivilege(
                 id: 'nx-blobstores-delete',
-                description: 'Delete permission for Blobstores',
+                description: 'Delete permission for Blob Stores',
                 type: 'application',
                 properties: [
                     domain : 'blobstores',
@@ -73,4 +73,3 @@ class StaticSecurityConfigurationResourceImpl
     )
   }
 }
-

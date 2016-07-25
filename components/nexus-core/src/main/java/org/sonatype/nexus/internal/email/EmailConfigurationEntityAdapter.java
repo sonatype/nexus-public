@@ -18,8 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.entity.action.SingletonActions;
+import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -36,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class EmailConfigurationEntityAdapter
-    extends EntityAdapter<EmailConfiguration>
+    extends SingletonEntityAdapter<EmailConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("email")
@@ -139,10 +138,4 @@ public class EmailConfigurationEntityAdapter
     document.field(P_SSL_CHECK_SERVER_IDENTITY_ENABLED, entity.isSslCheckServerIdentityEnabled());
     document.field(P_NEXUS_TRUST_STORE_ENABLED, entity.isNexusTrustStoreEnabled());
   }
-
-  //
-  // Actions
-  //
-
-  public final SingletonActions<EmailConfiguration> singleton = new SingletonActions<>(this);
 }

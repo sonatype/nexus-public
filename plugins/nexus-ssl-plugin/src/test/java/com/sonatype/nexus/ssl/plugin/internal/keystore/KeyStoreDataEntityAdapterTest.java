@@ -16,8 +16,8 @@ import java.nio.charset.StandardCharsets;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityEvent;
-import org.sonatype.nexus.orient.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.entity.EntityAdapter.EventKind;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;

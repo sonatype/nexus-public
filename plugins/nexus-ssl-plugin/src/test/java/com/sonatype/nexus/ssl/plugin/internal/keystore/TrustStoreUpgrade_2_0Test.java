@@ -10,23 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import org.sonatype.goodies.testsupport.TestSupport;
 
-/**
- * In-memory {@link DatabaseManager} implementation.
- *
- * @since 3.0
- */
-@Named("memory")
-@Singleton
-public class MemoryDatabaseManager
-    extends DatabaseManagerSupport
+import org.junit.Test;
+import org.mockito.Mock;
+
+import static org.mockito.Mockito.verify;
+
+public class TrustStoreUpgrade_2_0Test
+    extends TestSupport
 {
-  @Override
-  protected String connectionUri(final String name) {
-    return "memory:" + name;
+  @Mock
+  private LegacyKeyStoreUpgradeService upgradeService;
+
+  @Test
+  public void testApply() throws Exception {
+    new TrustStoreUpgrade_2_0(upgradeService).apply();
+    verify(upgradeService).importKeyStoreFiles();
   }
 }

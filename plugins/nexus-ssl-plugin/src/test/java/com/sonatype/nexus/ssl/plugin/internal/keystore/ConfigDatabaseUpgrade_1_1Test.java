@@ -10,16 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.httpclient;
+package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.goodies.testsupport.TestSupport;
 
-/**
- * Event fired when global {@link HttpClientConfiguration} has changed.
- *
- * @since 3.0
- */
-public class GlobalHttpClientConfigurationChanged
+import org.junit.Test;
+import org.mockito.Mock;
+
+import static org.mockito.Mockito.verify;
+
+public class ConfigDatabaseUpgrade_1_1Test
+    extends TestSupport
 {
-  // empty
+  @Mock
+  private LegacyKeyStoreUpgradeService upgradeService;
+
+  @Test
+  public void testApply() throws Exception {
+    new ConfigDatabaseUpgrade_1_1(upgradeService).apply();
+    verify(upgradeService).upgradeSchema();
+  }
 }

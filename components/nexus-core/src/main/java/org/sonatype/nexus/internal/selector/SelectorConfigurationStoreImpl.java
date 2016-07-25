@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
@@ -51,7 +52,7 @@ public class SelectorConfigurationStoreImpl
   private final SelectorConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public SelectorConfigurationStoreImpl(@Named("config") final Provider<DatabaseInstance> databaseInstance,
+  public SelectorConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                         final SelectorConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = databaseInstance;

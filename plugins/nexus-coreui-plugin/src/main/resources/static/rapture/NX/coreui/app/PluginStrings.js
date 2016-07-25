@@ -381,10 +381,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Expression_HelpText: 'Use JEXL query to identify repositories, components or assets',
     Selector_SelectorSettingsForm_Expression_AfterBodyEl: '<div style="font-size: 11px"><br/>' +
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
-    '<p>Select all \'raw\' format content<br/><i>format == \'raw\'</i></p>' +
-    '<p>Select all \'maven2\' content with a group that starts with \'org.sonatype.nexus\'<br/><i>format == \'maven2\' and coordinate.group =^ \'org.sonatype.nexus.\'</i></p>' +
-    '<p>Select all \'nuget\' content in the \'mycompany\' namespace<br/><i>format == \'nuget\' and path =^ \'/MyCompany.\'</i></p>' +
-    '<p>Select all \'docker\' content with a tag of \'foo\'<br/><i>format == \'docker\' and coordinate.name == \'foo\'</i></p>' +
+    '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
+    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus."</i></p>' +
+    '<p>Select all "nuget" content in the "mycompany" namespace<br/><i>format == "nuget" and path =^ "/MyCompany."</i></p>' +
+    '<p>Select all "docker" content with a tag of "foo"<br/><i>format == "docker" and coordinate.name == "foo"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',
