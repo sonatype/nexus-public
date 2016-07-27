@@ -119,7 +119,6 @@ public class WebappBootstrap
       properties.put(Constants.FRAMEWORK_STORAGE, workDir + "/felix-cache");
       properties.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
       properties.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK);
-      properties.put(Constants.FRAMEWORK_BOOTDELEGATION, "*");
 
       framework = ServiceLoader.load(FrameworkFactory.class).iterator().next().newFramework(properties);
 
