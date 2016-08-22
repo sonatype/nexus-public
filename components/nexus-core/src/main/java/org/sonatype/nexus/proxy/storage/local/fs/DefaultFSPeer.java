@@ -67,6 +67,8 @@ public class DefaultFSPeer
     extends ComponentSupport
     implements FSPeer
 {
+  public static final String SKIP_TMP_STORAGE_PROP = "skip.tmp.storage";
+
   /**
    * Filter for "move" and "delete" operations, to leave out folders
    * like ".meta" and ".nexus", with latter causing endless recursion
@@ -109,6 +111,41 @@ public class DefaultFSPeer
     return target;
   }
 
+  private void writeToFile(final StorageItem item, final ContentLocator cl, final File target)
+      throws LocalStorageException
+  {
+    try (final InputStream is = cl.getContent(); final OutputStream os = new BufferedOutputStream(
+        new FileOutputStream(target), getCopyStreamBufferSize())) {
+      StreamSupport.copy(is, os, getCopyStreamBufferSize());
+      os.flush();
+    }
+    catch (EOFException | RemoteStorageEOFException e)
+    // NXCM-4852: Upload premature end (thrown by Jetty org.eclipse.jetty.io.EofException)
+    // NXCM-4852: Proxy remote peer response premature end (should be translated by RRS)
+    {
+      try {
+        Files.deleteIfExists(target.toPath());
+      }
+      catch (IOException e1) {
+        // best effort to delete, we already have what to throw
+      }
+      throw new LocalStorageEOFException(String.format(
+          "EOF during storing on path \"%s\" (while writing to hiddenTarget: \"%s\")",
+          item.getRepositoryItemUid().toString(), target.getAbsolutePath()), e);
+    }
+    catch (IOException e) {
+      try {
+        Files.deleteIfExists(target.toPath());
+      }
+      catch (IOException e1) {
+        // best effort to delete, we already have what to throw
+      }
+      throw new LocalStorageException(String.format(
+          "Got exception during storing on path \"%s\" (while writing to hiddenTarget: \"%s\")",
+          item.getRepositoryItemUid().toString(), target.getAbsolutePath()), e);
+    }
+  }
+
   @Override
   public void storeItem(final Repository repository, final File repositoryBaseDir, final StorageItem item,
                         final File target, final ContentLocator cl)
@@ -122,41 +159,19 @@ public class DefaultFSPeer
     mkDirs(repository, target.getParentFile());
 
     if (cl != null) {
-      // we have _content_ (content or link), hence we store a file
-      final File hiddenTarget = getHiddenTarget(repository, repositoryBaseDir, target, item);
+      File hiddenTarget = null;
 
-      // NEXUS-4550: Part One, saving to "hidden" (temp) file
-      // In case of error cleaning up only what needed
-      // No locking needed, AbstractRepository took care of that
-      try (final InputStream is = cl.getContent(); final OutputStream os = new BufferedOutputStream(
-          new FileOutputStream(hiddenTarget), getCopyStreamBufferSize())) {
-        StreamSupport.copy(is, os, getCopyStreamBufferSize());
-        os.flush();
-      }
-      catch (EOFException | RemoteStorageEOFException e)
-      // NXCM-4852: Upload premature end (thrown by Jetty org.eclipse.jetty.io.EofException)
-      // NXCM-4852: Proxy remote peer response premature end (should be translated by RRS)
-      {
-        try {
-          Files.deleteIfExists(hiddenTarget.toPath());
-        }
-        catch (IOException e1) {
-          // best effort to delete, we already have what to throw
-        }
-        throw new LocalStorageEOFException(String.format(
-            "EOF during storing on path \"%s\" (while writing to hiddenTarget: \"%s\")",
-            item.getRepositoryItemUid().toString(), hiddenTarget.getAbsolutePath()), e);
-      }
-      catch (IOException e) {
-        try {
-          Files.deleteIfExists(hiddenTarget.toPath());
-        }
-        catch (IOException e1) {
-          // best effort to delete, we already have what to throw
-        }
-        throw new LocalStorageException(String.format(
-            "Got exception during storing on path \"%s\" (while writing to hiddenTarget: \"%s\")",
-            item.getRepositoryItemUid().toString(), hiddenTarget.getAbsolutePath()), e);
+      //give callers the ability to skip writing to temp storage
+      boolean skipTemp = Boolean.TRUE.equals(item.getItemContext().get(SKIP_TMP_STORAGE_PROP));
+
+      if (!skipTemp) {
+        // we have _content_ (content or link), hence we store a file
+        hiddenTarget = getHiddenTarget(repository, repositoryBaseDir, target, item);
+
+        // NEXUS-4550: Part One, saving to "hidden" (temp) file
+        // In case of error cleaning up only what needed
+        // No locking needed, AbstractRepository took care of that
+        writeToFile(item, cl, hiddenTarget);
       }
 
       // NEXUS-4550: Part Two, moving the "hidden" (temp) file to final location
@@ -169,7 +184,12 @@ public class DefaultFSPeer
       uidLock.lock(Action.create);
 
       try {
-        handleRenameOperation(hiddenTarget, target);
+        if (skipTemp) {
+          writeToFile(item, cl, target);
+        }
+        else if (hiddenTarget != null) {
+          handleRenameOperation(hiddenTarget, target);
+        }
         target.setLastModified(item.getModified());
       }
       catch (IOException e) {
@@ -203,7 +223,8 @@ public class DefaultFSPeer
         if (!isCleanupNeeded) {
           log.warn(
               "No cleanup done for error that happened while trying to save attibutes of item {}, the backup is left as {}!",
-              item.getRepositoryItemUid().toString(), hiddenTarget.getAbsolutePath());
+              item.getRepositoryItemUid().toString(),
+              hiddenTarget != null ? hiddenTarget.getAbsolutePath() : target != null ? target.getAbsolutePath() : null);
         }
 
         throw new LocalStorageException(String.format(
