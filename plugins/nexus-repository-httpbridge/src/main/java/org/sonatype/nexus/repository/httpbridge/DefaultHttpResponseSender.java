@@ -56,29 +56,30 @@ public class DefaultHttpResponseSender
 
     // add status followed by payload if we have one
     Status status = response.getStatus();
-    Payload payload = response.getPayload();
-    if (status.isSuccessful() || payload != null) {
-      httpResponse.setStatus(status.getCode());
+    try (Payload payload = response.getPayload()) {
+      if (status.isSuccessful() || payload != null) {
+        httpResponse.setStatus(status.getCode());
 
-      if (payload != null) {
-        log.trace("Attaching payload: {}", payload);
+        if (payload != null) {
+          log.trace("Attaching payload: {}", payload);
 
-        if (payload.getContentType() != null) {
-          httpResponse.setContentType(payload.getContentType());
-        }
-        if (payload.getSize() != Payload.UNKNOWN_SIZE) {
-          httpResponse.setContentLengthLong(payload.getSize());
-        }
+          if (payload.getContentType() != null) {
+            httpResponse.setContentType(payload.getContentType());
+          }
+          if (payload.getSize() != Payload.UNKNOWN_SIZE) {
+            httpResponse.setContentLengthLong(payload.getSize());
+          }
 
-        if (request != null && !HttpMethods.HEAD.equals(request.getAction())) {
-          try (InputStream input = payload.openInputStream(); OutputStream output = httpResponse.getOutputStream()) {
-            ByteStreams.copy(input, output);
+          if (request != null && !HttpMethods.HEAD.equals(request.getAction())) {
+            try (InputStream input = payload.openInputStream(); OutputStream output = httpResponse.getOutputStream()) {
+              ByteStreams.copy(input, output);
+            }
           }
         }
       }
-    }
-    else {
-      httpResponse.sendError(status.getCode(), status.getMessage());
+      else {
+        httpResponse.sendError(status.getCode(), status.getMessage());
+      }
     }
   }
 }

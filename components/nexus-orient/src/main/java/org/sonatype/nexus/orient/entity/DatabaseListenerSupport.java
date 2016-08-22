@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Skeleton database listener that does nothing.
@@ -65,6 +66,11 @@ public class DatabaseListenerSupport
 
   @Override
   public void onDropClass(final ODatabaseInternal db, final OClass type) {
+    // no-op
+  }
+
+  @Override
+  public void onLocalNodeConfigurationRequest(final ODocument config) {
     // no-op
   }
 

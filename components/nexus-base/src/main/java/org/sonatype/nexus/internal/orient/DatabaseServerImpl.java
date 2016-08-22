@@ -24,6 +24,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
@@ -87,15 +88,22 @@ public class DatabaseServerImpl
                             @Named("${nexus.orient.binaryListenerEnabled:-false}") final boolean binaryListenerEnabled,
                             @Named("${nexus.orient.httpListenerEnabled:-false}") final boolean httpListenerEnabled,
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
+                            final NodeAccess nodeAccess,
                             final EntityHook entityHook)
   {
     this.applicationDirectories = checkNotNull(applicationDirectories);
     this.injectedHandlers = checkNotNull(injectedHandlers);
     this.uberClassLoader = checkNotNull(uberClassLoader);
-    this.binaryListenerEnabled = binaryListenerEnabled;
     this.httpListenerEnabled = httpListenerEnabled;
     this.dynamicPlugins = dynamicPlugins;
     this.entityHook = checkNotNull(entityHook);
+
+    if (nodeAccess.isClustered()) {
+      this.binaryListenerEnabled = true; // clustered mode requires binary listener
+    }
+    else {
+      this.binaryListenerEnabled = binaryListenerEnabled;
+    }
 
     log.info("OrientDB version: {}", OConstants.getVersion());
   }
@@ -128,7 +136,7 @@ public class DatabaseServerImpl
     server.removeShutdownHook();
 
     // create default root user to avoid orientdb prompt on console
-    server.addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
+    server.addUser(OServerConfiguration.DEFAULT_ROOT_USER, null, "*");
 
     // Log global configuration
     if (log.isDebugEnabled()) {
@@ -148,18 +156,24 @@ public class DatabaseServerImpl
   }
 
   private OServerConfiguration createConfiguration() {
-    // FIXME: Unsure what this directory us used for
-    File homeDir = applicationDirectories.getWorkDirectory("orient");
-    System.setProperty("orient.home", homeDir.getPath());
-    System.setProperty(Orient.ORIENTDB_HOME, homeDir.getPath());
+    File etcDir = new File(applicationDirectories.getInstallDirectory(), "etc");
+
+    // FIXME: Unsure what this directory is used for
+    File orientDir = applicationDirectories.getWorkDirectory("orient");
+    System.setProperty("orient.home", orientDir.getPath());
+    System.setProperty(Orient.ORIENTDB_HOME, orientDir.getPath());
 
     OServerConfiguration config = new OServerConfiguration();
+
     // FIXME: Unsure what this is used for, its apparently assigned to xml location, but forcing it here
     config.location = "DYNAMIC-CONFIGURATION";
 
     File databaseDir = applicationDirectories.getWorkDirectory("db");
+    File securityFile = new File(etcDir, "orientdb-security.json");
+
     config.properties = new OServerEntryConfiguration[]{
         new OServerEntryConfiguration("server.database.path", databaseDir.getPath()),
+        new OServerEntryConfiguration("server.security.file", securityFile.getPath()),
         new OServerEntryConfiguration("plugin.dynamic", String.valueOf(dynamicPlugins))
     };
 

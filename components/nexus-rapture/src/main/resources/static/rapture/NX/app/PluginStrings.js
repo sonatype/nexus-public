@@ -81,7 +81,6 @@ Ext.define('NX.app.PluginStrings', {
     User_SignIn_Mask: 'Signing in&hellip;',
     SignIn_Username_Empty: 'Username',
     SignIn_Password_Empty: 'Password',
-    SignIn_RememberMe_BoxLabel: 'Remember me',
     SignIn_Submit_Button: 'Sign in',
     SignIn_Cancel_Button: '@Button_Cancel',
 

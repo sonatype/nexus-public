@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -23,6 +24,7 @@ import javax.annotation.Nullable;
  * @since 3.0
  */
 public interface Payload
+    extends Closeable
 {
   long UNKNOWN_SIZE = -1;
 
@@ -32,4 +34,15 @@ public interface Payload
 
   @Nullable
   String getContentType();
+
+  /**
+   * Closes this payload, relinquishing any underlying resources. Streams previously handed out by
+   * {@link #openInputStream()} may not be affected by this method and should be closed separately.
+   *
+   * @since 3.1
+   */
+  @Override
+  default void close() throws IOException {
+    // no underlying resources to clean-up by default
+  }
 }

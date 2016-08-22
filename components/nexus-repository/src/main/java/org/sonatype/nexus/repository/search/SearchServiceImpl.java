@@ -33,8 +33,9 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistration;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.base.Charsets;
@@ -60,6 +61,8 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
@@ -67,6 +70,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Default {@link SearchService} implementation. It does not expects that {@link Repository} have storage facet
@@ -96,22 +100,26 @@ public class SearchServiceImpl
 
   private final SecurityHelper securityHelper;
 
+  private final SearchSubjectHelper searchSubjectHelper;
+
   private final List<IndexSettingsContributor> indexSettingsContributors;
 
   private final ConcurrentMap<String, String> repositoryNameMapping;
-  
+
   private final boolean profile;
 
   @Inject
   public SearchServiceImpl(final Provider<Client> client,
                            final RepositoryManager repositoryManager,
                            final SecurityHelper securityHelper,
+                           final SearchSubjectHelper searchSubjectHelper,
                            final List<IndexSettingsContributor> indexSettingsContributors,
                            @Named("${nexus.elasticsearch.profile:-false}") final boolean profile)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.securityHelper = checkNotNull(securityHelper);
+    this.searchSubjectHelper = checkNotNull(searchSubjectHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.repositoryNameMapping = Maps.newConcurrentMap();
     this.profile = checkNotNull(profile);
@@ -216,7 +224,7 @@ public class SearchServiceImpl
   }
 
   @Override
-  public Iterable<SearchHit> browse(final QueryBuilder query) {
+  public Iterable<SearchHit> browseUnrestricted(final QueryBuilder query) {
     checkNotNull(query);
     try {
       if (!indicesAdminClient().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
@@ -227,7 +235,7 @@ public class SearchServiceImpl
       // no repositories were created yet, so there is no point in searching
       return null;
     }
-    final String[] searchableIndexes = getSearchableIndexes();
+    final String[] searchableIndexes = getSearchableIndexes(false);
     if (searchableIndexes.length == 0) {
       return Collections.emptyList();
     }
@@ -288,9 +296,26 @@ public class SearchServiceImpl
   }
 
   @Override
-  public Iterable<SearchHit> browse(final QueryBuilder query, final int from, final int size) {
-    SearchResponse response = search(query, null, from, size);
+  public Iterable<SearchHit> browseUnrestricted(final QueryBuilder query, final int from, final int size) {
+    SearchResponse response = searchUnrestricted(query, null, from, size);
     return response.getHits();
+  }
+
+  @Override
+  public SearchResponse searchUnrestricted(final QueryBuilder query,
+                                           @Nullable final List<SortBuilder> sort,
+                                           final int from,
+                                           final int size)
+  {
+    if (!validateQuery(query)) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+    final String[] searchableIndexes = getSearchableIndexes(false);
+    if (searchableIndexes.length == 0) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+
+    return executeSearch(query, searchableIndexes, from, size, sort, null);
   }
 
   @Override
@@ -299,40 +324,58 @@ public class SearchServiceImpl
                                final int from,
                                final int size)
   {
-    if(!validateQuery(query)) {
+    if (!validateQuery(query)) {
       return EMPTY_SEARCH_RESPONSE;
     }
-    final String[] searchableIndexes = getSearchableIndexes();
+    final String[] searchableIndexes = getSearchableIndexes(true);
     if (searchableIndexes.length == 0) {
       return EMPTY_SEARCH_RESPONSE;
     }
 
+    try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
+      return executeSearch(query, searchableIndexes, from, size, sort,
+          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())));
+    }
+  }
+
+  private SearchResponse executeSearch(final QueryBuilder query,
+                                       final String[] searchableIndexes,
+                                       final int from,
+                                       final int size,
+                                       @Nullable final List<SortBuilder> sort,
+                                       @Nullable final QueryBuilder postFilter)
+  {
+    checkNotNull(query);
+    checkNotNull(searchableIndexes);
     SearchRequestBuilder searchRequestBuilder = client.get().prepareSearch(searchableIndexes)
         .setTypes(TYPE)
         .setQuery(query)
         .setFrom(from)
         .setSize(size)
         .setProfile(profile);
+    if (postFilter != null) {
+      searchRequestBuilder.setPostFilter(postFilter);
+    }
     if (sort != null) {
       for (SortBuilder entry : sort) {
         searchRequestBuilder.addSort(entry);
       }
     }
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
-    
-    if(profile) {
+
+    if (profile) {
       logProfileResults(searchResponse);
     }
-    
+
     return searchResponse;
   }
 
   @Override
-  public long count(final QueryBuilder query) {
+  public long countUnrestricted(final QueryBuilder query) {
     if(!validateQuery(query)) {
       return 0;
     }
-    final String[] searchableIndexes = getSearchableIndexes();
+    final String[] searchableIndexes = getSearchableIndexes(false);
     if (searchableIndexes.length == 0) {
       return 0;
     }
@@ -369,7 +412,7 @@ public class SearchServiceImpl
     return true;
   }
 
-  private String[] getSearchableIndexes() {
+  private String[] getSearchableIndexes(final boolean skipPermissionCheck) {
     List<String> indexes = Lists.newArrayList();
     for (Repository repository : repositoryManager.browse()) {
       // check if search facet is available so avoid searching repositories without an index
@@ -377,7 +420,7 @@ public class SearchServiceImpl
         String indexName = repositoryNameMapping.get(repository.getName());
         if (indexName != null
             && repository.getConfiguration().isOnline()
-            && securityHelper.allPermitted(new RepositoryViewPermission(repository, BreadActions.BROWSE))) {
+            && (skipPermissionCheck || securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE)))) {
           indexes.add(indexName);
         }
       });

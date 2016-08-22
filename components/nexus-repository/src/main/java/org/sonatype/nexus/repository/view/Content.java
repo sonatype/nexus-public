@@ -97,6 +97,11 @@ public class Content
     return payload.getContentType();
   }
 
+  @Override
+  public void close() throws IOException {
+    payload.close();
+  }
+
   @Nonnull
   public AttributesMap getAttributes() {
     return attributes;

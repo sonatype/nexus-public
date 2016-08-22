@@ -36,7 +36,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.net.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -138,8 +137,8 @@ public class ConfigurationCustomizer
     }
 
     if (connection.getUserAgentSuffix() != null) {
-      checkState(plan.getUserAgent() != null, "Default User-Agent not set");
-      plan.getHeaders().put(HttpHeaders.USER_AGENT, plan.getUserAgent() + " " + connection.getUserAgentSuffix());
+      checkState(plan.getUserAgentBase() != null, "Default User-Agent not set");
+      plan.setUserAgentSuffix(connection.getUserAgentSuffix());
     }
 
     if (Boolean.TRUE.equals(connection.getUseTrustStore())) {

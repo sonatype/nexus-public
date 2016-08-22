@@ -87,7 +87,7 @@ public class EntityHookTest
 
     @Override
     protected void writeFields(ODocument document, TestEntity entity) throws Exception {
-      // nothing to add
+      document.setDirty(); // nothing to add, but need to mark it as dirty to force update
     }
 
     @Override

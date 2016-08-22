@@ -50,10 +50,15 @@ public class NexusBasicHttpAuthenticationFilter
 {
   public static final String NAME = "nx-basic-authc";
 
+  /**
+   * @since 3.1
+   */
+  public static final String BASIC_AUTH_REALM = "Sonatype Nexus Repository Manager";
+
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   public NexusBasicHttpAuthenticationFilter() {
-    setApplicationName("Sonatype Nexus");
+    setApplicationName(BASIC_AUTH_REALM);
   }
 
   /**

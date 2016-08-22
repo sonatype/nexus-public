@@ -52,9 +52,10 @@ public class SanitizingJsonOutputStream
       throws IOException
   {
     generator = new SanitizingJsonGenerator(jsonFactory.createGenerator(out), fields, replacement);
+    PipedInputStream pipedInput = new PipedInputStream(this);
 
     pipe = new Thread(() -> {
-      try (JsonParser parser = jsonFactory.createParser(new PipedInputStream(this))) {
+      try (JsonParser parser = jsonFactory.createParser(pipedInput)) {
         parser.nextToken();
         generator.copyCurrentStructure(parser);
       }

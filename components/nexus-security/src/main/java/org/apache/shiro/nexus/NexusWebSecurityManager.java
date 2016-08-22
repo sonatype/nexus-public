@@ -44,6 +44,8 @@ public class NexusWebSecurityManager
   {
     this.eventBus = checkNotNull(eventBus);
     setCacheManager(new ShiroJCacheManagerAdapter(cacheManager));
+    //explicitly disable rememberMe
+    this.setRememberMeManager(null); 
   }
 
   /**

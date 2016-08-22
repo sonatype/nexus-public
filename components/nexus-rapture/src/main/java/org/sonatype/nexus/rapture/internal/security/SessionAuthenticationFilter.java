@@ -49,8 +49,6 @@ public class SessionAuthenticationFilter
 
   public static final String P_PASSWORD = "password";
 
-  public static final String P_REMEMBER_ME = "rememberMe";
-
   public static final String DELETE_METHOD = "DELETE";
 
   /**
@@ -100,12 +98,6 @@ public class SessionAuthenticationFilter
   private boolean isLogoutRequest(final ServletRequest request) {
     return (request instanceof HttpServletRequest) &&
         WebUtils.toHttp(request).getMethod().equalsIgnoreCase(DELETE_METHOD);
-  }
-
-  @Override
-  protected boolean isRememberMe(final ServletRequest request) {
-    // TODO: Allow feature to be disabled globally by property, probably here is a good place?
-    return WebUtils.isTrue(request, P_REMEMBER_ME);
   }
 
   private String decodeBase64Param(final ServletRequest request, final String name) {

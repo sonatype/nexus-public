@@ -18,7 +18,6 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore
-import org.sonatype.nexus.blobstore.file.PeriodicJobService
 import org.sonatype.nexus.common.event.EventBus
 
 import com.google.common.collect.Lists
@@ -53,14 +52,11 @@ class BlobStoreManagerImplTest
   @Mock
   Provider<BlobStore> provider
 
-  @Mock
-  PeriodicJobService jobService
-
   BlobStoreManagerImpl underTest
 
   @Before
   void setup() {
-    underTest = spy(new BlobStoreManagerImpl(eventBus, store, jobService, [test: provider, File: provider]))
+    underTest = spy(new BlobStoreManagerImpl(eventBus, store, [test: provider, File: provider]))
   }
 
   @Test

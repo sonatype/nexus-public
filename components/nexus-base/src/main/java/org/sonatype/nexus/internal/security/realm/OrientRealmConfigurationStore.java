@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
 
 /**
  * Orient {@link RealmConfigurationStore}.
@@ -61,23 +63,14 @@ public class OrientRealmConfigurationStore
     }
   }
 
-  private ODatabaseDocumentTx openDb() {
-    ensureStarted();
-    return databaseInstance.get().acquire();
-  }
-
   @Override
   @Nullable
   public RealmConfiguration load() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.singleton.get(db);
-    }
+    return inTx(databaseInstance, db -> entityAdapter.singleton.get(db));
   }
 
   @Override
   public void save(final RealmConfiguration configuration) {
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.singleton.set(db, configuration);
-    }
+    inTxNoReturn(databaseInstance, db -> entityAdapter.singleton.set(db, configuration));
   }
 }

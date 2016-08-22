@@ -31,8 +31,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.file.PeriodicJobService;
+import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -68,29 +67,23 @@ public class BlobStoreManagerImpl
 
   private final Map<String, Provider<BlobStore>> blobstorePrototypes;
 
-  private final PeriodicJobService jobService;
-
   @Inject
   public BlobStoreManagerImpl(final EventBus eventBus,
                               final BlobStoreConfigurationStore store,
-                              final PeriodicJobService jobService,
                               Map<String, Provider<BlobStore>> blobstorePrototypes)
   {
     this.eventBus = checkNotNull(eventBus);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
-    this.jobService = checkNotNull(jobService);
   }
 
   @Override
   protected void doStart() throws Exception {
-    jobService.start();
-
     store.start();
     List<BlobStoreConfiguration> configurations = store.list();
     if (configurations.isEmpty()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
-      store.create(FileBlobStore.configure(DEFAULT_BLOBSTORE_NAME, DEFAULT_BLOBSTORE_NAME));
+      store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME).build());
       configurations = store.list();
     }
 
@@ -130,8 +123,6 @@ public class BlobStoreManagerImpl
     }
 
     stores.clear();
-
-    jobService.stop();
   }
 
   @Override

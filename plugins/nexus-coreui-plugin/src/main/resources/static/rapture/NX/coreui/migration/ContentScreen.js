@@ -58,6 +58,12 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                   name: 'repository.targets',
                   boxLabel: NX.I18n.render(me, 'RepositoryTargets_BoxLabel'),
                   checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'capability.healthcheck',
+                  boxLabel: NX.I18n.render(me, 'Repositories_HealthCheck_BoxLabel'),
+                  checked: true
                 }
               ]
             },
@@ -99,6 +105,12 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                 },
                 {
                   xtype: 'checkbox',
+                  name: 'security.target-privileges',
+                  boxLabel: NX.I18n.render(me, 'Security_TargetPrivileges_BoxLabel'),
+                  checked: true
+                },
+                {
+                  xtype: 'checkbox',
                   name: 'security.trust',
                   boxLabel: NX.I18n.render(me, 'Security_SSL_Certificates_BoxLabel'),
                   checked: true,
@@ -136,6 +148,13 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                   name: 'system.http',
                   boxLabel: NX.I18n.render(me, 'System_HTTP_BoxLabel'),
                   checked: true
+                },
+                {
+                  xtype: 'checkbox',
+                  name: 'capability.iq',
+                  boxLabel: NX.I18n.render(me, 'Repositories_Clm_BoxLabel'),
+                  checked: true,
+                  hidden: true
                 }
               ]
             }

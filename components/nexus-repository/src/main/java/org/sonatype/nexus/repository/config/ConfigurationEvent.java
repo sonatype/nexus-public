@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.repository.config;
 
-import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
-
 /**
  * Repository {@link Configuration} event.
  *
  * @since 3.1
  */
 public interface ConfigurationEvent
-    extends Batchable
 {
   boolean isLocal();
 

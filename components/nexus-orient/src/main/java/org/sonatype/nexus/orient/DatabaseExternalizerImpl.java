@@ -18,7 +18,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
@@ -123,7 +126,13 @@ public class DatabaseExternalizerImpl
 
   @Override
   public void export(final OutputStream output) throws IOException {
+    export(output, Collections.emptySet());
+  }
+
+  @Override
+  public void export(final OutputStream output, final Set<String> excludedClassNames) throws IOException {
     checkNotNull(output);
+    checkNotNull(excludedClassNames);
 
     log.debug("Exporting database: {}", name);
 
@@ -132,6 +141,16 @@ public class DatabaseExternalizerImpl
 
       log.debug("Starting export");
       ODatabaseExport exporter = new ODatabaseExport(db, output, new LoggingCommandOutputListener("EXPORT"));
+
+      if (!excludedClassNames.isEmpty()) {
+        // orientdb maps to classnames to uppercase
+        Set<String> upperCasedExcludedClassNames = excludedClassNames.stream()
+            .map(String::toUpperCase)
+            .collect(Collectors.toSet());
+        log.debug("excluding : {}", upperCasedExcludedClassNames);
+        exporter.setExcludeClasses(upperCasedExcludedClassNames);
+      }
+
       exporter.exportDatabase();
       log.debug("Completed export");
     }

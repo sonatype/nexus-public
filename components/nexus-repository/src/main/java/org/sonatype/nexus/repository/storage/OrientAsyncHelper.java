@@ -147,6 +147,11 @@ class OrientAsyncHelper
         log.warn("Interrupted end", e);
       }
     }
+
+    @Override
+    public Object getResult() {
+      return null; // unused
+    }
   }
 
   /**

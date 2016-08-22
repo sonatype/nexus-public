@@ -118,6 +118,10 @@ Ext.define('NX.coreui.controller.Users', {
       controller: {
         '#Refresh': {
           refresh: me.loadStores
+        },
+        '*': {
+          userSettingsAddTab: me.addTab,
+          userSettingsRemoveTab: me.removeTab
         }
       },
       store: {

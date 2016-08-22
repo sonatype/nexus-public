@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.quartz.internal.orient;
 
-import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
-
 /**
  * Trigger event.
  *
  * @since 3.1
  */
 public interface TriggerEvent
-    extends Batchable
 {
   boolean isLocal();
 

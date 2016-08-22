@@ -17,9 +17,14 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
+import org.sonatype.nexus.security.realm.RealmConfigurationCreatedEvent;
+import org.sonatype.nexus.security.realm.RealmConfigurationDeletedEvent;
+import org.sonatype.nexus.security.realm.RealmConfigurationUpdatedEvent;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -65,5 +70,21 @@ public class RealmConfigurationEntityAdapter
   @Override
   protected void writeFields(final ODocument document, final RealmConfiguration entity) {
     document.field(P_REALM_NAMES, entity.getRealmNames());
+  }
+
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    AttachedEntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    log.debug("Emitted {} event with metadata {}", eventKind, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new RealmConfigurationCreatedEvent(metadata);
+      case UPDATE:
+        return new RealmConfigurationUpdatedEvent(metadata);
+      case DELETE:
+        return new RealmConfigurationDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

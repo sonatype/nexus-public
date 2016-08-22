@@ -106,6 +106,12 @@
         <artifactId>pax-url-aether</artifactId>
         <version>2.4.4</version>
       </dependency>
+      
+      <dependency>
+        <groupId>org.littleshoot</groupId>
+        <artifactId>littleproxy</artifactId>
+        <version>1.1.0</version>
+      </dependency>   
 
       <!--
       TODO: Non-trivial changes to M20; needs investigation

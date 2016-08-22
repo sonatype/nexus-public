@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton

@@ -30,6 +30,7 @@ import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
+import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.RealmManager;
 
@@ -170,10 +171,16 @@ public class RealmManagerImpl
   public void setConfiguration(final RealmConfiguration configuration) {
     checkNotNull(configuration);
 
+    changeConfiguration(configuration, true);
+  }
+
+  private void changeConfiguration(final RealmConfiguration configuration, final boolean save) {
     RealmConfiguration model = configuration.copy();
-    log.info("Saving configuration: {}", model);
+    log.info("Changing configuration: {}", model);
     synchronized (lock) {
-      store.save(model);
+      if (save) {
+        store.save(model);
+      }
       this.configuration = model;
     }
 
@@ -275,6 +282,13 @@ public class RealmManagerImpl
   //
   // Event handling
   //
+
+  @Subscribe
+  public void on(final RealmConfigurationEvent event) {
+    if (!event.isLocal()) {
+      changeConfiguration(event.getConfiguration(), false);
+    }
+  }
 
   @Subscribe
   public void onEvent(final UserPrincipalsExpired event) {

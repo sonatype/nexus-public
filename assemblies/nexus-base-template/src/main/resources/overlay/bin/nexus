@@ -22,6 +22,10 @@ if [ "x$JAVA_MAX_MEM" = "x" ]; then
     JAVA_MAX_MEM=512M
     export JAVA_MAX_MEM
 fi
+if [ "x$DIRECT_MAX_MEM" = "x" ]; then
+    DIRECT_MAX_MEM=2G
+    export DIRECT_MAX_MEM
+fi
 
 #
 # Check the mode that initiated the script
@@ -258,7 +262,7 @@ setupDebugOptions() {
 }
 
 setupDefaults() {
-    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass "
+    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass "
 
     #Set the JVM_VENDOR specific JVM flags
     if [ "$JVM_VENDOR" = "SUN" ]; then

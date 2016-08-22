@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -60,5 +61,10 @@ public class HttpEntityPayload
       return header.getValue();
     }
     return null;
+  }
+
+  @Override
+  public void close() throws IOException {
+    EntityUtils.consume(entity);
   }
 }

@@ -17,6 +17,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -117,6 +119,25 @@ public class DatabaseExternalizerTest
   }
 
   @Test
+  public void exportDatabaseExcludingClass() throws Exception {
+    File exportJson = temporaryFolder.newFile("export.json");
+
+    createSampleDb();
+
+    try (OutputStream out = new FileOutputStream(exportJson)) {
+      database.getManager().externalizer("test").export(out, new HashSet<>(Arrays.asList("City")));
+    }
+
+    dropDb();
+
+    try (InputStream in = new FileInputStream(exportJson)) {
+      database.getManager().externalizer("test").import_(in);
+    }
+
+    assertLocationEmpty();
+  }
+
+  @Test
   public void importDatabase() throws Exception {
     File exportJson = temporaryFolder.newFile("export.json");
 
@@ -176,6 +197,14 @@ public class DatabaseExternalizerTest
       ODocument doc = db.browseClass("Person").current().getRecord();
       assertThat(doc.field("city.name"), is(expectedName));
       assertThat(doc.field("city.country"), is(expectedCountry));
+    }
+  }
+
+  private void assertLocationEmpty() {
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      ODocument doc = db.browseClass("Person").current().getRecord();
+      assertFalse(doc.containsField("city.name"));
+      assertFalse(doc.containsField("city.country"));
     }
   }
 

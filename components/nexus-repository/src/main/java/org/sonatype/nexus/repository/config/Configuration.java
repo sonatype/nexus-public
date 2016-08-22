@@ -18,7 +18,9 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.orient.entity.FieldCopier;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,6 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class Configuration
     extends Entity
+    implements Cloneable
 {
   private String repositoryName;
 
@@ -85,7 +88,7 @@ public class Configuration
       attributes = Maps.newHashMap();
     }
 
-    Map<String,Object> map = attributes.get(key);
+    Map<String, Object> map = attributes.get(key);
     if (map == null) {
       map = Maps.newHashMap();
       attributes.put(key, map);
@@ -102,4 +105,19 @@ public class Configuration
         ", attributes=" + attributes +
         '}';
   }
+
+  /**
+   * Returns a deeply cloned copy. Note that Entity.entityMetadata is not deep-copied.
+   */
+  public Configuration copy() {
+    try {
+      Configuration c = (Configuration) clone();
+      c.attributes = FieldCopier.copyIf(attributes);
+      return c;
+    }
+    catch (CloneNotSupportedException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
 }

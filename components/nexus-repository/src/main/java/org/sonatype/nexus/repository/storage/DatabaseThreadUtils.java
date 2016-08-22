@@ -31,7 +31,7 @@ public final class DatabaseThreadUtils
    * The current database ThreadLocal is preserved and restored after calling the lambda.
    */
   public static <T> T withOtherDatabase(Callable<T> function) {
-    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
       return function.call();
     }

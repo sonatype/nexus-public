@@ -16,7 +16,7 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.common.entity.EntityVersion;
 
-import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -31,19 +31,19 @@ public class AttachedEntityVersion
 {
   private final EntityAdapter owner;
 
-  private final ORecordVersion version;
+  private final int version;
 
   /**
    * Cached encoded value of version.
    */
   private volatile String encoded;
 
-  public AttachedEntityVersion(final EntityAdapter owner, final ORecordVersion version) {
+  public AttachedEntityVersion(final EntityAdapter owner, final int version) {
     this.owner = checkNotNull(owner);
-    this.version = checkNotNull(version);
+    this.version = version;
   }
 
-  public ORecordVersion getVersion() {
+  public int getVersion() {
     return version;
   }
 
@@ -51,8 +51,8 @@ public class AttachedEntityVersion
   @Nonnull
   public String getValue() {
     if (encoded == null) {
-      checkState(!version.isTemporary(), "attempted use of temporary/uncommitted document version");
-      encoded = version.toString();
+      checkState(!ORecordVersionHelper.isTemporary(version), "attempted use of temporary/uncommitted document version");
+      encoded = Integer.toString(version);
     }
     return encoded;
   }
@@ -64,7 +64,7 @@ public class AttachedEntityVersion
     }
     else if (o instanceof AttachedEntityVersion) {
       AttachedEntityVersion that = (AttachedEntityVersion)o;
-      return version.equals(that.version);
+      return version == that.version;
     }
     else if (o instanceof EntityVersion) {
       EntityVersion that = (EntityVersion)o;

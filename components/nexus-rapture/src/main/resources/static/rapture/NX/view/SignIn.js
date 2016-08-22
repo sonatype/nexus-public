@@ -60,11 +60,6 @@ Ext.define('NX.view.SignIn', {
             allowBlank: false,
             // allow cancel to be clicked w/o validating this to be non-blank
             validateOnBlur: false
-          },
-          {
-            xtype: 'checkbox',
-            boxLabel: NX.I18n.get('SignIn_RememberMe_BoxLabel'),
-            name: 'rememberMe'
           }
         ],
 

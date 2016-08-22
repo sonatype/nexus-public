@@ -27,9 +27,11 @@ class LicenseXO
   boolean required
 
   boolean installed
-  
+
   boolean valid
 
   @Nullable
   int daysToExpiry
+
+  List<String> features
 }

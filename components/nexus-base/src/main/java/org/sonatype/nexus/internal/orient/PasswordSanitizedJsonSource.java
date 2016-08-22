@@ -17,7 +17,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Provider;
 
@@ -37,6 +40,9 @@ class PasswordSanitizedJsonSource
     extends GeneratedContentSourceSupport
 {
   private static final List<String> FIELDS = Arrays.asList("applicationPassword", "password", "systemPassword");
+
+  private static final Set<String> EXCLUDED_CLASSES = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("api_key", "usertoken_record")));
 
   private static final String REPLACEMENT = "**REDACTED**";
 
@@ -58,7 +64,7 @@ class PasswordSanitizedJsonSource
     try (OutputStream output = new SanitizingJsonOutputStream(
         new BufferedOutputStream(new FileOutputStream(file)), FIELDS, REPLACEMENT)) {
       DatabaseExternalizer externalizer = databaseInstance.get().externalizer();
-      externalizer.export(output);
+      externalizer.export(output, EXCLUDED_CLASSES);
     }
   }
 }

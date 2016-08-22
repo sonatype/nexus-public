@@ -53,7 +53,10 @@ public class HttpClientPlan
   private CredentialsProvider credentials;
 
   @Nullable
-  private String userAgent;
+  private String userAgentBase;
+
+  @Nullable
+  private String userAgentSuffix;
 
   public HttpClientPlan() {
     this.client = HttpClientBuilder.create();
@@ -101,13 +104,51 @@ public class HttpClientPlan
     return credentials;
   }
 
+  /**
+   * Get the user agent without a suffix.
+   * 
+   * @since 3.1
+   */
   @Nullable
-  public String getUserAgent() {
-    return userAgent;
+  public String getUserAgentBase() {
+    return userAgentBase;
   }
 
-  public void setUserAgent(@Nullable final String userAgent) {
-    this.userAgent = userAgent;
+  /**
+   * @since 3.1
+   */
+  public void setUserAgentBase(@Nullable final String userAgentBase) {
+    this.userAgentBase = userAgentBase;
+  }
+
+  /**
+   * @since 3.1
+   */
+  @Nullable
+  public String getUserAgentSuffix() {
+    return userAgentSuffix;
+  }
+
+  /**
+   * @since 3.1
+   */
+  public void setUserAgentSuffix(@Nullable String userAgentSuffix) {
+    this.userAgentSuffix = userAgentSuffix;
+  }
+
+  /**
+   * Get the full user agent, including suffix.
+   * 
+   * @since 3.1
+   */
+  @Nullable
+  public String getUserAgent() {
+    if (userAgentBase != null && userAgentSuffix != null) {
+      return userAgentBase + " " + userAgentSuffix;
+    }
+    else {
+      return userAgentBase;
+    }
   }
 
   //
@@ -121,4 +162,5 @@ public class HttpClientPlan
   {
     void customize(HttpClientPlan plan);
   }
+
 }

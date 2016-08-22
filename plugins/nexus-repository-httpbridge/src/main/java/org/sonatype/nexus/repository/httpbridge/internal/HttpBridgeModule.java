@@ -18,8 +18,8 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
+import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
-import org.sonatype.nexus.security.authc.NexusBasicHttpAuthenticationFilter;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.servlet.ServletModule;
@@ -62,13 +62,13 @@ public class HttpBridgeModule
       @Override
       protected void configure() {
         addFilterChain(MOUNT_POINT + "/**",
-            NexusBasicHttpAuthenticationFilter.NAME,
+            NexusAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME);
 
         if (SUPPORT_LEGACY_CONTENT) {
           addFilterChain("/content/**",
-              NexusBasicHttpAuthenticationFilter.NAME,
+              NexusAuthenticationFilter.NAME,
               ApiKeyAuthenticationFilter.NAME,
               AnonymousFilter.NAME);
         }

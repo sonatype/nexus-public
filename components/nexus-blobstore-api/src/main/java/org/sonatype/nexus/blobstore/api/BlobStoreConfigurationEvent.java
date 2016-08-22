@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
-import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
-
 /**
  * {@link BlobStoreConfiguration} event.
  *
  * @since 3.1
  */
 public interface BlobStoreConfigurationEvent
-    extends Batchable
 {
   boolean isLocal();
 

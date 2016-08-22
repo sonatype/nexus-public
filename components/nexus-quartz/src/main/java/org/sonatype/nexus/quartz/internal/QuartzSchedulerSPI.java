@@ -484,8 +484,7 @@ public class QuartzSchedulerSPI
   {
     ensureStarted();
 
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       // check for existing task with same id
       QuartzTaskInfo old = findTaskById(config.getId());
 
@@ -565,9 +564,6 @@ public class QuartzSchedulerSPI
     catch (SchedulerException e) {
       throw Throwables.propagate(e);
     }
-    finally {
-      tccl.restore();
-    }
   }
 
   private JobDetail buildJob(final TaskConfiguration config, final JobKey jobKey) {
@@ -588,15 +584,11 @@ public class QuartzSchedulerSPI
   public int getRunningTaskCount() {
     ensureStarted();
 
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       return scheduler.getCurrentlyExecutingJobs().size();
     }
     catch (SchedulerException e) {
       throw Throwables.propagate(e);
-    }
-    finally {
-      tccl.restore();
     }
   }
 
@@ -622,8 +614,7 @@ public class QuartzSchedulerSPI
    * Returns all tasks for the {@link #GROUP_NAME} group, which also have attached job-listeners.
    */
   private Map<JobKey, QuartzTaskInfo> allTasks() throws SchedulerException {
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       Map<JobKey, QuartzTaskInfo> result = new HashMap<>();
 
       Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
@@ -640,9 +631,6 @@ public class QuartzSchedulerSPI
 
       return result;
     }
-    finally {
-      tccl.restore();
-    }
   }
 
   /**
@@ -650,15 +638,11 @@ public class QuartzSchedulerSPI
    */
   @Nullable
   private QuartzTaskInfo findTaskById(final String id) throws SchedulerException {
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       return allTasks().values().stream()
           .filter((task) -> task.getId().equals(id))
           .findFirst()
           .orElse(null);
-    }
-    finally {
-      tccl.restore();
     }
   }
 
@@ -669,19 +653,13 @@ public class QuartzSchedulerSPI
     checkNotNull(jobKey);
     ensureStarted();
 
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
-      try {
-        return scheduler.interrupt(jobKey);
-      }
-      catch (UnableToInterruptJobException e) {
-        log.debug("Unable to interrupt job with key: {}", jobKey, e);
-      }
-      return false;
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
+      return scheduler.interrupt(jobKey);
     }
-    finally {
-      tccl.restore();
+    catch (UnableToInterruptJobException e) {
+      log.debug("Unable to interrupt job with key: {}", jobKey, e);
     }
+    return false;
   }
 
   /**
@@ -690,8 +668,7 @@ public class QuartzSchedulerSPI
   public void runNow(final JobKey jobKey) throws TaskRemovedException, SchedulerException {
     ensureStarted();
 
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       // triggering with dataMap from "now" trigger as it contains metadata for back-conversion in listener
       scheduler.triggerJob(
           jobKey,
@@ -703,9 +680,6 @@ public class QuartzSchedulerSPI
     catch (JobPersistenceException e) {
       throw new TaskRemovedException(jobKey.getName(), e);
     }
-    finally {
-      tccl.restore();
-    }
   }
 
   /**
@@ -714,8 +688,7 @@ public class QuartzSchedulerSPI
   public boolean removeTask(final JobKey jobKey) {
     ensureStarted();
 
-    final TcclBlock tccl = TcclBlock.begin(this);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
       boolean result = false;
       List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
       for (Trigger trigger : triggers) {
@@ -726,9 +699,6 @@ public class QuartzSchedulerSPI
     }
     catch (SchedulerException e) {
       throw Throwables.propagate(e);
-    }
-    finally {
-      tccl.restore();
     }
   }
 

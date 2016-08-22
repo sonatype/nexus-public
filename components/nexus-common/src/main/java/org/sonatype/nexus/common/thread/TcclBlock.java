@@ -18,18 +18,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Helper to simplify boilerplate to begin (capture, set) and restore the current Thread's context-class-loader.
  *
  * <pre>{@code
- *   final TcclBlock tccl = TcclBlock.begin(newClassLoader);
- *   try {
+ *   try (TcclBlock tccl = TcclBlock.begin(newClassLoader)) {
  *      // do something which requires TCCL to be newClassLoader
- *   }
- *   finally {
- *      tccl.restore();
  *   }
  * }</pre>
  *
  * @since 3.0
  */
 public final class TcclBlock
+    implements AutoCloseable
 {
   private final ClassLoader previous;
 
@@ -40,7 +37,8 @@ public final class TcclBlock
   /**
    * Restore the Thread-context-class-loader to previous.
    */
-  public void restore() {
+  @Override
+  public void close() {
     Thread.currentThread().setContextClassLoader(previous);
   }
 

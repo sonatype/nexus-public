@@ -17,8 +17,6 @@ import org.sonatype.nexus.common.entity.DetachedEntityVersion
 import org.sonatype.nexus.common.entity.EntityVersion
 
 import com.orientechnologies.orient.core.metadata.schema.OClass
-import com.orientechnologies.orient.core.version.ORecordVersion
-import com.orientechnologies.orient.core.version.OSimpleVersion
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -42,7 +40,7 @@ class AttachedEntityVersionTest
 
   @Test
   void 'human representation'() {
-    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, new OSimpleVersion(1))
+    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, 1)
     def str = a.toString()
     println str
     assert str != null
@@ -50,18 +48,18 @@ class AttachedEntityVersionTest
 
   @Test
   void 'value externalization'() {
-    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, new OSimpleVersion(1))
+    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, 1)
     println a.value
     assert a.value != null
   }
 
   @Test
   void 'attached equality'() {
-    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, new OSimpleVersion(1))
+    AttachedEntityVersion a = new AttachedEntityVersion(entityAdapter, 1)
     assert a.equals(a)
-    assert a.equals(new AttachedEntityVersion(entityAdapter, new OSimpleVersion(1)))
+    assert a.equals(new AttachedEntityVersion(entityAdapter, 1))
 
-    AttachedEntityVersion b = new AttachedEntityVersion(entityAdapter, new OSimpleVersion(2))
+    AttachedEntityVersion b = new AttachedEntityVersion(entityAdapter, 2)
     assert !a.equals(b)
     assert !b.equals(a)
   }
@@ -69,14 +67,12 @@ class AttachedEntityVersionTest
   @SuppressWarnings("GrEqualsBetweenInconvertibleTypes")
   @Test
   void 'detached equality'() {
-    ORecordVersion rv1 = new OSimpleVersion(1)
-    EntityVersion a = new AttachedEntityVersion(entityAdapter, rv1)
-    EntityVersion b = new DetachedEntityVersion(rv1.toString())
+    EntityVersion a = new AttachedEntityVersion(entityAdapter, 1)
+    EntityVersion b = new DetachedEntityVersion('1')
     assert a.equals(b)
     assert b.equals(a)
 
-    ORecordVersion rv2 = new OSimpleVersion(2)
-    EntityVersion c = new DetachedEntityVersion(rv2.toString())
+    EntityVersion c = new DetachedEntityVersion('2')
     assert !a.equals(c)
     assert !c.equals(a)
   }

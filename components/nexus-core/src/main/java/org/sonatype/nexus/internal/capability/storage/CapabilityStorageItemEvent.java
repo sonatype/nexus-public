@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.capability.storage;
 
 import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
 
 /**
  * {@link CapabilityStorageItem} event.
@@ -21,7 +20,6 @@ import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
  * @since 3.1
  */
 public interface CapabilityStorageItemEvent
-    extends Batchable
 {
   boolean isLocal();
 

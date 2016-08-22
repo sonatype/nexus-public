@@ -18,7 +18,6 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -68,7 +67,7 @@ public class AttachedEntityHelper
   /**
    * Returns attached record-version of entity.
    */
-  public static ORecordVersion version(final Entity entity) {
-    return document(entity).getRecordVersion();
+  public static int version(final Entity entity) {
+    return document(entity).getVersion();
   }
 }

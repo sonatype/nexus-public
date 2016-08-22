@@ -25,6 +25,7 @@ import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -84,6 +85,11 @@ public class PbeCompression
     return NAME;
   }
 
+  @Override
+  public OCompression configure(final String options) {
+    return this;
+  }
+
   //
   // Helpers
   //
@@ -104,7 +110,7 @@ public class PbeCompression
       catch (IOException e) {
         throw Throwables.propagate(e);
       }
-      catch (IllegalArgumentException | OStorageException e) {
+      catch (IllegalArgumentException | OStorageException | OSecurityException e) {
         log.warn("Cannot enable PBE compression for cluster: {}", cluster.getName(), e);
       }
     }

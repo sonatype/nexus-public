@@ -65,15 +65,11 @@ public abstract class MarshalledEntityAdapter<T extends MarshalledEntity>
     Object valueData = document.field(P_VALUE_DATA);
 
     // unmarshall
-    TcclBlock tccl = TcclBlock.begin(classLoader);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(classLoader)) {
       Object value = marshaller.unmarshall(valueData, valueClass);
 
       //noinspection unchecked
       entity.setValue(value);
-    }
-    finally {
-      tccl.restore();
     }
   }
 
@@ -85,13 +81,9 @@ public abstract class MarshalledEntityAdapter<T extends MarshalledEntity>
     document.field(P_VALUE_TYPE, valueType);
 
     // marshall
-    TcclBlock tccl = TcclBlock.begin(classLoader);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(classLoader)) {
       Object valueData = marshaller.marshall(value);
       document.field(P_VALUE_DATA, valueData);
-    }
-    finally {
-      tccl.restore();
     }
   }
 }

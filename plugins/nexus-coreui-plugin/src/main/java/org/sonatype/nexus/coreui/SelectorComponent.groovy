@@ -22,7 +22,6 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.repository.selector.SelectorPreview
 import org.sonatype.nexus.selector.JexlSelector
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorConfigurationStore
@@ -109,11 +108,6 @@ class SelectorComponent
   @Validate
   void remove(final @NotEmpty String id) {
     store.delete(store.read(new DetachedEntityId(id)))
-  }
-
-  @DirectMethod
-  List<ReferenceXO> readContentTypes() {
-    return SelectorPreview.ContentType.values().collect { c -> new ReferenceXO(id: c, name: c) }
   }
 
   /**

@@ -562,7 +562,8 @@
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
             <argLine>
-              -Xmx300m
+              -Xmx300M
+              -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports
             </argLine>
@@ -583,7 +584,8 @@
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
             <argLine>
-              -Xmx300m
+              -Xmx300M
+              -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
             </argLine>
@@ -729,6 +731,7 @@
               <id>resteasy-multipart-provider</id>
               <id>resteasy-validator-provider-11</id>
               <id>resteasy-client</id>
+              <id>orientdb-core</id>
             </excludedArtifactIds>
           </configuration>
         </plugin>

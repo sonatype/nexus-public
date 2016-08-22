@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.extdirect.internal;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 
-import javax.inject.Named;
-
+import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 
 import com.google.common.base.Throwables;
-import com.google.inject.Key;
 import com.google.inject.servlet.ServletScopes;
 import com.softwarementors.extjs.djn.servlet.ssm.SsmJsonRequestProcessorThread;
 import org.apache.shiro.SecurityUtils;
@@ -35,7 +32,6 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.0
  */
-@Named
 public class ExtDirectJsonRequestProcessorThread
     extends SsmJsonRequestProcessorThread
 {
@@ -49,13 +45,19 @@ public class ExtDirectJsonRequestProcessorThread
     checkState(subject != null, "Subject is not set");
     // create the thread state by this moment as this is created in the master (web container) thread
     threadState = new SubjectThreadState(subject);
-    processRequest = ServletScopes.continueRequest(new Callable<String>()
+
+    final String baseUrl = BaseUrlHolder.get();
+
+    processRequest = ServletScopes.transferRequest(new Callable<String>()
     {
       @Override
       public String call() {
         threadState.bind();
         UserIdMdcHelper.set();
         try {
+          // apply base-url from the original thread
+          BaseUrlHolder.set(baseUrl);
+
           return ExtDirectJsonRequestProcessorThread.super.processRequest();
         }
         finally {
@@ -64,7 +66,7 @@ public class ExtDirectJsonRequestProcessorThread
         }
 
       }
-    }, Collections.<Key<?>, Object>emptyMap());
+    });
   }
 
   @Override

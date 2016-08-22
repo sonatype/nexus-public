@@ -26,6 +26,9 @@ if "%JAVA_MIN_MEM%" == "" (
 if "%JAVA_MAX_MEM%" == "" (
     set JAVA_MAX_MEM=512M
 )
+if "%DIRECT_MAX_MEM%" == "" (
+    set DIRECT_MAX_MEM=2G
+)
 
 goto BEGIN
 
@@ -201,8 +204,8 @@ if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
         set JAVA_MODE=-client
     )
 )
-rem SONATYPE: removed -Dcom.sun.management.jmxremote
-set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -Dderby.system.home="%KARAF_DATA%\derby" -Dderby.storage.fileSyncTransactionLog=true  -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass
+rem SONATYPE: removed -Dcom.sun.management.jmxremote and unused derby properties
+set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass
 
 rem SONATYPE: removed -XX:PermSize and -XX:MaxPermSize
 

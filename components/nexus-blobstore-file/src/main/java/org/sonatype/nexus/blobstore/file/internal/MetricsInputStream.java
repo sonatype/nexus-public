@@ -18,7 +18,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.sonatype.nexus.blobstore.file.FileOperations.StreamMetrics;
+import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;

@@ -242,8 +242,7 @@ Ext.define('NX.controller.User', {
       method: 'POST',
       params: {
         username: b64username,
-        password: b64password,
-        rememberMe: values.rememberMe
+        password: b64password
       },
       scope: me,
       suppressStatus: true,

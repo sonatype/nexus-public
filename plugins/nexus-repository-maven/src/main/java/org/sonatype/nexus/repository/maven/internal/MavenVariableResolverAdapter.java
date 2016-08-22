@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.elasticsearch.search.lookup.SourceLookup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -60,6 +61,14 @@ public class MavenVariableResolverAdapter
   @Override
   protected void addFromAsset(final VariableSourceBuilder builder, final Asset asset) {
     addMavenCoordinates(builder, asset.name());
+  }
+
+  @Override
+  protected void addFromSourceLookup(final VariableSourceBuilder builder,
+                                     final SourceLookup sourceLookup,
+                                     final Map<String, Object> asset)
+  {
+    addMavenCoordinates(builder, (String) asset.get(AssetEntityAdapter.P_NAME));
   }
 
   /**

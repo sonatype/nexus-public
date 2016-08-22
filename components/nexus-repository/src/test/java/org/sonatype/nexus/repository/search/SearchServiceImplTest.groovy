@@ -73,6 +73,9 @@ class SearchServiceImplTest
   SecurityHelper securityHelper
 
   @Mock
+  SearchSubjectHelper searchSubjectHelper
+
+  @Mock
   List<IndexSettingsContributor> indexSettingsContributors
 
   @Mock
@@ -82,8 +85,8 @@ class SearchServiceImplTest
 
   @Before
   public void setup() {
-    searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, indexSettingsContributors,
-        false)
+    searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
+        indexSettingsContributors, false)
     when(clientProvider.get()).thenReturn(client);
     when(client.admin()).thenReturn(adminClient)
     when(adminClient.indices()).thenReturn(indicesAdminClient)

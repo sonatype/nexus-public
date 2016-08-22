@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.Map;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.elasticsearch.search.lookup.SourceLookup;
 
 /**
  * Generate a variable source from a context, to be used for content selector evaluation
@@ -30,4 +33,9 @@ public interface VariableResolverAdapter
   VariableSource fromDocument(ODocument document);
 
   VariableSource fromAsset(Asset asset);
+
+  /**
+   * Creates a {@link VariableSource} from an ES-indexed asset.
+   */
+  VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset);
 }

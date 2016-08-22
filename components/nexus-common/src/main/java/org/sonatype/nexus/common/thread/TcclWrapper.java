@@ -38,12 +38,8 @@ public class TcclWrapper
     checkNotNull(classLoader);
 
     InvocationHandler handler = (proxy, method, args) -> {
-      final TcclBlock tccl = TcclBlock.begin(classLoader);
-      try {
+      try (TcclBlock tccl = TcclBlock.begin(classLoader)) {
         return method.invoke(target, args);
-      }
-      finally {
-        tccl.restore();
       }
     };
 

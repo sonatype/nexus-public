@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -36,7 +37,9 @@ import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.eventbus.Subscribe;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -65,7 +68,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Singleton
 public class HttpClientManagerImpl
     extends StateGuardLifecycleSupport
-    implements HttpClientManager
+    implements HttpClientManager, EventAware
 {
   static final String HTTPCLIENT_OUTBOUND_LOGGER_NAME = "org.sonatype.nexus.httpclient.outbound";
 
@@ -186,6 +189,18 @@ public class HttpClientManagerImpl
     eventBus.post(new HttpClientConfigurationChangedEvent(model));
   }
 
+  @Subscribe
+  public void onStoreChanged(final HttpClientConfigurationEvent event) {
+    if (!event.isLocal()) {
+      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
+      HttpClientConfiguration model;
+      synchronized (lock) {
+        configuration = model = loadConfiguration();
+      }
+      eventBus.post(new HttpClientConfigurationChangedEvent(model));
+    }
+  }
+
   //
   // Instance creation
   //
@@ -206,7 +221,7 @@ public class HttpClientManagerImpl
   @Override
   @Guarded(by = STARTED)
   public HttpClientBuilder prepare(@Nullable final Customizer customizer) {
-    final HttpClientPlan plan = new HttpClientPlan();
+    final HttpClientPlan plan = httpClientPlan();
 
     // attach connection manager early, so customizer has chance to replace it if needed
     plan.getClient().setConnectionManager(sharedConnectionManager);
@@ -224,6 +239,11 @@ public class HttpClientManagerImpl
 
     // apply plan to builder
     HttpClientBuilder builder = plan.getClient();
+    // User agent must be set here to apply to all apache http requests, including over proxies
+    String userAgent = plan.getUserAgent();
+    if (userAgent != null) {
+      setUserAgent(builder, userAgent);
+    }
     builder.setDefaultConnectionConfig(plan.getConnection().build());
     builder.setDefaultSocketConfig(plan.getSocket().build());
     builder.setDefaultRequestConfig(plan.getRequest().build());
@@ -267,6 +287,20 @@ public class HttpClientManagerImpl
     );
 
     return builder;
+  }
+
+  /**
+   * Allows for verification on unverifiable final method. NOTE: if you modify the behavior of this
+   * method beyond simply delegating to {@link HttpClientBuilder#setUserAgent}, write a unit test for it.
+   */
+  @VisibleForTesting
+  void setUserAgent(HttpClientBuilder builder, String value) {
+    builder.setUserAgent(value);
+  }
+
+  @VisibleForTesting
+  HttpClientPlan httpClientPlan() {
+    return new HttpClientPlan();
   }
 
   /**

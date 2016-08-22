@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
 
 /**
  * Orient {@link HttpClientConfigurationStore}.
@@ -61,23 +63,14 @@ public class OrientHttpClientConfigurationStore
     }
   }
 
-  private ODatabaseDocumentTx openDb() {
-    ensureStarted();
-    return databaseInstance.get().acquire();
-  }
-
   @Override
   @Nullable
   public HttpClientConfiguration load() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.singleton.get(db);
-    }
+    return inTx(databaseInstance, db -> entityAdapter.singleton.get(db));
   }
 
   @Override
   public void save(final HttpClientConfiguration configuration) {
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.singleton.set(db, configuration);
-    }
+    inTxNoReturn(databaseInstance, db -> entityAdapter.singleton.set(db, configuration));
   }
 }

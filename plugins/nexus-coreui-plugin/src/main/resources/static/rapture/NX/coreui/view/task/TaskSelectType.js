@@ -51,6 +51,13 @@ Ext.define('NX.coreui.view.task.TaskSelectType', {
       { property: 'exposed', value: true }
     ], false);
 
+    // Add a white background behind the filter, to make it look like part of the header
+    me.dockedItems = [
+      {
+        xtype: 'nx-actions'
+      }
+    ];
+
     me.callParent();
   }
 

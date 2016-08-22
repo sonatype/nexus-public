@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.security.VariableResolverAdapter
-import org.sonatype.nexus.repository.selector.ContentAuth
+import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter
 import org.sonatype.nexus.repository.storage.Component
@@ -114,11 +114,7 @@ class ComponentComponent
   ContentPermissionChecker contentPermissionChecker
 
   @Inject
-  @Named("simple")
-  VariableResolverAdapter simpleVariableResolverAdapter
-
-  @Inject
-  Map<String, VariableResolverAdapter> variableResolverAdapters
+  VariableResolverAdapterManager variableResolverAdapterManager
 
   @DirectMethod
   PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
@@ -166,7 +162,7 @@ class ComponentComponent
         repositories = ImmutableList.of(repository)
       }
 
-      def whereClause = "${ContentAuth.NAME}(@this) == true"
+      def whereClause = "contentAuth(@this) == true"
       def queryParams = null
       def filter = parameters.getFilter('filter')
       if (filter) {
@@ -236,8 +232,7 @@ class ComponentComponent
     finally {
       storageTx.close()
     }
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapters.
-        getOrDefault(component.format(), simpleVariableResolverAdapter)
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format())
     return assets.findAll {
       contentPermissionChecker.isPermitted(
           repository.name,
@@ -262,7 +257,7 @@ class ComponentComponent
     try {
       storageTx.begin()
       if (componentName) {
-        def whereClause = "${ContentAuth.NAME}(@this) == true"
+        def whereClause = "contentAuth(@this) == true"
         whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${MetadataNodeEntityAdapter.P_NAME} = :name"
         def params = ['name': componentName]
         if (componentGroup) {
@@ -323,7 +318,7 @@ class ComponentComponent
         repositories = ImmutableList.of(repository)
       }
 
-      def whereClause = "${ContentAuth.NAME}(@this) == true"
+      def whereClause = "contentAuth(@this) == true"
       def queryParams = null
       def filter = parameters.getFilter('filter')
       if (filter) {
@@ -444,10 +439,9 @@ class ComponentComponent
     checkNotNull(selectorConfigurations)
     checkNotNull(assets)
     checkNotNull(action)
+    String format = repository.getFormat().getValue()
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format)
     for (Asset asset : assets) {
-      String format = repository.getFormat().getValue()
-      VariableResolverAdapter variableResolverAdapter = variableResolverAdapters.
-          getOrDefault(format, simpleVariableResolverAdapter)
       VariableSource variableSource = variableResolverAdapter.fromAsset(asset)
       if (contentPermissionChecker
           .isPermitted(repository.getName(), format, action, selectorConfigurations,

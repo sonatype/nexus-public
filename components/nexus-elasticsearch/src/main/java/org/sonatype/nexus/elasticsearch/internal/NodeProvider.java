@@ -15,7 +15,10 @@ package org.sonatype.nexus.elasticsearch.internal;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
@@ -27,6 +30,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.thread.TcclBlock;
+import org.sonatype.nexus.elasticsearch.PluginLocator;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -36,6 +41,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.PluginManager;
 import org.elasticsearch.plugins.PluginManager.OutputMode;
 
@@ -60,16 +66,20 @@ public class NodeProvider
   
   private final List<String> plugins;
 
+  private final List<PluginLocator> pluginLocators;
+
   private Node node;
 
   @Inject
   public NodeProvider(final ApplicationDirectories directories,
                       final NodeAccess nodeAccess,
-                      @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins)
+                      @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins,
+                      @Nullable final List<PluginLocator> pluginLocators)
   {
     this.directories = checkNotNull(directories);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.plugins = plugins == null ? new ArrayList<>() : Splitter.on(",").splitToList(plugins);
+    this.pluginLocators = pluginLocators == null ? Collections.emptyList() : pluginLocators;
   }
 
   @Override
@@ -118,7 +128,13 @@ public class NodeProvider
       }
     }
 
-    return builder.node();
+    try (TcclBlock tccl = TcclBlock.begin(NodeProvider.class.getClassLoader())) {
+      return new PluginUsingNode(builder.settings().build(), deployedPluginClasses()).start();
+    }
+  }
+
+  private Collection<Class<? extends Plugin>> deployedPluginClasses() {
+    return pluginLocators.stream().map(PluginLocator::pluginClass).collect(Collectors.toList());
   }
 
   @PreDestroy

@@ -14,6 +14,7 @@ package org.sonatype.nexus.cache.internal;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.cache.CacheManager;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,6 +22,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,10 +48,11 @@ public class RuntimeCacheManagerProvider
 
   @Inject
   public RuntimeCacheManagerProvider(final Map<String, Provider<CacheManager>> providers,
-                                     @Named("${nexus.cache.provider:-ehcache}") final String name)
+                                     @Nullable @Named("${nexus.cache.provider}") final String customName,
+                                     final NodeAccess nodeAccess)
   {
     this.providers = checkNotNull(providers);
-    this.name = checkNotNull(name);
+    this.name = customName != null ? customName : (nodeAccess.isClustered() ? "hazelcast" : "ehcache");
     checkArgument(!"default".equals(name));
     log.info("Cache-provider: {}", name);
     checkState(providers.containsKey(name), "Missing cache-provider: %s", name);

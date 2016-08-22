@@ -28,8 +28,23 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-common</artifactId>
+    </dependency>  
+  
+    <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
+    </dependency>  
+    
+    <dependency>
+      <groupId>org.sonatype.goodies</groupId>
+      <artifactId>goodies-httpfixture</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.littleshoot</groupId>
+      <artifactId>littleproxy</artifactId>
     </dependency>
 
     <dependency>

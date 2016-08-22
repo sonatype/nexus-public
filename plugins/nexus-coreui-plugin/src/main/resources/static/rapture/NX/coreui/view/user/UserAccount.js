@@ -85,9 +85,10 @@ Ext.define('NX.coreui.view.user.UserAccount', {
       isValid: function() {
         if (this.external) {
           this.clearInvalid();
+          return true;
         }
         else {
-          this.callParent();
+          return this.callParent();
         }
       }
     });

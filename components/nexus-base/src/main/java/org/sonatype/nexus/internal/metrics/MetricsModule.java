@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.metrics;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.NexusBasicHttpAuthenticationFilter;
+import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
 
 import com.codahale.metrics.Clock;
@@ -89,7 +89,7 @@ public class MetricsModule
       @Override
       protected void configure() {
         addFilterChain(MOUNT_POINT + "/**",
-            NexusBasicHttpAuthenticationFilter.NAME,
+            NexusAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
             PermissionsFilter.config("nexus:metrics:read"));
       }

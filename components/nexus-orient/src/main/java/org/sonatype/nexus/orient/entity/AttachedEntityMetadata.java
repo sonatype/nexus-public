@@ -49,7 +49,7 @@ public class AttachedEntityMetadata
     this.owner = checkNotNull(owner);
     this.document = checkNotNull(document);
     this.id = new AttachedEntityId(owner, document.getIdentity());
-    this.version = new AttachedEntityVersion(owner, document.getRecordVersion());
+    this.version = new AttachedEntityVersion(owner, document.getVersion());
   }
 
   public EntityAdapter getOwner() {

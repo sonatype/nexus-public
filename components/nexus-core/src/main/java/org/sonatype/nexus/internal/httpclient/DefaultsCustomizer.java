@@ -21,7 +21,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 
-import com.google.common.net.HttpHeaders;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 
@@ -75,8 +74,7 @@ public class DefaultsCustomizer
   public void customize(final HttpClientPlan plan) {
     checkNotNull(plan);
 
-    plan.setUserAgent(userAgentGenerator.generate());
-    plan.getHeaders().put(HttpHeaders.USER_AGENT, plan.getUserAgent());
+    plan.setUserAgentBase(userAgentGenerator.generate());
 
     plan.getClient().setKeepAliveStrategy(new NexusConnectionKeepAliveStrategy(keepAliveDuration.toMillis()));
     plan.getClient().setRetryHandler(new StandardHttpRequestRetryHandler(2, false));

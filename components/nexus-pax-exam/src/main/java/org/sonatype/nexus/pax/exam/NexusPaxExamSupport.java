@@ -51,6 +51,8 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtendOption;
 import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.ProvisionOption;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -83,6 +85,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
  * @since 3.0
  */
 @RunWith(PaxExam.class)
+@ExamReactorStrategy(PerClass.class)
 public abstract class NexusPaxExamSupport
 {
   public static final String BASEDIR = new File(System.getProperty("basedir", "")).getAbsolutePath();
@@ -105,6 +108,9 @@ public abstract class NexusPaxExamSupport
   @Rule
   public final TestIndexRule testIndex = new TestIndexRule(resolveBaseFile("target/it-reports"),
       resolveBaseFile("target/it-data"));
+
+  @Rule
+  public final TestCleaner testCleaner = new TestCleaner();
 
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
@@ -330,13 +336,20 @@ public abstract class NexusPaxExamSupport
     String logLevel = System.getProperty("it.test.log.level", "INFO");
 
     return composite(
-        vmOptions("-Xmx400m"), // taken from testsuite config
+
+        // mimic nexus script
+        vmOptions("-Xms1200M"),
+        vmOptions("-Xmx1200M"),
+        vmOptions("-XX:MaxDirectMemorySize=2G"),
+        vmOptions("-XX:+UnlockDiagnosticVMOptions"),
+        vmOptions("-XX:+UnsyncloadClass"),
 
         vmOptions("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
 
         systemTimeout(examTimeout()),
 
         propagateSystemProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY),
+        propagateSystemProperty(TestCleaner.CLEAN_ON_SUCCESS_KEY),
 
         systemProperty("basedir").value(BASEDIR),
 
@@ -478,6 +491,8 @@ public abstract class NexusPaxExamSupport
     final String failsafePrefix = "target/failsafe-reports/" + getClass().getName();
     testIndex.recordLink("failsafe result", resolveBaseFile(failsafePrefix + ".txt"));
     testIndex.recordLink("failsafe output", resolveBaseFile(failsafePrefix + "-output.txt"));
+
+    testCleaner.cleanOnSuccess(applicationDirectories.getInstallDirectory());
   }
 
   // -------------------------------------------------------------------------

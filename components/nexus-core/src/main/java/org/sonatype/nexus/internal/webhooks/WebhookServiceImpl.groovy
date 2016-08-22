@@ -75,7 +75,6 @@ class WebhookServiceImpl
   List<Webhook> webhooks
 
   private final ObjectMapper objectMapper = new ObjectMapper()
-      .enable(SerializationFeature.INDENT_OUTPUT)
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 

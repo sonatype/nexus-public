@@ -29,10 +29,8 @@ import org.apache.shiro.authz.Authorizer;
 import org.apache.shiro.config.ConfigurationException;
 import org.apache.shiro.guice.web.ShiroWebModule;
 import org.apache.shiro.mgt.RealmSecurityManager;
-import org.apache.shiro.mgt.RememberMeManager;
 import org.apache.shiro.mgt.SessionStorageEvaluator;
 import org.apache.shiro.mgt.SubjectDAO;
-import org.apache.shiro.nexus.NexusCookieRememberMeManager;
 import org.apache.shiro.nexus.NexusSessionDAO;
 import org.apache.shiro.nexus.NexusSessionFactory;
 import org.apache.shiro.nexus.NexusSessionStorageEvaluator;
@@ -67,7 +65,6 @@ public class WebSecurityModule
     bindSingleton(SessionFactory.class, NexusSessionFactory.class);
     bindSingleton(SessionStorageEvaluator.class, NexusSessionStorageEvaluator.class);
     bindSingleton(SubjectDAO.class, NexusSubjectDAO.class);
-    bindSingleton(RememberMeManager.class, NexusCookieRememberMeManager.class);
 
     // configure our preferred security components
     bindSingleton(SessionDAO.class, NexusSessionDAO.class);

@@ -165,11 +165,12 @@ class RepositoryComponent
   RepositoryXO update(final @NotNull @Valid RepositoryXO repositoryXO) {
     Repository repository = repositoryManager.get(repositoryXO.name)
     securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
-    return asRepository(repositoryManager.update(repository.configuration.with {
+    Configuration updatedConfiguration = repository.configuration.copy().with {
       online = repositoryXO.online
       attributes = repositoryXO.attributes
       return it
-    }))
+    }
+    return asRepository(repositoryManager.update(updatedConfiguration))
   }
 
   @DirectMethod

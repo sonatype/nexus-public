@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.security;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.view.Request;
@@ -24,6 +25,9 @@ import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.elasticsearch.search.lookup.SourceLookup;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Adapts different contexts to variable resolvers
@@ -74,6 +78,22 @@ public abstract class VariableResolverAdapterSupport
   }
 
   protected abstract void addFromAsset(VariableSourceBuilder builder, Asset asset);
+
+  @Override
+  public VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset) {
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(
+        new ConstantVariableResolver(checkNotNull(asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
+    builder.addResolver(
+        new ConstantVariableResolver(checkNotNull(sourceLookup.get(DefaultComponentMetadataProducer.FORMAT)), FORMAT));
+    addFromSourceLookup(builder, sourceLookup, asset);
+
+    return builder.build();
+  }
+
+  protected abstract void addFromSourceLookup(VariableSourceBuilder builder,
+                                              SourceLookup sourceLookup,
+                                              Map<String, Object> asset);
 
   protected void addCoordinates(VariableSourceBuilder builder, Map<String, String> coordinates) {
     builder.addResolver(new PropertiesResolver<>("coordinate", coordinates));

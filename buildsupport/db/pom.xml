@@ -28,7 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.1.19</orientdb.version>
+    <orientdb.version>2.2.6</orientdb.version>
+    <hazelcast.version>3.6.3</hazelcast.version>
   </properties>
 
   <dependencyManagement>
@@ -128,7 +129,13 @@
       <dependency>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast</artifactId>
-        <version>3.5.3</version>
+        <version>${hazelcast.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.hazelcast</groupId>
+        <artifactId>hazelcast-cloud</artifactId>
+        <version>${hazelcast.version}</version>
       </dependency>
 
       <dependency>

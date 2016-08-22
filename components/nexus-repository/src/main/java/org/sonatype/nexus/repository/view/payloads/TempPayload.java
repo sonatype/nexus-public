@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.view.PartPayload;
  * @since 3.1
  */
 public class TempPayload
-    implements PartPayload, AutoCloseable
+    implements PartPayload
 {
   private final PartPayload payload;
 

@@ -21,9 +21,8 @@ import org.sonatype.nexus.internal.security.realm.OrientRealmConfigurationStore;
 import org.sonatype.nexus.security.FilterProviderSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
-import org.sonatype.nexus.security.authc.NexusBasicHttpAuthenticationFilter;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 
@@ -41,7 +40,7 @@ public class SecurityModule
   @Override
   protected void configure() {
     bind(filterKey(AnonymousFilter.NAME)).to(AnonymousFilter.class);
-    bind(filterKey(NexusBasicHttpAuthenticationFilter.NAME)).to(NexusBasicHttpAuthenticationFilter.class);
+    bind(filterKey(NexusAuthenticationFilter.NAME)).to(NexusAuthenticationFilter.class);
     bind(filterKey(ApiKeyAuthenticationFilter.NAME)).to(ApiKeyAuthenticationFilter.class);
     bind(filterKey(PermissionsFilter.NAME)).to(PermissionsFilter.class);
 

@@ -49,8 +49,7 @@ public class RestClientFactoryImpl
 
   @Override
   public ResteasyClient create(@Nullable final Customizer customizer) {
-    TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class);
-    try {
+    try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
       ResteasyClientBuilder builder = new ResteasyClientBuilder()
           .httpEngine(new ApacheHttpClient4Engine(httpClient.get()));
 
@@ -59,9 +58,6 @@ public class RestClientFactoryImpl
       }
 
       return builder.build();
-    }
-    finally {
-      tccl.restore();
     }
   }
 

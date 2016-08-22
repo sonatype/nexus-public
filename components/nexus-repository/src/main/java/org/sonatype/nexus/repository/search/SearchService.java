@@ -57,23 +57,38 @@ public interface SearchService
   void delete(Repository repository, String identifier);
 
   /**
-   * Search component metadata and browse results.
+   * Search component metadata and browse results, without the effect of content selectors.
+   *
+   * @since 3.1
    */
-  Iterable<SearchHit> browse(QueryBuilder query);
+  Iterable<SearchHit> browseUnrestricted(QueryBuilder query);
 
   /**
-   * Search component metadata and browse results (paged).
+   * Search component metadata and browse results (paged), without the effect of content selectors.
+   *
+   * @since 3.1
    */
-  Iterable<SearchHit> browse(QueryBuilder query, int from, int size);
+  Iterable<SearchHit> browseUnrestricted(QueryBuilder query, int from, int size);
 
   /**
-   * Search component metadata and browse results (paged).
+   * Search component metadata and browse results (paged), without the effect of content selectors.
+   *
+   * @since 3.1
+   */
+  SearchResponse searchUnrestricted(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
+
+  /**
+   * Search component metadata and browse results (paged) with content selectors applied.
+   *
+   * @since 3.1
    */
   SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
 
   /**
-   * Count the number of results for a given query
+   * Count the number of results for a given query, without the effect of content selectors.
+   *
+   * @since 3.1
    */
-  long count(QueryBuilder query);
+  long countUnrestricted(QueryBuilder query);
 
 }

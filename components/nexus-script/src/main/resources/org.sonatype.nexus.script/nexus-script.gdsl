@@ -8,4 +8,6 @@ contributor(context) {
   property name: 'core', type: 'org.sonatype.nexus.internal.provisioning.CoreApiImpl'
   property name: 'repository', type: 'org.sonatype.nexus.script.plugin.internal.provisioning.RepositoryApiImpl'
   property name: 'blobStore', type: 'org.sonatype.nexus.internal.provisioning.BlobStoreApiImpl'
+  property name: 'container', type: 'org.sonatype.nexus.common.app.GlobalComponentLookupHelper', doc: 'Nexus Repository Manager Internal (subject to change without notice)'
+  property name: 'beanLocator', type: 'org.eclipse.sisu.inject.BeanLocator', doc: 'Nexus Repository Manager Internal (subject to change without notice)'
 }

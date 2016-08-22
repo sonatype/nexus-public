@@ -52,6 +52,7 @@ import org.junit.Test;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -531,7 +532,7 @@ public class StorageFacetImplIT
       EntityVersion finalVersion = EntityHelper.version(asset);
 
       assertThat(name, is("secondValue"));
-      assertThat(finalVersion.getValue(), is(String.valueOf(Integer.valueOf(firstVersion.getValue()) + 2)));
+      assertThat(Integer.valueOf(finalVersion.getValue()), greaterThan(Integer.valueOf(firstVersion.getValue())));
     }
   }
 

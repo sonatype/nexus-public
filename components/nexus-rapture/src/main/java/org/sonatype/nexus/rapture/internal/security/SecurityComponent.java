@@ -87,13 +87,11 @@ public class SecurityComponent
     // FIXME: Subject is not nullable, but we have code that checks for nulls, likely from testing setups, verify and simplify
     checkState(subject != null);
 
-    boolean rememberMe = subject.isRemembered();
-
     try {
       subject.login(new UsernamePasswordToken(
           Strings2.decodeBase64(base64Username),
           Strings2.decodeBase64(base64Password),
-          rememberMe
+          false
       ));
     }
     catch (Exception e) {

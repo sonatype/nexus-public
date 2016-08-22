@@ -22,6 +22,7 @@ import javax.servlet.ServletContext;
 
 import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.security.config.PreconfiguredSecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
@@ -82,6 +83,7 @@ public abstract class AbstractSecurityTest
         bind(RealmConfiguration.class).annotatedWith(Names.named("initial")).toInstance(realmConfiguration);
 
         bind(ApplicationDirectories.class).toInstance(mock(ApplicationDirectories.class));
+        bind(NodeAccess.class).toInstance(mock(NodeAccess.class));
 
         requestInjection(AbstractSecurityTest.this);
       }

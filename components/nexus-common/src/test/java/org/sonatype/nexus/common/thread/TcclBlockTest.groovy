@@ -35,7 +35,7 @@ class TcclBlockTest
       assert thread.contextClassLoader.is(classLoader)
     }
     finally {
-      tccl.restore()
+      tccl.close()
     }
     assert thread.contextClassLoader.is(original)
   }

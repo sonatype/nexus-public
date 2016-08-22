@@ -18,8 +18,6 @@ import org.sonatype.nexus.common.entity.Entity
 import com.orientechnologies.orient.core.id.ORID
 import com.orientechnologies.orient.core.id.ORecordId
 import com.orientechnologies.orient.core.record.impl.ODocument
-import com.orientechnologies.orient.core.version.ORecordVersion
-import com.orientechnologies.orient.core.version.OSimpleVersion
 import org.junit.Test
 
 import static org.junit.Assert.fail
@@ -86,8 +84,8 @@ class AttachedEntityHelperTest
     ORID rid = new ORecordId(1, 1)
     when(doc.getIdentity()).thenReturn(rid)
 
-    ORecordVersion rv = new OSimpleVersion(1)
-    when(doc.getRecordVersion()).thenReturn(rv)
+    int rv = 1
+    when(doc.getVersion()).thenReturn(rv)
 
     EntityAdapter entityAdapter = mock(EntityAdapter.class)
     entity.setEntityMetadata(new AttachedEntityMetadata(entityAdapter, doc));

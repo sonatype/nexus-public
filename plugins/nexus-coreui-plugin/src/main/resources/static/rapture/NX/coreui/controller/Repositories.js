@@ -71,7 +71,8 @@ Ext.define('NX.coreui.controller.Repositories', {
   refs: [
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},
     {ref: 'list', selector: 'nx-coreui-repository-list'},
-    {ref: 'settings', selector: 'nx-coreui-repository-feature nx-coreui-repository-settings'}
+    {ref: 'settings', selector: 'nx-coreui-repository-feature nx-coreui-repository-settings'},
+    {ref: 'proxyFacetContentMaxAge', selector: 'nx-coreui-repository-proxy-facet numberfield[name=attributes.proxy.contentMaxAge]'}
   ],
   icons: {
     'repository-hosted': {
@@ -147,6 +148,9 @@ Ext.define('NX.coreui.controller.Repositories', {
         },
         'nx-coreui-repository-selectrecipe': {
           cellclick: me.showAddRepositoryPanel
+        },
+        'nx-coreui-repository-feature combo[name=attributes.maven.versionPolicy]' : {
+          change: me.handleMaven2VersionPolicyChange
         }
       }
     });
@@ -231,6 +235,27 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.setItemName(2, NX.I18n.format('Repositories_Create_Title', model.get('name')));
       me.setItemClass(2, NX.Icons.cls('repository-hosted', 'x16'));
       me.loadCreateWizard(2, true, {xtype: 'nx-coreui-repository-add', recipe: model});
+    }
+  },
+
+  /**
+   * @private
+   */
+  handleMaven2VersionPolicyChange: function(element, newValue) {
+    var me = this;
+
+    var proxyFacetContentMaxAge = me.getProxyFacetContentMaxAge();
+    if (proxyFacetContentMaxAge) {
+      switch (newValue) {
+        case 'RELEASE':
+          proxyFacetContentMaxAge.setValue(-1);
+          break;
+        case 'SNAPSHOT':
+          proxyFacetContentMaxAge.setValue(1440);
+          break;
+        default:
+          //no change
+      }
     }
   },
 

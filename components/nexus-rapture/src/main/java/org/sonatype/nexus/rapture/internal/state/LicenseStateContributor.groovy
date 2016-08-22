@@ -63,6 +63,12 @@ public class LicenseStateContributor
         result.setDaysToExpiry(duration.days)
       }
     }
+    if (attributes && attributes.get(ApplicationLicense.Attributes.FEATURES.getKey())) {
+      result.setFeatures(attributes.get(ApplicationLicense.Attributes.FEATURES.getKey()))
+    }
+    else {
+      result.setFeatures(Collections.emptyList())
+    }
     return result
   }
 }

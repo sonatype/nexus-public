@@ -383,7 +383,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
     '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus."</i></p>' +
-    '<p>Select all "nuget" content in the "mycompany" namespace<br/><i>format == "nuget" and path =^ "/MyCompany."</i></p>' +
+    '<p>Select all "nuget" content in the "MyCompany" namespace<br/><i>format == "nuget" and path =^ "/MyCompany."</i></p>' +
     '<p>Select all "docker" content with a tag of "foo"<br/><i>format == "docker" and coordinate.name == "foo"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
@@ -1141,7 +1141,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Description: "<p>Configure the connection to remote server's migration-agent.<br/>" +
       'The remote server must have a migration-agent previously configured and enabled.</p>',
       Endpoint_FieldLabel: 'URL',
-      Endpoint_HelpText: "The URL of the remote server's migration-agent endpoint (e.g. http://localhost:8082/nexus/service/siesta/migrationagent)",
+      Endpoint_HelpText: "The base URL of the remote server",
       Token_FieldLabel: 'Access Token',
       Token_HelpText: "The access token copied from the remote server's migration-agent settings."
     },
@@ -1160,12 +1160,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Security_Users_BoxLabel: 'Users',
       Security_User_Tokens_BoxLabel: 'User Tokens',
       Security_Roles_BoxLabel: 'Roles',
+      Security_TargetPrivileges_BoxLabel: 'Target Privileges',
       Security_LDAP_BoxLabel: 'LDAP Configuration',
       Security_SSL_Certificates_BoxLabel: 'SSL Certificates',
       Security_NuGet_API_Key_BoxLabel: 'NuGet API-Key',
       System_FieldLabel: 'System',
       System_Email_BoxLabel: 'Email',
       System_HTTP_BoxLabel: 'HTTP Configuration',
+      Repositories_Clm_BoxLabel: 'IQ Server',
+      Repositories_HealthCheck_BoxLabel: 'Health Check',
       Repositories_FieldLabel: 'Repositories',
       Repositories_BoxLabel: 'User-Managed Repositories',
       RepositoryTargets_BoxLabel: 'Repository Targets'

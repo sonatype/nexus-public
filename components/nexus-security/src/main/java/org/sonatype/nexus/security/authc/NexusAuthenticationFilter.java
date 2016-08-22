@@ -39,6 +39,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class NexusAuthenticationFilter
     extends NexusBasicHttpAuthenticationFilter
 {
+  public static final String NAME = "nx-authc";
+
   private List<AuthenticationTokenFactory> factories = Lists.newArrayList();
 
   @Inject

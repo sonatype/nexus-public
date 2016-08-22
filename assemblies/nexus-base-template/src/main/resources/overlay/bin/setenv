@@ -18,8 +18,9 @@
 # karaf scripts
 #
 # JAVA_HOME # Location of Java installation
-# JAVA_MIN_MEM # Minimum memory for the JVM
-# JAVA_MAX_MEM # Maximum memory for the JVM
+# JAVA_MIN_MEM # Minimum Java heap memory for the JVM
+# JAVA_MAX_MEM # Maximum Java heap memory for the JVM
+# DIRECT_MAX_MEM # Maximum direct buffer memory for the JVM
 # EXTRA_JAVA_OPTS # Additional JVM options
 # KARAF_HOME # Karaf home folder
 # KARAF_DATA # Karaf data folder
@@ -34,6 +35,9 @@ export JAVA_MIN_MEM
 
 JAVA_MAX_MEM="1200M"
 export JAVA_MAX_MEM
+
+DIRECT_MAX_MEM="2G"
+export DIRECT_MAX_MEM
 
 KARAF_OPTS="-Djava.net.preferIPv4Stack=true"
 export KARAF_OPTS

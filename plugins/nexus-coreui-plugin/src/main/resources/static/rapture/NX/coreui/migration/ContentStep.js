@@ -74,6 +74,10 @@ Ext.define('NX.coreui.migration.ContentStep', {
       screen.down('checkbox[name=security.trust]').show();
       // user-tokens are a pro feature
       screen.down('checkbox[name=security.user-tokens]').show();
+      // only show the IQ server ("CLM") migration capability when that feature is available
+      if (NX.State.hasFeature('SonatypeCLM')) {
+        screen.down('checkbox[name=capability.iq]').show();
+      }
     }
   },
 

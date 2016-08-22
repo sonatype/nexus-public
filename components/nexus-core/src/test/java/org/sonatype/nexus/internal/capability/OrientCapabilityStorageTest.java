@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreatedEvent;
@@ -26,8 +25,8 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemUpdatedEvent;
 import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
-import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.orient.entity.EntityHook;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.Orient;
@@ -151,21 +150,18 @@ public class OrientCapabilityStorageTest
 
     // events (entity + batch)
     ArgumentCaptor<?> eventCaptor = ArgumentCaptor.forClass(Object.class);
-    verify(eventBus, times(6)).post(eventCaptor.capture());
+    verify(eventBus, times(3)).post(eventCaptor.capture());
 
     Object[] events = eventCaptor.getAllValues().toArray();
 
     assertThat(events[0], instanceOf(CapabilityStorageItemCreatedEvent.class));
     checkEventDetails((CapabilityStorageItemEvent) events[0], id, item1);
-    assertThat(events[1], instanceOf(EntityBatchEvent.class));
 
-    assertThat(events[2], instanceOf(CapabilityStorageItemUpdatedEvent.class));
+    assertThat(events[1], instanceOf(CapabilityStorageItemUpdatedEvent.class));
+    checkEventDetails((CapabilityStorageItemEvent) events[1], id, item3);
+
+    assertThat(events[2], instanceOf(CapabilityStorageItemDeletedEvent.class));
     checkEventDetails((CapabilityStorageItemEvent) events[2], id, item3);
-    assertThat(events[3], instanceOf(EntityBatchEvent.class));
-
-    assertThat(events[4], instanceOf(CapabilityStorageItemDeletedEvent.class));
-    checkEventDetails((CapabilityStorageItemEvent) events[4], id, item3);
-    assertThat(events[5], instanceOf(EntityBatchEvent.class));
   }
 
   private static void checkEventDetails(CapabilityStorageItemEvent event,

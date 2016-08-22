@@ -16,8 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.file.PeriodicJobService.PeriodicJob;
-import org.sonatype.nexus.blobstore.file.PeriodicJobServiceImpl;
+import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
 
 import org.junit.After;
 import org.junit.Before;

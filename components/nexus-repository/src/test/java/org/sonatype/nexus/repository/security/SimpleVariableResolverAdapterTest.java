@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -21,6 +23,7 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.elasticsearch.search.lookup.SourceLookup;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -42,6 +45,12 @@ public class SimpleVariableResolverAdapterTest
 
   @Mock
   Request request;
+
+  @Mock
+  SourceLookup sourceLookup;
+
+  @Mock
+  Map<String, Object> sourceLookupAsset;
 
   @Mock
   ODocument document;
@@ -85,6 +94,19 @@ public class SimpleVariableResolverAdapterTest
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
     VariableSource source = simpleVariableResolverAdapter.fromAsset(asset);
+
+    assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
+    assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH));
+  }
+
+  @Test
+  public void testFromSourceLookup() throws Exception {
+    when(sourceLookupAsset.get("name")).thenReturn(TEST_PATH);
+    when(sourceLookup.get("format")).thenReturn(TEST_FORMAT);
+
+    SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
+    VariableSource source = simpleVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));

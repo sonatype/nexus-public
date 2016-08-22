@@ -16,8 +16,6 @@ import java.nio.file.Path;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.file.PeriodicJobServiceImpl;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 import org.junit.After;
@@ -37,14 +35,10 @@ public class BlobStoreMetricsStoreImplIT
 
   private Path blobStoreDirectory;
 
-  private PeriodicJobServiceImpl jobService;
-
   @Before
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
-    jobService = new PeriodicJobServiceImpl();
-    jobService.start();
-    underTest = new BlobStoreMetricsStoreImpl(jobService);
+    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl());
     underTest.setStorageDir(blobStoreDirectory);
   }
 
@@ -52,9 +46,6 @@ public class BlobStoreMetricsStoreImplIT
   public void tearDown() throws Exception {
     if (underTest != null) {
       underTest.stop();
-    }
-    if (jobService != null) {
-      jobService.stop();
     }
   }
 

@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -157,20 +158,27 @@ public abstract class ProxyFacetSupport
   public Content get(final Context context) throws IOException {
     checkNotNull(context);
 
-    final Content content = getCachedContent(context);
+    Content content = getCachedContent(context);
 
     if (isStale(context, content)) {
+      Content remote = null;
       try {
-        final Content remote = fetch(context, content);
+        remote = fetch(context, content);
         if (remote != null) {
-          return store(context, remote);
+          content = store(context, remote);
         }
       }
       catch (ProxyServiceException | IOException e) {
         log.warn("Failed to fetch: {}", getUrl(context), e);
         throw e;
       }
+      finally {
+        if (remote != null && !remote.equals(content)) {
+          Closeables.close(remote, true);
+        }
+      }
     }
+
     return content;
   }
 

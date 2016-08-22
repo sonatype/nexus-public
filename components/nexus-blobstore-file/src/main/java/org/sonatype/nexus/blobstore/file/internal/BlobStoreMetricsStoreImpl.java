@@ -21,10 +21,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.PeriodicJobService;
-import org.sonatype.nexus.blobstore.file.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -95,6 +93,7 @@ public class BlobStoreMetricsStoreImpl
       updateProperties();
     }
 
+    jobService.startUsing();
     metricsWritingJob = jobService.schedule(() -> {
       try {
         if (dirty.compareAndSet(true, false)) {
@@ -114,6 +113,7 @@ public class BlobStoreMetricsStoreImpl
   protected void doStop() throws Exception {
     metricsWritingJob.cancel();
     metricsWritingJob = null;
+    jobService.stopUsing();
 
     blobCount = null;
     totalSize = null;
