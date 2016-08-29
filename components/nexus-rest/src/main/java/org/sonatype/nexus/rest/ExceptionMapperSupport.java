@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.rest;
 
+import java.util.UUID;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -36,7 +38,7 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
     checkNotNull(exception);
 
     // Generate unique identifier
-    final String id = FaultIdGenerator.generate();
+    final String id = generateFaultId();
 
     // debug/trace log exception details
     if (log.isTraceEnabled()) {
@@ -70,6 +72,10 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
     );
 
     return response;
+  }
+
+  private static String generateFaultId() {
+    return UUID.randomUUID().toString();
   }
 
   /**

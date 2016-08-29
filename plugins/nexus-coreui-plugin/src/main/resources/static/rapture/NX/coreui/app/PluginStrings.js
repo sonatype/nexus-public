@@ -383,13 +383,21 @@ Ext.define('NX.coreui.app.PluginStrings', {
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
     '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus."</i></p>' +
-    '<p>Select all "nuget" content in the "MyCompany" namespace<br/><i>format == "nuget" and path =^ "/MyCompany."</i></p>' +
+    '<p>Select all "nuget" content in the "MyCompany" namespace<br/><i>format == "nuget" and coordinate.id =^ "MyCompany."</i></p>' +
     '<p>Select all "docker" content with a tag of "foo"<br/><i>format == "docker" and coordinate.name == "foo"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',
     Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
     Selector_SelectorSettingsForm_Specification_Title: 'Specification',
+    Selector_SelectorSettingsForm_Preview_Button: 'Preview results',
+
+    // Admin -> Repository -> Selectors -> Preview Window
+    SelectorPreviewWindow_Title: 'Preview results',
+    SelectorPreviewWindow_jexl_FieldLabel: 'Expression',
+    SelectorPreviewWindow_repository_FieldLabel: 'Preview Repository',
+    SelectorPreviewWindow_repository_HelpText: 'Select a repository to evaluate the content selector and see the content that would be available.',
+    SelectorPreviewWindow_repository_EmptyText: 'Select a repository...',
 
     // Admin -> Security
     FeatureGroups_Security_Title: 'Security',
@@ -1159,6 +1167,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Security_Realms_BoxLabel: 'Realms',
       Security_Users_BoxLabel: 'Users',
       Security_User_Tokens_BoxLabel: 'User Tokens',
+      Security_Crowd_BoxLabel: 'Crowd',
       Security_Roles_BoxLabel: 'Roles',
       Security_TargetPrivileges_BoxLabel: 'Target Privileges',
       Security_LDAP_BoxLabel: 'LDAP Configuration',

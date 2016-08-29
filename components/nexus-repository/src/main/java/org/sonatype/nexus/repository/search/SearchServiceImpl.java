@@ -47,8 +47,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
-import org.elasticsearch.action.count.CountRequestBuilder;
-import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -62,7 +60,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
@@ -379,9 +376,9 @@ public class SearchServiceImpl
     if (searchableIndexes.length == 0) {
       return 0;
     }
-    CountRequestBuilder count = client.get().prepareCount(searchableIndexes).setQuery(query);
-    CountResponse response = count.execute().actionGet();
-    return response.getCount();
+    SearchRequestBuilder count = client.get().prepareSearch(searchableIndexes).setQuery(query).setSize(0);
+    SearchResponse response = count.execute().actionGet();
+    return response.getHits().totalHits();
   }
 
   private boolean validateQuery(QueryBuilder query) {

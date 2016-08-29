@@ -21,7 +21,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.httpbridge.DefaultHttpResponseSender;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
 
 import static com.google.common.base.Preconditions.checkNotNull;

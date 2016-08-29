@@ -102,7 +102,8 @@ Ext.define('NX.coreui.migration.ProgressScreenSupport', {
         }
       ],
 
-      store: 'NX.coreui.migration.ProgressStore'
+      store: 'NX.coreui.migration.ProgressStore',
+      invalidateScrollerOnRefresh: false
     };
 
     me.callParent();

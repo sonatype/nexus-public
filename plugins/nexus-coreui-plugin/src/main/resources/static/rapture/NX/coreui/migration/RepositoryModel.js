@@ -22,6 +22,7 @@ Ext.define('NX.coreui.migration.RepositoryModel', {
   idProperty: 'repository',
   fields: [
     {name: 'repository', type: 'string', sortType: 'asUCText'},
+    {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
     {name: 'format', type: 'string', sortType: 'asUCText'},
     {name: 'supported', type: 'boolean'},

@@ -72,7 +72,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},
     {ref: 'list', selector: 'nx-coreui-repository-list'},
     {ref: 'settings', selector: 'nx-coreui-repository-feature nx-coreui-repository-settings'},
-    {ref: 'proxyFacetContentMaxAge', selector: 'nx-coreui-repository-proxy-facet numberfield[name=attributes.proxy.contentMaxAge]'}
+    {ref: 'proxyFacetContentMaxAge', selector: 'nx-coreui-repository-add numberfield[name=attributes.proxy.contentMaxAge]'}
   ],
   icons: {
     'repository-hosted': {
@@ -240,18 +240,23 @@ Ext.define('NX.coreui.controller.Repositories', {
 
   /**
    * @private
+   * Update The maximum component age in the proxy facet based on the selected version policy, but do not update if the
+   * user has entered a value.
    */
   handleMaven2VersionPolicyChange: function(element, newValue) {
     var me = this;
 
     var proxyFacetContentMaxAge = me.getProxyFacetContentMaxAge();
-    if (proxyFacetContentMaxAge) {
+
+    if (proxyFacetContentMaxAge && !proxyFacetContentMaxAge.isDirty()) {
       switch (newValue) {
         case 'RELEASE':
-          proxyFacetContentMaxAge.setValue(-1);
+          proxyFacetContentMaxAge.originalValue = -1;
+          proxyFacetContentMaxAge.reset();
           break;
         case 'SNAPSHOT':
-          proxyFacetContentMaxAge.setValue(1440);
+          proxyFacetContentMaxAge.originalValue = 1440;
+          proxyFacetContentMaxAge.reset();
           break;
         default:
           //no change

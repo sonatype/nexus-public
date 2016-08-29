@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
-import org.sonatype.nexus.repository.httpbridge.DefaultHttpResponseSender;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
 import org.sonatype.nexus.repository.httpbridge.internal.describe.Description;
 import org.sonatype.nexus.repository.httpbridge.internal.describe.DescriptionHelper;

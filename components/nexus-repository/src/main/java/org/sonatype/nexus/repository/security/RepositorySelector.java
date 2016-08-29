@@ -84,4 +84,12 @@ public class RepositorySelector
     }
     return name;
   }
+
+  public boolean isAllRepositories() {
+    return ALL.equals(name);
+  }
+
+  public boolean isAllFormats() {
+    return ALL.equals(format);
+  }
 }

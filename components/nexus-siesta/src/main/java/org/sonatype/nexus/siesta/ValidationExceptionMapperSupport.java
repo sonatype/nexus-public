@@ -30,7 +30,7 @@ import static org.sonatype.nexus.rest.MediaTypes.VND_VALIDATION_ERRORS_V1_JSON_T
 import static org.sonatype.nexus.rest.MediaTypes.VND_VALIDATION_ERRORS_V1_XML_TYPE;
 
 /**
- * Support calls for exception mappers returning {@link Status#BAD_REQUEST} with {@link ValidationErrorXO}s in body.
+ * Support class for exception mappers returning {@link Status#BAD_REQUEST} with {@link ValidationErrorXO}s in body.
  *
  * @since 3.0
  */

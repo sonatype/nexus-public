@@ -10,30 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest;
+package org.sonatype.nexus.email.internal;
 
-import javax.ws.rs.core.MediaType;
+import javax.inject.Named;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.email.EmailConfiguration;
 
 /**
- * Siesta specific media types.
+ * Initial {@link EmailConfiguration} provider.
  *
  * @since 3.0
  */
-public class MediaTypes
+@Named("initial")
+@Singleton
+public class InitialEmailConfigurationProvider
+  implements Provider<EmailConfiguration>
 {
-  private MediaTypes() {
-    // empty
+  @Override
+  public EmailConfiguration get() {
+    EmailConfiguration configuration = new EmailConfiguration();
+    configuration.setEnabled(false);
+    configuration.setHost("localhost");
+    configuration.setPort(25);
+    configuration.setFromAddress("nexus@example.org");
+    return configuration;
   }
-
-  // application/vnd.siesta-validation-errors-v1+xml
-
-  public static final String VND_VALIDATION_ERRORS_V1_XML = "application/vnd.siesta-validation-errors-v1+xml";
-
-  public static final MediaType VND_VALIDATION_ERRORS_V1_XML_TYPE = new MediaType("application", "vnd.siesta-validation-errors-v1+xml");
-
-  // application/vnd.siesta-validation-errors-v1+json
-
-  public static final String VND_VALIDATION_ERRORS_V1_JSON = "application/vnd.siesta-validation-errors-v1+json";
-
-  public static final MediaType VND_VALIDATION_ERRORS_V1_JSON_TYPE = new MediaType("application", "vnd.siesta-validation-errors-v1+json");
 }

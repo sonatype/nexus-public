@@ -53,7 +53,7 @@ Ext.define('NX.coreui.migration.RepositoriesScreen', {
         columns: [
           {
             header: NX.I18n.render(me, 'Repository_Column'),
-            dataIndex: 'repository',
+            dataIndex: 'name',
             flex: 1
           },
           {

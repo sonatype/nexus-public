@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.app.GlobalComponentLookupHelper
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Recipe
@@ -165,6 +166,13 @@ class RepositoryComponent
   RepositoryXO update(final @NotNull @Valid RepositoryXO repositoryXO) {
     Repository repository = repositoryManager.get(repositoryXO.name)
     securityHelper.ensurePermitted(adminPermission(repository, BreadActions.EDIT))
+
+    if (PasswordPlaceholder.is(repositoryXO?.attributes?.httpclient?.authentication?.password)) {
+      //Did not update the password, just use the password we already have
+      repositoryXO.attributes.httpclient.authentication.password =
+          repository.configuration.attributes?.httpclient?.authentication?.password
+    }
+
     Configuration updatedConfiguration = repository.configuration.copy().with {
       online = repositoryXO.online
       attributes = repositoryXO.attributes
@@ -213,9 +221,14 @@ class RepositoryComponent
         online: input.configuration.online,
         recipe: input.configuration.recipeName,
         status: buildStatus(input),
-        attributes: input.configuration.attributes,
+        attributes: filterAttributes(input.configuration.copy().attributes),
         url: "${BaseUrlHolder.get()}/repository/${input.name}/" // trailing slash is important
     )
+  }
+
+  Map<String, Map<String, Object>> filterAttributes(Map<String, Map<String, Object>> attributes) {
+    attributes?.httpclient?.authentication?.password = PasswordPlaceholder.get()
+    return attributes
   }
 
   @DirectPollMethod(event = "coreui_Repository_readStatus")

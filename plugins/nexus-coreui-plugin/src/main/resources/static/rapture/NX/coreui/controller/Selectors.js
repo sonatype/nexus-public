@@ -23,7 +23,8 @@ Ext.define('NX.coreui.controller.Selectors', {
     'NX.Conditions',
     'NX.Messages',
     'NX.Permissions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.coreui.view.selector.SelectorPreviewWindow'
   ],
   masters: [
     'nx-coreui-selector-list'
@@ -32,19 +33,28 @@ Ext.define('NX.coreui.controller.Selectors', {
     'Selector'
   ],
   stores: [
-    'Selector'
+    'Selector',
+    'PreviewAsset'
   ],
   views: [
     'selector.SelectorAdd',
     'selector.SelectorFeature',
     'selector.SelectorList',
     'selector.SelectorSettings',
-    'selector.SelectorSettingsForm'
+    'selector.SelectorSettingsForm',
+    'selector.SelectorPreviewWindow'
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-selector-feature'},
     {ref: 'list', selector: 'nx-coreui-selector-list'},
-    {ref: 'settings', selector: 'nx-coreui-selector-feature nx-coreui-selector-settings'}
+    {ref: 'settings', selector: 'nx-coreui-selector-feature nx-coreui-selector-settings'},
+    {ref: 'previewWindow', selector: 'nx-coreui-selector-preview-window'},
+    {ref: 'previewAssetList', selector: 'nx-coreui-selector-preview-window nx-coreui-browse-asset-list'},
+    {ref: 'previewExpressionTextfield', selector: 'nx-coreui-selector-preview-window textfield[name=jexl]'},
+    {ref: 'previewRepositoryComboBox', selector: 'nx-coreui-selector-preview-window combo[name=selectedRepository]'},
+    {ref: 'previewRepositoryExpression', selector: 'nx-coreui-selector-preview-window textfield[name=jexl]'},
+    {ref: 'addSettingsForm', selector: 'nx-coreui-selector-add nx-coreui-selector-settings-form'},
+    {ref: 'editSettingsForm', selector: 'nx-coreui-selector-settings nx-coreui-selector-settings-form'}
   ],
   icons: {
     'selector-default': {
@@ -97,6 +107,16 @@ Ext.define('NX.coreui.controller.Selectors', {
         },
         'nx-coreui-selector-settings-form': {
           submitted: me.loadStores
+        },
+        'nx-coreui-selector-settings-form button[action=preview]': {
+          click: me.showPreviewWindow
+        },
+        'nx-coreui-selector-preview-window combo[name=selectedRepository]': {
+          select: me.previewRepositorySelected
+        },
+        'nx-coreui-selector-preview-window textfield[name=jexl]': {
+          //note i use blur instead of change, we don't want to requery on every keystroke
+          blur: me.previewRepositorySelected
         }
       }
     });
@@ -113,8 +133,12 @@ Ext.define('NX.coreui.controller.Selectors', {
    * @override
    */
   onSelection: function(list, model) {
+    var me = this;
+
+    me.addMode = false;
+
     if (Ext.isDefined(model)) {
-      this.getSettings().loadRecord(model);
+      me.getSettings().loadRecord(model);
     }
   },
 
@@ -123,6 +147,8 @@ Ext.define('NX.coreui.controller.Selectors', {
    */
   showAddWindow: function() {
     var me = this;
+
+    me.addMode = true;
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Selectors_Create_Title'));
@@ -144,5 +170,60 @@ Ext.define('NX.coreui.controller.Selectors', {
         });
       }
     });
+  },
+
+  showPreviewWindow: function() {
+    var me = this, form;
+
+    if (me.addMode) {
+      form = me.getAddSettingsForm().getForm();
+    }
+    else {
+      form = me.getEditSettingsForm().getForm();
+    }
+
+    var assetStore = me.getPreviewAssetStore();
+    assetStore.addListener('load', me.loadPreviewAssetStore, this);
+
+    Ext.create('NX.coreui.view.selector.SelectorPreviewWindow', {
+      jexl: form.findField('expression').getValue(),
+      assetStore: assetStore
+    });
+  },
+
+  previewRepositorySelected: function() {
+    var me = this,
+        assetList = me.getPreviewAssetList(),
+        assetStore = assetList.getStore(),
+        repositoryName = me.getPreviewRepositoryComboBox().getValue();
+
+    me.getPreviewExpressionTextfield().clearInvalid();
+
+    if (repositoryName) {
+      assetStore.addFilter([
+        {
+          id: 'repositoryName',
+          property: 'repositoryName',
+          value: repositoryName
+        },
+        {
+          id: 'jexlExpression',
+          property: 'jexlExpression',
+          value: me.getPreviewRepositoryExpression().getValue()
+        }
+      ]);
+    }
+  },
+
+  loadPreviewAssetStore: function(store, records, successful) {
+    var me = this;
+    //since we are dealing with a store, there isn't typical api for mapping an error to a form field
+    //so we do it manually
+    if (!successful &&
+        store.getProxy().getReader().jsonData &&
+        store.getProxy().getReader().jsonData.errors &&
+        store.getProxy().getReader().jsonData.errors.expression) {
+      me.getPreviewExpressionTextfield().markInvalid(store.getProxy().getReader().jsonData.errors.expression);
+    }
   }
 });

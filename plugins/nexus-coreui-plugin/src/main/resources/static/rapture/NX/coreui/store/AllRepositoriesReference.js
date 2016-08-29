@@ -10,29 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.email;
-
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+/*global Ext, NX*/
 
 /**
- * Initial {@link EmailConfiguration} provider.
+ * All Repository reference store. includes items such as 'All Repositories', 'All Maven2 Repositories', etc.
  *
- * @since 3.0
+ * @since 3.1
  */
-@Named("initial")
-@Singleton
-public class InitialEmailConfigurationProvider
-  implements Provider<EmailConfiguration>
-{
-  @Override
-  public EmailConfiguration get() {
-    EmailConfiguration configuration = new EmailConfiguration();
-    configuration.setEnabled(false);
-    configuration.setHost("localhost");
-    configuration.setPort(25);
-    configuration.setFromAddress("nexus@example.org");
-    return configuration;
-  }
-}
+Ext.define('NX.coreui.store.AllRepositoriesReference', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.RepositoryReference',
+
+  proxy: {
+    type: 'direct',
+
+    api: {
+      read: 'NX.direct.coreui_Repository.readReferencesAddingEntriesForAllFormats'
+    },
+
+    reader: {
+      type: 'json',
+      root: 'data',
+      idProperty: 'id',
+      successProperty: 'success'
+    }
+  },
+
+  sortOnLoad: true,
+  sorters: { property: 'name', direction: 'ASC' }
+
+});

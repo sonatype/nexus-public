@@ -31,8 +31,10 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
    * @override
    */
   initComponent: function() {
-    Ext.apply(this, {
-      store: 'Asset',
+    var me = this;
+    var store = me.store || 'Asset';
+    Ext.apply(me, {
+      store: store,
 
       // Marker for source of targets to be shown in container assets
       assetContainerSource: true,
@@ -97,7 +99,7 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
       }
     });
 
-    this.callParent();
+    me.callParent();
   }
 
 });

@@ -10,22 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest;
-
-import java.util.UUID;
+/*global Ext, NX*/
 
 /**
- * Helper to generate unique identifiers for faults.
+ * Asset store.
  *
  * @since 3.0
  */
-public class FaultIdGenerator
-{
-  private FaultIdGenerator() {
-    // empty
-  }
+Ext.define('NX.coreui.store.PreviewAsset', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.Asset',
 
-  public static String generate() {
-    return UUID.randomUUID().toString();
-  }
-}
+  proxy: {
+    type: 'direct',
+
+    api: {
+      read: 'NX.direct.coreui_Component.previewAssets'
+    },
+
+    reader: {
+      type: 'json',
+      root: 'data',
+      successProperty: 'success'
+    }
+  },
+
+  remote: true,
+  autoLoad: false,
+
+  buffered: true,
+  pageSize: 50,
+
+  remoteFilter: true,
+  remoteSort: true,
+
+  sorters: { property: 'name', direction: 'ASC' }
+
+});

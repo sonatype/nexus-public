@@ -72,8 +72,9 @@ Ext.define('NX.coreui.migration.ContentStep', {
     if (screen && NX.State.requiresLicense() && NX.State.isLicenseValid()) {
       //don't show the ssl plugin when a license is not installed, as nx2 oss did not support ssl plugin
       screen.down('checkbox[name=security.trust]').show();
-      // user-tokens are a pro feature
+      // user-tokens and crowd are pro features
       screen.down('checkbox[name=security.user-tokens]').show();
+      screen.down('checkbox[name=security.crowd]').show();
       // only show the IQ server ("CLM") migration capability when that feature is available
       if (NX.State.hasFeature('SonatypeCLM')) {
         screen.down('checkbox[name=capability.iq]').show();

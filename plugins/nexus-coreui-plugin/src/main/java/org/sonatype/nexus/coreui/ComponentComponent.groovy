@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
+import org.sonatype.nexus.repository.security.RepositorySelector
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
@@ -44,6 +45,7 @@ import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
+import org.sonatype.nexus.selector.JexlExpressionValidator
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorConfigurationStore
 import org.sonatype.nexus.selector.VariableSource
@@ -115,6 +117,9 @@ class ComponentComponent
 
   @Inject
   VariableResolverAdapterManager variableResolverAdapterManager
+
+  @Inject
+  JexlExpressionValidator jexlExpressionValidator
 
   @DirectMethod
   PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
@@ -279,20 +284,134 @@ class ComponentComponent
     }
   }
 
+  List<Repository> getPreviewRepositories(String repositoryName) {
+    RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
+    if (!repositorySelector.allRepositories) {
+      return ImmutableList.of(repositoryManager.get(repositorySelector.name))
+    }
+
+    if (!repositorySelector.allFormats) {
+      return repositoryManager.browse().findResults { Repository repository ->
+        return repository.format.value == repositorySelector.format ? repository : null
+      }
+    }
+
+    return repositoryManager.browse().collect()
+  }
+
+  @DirectMethod
+  PagedResponse<AssetXO> previewAssets(final StoreLoadParameters parameters) {
+    String repositoryName = parameters.getFilter('repositoryName')
+    String jexlExpression = parameters.getFilter('jexlExpression')
+
+    if (!jexlExpression || !repositoryName) {
+      return null
+    }
+
+    jexlExpressionValidator.validate(jexlExpression)
+
+    List<Repository> selectedRepositories = getPreviewRepositories(repositoryName)
+
+    if (!selectedRepositories.size()) {
+      return null
+    }
+
+    def querySuffix = getQuerySuffix(selectedRepositories, parameters)
+
+    StorageTx storageTx = selectedRepositories[0].facet(StorageFacet).txSupplier().get()
+    try {
+      storageTx.begin()
+
+      def repositories
+      def repositoriesAsString = ''
+      if (selectedRepositories.size() == 1 && groupType == selectedRepositories[0].type) {
+        repositories = selectedRepositories[0].facet(GroupFacet).leafMembers()
+        repositoriesAsString = (repositories*.name).join(',')
+      }
+      else {
+        repositories = selectedRepositories
+      }
+
+      def whereClause = 'contentAuth(@this) == true and contentExpression(@this, :jexlExpression, :repositoryName, ' +
+          ':repositoriesAsString) == true'
+      //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
+      def queryParams = [repositoryName: repositoryName, jexlExpression: jexlExpression.replaceAll('"', '\''), repositoriesAsString:
+          repositoriesAsString]
+      def filter = parameters.getFilter('filter')
+      if (filter) {
+        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
+        queryParams['nameFilter'] = "%${filter}%"
+      }
+
+      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
+      List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix).
+          collect(ASSET_CONVERTER.rcurry(null, null))
+
+      return new PagedResponse<AssetXO>(
+          countAssets,
+          results
+      )
+    }
+    finally {
+      storageTx.close()
+    }
+  }
+
   @DirectMethod
   PagedResponse<AssetXO> readAssets(final StoreLoadParameters parameters) {
-    Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
+    String repositoryName = parameters.getFilter('repositoryName')
+    Repository repository = repositoryManager.get(repositoryName)
 
     if (!repository.configuration.online) {
       return null
     }
 
-    def sort = parameters.sort?.get(0)
+    def querySuffix = getQuerySuffix(ImmutableList.of(repository), parameters)
+
+    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+    try {
+      storageTx.begin()
+
+      def repositories
+      if (groupType == repository.type) {
+        repositories = repository.facet(GroupFacet).leafMembers()
+      }
+      else {
+        repositories = ImmutableList.of(repository)
+      }
+
+      def whereClause = 'contentAuth(@this) == true'
+      def queryParams = null
+      def filter = parameters.getFilter('filter')
+      if (filter) {
+        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
+        queryParams = [
+            'nameFilter': "%${filter}%"
+        ]
+      }
+
+      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
+      List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix).
+          collect(ASSET_CONVERTER.rcurry(null, repositoryName))
+
+      return new PagedResponse<AssetXO>(
+          countAssets,
+          results
+      )
+    }
+    finally {
+      storageTx.close()
+    }
+  }
+
+  def getQuerySuffix(List<Repository> repositories, StoreLoadParameters parameters) {
     def querySuffix = ''
+    def sort = parameters.sort?.get(0)
     if (sort) {
-      if (GroupType.NAME != repository.type.value) {
+      if (repositories.size() == 1 && groupType != repositories[0].type) {
         // optimization to match asset-bucket-name index when querying on a single repository
-        querySuffix += " ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
+        querySuffix = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME} ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} " +
+            "${sort.direction},${sort.property} ${sort.direction}"
       }
       else {
         querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
@@ -305,41 +424,7 @@ class ComponentComponent
       querySuffix += " LIMIT ${parameters.limit}"
     }
 
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-
-      def repositories
-      if (groupType == repository.type) {
-        repositories = repository.facet(GroupFacet).leafMembers()
-        querySuffix = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME}" + querySuffix
-      }
-      else {
-        repositories = ImmutableList.of(repository)
-      }
-
-      def whereClause = "contentAuth(@this) == true"
-      def queryParams = null
-      def filter = parameters.getFilter('filter')
-      if (filter) {
-        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
-        queryParams = [
-            'nameFilter': "%${filter}%"
-        ]
-      }
-
-      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
-      List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix)
-          .collect(ASSET_CONVERTER.rcurry(null, repository.name))
-
-      return new PagedResponse<AssetXO>(
-          countAssets,
-          results
-      )
-    }
-    finally {
-      storageTx.close()
-    }
+    return querySuffix
   }
 
   @DirectMethod

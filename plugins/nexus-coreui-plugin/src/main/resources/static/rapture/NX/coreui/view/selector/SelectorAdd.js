@@ -42,6 +42,7 @@ Ext.define('NX.coreui.view.selector.SelectorAdd', {
       editableMarker: NX.I18n.get('Selector_SelectorAdd_Create_Error'),
 
       buttons: [
+        {text: NX.I18n.get('Selector_SelectorSettingsForm_Preview_Button'), action: 'preview', ui: 'nx-primary'},
         {text: NX.I18n.get('Selector_SelectorList_New_Button'), action: 'add', formBind: true, ui: 'nx-primary'},
         {text: NX.I18n.get('Add_Cancel_Button'), action: 'back'}
       ]

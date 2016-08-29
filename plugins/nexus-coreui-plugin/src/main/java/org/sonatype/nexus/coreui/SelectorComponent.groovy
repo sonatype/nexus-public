@@ -15,14 +15,13 @@ package org.sonatype.nexus.coreui
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
-import javax.validation.ConstraintViolationException
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.selector.JexlSelector
+import org.sonatype.nexus.selector.JexlExpressionValidator
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorConfigurationStore
 import org.sonatype.nexus.validation.ConstraintViolationFactory
@@ -32,12 +31,9 @@ import org.sonatype.nexus.validation.group.Update
 
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.commons.jexl3.JexlException
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
-
-import static org.sonatype.nexus.selector.JexlSelector.prettyExceptionMsg
 
 /**
  * Selector {@link DirectComponent}.
@@ -57,6 +53,9 @@ class SelectorComponent
   @Inject
   ConstraintViolationFactory constraintViolationFactory
 
+  @Inject
+  JexlExpressionValidator jexlExpressionValidator
+
   /**
    * @return a list of selectors
    */
@@ -73,7 +72,7 @@ class SelectorComponent
   @RequiresAuthentication
   @Validate(groups = [Create.class, Default.class])
   SelectorXO create(final @NotNull @Valid SelectorXO selectorXO) {
-    validateExpressionOrThrow(selectorXO.expression)
+    jexlExpressionValidator.validate(selectorXO.expression)
     def configuration = new SelectorConfiguration(
         name: selectorXO.name,
         type: selectorXO.type,
@@ -91,7 +90,7 @@ class SelectorComponent
   @RequiresAuthentication
   @Validate(groups = [Update.class, Default.class])
   SelectorXO update(final @NotNull @Valid SelectorXO selectorXO) {
-    validateExpressionOrThrow(selectorXO.expression)
+    jexlExpressionValidator.validate(selectorXO.expression)
     store.update(store.read(new DetachedEntityId(selectorXO.id)).with {
       description = selectorXO.description
       attributes = ['expression': selectorXO.expression]
@@ -126,19 +125,5 @@ class SelectorComponent
         description: configuration.description,
         expression: configuration.attributes['expression']
     )
-  }
-
-  /**
-   * Convenience method to validate a JEXL expression or throw an exception on error.
-   */
-  void validateExpressionOrThrow(String expression) {
-    try {
-      new JexlSelector(expression)
-    }
-    catch (Exception e) {
-      String msg = e instanceof JexlException ? prettyExceptionMsg(e) : e.getMessage()
-      throw new ConstraintViolationException(e.getMessage(),
-          Collections.singleton(constraintViolationFactory.createViolation("expression", msg)))
-    }
   }
 }

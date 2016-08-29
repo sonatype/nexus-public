@@ -125,6 +125,13 @@ Ext.define('NX.coreui.migration.ContentScreen', {
                 },
                 {
                   xtype: 'checkbox',
+                  name: 'security.crowd',
+                  boxLabel: NX.I18n.render(me, 'Security_Crowd_BoxLabel'),
+                  checked: true,
+                  hidden: true
+                },
+                {
+                  xtype: 'checkbox',
                   name: 'security.users',
                   boxLabel: NX.I18n.render(me, 'Security_Users_BoxLabel'),
                   checked: true
