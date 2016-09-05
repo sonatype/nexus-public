@@ -78,7 +78,7 @@ Ext.define('NX.coreui.migration.Controller', {
 
     me.getApplication().getFeaturesController().registerFeature({
       mode: 'admin',
-      path: '/System/Migration',
+      path: '/System/Upgrade',
       text: NX.I18n.render(me, 'Feature_Text'),
       description: NX.I18n.render(me, 'Feature_Description'),
       view: {xtype: 'nx-coreui-migration-panel'},
@@ -131,7 +131,7 @@ Ext.define('NX.coreui.migration.Controller', {
       if (event.status && response.success) {
         var state = response.data.state;
         //<if debug>
-        me.logDebug('Migration state:', state);
+        me.logDebug('Upgrade state:', state);
         //</if>
 
         switch (state) {

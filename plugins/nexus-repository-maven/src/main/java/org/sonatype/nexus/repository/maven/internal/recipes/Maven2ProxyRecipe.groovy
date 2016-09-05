@@ -37,10 +37,8 @@ import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
-import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
@@ -118,10 +116,7 @@ class Maven2ProxyRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
-    builder.route(new Route.Builder()
-        .matcher(BrowseUnsupportedHandler.MATCHER)
-        .handler(browseUnsupportedHandler)
-        .create())
+    addBrowseUnsupportedRoute(builder)
 
     // Note: partialFetchHandler NOT added for Maven metadata
     builder.route(newMetadataRouteBuilder()

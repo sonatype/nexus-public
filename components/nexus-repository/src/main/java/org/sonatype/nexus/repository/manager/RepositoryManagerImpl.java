@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -64,9 +63,6 @@ public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
-  private static final boolean SKIP_DEFAULT_REPOSITORIES =
-      SystemPropertiesHelper.getBoolean("nexus.skipDefaultRepositories", false);
-
   private final EventBus eventBus;
 
   private final ConfigurationStore store;
@@ -83,6 +79,8 @@ public class RepositoryManagerImpl
 
   private final Map<String, Repository> repositories = Maps.newHashMap();
 
+  private final boolean skipDefaultRepositories;
+
   @Inject
   public RepositoryManagerImpl(final EventBus eventBus,
                                final ConfigurationStore store,
@@ -90,7 +88,8 @@ public class RepositoryManagerImpl
                                final Provider<ConfigurationFacet> configFacet,
                                final Map<String, Recipe> recipes,
                                final RepositoryAdminSecurityConfigurationResource securityResource,
-                               final List<DefaultRepositoriesContributor> defaultRepositoriesContributors)
+                               final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories)
   {
     this.eventBus = checkNotNull(eventBus);
     this.store = checkNotNull(store);
@@ -99,6 +98,7 @@ public class RepositoryManagerImpl
     this.recipes = checkNotNull(recipes);
     this.securityResource = checkNotNull(securityResource);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
+    this.skipDefaultRepositories = skipDefaultRepositories;
   }
 
   /**
@@ -177,8 +177,8 @@ public class RepositoryManagerImpl
 
     // attempt to provision default repositories if allowed
     if (configurations.isEmpty()) {
-      if (SKIP_DEFAULT_REPOSITORIES) {
-        log.debug("No repositories configured; skipping provisioning of default repositories");
+      if (skipDefaultRepositories) {
+        log.debug("Skipping provisioning of default repositories");
         return;
       }
 

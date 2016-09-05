@@ -12,47 +12,24 @@
  */
 package org.sonatype.nexus.repository.capability;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.function.Supplier;
 
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Factory of {@link Condition}s related to repositories.
  *
  * @since 3.0
  */
-@Named
-@Singleton
-public class RepositoryConditions
+public interface RepositoryConditions
 {
-
-  private final EventBus eventBus;
-
-  private final RepositoryManager repositoryManager;
-
-  @Inject
-  public RepositoryConditions(final EventBus eventBus,
-                              final RepositoryManager repositoryManager)
-  {
-    this.eventBus = checkNotNull(eventBus);
-    this.repositoryManager = checkNotNull(repositoryManager);
-  }
-
   /**
    * Creates a new condition that is satisfied when a repository is in service.
    *
    * @param repositoryName getter for repository name (usually condition specific property)
    * @return created condition
    */
-  public Condition repositoryIsOnline(final RepositoryName repositoryName) {
-    return new RepositoryOnlineCondition(eventBus, repositoryManager, repositoryName);
-  }
+  Condition repositoryIsOnline(Supplier<String> repositoryName);
 
   /**
    * Creates a new condition that is satisfied when a repository exists.
@@ -60,16 +37,5 @@ public class RepositoryConditions
    * @param repositoryName getter for repository name (usually condition specific property)
    * @return created condition
    */
-  public Condition repositoryExists(final RepositoryName repositoryName) {
-    return new RepositoryExistsCondition(eventBus, repositoryManager, repositoryName);
-  }
-
-  /**
-   * Function to return repository name.
-   */
-  public interface RepositoryName
-  {
-    String get();
-  }
-
+  Condition repositoryExists(Supplier<String> repositoryName);
 }

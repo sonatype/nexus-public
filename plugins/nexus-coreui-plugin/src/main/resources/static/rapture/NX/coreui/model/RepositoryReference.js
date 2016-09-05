@@ -20,9 +20,11 @@
 Ext.define('NX.coreui.model.RepositoryReference', {
   extend: 'Ext.data.Model',
   fields: [
-    'id',
-    'name',
-    'type',
-    'format'
+    {name: 'id', type: 'string', sortType: 'asUCText'},
+    {name: 'name', type: 'string', sortType: 'asUCText'},
+    {name: 'type', type: 'string', sortType: 'asUCText'},
+    {name: 'format', type: 'string', sortType: 'asUCText'},
+    {name: 'status', type: 'auto' /*object*/},
+    {name: 'url', type: 'string', sortType: 'asUCText'}
   ]
 });

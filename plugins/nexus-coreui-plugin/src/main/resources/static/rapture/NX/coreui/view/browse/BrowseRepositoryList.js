@@ -18,7 +18,7 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
-  extend: 'NX.view.drilldown.Master',
+  extend: 'NX.coreui.view.repository.RepositoryListTemplate',
   alias: 'widget.nx-coreui-browse-repository-list',
   requires: [
     'NX.I18n'
@@ -31,58 +31,18 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
    * @override
    */
   initComponent: function() {
-    var me = this;
 
-    me.columns = [
-      {
-        xtype: 'nx-iconcolumn',
-        width: 36,
-        iconVariant: 'x16',
-        iconNamePrefix: 'repository-',
-        dataIndex: 'type'
-      },
-      {
-        text: NX.I18n.get('Browse_BrowseRepositoryList_Name_Column'),
-        dataIndex: 'name',
-        stateId: 'name',
-        flex: 1
-      },
-      {
-        text: NX.I18n.get('Browse_BrowseRepositoryList_Type_Column'),
-        dataIndex: 'type',
-        stateId: 'type'
-      },
-      {
-        text: NX.I18n.get('Browse_BrowseRepositoryList_Format_Column'),
-        dataIndex: 'format',
-        stateId: 'format'
-      }
-    ];
-
-    me.viewConfig = {
-      emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_View'),
-      deferEmptyText: false,
-      markDirty: false
-    };
-
-    // filter will install into toolbar, ensure its properly styled for drilldown
-    me.tbar = {
-      xtype: 'nx-actions'
-    };
-
-    me.plugins = [
-      {
-        ptype: 'gridfilterbox',
-        emptyText: NX.I18n.get('Browse_BrowseRepositoryList_EmptyText_Filter')
-      }
-    ];
-
-    me.store = Ext.create('NX.coreui.store.RepositoryReference', { remoteFilter: true });
-    me.store.addFilter([
+    this.store = Ext.create('NX.coreui.store.RepositoryReference', { remoteFilter: true });
+    this.store.addFilter([
       { property: 'applyPermissions', value: true }
     ], false);
 
-    me.callParent();
+    // filter will install into toolbar, ensure its properly styled for drilldown
+    this.tbar = {
+      xtype: 'nx-actions'
+    };
+
+    this.callParent();
   }
 
 });

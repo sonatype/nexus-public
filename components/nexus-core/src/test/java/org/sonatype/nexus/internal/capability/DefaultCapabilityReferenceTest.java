@@ -23,12 +23,13 @@ import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
-import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.capability.condition.LogicalConditions;
-import org.sonatype.nexus.capability.condition.NexusConditions;
-import org.sonatype.nexus.capability.condition.NexusIsActiveCondition;
-import org.sonatype.nexus.capability.condition.crypto.CryptoConditions;
+import org.sonatype.nexus.capability.condition.CryptoConditions;
+import org.sonatype.nexus.capability.condition.internal.CapabilityConditionsImpl;
+import org.sonatype.nexus.capability.condition.internal.ConditionsImpl;
+import org.sonatype.nexus.capability.condition.internal.LogicalConditionsImpl;
+import org.sonatype.nexus.capability.condition.internal.NexusConditionsImpl;
+import org.sonatype.nexus.capability.condition.internal.NexusIsActiveCondition;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventBusImpl;
 
@@ -88,10 +89,10 @@ public class DefaultCapabilityReferenceTest
 
     activeCondition = new NexusIsActiveCondition(eventBus);
 
-    final Conditions conditions = new Conditions(
-        new LogicalConditions(eventBus),
-        new CapabilityConditions(eventBus, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
-        new NexusConditions(activeCondition),
+    final Conditions conditions = new ConditionsImpl(
+        new LogicalConditionsImpl(eventBus),
+        new CapabilityConditionsImpl(eventBus, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
+        new NexusConditionsImpl(activeCondition),
         mock(CryptoConditions.class)
     );
 

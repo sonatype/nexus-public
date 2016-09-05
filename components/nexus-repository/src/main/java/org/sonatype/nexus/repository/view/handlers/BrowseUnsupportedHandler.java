@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import java.net.URL;
+import java.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Matcher;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -51,11 +53,14 @@ public class BrowseUnsupportedHandler
 
   private final URL template;
 
+  private final Route route;
+
   @Inject
   public BrowseUnsupportedHandler(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
     checkNotNull(template);
+    this.route = new Route(MATCHER, Collections.singletonList(this));
   }
 
   @Nonnull
@@ -66,6 +71,11 @@ public class BrowseUnsupportedHandler
 
     String html = templateHelper.render(template, params);
     return HttpResponses.ok(new StringPayload(html, "text/html"));
+  }
+
+  @Nonnull
+  public Route getRoute() {
+    return this.route;
   }
 
   //
@@ -97,5 +107,5 @@ public class BrowseUnsupportedHandler
     }
   }
 
-  public static final Matcher MATCHER = new MatcherImpl();
+  private static final Matcher MATCHER = new MatcherImpl();
 }

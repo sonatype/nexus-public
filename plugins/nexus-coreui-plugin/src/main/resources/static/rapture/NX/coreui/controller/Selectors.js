@@ -49,10 +49,10 @@ Ext.define('NX.coreui.controller.Selectors', {
     {ref: 'list', selector: 'nx-coreui-selector-list'},
     {ref: 'settings', selector: 'nx-coreui-selector-feature nx-coreui-selector-settings'},
     {ref: 'previewWindow', selector: 'nx-coreui-selector-preview-window'},
-    {ref: 'previewAssetList', selector: 'nx-coreui-selector-preview-window nx-coreui-browse-asset-list'},
-    {ref: 'previewExpressionTextfield', selector: 'nx-coreui-selector-preview-window textfield[name=jexl]'},
+    {ref: 'previewAssetList', selector: 'nx-coreui-selector-preview-window gridpanel'},
     {ref: 'previewRepositoryComboBox', selector: 'nx-coreui-selector-preview-window combo[name=selectedRepository]'},
-    {ref: 'previewRepositoryExpression', selector: 'nx-coreui-selector-preview-window textfield[name=jexl]'},
+    {ref: 'previewExpression', selector: 'nx-coreui-selector-preview-window textareafield[name=jexl]'},
+    {ref: 'previewWindowPreviewButton', selector: 'nx-coreui-selector-preview-window button[action=preview]'},
     {ref: 'addSettingsForm', selector: 'nx-coreui-selector-add nx-coreui-selector-settings-form'},
     {ref: 'editSettingsForm', selector: 'nx-coreui-selector-settings nx-coreui-selector-settings-form'}
   ],
@@ -111,12 +111,15 @@ Ext.define('NX.coreui.controller.Selectors', {
         'nx-coreui-selector-settings-form button[action=preview]': {
           click: me.showPreviewWindow
         },
-        'nx-coreui-selector-preview-window combo[name=selectedRepository]': {
-          select: me.previewRepositorySelected
+        'nx-coreui-selector-preview-window gridpanel #filter': {
+          search: me.filterPreviewAssetStore,
+          searchcleared: me.clearFilterPreviewAssetStore
         },
-        'nx-coreui-selector-preview-window textfield[name=jexl]': {
-          //note i use blur instead of change, we don't want to requery on every keystroke
-          blur: me.previewRepositorySelected
+        'nx-coreui-selector-preview-window button[action=preview]': {
+          click: me.loadStore
+        },
+        'nx-coreui-selector-preview-window button[action=close]': {
+          click: me.closePreviewWindow
         }
       }
     });
@@ -185,19 +188,39 @@ Ext.define('NX.coreui.controller.Selectors', {
     var assetStore = me.getPreviewAssetStore();
     assetStore.addListener('load', me.loadPreviewAssetStore, this);
 
+    //make sure to empty the store so we don't see stale data
+    assetStore.removeAll();
+
     Ext.create('NX.coreui.view.selector.SelectorPreviewWindow', {
       jexl: form.findField('expression').getValue(),
       assetStore: assetStore
     });
   },
 
-  previewRepositorySelected: function() {
+  closePreviewWindow: function() {
+    var me = this, form, value = me.getPreviewExpression().getValue();
+
+    if (value) {
+      if (me.addMode) {
+        form = me.getAddSettingsForm().getForm();
+      }
+      else {
+        form = me.getEditSettingsForm().getForm();
+      }
+
+      form.findField('expression').setValue(value);
+    }
+  },
+
+  loadStore: function() {
     var me = this,
         assetList = me.getPreviewAssetList(),
         assetStore = assetList.getStore(),
         repositoryName = me.getPreviewRepositoryComboBox().getValue();
 
-    me.getPreviewExpressionTextfield().clearInvalid();
+    me.getPreviewExpression().clearInvalid();
+
+    me.getPreviewWindowPreviewButton().disable();
 
     if (repositoryName) {
       assetStore.addFilter([
@@ -209,7 +232,7 @@ Ext.define('NX.coreui.controller.Selectors', {
         {
           id: 'jexlExpression',
           property: 'jexlExpression',
-          value: me.getPreviewRepositoryExpression().getValue()
+          value: me.getPreviewExpression().getValue()
         }
       ]);
     }
@@ -217,13 +240,54 @@ Ext.define('NX.coreui.controller.Selectors', {
 
   loadPreviewAssetStore: function(store, records, successful) {
     var me = this;
+
+    me.getPreviewWindowPreviewButton().enable();
+
     //since we are dealing with a store, there isn't typical api for mapping an error to a form field
     //so we do it manually
     if (!successful &&
         store.getProxy().getReader().jsonData &&
         store.getProxy().getReader().jsonData.errors &&
         store.getProxy().getReader().jsonData.errors.expression) {
-      me.getPreviewExpressionTextfield().markInvalid(store.getProxy().getReader().jsonData.errors.expression);
+      me.getPreviewExpression().markInvalid(store.getProxy().getReader().jsonData.errors.expression);
+    }
+  },
+
+  filterPreviewAssetStore: function(filterTextField, value) {
+    var grid = filterTextField.up('grid'),
+        store = grid.getStore(),
+        emptyText = grid.getView().emptyTextFilter;
+
+    if (!grid.emptyText) {
+      grid.emptyText = grid.getView().emptyText;
+    }
+    grid.getView().emptyText = '<div class="x-grid-empty">' + emptyText.replace(/\$filter/, value) + '</div>';
+    grid.getSelectionModel().deselectAll();
+    store.addFilter([
+      {
+        id: 'filter',
+        property: 'filter',
+        value: value
+      }
+    ]);
+  },
+
+  clearFilterPreviewAssetStore: function(filterTextField) {
+    var grid = filterTextField.up('grid'),
+        store = grid.getStore();
+
+    if (grid.emptyText) {
+      grid.getView().emptyText = grid.emptyText;
+    }
+    grid.getSelectionModel().deselectAll();
+    // we have to remove filter directly as store#removeFilter() does not work when store#remoteFilter = true
+    if (store.filters.removeAtKey('filter')) {
+      if (store.filters.length) {
+        store.filter();
+      }
+      else {
+        store.clearFilter();
+      }
     }
   }
 });

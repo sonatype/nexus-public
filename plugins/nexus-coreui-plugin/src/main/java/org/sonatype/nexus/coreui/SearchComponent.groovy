@@ -20,6 +20,7 @@ import javax.validation.ValidationException
 import org.sonatype.nexus.coreui.search.SearchContribution
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.search.SearchService
@@ -51,12 +52,15 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 class SearchComponent
     extends DirectComponentSupport
 {
-
   @Inject
   SearchService searchService
 
   @Inject
   Map<String, SearchContribution> searchContributions
+
+  @Inject
+  @Named('${nexus.searchResultsLimit:-1000}')
+  long searchResultsLimit
 
   /**
    * Search based on configured filters.
@@ -95,7 +99,8 @@ class SearchComponent
         }
       }
       SearchResponse response = searchService.search(query, sortBuilders, parameters.start, parameters.limit)
-      return new PagedResponse<ComponentXO>(
+      return new LimitedPagedResponse<ComponentXO>(
+          searchResultsLimit,
           response.hits.totalHits,
           response.hits.hits?.collect { hit ->
             return new ComponentXO(
@@ -134,5 +139,4 @@ class SearchComponent
     log.debug('Query: {}', query)
     return query
   }
-
 }

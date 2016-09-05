@@ -40,11 +40,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Browse_Assets_Description_Feature: 'Browse assets',
     Browse_Components_Title_Feature: 'Components',
     Browse_Components_Description_Feature: 'Browse components and assets',
-    Browse_BrowseRepositoryList_Name_Column: 'Name',
-    Browse_BrowseRepositoryList_Type_Column: 'Type',
-    Browse_BrowseRepositoryList_Format_Column: 'Format',
-    Browse_BrowseRepositoryList_EmptyText_View: 'No browseable repositories defined',
-    Browse_BrowseRepositoryList_EmptyText_Filter: 'No repositories matched "$filter"',
     Browse_BrowseComponentList_Name_Column: 'Name',
     Browse_BrowseComponentList_Group_Column: 'Group',
     Browse_BrowseComponentList_Version_Column: 'Version',
@@ -83,6 +78,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Search_SaveSearchFilter_Title: 'Save search filter',
     Search_SaveSearchFilter_Name_FieldLabel: 'Filter name',
     Search_SaveSearchFilter_Description_FieldLabel: 'Filter description',
+    Search_Results_Limit_Message: 'Only showing the first {0} of {1} results',
     SearchCriteria_Keyword_FieldLabel: 'Keyword',
     SearchCriteria_Name_FieldLabel: 'Name',
     SearchCriteria_Format_FieldLabel: 'Format',
@@ -398,6 +394,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SelectorPreviewWindow_repository_FieldLabel: 'Preview Repository',
     SelectorPreviewWindow_repository_HelpText: 'Select a repository to evaluate the content selector and see the content that would be available.',
     SelectorPreviewWindow_repository_EmptyText: 'Select a repository...',
+    SelectorPreviewWindow_EmptyText_View: 'No assets in repository matched the expression',
+    SelectorPreviewWindow_EmptyText_Filter: 'No assets matched "$filter"',
+    SelectorPreviewWindow_Name_Column: 'Name',
+    SelectorPreviewWindow_Preview_Button: 'Preview',
 
     // Admin -> Security
     FeatureGroups_Security_Title: 'Security',
@@ -1124,21 +1124,21 @@ Ext.define('NX.coreui.app.PluginStrings', {
    */
   bundles: {
     'NX.coreui.migration.Controller': {
-      Feature_Text: 'Migration',
-      Feature_Description: 'Migrate configuration and content from remote server',
+      Feature_Text: 'Upgrade',
+      Feature_Description: 'Upgrade configuration and content from Nexus Repository Manager 2',
 
       Activate_Mask: 'Loading',
 
       Configure_Mask: 'Configuring',
-      Configure_Message: 'Migration configured',
+      Configure_Message: 'Upgrade configured',
 
-      Cancel_Confirm_Title: 'Cancel Migration',
-      Cancel_Confirm_Text: 'Do you want to cancel migration?',
+      Cancel_Confirm_Title: 'Cancel Upgrade',
+      Cancel_Confirm_Text: 'Do you want to cancel upgrade?',
       Cancel_Mask: 'Canceling',
-      Cancel_Message: 'Migration canceled',
+      Cancel_Message: 'Upgrade canceled',
 
       IncompleteCancel_Title: 'Configuration Incomplete',
-      IncompleteCancel_Text: 'Migration has been partially configured and needs to be reset to continue.',
+      IncompleteCancel_Text: 'Upgrade has been partially configured and needs to be reset to continue.',
       IncompleteCancel_Mask: 'Resetting',
 
       PlanStepDetail_Mask: 'Fetching details'
@@ -1146,12 +1146,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.AgentScreen': {
       Title: 'Agent Connection',
-      Description: "<p>Configure the connection to remote server's migration-agent.<br/>" +
-      'The remote server must have a migration-agent previously configured and enabled.</p>',
+      Description: "<p>Configure the connection to remote server's upgrade-agent.<br/>" +
+      'The remote server must have an upgrade-agent configured and enabled.</p>',
       Endpoint_FieldLabel: 'URL',
       Endpoint_HelpText: "The base URL of the remote server",
       Token_FieldLabel: 'Access Token',
-      Token_HelpText: "The access token copied from the remote server's migration-agent settings."
+      Token_HelpText: "The access token copied from the remote server's upgrade-agent settings."
     },
 
     'NX.coreui.migration.AgentStep': {
@@ -1161,7 +1161,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.ContentScreen': {
       Title: 'Content',
-      Description: '<p>Select the contents to migrate from remote server.</p>',
+      Description: '<p>Select the contents to upgrade from Nexus Repository Manager 2.</p>',
       Security_FieldLabel: 'Security',
       Security_Anonymous_BoxLabel: 'Anonymous',
       Security_Realms_BoxLabel: 'Realms',
@@ -1185,27 +1185,27 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.OverviewScreen': {
       Title: 'Overview',
-      Description: '<p>This wizard will help you setup migration from a remote server.</p>' +
-      '<p>Many aspects of a server can be migrated <strong>automatically</strong>:' +
+      Description: '<p>This wizard will help you upgrade from Nexus Repository Manager 2.</p>' +
+      '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
       '<ul>' +
       '<li>Security: users, roles and privileges</li>' +
       '<li>Repositories in supported formats: maven2, nuget, npm, site</li>' +
       '</ul>' +
       '</p>' +
-      '<p>Some aspects are <strong>incompatible</strong> and can not be automatically migrated:' +
+      '<p>Some aspects are <strong>incompatible</strong> and can not be automatically upgraded:' +
       '<ul>' +
       '<li>Unsupported repository formats: yum, p2, obr</li>' +
       '<li>Scheduled tasks</li>' +
       '<li>Capabilities</li>' +
       '</ul>' +
       '</p>' +
-      '<p>Migration is incremental. We recommend migrating one or two repositories first to ensure that the process works, then repeat the process and migrate the rest. Keep in mind that repository migration could take <strong>considerable time</strong> and needs <strong>special consideration</strong> for finalization upon completion.' +
+      '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Keep in mind that repository upgrade could take <strong>considerable time</strong> and needs <strong>special consideration</strong> for finalization upon completion.' +
       '</p>'
     },
 
     'NX.coreui.migration.PhaseFinishScreen': {
       Title: 'Finishing',
-      Description: '<p>Migration is finishing.</p>',
+      Description: '<p>Upgrade is finishing.</p>',
       Done_Button: 'Done'
     },
 
@@ -1213,21 +1213,21 @@ Ext.define('NX.coreui.app.PluginStrings', {
       $extend: 'NX.coreui.migration.RepositoryCustomizeWindow',
 
       Title: 'Repository Defaults',
-      Description: '<p>Configure the default settings used for repository migration.<br/>' +
-      'Per-repository settings may be customized when selecting repositories to migrate.</p>',
-      IngestMethod_HelpText: 'Choose how the repository should be migrated. The method you choose may not be supported by all repositories.'
+      Description: '<p>Configure the default settings used for repository upgrade.<br/>' +
+      'Per-repository settings may be customized when selecting repositories to upgrade.</p>',
+      IngestMethod_HelpText: 'Choose how the repository content should be transferred. The method you choose may not be supported by all repositories.'
     },
 
     'NX.coreui.migration.RepositoryCustomizeWindow': {
       Title: 'Customize {0}',
 
       BlobStore_FieldLabel: 'Destination',
-      BlobStore_HelpText: 'Choose where this repository should be migrated',
+      BlobStore_HelpText: 'Choose where the repository content should be stored',
       BlobStore_EmptyText: 'Choose a blob store',
 
       IngestMethod_FieldLabel: 'Method',
-      IngestMethod_HelpText: 'Choose how the repository should be migrated',
-      IngestMethod_EmptyText: 'Choose a migration method',
+      IngestMethod_HelpText: 'Choose how the repository content should be transferred',
+      IngestMethod_EmptyText: 'Choose a repository content transfer method',
       IngestMethod_Link: 'Hard link (fastest)',
       IngestMethod_Copy: 'Filesystem copy (slow)',
       IngestMethod_Download: 'Download (slowest)'
@@ -1242,17 +1242,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.PreviewScreen': {
       Title: 'Preview',
-      Description: '<p>Here is a preview of the migration configuration.</p>',
+      Description: '<p>Here is a preview of the upgrade configuration.</p>',
       Name_Column: 'Name',
       State_Column: 'State',
       Begin_Button: 'Begin'
     },
 
     'NX.coreui.migration.PreviewStep': {
-      Begin_Confirm_Title: 'Begin Migration',
-      Begin_Confirm_Text: 'Do you want to begin migration?',
-      Begin_Mask: 'Migration beginning',
-      Begin_Message: 'Migration begun'
+      Begin_Confirm_Title: 'Begin Upgrade',
+      Begin_Confirm_Text: 'Do you want to begin upgrade?',
+      Begin_Mask: 'Upgrade beginning',
+      Begin_Message: 'Upgrade begun'
     },
 
     'NX.coreui.migration.ProgressScreenSupport': {
@@ -1268,8 +1268,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.RepositoriesScreen': {
       Title: 'Repositories',
-      Description: '<p>Select the repositories to be migrated.<br/>' +
-      'Customize advanced configuration of the migration per-repository as needed.</p>',
+      Description: '<p>Select the repositories to be upgraded.<br/>' +
+      'Customize advanced configuration of the upgrade per-repository as needed.</p>',
       Repository_Column: 'Repository',
       Type_Column: 'Type',
       Format_Column: 'Format',
@@ -1290,7 +1290,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.PhasePrepareScreen': {
       Title: 'Preparing',
-      Description: '<p>Preparing for migration.</p>',
+      Description: '<p>Preparing for upgrade.</p>',
       Abort_Button: 'Abort',
       Continue_Button: 'Continue'
     },
@@ -1298,20 +1298,20 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.PhasePrepareStep': {
       $extend: 'NX.coreui.migration.ProgressStepSupport',
 
-      Abort_Confirm_Title: 'Abort Migration',
-      Abort_Confirm_Text: 'Do you want to abort migration?',
-      Abort_Mask: 'Migration aborting',
-      Abort_Message: 'Migration aborted',
+      Abort_Confirm_Title: 'Abort Upgrade',
+      Abort_Confirm_Text: 'Do you want to abort upgrade?',
+      Abort_Mask: 'Upgrade aborting',
+      Abort_Message: 'Upgrade aborted',
 
-      Continue_Confirm_Title: 'Continue Migration',
-      Continue_Confirm_Text: 'Do you want to continue migration?',
-      Continue_Mask: 'Migration continuing',
-      Continue_Message: 'Migration continuing'
+      Continue_Confirm_Title: 'Continue Upgrade',
+      Continue_Confirm_Text: 'Do you want to continue upgrade?',
+      Continue_Mask: 'Upgrade continuing',
+      Continue_Message: 'Upgrade continuing'
     },
 
     'NX.coreui.migration.PhaseSyncScreen': {
       Title: 'Synchronizing',
-      Description: '<p>Migration is synchronizing changes.</p>',
+      Description: '<p>Upgrade is synchronizing changes.</p>',
       Abort_Button: 'Abort',
       Stop_Monitoring_Button: 'Stop Monitoring',
       Finish_Button: 'Finish'
@@ -1320,27 +1320,27 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.PhaseSyncStep': {
       $extend: 'NX.coreui.migration.ProgressStepSupport',
 
-      Abort_Confirm_Title: 'Abort Migration',
-      Abort_Confirm_Text: 'Do you want to abort migration?',
-      Abort_Mask: 'Migration aborting',
-      Abort_Message: 'Migration aborted',
+      Abort_Confirm_Title: 'Abort Upgrade',
+      Abort_Confirm_Text: 'Do you want to abort upgrade?',
+      Abort_Mask: 'Upgrade aborting',
+      Abort_Message: 'Upgrade aborted',
 
       Stop_Waiting_Confirm_Title: 'Stop waiting for changes',
-      Stop_Waiting_Confirm_Text: 'Any future changes to repositories will not be migrated. Proceed?',
+      Stop_Waiting_Confirm_Text: 'Any future changes to repositories will not be synchronized. Proceed?',
       Stop_Waiting_Confirm_Mask: 'Finalizing changes',
       Stop_Waiting_Confirm_Message: 'Changes finalized',
 
-      Finish_Confirm_Title: 'Finish Migration',
-      Finish_Confirm_Text: 'Do you want to finish migration?',
-      Finish_Mask: 'Migration finishing',
-      Finish_Message: 'Migration finishing'
+      Finish_Confirm_Title: 'Finish Upgrade',
+      Finish_Confirm_Text: 'Do you want to finish the upgrade?',
+      Finish_Mask: 'Upgrade finishing',
+      Finish_Message: 'Upgrade finishing'
     },
 
     'NX.coreui.migration.PhaseFinishStep': {
       $extend: 'NX.coreui.migration.ProgressStepSupport',
 
       Done_Mask: 'Confirming',
-      Done_Message: 'Migration done'
+      Done_Message: 'Upgrade done'
     },
 
     'NX.coreui.audit.AuditController': {

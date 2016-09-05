@@ -49,7 +49,15 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
           //],
         },
         {
+          xtype: 'panel',
+          itemId: 'info',
+          ui: 'nx-info-message',
+          iconCls: NX.Icons.cls('message-primary', 'x16'),
+          hidden: true
+        },
+        {
           xtype: 'nx-coreui-search-result-list',
+          cls: 'nx-search-result-list',
           flex: 1,
           header: false
         }

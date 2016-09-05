@@ -26,6 +26,8 @@ class RepositoryReferenceXO
 {
   String type
   String format
+  String url
+  RepositoryStatusXO status
   /**
    * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
    * the top you will get

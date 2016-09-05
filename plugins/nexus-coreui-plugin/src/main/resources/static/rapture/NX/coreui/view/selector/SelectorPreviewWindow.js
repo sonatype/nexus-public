@@ -51,49 +51,101 @@ Ext.define('NX.coreui.view.selector.SelectorPreviewWindow', {
     Ext.apply(me, {
       title: NX.I18n.get('SelectorPreviewWindow_Title'),
       width: NX.view.ModalDialog.LARGE_MODAL,
+      height: 540,
       buttonAlign: 'left',
       buttons: [
-        {text: NX.I18n.get('Button_Close'), handler: me.close, scope: me}
+        {text: NX.I18n.get('Button_Close'), handler: me.close, action: 'close', scope: me}
       ],
       items: [
         {
           xtype: 'form',
+          buttonAlign: 'left',
           items: [
             {
-              xtype: 'fieldcontainer',
-              items: {
-                xtype: 'fieldset',
-                cls: 'nx-form-section',
-                items: [
-                  {
-                    xtype: 'textfield',
-                    name: 'jexl',
-                    itemId: 'jexl',
-                    fieldLabel: NX.I18n.get('SelectorPreviewWindow_jexl_FieldLabel'),
-                    allowBlank: false,
-                    value: me.jexl
-                  },
-                  {
-                    xtype: 'combo',
-                    name: 'selectedRepository',
-                    fieldLabel: NX.I18n.get('SelectorPreviewWindow_repository_FieldLabel'),
-                    helpText: NX.I18n.get('SelectorPreviewWindow_repository_HelpText'),
-                    emptyText: NX.I18n.get('SelectorPreviewWindow_repository_EmptyText'),
-                    editable: false,
-                    store: Ext.create('NX.coreui.store.AllRepositoriesReference', {remote: true, autoLoad: true}),
-                    valueField: 'id',
-                    displayField: 'name',
-                    allowBlank: false
-                  }
-                ]
-              }
+              xtype: 'textareafield',
+              name: 'jexl',
+              itemId: 'jexl',
+              fieldLabel: NX.I18n.get('SelectorPreviewWindow_jexl_FieldLabel'),
+              allowBlank: false,
+              value: me.jexl
+            },
+            {
+              xtype: 'combo',
+              name: 'selectedRepository',
+              fieldLabel: NX.I18n.get('SelectorPreviewWindow_repository_FieldLabel'),
+              helpText: NX.I18n.get('SelectorPreviewWindow_repository_HelpText'),
+              emptyText: NX.I18n.get('SelectorPreviewWindow_repository_EmptyText'),
+              editable: false,
+              store: Ext.create('NX.coreui.store.AllRepositoriesReference', {remote: true, autoLoad: true}),
+              valueField: 'id',
+              displayField: 'name',
+              allowBlank: false
+            }
+          ],
+          buttons: [
+            {
+              text: NX.I18n.get('SelectorPreviewWindow_Preview_Button'),
+              action: 'preview',
+              ui: 'nx-primary',
+              formBind: true
             }
           ]
         },
         {
-          xtype: 'nx-coreui-browse-asset-list',
+          xtype: 'gridpanel',
           store: me.assetStore,
-          flex: 1
+          flex: 1,
+          viewConfig: {
+            emptyText: NX.I18n.get('SelectorPreviewWindow_EmptyText_View'),
+            emptyTextFilter: NX.I18n.get('SelectorPreviewWindow_EmptyText_Filter'),
+            deferEmptyText: false
+          },
+
+          columns: [
+            {
+              xtype: 'nx-iconcolumn',
+              dataIndex: 'contentType',
+              width: 36,
+              iconVariant: 'x16',
+              iconNamePrefix: 'asset-type-',
+              iconName: function(value) {
+                var assetType;
+
+                if (value) {
+                  assetType = value.replace('/', '-');
+                  if (NX.getApplication().getIconController().findIcon('asset-type-' + assetType, 'x16')) {
+                    return assetType;
+                  }
+                }
+                return 'default';
+              }
+            },
+            {
+              text: NX.I18n.get('SelectorPreviewWindow_Name_Column'),
+              dataIndex: 'name',
+              stateId: 'name',
+              flex: 1
+            }
+          ],
+
+          tbar: {
+            xtype: 'nx-actions',
+            items: [
+              '->',
+              {
+                xtype: 'nx-searchbox',
+                itemId: 'filter',
+                emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
+                width: 200
+              }
+            ]
+          },
+
+          plugins: {
+            ptype: 'bufferedrenderer',
+            trailingBufferZone: 20,
+            leadingBufferZone: 50
+          }
         }
       ]
     });

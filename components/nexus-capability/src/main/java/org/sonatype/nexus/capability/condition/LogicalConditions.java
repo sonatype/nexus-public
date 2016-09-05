@@ -12,41 +12,22 @@
  */
 package org.sonatype.nexus.capability.condition;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Factory of logical {@link Condition}s.
  *
  * @since capabilities 2.0
  */
-@Named
-@Singleton
-public class LogicalConditions
+public interface LogicalConditions
 {
-
-  private final EventBus eventBus;
-
-  @Inject
-  public LogicalConditions(final EventBus eventBus) {
-    this.eventBus = checkNotNull(eventBus);
-  }
-
   /**
    * Creates a new condition that is satisfied when both conditions are satisfied (logical AND).
    *
    * @param conditions to be AND-ed
    * @return created condition
    */
-  public Condition and(final Condition... conditions) {
-    return new ConjunctionCondition(eventBus, conditions);
-  }
+  Condition and(Condition... conditions);
 
   /**
    * Creates a new condition that is satisfied when at least one condition is satisfied (logical OR).
@@ -54,9 +35,7 @@ public class LogicalConditions
    * @param conditions to be OR-ed
    * @return created condition
    */
-  public Condition or(final Condition... conditions) {
-    return new DisjunctionCondition(eventBus, conditions);
-  }
+  Condition or(Condition... conditions);
 
   /**
    * Creates a new condition that is satisfied when at another condition is not satisfied (logical NOT).
@@ -64,149 +43,5 @@ public class LogicalConditions
    * @param condition negated condition
    * @return created condition
    */
-  public Condition not(final Condition condition) {
-    return new InversionCondition(eventBus, condition);
-  }
-
-  /**
-   * A condition that applies a logical AND between conditions.
-   *
-   * @since capabilities 2.0
-   */
-  private static class ConjunctionCondition
-      extends CompositeConditionSupport
-      implements Condition
-  {
-
-    private Condition lastNotSatisfied;
-
-    public ConjunctionCondition(final EventBus eventBus,
-                                final Condition... conditions)
-    {
-      super(eventBus, conditions);
-    }
-
-    @Override
-    protected boolean reevaluate(final Condition... conditions) {
-      for (final Condition condition : conditions) {
-        if (!condition.isSatisfied()) {
-          lastNotSatisfied = condition;
-          return false;
-        }
-      }
-      lastNotSatisfied = null;
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" AND ");
-        }
-        sb.append(condition);
-      }
-      return sb.toString();
-    }
-
-    @Override
-    public String explainSatisfied() {
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" AND ");
-        }
-        sb.append(condition.explainSatisfied());
-      }
-      return sb.toString();
-    }
-
-    @Override
-    public String explainUnsatisfied() {
-      if (lastNotSatisfied != null) {
-        return lastNotSatisfied.explainUnsatisfied();
-      }
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" OR ");
-        }
-        sb.append(condition.explainUnsatisfied());
-      }
-      return sb.toString();
-    }
-  }
-
-  /**
-   * A condition that applies a logical OR between conditions.
-   *
-   * @since capabilities 2.0
-   */
-  private static class DisjunctionCondition
-      extends CompositeConditionSupport
-      implements Condition
-  {
-
-    private Condition lastSatisfied;
-
-    public DisjunctionCondition(final EventBus eventBus,
-                                final Condition... conditions)
-    {
-      super(eventBus, conditions);
-    }
-
-    @Override
-    protected boolean reevaluate(final Condition... conditions) {
-      for (final Condition condition : conditions) {
-        if (condition.isSatisfied()) {
-          lastSatisfied = condition;
-          return true;
-        }
-      }
-      lastSatisfied = null;
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" OR ");
-        }
-        sb.append(condition);
-      }
-      return sb.toString();
-    }
-
-    @Override
-    public String explainSatisfied() {
-      if (lastSatisfied != null) {
-        return lastSatisfied.explainSatisfied();
-      }
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" OR ");
-        }
-        sb.append(condition.explainSatisfied());
-      }
-      return sb.toString();
-    }
-
-    @Override
-    public String explainUnsatisfied() {
-      final StringBuilder sb = new StringBuilder();
-      for (final Condition condition : getConditions()) {
-        if (sb.length() > 0) {
-          sb.append(" AND ");
-        }
-        sb.append(condition.explainUnsatisfied());
-      }
-      return sb.toString();
-    }
-
-  }
-
+  Condition not(Condition condition);
 }

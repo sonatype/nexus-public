@@ -33,10 +33,8 @@ import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet
 import org.sonatype.nexus.repository.maven.internal.group.MergingGroupHandler
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
-import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
@@ -101,10 +99,7 @@ extends MavenRecipeSupport
   private ViewFacet configure(final ConfigurableViewFacet viewFacet) {
     Router.Builder builder = new Router.Builder()
 
-    builder.route(new Route.Builder()
-        .matcher(BrowseUnsupportedHandler.MATCHER)
-        .handler(browseUnsupportedHandler)
-        .create())
+    addBrowseUnsupportedRoute(builder)
 
     // Note: partialFetchHandler NOT added for Maven metadata
     builder.route(newMetadataRouteBuilder()

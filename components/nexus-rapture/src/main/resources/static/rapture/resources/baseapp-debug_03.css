@@ -1,3 +1,220 @@
+.x-tab-bar-strip-nx-light {
+  border-style: solid;
+  border-color: #cbcbcb;
+  background-color: #f4f4f4;
+}
+
+.x-content-box .x-tab-bar-strip-nx-light-horizontal {
+  height: -1px;
+}
+
+.x-content-box .x-tab-bar-strip-nx-light-vertical {
+  width: -1px;
+}
+
+.x-tab-bar-strip-nx-light-top {
+  border-width: 1px;
+  height: 1px;
+}
+.x-tab-bar-plain .x-tab-bar-strip-nx-light-top {
+  border-width: 1px;
+}
+
+.x-tab-bar-strip-nx-light-bottom {
+  border-width: 1px 1px 1px 1px;
+  height: 1px;
+}
+.x-tab-bar-plain .x-tab-bar-strip-nx-light-bottom {
+  border-width: 1px 1px 1px 1px;
+}
+
+.x-tab-bar-strip-nx-light-left {
+  border-width: 1px 1px 1px 1px;
+  width: 1px;
+}
+.x-tab-bar-plain .x-tab-bar-strip-nx-light-left {
+  border-width: 1px 1px 1px 1px;
+}
+
+.x-tab-bar-strip-nx-light-right {
+  border-width: 1px 1px 1px 1px;
+  width: 1px;
+}
+.x-tab-bar-plain .x-tab-bar-strip-nx-light-right {
+  border-width: 1px 1px 1px 1px;
+}
+
+.x-tab-bar-nx-light {
+  background-color: #f4f4f4;
+}
+
+.x-tab-bar-nx-light .x-box-scroller {
+  cursor: pointer;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=50);
+  opacity: 0.5;
+  background-color: #f4f4f4;
+}
+.x-tab-bar-nx-light .x-box-scroller-plain .x-box-scroller {
+  background-color: transparent;
+}
+.x-ie8m .x-tab-bar-nx-light .x-box-scroller-plain .x-box-scroller {
+  background-color: #fff;
+}
+.x-tab-bar-nx-light .x-box-scroller-hover {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=60);
+  opacity: 0.6;
+}
+.x-tab-bar-nx-light .x-box-scroller-pressed {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=70);
+  opacity: 0.7;
+}
+.x-tab-bar-nx-light .x-tabbar-scroll-left,
+.x-tab-bar-nx-light .x-tabbar-scroll-right {
+  height: 31px;
+  width: 24px;
+}
+.x-tab-bar-nx-light .x-tabbar-scroll-top,
+.x-tab-bar-nx-light .x-tabbar-scroll-bottom {
+  width: 31px;
+  height: 24px;
+}
+
+.x-tab-bar-nx-light-bottom .x-box-scroller {
+  margin-top: 1px;
+}
+.x-tab-bar-nx-light-right .x-box-scroller {
+  margin-left: 1px;
+}
+
+.x-tab-bar-nx-light .x-tabbar-scroll-left {
+  background-image: url(images/tab-bar/nx-light-scroll-left.png);
+}
+.x-tab-bar-nx-light .x-tabbar-scroll-right {
+  background-image: url(images/tab-bar/nx-light-scroll-right.png);
+}
+.x-tab-bar-nx-light .x-tabbar-scroll-top {
+  background-image: url(images/tab-bar/nx-light-scroll-top.png);
+}
+.x-tab-bar-nx-light .x-tabbar-scroll-bottom {
+  background-image: url(images/tab-bar/nx-light-scroll-bottom.png);
+}
+
+.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-left {
+  background-image: url(images/tab-bar/nx-light-plain-scroll-left.png);
+}
+.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-right {
+  background-image: url(images/tab-bar/nx-light-plain-scroll-right.png);
+}
+.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-top {
+  background-image: url(images/tab-bar/nx-light-plain-scroll-top.png);
+}
+.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-bottom {
+  background-image: url(images/tab-bar/nx-light-plain-scroll-bottom.png);
+}
+
+.x-tab-bar-nx-light .x-box-scroller-disabled {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=25);
+  opacity: 0.25;
+  cursor: default;
+}
+
+/*<if slicer>*/
+.x-tab-bar-nx-light-top:after {
+  display: none;
+  content: "x-slicer:stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-bar-nx-light-bottom:after {
+  display: none;
+  content: "x-slicer:stretch:top";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-bar-nx-light-left:after {
+  display: none;
+  content: "x-slicer:stretch:right";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-bar-nx-light-right:after {
+  display: none;
+  content: "x-slicer:stretch:left";
+}
+
+/*</if slicer>*/
+/* */
+.x-tab-bar-body-nx-light-top {
+  padding-left: 5px;
+}
+
+.x-tab-bar-strip-nx-light-top {
+  border-bottom: 1px solid #dddddd;
+  border-top: none;
+}
+
+.x-tab-nx-light-top,
+.x-tab-nx-light-top-disabled {
+  border-bottom: 1px solid #f4f4f4;
+}
+
+.x-tab-nx-light-top-active {
+  border-bottom: 1px solid #cbcbcb;
+}
+
+.x-tab-nx-light-top-over {
+  border-bottom: 1px solid #ebebeb;
+}
+
+.x-tab-bar + .x-panel-body {
+  z-index: 0;
+}
+
+/* including package baseapp */
+/**
+ * @class NX.ext.form.OptionalFieldSet
+ */
+.nx-optionalfieldset {
+  margin: 10px 25px 0 0;
+}
+.nx-optionalfieldset .x-fieldset-body {
+  background-color: #f4f4f4;
+  border: 1px solid #cbcbcb;
+  padding: 5px 20px 10px 20px;
+  position: relative;
+  margin-left: 25px;
+  width: auto !important;
+}
+.nx-optionalfieldset .nx-optionalfieldset .x-fieldset-body {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/**
+ * @class NX.view.AboutWindow
+ */
+.nx-aboutwindow .x-window {
+  padding: 0;
+}
+.nx-aboutwindow .summary {
+  background-color: #f4f4f4;
+}
+.nx-aboutwindow .logo {
+  margin: 10px;
+}
+
+/**
+ * @class NX.view.Authenticate
+ */
+.nx-authenticate .message {
+  margin-bottom: 10px;
+}
+
 /**
  * @class NX.view.Unlicensed
  */
@@ -3430,7 +3647,6 @@
  * @class NX.coreui.view.search.SearchFeature
  */
 .nx-coreui-searchfeature .criteria {
-  border-bottom: 1px solid #dddddd;
   background-color: white;
   padding: 0 0 10px 10px;
 }

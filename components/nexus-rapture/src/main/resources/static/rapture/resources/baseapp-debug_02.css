@@ -5892,6 +5892,288 @@
 }
 
 /**
+ * Style for the 'too many results' panel on the search page
+ */
+.x-panel-nx-info-message {
+  border-color: #444444;
+  padding: 0;
+}
+
+.x-panel-header-nx-info-message {
+  font-size: 13px;
+  border: 1px solid #444444;
+}
+.x-panel-header-nx-info-message .x-tool-img {
+  background-color: white;
+}
+
+.x-panel-header-nx-info-message-horizontal {
+  padding: 9px 9px 10px 9px;
+}
+
+.x-panel-header-nx-info-message-horizontal-noborder {
+  padding: 10px 10px 10px 10px;
+}
+
+.x-panel-header-nx-info-message-vertical {
+  padding: 9px 9px 9px 10px;
+}
+
+.x-panel-header-nx-info-message-vertical-noborder {
+  padding: 10px 10px 10px 10px;
+}
+
+.x-panel-header-text-container-nx-info-message {
+  color: #333333;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: arial, helvetica, verdana, sans-serif;
+  line-height: 15px;
+  padding: 1px 0 0;
+  text-transform: none;
+}
+
+.x-panel-body-nx-info-message {
+  background: transparent;
+  border-color: #444444;
+  color: black;
+  font-size: 13px;
+  font-weight: normal;
+  font-family: "Proxima Nova", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.x-panel-header-nx-info-message {
+  background-image: none;
+  background-color: white;
+}
+
+.x-panel-header-nx-info-message-vertical {
+  background-image: none;
+  background-color: white;
+}
+
+.x-panel .x-panel-header-nx-info-message-collapsed-border-top {
+  border-bottom-width: 1px !important;
+}
+.x-panel .x-panel-header-nx-info-message-collapsed-border-right {
+  border-left-width: 1px !important;
+}
+.x-panel .x-panel-header-nx-info-message-collapsed-border-bottom {
+  border-top-width: 1px !important;
+}
+.x-panel .x-panel-header-nx-info-message-collapsed-border-left {
+  border-right-width: 1px !important;
+}
+
+/*<if slicer>*/
+.x-panel-header-nx-info-message-top:after {
+  display: none;
+  content: "x-slicer:stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-panel-header-nx-info-message-bottom:after {
+  display: none;
+  content: "x-slicer:stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-panel-header-nx-info-message-left:after {
+  display: none;
+  content: "x-slicer:stretch:left";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-panel-header-nx-info-message-right:after {
+  display: none;
+  content: "x-slicer:stretch:left";
+}
+
+/*</if slicer>*/
+/* */
+.x-panel-header-nx-info-message-vertical .x-panel-header-text-container {
+  -webkit-transform: rotate(90deg);
+  -webkit-transform-origin: 0 0;
+  -moz-transform: rotate(90deg);
+  -moz-transform-origin: 0 0;
+  -o-transform: rotate(90deg);
+  -o-transform-origin: 0 0;
+  transform: rotate(90deg);
+  transform-origin: 0 0;
+}
+.x-ie9m .x-panel-header-nx-info-message-vertical .x-panel-header-text-container {
+  background-color: white;
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1), progid:DXImageTransform.Microsoft.Chroma(color=white);
+}
+
+.x-panel-header-nx-info-message .x-panel-header-icon {
+  width: 16px;
+  height: 16px;
+  background-position: center center;
+}
+.x-panel-header-nx-info-message .x-panel-header-glyph {
+  color: white;
+  font-size: 16px;
+  line-height: 16px;
+  opacity: 0.5;
+}
+.x-ie8m .x-panel-header-nx-info-message .x-panel-header-glyph {
+  color: white;
+}
+
+.x-panel-header-nx-info-message-horizontal .x-panel-header-icon-before-title {
+  margin: 0 6px 0 0;
+}
+.x-panel-header-nx-info-message-horizontal .x-panel-header-icon-after-title {
+  margin: 0 0 0 6px;
+}
+
+.x-panel-header-nx-info-message-vertical .x-panel-header-icon-before-title {
+  margin: 0 0 6px 0;
+}
+.x-panel-header-nx-info-message-vertical .x-panel-header-icon-after-title {
+  margin: 6px 0 0 0;
+}
+
+.x-panel-header-nx-info-message-horizontal .x-tool-after-title {
+  margin: 0 0 0 6px;
+}
+.x-panel-header-nx-info-message-horizontal .x-tool-before-title {
+  margin: 0 6px 0 0;
+}
+
+.x-panel-header-nx-info-message-vertical .x-tool-after-title {
+  margin: 6px 0 0 0;
+}
+.x-panel-header-nx-info-message-vertical .x-tool-before-title {
+  margin: 0 0 6px 0;
+}
+
+.x-panel-nx-info-message-resizable .x-panel-handle {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+}
+
+.x-panel-nx-info-message-outer-border-l {
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-b {
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-bl {
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-r {
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-rl {
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-rb {
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-rbl {
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-t {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-tl {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-tb {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-tbl {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-tr {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-trl {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+  border-left-color: #444444 !important;
+  border-left-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-trb {
+  border-top-color: #444444 !important;
+  border-top-width: 1px !important;
+  border-right-color: #444444 !important;
+  border-right-width: 1px !important;
+  border-bottom-color: #444444 !important;
+  border-bottom-width: 1px !important;
+}
+
+.x-panel-nx-info-message-outer-border-trbl {
+  border-color: #444444 !important;
+  border-width: 1px !important;
+}
+
+.x-panel-nx-info-message .x-header {
+  padding: 0 10px 10px 10px;
+}
+
+.nx-search-result-list {
+  border-top: 1px solid #dddddd;
+}
+
+/**
  * @class Ext.form.field.Base
  */
 /**
@@ -15468,221 +15750,4 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 
 .x-tab-bar-body-nx-light-right {
   padding-left: 0;
-}
-
-.x-tab-bar-strip-nx-light {
-  border-style: solid;
-  border-color: #cbcbcb;
-  background-color: #f4f4f4;
-}
-
-.x-content-box .x-tab-bar-strip-nx-light-horizontal {
-  height: -1px;
-}
-
-.x-content-box .x-tab-bar-strip-nx-light-vertical {
-  width: -1px;
-}
-
-.x-tab-bar-strip-nx-light-top {
-  border-width: 1px;
-  height: 1px;
-}
-.x-tab-bar-plain .x-tab-bar-strip-nx-light-top {
-  border-width: 1px;
-}
-
-.x-tab-bar-strip-nx-light-bottom {
-  border-width: 1px 1px 1px 1px;
-  height: 1px;
-}
-.x-tab-bar-plain .x-tab-bar-strip-nx-light-bottom {
-  border-width: 1px 1px 1px 1px;
-}
-
-.x-tab-bar-strip-nx-light-left {
-  border-width: 1px 1px 1px 1px;
-  width: 1px;
-}
-.x-tab-bar-plain .x-tab-bar-strip-nx-light-left {
-  border-width: 1px 1px 1px 1px;
-}
-
-.x-tab-bar-strip-nx-light-right {
-  border-width: 1px 1px 1px 1px;
-  width: 1px;
-}
-.x-tab-bar-plain .x-tab-bar-strip-nx-light-right {
-  border-width: 1px 1px 1px 1px;
-}
-
-.x-tab-bar-nx-light {
-  background-color: #f4f4f4;
-}
-
-.x-tab-bar-nx-light .x-box-scroller {
-  cursor: pointer;
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=50);
-  opacity: 0.5;
-  background-color: #f4f4f4;
-}
-.x-tab-bar-nx-light .x-box-scroller-plain .x-box-scroller {
-  background-color: transparent;
-}
-.x-ie8m .x-tab-bar-nx-light .x-box-scroller-plain .x-box-scroller {
-  background-color: #fff;
-}
-.x-tab-bar-nx-light .x-box-scroller-hover {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=60);
-  opacity: 0.6;
-}
-.x-tab-bar-nx-light .x-box-scroller-pressed {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=70);
-  opacity: 0.7;
-}
-.x-tab-bar-nx-light .x-tabbar-scroll-left,
-.x-tab-bar-nx-light .x-tabbar-scroll-right {
-  height: 31px;
-  width: 24px;
-}
-.x-tab-bar-nx-light .x-tabbar-scroll-top,
-.x-tab-bar-nx-light .x-tabbar-scroll-bottom {
-  width: 31px;
-  height: 24px;
-}
-
-.x-tab-bar-nx-light-bottom .x-box-scroller {
-  margin-top: 1px;
-}
-.x-tab-bar-nx-light-right .x-box-scroller {
-  margin-left: 1px;
-}
-
-.x-tab-bar-nx-light .x-tabbar-scroll-left {
-  background-image: url(images/tab-bar/nx-light-scroll-left.png);
-}
-.x-tab-bar-nx-light .x-tabbar-scroll-right {
-  background-image: url(images/tab-bar/nx-light-scroll-right.png);
-}
-.x-tab-bar-nx-light .x-tabbar-scroll-top {
-  background-image: url(images/tab-bar/nx-light-scroll-top.png);
-}
-.x-tab-bar-nx-light .x-tabbar-scroll-bottom {
-  background-image: url(images/tab-bar/nx-light-scroll-bottom.png);
-}
-
-.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-left {
-  background-image: url(images/tab-bar/nx-light-plain-scroll-left.png);
-}
-.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-right {
-  background-image: url(images/tab-bar/nx-light-plain-scroll-right.png);
-}
-.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-top {
-  background-image: url(images/tab-bar/nx-light-plain-scroll-top.png);
-}
-.x-tab-bar-nx-light .x-box-scroller-plain .x-tabbar-scroll-bottom {
-  background-image: url(images/tab-bar/nx-light-plain-scroll-bottom.png);
-}
-
-.x-tab-bar-nx-light .x-box-scroller-disabled {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=25);
-  opacity: 0.25;
-  cursor: default;
-}
-
-/*<if slicer>*/
-.x-tab-bar-nx-light-top:after {
-  display: none;
-  content: "x-slicer:stretch:bottom";
-}
-
-/*</if slicer>*/
-/* */
-/*<if slicer>*/
-.x-tab-bar-nx-light-bottom:after {
-  display: none;
-  content: "x-slicer:stretch:top";
-}
-
-/*</if slicer>*/
-/* */
-/*<if slicer>*/
-.x-tab-bar-nx-light-left:after {
-  display: none;
-  content: "x-slicer:stretch:right";
-}
-
-/*</if slicer>*/
-/* */
-/*<if slicer>*/
-.x-tab-bar-nx-light-right:after {
-  display: none;
-  content: "x-slicer:stretch:left";
-}
-
-/*</if slicer>*/
-/* */
-.x-tab-bar-body-nx-light-top {
-  padding-left: 5px;
-}
-
-.x-tab-bar-strip-nx-light-top {
-  border-bottom: 1px solid #dddddd;
-  border-top: none;
-}
-
-.x-tab-nx-light-top,
-.x-tab-nx-light-top-disabled {
-  border-bottom: 1px solid #f4f4f4;
-}
-
-.x-tab-nx-light-top-active {
-  border-bottom: 1px solid #cbcbcb;
-}
-
-.x-tab-nx-light-top-over {
-  border-bottom: 1px solid #ebebeb;
-}
-
-.x-tab-bar + .x-panel-body {
-  z-index: 0;
-}
-
-/* including package baseapp */
-/**
- * @class NX.ext.form.OptionalFieldSet
- */
-.nx-optionalfieldset {
-  margin: 10px 25px 0 0;
-}
-.nx-optionalfieldset .x-fieldset-body {
-  background-color: #f4f4f4;
-  border: 1px solid #cbcbcb;
-  padding: 5px 20px 10px 20px;
-  position: relative;
-  margin-left: 25px;
-  width: auto !important;
-}
-.nx-optionalfieldset .nx-optionalfieldset .x-fieldset-body {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-/**
- * @class NX.view.AboutWindow
- */
-.nx-aboutwindow .x-window {
-  padding: 0;
-}
-.nx-aboutwindow .summary {
-  background-color: #f4f4f4;
-}
-.nx-aboutwindow .logo {
-  margin: 10px;
-}
-
-/**
- * @class NX.view.Authenticate
- */
-.nx-authenticate .message {
-  margin-bottom: 10px;
 }

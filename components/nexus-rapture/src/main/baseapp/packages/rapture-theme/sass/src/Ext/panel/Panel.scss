@@ -96,3 +96,19 @@
 .nx-hr {
   border-top: 1px solid $color-gainsboro !important;
 }
+
+/**
+ * Style for the 'too many results' panel on the search page
+ */
+@include extjs-panel-ui(
+  $ui: 'nx-info-message',
+
+  $ui-header-background-color: $color-white,
+  $ui-header-color: $color-night-rider
+);
+.x-panel-nx-info-message .x-header {
+  padding: 0 10px 10px 10px;
+}
+.nx-search-result-list {
+  border-top: 1px solid $color-gainsboro;
+}

@@ -12,54 +12,24 @@
  */
 package org.sonatype.nexus.capability.condition;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
-import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Evaluable;
-import org.sonatype.nexus.common.event.EventBus;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Factory of {@link Condition}s related to capabilities.
  *
  * @since capabilities 2.0
  */
-@Named
-@Singleton
-public class CapabilityConditions
+public interface CapabilityConditions
 {
-
-  private final CapabilityRegistry capabilityRegistry;
-
-  private final EventBus eventBus;
-
-  private final CapabilityDescriptorRegistry descriptorRegistry;
-
-  @Inject
-  public CapabilityConditions(final EventBus eventBus,
-                              final CapabilityDescriptorRegistry descriptorRegistry,
-                              final CapabilityRegistry capabilityRegistry)
-  {
-    this.descriptorRegistry = checkNotNull(descriptorRegistry);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventBus = checkNotNull(eventBus);
-  }
-
   /**
    * Creates a new condition that is satisfied when a capability of a specified type exists.
    *
    * @param type class of capability that should exist
    * @return created condition
    */
-  public Condition capabilityOfTypeExists(final CapabilityType type) {
-    return new CapabilityOfTypeExistsCondition(eventBus, descriptorRegistry, capabilityRegistry, type);
-  }
+  Condition capabilityOfTypeExists(CapabilityType type);
 
   /**
    * Creates a new condition that is satisfied when a capability of a specified type exists and is in an active
@@ -68,9 +38,7 @@ public class CapabilityConditions
    * @param type class of capability that should exist and be active
    * @return created condition
    */
-  public Condition capabilityOfTypeActive(final CapabilityType type) {
-    return new CapabilityOfTypeActiveCondition(eventBus, descriptorRegistry, capabilityRegistry, type);
-  }
+  Condition capabilityOfTypeActive(CapabilityType type);
 
   /**
    * Creates a new condition that is becoming unsatisfied before an capability is updated and becomes satisfied after
@@ -78,9 +46,7 @@ public class CapabilityConditions
    *
    * @return created condition
    */
-  public Condition passivateCapabilityDuringUpdate() {
-    return new PassivateCapabilityDuringUpdateCondition(eventBus);
-  }
+  Condition passivateCapabilityDuringUpdate();
 
   /**
    * Creates a new condition that is becoming unsatisfied before an capability is updated and becomes satisfied after
@@ -89,9 +55,7 @@ public class CapabilityConditions
    * @param propertyNames list of properties names that should be checked if updated
    * @return created condition
    */
-  public Condition passivateCapabilityWhenPropertyChanged(final String... propertyNames) {
-    return new PassivateCapabilityDuringUpdateCondition(eventBus, propertyNames);
-  }
+  Condition passivateCapabilityWhenPropertyChanged(String... propertyNames);
 
   /**
    * Creates a new condition that is satisfied as long as capability has no failures.
@@ -99,9 +63,7 @@ public class CapabilityConditions
    * @return created condition
    * @since 2.7
    */
-  public Condition capabilityHasNoFailures() {
-    return new CapabilityHasNoFailures(eventBus);
-  }
+  Condition capabilityHasNoFailures();
 
   /**
    * Creates a new condition that delegates to provided {@link Evaluable} for checking if the condition is satisfied.
@@ -110,8 +72,5 @@ public class CapabilityConditions
    * @param condition delegate
    * @return created condition
    */
-  public Condition evaluable(final Evaluable condition) {
-    return new EvaluableCondition(eventBus, condition);
-  }
-
+  Condition evaluable(Evaluable condition);
 }

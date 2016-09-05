@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository;
 
+import javax.inject.Inject;
+
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.view.Router;
+import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,6 +32,8 @@ public abstract class RecipeSupport
   private final Format format;
 
   private final Type type;
+
+  private BrowseUnsupportedHandler browseUnsupportedHandler;
 
   protected RecipeSupport(final Type type, final Format format) {
     this.type = checkNotNull(type);
@@ -51,4 +57,18 @@ public abstract class RecipeSupport
         ", type=" + type +
         '}';
   }
+
+  @Inject
+  public void setBrowseUnsupportedHandler(final BrowseUnsupportedHandler browseUnsupportedHandler) {
+    this.browseUnsupportedHandler = checkNotNull(browseUnsupportedHandler);
+  }
+
+  /**
+   * Adds route to redirect access directly with a browser to a handler with links to the repo's components and
+   * assets.
+   */
+  protected void addBrowseUnsupportedRoute(Router.Builder builder) {
+    builder.route(browseUnsupportedHandler.getRoute());
+  }
+
 }

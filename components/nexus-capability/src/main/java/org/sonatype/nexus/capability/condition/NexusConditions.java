@@ -12,38 +12,19 @@
  */
 package org.sonatype.nexus.capability.condition;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.capability.Condition;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Factory of {@link Condition}s related to Nexus.
  *
  * @since capabilities 2.0
  */
-@Named
-@Singleton
-public class NexusConditions
+public interface NexusConditions
 {
-
-  private NexusIsActiveCondition nexusIsActiveCondition;
-
-  @Inject
-  public NexusConditions(final NexusIsActiveCondition nexusIsActiveCondition) {
-    this.nexusIsActiveCondition = checkNotNull(nexusIsActiveCondition);
-  }
-
   /**
    * Creates a new condition that is satisfied when Nexus is active (started but not stopped).
    *
    * @return created condition
    */
-  public Condition active() {
-    return nexusIsActiveCondition;
-  }
-
+  Condition active();
 }

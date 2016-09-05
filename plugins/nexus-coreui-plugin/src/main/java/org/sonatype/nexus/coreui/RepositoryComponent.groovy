@@ -113,7 +113,9 @@ class RepositoryComponent
           id: repository.name,
           name: repository.name,
           type: repository.type.toString(),
-          format: repository.format.toString()
+          format: repository.format.toString(),
+          status: buildStatus(repository),
+          url: "${BaseUrlHolder.get()}/repository/${repository.name}/" // trailing slash is important
       )
     }
   }

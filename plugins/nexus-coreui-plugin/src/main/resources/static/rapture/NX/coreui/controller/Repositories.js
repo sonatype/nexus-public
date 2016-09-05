@@ -66,7 +66,8 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.DockerGroup',
     'repository.recipe.DockerProxy',
     'repository.recipe.PyPiHosted',
-    'repository.recipe.PyPiProxy'
+    'repository.recipe.PyPiProxy',
+    'repository.recipe.PyPiGroup'
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},
@@ -235,7 +236,22 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.setItemName(2, NX.I18n.format('Repositories_Create_Title', model.get('name')));
       me.setItemClass(2, NX.Icons.cls('repository-hosted', 'x16'));
       me.loadCreateWizard(2, true, {xtype: 'nx-coreui-repository-add', recipe: model});
+      if (model.getId() === 'maven2-proxy') {
+        me.cleanUpdateProxyFacetContentMaxAge(-1);
+      }
     }
+  },
+
+  /**
+   * Updates the 'originalValue' of the proxyFacetContentMaxAge input and resets it so the field is not dirty.
+   * @param newValue
+   */
+  cleanUpdateProxyFacetContentMaxAge: function(newValue) {
+    var me = this,
+        proxyFacetContentMaxAge = me.getProxyFacetContentMaxAge();
+
+    proxyFacetContentMaxAge.originalValue = newValue;
+    proxyFacetContentMaxAge.reset();
   },
 
   /**
@@ -251,12 +267,10 @@ Ext.define('NX.coreui.controller.Repositories', {
     if (proxyFacetContentMaxAge && !proxyFacetContentMaxAge.isDirty()) {
       switch (newValue) {
         case 'RELEASE':
-          proxyFacetContentMaxAge.originalValue = -1;
-          proxyFacetContentMaxAge.reset();
+          me.cleanUpdateProxyFacetContentMaxAge(-1);
           break;
         case 'SNAPSHOT':
-          proxyFacetContentMaxAge.originalValue = 1440;
-          proxyFacetContentMaxAge.reset();
+          me.cleanUpdateProxyFacetContentMaxAge(1440);
           break;
         default:
           //no change

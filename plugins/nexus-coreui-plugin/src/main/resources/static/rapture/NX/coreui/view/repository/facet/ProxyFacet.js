@@ -80,7 +80,7 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
             fieldLabel: NX.I18n.get('Repository_Facet_ProxyFacet_ArtifactAge_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_ProxyFacet_ArtifactAge_HelpText'),
             minValue: -1,
-            value: -1
+            value: 1440
           },
           {
             xtype: 'numberfield',

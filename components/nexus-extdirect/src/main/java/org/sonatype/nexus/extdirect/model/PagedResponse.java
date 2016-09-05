@@ -22,10 +22,14 @@ import java.util.Collection;
 public class PagedResponse<T>
     extends Response<Collection<T>>
 {
-  private Long total;
+  private long total;
 
-  public PagedResponse(Long total, Collection<T> data) {
+  public PagedResponse(long total, Collection<T> data) {
     super(true, data);
     this.total = total;
+  }
+
+  public long getTotal() {
+    return total;
   }
 }
