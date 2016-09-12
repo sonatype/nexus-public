@@ -115,7 +115,10 @@ public class OrientMetadataStore
       registerHandler(new PackageRootHandler(db));
     }
 
-    pool = new OPartitionedDatabasePool(dbUri, "admin", "admin", poolMaxSize);
+    pool = new OPartitionedDatabasePool(dbUri, "admin", "admin", //
+        poolMaxSize, // max connections per partition
+        poolMaxSize); // max connections in the pool
+
     log.info("Created pool (maxSize={}): {}", poolMaxSize, pool);
   }
 

@@ -25,6 +25,6 @@ public class IsInternalAttribute
   @Override
   public Boolean getValueFor(final RepositoryItemUid subject) {
     String path = subject.getPath();
-    return path != null && path.startsWith("/.nexus");
+    return path != null && (path.startsWith("/.nexus") || path.startsWith("/.meta"));
   }
 }

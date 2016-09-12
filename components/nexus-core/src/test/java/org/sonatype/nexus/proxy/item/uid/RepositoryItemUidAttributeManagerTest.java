@@ -94,6 +94,9 @@ public class RepositoryItemUidAttributeManagerTest
 
     RepositoryItemUid trashedFile = factory.createUid(repository, "/.nexus/trash/some/plain/fileInTrash.txt");
     validateAttributes(trashedFile, IsHiddenAttribute.class);
+
+    RepositoryItemUid hiddenMeta = factory.createUid(repository, "/.meta/hiddenPath.txt");
+    validateAttributes(hiddenMeta, IsMetadataMaintainedAttribute.class, IsHiddenAttribute.class);
   }
 
   @Test
