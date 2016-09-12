@@ -10,19 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.email;
+
+package org.sonatype.nexus.audit.internal;
 
 import javax.annotation.Nullable;
 
-/**
- * {@link EmailConfiguration} store.
- *
- * @since 3.0
- */
-public interface EmailConfigurationStore
-{
-  @Nullable
-  EmailConfiguration load();
+import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.audit.AuditData;
+import org.sonatype.nexus.common.collect.AutoClosableIterable;
 
-  void save(EmailConfiguration configuration);
+/**
+ * Audit store.
+ *
+ * @since 3.1
+ */
+public interface AuditStore
+    extends Lifecycle
+{
+  void add(AuditData data) throws Exception;
+
+  void clear() throws Exception;
+
+  long approximateSize() throws Exception;
+
+  AutoClosableIterable<AuditData> browse(long offset, @Nullable Long limit) throws Exception;
 }

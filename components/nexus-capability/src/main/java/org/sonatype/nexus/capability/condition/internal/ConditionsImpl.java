@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.capability.condition.Conditions;
 import org.sonatype.nexus.capability.condition.CryptoConditions;
@@ -73,5 +74,15 @@ public class ConditionsImpl
   @Override
   public CryptoConditions crypto() {
     return cryptoConditions;
+  }
+
+  @Override
+  public Condition always(final String reason) {
+    return new SatisfiedCondition(reason);
+  }
+
+  @Override
+  public Condition never(final String reason) {
+    return new UnsatisfiedCondition(reason);
   }
 }

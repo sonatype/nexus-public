@@ -19,8 +19,6 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.capability.condition.SatisfiedCondition;
-import org.sonatype.nexus.capability.condition.UnsatisfiedCondition;
 import org.sonatype.nexus.common.event.EventBus;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -81,7 +79,7 @@ public class ActivationConditionHandler
       try {
         Condition capabilityActivationCondition = reference.capability().activationCondition();
         if (capabilityActivationCondition == null) {
-          capabilityActivationCondition = new SatisfiedCondition("Capability has no activation condition");
+          capabilityActivationCondition = conditions.always("Capability has no activation condition");
         }
         activationCondition = conditions.logical().and(
             capabilityActivationCondition,
@@ -93,7 +91,7 @@ public class ActivationConditionHandler
         }
       }
       catch (Exception e) {
-        activationCondition = new UnsatisfiedCondition("Failed to determine activation condition");
+        activationCondition = conditions.never("Failed to determine activation condition");
         log.error(
             "Could not get activation condition from capability {} ({}). Considering it as non activatable",
             reference.capability(), reference.context().id(), e

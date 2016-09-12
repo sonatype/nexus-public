@@ -20,7 +20,6 @@ import javax.inject.Singleton
 import org.sonatype.goodies.i18n.I18N
 import org.sonatype.goodies.i18n.MessageBundle
 import org.sonatype.goodies.i18n.MessageBundle.DefaultMessage
-import org.sonatype.nexus.audit.AuditStore
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport
 import org.sonatype.nexus.capability.CapabilityDescriptorSupport
 import org.sonatype.nexus.capability.CapabilitySupport

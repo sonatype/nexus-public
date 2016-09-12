@@ -29,7 +29,6 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.HttpClientPlan.Customizer;

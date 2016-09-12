@@ -48,4 +48,18 @@ public interface Conditions
    * @since 2.7
    */
   CryptoConditions crypto();
+
+  /**
+   * Creates a new condition that is always satisfied for the specified reason.
+   * 
+   * @since 3.1
+   */
+  Condition always(String reason);
+
+  /**
+   * Creates a new condition that is never satisfied for the specified reason.
+   * 
+   * @since 3.1
+   */
+  Condition never(String reason);
 }

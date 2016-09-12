@@ -60,19 +60,6 @@
           <excludeDependencies>*</excludeDependencies>
           <instructions>
             <Fragment-Host>com.google.inject</Fragment-Host>
-            <!--
-            Add exports with version 3.0 to workaround SHIRO-502
-            -->
-            <Export-Package>
-              com.google.inject;version=3,
-              com.google.inject.binder;version=3,
-              com.google.inject.matcher;version=3,
-              com.google.inject.multibindings;version=3,
-              com.google.inject.name;version=3,
-              com.google.inject.servlet;version=3,
-              com.google.inject.spi;version=3,
-              com.google.inject.util;version=3
-            </Export-Package>
           </instructions>
         </configuration>
       </plugin>

@@ -40,11 +40,6 @@ public class UniqueRepositoryNameValidator
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
-    for (Repository repository : repositoryManager.browse()) {
-      if (repository.getName().equalsIgnoreCase(value)) {
-        return false;
-      }
-    }
-    return true;
+    return !repositoryManager.exists(value);
   }
 }

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import com.google.inject.AbstractModule
@@ -29,6 +28,6 @@ class TestRepositoryManagerModule
   
   @Override
   protected void configure() {
-    bind(RepositoryManager).toInstance({ -> NAMES.collect { { -> it } as Repository } } as RepositoryManager);
+    bind(RepositoryManager).toInstance({ testValue -> NAMES.any({ it -> it.equalsIgnoreCase(testValue) }) } as RepositoryManager);
   }
 }

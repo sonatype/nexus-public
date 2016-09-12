@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.anonymous;
+package org.sonatype.nexus.security.internal;
 
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
+import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 /**
  * Initial {@link AnonymousConfiguration} provider.
@@ -30,16 +30,12 @@ import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 public class InitialAnonymousConfigurationProvider
   implements Provider<AnonymousConfiguration>
 {
-  public static final String DEFAULT_USER_ID = "anonymous";
-
-  public static final String DEFAULT_REALM_NAME = AuthorizingRealmImpl.NAME;
-
   @Override
   public AnonymousConfiguration get() {
     AnonymousConfiguration model = new AnonymousConfiguration();
     model.setEnabled(true);
-    model.setUserId(DEFAULT_USER_ID);
-    model.setRealmName(DEFAULT_REALM_NAME);
+    model.setUserId(AnonymousConfiguration.DEFAULT_USER_ID);
+    model.setRealmName(AnonymousConfiguration.DEFAULT_REALM_NAME);
     return model;
   }
 }

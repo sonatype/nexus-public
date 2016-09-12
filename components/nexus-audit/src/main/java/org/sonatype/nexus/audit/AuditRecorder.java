@@ -23,7 +23,7 @@ public interface AuditRecorder
   boolean isEnabled();
 
   /**
-   * Record audit data into the {@link AuditStore} and fires {@link AuditDataRecordedEvent}.
+   * Record audit data and fires {@link AuditDataRecordedEvent}.
    */
   void record(AuditData data);
 }

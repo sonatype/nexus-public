@@ -28,6 +28,8 @@ public interface RepositoryManager
 {
   Iterable<Repository> browse();
 
+  boolean exists(String name);
+
   @Nullable
   Repository get(String name);
 

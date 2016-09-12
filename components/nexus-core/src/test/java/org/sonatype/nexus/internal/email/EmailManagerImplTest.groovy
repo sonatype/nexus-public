@@ -17,7 +17,6 @@ import javax.net.ssl.SSLContext
 
 import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.email.EmailConfiguration
-import org.sonatype.nexus.email.EmailConfigurationStore
 import org.sonatype.nexus.ssl.TrustStore
 
 import org.apache.commons.mail.Email

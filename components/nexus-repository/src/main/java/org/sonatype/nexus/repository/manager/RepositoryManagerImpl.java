@@ -245,6 +245,11 @@ public class RepositoryManagerImpl
     return ImmutableList.copyOf(repositories.values());
   }
 
+  @Override
+  public boolean exists(final String name) {
+    return stream(browse().spliterator(), false).anyMatch(repository -> repository.getName().equalsIgnoreCase(name));
+  }
+
   @Nullable
   @Override
   @Guarded(by = STARTED)

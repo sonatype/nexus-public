@@ -22,7 +22,6 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Evaluable;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
-import org.sonatype.nexus.capability.condition.EvaluableCondition;
 import org.sonatype.nexus.common.event.EventBus;
 
 import static com.google.common.base.Preconditions.checkNotNull;

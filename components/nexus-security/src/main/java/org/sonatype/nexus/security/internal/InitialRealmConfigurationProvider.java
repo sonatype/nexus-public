@@ -10,32 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.security.internal;
 
-import java.util.List;
+import javax.inject.Named;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.security.realm.RealmConfiguration;
+
+import com.google.common.collect.Lists;
 
 /**
- * {@link BlobStoreConfiguration} store.
+ * Initial {@link RealmConfiguration} provider.
  *
- * since 3.0
+ * @since 3.0
  */
-public interface BlobStoreConfigurationStore
-    extends Lifecycle
+@Named("initial")
+@Singleton
+public class InitialRealmConfigurationProvider
+    implements Provider<RealmConfiguration>
 {
-  /**
-   * @return all BlobStoreConfigurations
-   */
-  List<BlobStoreConfiguration> list();
-
-  /**
-   * Persist a new BlobStoreConfiguration.
-   */
-  void create(BlobStoreConfiguration configuration);
-
-  /**
-   * Delete an existing BlobStoreConfiguration.
-   */
-  void delete(BlobStoreConfiguration configuration);
+  @Override
+  public RealmConfiguration get() {
+    RealmConfiguration configuration = new RealmConfiguration();
+    configuration.setRealmNames(Lists.newArrayList(
+        AuthenticatingRealmImpl.NAME,
+        AuthorizingRealmImpl.NAME
+    ));
+    return configuration;
+  }
 }

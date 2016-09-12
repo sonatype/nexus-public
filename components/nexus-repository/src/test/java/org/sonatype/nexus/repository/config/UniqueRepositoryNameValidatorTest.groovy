@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.config
 
-import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import spock.lang.Specification
@@ -25,23 +24,20 @@ class UniqueRepositoryNameValidatorTest
     extends Specification
 {
   RepositoryManager repositoryManager = Mock()
-  
+
   UniqueRepositoryNameValidator validator = new UniqueRepositoryNameValidator(repositoryManager)
 
-  def "Name is valid when it is unique case-insensitively"(String name, List<String> repositoryNames, boolean isValid) {
+  def "Name is valid when the RepositoryManager says it does not exist"(String name, boolean exists) {
     when:
       def valid = validator.isValid(name, null)
 
     then:
-      1 * repositoryManager.browse() >> repositoryNames.collect{ String repoName -> { -> repoName } as Repository}
-      valid == isValid
+      1 * repositoryManager.exists(name) >> exists
+      valid == !exists
 
     where:
-      name  | repositoryNames | isValid
-      'foo' | ['bar', 'baz']  | true
-      'foo' | ['foobar']      | true
-      'foo' | ['foo123']      | true
-      'foo' | ['foo']         | false
-      'foo' | ['Foo']         | false
+      name  | exists
+      'foo' | true
+      'foo' | false
   }
 }

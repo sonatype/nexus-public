@@ -20,7 +20,6 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.capability.condition.SatisfiedCondition;
 import org.sonatype.nexus.common.event.EventBus;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -117,7 +116,7 @@ public class ValidityConditionHandler
         }
       }
       catch (Exception e) {
-        validityCondition = new SatisfiedCondition(
+        validityCondition = conditions.always(
             "Always satisfied (failed to determine validity condition)"
         );
         log.error(
@@ -126,7 +125,7 @@ public class ValidityConditionHandler
         );
       }
       if (validityCondition == null) {
-        validityCondition = new SatisfiedCondition("Always satisfied (capability has no validity condition)");
+        validityCondition = conditions.always("Always satisfied (capability has no validity condition)");
       }
       validityCondition.bind();
     }

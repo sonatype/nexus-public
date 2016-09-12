@@ -92,7 +92,7 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
 
     if (screen && (me.checkSyncStatus || me.controller.getContext().get('checkSyncStatus'))) {
       NX.direct.migration_Assistant.syncStatus(function (response, event) {
-        if (event.status && response.success && response.data.waitingForChanges) {
+        if (event.status && response.success && response.data.waitingForChanges && response.data.scanComplete) {
           screen.down('button[action=continue]').enable();
         }
       });

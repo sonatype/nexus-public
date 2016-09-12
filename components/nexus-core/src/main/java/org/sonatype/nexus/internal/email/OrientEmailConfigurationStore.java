@@ -21,7 +21,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.email.EmailConfiguration;
-import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 

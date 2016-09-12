@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.AuditData
 import org.sonatype.nexus.audit.AuditRecorder
-import org.sonatype.nexus.audit.AuditStore
+import org.sonatype.nexus.audit.internal.AuditStore
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse

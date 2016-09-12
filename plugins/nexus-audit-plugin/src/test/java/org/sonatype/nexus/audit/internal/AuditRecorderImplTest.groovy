@@ -15,7 +15,6 @@ package org.sonatype.nexus.audit.internal
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.audit.AuditData
 import org.sonatype.nexus.audit.AuditDataRecordedEvent
-import org.sonatype.nexus.audit.AuditStore
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.common.node.NodeAccess

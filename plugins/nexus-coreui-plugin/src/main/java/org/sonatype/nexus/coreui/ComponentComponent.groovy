@@ -51,6 +51,7 @@ import org.sonatype.nexus.selector.SelectorConfigurationStore
 import org.sonatype.nexus.selector.VariableSource
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Lists
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
@@ -122,6 +123,7 @@ class ComponentComponent
   JexlExpressionValidator jexlExpressionValidator
 
   @DirectMethod
+  @Timed
   PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
     Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
 
@@ -194,6 +196,7 @@ class ComponentComponent
   }
 
   @DirectMethod
+  @Timed
   List<AssetXO> readComponentAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)
@@ -284,7 +287,7 @@ class ComponentComponent
     }
   }
 
-  List<Repository> getPreviewRepositories(String repositoryName) {
+  private List<Repository> getPreviewRepositories(String repositoryName) {
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
     if (!repositorySelector.allRepositories) {
       return ImmutableList.of(repositoryManager.get(repositorySelector.name))
@@ -299,7 +302,13 @@ class ComponentComponent
     return repositoryManager.browse().collect()
   }
 
+  String parseJexlExpression(String expression) {
+    //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
+    return expression.replaceAll('"', '\'').replaceAll('\\s', ' ')
+  }
+
   @DirectMethod
+  @Timed
   PagedResponse<AssetXO> previewAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     String jexlExpression = parameters.getFilter('jexlExpression')
@@ -334,8 +343,7 @@ class ComponentComponent
 
       def whereClause = 'contentAuth(@this) == true and contentExpression(@this, :jexlExpression, :repositoryName, ' +
           ':repositoriesAsString) == true'
-      //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
-      def queryParams = [repositoryName: repositoryName, jexlExpression: jexlExpression.replaceAll('"', '\''), repositoriesAsString:
+      def queryParams = [repositoryName: repositoryName, jexlExpression: parseJexlExpression(jexlExpression), repositoriesAsString:
           repositoriesAsString]
       def filter = parameters.getFilter('filter')
       if (filter) {
@@ -358,6 +366,7 @@ class ComponentComponent
   }
 
   @DirectMethod
+  @Timed
   PagedResponse<AssetXO> readAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)
@@ -404,18 +413,11 @@ class ComponentComponent
     }
   }
 
-  def getQuerySuffix(List<Repository> repositories, StoreLoadParameters parameters) {
+  private def getQuerySuffix(List<Repository> repositories, StoreLoadParameters parameters) {
     def querySuffix = ''
     def sort = parameters.sort?.get(0)
     if (sort) {
-      if (repositories.size() == 1 && groupType != repositories[0].type) {
-        // optimization to match asset-bucket-name index when querying on a single repository
-        querySuffix = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME} ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} " +
-            "${sort.direction},${sort.property} ${sort.direction}"
-      }
-      else {
-        querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
-      }
+      querySuffix += " ORDER BY ${sort.property} ${sort.direction} "
     }
     if (parameters.start) {
       querySuffix += " SKIP ${parameters.start}"

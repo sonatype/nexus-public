@@ -22,7 +22,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.AuditRecorder;
-import org.sonatype.nexus.audit.AuditStore;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.node.NodeAccess;

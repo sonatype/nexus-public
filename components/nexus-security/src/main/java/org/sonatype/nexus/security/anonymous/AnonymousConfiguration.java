@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.anonymous;
 
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 
 import com.google.common.base.Throwables;
 
@@ -25,6 +26,16 @@ public class AnonymousConfiguration
   extends Entity
   implements Cloneable
 {
+  /**
+   * @since 3.1
+   */
+  public static final String DEFAULT_USER_ID = "anonymous";
+
+  /**
+   * @since 3.1
+   */
+  public static final String DEFAULT_REALM_NAME = AuthorizingRealmImpl.NAME;
+
   private boolean enabled;
 
   private String userId;

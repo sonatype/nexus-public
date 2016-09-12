@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.httpclient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;

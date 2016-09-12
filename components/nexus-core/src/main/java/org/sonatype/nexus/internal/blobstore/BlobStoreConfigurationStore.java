@@ -10,27 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.internal.blobstore;
 
-package org.sonatype.nexus.audit;
-
-import javax.annotation.Nullable;
+import java.util.List;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.collect.AutoClosableIterable;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**
- * Audit store.
+ * {@link BlobStoreConfiguration} store.
  *
- * @since 3.1
+ * since 3.0
  */
-public interface AuditStore
+public interface BlobStoreConfigurationStore
     extends Lifecycle
 {
-  void add(AuditData data) throws Exception;
+  /**
+   * @return all BlobStoreConfigurations
+   */
+  List<BlobStoreConfiguration> list();
 
-  void clear() throws Exception;
+  /**
+   * Persist a new BlobStoreConfiguration.
+   */
+  void create(BlobStoreConfiguration configuration);
 
-  long approximateSize() throws Exception;
-
-  AutoClosableIterable<AuditData> browse(long offset, @Nullable Long limit) throws Exception;
+  /**
+   * Delete an existing BlobStoreConfiguration.
+   */
+  void delete(BlobStoreConfiguration configuration);
 }

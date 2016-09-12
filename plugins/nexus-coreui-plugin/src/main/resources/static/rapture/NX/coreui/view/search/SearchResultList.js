@@ -71,7 +71,13 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
           stateId: 'repositoryName',
           hidden: true
         }
-      ]
+      ],
+      
+      plugins: {
+        ptype: 'bufferedrenderer',
+        trailingBufferZone: 20,
+        leadingBufferZone: 50
+      }
     });
 
     this.callParent();

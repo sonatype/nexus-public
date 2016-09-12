@@ -37,6 +37,6 @@ Ext.define('NX.coreui.store.AllRepositoriesReference', {
   },
 
   sortOnLoad: true,
-  sorters: { property: 'name', direction: 'ASC' }
+  sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: 'name', direction: 'ASC' }]
 
 });

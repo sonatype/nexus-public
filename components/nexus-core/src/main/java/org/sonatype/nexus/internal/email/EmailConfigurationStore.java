@@ -10,21 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.httpclient;
+package org.sonatype.nexus.internal.email;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.email.EmailConfiguration;
 
 /**
- * {@link HttpClientConfiguration} store.
+ * {@link EmailConfiguration} store.
  *
  * @since 3.0
  */
-public interface HttpClientConfigurationStore
+public interface EmailConfigurationStore
 {
   @Nullable
-  HttpClientConfiguration load();
+  EmailConfiguration load();
 
-  void save(HttpClientConfiguration configuration);
+  void save(EmailConfiguration configuration);
 }

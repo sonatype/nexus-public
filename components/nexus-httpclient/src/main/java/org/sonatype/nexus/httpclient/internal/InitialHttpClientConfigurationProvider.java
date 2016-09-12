@@ -10,40 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.email;
+package org.sonatype.nexus.httpclient.internal;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 
 /**
- * In-memory {@link EmailConfigurationStore}.
+ * Initial {@link HttpClientConfiguration} provider.
  *
  * @since 3.0
  */
-@Named("memory")
+@Named("initial")
 @Singleton
-@VisibleForTesting
-public class MemoryEmailConfigurationStore
-  extends ComponentSupport
-  implements EmailConfigurationStore
+public class InitialHttpClientConfigurationProvider
+  implements Provider<HttpClientConfiguration>
 {
-  private EmailConfiguration model;
-
-  @Nullable
   @Override
-  public synchronized EmailConfiguration load() {
-    return model;
-  }
-
-  @Override
-  public synchronized void save(final EmailConfiguration configuration) {
-    this.model = checkNotNull(configuration);
+  public HttpClientConfiguration get() {
+    HttpClientConfiguration configuration = new HttpClientConfiguration();
+    // TODO:
+    return configuration;
   }
 }

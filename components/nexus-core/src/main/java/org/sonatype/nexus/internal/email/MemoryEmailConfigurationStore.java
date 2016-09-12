@@ -10,34 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.realm;
+package org.sonatype.nexus.internal.email;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
-import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.email.EmailConfiguration;
 
-import com.google.common.collect.Lists;
+import com.google.common.annotations.VisibleForTesting;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Initial {@link RealmConfiguration} provider.
+ * In-memory {@link EmailConfigurationStore}.
  *
  * @since 3.0
  */
-@Named("initial")
+@Named("memory")
 @Singleton
-public class InitialRealmConfigurationProvider
-    implements Provider<RealmConfiguration>
+@VisibleForTesting
+public class MemoryEmailConfigurationStore
+  extends ComponentSupport
+  implements EmailConfigurationStore
 {
+  private EmailConfiguration model;
+
+  @Nullable
   @Override
-  public RealmConfiguration get() {
-    RealmConfiguration configuration = new RealmConfiguration();
-    configuration.setRealmNames(Lists.newArrayList(
-        AuthenticatingRealmImpl.NAME,
-        AuthorizingRealmImpl.NAME
-    ));
-    return configuration;
+  public synchronized EmailConfiguration load() {
+    return model;
+  }
+
+  @Override
+  public synchronized void save(final EmailConfiguration configuration) {
+    this.model = checkNotNull(configuration);
   }
 }

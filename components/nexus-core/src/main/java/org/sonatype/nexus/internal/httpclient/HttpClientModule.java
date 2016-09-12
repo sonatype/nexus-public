@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.httpclient;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
-
 import com.google.inject.AbstractModule;
 
 /**

@@ -25,7 +25,6 @@ import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.validation.ValidatingBehaviour;
 import org.sonatype.goodies.httpfixture.validation.ValidatingProxyServer;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.httpclient.HttpClientConfigurationStore;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testcommon.validation.HeaderValidator;

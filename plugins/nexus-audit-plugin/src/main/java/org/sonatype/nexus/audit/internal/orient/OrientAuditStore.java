@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.audit.AuditData;
-import org.sonatype.nexus.audit.AuditStore;
+import org.sonatype.nexus.audit.internal.AuditStore;
 import org.sonatype.nexus.common.collect.AutoClosableIterable;
 import org.sonatype.nexus.orient.DatabaseInstance;
 

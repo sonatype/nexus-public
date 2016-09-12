@@ -26,7 +26,6 @@ import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationChangedEvent;
-import org.sonatype.nexus.email.EmailConfigurationStore;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.ssl.TrustStore;
 

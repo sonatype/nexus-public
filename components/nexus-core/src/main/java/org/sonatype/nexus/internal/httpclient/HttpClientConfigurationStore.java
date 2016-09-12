@@ -10,41 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.httpclient;
+package org.sonatype.nexus.internal.httpclient;
 
 import javax.annotation.Nullable;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * In-memory {@link HttpClientConfigurationStore}.
+ * {@link HttpClientConfiguration} store.
  *
  * @since 3.0
  */
-@Named("memory")
-@Singleton
-@VisibleForTesting
-public class MemoryHttpClientConfigurationStore
-  extends ComponentSupport
-  implements HttpClientConfigurationStore
+public interface HttpClientConfigurationStore
 {
-  private HttpClientConfiguration model;
-
   @Nullable
-  @Override
-  public synchronized HttpClientConfiguration load() {
-    return model;
-  }
+  HttpClientConfiguration load();
 
-  @Override
-  public synchronized void save(final HttpClientConfiguration configuration) {
-    this.model = checkNotNull(configuration);
-  }
+  void save(HttpClientConfiguration configuration);
 }

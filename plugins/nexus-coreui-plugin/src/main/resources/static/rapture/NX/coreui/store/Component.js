@@ -36,7 +36,7 @@ Ext.define('NX.coreui.store.Component', {
   },
 
   buffered: true,
-  pageSize: 50,
+  pageSize: 300,
 
   remoteFilter: true,
   remoteSort: true,

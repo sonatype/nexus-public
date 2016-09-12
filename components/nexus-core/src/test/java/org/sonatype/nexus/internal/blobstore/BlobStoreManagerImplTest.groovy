@@ -17,7 +17,6 @@ import javax.inject.Provider
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationStore
 import org.sonatype.nexus.common.event.EventBus
 
 import com.google.common.collect.Lists
