@@ -20,7 +20,6 @@ import java.util.List;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
-import org.sonatype.nexus.mime.NexusMimeTypes;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;

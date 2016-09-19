@@ -61,6 +61,22 @@ public class UpgradeManager
     this.managedUpgrades = checkNotNull(managedUpgrades);
   }
 
+  public Set<String> getLocalModels() {
+    return getModels(true);
+  }
+
+  public Set<String> getClusteredModels() {
+    return getModels(false);
+  }
+
+  private Set<String> getModels(boolean local) {
+    return managedCheckpoints.stream()
+        .map(UpgradeManager::checkpoints)
+        .filter(checkpoints -> checkpoints.local() == local)
+        .map(checkpoints -> checkpoints.model())
+        .collect(toCollection(HashSet::new));
+  }
+
   /**
    * Returns ordered list of upgrades that should be applied to the current installation.
    * 

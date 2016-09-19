@@ -34,6 +34,7 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -149,7 +150,7 @@ public class DefaultCapabilityRegistryTest
         eventBus,
         achf,
         vchf,
-        passwordHelper = new PasswordHelper(new CryptoHelperImpl()),
+        passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl())),
         validatorProvider
     );
 

@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 
 import com.google.common.base.Throwables;
 import org.hamcrest.MatcherAssert;
@@ -36,7 +37,7 @@ public class PasswordHelperTest
 
   @Before
   public void init() throws Exception {
-    helper = new PasswordHelper(new CryptoHelperImpl());
+    helper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()));
   }
 
   @Test

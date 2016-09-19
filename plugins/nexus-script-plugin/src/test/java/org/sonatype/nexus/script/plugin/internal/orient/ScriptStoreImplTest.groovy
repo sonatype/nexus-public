@@ -15,7 +15,7 @@ package org.sonatype.nexus.script.plugin.internal.orient
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.script.Script
-import org.sonatype.nexus.script.ScriptStore
+import org.sonatype.nexus.script.plugin.internal.ScriptStore
 
 import org.junit.Before
 import org.junit.Rule

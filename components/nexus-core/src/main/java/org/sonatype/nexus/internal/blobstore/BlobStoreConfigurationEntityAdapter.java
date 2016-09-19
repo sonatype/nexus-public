@@ -19,8 +19,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationCreatedEvent;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationDeletedEvent;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;

@@ -27,4 +27,9 @@ import java.lang.annotation.Target;
 public @interface Checkpoints
 {
   String model();
+
+  /**
+   * {@code true} if the checkpoint operates on a local model, {@code false} if the model is clustered.
+   */
+  boolean local() default false;
 }

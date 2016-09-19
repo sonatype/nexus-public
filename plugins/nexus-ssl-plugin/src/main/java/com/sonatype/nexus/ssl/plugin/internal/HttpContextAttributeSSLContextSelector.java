@@ -27,7 +27,7 @@ import org.apache.http.protocol.HttpContext;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * An {@link SSLContextSelector} that will make use of Nexus SSL TrustStore depending on presence of
+ * An {@link SSLContextSelector} that will make use of Nexus SSL TrustStore depending on value of
  * {@link SSLContextSelector#USE_TRUST_STORE} attribute.
  *
  * @since 3.0
@@ -47,8 +47,8 @@ public class HttpContextAttributeSSLContextSelector
 
   @Override
   public SSLContext select(final HttpContext context) {
-    Boolean useTrustStore = (Boolean) context.getAttribute(SSLContextSelector.USE_TRUST_STORE);
-    if (useTrustStore != null) {
+    Object useTrustStore = context.getAttribute(SSLContextSelector.USE_TRUST_STORE);
+    if (Boolean.TRUE.equals(useTrustStore)) {
       return trustStore.getSSLContext();
     }
     return null;

@@ -27,7 +27,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.MimeSupport;
-import org.sonatype.nexus.mime.NexusMimeTypes;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;

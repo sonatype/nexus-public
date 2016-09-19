@@ -15,8 +15,9 @@ package org.sonatype.nexus.upgrade.internal;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.sonatype.goodies.common.Properties2;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.FileHelper;
@@ -38,6 +39,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
@@ -46,9 +48,12 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -61,9 +66,10 @@ public class UpgradeServiceTest
   @Mock
   private ApplicationDirectories directories;
 
-  private File dbFolder;
+  @Mock
+  private ModelVersionStore modelVersionStore;
 
-  private File modelProperties;
+  private File dbFolder;
 
   private Checkpoint checkpointFoo;
 
@@ -85,7 +91,6 @@ public class UpgradeServiceTest
   public void setupService() throws Exception {
     dbFolder = tmpDir.newFolder();
 
-    modelProperties = new File(dbFolder, "model.properties");
     when(directories.getWorkDirectory("db")).thenReturn(dbFolder);
 
     CheckpointMock[] checkpoints = {
@@ -111,16 +116,32 @@ public class UpgradeServiceTest
     upgradeWibble_2_0 = upgrades[3].mock;
 
     upgradeService = new UpgradeServiceImpl(directories,
-        new UpgradeManager(Arrays.asList(checkpoints), Arrays.asList(upgrades)));
+        new UpgradeManager(Arrays.asList(checkpoints), Arrays.asList(upgrades)), modelVersionStore);
+  }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private Map<String, String> verifyModelVersionsSaved() {
+    ArgumentCaptor<Map> modelVersionsCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(modelVersionStore).save(modelVersionsCaptor.capture());
+    return modelVersionsCaptor.getValue();
+  }
+
+  @Test
+  public void testManagesLifecycleOfVersionStore() throws Exception {
+    upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()), modelVersionStore);
+
+    upgradeService.start();
+    verify(modelVersionStore).start();
+
+    upgradeService.stop();
+    verify(modelVersionStore).stop();
   }
 
   @Test
   public void testNoUpgradesDoesNothing() throws Exception {
-    upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()));
+    upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()), modelVersionStore);
 
     upgradeService.start();
-
-    assertThat(modelProperties.exists(), is(false));
 
     verifyNoMoreInteractions(
         checkpointFoo,
@@ -134,13 +155,9 @@ public class UpgradeServiceTest
 
   @Test
   public void testInventoryTakenForFreshInstallation() throws Exception {
-    assertThat(modelProperties.exists(), is(false));
-
     upgradeService.start();
 
-    assertThat(modelProperties.exists(), is(true));
-
-    assertThat(Properties2.load(modelProperties),
+    assertThat(verifyModelVersionsSaved(),
         is(ImmutableMap.of("foo", "1.2", "bar", "1.1", "wibble", "2.0")));
 
     verifyNoMoreInteractions(
@@ -156,15 +173,11 @@ public class UpgradeServiceTest
   @Test
   public void testUpgradeExistingInstallation() throws Exception {
     FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
-    FileHelper.writeFile(modelProperties.toPath(), "foo = 1.1\n" + "bar = 1.1");
-
-    assertThat(modelProperties.exists(), is(true));
+    when(modelVersionStore.load()).thenReturn(new HashMap<>(ImmutableMap.of("foo", "1.1", "bar", "1.1")));
 
     upgradeService.start();
 
-    assertThat(modelProperties.exists(), is(true));
-
-    assertThat(Properties2.load(modelProperties),
+    assertThat(verifyModelVersionsSaved(),
         is(ImmutableMap.of("foo", "1.2", "bar", "1.1", "wibble", "2.0")));
 
     InOrder order = inOrder(
@@ -202,16 +215,13 @@ public class UpgradeServiceTest
   public void testUpgradeOnlyAppliedOnce() throws Exception {
     FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
 
-    assertThat(modelProperties.exists(), is(false));
-
     upgradeService.start();
 
-    assertThat(modelProperties.exists(), is(true));
-
-    assertThat(Properties2.load(modelProperties),
-        is(ImmutableMap.of("foo", "1.2", "bar", "1.1", "wibble", "2.0")));
+    Map<String, String> upgradedVersions = ImmutableMap.of("foo", "1.2", "bar", "1.1", "wibble", "2.0");
+    assertThat(verifyModelVersionsSaved(), is(upgradedVersions));
 
     upgradeService.stop();
+    when(modelVersionStore.load()).thenReturn(new HashMap<>(upgradedVersions));
     upgradeService.start();
 
     upgradeService.stop();
@@ -259,8 +269,6 @@ public class UpgradeServiceTest
 
     doThrow(new IOException()).when(upgradeBar_1_1).apply();
 
-    assertThat(modelProperties.exists(), is(false));
-
     try {
       upgradeService.start();
       fail("Expected IOException");
@@ -269,7 +277,7 @@ public class UpgradeServiceTest
       assertThat(e, instanceOf(IOException.class));
     }
 
-    assertThat(modelProperties.exists(), is(false));
+    verify(modelVersionStore, never()).save(any());
 
     InOrder order = inOrder(
         checkpointFoo,
@@ -307,8 +315,6 @@ public class UpgradeServiceTest
 
     doThrow(new IOException()).when(checkpointBar).begin(anyString());
 
-    assertThat(modelProperties.exists(), is(false));
-
     try {
       upgradeService.start();
       fail("Expected IOException");
@@ -317,7 +323,7 @@ public class UpgradeServiceTest
       assertThat(e, instanceOf(IOException.class));
     }
 
-    assertThat(modelProperties.exists(), is(false));
+    verify(modelVersionStore, never()).save(any());
 
     InOrder order = inOrder(
         checkpointFoo,
@@ -347,8 +353,6 @@ public class UpgradeServiceTest
 
     doThrow(new IOException()).when(checkpointBar).commit();
 
-    assertThat(modelProperties.exists(), is(false));
-
     try {
       upgradeService.start();
       fail("Expected IOException");
@@ -357,7 +361,7 @@ public class UpgradeServiceTest
       assertThat(e, instanceOf(IOException.class));
     }
 
-    assertThat(modelProperties.exists(), is(false));
+    verify(modelVersionStore, never()).save(any());
 
     InOrder order = inOrder(
         checkpointFoo,
@@ -401,8 +405,6 @@ public class UpgradeServiceTest
     doThrow(new IOException()).when(checkpointBar).commit();
     doThrow(new IOException()).when(checkpointBar).rollback();
 
-    assertThat(modelProperties.exists(), is(false));
-
     try {
       upgradeService.start();
       fail("Expected IOException");
@@ -411,7 +413,7 @@ public class UpgradeServiceTest
       assertThat(e, instanceOf(IOException.class));
     }
 
-    assertThat(modelProperties.exists(), is(false));
+    verify(modelVersionStore, never()).save(any());
 
     InOrder order = inOrder(
         checkpointFoo,

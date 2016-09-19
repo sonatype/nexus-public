@@ -222,4 +222,30 @@ public class UpgradeManagerTest
     thrown.expect(UnresolvedDependencyException.class);
     upgradeManager.plan(ImmutableMap.of());
   }
+
+  @Test
+  public void testGetLocalModels() {
+    List<Checkpoint> checkpoints = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.example.CheckpointFoo(),
+        new org.sonatype.nexus.upgrade.example.CheckpointBar(),
+        new org.sonatype.nexus.upgrade.example.CheckpointWibble()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of());
+
+    assertThat(upgradeManager.getLocalModels(), containsInAnyOrder("foo"));
+  }
+
+  @Test
+  public void testGetClusteredModels() {
+    List<Checkpoint> checkpoints = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.example.CheckpointFoo(),
+        new org.sonatype.nexus.upgrade.example.CheckpointBar(),
+        new org.sonatype.nexus.upgrade.example.CheckpointWibble()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of());
+
+    assertThat(upgradeManager.getClusteredModels(), containsInAnyOrder("bar", "wibble"));
+  }
 }

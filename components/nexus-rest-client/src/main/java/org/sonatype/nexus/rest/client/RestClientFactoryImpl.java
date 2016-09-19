@@ -12,18 +12,20 @@
  */
 package org.sonatype.nexus.rest.client;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.ws.rs.client.Client;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
-import org.sonatype.nexus.rest.client.RestClientFactory;
+import org.sonatype.nexus.httpclient.SSLContextSelector;
 
 import org.apache.http.client.HttpClient;
-import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 
@@ -48,13 +50,20 @@ public class RestClientFactoryImpl
   }
 
   @Override
-  public ResteasyClient create(@Nullable final Customizer customizer) {
-    try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
-      ResteasyClientBuilder builder = new ResteasyClientBuilder()
-          .httpEngine(new ApacheHttpClient4Engine(httpClient.get()));
+  public Client create(final RestClientConfiguration configuration) {
+    checkNotNull(configuration);
 
-      if (customizer != null) {
-        customizer.apply(builder);
+    try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
+      HttpContext httpContext = new BasicHttpContext();
+      if (configuration.getUseTrustStore()) {
+          httpContext.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
+      }
+      ClientHttpEngine httpEngine = new ApacheHttpClient4Engine(httpClient.get(), httpContext);
+
+      ResteasyClientBuilder builder = new ResteasyClientBuilder().httpEngine(httpEngine);
+
+      if (configuration.getCustomizer() != null) {
+        configuration.getCustomizer().apply(builder);
       }
 
       return builder.build();
@@ -62,7 +71,7 @@ public class RestClientFactoryImpl
   }
 
   @Override
-  public ResteasyClient create() {
-    return create(null);
+  public Client create() {
+    return create(RestClientConfiguration.DEFAULTS);
   }
 }

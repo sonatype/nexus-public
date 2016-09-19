@@ -24,9 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationCreatedEvent;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationDeletedEvent;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfigurationEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;

@@ -122,11 +122,20 @@ Ext.define('NX.coreui.controller.Blobstores', {
    * @override
    */
   bindDeleteButton: function (button) {
+    var me = this;
     button.mon(
       NX.Conditions.and(
         NX.Conditions.isPermitted(this.permission + ':delete'),
         NX.Conditions.gridHasSelection('nx-coreui-blobstore-list', function(model) {
-          return !model.get('inUse');
+          var repositoryUseCount = model.get('repositoryUseCount');
+          if (repositoryUseCount > 0) {
+            me.showInfo(NX.I18n.format('Blobstore_BlobstoreFeature_Delete_Disabled_Message',
+                Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories')));
+          }
+          else {
+            me.clearInfo();
+          }
+          return !repositoryUseCount > 0;
         })
       ),
       {

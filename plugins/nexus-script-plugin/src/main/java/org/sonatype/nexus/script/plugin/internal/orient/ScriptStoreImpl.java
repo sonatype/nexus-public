@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.script.Script;
-import org.sonatype.nexus.script.ScriptStore;
+import org.sonatype.nexus.script.plugin.internal.ScriptStore;
 
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

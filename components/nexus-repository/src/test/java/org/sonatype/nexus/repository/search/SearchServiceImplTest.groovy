@@ -18,8 +18,8 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.manager.RepositoryImpl
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.security.SecurityHelper
 

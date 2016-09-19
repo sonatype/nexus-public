@@ -126,6 +126,8 @@ Ext.define('NX.coreui.migration.RepositoriesScreen', {
 
     me.callParent();
 
+    me.down('grid').settingsForm = true;
+
     // update hidden field to when grid selection changes
     me.getSelectionModel().on('selectionchange', function(selModel, selected, opts) {
       me.down('hidden').setValue(selected.length);
@@ -144,5 +146,14 @@ Ext.define('NX.coreui.migration.RepositoriesScreen', {
    */
   getSelectionModel: function() {
     return this.getGrid().getSelectionModel();
+  },
+
+  /**
+   * Returns the state of the screen form
+   *
+   * @return {boolean}
+   */
+  isDirty: function() {
+    return this.getGrid().isDirty();
   }
 });

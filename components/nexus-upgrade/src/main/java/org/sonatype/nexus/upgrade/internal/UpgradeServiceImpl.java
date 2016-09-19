@@ -16,6 +16,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -25,7 +26,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
@@ -34,7 +34,6 @@ import org.sonatype.nexus.upgrade.UpgradeService;
 import com.google.common.base.Throwables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Maps.fromProperties;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 import static org.sonatype.nexus.upgrade.internal.UpgradeManager.checkpoints;
 import static org.sonatype.nexus.upgrade.internal.UpgradeManager.upgrades;
@@ -58,27 +57,31 @@ public class UpgradeServiceImpl
 
   private final UpgradeManager upgradeManager;
 
-  private final PropertiesFile modelProperties;
+  private final ModelVersionStore modelVersionStore;
+
+  private Map<String, String> modelVersions;
 
   private final Path componentDatabase;
 
   @Inject
-  public UpgradeServiceImpl(final ApplicationDirectories applicationDirectories, final UpgradeManager upgradeManager) {
+  public UpgradeServiceImpl(final ApplicationDirectories applicationDirectories,
+                            final UpgradeManager upgradeManager,
+                            final ModelVersionStore modelVersionStore)
+  {
     this.upgradeManager = checkNotNull(upgradeManager);
+    this.modelVersionStore = checkNotNull(modelVersionStore);
 
     File dbDirectory = applicationDirectories.getWorkDirectory("db");
-    modelProperties = new PropertiesFile(new File(dbDirectory, "model.properties"));
     componentDatabase = dbDirectory.toPath().resolve("component/component.pcl");
   }
 
   @Override
   protected void doStart() throws Exception {
+    modelVersionStore.start();
 
-    if (modelProperties.getFile().exists()) {
-      modelProperties.load();
-    }
+    modelVersions = modelVersionStore.load();
 
-    List<Upgrade> upgrades = upgradeManager.plan(fromProperties(modelProperties));
+    List<Upgrade> upgrades = upgradeManager.plan(modelVersions);
     if (upgrades.isEmpty()) {
       return; // nothing to upgrade
     }
@@ -97,7 +100,12 @@ public class UpgradeServiceImpl
       throw e;
     }
 
-    modelProperties.store();
+    modelVersionStore.save(modelVersions);
+  }
+
+  @Override
+  protected void doStop() throws Exception {
+    modelVersionStore.stop();
   }
 
   private boolean firstTimeInstall() {
@@ -109,7 +117,7 @@ public class UpgradeServiceImpl
    */
   private void doInventory(List<Upgrade> upgrades) {
     upgrades.stream().map(UpgradeManager::upgrades)
-        .forEach(upgrade -> modelProperties.setProperty(upgrade.model(), upgrade.to()));
+        .forEach(upgrade -> modelVersions.put(upgrade.model(), upgrade.to()));
   }
 
   /**
@@ -142,7 +150,7 @@ public class UpgradeServiceImpl
       String model = checkpoints(checkpoint).model();
       try {
         log.info("Checkpoint {}", model);
-        checkpoint.begin(modelProperties.getProperty(model, "1.0"));
+        checkpoint.begin(modelVersions.getOrDefault(model, "1.0"));
       }
       catch (Throwable e) {
         log.warn("Problem checkpointing {}", model, e);
@@ -160,7 +168,7 @@ public class UpgradeServiceImpl
         upgrade.apply();
 
         // keep track of which upgrades we've applied so far
-        modelProperties.setProperty(upgrades.model(), upgrades.to());
+        modelVersions.put(upgrades.model(), upgrades.to());
       }
       catch (Throwable e) {
         log.warn("Problem upgrading {}", detail, e);

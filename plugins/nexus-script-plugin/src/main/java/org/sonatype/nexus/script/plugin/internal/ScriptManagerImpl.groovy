@@ -24,7 +24,6 @@ import org.sonatype.nexus.script.Script
 import org.sonatype.nexus.script.ScriptCreatedEvent
 import org.sonatype.nexus.script.ScriptDeletedEvent
 import org.sonatype.nexus.script.ScriptManager
-import org.sonatype.nexus.script.ScriptStore
 import org.sonatype.nexus.script.ScriptUpdatedEvent
 
 import com.google.common.collect.ImmutableList

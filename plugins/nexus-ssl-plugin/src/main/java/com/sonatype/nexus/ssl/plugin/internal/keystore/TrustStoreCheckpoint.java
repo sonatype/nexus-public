@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
-@Checkpoints(model = TrustStoreCheckpoint.MODEL)
+@Checkpoints(model = TrustStoreCheckpoint.MODEL, local = true)
 public class TrustStoreCheckpoint
     implements Checkpoint
 {

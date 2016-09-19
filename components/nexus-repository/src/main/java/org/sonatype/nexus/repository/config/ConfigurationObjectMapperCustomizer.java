@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import org.sonatype.nexus.repository.config.internal.ConfigurationObjectMapperProvider;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**

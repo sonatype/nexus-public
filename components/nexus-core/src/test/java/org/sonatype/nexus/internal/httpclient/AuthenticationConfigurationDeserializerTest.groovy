@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.httpclient
 import org.sonatype.goodies.common.Time
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
+import org.sonatype.nexus.crypto.internal.MavenCipherImpl
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.security.PasswordHelper
@@ -36,7 +37,7 @@ class AuthenticationConfigurationDeserializerTest
 
   @Before
   void setUp() {
-    final PasswordHelper passwordHelper = new PasswordHelper(new CryptoHelperImpl());
+    final PasswordHelper passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()))
     objectMapper = new ObjectMapper().registerModule(
         new SimpleModule().addSerializer(
             Time.class,

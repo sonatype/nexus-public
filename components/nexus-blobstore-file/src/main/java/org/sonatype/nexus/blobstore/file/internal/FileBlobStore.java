@@ -35,11 +35,9 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.api.BlobStoreListener;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.collect.AutoClosableIterable;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -97,8 +95,6 @@ public class FileBlobStore
   private final LocationStrategy locationStrategy;
 
   private final FileOperations fileOperations;
-
-  private volatile BlobStoreListener listener;
 
   private BlobStoreConfiguration blobStoreConfiguration;
 
@@ -169,17 +165,6 @@ public class FileBlobStore
     }
   }
 
-  @Override
-  public void setBlobStoreListener(@Nullable final BlobStoreListener listener) {
-    this.listener = listener;
-  }
-
-  @Nullable
-  @Override
-  public BlobStoreListener getBlobStoreListener() {
-    return listener;
-  }
-
   /**
    * Returns path for blob-id content file relative to root directory.
    */
@@ -233,10 +218,6 @@ public class FileBlobStore
       final StreamMetrics streamMetrics = ingester.ingestTo(blobPath);
       final BlobMetrics metrics = new BlobMetrics(new DateTime(), streamMetrics.getSha1(), streamMetrics.getSize());
       blob.refresh(headers, metrics);
-
-      if (listener != null) {
-        listener.blobCreated(blob, "Blob: " + blobId + " written to: " + blobPath);
-      }
 
       // Write the blob attribute file
       BlobAttributes blobAttributes = new BlobAttributes(attributePath, headers, metrics);
@@ -292,9 +273,6 @@ public class FileBlobStore
     }
 
     log.debug("Accessing blob {}", blobId);
-    if (listener != null) {
-      listener.blobAccessed(blob, null);
-    }
 
     return blob;
   }
@@ -353,10 +331,6 @@ public class FileBlobStore
       boolean blobDeleted = delete(blobPath);
 
       log.debug("Deleting-hard blob {}", blobId);
-
-      if (listener != null) {
-        listener.blobDeleted(blobId, "Path: " + blobPath);
-      }
 
       return blobDeleted;
     }
@@ -422,11 +396,6 @@ public class FileBlobStore
       throw new BlobStoreException(
           "Unable to initialize blob store directory structure: " + getConfiguredBlobStorePath(), e, null);
     }
-  }
-
-  @Override
-  public AutoClosableIterable<BlobId> iterator() {
-    throw new UnsupportedOperationException();
   }
 
   private void checkExists(final Path path, final BlobId blobId) throws IOException {

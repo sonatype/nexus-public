@@ -349,6 +349,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreList_Filter_EmptyText: 'No blob stores matched "$filter"',
     Blobstore_BlobstoreList_EmptyText: 'No blob stores defined',
     Blobstore_BlobstoreFeature_Delete_Button: 'Delete blob store',
+    Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and cannot be deleted',
     Blobstore_BlobstoreSettings_Title: 'Settings',
     Blobstore_BlobstoreAdd_Type_FieldLabel: 'Type',
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',
@@ -1189,7 +1190,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
       '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
       '<ul>' +
       '<li>Security: users, roles and privileges</li>' +
-      '<li>Repositories in supported formats: maven2, nuget, npm, site</li>' +
+      '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
       '</ul>' +
       '</p>' +
       '<p>Some aspects are <strong>incompatible</strong> and can not be automatically upgraded:' +

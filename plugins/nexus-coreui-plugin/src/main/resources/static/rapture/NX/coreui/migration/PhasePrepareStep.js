@@ -109,6 +109,14 @@ Ext.define('NX.coreui.migration.PhasePrepareStep', {
             me.unmask();
 
             if (event.status && response.success) {
+              // need to set forms so they won't be queried for dirtiness
+              var forms = Ext.ComponentQuery.query('form[settingsForm=true]');
+              if (forms.length !== 0) {
+                Ext.Array.each(forms, function (form) {
+                  form.settingsForm = false;
+                });
+              }
+              // now ready to move ahead
               me.moveNext();
 
               NX.Messages.success(NX.I18n.render(me, 'Continue_Message'));

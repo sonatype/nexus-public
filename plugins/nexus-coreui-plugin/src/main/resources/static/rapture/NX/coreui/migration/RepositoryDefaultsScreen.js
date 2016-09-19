@@ -67,5 +67,15 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsScreen', {
     });
 
     me.callParent();
+    me.down('form').settingsForm = true;
+  },
+
+  /**
+   * Returns the state of the screen form
+   *
+   * @return {boolean}
+   */
+  isDirty: function() {
+    return this.down('form').isDirty();
   }
 });

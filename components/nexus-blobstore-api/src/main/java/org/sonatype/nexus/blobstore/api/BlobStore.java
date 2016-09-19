@@ -19,7 +19,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.collect.AutoClosableIterable;
 
 import com.google.common.hash.HashCode;
 
@@ -102,17 +101,6 @@ public interface BlobStore
   BlobStoreMetrics getMetrics();
 
   /**
-   * Installs a listener to receive blob store events. Subsequent calls replace the listener.
-   */
-  void setBlobStoreListener(@Nullable BlobStoreListener listener);
-
-  /**
-   * Returns whatever BlobStoreListener has been installed, or {@code null}.
-   */
-  @Nullable
-  BlobStoreListener getBlobStoreListener();
-
-  /**
    * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
    * tasks need doing.
    */
@@ -127,13 +115,6 @@ public interface BlobStore
    * Initialize the BlobStore.
    */
   void init(BlobStoreConfiguration configuration) throws Exception;
-
-  /**
-   * Returns an Iterable of BlobIds.
-   *
-   * @return Iterable handle must be closed when finished using it.
-   */
-  AutoClosableIterable<BlobId> iterator();
 
   /**
    * Signifies that the {@link BlobStoreManager} has permanently deleted this blob store.

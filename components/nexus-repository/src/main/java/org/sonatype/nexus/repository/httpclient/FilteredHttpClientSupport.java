@@ -150,7 +150,7 @@ public abstract class FilteredHttpClientSupport
 
   @Override
   public String toString() {
-    return "FilteredHttpClientSupport{" +
+    return getClass().getSimpleName() + "{" +
         "delegate=" + delegate +
         '}';
   }
