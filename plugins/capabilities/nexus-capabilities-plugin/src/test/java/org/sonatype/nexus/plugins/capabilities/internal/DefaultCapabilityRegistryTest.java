@@ -187,8 +187,10 @@ public class DefaultCapabilityRegistryTest
     verify(eventBus, atLeastOnce()).post(rec.capture());
     assertThat(rec.getAllValues().get(0), is(instanceOf(CapabilityEvent.Created.class)));
     assertThat(rec.getAllValues().get(0).getReference(), is(equalTo(reference1)));
-    assertThat(rec.getAllValues().get(1), is(instanceOf(CapabilityEvent.AfterRemove.class)));
+    assertThat(rec.getAllValues().get(1), is(instanceOf(CapabilityEvent.BeforeRemove.class)));
     assertThat(rec.getAllValues().get(1).getReference(), is(equalTo(reference1)));
+    assertThat(rec.getAllValues().get(2), is(instanceOf(CapabilityEvent.AfterRemove.class)));
+    assertThat(rec.getAllValues().get(2).getReference(), is(equalTo(reference1)));
   }
 
   /**

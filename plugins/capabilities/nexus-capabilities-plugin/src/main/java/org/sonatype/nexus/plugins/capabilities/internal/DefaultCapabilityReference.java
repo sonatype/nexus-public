@@ -518,6 +518,9 @@ public class DefaultCapabilityReference
 
     @Override
     public void remove() {
+      eventBus.post(
+          new CapabilityEvent.BeforeRemove(capabilityRegistry, DefaultCapabilityReference.this)
+      );
       try {
         DefaultCapabilityReference.this.disable();
         validityHandler.release();

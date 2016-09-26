@@ -214,6 +214,29 @@ public class CapabilityEvent
   }
 
   /**
+   * Event fired when a capability is removed from registry.
+   * <p/>
+   * Called before {@link Capability#onRemove()} is called.
+   *
+   * @since 2.14.1
+   */
+  public static class BeforeRemove
+      extends CapabilityEvent
+  {
+
+    public BeforeRemove(final CapabilityRegistry capabilityRegistry,
+                        final CapabilityReference reference)
+    {
+      super(capabilityRegistry, reference);
+    }
+
+    @Override
+    public String toString() {
+      return "Before remove of " + super.toString();
+    }
+  }
+
+  /**
    * Event fired when an exception occurred during a lifecycle callback method (create/load/update/activate/passivate).
    *
    * @since 2.7
