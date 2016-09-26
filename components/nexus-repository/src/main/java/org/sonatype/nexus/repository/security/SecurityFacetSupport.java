@@ -12,16 +12,12 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.List;
-
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.security.BreadActions;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.apache.shiro.authz.AuthorizationException;
@@ -39,19 +35,15 @@ public abstract class SecurityFacetSupport
 {
   private final RepositoryFormatSecurityConfigurationResource securityResource;
 
-  private final SelectorConfigurationStore selectorConfigurationStore;
-
   private final VariableResolverAdapter variableResolverAdapter;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
   public SecurityFacetSupport(final RepositoryFormatSecurityConfigurationResource securityResource,
-                              final SelectorConfigurationStore selectorConfigurationStore,
                               final VariableResolverAdapter variableResolverAdapter,
                               final ContentPermissionChecker contentPermissionChecker)
   {
     this.securityResource = checkNotNull(securityResource);
-    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
     this.variableResolverAdapter = checkNotNull(variableResolverAdapter);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
@@ -75,10 +67,8 @@ public abstract class SecurityFacetSupport
 
     Repository repo = getRepository();
 
-    List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse();
     VariableSource variableSource = variableResolverAdapter.fromRequest(request, getRepository());
-    if (!contentPermissionChecker
-        .isPermitted(repo.getName(), repo.getFormat().getValue(), action, selectorConfigurations, variableSource)) {
+    if (!contentPermissionChecker.isPermitted(repo.getName(), repo.getFormat().getValue(), action, variableSource)) {
       throw new AuthorizationException();
     }
   }

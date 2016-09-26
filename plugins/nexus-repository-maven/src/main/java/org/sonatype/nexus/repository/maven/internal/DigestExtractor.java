@@ -18,11 +18,11 @@ import java.io.InputStreamReader;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.io.LimitedInputStream;
 import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -51,8 +51,7 @@ public class DigestExtractor
       throws IOException
   {
     checkNotNull(stream);
-    try (InputStreamReader isr = new InputStreamReader(
-        new LimitedInputStream(stream, 0, MAX_CHARS_NEEDED), Charsets.UTF_8)) {
+    try (InputStreamReader isr = new InputStreamReader(ByteStreams.limit(stream, MAX_CHARS_NEEDED), Charsets.UTF_8)) {
       return extract(CharStreams.toString(isr));
     }
     finally {

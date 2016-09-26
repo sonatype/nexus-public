@@ -24,5 +24,7 @@ public interface RestClientFactory
 
   Client create(RestClientConfiguration configuration);
 
-  Client create();
+  default Client create() {
+    return create(RestClientConfiguration.DEFAULTS);
+  }
 }

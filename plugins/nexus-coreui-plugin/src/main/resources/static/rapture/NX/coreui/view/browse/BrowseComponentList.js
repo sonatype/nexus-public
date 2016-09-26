@@ -89,23 +89,6 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
         items: [
           '->',
           {
-            xtype: 'pagingtoolbar',
-            itemId: 'resultCount',
-            displayInfo: true,
-            store: 'Component',
-            afterPageText: '',
-            beforePageText: '',
-            listeners: {
-              beforerender: function (toolbar) {
-                Ext.each(toolbar.items.items, function (item) {
-                  if (item.itemId !== "displayItem") {
-                    item.hide();
-                  }
-                })
-              }
-            }
-          },
-          {
             xtype: 'nx-searchbox',
             itemId: 'filter',
             emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),

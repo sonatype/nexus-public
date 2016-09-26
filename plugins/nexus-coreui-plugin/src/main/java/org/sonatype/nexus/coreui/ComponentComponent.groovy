@@ -35,7 +35,6 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.storage.ComponentMaintenance
@@ -46,8 +45,6 @@ import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.selector.JexlExpressionValidator
-import org.sonatype.nexus.selector.SelectorConfiguration
-import org.sonatype.nexus.selector.SelectorConfigurationStore
 import org.sonatype.nexus.selector.VariableSource
 import org.sonatype.nexus.validation.Validate
 
@@ -109,9 +106,6 @@ class ComponentComponent
 
   @Inject
   GroupType groupType
-
-  @Inject
-  SelectorConfigurationStore selectorConfigurationStore
 
   @Inject
   ContentPermissionChecker contentPermissionChecker
@@ -206,31 +200,22 @@ class ComponentComponent
     }
 
     def componentId = parameters.getFilter('componentId')
-
-    def repositories
-    if (groupType == repository.type) {
-      repositories = repository.facet(GroupFacet).leafMembers()
-    }
-    else {
-      repositories = ImmutableList.of(repository)
-    }
-
-    if (repositories.size() == 1) {
-      return readRepositoryComponentAssets(repository, componentId)
-    }
-    return readRepositoryComponentAssets(repository, repositories, parameters)
+    return readRepositoryComponentAssets(repository, componentId)
   }
 
+  /**
+   * Find all Assets related to the given component. Note that the Repository passed in is not necessarily the
+   * Repository where the component resides (in the case of a group Repository).
+   */
   private List<AssetXO> readRepositoryComponentAssets(final Repository repository, final String componentId) {
     checkNotNull(repository)
     checkNotNull(componentId)
     List<Asset> assets
     Component component
-    List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse()
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     try {
       storageTx.begin()
-      component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repository))
+      component = storageTx.findComponent(new DetachedEntityId(componentId))
       if (component == null) {
         log.warn 'Component {} not found', componentId
         return null
@@ -246,47 +231,10 @@ class ComponentComponent
           repository.name,
           it.format(),
           BreadActions.BROWSE,
-          selectorConfigurations,
           variableResolverAdapter.fromAsset(it))
     }.collect(ASSET_CONVERTER.rcurry(component.name(), repository.name))
   }
-
-  private List<AssetXO> readRepositoryComponentAssets(final Repository repository,
-                                                      final List<Repository> repositories,
-                                                      final StoreLoadParameters parameters)
-  {
-    checkNotNull(repository)
-    checkNotNull(repositories)
-    checkNotNull(parameters)
-    def componentGroup = parameters.getFilter('componentGroup')
-    def componentName = parameters.getFilter('componentName')
-    def componentVersion = parameters.getFilter('componentVersion')
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-      if (componentName) {
-        def whereClause = "contentAuth(@this) == true"
-        whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${MetadataNodeEntityAdapter.P_NAME} = :name"
-        def params = ['name': componentName]
-        if (componentGroup) {
-          whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${ComponentEntityAdapter.P_GROUP} = :group"
-          params << ['group': componentGroup]
-        }
-        if (componentVersion) {
-          whereClause += " AND ${AssetEntityAdapter.P_COMPONENT}.${ComponentEntityAdapter.P_VERSION} = :version"
-          params << ['version': componentVersion]
-        }
-        def groupBy = " GROUP BY ${MetadataNodeEntityAdapter.P_NAME}"
-        return storageTx.findAssets(whereClause, params, repositories, groupBy).
-            collect(ASSET_CONVERTER.rcurry(componentName, repository.name))
-      }
-      return null
-    }
-    finally {
-      storageTx.close()
-    }
-  }
-
+  
   private List<Repository> getPreviewRepositories(String repositoryName) {
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
     if (!repositorySelector.allRepositories) {
@@ -471,20 +419,19 @@ class ComponentComponent
   @Validate
   @Nullable
   ComponentXO readComponent(@NotEmpty String componentId, @NotEmpty String repositoryName) {
-    List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse()
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     Component component;
     List<Asset> assets;
     try {
       storageTx.begin()
-      component = storageTx.findComponent(new DetachedEntityId(componentId), storageTx.findBucket(repository))
+      component = storageTx.findComponentInBucket(new DetachedEntityId(componentId), storageTx.findBucket(repository))
       assets = Lists.newArrayList(storageTx.browseAssets(component))
     }
     finally {
       storageTx.close()
     }
-    ensurePermissions(repository, selectorConfigurations, assets, BreadActions.READ)
+    ensurePermissions(repository, assets, BreadActions.READ)
     return component ? COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO : null
   }
 
@@ -497,7 +444,6 @@ class ComponentComponent
   @Validate
   @Nullable
   AssetXO readAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
-    List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse()
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     Asset asset;
@@ -508,7 +454,7 @@ class ComponentComponent
     finally {
       storageTx.close()
     }
-    ensurePermissions(repository, selectorConfigurations, Collections.singletonList(asset), BreadActions.READ)
+    ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
     return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
   }
 
@@ -518,12 +464,10 @@ class ComponentComponent
    * @throws AuthorizationException
    */
   private void ensurePermissions(final Repository repository,
-                                 final Collection<SelectorConfiguration> selectorConfigurations,
                                  final Iterable<Asset> assets,
                                  final String action)
   {
     checkNotNull(repository)
-    checkNotNull(selectorConfigurations)
     checkNotNull(assets)
     checkNotNull(action)
     String format = repository.getFormat().getValue()
@@ -531,8 +475,7 @@ class ComponentComponent
     for (Asset asset : assets) {
       VariableSource variableSource = variableResolverAdapter.fromAsset(asset)
       if (contentPermissionChecker
-          .isPermitted(repository.getName(), format, action, selectorConfigurations,
-          variableSource)) {
+          .isPermitted(repository.getName(), format, action, variableSource)) {
         return
       }
     }

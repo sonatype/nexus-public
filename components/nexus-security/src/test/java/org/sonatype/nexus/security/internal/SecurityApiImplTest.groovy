@@ -12,13 +12,9 @@
  */
 package org.sonatype.nexus.security.internal
 
-import javax.inject.Provider
-
-import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.security.SecurityApi
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration
-import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore
 import org.sonatype.nexus.security.anonymous.AnonymousManager
 import org.sonatype.nexus.security.authz.AuthorizationManager
 import org.sonatype.nexus.security.role.Role
@@ -34,13 +30,7 @@ import spock.lang.Specification
 class SecurityApiImplTest
     extends Specification
 {
-  EventBus eventBus = Mock()
-
-  AnonymousConfigurationStore store = Mock()
-
-  Provider<AnonymousConfiguration> defaults = Mock()
-
-  AnonymousManager anonymousManager = Spy(AnonymousManagerImpl, constructorArgs: [eventBus, store, defaults])
+  AnonymousManager anonymousManager = Mock()
 
   SecuritySystem securitySystem = Mock()
 
@@ -56,7 +46,7 @@ class SecurityApiImplTest
       def updatedConfiguration = api.setAnonymousAccess(false)
 
     then:
-      1 * store.load() >> configuration
+      1 * anonymousManager.getConfiguration() >> configuration
       1 * anonymousManager.setConfiguration(_)
       !updatedConfiguration.enabled
   }
@@ -69,7 +59,7 @@ class SecurityApiImplTest
       def updatedConfiguration = api.setAnonymousAccess(true)
 
     then:
-      1 * store.load() >> configuration
+      1 * anonymousManager.getConfiguration() >> configuration
       0 * anonymousManager.setConfiguration(_)
       updatedConfiguration.enabled
   }

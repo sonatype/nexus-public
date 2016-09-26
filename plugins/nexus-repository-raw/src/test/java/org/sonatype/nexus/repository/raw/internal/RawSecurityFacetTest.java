@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.internal;
 
-import java.util.Arrays;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -21,8 +19,6 @@ import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
@@ -46,16 +42,10 @@ public class RawSecurityFacetTest
   Repository repository;
 
   @Mock
-  SelectorConfigurationStore selectorConfigurationStore;
-
-  @Mock
   ContentPermissionChecker contentPermissionChecker;
 
   @Mock
   VariableResolverAdapter variableResolverAdapter;
-
-  @Mock
-  SelectorConfiguration selectorConfiguration;
 
   @Mock
   RawFormatSecurityConfigurationResource rawFormatSecurityConfigurationResource;
@@ -70,9 +60,7 @@ public class RawSecurityFacetTest
     when(repository.getFormat()).thenReturn(new Format("raw") { });
     when(repository.getName()).thenReturn("RawSecurityFacetTest");
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(selectorConfiguration));
-
-    rawSecurityFacet = new RawSecurityFacet(rawFormatSecurityConfigurationResource, selectorConfigurationStore,
+    rawSecurityFacet = new RawSecurityFacet(rawFormatSecurityConfigurationResource,
         variableResolverAdapter, contentPermissionChecker);
 
     rawSecurityFacet.attach(repository);
@@ -80,14 +68,14 @@ public class RawSecurityFacetTest
 
   @Test
   public void testEnsurePermitted_permitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any()))
         .thenReturn(true);
     rawSecurityFacet.ensurePermitted(request);
   }
 
   @Test
   public void testEnsurePermitted_notPermitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any()))
         .thenReturn(false);
     try {
       rawSecurityFacet.ensurePermitted(request);
@@ -97,6 +85,6 @@ public class RawSecurityFacetTest
       //expected
     }
 
-    verify(contentPermissionChecker).isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any());
+    verify(contentPermissionChecker).isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any());
   }
 }

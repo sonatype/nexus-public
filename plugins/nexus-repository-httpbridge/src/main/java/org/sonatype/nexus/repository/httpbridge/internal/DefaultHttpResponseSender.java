@@ -48,7 +48,7 @@ public class DefaultHttpResponseSender
   public void send(@Nullable final Request request, final Response response, final HttpServletResponse httpResponse)
       throws ServletException, IOException
   {
-    log.trace("Sending response: {}", response);
+    log.debug("Sending response: {}", response);
 
     // add response headers
     for (Map.Entry<String, String> header : response.getHeaders()) {

@@ -299,14 +299,14 @@ public class SecurityConfigurationManagerImpl
   private SecurityConfiguration getMergedConfiguration() {
     // Assign configuration to local variable first, as calls to clearCache can null it out at any time
     SecurityConfiguration configuration = this.mergedConfiguration;
-    if (configuration == null || shouldRebuildMergedConfiguration()) {
+    if (configuration == null || isDirty()) {
       boolean rebuiltConfiguration = false;
 
       synchronized (this) {
         // double-checked locking of volatile is apparently OK with java5+
         // http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
         configuration = this.mergedConfiguration;
-        if (configuration == null || shouldRebuildMergedConfiguration()) {
+        if (configuration == null || isDirty()) {
           rebuiltConfiguration = (configuration != null);
           this.mergedConfiguration = configuration = doGetMergedConfiguration();
         }
@@ -320,7 +320,8 @@ public class SecurityConfigurationManagerImpl
     return configuration;
   }
 
-  private boolean shouldRebuildMergedConfiguration() {
+  @Override
+  public boolean isDirty() {
     for (DynamicSecurityConfigurationResource resource : dynamicResources) {
       if (resource.isDirty()) {
         return true;

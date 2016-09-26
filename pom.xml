@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>10-SNAPSHOT</version>
+    <version>10</version>
     <relativePath/>
   </parent>
 

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest.client;
+package org.sonatype.nexus.rest.client.internal;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,6 +21,8 @@ import javax.ws.rs.client.Client;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
+import org.sonatype.nexus.rest.client.RestClientConfiguration;
+import org.sonatype.nexus.rest.client.RestClientFactory;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.BasicHttpContext;
@@ -36,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-@Named
+@Named("default")
 @Singleton
 public class RestClientFactoryImpl
     extends ComponentSupport
@@ -58,7 +60,14 @@ public class RestClientFactoryImpl
       if (configuration.getUseTrustStore()) {
           httpContext.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
       }
-      ClientHttpEngine httpEngine = new ApacheHttpClient4Engine(httpClient.get(), httpContext);
+      HttpClient client;
+      if (configuration.getHttpClient() != null) {
+        client = checkNotNull(configuration.getHttpClient().get());
+      }
+      else {
+        client = httpClient.get();
+      }
+      ClientHttpEngine httpEngine = new ApacheHttpClient4Engine(client, httpContext);
 
       ResteasyClientBuilder builder = new ResteasyClientBuilder().httpEngine(httpEngine);
 
@@ -68,10 +77,5 @@ public class RestClientFactoryImpl
 
       return builder.build();
     }
-  }
-
-  @Override
-  public Client create() {
-    return create(RestClientConfiguration.DEFAULTS);
   }
 }

@@ -129,14 +129,14 @@ public class RolePermissionResolverImpl
         }
 
         try {
-          final CRole role = configuration.readRole(roleId);
-
-          // check memory-sensitive cache (after readRole to allow for the dirty check)
+          // check memory-sensitive cache; use cached value as long as config is not dirty
           final Collection<Permission> cachedPermissions = rolePermissionsCache.get(roleId);
-          if (cachedPermissions != null) {
+          if (cachedPermissions != null && !configuration.isDirty()) {
             permissions.addAll(cachedPermissions);
             continue; // use cached results
           }
+
+          final CRole role = configuration.readRole(roleId);
 
           // process the roles this role has recursively
           rolesToProcess.addAll(role.getRoles());

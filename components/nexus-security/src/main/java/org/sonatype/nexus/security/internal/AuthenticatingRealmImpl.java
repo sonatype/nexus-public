@@ -121,7 +121,7 @@ public class AuthenticatingRealmImpl
         CUser toUpdate = configuration.readUser(user.getId());
         toUpdate.setPassword(hashedPassword);
         try {
-          configuration.updateUser(user);
+          configuration.updateUser(toUpdate);
           updated = true;
         }
         catch (ConcurrentModificationException e) {

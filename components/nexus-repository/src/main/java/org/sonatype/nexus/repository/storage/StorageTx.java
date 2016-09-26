@@ -182,7 +182,13 @@ public interface StorageTx
    * Gets a component by id, owned by the specified bucket, or {@code null} if not found.
    */
   @Nullable
-  Component findComponent(EntityId id, Bucket bucket);
+  Component findComponentInBucket(EntityId id, Bucket bucket);
+
+  /**
+   * Gets a component by id, regardless of which bucket it resides in, or {@code null} if not found.
+   */
+  @Nullable
+  Component findComponent(EntityId id);
 
   /**
    * Gets a component by some identifying property, or {@code null} if not found.

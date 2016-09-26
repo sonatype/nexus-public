@@ -45,7 +45,7 @@ public class MavenHostedComponentMaintenanceFacet
         .retryOn(IllegalStateException.class).swallow(ONeedRetryException.class)
         .call(() -> {
           final StorageTx tx = UnitOfWork.currentTx();
-          Component component = tx.findComponent(componentId, tx.findBucket(getRepository()));
+          Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
           if (component != null) {
             return new String[]{
                 component.formatAttributes().get(P_GROUP_ID, String.class),

@@ -20,7 +20,6 @@ import org.sonatype.nexus.elasticsearch.PluginLocator;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 import org.elasticsearch.plugins.Plugin;
 
@@ -36,13 +35,12 @@ public class ContentAuthPluginLocator
     implements PluginLocator
 {
   @Inject
-  public ContentAuthPluginLocator(final SelectorConfigurationStore selectorConfigurationStore,
-                                  final ContentPermissionChecker contentPermissionChecker,
+  public ContentAuthPluginLocator(final ContentPermissionChecker contentPermissionChecker,
                                   final VariableResolverAdapterManager variableResolverAdapterManager,
                                   final SearchSubjectHelper searchSubjectHelper)
   {
-    ContentAuthPlugin.setDependencies(selectorConfigurationStore, contentPermissionChecker,
-        variableResolverAdapterManager, searchSubjectHelper);
+    ContentAuthPlugin.setDependencies(contentPermissionChecker, variableResolverAdapterManager,
+        searchSubjectHelper);
   }
 
   @Override

@@ -23,6 +23,7 @@ import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Supplier;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -101,7 +102,9 @@ public class OrientTransaction
   public static <T> T inTx(final Provider<DatabaseInstance> databaseInstance,
                            final Function<ODatabaseDocumentTx, T> operation)
   {
-    return Operations.transactional(txSupplier(databaseInstance.get())).call(() -> operation.apply(currentDb()));
+    return Operations.transactional(txSupplier(databaseInstance.get()))
+        .retryOn(ONeedRetryException.class)
+        .call(() -> operation.apply(currentDb()));
   }
 
   @Override

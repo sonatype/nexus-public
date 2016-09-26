@@ -25,8 +25,6 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.collect.ImmutableMap;
@@ -57,19 +55,15 @@ public class ContentAuth
 {
   public static final String NAME = "contentAuth";
 
-  private final SelectorConfigurationStore selectorConfigurationStore;
-
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
   @Inject
-  public ContentAuth(@Nonnull final SelectorConfigurationStore selectorConfigurationStore,
-                     @Nonnull final ContentPermissionChecker contentPermissionChecker,
+  public ContentAuth(@Nonnull final ContentPermissionChecker contentPermissionChecker,
                      final VariableResolverAdapterManager variableResolverAdapterManager)
   {
     super(NAME, 1, 1);
-    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
   }
@@ -110,9 +104,8 @@ public class ContentAuth
     String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
-    List<SelectorConfiguration> selectorConfigurations = withOtherDatabase(selectorConfigurationStore::browse);
     return withOtherDatabase(() -> contentPermissionChecker
-        .isPermitted(repositoryName, format, BROWSE, selectorConfigurations, variableSource));
+        .isPermitted(repositoryName, format, BROWSE, variableSource));
   }
 
   @Override

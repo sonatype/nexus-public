@@ -54,7 +54,7 @@ public class DefaultComponentMaintenanceImpl
   @Transactional(retryOn = ONeedRetryException.class)
   protected void deleteComponentTx(final EntityId componentId) {
     StorageTx tx = UnitOfWork.currentTx();
-    Component component = tx.findComponent(componentId, tx.findBucket(getRepository()));
+    Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
       return;
     }

@@ -125,7 +125,7 @@ locateData() {
             die "KARAF_DATA is not valid: $KARAF_DATA"
         fi
     else
-        KARAF_DATA=$KARAF_BASE/data
+        KARAF_DATA=$KARAF_BASE/../sonatype-work/nexus3/data
     fi
 }
 

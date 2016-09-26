@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.selector;
 
+import java.lang.ref.SoftReference;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -21,6 +22,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -28,12 +30,16 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
 
 /**
  * Default {@link SelectorConfigurationStore} implementation.
@@ -45,11 +51,15 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedLifecycle(phase = SCHEMAS)
 public class SelectorConfigurationStoreImpl
     extends StateGuardLifecycleSupport
-    implements SelectorConfigurationStore
+    implements SelectorConfigurationStore, EventAware
 {
+  private static final SoftReference<List<SelectorConfiguration>> EMPTY_CACHE = new SoftReference<>(null);
+
   private final Provider<DatabaseInstance> databaseInstance;
 
   private final SelectorConfigurationEntityAdapter entityAdapter;
+
+  private volatile SoftReference<List<SelectorConfiguration>> cachedBrowseResult = EMPTY_CACHE;
 
   @Inject
   public SelectorConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
@@ -66,24 +76,31 @@ public class SelectorConfigurationStoreImpl
     }
   }
 
-  private ODatabaseDocumentTx openDb() {
-    return databaseInstance.get().acquire();
-  }
-
   @Override
   @Guarded(by = STARTED)
   public List<SelectorConfiguration> browse() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return Lists.newArrayList(entityAdapter.browse.execute(db));
+    List<SelectorConfiguration> result;
+
+    // double-checked lock to minimize caching attempts
+    if ((result = cachedBrowseResult.get()) == null) {
+      synchronized (this) {
+        if ((result = cachedBrowseResult.get()) == null) {
+          result = inTx(databaseInstance, db -> ImmutableList.copyOf(entityAdapter.browse.execute(db)));
+          // maintain this result in memory-sensitive cache
+          cachedBrowseResult = new SoftReference<>(result);
+        }
+      }
     }
+
+    return result;
   }
 
   @Override
   @Guarded(by = STARTED)
   public SelectorConfiguration read(final EntityId entityId) {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.read.execute(db, entityId);
-    }
+    checkNotNull(entityId);
+
+    return inTx(databaseInstance, db -> entityAdapter.read.execute(db, entityId));
   }
 
   @Override
@@ -91,17 +108,15 @@ public class SelectorConfigurationStoreImpl
   public void create(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.addEntity(db, configuration);
-    }
+    inTx(databaseInstance, db -> entityAdapter.addEntity(db, configuration));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void update(final SelectorConfiguration configuration) {
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.editEntity(db, configuration);
-    }
+    checkNotNull(configuration);
+
+    inTx(databaseInstance, db -> entityAdapter.editEntity(db, configuration));
   }
 
   @Override
@@ -109,8 +124,12 @@ public class SelectorConfigurationStoreImpl
   public void delete(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.deleteEntity(db, configuration);
-    }
+    inTxNoReturn(databaseInstance, db -> entityAdapter.deleteEntity(db, configuration));
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final SelectorConfigurationEvent event) {
+    cachedBrowseResult = EMPTY_CACHE;
   }
 }

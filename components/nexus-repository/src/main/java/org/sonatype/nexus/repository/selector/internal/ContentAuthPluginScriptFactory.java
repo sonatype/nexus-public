@@ -40,7 +40,6 @@ public class ContentAuthPluginScriptFactory
     Subject subject = ContentAuthPlugin.getSearchSubjectHelper().getSubject(subjectId);
     return new ContentAuthPluginScript(
         subject,
-        ContentAuthPlugin.getSelectorConfigurationStore(),
         ContentAuthPlugin.getContentPermissionChecker(),
         ContentAuthPlugin.getVariableResolverAdapterManager());
   }

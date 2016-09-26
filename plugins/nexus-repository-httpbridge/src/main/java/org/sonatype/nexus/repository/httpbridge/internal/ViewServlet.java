@@ -210,7 +210,7 @@ public class ViewServlet
       if (failure != null) {
         throw failure;
       }
-      log.debug("HTTP response sender: {}", sender);
+      log.debug("Request: {}", request);
       sender.send(request, response, httpResponse);
     }
   }

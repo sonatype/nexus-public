@@ -12,10 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
@@ -23,8 +19,6 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.security.BreadActions;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
@@ -47,9 +41,6 @@ public class MavenSecurityFacetTest
   Repository repository;
 
   @Mock
-  SelectorConfigurationStore selectorConfigurationStore;
-
-  @Mock
   ContentPermissionChecker contentPermissionChecker;
 
   @Mock
@@ -68,10 +59,7 @@ public class MavenSecurityFacetTest
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.getName()).thenReturn("MavenSecurityFacetTest");
 
-    when(selectorConfigurationStore.browse())
-        .thenReturn(Arrays.asList(getSelectorConfiguration("MavenSecurityFacetTest", "format == 'maven2'")));
-
-    mavenSecurityFacet = new MavenSecurityFacet(mavenFormatSecurityConfigurationResource, selectorConfigurationStore,
+    mavenSecurityFacet = new MavenSecurityFacet(mavenFormatSecurityConfigurationResource,
         variableResolverAdapter, contentPermissionChecker);
 
     mavenSecurityFacet.attach(repository);
@@ -80,7 +68,7 @@ public class MavenSecurityFacetTest
   @Test
   public void testEnsurePermitted() throws Exception {
     when(contentPermissionChecker
-        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any(), any()))
+        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any()))
         .thenReturn(true);
 
     mavenSecurityFacet.ensurePermitted(request);
@@ -99,51 +87,6 @@ public class MavenSecurityFacetTest
     }
 
     verify(contentPermissionChecker)
-        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any(), any());
-  }
-
-  @Test
-  public void testEnsurePermitted_contentSelectorCoordinateGAVEMatches() throws Exception {
-    when(contentPermissionChecker
-        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any(), any()))
-        .thenReturn(true);
-
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(
-        getSelectorConfiguration("MavenSecurityFacetTest", "coordinate.groupId == 'mygroupid'")));
-
-    mavenSecurityFacet.ensurePermitted(request);
-
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(
-        getSelectorConfiguration("MavenSecurityFacetTest", "coordinate.artifactId == 'myartifactid'")));
-
-    mavenSecurityFacet.ensurePermitted(request);
-
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(
-        getSelectorConfiguration("MavenSecurityFacetTest", "coordinate.version == '1.0'")));
-
-    mavenSecurityFacet.ensurePermitted(request);
-
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(
-        getSelectorConfiguration("MavenSecurityFacetTest", "coordinate.extension == 'jar'")));
-
-    mavenSecurityFacet.ensurePermitted(request);
-
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(
-        getSelectorConfiguration("MavenSecurityFacetTest",
-            "coordinate.groupId == 'mygroupid' && coordinate.artifactId == 'myartifactid' && " +
-                "coordinate.version == '1.0' && coordinate.extension == 'jar'")));
-
-    mavenSecurityFacet.ensurePermitted(request);
-  }
-
-  private SelectorConfiguration getSelectorConfiguration(String name, String expression) {
-    SelectorConfiguration config = new SelectorConfiguration();
-    config.setName(name);
-    config.setDescription(name);
-    config.setType("jexl");
-    Map<String, Object> attributes = new HashMap<>();
-    attributes.put("expression", expression);
-    config.setAttributes(attributes);
-    return config;
+        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any());
   }
 }

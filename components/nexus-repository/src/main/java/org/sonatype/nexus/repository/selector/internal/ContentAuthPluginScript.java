@@ -19,8 +19,6 @@ import java.util.Map;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -47,19 +45,15 @@ public class ContentAuthPluginScript
 
   private final Subject subject;
 
-  private final SelectorConfigurationStore selectorConfigurationStore;
-
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
   public ContentAuthPluginScript(final Subject subject,
-                                 final SelectorConfigurationStore selectorConfigurationStore,
                                  final ContentPermissionChecker contentPermissionChecker,
                                  final VariableResolverAdapterManager variableResolverAdapterManager)
   {
     this.subject = checkNotNull(subject);
-    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
   }
@@ -69,7 +63,6 @@ public class ContentAuthPluginScript
     ThreadState threadState = new SubjectThreadState(subject);
     threadState.bind();
     try {
-      List<SelectorConfiguration> selectorConfigurations = selectorConfigurationStore.browse();
       SourceLookup sourceLookup = getSourceLookup();
       String format = (String) checkNotNull(sourceLookup.get(FORMAT));
       String repositoryName = (String) checkNotNull(sourceLookup.get(REPOSITORY_NAME));
@@ -80,10 +73,7 @@ public class ContentAuthPluginScript
       if (assets != null) {
         for (Map<String, Object> asset : assets) {
           VariableSource variableSource = variableResolverAdapter.fromSourceLookup(sourceLookup, asset);
-          if (contentPermissionChecker
-              .isPermitted(repositoryName, format, BROWSE, selectorConfigurations, variableSource)) {
-            return true;
-          }
+          return contentPermissionChecker.isPermitted(repositoryName, format, BROWSE, variableSource);
         }
       }
       return false;

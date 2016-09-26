@@ -339,11 +339,19 @@ public class StorageTxImpl
   @Nullable
   @Override
   @Guarded(by = ACTIVE)
-  public Component findComponent(final EntityId id, final Bucket bucket) {
+  public Component findComponentInBucket(final EntityId id, final Bucket bucket) {
     checkNotNull(id);
     checkNotNull(bucket);
-    Component component = componentEntityAdapter.read.execute(db, id);
+    Component component = findComponent(id);
     return bucketOwns(bucket, component) ? component : null;
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = ACTIVE)
+  public Component findComponent(final EntityId id) {
+    checkNotNull(id);
+    return componentEntityAdapter.read.execute(db, id);
   }
 
   @Nullable

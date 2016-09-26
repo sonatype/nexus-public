@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.Collection;
-
-import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.VariableSource;
 
 /**
@@ -30,6 +27,5 @@ public interface ContentPermissionChecker
   boolean isPermitted(String repositoryName,
                       String repositoryFormat,
                       String action,
-                      Collection<SelectorConfiguration> selectorConfigurations,
                       VariableSource variableSource);
 }

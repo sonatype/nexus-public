@@ -10,29 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.SecurityFacetSupport;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 
 /**
- * RAW security facet.
+ * REST Jackson v2 integration.
  *
  * @since 3.0
  */
-@Named
-public class RawSecurityFacet
-    extends SecurityFacetSupport
-{
-  @Inject
-  public RawSecurityFacet(final RawFormatSecurityConfigurationResource securityResource,
-                          @Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                          final ContentPermissionChecker contentPermissionChecker)
-  {
-    super(securityResource, variableResolverAdapter, contentPermissionChecker);
-  }
-}
+package org.sonatype.nexus.rest.jackson2.internal;

@@ -94,7 +94,7 @@ public class SearchFacetImpl
     checkNotNull(componentId);
     Component component;
     final StorageTx tx = UnitOfWork.currentTx();
-    component = tx.findComponent(componentId, tx.findBucket(getRepository()));
+    component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component != null) {
       put(component, tx.browseAssets(component));
     }

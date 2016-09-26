@@ -98,32 +98,25 @@ Ext.define('NX.coreui.migration.PhasePrepareStep', {
    */
   doContinue: function() {
     var me = this;
+    me.mask(NX.I18n.render(me, 'Continue_Mask'));
 
-    NX.Dialogs.askConfirmation(
-        NX.I18n.render(me, 'Continue_Confirm_Title'),
-        NX.I18n.render(me, 'Continue_Confirm_Text'),
-        function () {
-          me.mask(NX.I18n.render(me, 'Continue_Mask'));
+    NX.direct.migration_Assistant.sync(function (response, event) {
+      me.unmask();
 
-          NX.direct.migration_Assistant.sync(function (response, event) {
-            me.unmask();
-
-            if (event.status && response.success) {
-              // need to set forms so they won't be queried for dirtiness
-              var forms = Ext.ComponentQuery.query('form[settingsForm=true]');
-              if (forms.length !== 0) {
-                Ext.Array.each(forms, function (form) {
-                  form.settingsForm = false;
-                });
-              }
-              // now ready to move ahead
-              me.moveNext();
-
-              NX.Messages.success(NX.I18n.render(me, 'Continue_Message'));
-            }
+      if (event.status && response.success) {
+        // need to set forms so they won't be queried for dirtiness
+        var forms = Ext.ComponentQuery.query('form[settingsForm=true]');
+        if (forms.length !== 0) {
+          Ext.Array.each(forms, function (form) {
+            form.settingsForm = false;
           });
         }
-    );
+        // now ready to move ahead
+        me.moveNext();
+
+        NX.Messages.success(NX.I18n.render(me, 'Continue_Message'));
+      }
+    });
   }
 
 });

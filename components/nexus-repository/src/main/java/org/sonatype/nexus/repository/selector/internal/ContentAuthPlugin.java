@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.selector.internal;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.ScriptModule;
@@ -32,13 +31,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ContentAuthPlugin
     extends Plugin
 {
-  private static SelectorConfigurationStore selectorConfigurationStore;
   private static ContentPermissionChecker contentPermissionChecker;
   private static VariableResolverAdapterManager variableResolverAdapterManager;
   private static SearchSubjectHelper searchSubjectHelper;
 
   public ContentAuthPlugin() {
-    checkNotNull(selectorConfigurationStore);
     checkNotNull(contentPermissionChecker);
     checkNotNull(variableResolverAdapterManager);
     checkNotNull(searchSubjectHelper);
@@ -58,19 +55,13 @@ public class ContentAuthPlugin
     module.registerScript(ContentAuthPluginScript.NAME, ContentAuthPluginScriptFactory.class);
   }
 
-  public static void setDependencies(final SelectorConfigurationStore selectorConfigurationStore,
-                                     final ContentPermissionChecker contentPermissionChecker,
+  public static void setDependencies(final ContentPermissionChecker contentPermissionChecker,
                                      final VariableResolverAdapterManager variableResolverAdapterManager,
                                      final SearchSubjectHelper searchSubjectHelper)
   {
-    ContentAuthPlugin.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
     ContentAuthPlugin.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     ContentAuthPlugin.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     ContentAuthPlugin.searchSubjectHelper = checkNotNull(searchSubjectHelper);
-  }
-
-  public static SelectorConfigurationStore getSelectorConfigurationStore() {
-    return selectorConfigurationStore;
   }
 
   public static ContentPermissionChecker getContentPermissionChecker() {

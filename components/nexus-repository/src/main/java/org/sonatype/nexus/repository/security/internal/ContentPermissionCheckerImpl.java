@@ -14,7 +14,6 @@
 package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,6 +25,7 @@ import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermissio
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorEvaluator;
 import org.sonatype.nexus.selector.VariableSource;
@@ -45,11 +45,16 @@ public class ContentPermissionCheckerImpl
 {
   private final SecurityHelper securityHelper;
 
+  private final SelectorConfigurationStore selectorConfigurationStore;
+
   private final SelectorEvaluator selectorEvaluator;
 
   @Inject
-  public ContentPermissionCheckerImpl(final SecurityHelper securityHelper, final SelectorEvaluator selectorEvaluator) {
+  public ContentPermissionCheckerImpl(final SecurityHelper securityHelper,
+                                      final SelectorConfigurationStore selectorConfigurationStore,
+                                      final SelectorEvaluator selectorEvaluator) {
     this.securityHelper = checkNotNull(securityHelper);
+    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
     this.selectorEvaluator = checkNotNull(selectorEvaluator);
   }
 
@@ -65,16 +70,12 @@ public class ContentPermissionCheckerImpl
                                     final SelectorConfiguration selectorConfiguration,
                                     final VariableSource variableSource)
   {
-    try {
-      if (selectorEvaluator.evaluate(selectorConfiguration, variableSource)) {
-        RepositoryContentSelectorPermission perm = new RepositoryContentSelectorPermission(
-            selectorConfiguration.getName(), repositoryFormat, repositoryName, Arrays.asList(action));
+    RepositoryContentSelectorPermission perm = new RepositoryContentSelectorPermission(
+        selectorConfiguration.getName(), repositoryFormat, repositoryName, Arrays.asList(action));
 
-        //any single passing permission will cause success
-        if (securityHelper.anyPermitted(perm)) {
-          return true;
-        }
-      }
+    try {
+      // make sure subject has the selector permission before evaluating it, because that's a cheaper/faster check
+      return securityHelper.anyPermitted(perm) && selectorEvaluator.evaluate(selectorConfiguration, variableSource);
     }
     catch (SelectorEvaluationException e) {
       if (log.isTraceEnabled()) {
@@ -92,7 +93,6 @@ public class ContentPermissionCheckerImpl
   public boolean isPermitted(final String repositoryName,
                              final String repositoryFormat,
                              final String action,
-                             final Collection<SelectorConfiguration> selectorConfigurations,
                              final VariableSource variableSource)
   {
     //check view perm first, if applicable, grant access
@@ -100,7 +100,7 @@ public class ContentPermissionCheckerImpl
       return true;
     }
     //otherwise check the content selector perms
-    return selectorConfigurations.stream()
+    return selectorConfigurationStore.browse().stream()
         .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
 }

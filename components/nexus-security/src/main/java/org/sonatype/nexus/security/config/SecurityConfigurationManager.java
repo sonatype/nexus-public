@@ -148,4 +148,13 @@ public interface SecurityConfigurationManager
   List<CUserRoleMapping> listUserRoleMappings();
 
   void deleteUserRoleMapping(String userId, String source) throws NoSuchRoleMappingException;
+
+  //
+  // Management
+  //
+
+  /**
+   * @since 3.1
+   */
+  boolean isDirty();
 }

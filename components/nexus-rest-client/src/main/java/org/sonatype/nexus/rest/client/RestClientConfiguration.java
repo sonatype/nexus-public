@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.rest.client;
 
+import java.util.function.Supplier;
+
 import javax.annotation.Nullable;
 import javax.ws.rs.core.Configurable;
+
+import org.apache.http.client.HttpClient;
 
 /**
  * REST client configuration.
@@ -29,19 +33,34 @@ public class RestClientConfiguration
     void apply(Configurable<?> builder);
   }
 
-  public static final RestClientConfiguration DEFAULTS = new RestClientConfiguration(null, false);
+  public static final RestClientConfiguration DEFAULTS = new RestClientConfiguration(null, null, false);
+
+  private final Supplier<HttpClient> httpClient;
 
   private final Customizer customizer;
 
   private final boolean useTrustStore;
 
-  private RestClientConfiguration(@Nullable final Customizer customizer, final boolean useTrustStore) {
+  private RestClientConfiguration(@Nullable final Supplier<HttpClient> httpClient,
+                                  @Nullable final Customizer customizer,
+                                  final boolean useTrustStore)
+  {
+    this.httpClient = httpClient;
     this.customizer = customizer;
     this.useTrustStore = useTrustStore;
   }
 
-  public RestClientConfiguration withCustomizer(final Customizer customizer) {
-    return new RestClientConfiguration(customizer, this.useTrustStore);
+  public RestClientConfiguration withHttpClient(@Nullable final Supplier<HttpClient> httpClient) {
+    return new RestClientConfiguration(httpClient, customizer, useTrustStore);
+  }
+
+  @Nullable
+  public Supplier<HttpClient> getHttpClient() {
+    return httpClient;
+  }
+
+  public RestClientConfiguration withCustomizer(@Nullable final Customizer customizer) {
+    return new RestClientConfiguration(httpClient, customizer, useTrustStore);
   }
 
   @Nullable
@@ -50,7 +69,7 @@ public class RestClientConfiguration
   }
 
   public RestClientConfiguration withUseTrustStore(final boolean useTrustStore) {
-    return new RestClientConfiguration(this.customizer, useTrustStore);
+    return new RestClientConfiguration(httpClient, customizer, useTrustStore);
   }
 
   public boolean getUseTrustStore() {

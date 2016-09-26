@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -201,22 +202,29 @@ public abstract class NexusPaxExamSupport
   /**
    * Periodically polls function until it returns {@code true} or 30 seconds have elapsed.
    *
-   * @throws InterruptedException if the thread is interrupted or the timeout exceeded
+   * @throws InterruptedException if the thread is interrupted
+   * @throws TimeoutException if the timeout exceeded
    */
-  public static void waitFor(final Callable<Boolean> function) throws InterruptedException {
+  public static void waitFor(final Callable<Boolean> function) // NOSONAR
+      throws InterruptedException, TimeoutException
+  {
     waitFor(function, 30000);
   }
 
   /**
    * Periodically polls function until it returns {@code true} or the timeout has elapsed.
    *
-   * @throws InterruptedException if the thread is interrupted or the timeout exceeded
+   * @throws InterruptedException if the thread is interrupted
+   * @throws TimeoutException if the timeout exceeded
    */
-  public static void waitFor(final Callable<Boolean> function, final long millis) throws InterruptedException {
+  public static void waitFor(final Callable<Boolean> function, final long millis) // NOSONAR
+      throws InterruptedException, TimeoutException
+  {
     Exception functionEvaluationException = null;
 
     Thread.yield();
-    for (int i = 0; i < millis / 100; i++) {
+    long end = System.currentTimeMillis() + millis;
+    do {
       try {
         if (Boolean.TRUE.equals(function.call())) {
           return; // success
@@ -233,7 +241,10 @@ public abstract class NexusPaxExamSupport
         Thread.sleep(100);
       }
     }
-    throw (InterruptedException) new InterruptedException().initCause(functionEvaluationException);
+    while (System.currentTimeMillis() <= end);
+    Loggers.getLogger(NexusPaxExamSupport.class).warn("Timed out waiting for {} after {} ms", function, millis);
+    throw (TimeoutException) new TimeoutException("Condition still unsatisfied after " + millis + " ms")
+        .initCause(functionEvaluationException);
   }
 
   /**

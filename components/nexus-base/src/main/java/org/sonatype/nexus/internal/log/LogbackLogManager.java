@@ -34,7 +34,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.io.LimitedInputStream;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
@@ -50,6 +49,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.ByteStreams;
 import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
@@ -194,7 +194,8 @@ public class LogbackLogManager
       return input;
     }
     else {
-      return new LimitedInputStream(input, fromByte, bytesCount);
+      input.skip(fromByte);
+      return ByteStreams.limit(input, bytesCount);
     }
   }
 

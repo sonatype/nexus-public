@@ -10,29 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.internal.selector;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.SecurityFacetSupport;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
+import org.sonatype.nexus.common.entity.EntityDeletedEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.selector.SelectorConfiguration;
 
 /**
- * RAW security facet.
+ * {@link SelectorConfiguration} deleted event.
  *
- * @since 3.0
+ * @since 3.1
  */
-@Named
-public class RawSecurityFacet
-    extends SecurityFacetSupport
+public class SelectorConfigurationDeletedEvent
+    extends EntityDeletedEvent
+    implements SelectorConfigurationEvent
 {
-  @Inject
-  public RawSecurityFacet(final RawFormatSecurityConfigurationResource securityResource,
-                          @Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                          final ContentPermissionChecker contentPermissionChecker)
-  {
-    super(securityResource, variableResolverAdapter, contentPermissionChecker);
+  public SelectorConfigurationDeletedEvent(final EntityMetadata metadata) {
+    super(metadata);
+  }
+
+  @Override
+  public SelectorConfiguration getSelectorConfiguration() {
+    return getEntity();
   }
 }

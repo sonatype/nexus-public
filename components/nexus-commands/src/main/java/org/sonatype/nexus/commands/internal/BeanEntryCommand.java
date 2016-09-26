@@ -10,9 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.commands;
+package org.sonatype.nexus.commands.internal;
 
 import java.util.Iterator;
+
+import org.sonatype.nexus.commands.CommandSupport;
+import org.sonatype.nexus.commands.SessionAware;
 
 import com.google.inject.Key;
 import org.apache.karaf.shell.api.action.Action;

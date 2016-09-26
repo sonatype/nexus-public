@@ -13,16 +13,12 @@
 package org.sonatype.nexus.repository.selector.internal;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.repository.selector.internal.ContentAuth;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -57,12 +53,6 @@ public class ContentAuthTest
   private static final String FORMAT = "format";
 
   @Mock
-  List<SelectorConfiguration> selectorConfigurations;
-
-  @Mock
-  SelectorConfigurationStore selectorConfigurationStore;
-
-  @Mock
   VariableSource variableSource;
 
   @Mock
@@ -93,7 +83,6 @@ public class ContentAuthTest
 
   @Before
   public void setup() {
-    when(selectorConfigurationStore.browse()).thenReturn(selectorConfigurations);
     when(variableResolverAdapterManager.get(FORMAT)).thenReturn(variableResolverAdapter);
     when(variableResolverAdapter.fromDocument(assetDocument)).thenReturn(variableSource);
 
@@ -116,7 +105,7 @@ public class ContentAuthTest
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
-    underTest = new ContentAuth(selectorConfigurationStore, contentPermissionChecker, variableResolverAdapterManager);
+    underTest = new ContentAuth(contentPermissionChecker, variableResolverAdapterManager);
 
     // This feels odd...
     ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
@@ -125,37 +114,29 @@ public class ContentAuthTest
 
   @Test
   public void testAssetPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations, variableSource))
-        .thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null, new Object[]{assetDocument}, null), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations,
-        variableSource);
+    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument }, null), is(true));
+    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testAssetNotPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations, variableSource))
-        .thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null, new Object[]{assetDocument}, null), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations,
-        variableSource);
+    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument }, null), is(false));
+    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testComponentPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations, variableSource))
-        .thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null, new Object[]{componentDocument}, null), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations,
-        variableSource);
+    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument }, null), is(true));
+    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testComponentNotPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations, variableSource))
-        .thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null, new Object[]{componentDocument}, null), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, selectorConfigurations,
-        variableSource);
+    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument }, null), is(false));
+    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 }

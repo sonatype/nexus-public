@@ -17,8 +17,11 @@ import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -104,5 +107,26 @@ public class SelectorConfigurationEntityAdapter
     document.field(P_TYPE, entity.getType());
     document.field(P_DESCRIPTION, entity.getDescription());
     document.field(P_ATTRIBUTES, entity.getAttributes());
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+
+    switch (eventKind) {
+      case CREATE:
+        return new SelectorConfigurationCreatedEvent(metadata);
+      case UPDATE:
+        return new SelectorConfigurationUpdatedEvent(metadata);
+      case DELETE:
+        return new SelectorConfigurationDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

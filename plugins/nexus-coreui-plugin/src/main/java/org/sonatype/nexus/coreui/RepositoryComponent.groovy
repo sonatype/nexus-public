@@ -38,7 +38,6 @@ import org.sonatype.nexus.repository.search.RebuildIndexTask
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositorySelector
-import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
@@ -266,17 +265,13 @@ class RepositoryComponent
     def repositories = repositoryManager.browse()
     if (parameters) {
       String format = parameters.getFilter('format')
-      if (format) {
-        repositories = repositories.findResults { Repository repository ->
-          repository.format.value == format ? repository : null
-        }
-      }
+      repositories = filterIn(repositories, format, { Repository repository ->
+        repository.format.value
+      })
       String type = parameters.getFilter('type')
-      if (type) {
-        repositories = repositories.findResults { Repository repository ->
-          repository.type.value == type ? repository : null
-        }
-      }
+      repositories = filterIn(repositories, type, { Repository repository ->
+        repository.type.value
+      })
       String facets = parameters.getFilter('facets')
       if (facets) {
         def facetTypes = facets.tokenize(',').collect { typeLookup.type(it) }.findAll()
@@ -314,5 +309,45 @@ class RepositoryComponent
 
   RepositoryAdminPermission adminPermission(final Repository repository, final String action) {
     return new RepositoryAdminPermission(repository.format.value, repository.name, [action])
+  }
+
+  /**
+   * Filters a collection by evaluating if the field dictated by filteredFieldSelector is in the list of comma
+   * separated values in filter and is not in the list of comma separated values in filter that are prepended by '!'.
+   * NOTE: A list of only excludes will include all other items.
+   * Used to parse the filters build by {@link org.sonatype.nexus.formfields.RepositoryCombobox#getStoreFilters()}
+   *
+   * @param iterable The iterable to filter
+   * @param filter A comma separated list of values which either match the selected field or, if prepended with '!', do
+   * not match the field
+   * @param filteredFieldSelector A selector for the field to match against the supplied filter list
+   * @return The filtered iterable
+   */
+  private static <U> Collection<U> filterIn(Iterable<U> iterable, String filter, Closure<String> filteredFieldSelector) {
+    if (!filter) {
+      return iterable
+    }
+    List<String> filters = filter.split(',')
+
+    // If the filters are only exclude type, the default behavior should be to include the other items
+    def allExcludes = filters.every { String strFilter ->
+      return strFilter.startsWith('!')
+    }
+
+    return iterable.findResults { U result ->
+      def shouldInclude = allExcludes
+      def fieldValue = filteredFieldSelector(result)
+      for (String strFilter in filters) {
+        if (strFilter.startsWith('!')) {
+          if (fieldValue == strFilter.substring(1)) {
+            shouldInclude = false
+          }
+        }
+        else if (fieldValue == strFilter) {
+          shouldInclude = true
+        }
+      }
+      return shouldInclude ? result : null
+    }
   }
 }

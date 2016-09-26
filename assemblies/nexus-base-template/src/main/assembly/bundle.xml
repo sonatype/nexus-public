@@ -33,6 +33,7 @@
       <directoryMode>0755</directoryMode>
       <excludes>
         <exclude>bin/*</exclude>
+        <exclude>data/**</exclude>
       </excludes>
     </fileSet>
 
@@ -59,6 +60,13 @@
       <excludes>
         <exclude>bin/*.bat</exclude>
       </excludes>
+    </fileSet>
+
+    <fileSet>
+      <directory>${project.build.directory}/sonatype-work</directory>
+      <outputDirectory>sonatype-work</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
     </fileSet>
   </fileSets>
 

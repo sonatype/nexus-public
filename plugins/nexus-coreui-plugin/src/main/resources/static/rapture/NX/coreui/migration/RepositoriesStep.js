@@ -26,8 +26,6 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
 
   screen: 'NX.coreui.migration.RepositoriesScreen',
 
-  resetOnBack: true,
-
   /**
    * @override
    */

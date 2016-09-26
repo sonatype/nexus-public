@@ -10,10 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.internal.selector;
+
+import org.sonatype.nexus.common.entity.EntityCreatedEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.selector.SelectorConfiguration;
 
 /**
- * REST Jackson v2 integration.
+ * {@link SelectorConfiguration} created event.
  *
- * @since 3.0
+ * @since 3.1
  */
-package org.sonatype.nexus.rest.jackson2;
+public class SelectorConfigurationCreatedEvent
+    extends EntityCreatedEvent
+    implements SelectorConfigurationEvent
+{
+  public SelectorConfigurationCreatedEvent(final EntityMetadata metadata) {
+    super(metadata);
+  }
+
+  @Override
+  public SelectorConfiguration getSelectorConfiguration() {
+    return getEntity();
+  }
+}

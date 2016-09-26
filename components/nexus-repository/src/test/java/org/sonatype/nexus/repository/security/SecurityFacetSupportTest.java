@@ -12,15 +12,11 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import java.util.Collections;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
@@ -41,11 +37,10 @@ public class SecurityFacetSupportTest
       extends SecurityFacetSupport
   {
     public TestSecurityFacetSupport(final RepositoryFormatSecurityConfigurationResource securityResource,
-                                    final SelectorConfigurationStore selectorConfigurationStore,
                                     final VariableResolverAdapter variableResolverAdapter,
                                     final ContentPermissionChecker contentPermissionChecker)
     {
-      super(securityResource, selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);
+      super(securityResource, variableResolverAdapter, contentPermissionChecker);
     }
   }
 
@@ -56,16 +51,10 @@ public class SecurityFacetSupportTest
   Repository repository;
 
   @Mock
-  SelectorConfigurationStore selectorConfigurationStore;
-
-  @Mock
   ContentPermissionChecker contentPermissionChecker;
 
   @Mock
   VariableResolverAdapter variableResolverAdapter;
-
-  @Mock
-  SelectorConfiguration selectorConfiguration;
 
   @Mock
   RepositoryFormatSecurityConfigurationResource repositoryFormatSecurityConfigurationResource;
@@ -80,24 +69,22 @@ public class SecurityFacetSupportTest
     when(repository.getFormat()).thenReturn(new Format("test") { });
     when(repository.getName()).thenReturn("SecurityFacetSupportTest");
 
-    when(selectorConfigurationStore.browse()).thenReturn(Collections.singletonList(selectorConfiguration));
-
     testSecurityFacetSupport = new TestSecurityFacetSupport(repositoryFormatSecurityConfigurationResource,
-        selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);
+        variableResolverAdapter, contentPermissionChecker);
 
     testSecurityFacetSupport.attach(repository);
   }
 
   @Test
   public void testEnsurePermitted_permitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any()))
         .thenReturn(true);
     testSecurityFacetSupport.ensurePermitted(request);
   }
 
   @Test
   public void testEnsurePermitted_notPermitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any()))
         .thenReturn(false);
 
     try {
@@ -108,6 +95,6 @@ public class SecurityFacetSupportTest
       //expected
     }
 
-    verify(contentPermissionChecker).isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any());
+    verify(contentPermissionChecker).isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any());
   }
 }

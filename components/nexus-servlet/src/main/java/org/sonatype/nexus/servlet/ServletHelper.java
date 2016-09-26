@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.nexus.common.io.StreamHelper;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -99,7 +98,14 @@ public class ServletHelper
       response.setBufferSize(bufferSize);
     }
     try (final InputStream from = input; final OutputStream to = response.getOutputStream()) {
-      StreamHelper.copy(from, to, bufferSize);
+      final byte[] buf = new byte[bufferSize];
+      while (true) {
+        int r = from.read(buf);
+        if (r == -1) {
+          break;
+        }
+        to.write(buf, 0, r);
+      }
       response.flushBuffer();
     }
   }

@@ -66,7 +66,7 @@ if not "%KARAF_DATA%" == "" (
     )
 )
 if "%KARAF_DATA%" == "" (
-    set "KARAF_DATA=%KARAF_BASE%\data"
+    set "KARAF_DATA=%KARAF_BASE%\..\sonatype-work\nexus3\data"
 )
 
 if not "%KARAF_ETC%" == "" (

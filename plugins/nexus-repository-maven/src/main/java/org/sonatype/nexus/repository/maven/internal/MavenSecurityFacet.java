@@ -18,7 +18,6 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.SecurityFacetSupport;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 
 /**
  * Maven 2 security facet.
@@ -31,10 +30,9 @@ public class MavenSecurityFacet
 {
   @Inject
   public MavenSecurityFacet(final MavenFormatSecurityConfigurationResource securityResource,
-                            final SelectorConfigurationStore selectorConfigurationStore,
                             @Named(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,
                             final ContentPermissionChecker contentPermissionChecker)
   {
-    super(securityResource, selectorConfigurationStore, variableResolverAdapter, contentPermissionChecker);
+    super(securityResource, variableResolverAdapter, contentPermissionChecker);
   }
 }

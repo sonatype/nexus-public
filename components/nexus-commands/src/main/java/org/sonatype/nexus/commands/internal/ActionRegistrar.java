@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.commands.BeanEntryCommand;
 
 import com.google.inject.Key;
 import org.apache.karaf.shell.api.action.Action;

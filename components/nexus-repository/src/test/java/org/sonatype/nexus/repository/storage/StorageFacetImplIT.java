@@ -388,10 +388,10 @@ public class StorageFacetImplIT
       checkSize(tx.browseComponents(bucket), 1);
 
       assertNotNull(tx.findAsset(asset1Id, bucket));
-      assertNotNull(tx.findComponent(componentId, bucket));
+      assertNotNull(tx.findComponentInBucket(componentId, bucket));
 
-      checkSize(tx.browseAssets(tx.findComponent(componentId, bucket)), 1);
-      assertNotNull(tx.firstAsset(tx.findComponent(componentId, bucket)));
+      checkSize(tx.browseAssets(tx.findComponentInBucket(componentId, bucket)), 1);
+      assertNotNull(tx.firstAsset(tx.findComponentInBucket(componentId, bucket)));
       assertNull(tx.findAsset(asset1Id, bucket).componentId());
       assertNotNull(tx.findAsset(asset2Id, bucket).componentId());
 
@@ -403,7 +403,7 @@ public class StorageFacetImplIT
 
       // Delete both and make sure browse and find behave as expected
       tx.deleteAsset(tx.findAsset(asset1Id, bucket));
-      tx.deleteComponent(tx.findComponent(componentId, bucket));
+      tx.deleteComponent(tx.findComponentInBucket(componentId, bucket));
 
       tx.commit();
       tx.begin();
@@ -411,7 +411,7 @@ public class StorageFacetImplIT
       checkSize(tx.browseAssets(bucket), 0);
       checkSize(tx.browseComponents(bucket), 0);
       assertNull(tx.findAsset(asset1Id, bucket));
-      assertNull(tx.findComponent(componentId, bucket));
+      assertNull(tx.findComponentInBucket(componentId, bucket));
 
       // NOTE: It doesn't matter for this test, but you should commit when finished with one or more writes
       //       If you don't, your changes will be automatically rolled back.
@@ -436,7 +436,7 @@ public class StorageFacetImplIT
       final Asset asset = tx.findAssetWithProperty("name", "asset", tx.findBucket(testRepository1));
       assertThat(asset, is(notNullValue()));
 
-      final Component component = tx.findComponent(asset.componentId(), tx.findBucket(testRepository1));
+      final Component component = tx.findComponentInBucket(asset.componentId(), tx.findBucket(testRepository1));
       assertThat(component, is(notNullValue()));
       assertThat(component.name(), is("component"));
 
@@ -723,7 +723,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponent(componentId, tx.findBucket(testRepository1));
+      final Component component = tx.findComponentInBucket(componentId, tx.findBucket(testRepository1));
       assertThat("component", component, is(notNullValue()));
       assertThat(component.name(), is("component"));
     }
@@ -748,7 +748,7 @@ public class StorageFacetImplIT
     }
 
     try (StorageTx tx = beginTX()) {
-      final Component component = tx.findComponent(componentId, tx.findBucket(testRepository1));
+      final Component component = tx.findComponentInBucket(componentId, tx.findBucket(testRepository1));
       assertThat("component", component, is(notNullValue()));
       assertThat(component.name(), is("component"));
 

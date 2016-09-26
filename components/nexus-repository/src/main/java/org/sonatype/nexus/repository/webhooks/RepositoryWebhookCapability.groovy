@@ -33,6 +33,7 @@ import org.sonatype.nexus.formfields.PasswordFormField
 import org.sonatype.nexus.formfields.RepositoryCombobox
 import org.sonatype.nexus.formfields.StringTextFormField
 import org.sonatype.nexus.repository.capability.RepositoryConditions
+import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.webhooks.WebhookService
 import org.sonatype.nexus.webhooks.WebhookSubscription
 
@@ -223,10 +224,7 @@ class RepositoryWebhookCapability
           messages.repositoryLabel(),
           messages.repositoryHelp(),
           FormField.MANDATORY
-      ).with {
-        includeAnEntryForAllRepositories()
-        return it
-      }
+      ).excludingAnyOfTypes(GroupType.NAME)
 
       this.names = new ItemselectFormField(
           P_NAMES,
