@@ -129,11 +129,11 @@ public class NexusSSLConnectionSocketFactory
         Method setHost = sslSocketFactoryClass.getMethod("setHost", String.class);
         setHost.invoke(sock, host.getHostName());
       } catch (NoSuchMethodException e1) {
-        e1.printStackTrace();
+        // do nothing - means old JRE
       } catch (InvocationTargetException e1) {
-        e1.printStackTrace();
+        // do nothing - should never happen
       } catch (IllegalAccessException e1) {
-        e1.printStackTrace();
+        // do nothing - should never happen
       }
     }
     try {
