@@ -83,6 +83,7 @@ public class ErrorPageFilter
     }
     catch (IOException e) {
       // IOException handling, do not leak information nor render error page
+      log.error("Internal error", e);
       response.setStatus(SC_INTERNAL_SERVER_ERROR);
     }
     catch (Exception e) {
