@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -67,23 +66,23 @@ public class OrientCapabilityStorage
   }
 
   @Override
-  public CapabilityIdentity add(final CapabilityStorageItem item) throws IOException {
+  public CapabilityIdentity add(final CapabilityStorageItem item) {
     inTx(databaseInstance, db -> entityAdapter.addEntity(db, item));
     return identity(item);
   }
 
   @Override
-  public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) throws IOException {
+  public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
     return inTx(databaseInstance, db -> entityAdapter.edit(db, id.toString(), item));
   }
 
   @Override
-  public boolean remove(final CapabilityIdentity id) throws IOException {
+  public boolean remove(final CapabilityIdentity id) {
     return inTx(databaseInstance, db -> entityAdapter.delete(db, id.toString()));
   }
 
   @Override
-  public Map<CapabilityIdentity, CapabilityStorageItem> getAll() throws IOException {
+  public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
     return inTx(databaseInstance, db -> Maps.uniqueIndex(entityAdapter.browse.execute(db), this::identity));
   }
 }

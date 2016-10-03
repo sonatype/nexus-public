@@ -21,13 +21,19 @@ Ext.define('NX.coreui.view.selector.SelectorSettings', {
   extend: 'NX.view.SettingsPanel',
   alias: 'widget.nx-coreui-selector-settings',
 
-  settingsForm: {
-    xtype: 'nx-coreui-selector-settings-form',
-    buttons: [
-      {text: NX.I18n.get('Selector_SelectorSettingsForm_Preview_Button'), action: 'preview', ui: 'nx-primary'},
-      {text: NX.I18n.get('SettingsForm_Save_Button'), action: 'save', ui: 'nx-primary', bindToEnter: false},
-      {text: NX.I18n.get('SettingsForm_Discard_Button'), action: 'discard'}
-    ]
+  initComponent: function() {
+    var me = this;
+
+    me.settingsForm = {
+      xtype: 'nx-coreui-selector-settings-form',
+      buttons: [
+        {text: NX.I18n.get('Selector_SelectorSettingsForm_Preview_Button'), action: 'preview', ui: 'nx-primary'},
+        {text: NX.I18n.get('SettingsForm_Save_Button'), action: 'save', ui: 'nx-primary', bindToEnter: false},
+        {text: NX.I18n.get('SettingsForm_Discard_Button'), action: 'discard'}
+      ]
+    };
+
+    me.callParent();
   }
 
 });

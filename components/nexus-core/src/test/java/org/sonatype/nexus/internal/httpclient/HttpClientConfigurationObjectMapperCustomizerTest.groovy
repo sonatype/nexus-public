@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.httpclient
 
 import org.sonatype.goodies.common.Time
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
-import org.sonatype.nexus.repository.httpclient.HttpClientFacetImpl
+import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.fasterxml.jackson.databind.ObjectMapper

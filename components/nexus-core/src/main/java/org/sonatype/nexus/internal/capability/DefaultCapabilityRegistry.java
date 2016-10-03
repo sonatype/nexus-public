@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -121,7 +120,6 @@ public class DefaultCapabilityRegistry
                                  final boolean enabled,
                                  @Nullable final String notes,
                                  @Nullable final Map<String, String> properties)
-      throws IOException
   {
     checkNotNull(type);
 
@@ -152,7 +150,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Subscribe
-  public void on(final CapabilityStorageItemCreatedEvent event) throws IOException {
+  public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
       CapabilityStorageItem item = event.getCapabilityStorageItem();
@@ -196,7 +194,6 @@ public class DefaultCapabilityRegistry
                                     final boolean enabled,
                                     @Nullable final String notes,
                                     @Nullable final Map<String, String> properties)
-      throws IOException
   {
     try {
       lock.writeLock().lock();
@@ -225,7 +222,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Subscribe
-  public void on(final CapabilityStorageItemUpdatedEvent event) throws IOException {
+  public void on(final CapabilityStorageItemUpdatedEvent event) {
     if (!event.isLocal()) {
       CapabilityIdentity id = event.getCapabilityId();
       CapabilityStorageItem item = event.getCapabilityStorageItem();
@@ -264,7 +261,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference remove(final CapabilityIdentity id) throws IOException {
+  public CapabilityReference remove(final CapabilityIdentity id) {
     try {
       lock.writeLock().lock();
 
@@ -308,7 +305,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference enable(final CapabilityIdentity id) throws IOException {
+  public CapabilityReference enable(final CapabilityIdentity id) {
     try {
       lock.writeLock().lock();
 
@@ -323,7 +320,7 @@ public class DefaultCapabilityRegistry
   }
 
   @Override
-  public CapabilityReference disable(final CapabilityIdentity id) throws IOException {
+  public CapabilityReference disable(final CapabilityIdentity id) {
     try {
       lock.writeLock().lock();
 
@@ -366,7 +363,7 @@ public class DefaultCapabilityRegistry
     }
   }
 
-  public void load() throws IOException {
+  public void load() {
     final Map<CapabilityIdentity, CapabilityStorageItem> items = capabilityStorage.getAll();
     for (final Map.Entry<CapabilityIdentity, CapabilityStorageItem> entry : items.entrySet()) {
       CapabilityIdentity id = entry.getKey();
@@ -485,7 +482,7 @@ public class DefaultCapabilityRegistry
    * @since 2.7
    */
   private Map<String, String> encryptValuesIfNeeded(final CapabilityDescriptor descriptor,
-                                                    final Map<String, String> props) throws IOException
+                                                    final Map<String, String> props)
   {
     if (props == null || props.isEmpty()) {
       return props;
@@ -501,7 +498,7 @@ public class DefaultCapabilityRegistry
               encrypted.put(formField.getId(), passwordHelper.encrypt(value));
             }
             catch (Exception e) {
-              throw new IOException(
+              throw new RuntimeException(
                   "Could not encrypt value of '" + formField.getType() + "' due to " + e.getMessage(), e
               );
             }
@@ -518,7 +515,7 @@ public class DefaultCapabilityRegistry
    * @since 2.7
    */
   private Map<String, String> decryptValuesIfNeeded(final CapabilityDescriptor descriptor,
-                                                    final Map<String, String> props) throws IOException
+                                                    final Map<String, String> props)
   {
     if (props == null || props.isEmpty()) {
       return props;
@@ -534,7 +531,7 @@ public class DefaultCapabilityRegistry
               decrypted.put(formField.getId(), passwordHelper.decrypt(value));
             }
             catch (Exception e) {
-              throw new IOException(
+              throw new RuntimeException(
                   "Could not decrypt value of '" + formField.getType() + "' due to " + e.getMessage(), e
               );
             }

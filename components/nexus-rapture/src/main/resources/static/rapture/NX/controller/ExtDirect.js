@@ -21,7 +21,8 @@ Ext.define('NX.controller.ExtDirect', {
   extend: 'NX.app.Controller',
   requires: [
     'NX.Security',
-    'NX.Messages'
+    'NX.Messages',
+    'NX.I18n'
   ],
 
   /**

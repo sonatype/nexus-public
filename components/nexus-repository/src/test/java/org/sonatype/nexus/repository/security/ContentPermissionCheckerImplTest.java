@@ -20,8 +20,7 @@ import org.sonatype.nexus.repository.security.internal.ContentPermissionCheckerI
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
-import org.sonatype.nexus.selector.SelectorEvaluator;
+import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.junit.Before;
@@ -42,10 +41,7 @@ public class ContentPermissionCheckerImplTest
   SecurityHelper securityHelper;
 
   @Mock
-  SelectorConfigurationStore selectorConfigurationStore;
-
-  @Mock
-  SelectorEvaluator selectorEvaluator;
+  SelectorManager selectorManager;
 
   @Mock
   VariableSource variableSource;
@@ -56,7 +52,7 @@ public class ContentPermissionCheckerImplTest
 
   @Before
   public void setup() {
-    impl = new ContentPermissionCheckerImpl(securityHelper, selectorConfigurationStore, selectorEvaluator);
+    impl = new ContentPermissionCheckerImpl(securityHelper, selectorManager);
 
     config = new SelectorConfiguration();
     config.setName("selector");
@@ -85,7 +81,7 @@ public class ContentPermissionCheckerImplTest
 
   @Test
   public void testIsContentPermitted_permitted() throws Exception {
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     when(securityHelper.anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName",
         Arrays.asList(BreadActions.READ))))).thenReturn(true);
@@ -95,7 +91,7 @@ public class ContentPermissionCheckerImplTest
 
   @Test
   public void testIsContentPermitted_notPermitted() throws Exception {
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     assertThat(impl.isContentPermitted("repoName", "repoFormat", BreadActions.READ, config, variableSource), is(false));
 
@@ -110,9 +106,9 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(config));
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
   }
@@ -123,9 +119,9 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(true);
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(config));
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(false);
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
   }
@@ -136,9 +132,9 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(false);
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(config));
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
   }
@@ -149,9 +145,9 @@ public class ContentPermissionCheckerImplTest
         .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
         .thenReturn(false);
 
-    when(selectorConfigurationStore.browse()).thenReturn(Arrays.asList(config));
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(false);
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
   }

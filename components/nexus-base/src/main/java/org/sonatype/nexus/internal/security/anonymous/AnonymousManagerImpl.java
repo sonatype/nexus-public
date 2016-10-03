@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.internal;
+package org.sonatype.nexus.internal.security.anonymous;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,7 +24,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationChangedEvent;
-import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 

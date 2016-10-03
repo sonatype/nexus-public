@@ -10,38 +10,44 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.node;
+package org.sonatype.nexus.internal.selector;
 
-import java.security.cert.Certificate;
+import java.util.List;
+
+import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.selector.SelectorConfiguration;
 
 /**
- * Provides access to the certificate-based node identifier.
- * <p/>
- * ID is based on certificate fingerprint digest encoded with "-" every 8 characters for better human readability while
- * remaining terse:
- * <p/>
- * <pre>05F4743F-A7565846-43FDF9D0-577BE4FB-079289C6</pre>
+ * {@link SelectorConfiguration} store.
  *
- * @since 3.0
+ * since 3.0
  */
-public interface LocalNodeAccess
+public interface SelectorConfigurationStore
+    extends Lifecycle
 {
   /**
-   * Returns the local-node certificate.
+   * @return all configuration
    */
-  Certificate getCertificate();
+  List<SelectorConfiguration> browse();
 
   /**
-   * Returns the local-node fingerprint.
-   *
-   * This is the SHA1 of the certificate.
+   * @return configuration by id
    */
-  String getFingerprint();
+  SelectorConfiguration read(EntityId entityId);
 
   /**
-   * Returns the local-node identifier.
-   *
-   * This is a variant format of the fingerprint.
+   * Persist a new configuration.
    */
-  String getId();
+  void create(SelectorConfiguration configuration);
+
+  /**
+   * Persist an existing configuration.
+   */
+  void update(SelectorConfiguration configuration);
+
+  /**
+   * Delete an existing configuration.
+   */
+  void delete(SelectorConfiguration configuration);
 }

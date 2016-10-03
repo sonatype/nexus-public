@@ -22,6 +22,8 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.supportzip.SupportZipGenerator
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
@@ -46,6 +48,8 @@ class SupportZipComponent
    * @return a created ZIP file info
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:atlas:create')
   @Validate

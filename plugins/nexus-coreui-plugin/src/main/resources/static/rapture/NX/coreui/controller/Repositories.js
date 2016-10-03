@@ -89,27 +89,28 @@ Ext.define('NX.coreui.controller.Repositories', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Repository/Repositories',
-    text: NX.I18n.get('Repositories_Text'),
-    description: NX.I18n.get('Repositories_Description'),
-    view: {xtype: 'nx-coreui-repository-feature'},
-    iconConfig: {
-      file: 'database.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function () {
-      // Show feature if the current user is permitted any repository-admin permissions
-      return NX.Permissions.checkExistsWithPrefix('nexus:repository-admin');
-    }
-  },
 
   /**
    * @override
    */
   init: function () {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Repository/Repositories',
+      text: NX.I18n.get('Repositories_Text'),
+      description: NX.I18n.get('Repositories_Description'),
+      view: {xtype: 'nx-coreui-repository-feature'},
+      iconConfig: {
+        file: 'database.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        // Show feature if the current user is permitted any repository-admin permissions
+        return NX.Permissions.checkExistsWithPrefix('nexus:repository-admin');
+      }
+    };
 
     me.callParent();
 

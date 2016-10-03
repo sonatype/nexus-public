@@ -45,6 +45,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -73,6 +75,8 @@ class TaskComponent
    * Retrieve a list of scheduled tasks.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:tasks:read')
   List<TaskXO> read() {
     return scheduler.listsTasks().findAll { it.configuration.visible }.collect { TaskInfo task -> asTaskXO(task) }
@@ -83,6 +87,8 @@ class TaskComponent
    * @return a list of task types
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:tasks:read')
   List<TaskTypeXO> readTypes() {
     return scheduler.taskFactory.descriptors.collect { descriptor ->
@@ -102,6 +108,8 @@ class TaskComponent
    * @return created task
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:tasks:create')
   @Validate(groups = [Create.class, Default.class])
@@ -127,6 +135,8 @@ class TaskComponent
    * @return updated task
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:tasks:update')
   @Validate(groups = [Update.class, Default.class])
@@ -148,6 +158,8 @@ class TaskComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:tasks:delete')
   @Validate
@@ -156,6 +168,8 @@ class TaskComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:tasks:start')
   @Validate
@@ -164,6 +178,8 @@ class TaskComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:tasks:stop')
   @Validate

@@ -29,6 +29,8 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.ssl.CertificateUtil
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -58,6 +60,8 @@ extends DirectComponentSupport
    * @return a list of certificates
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:ssl-truststore:read')
   List<CertificateXO> read() {
     return trustStore.trustedCertificates?.collect { certificate ->
@@ -71,6 +75,8 @@ extends DirectComponentSupport
    * @return created certificate
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:ssl-truststore:create')
   @Validate
@@ -85,6 +91,8 @@ extends DirectComponentSupport
    * @param id of certificate to be deleted
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:ssl-truststore:delete')
   @Validate

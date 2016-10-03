@@ -10,34 +10,38 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cache;
+package org.sonatype.nexus.repository.cache.internal;
+
+import org.sonatype.nexus.repository.cache.NegativeCacheKey;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 // TODO: implement Externalizable
 
 /**
- * A simple value based {@link NegativeCacheKey}.
+ * A path based {@link NegativeCacheKey}.
  *
  * @since 3.0
  */
-public class ValueNegativeCacheKey
+public class PathNegativeCacheKey
     implements NegativeCacheKey
 {
-  private final String value;
+  private final String path;
 
-  public ValueNegativeCacheKey(final String value) {
-    this.value = checkNotNull(value);
+  public PathNegativeCacheKey(final String path) {
+    this.path = checkNotNull(path);
   }
 
   /**
    * @param key child key
-   * @return false
+   * @return true if child key path starts with this key path
    */
   @Override
   public boolean isParentOf(final NegativeCacheKey key) {
     checkNotNull(key);
-    return false;
+    return path.endsWith("/")
+        && key instanceof PathNegativeCacheKey
+        && ((PathNegativeCacheKey) key).path.startsWith(path);
   }
 
   @Override
@@ -49,20 +53,20 @@ public class ValueNegativeCacheKey
       return false;
     }
 
-    ValueNegativeCacheKey that = (ValueNegativeCacheKey) o;
+    PathNegativeCacheKey that = (PathNegativeCacheKey) o;
 
-    return value.equals(that.value);
+    return path.equals(that.path);
   }
 
   @Override
   public int hashCode() {
-    return value.hashCode();
+    return path.hashCode();
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "value='" + value + '\'' +
+        "path='" + path + '\'' +
         '}';
   }
 

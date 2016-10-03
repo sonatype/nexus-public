@@ -24,6 +24,8 @@ import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -49,6 +51,8 @@ class EmailComponent
    * Returns current configuration.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   EmailConfigurationXO read() {
     return convert(emailManager.configuration)
@@ -76,6 +80,8 @@ class EmailComponent
    * Update configuration, returns updated configuration.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   @Validate
@@ -107,6 +113,8 @@ class EmailComponent
    * Send verification email.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   @Validate

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
@@ -39,7 +40,15 @@ public class ConfigurableViewFacet
 
   @Override
   public Response dispatch(final Request request) throws Exception {
+    return dispatch(request, null);
+  }
+
+  /**
+   * @since 3.1
+   */
+  @Override
+  public Response dispatch(final Request request, @Nullable final Context context) throws Exception {
     checkState(router != null, "Router not configured");
-    return router.dispatch(getRepository(), request);
+    return router.dispatch(getRepository(), request, context);
   }
 }

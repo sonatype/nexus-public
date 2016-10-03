@@ -26,6 +26,8 @@ import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.StateContributor
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
@@ -50,6 +52,8 @@ class AuditComponent
   AuditRecorder auditRecorder
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:audit:read')
   PagedResponse<AuditData> read(final StoreLoadParameters parameters) {
     List<AuditData> data = read(parameters.start, parameters.limit)
@@ -86,6 +90,8 @@ class AuditComponent
    * Clear all audit data.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:audit:delete')
   void clear() {

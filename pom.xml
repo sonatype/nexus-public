@@ -632,11 +632,14 @@
         </plugin>
 
         <plugin>
-          <groupId>org.codehaus.gmaven</groupId>
-          <artifactId>gmaven-plugin</artifactId>
+          <groupId>org.codehaus.gmavenplus</groupId>
+          <artifactId>gmavenplus-plugin</artifactId>
           <version>1.5</version>
           <configuration>
-            <providerSelection>2.0</providerSelection>
+            <!--
+            Workaround https://github.com/groovy/GMavenPlus/issues/56
+            -->
+            <allowSystemExits>true</allowSystemExits>
           </configuration>
         </plugin>
 
@@ -1348,8 +1351,8 @@
                     </pluginExecution>
                     <pluginExecution>
                       <pluginExecutionFilter>
-                        <groupId>org.codehaus.gmaven</groupId>
-                        <artifactId>gmaven-plugin</artifactId>
+                        <groupId>org.codehaus.gmavenplus</groupId>
+                        <artifactId>gmavenplus-plugin</artifactId>
                         <versionRange>[1.5,)</versionRange>
                         <goals>
                           <goal>execute</goal>

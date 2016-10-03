@@ -52,24 +52,7 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
     {ref: 'componentList', selector: 'nx-coreui-browsecomponentfeature nx-coreui-browse-component-list'},
     {ref: 'assetList', selector: 'nx-coreui-browsecomponentfeature nx-coreui-component-asset-list'},
     {ref: 'componentDetails', selector: 'nx-coreui-browsecomponentfeature nx-coreui-component-details'},
-    {ref: 'componentFilter', selector: 'nx-coreui-browsecomponentfeature nx-coreui-browse-component-list #filter'}
   ],
-
-  features: {
-    mode: 'browse',
-    path: '/Browse/Components',
-    text: NX.I18n.get('Browse_Components_Title_Feature'),
-    description: NX.I18n.get('Browse_Components_Description_Feature'),
-    view: 'NX.coreui.view.browse.BrowseComponentFeature',
-    iconConfig: {
-      file: 'box_front.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
-    },
-    authenticationRequired: false
-  },
 
   icons: {
     'browse-component-default': {file: 'database.png', variants: ['x16', 'x32']},
@@ -82,6 +65,22 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'browse',
+      path: '/Browse/Components',
+      text: NX.I18n.get('Browse_Components_Title_Feature'),
+      description: NX.I18n.get('Browse_Components_Description_Feature'),
+      view: 'NX.coreui.view.browse.BrowseComponentFeature',
+      iconConfig: {
+        file: 'box_front.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
+      },
+      authenticationRequired: false
+    };
 
     me.callParent();
 
@@ -99,10 +98,6 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
       component: {
         'nx-coreui-browsecomponentfeature nx-coreui-browse-repository-list': {
           beforerender: me.onBeforeRender
-        },
-        'nx-coreui-browsecomponentfeature nx-coreui-browse-component-list #filter': {
-          search: me.onSearch,
-          searchcleared: me.onSearchCleared
         }
       }
     });
@@ -144,7 +139,7 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
     var me = this,
         componentStore = me.getStore('Component'),
         componentList = me.getComponentList(),
-        componentFilter = me.getComponentFilter();
+        filter = componentList.findPlugin('remotegridfilterbox');
 
     // If the list hasn’t loaded, don't do anything
     if (!componentList) {
@@ -152,7 +147,7 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
     }
 
     componentStore.filters.removeAtKey('filter');
-    componentFilter.clearSearch();
+    filter.clearSearch();
     componentList.getSelectionModel().deselectAll();
     componentStore.addFilter([
       {
@@ -288,58 +283,6 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
         me.reselect();
       }
     });
-  },
-
-  /**
-   * @private
-   * Filter grid.
-   *
-   * @private
-   * @param {NX.ext.SearchBox} searchBox component
-   * @param {String} value to be searched
-   */
-  onSearch: function(searchBox, value) {
-    var grid = searchBox.up('grid'),
-        store = grid.getStore(),
-        emptyText = grid.getView().emptyTextFilter;
-
-    if (!grid.emptyText) {
-      grid.emptyText = grid.getView().emptyText;
-    }
-    grid.getView().emptyText = '<div class="x-grid-empty">' + emptyText.replace(/\$filter/, value) + '</div>';
-    grid.getSelectionModel().deselectAll();
-    store.addFilter([
-      {
-        id: 'filter',
-        property: 'filter',
-        value: value
-      }
-    ]);
-  },
-
-  /**
-   * Clear filtering on grid.
-   *
-   * @private
-   * @param {NX.ext.SearchBox} searchBox component
-   */
-  onSearchCleared: function(searchBox) {
-    var grid = searchBox.up('grid'),
-        store = grid.getStore();
-
-    if (grid.emptyText) {
-      grid.getView().emptyText = grid.emptyText;
-    }
-    grid.getSelectionModel().deselectAll();
-    // we have to remove filter directly as store#removeFilter() does not work when store#remoteFilter = true
-    if (store.filters.removeAtKey('filter')) {
-      if (store.filters.length) {
-        store.filter();
-      }
-      else {
-        store.clearFilter();
-      }
-    }
   },
 
   /**

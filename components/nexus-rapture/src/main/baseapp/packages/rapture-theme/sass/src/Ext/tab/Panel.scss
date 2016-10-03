@@ -29,9 +29,9 @@
   $ui: 'nx-light',
 
   $ui-background-color: $color-light-smoke,
-  $ui-background-color-over: $color-gainsboro,
-  $ui-background-color-active: $color-cerulean-blue,
-  $ui-background-color-disabled: $color-white,
+  $ui-background-color-over: $color-smoke,
+  $ui-background-color-active: $color-white,
+  $ui-background-color-disabled: $color-light-smoke,
   
   $ui-margin: 0 2px,
   $ui-padding: 5px 12px,
@@ -39,9 +39,11 @@
   $ui-font-size: $font-size-body,
   $ui-font-weight: $font-weight-body,
   $ui-font-weight-over: $font-weight-body,
+  $ui-font-weight-active: $font-weight-body,
+  $ui-font-weight-disabled: $font-weight-body,
   $ui-border-color: $color-light-smoke,
-  $ui-border-color-over: $color-smoke,
-  $ui-border-color-active: $color-light-gray,
+  $ui-border-color-over: $color-gainsboro,
+  $ui-border-color-active: $color-white,
   $ui-border-color-disabled: $color-light-smoke,
 
   $ui-border-radius: 6px,
@@ -49,7 +51,7 @@
 
   $ui-color: $color-navy-blue,
   $ui-color-over: $color-navy-blue,
-  $ui-color-active: $color-white,
+  $ui-color-active: $color-night-rider,
   $ui-color-disabled: $color-night-rider
 );
 
@@ -86,12 +88,13 @@
   border-bottom: 1px solid $color-light-smoke;
 }
 
-.x-tab-nx-light-top-active {
-  border-bottom: 1px solid $color-light-gray;
+.x-tab-nx-light-top-active,
+.x-tab-nx-light-top-active.x-tab-nx-light-top-over {
+  border-bottom: 1px solid $color-light-smoke;
 }
 
 .x-tab-nx-light-top-over {
-  border-bottom: 1px solid $color-smoke;
+  border-bottom: 1px solid $color-gainsboro;
 }
 
 // Force the tab panel body to sit underneath the tab bar

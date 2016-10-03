@@ -34,6 +34,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -73,6 +75,8 @@ extends DirectComponentSupport
    * @return a list of capabilities
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:capabilities:read')
   List<CapabilityXO> read() {
     return capabilityRegistry.get(CapabilityReferenceFilterBuilder.capabilities()).collect { capability ->
@@ -85,6 +89,8 @@ extends DirectComponentSupport
    * @return a list of capability types
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:capabilities:read')
   List<CapabilityTypeXO> readTypes() {
     return capabilityDescriptorRegistry.all.findAll { it.exposed }.collect { descriptor ->
@@ -103,6 +109,8 @@ extends DirectComponentSupport
    * @return created capability
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:create')
   @Validate(groups = [Create.class, Default.class])
@@ -121,6 +129,8 @@ extends DirectComponentSupport
    * @return updated capability
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:update')
   @Validate(groups = [Update.class, Default.class])
@@ -139,6 +149,8 @@ extends DirectComponentSupport
    * @return updated capability
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:update')
   @Validate(groups = [Update.class, Default.class])
@@ -157,6 +169,8 @@ extends DirectComponentSupport
    * @param id of capability to be deleted
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:delete')
   @Validate
@@ -168,6 +182,8 @@ extends DirectComponentSupport
    * Enables an existing capability.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:update')
   @Validate
@@ -179,6 +195,8 @@ extends DirectComponentSupport
    * Disables an existing capability.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:capabilities:update')
   @Validate

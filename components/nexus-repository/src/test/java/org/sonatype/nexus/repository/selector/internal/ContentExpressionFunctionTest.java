@@ -19,7 +19,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.selector.SelectorEvaluator;
+import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -71,7 +71,7 @@ public class ContentExpressionFunctionTest
   ODatabaseDocumentInternal database;
 
   @Mock
-  SelectorEvaluator selectorEvaluator;
+  private SelectorManager selectorManager;
 
   ContentExpressionFunction underTest;
 
@@ -93,12 +93,12 @@ public class ContentExpressionFunctionTest
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
-    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorEvaluator);
+    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager);
   }
 
   @Test
   public void testMatchingAsset_SingleRepository() throws Exception {
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
         .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, ""},
             null), is(true));
@@ -106,14 +106,14 @@ public class ContentExpressionFunctionTest
 
   @Test
   public void testMatchingAsset_AllRepositories() throws Exception {
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null,
         new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), ""}, null), is(true));
   }
 
   @Test
   public void testMatchingAsset_GroupRepository() throws Exception {
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null,
         new Object[]{assetDocument, "ignored", "doesntmatter", "repo1," + REPOSITORY_NAME}, null), is(true));
   }
@@ -121,7 +121,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testNonMatchingAsset_SingleRepository() throws Exception {
     //this isn't really necessary, just to prove that this isn't causing the execute call to return false
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
         .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "invalidname", ""},
             null), is(false));
@@ -130,7 +130,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testNonMatchingAsset_SingleRepository_BadFormat() throws Exception {
     //this isn't really necessary, just to prove that this isn't causing the execute call to return false
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null, new Object[]{
         assetDocument, "format == '" + FORMAT + "'", RepositorySelector.allOfFormat("bad").toSelector(), ""
     }, null), is(false));
@@ -139,7 +139,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testNonMatchingAsset_GroupRepository() throws Exception {
     //this isn't really necessary, just to prove that this isn't causing the execute call to return false
-    when(selectorEvaluator.evaluate(any(), any())).thenReturn(true);
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
             .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "doesntmatter", "repo1,repo2"}, null),
         is(false));

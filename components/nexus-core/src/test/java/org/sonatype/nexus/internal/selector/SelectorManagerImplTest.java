@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector.internal;
+package org.sonatype.nexus.internal.selector;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +20,7 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.VariableSource;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -27,38 +28,41 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
-public class SelectorEvaluatorImplTest
+public class SelectorManagerImplTest
     extends TestSupport
 {
   @Mock
-  VariableSource variableSource;
+  private SelectorConfigurationStore store;
 
   @Mock
-  SelectorConfiguration selectorConfiguration;
+  private VariableSource variableSource;
 
-  @Test
-  public void testEvaluate() throws Exception {
-    SelectorEvaluatorImpl selectorEvaluator = new SelectorEvaluatorImpl();
+  @Mock
+  private SelectorConfiguration selectorConfiguration;
 
-    SelectorConfiguration selectorConfiguration = getSelectorConfiguration("jexl", "true");
-    assertThat(selectorEvaluator.evaluate(selectorConfiguration, variableSource), is(true));
+  private SelectorManagerImpl manager;
+
+  @Before
+  public void setUp() {
+    this.manager = new SelectorManagerImpl(store);
   }
 
   @Test
-  public void testEvaluateFailed() throws Exception {
-    SelectorEvaluatorImpl selectorEvaluator = new SelectorEvaluatorImpl();
+  public void testEvaluate_True() throws Exception {
+    SelectorConfiguration selectorConfiguration = getSelectorConfiguration("jexl", "true");
+    assertThat(manager.evaluate(selectorConfiguration, variableSource), is(true));
+  }
 
+  @Test
+  public void testEvaluate_False() throws Exception {
     SelectorConfiguration selectorConfiguration = getSelectorConfiguration("jexl", "false");
-    assertThat(selectorEvaluator.evaluate(selectorConfiguration, variableSource), is(false));
+    assertThat(manager.evaluate(selectorConfiguration, variableSource), is(false));
   }
 
   @Test(expected = SelectorEvaluationException.class)
-  public void testEvaluate_invalidSelectorType() throws Exception {
-    SelectorEvaluatorImpl selectorEvaluator = new SelectorEvaluatorImpl();
-
+  public void testEvaluate_InvalidSelectorType() throws Exception {
     SelectorConfiguration selectorConfiguration = getSelectorConfiguration("junk", "");
-
-    selectorEvaluator.evaluate(selectorConfiguration, variableSource);
+    manager.evaluate(selectorConfiguration, variableSource);
   }
 
   private SelectorConfiguration getSelectorConfiguration(String type, String expression) {

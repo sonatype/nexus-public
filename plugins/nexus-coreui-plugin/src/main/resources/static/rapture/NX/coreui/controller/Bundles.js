@@ -42,21 +42,6 @@ Ext.define('NX.coreui.controller.Bundles', {
     { ref: 'info', selector: 'nx-coreui-system-bundles nx-info-panel' }
   ],
 
-  features: {
-    mode: 'admin',
-    path: '/System/Bundles',
-    text: NX.I18n.get('Bundles_Text'),
-    description: NX.I18n.get('Bundles_Description'),
-    view: 'NX.coreui.view.system.Bundles',
-    iconConfig: {
-      file: 'plugin.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function () {
-      return NX.Permissions.check('nexus:bundles:read');
-    }
-  },
-
   icons: {
     'bundle-default': {
       file: 'plugin.png',
@@ -69,6 +54,21 @@ Ext.define('NX.coreui.controller.Bundles', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/System/Bundles',
+      text: NX.I18n.get('Bundles_Text'),
+      description: NX.I18n.get('Bundles_Description'),
+      view: 'NX.coreui.view.system.Bundles',
+      iconConfig: {
+        file: 'plugin.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:bundles:read');
+      }
+    };
 
     me.callParent();
 

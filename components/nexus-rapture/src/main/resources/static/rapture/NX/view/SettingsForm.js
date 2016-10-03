@@ -91,24 +91,28 @@ Ext.define('NX.view.SettingsForm', {
 
   buttonAlign: 'left',
 
-  buttons: [
-    {
-      text: NX.I18n.get('SettingsForm_Save_Button'),
-      action: 'save',
-      ui: 'nx-primary',
-      bindToEnter: false
-    },
-    {
-      text: NX.I18n.get('SettingsForm_Discard_Button'),
-      action: 'discard'
-    }
-  ],
+  buttons: 'defaultButtons',
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    if (me.buttons === 'defaultButtons') {
+      me.buttons = [
+        {
+          text: NX.I18n.get('SettingsForm_Save_Button'),
+          action: 'save',
+          ui: 'nx-primary',
+          bindToEnter: false
+        },
+        {
+          text: NX.I18n.get('SettingsForm_Discard_Button'),
+          action: 'discard'
+        }
+      ];
+    }
 
     Ext.applyIf(me, {
       settingsFormLoadMessage: NX.I18n.get('SettingsForm_Load_Message'),

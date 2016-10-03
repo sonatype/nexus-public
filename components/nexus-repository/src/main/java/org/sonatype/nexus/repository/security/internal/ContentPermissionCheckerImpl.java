@@ -25,9 +25,8 @@ import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermissio
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
-import org.sonatype.nexus.selector.SelectorEvaluator;
+import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -45,17 +44,13 @@ public class ContentPermissionCheckerImpl
 {
   private final SecurityHelper securityHelper;
 
-  private final SelectorConfigurationStore selectorConfigurationStore;
-
-  private final SelectorEvaluator selectorEvaluator;
+  private final SelectorManager selectorManager;
 
   @Inject
   public ContentPermissionCheckerImpl(final SecurityHelper securityHelper,
-                                      final SelectorConfigurationStore selectorConfigurationStore,
-                                      final SelectorEvaluator selectorEvaluator) {
+                                      final SelectorManager selectorManager) {
     this.securityHelper = checkNotNull(securityHelper);
-    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
-    this.selectorEvaluator = checkNotNull(selectorEvaluator);
+    this.selectorManager = checkNotNull(selectorManager);
   }
 
   @VisibleForTesting
@@ -75,7 +70,7 @@ public class ContentPermissionCheckerImpl
 
     try {
       // make sure subject has the selector permission before evaluating it, because that's a cheaper/faster check
-      return securityHelper.anyPermitted(perm) && selectorEvaluator.evaluate(selectorConfiguration, variableSource);
+      return securityHelper.anyPermitted(perm) && selectorManager.evaluate(selectorConfiguration, variableSource);
     }
     catch (SelectorEvaluationException e) {
       if (log.isTraceEnabled()) {
@@ -100,7 +95,7 @@ public class ContentPermissionCheckerImpl
       return true;
     }
     //otherwise check the content selector perms
-    return selectorConfigurationStore.browse().stream()
+    return selectorManager.browse().stream()
         .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
 }

@@ -14,13 +14,15 @@ package org.sonatype.nexus.upgrade.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.FileHelper;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.upgrade.UpgradeService;
@@ -126,6 +128,12 @@ public class UpgradeServiceTest
     return modelVersionsCaptor.getValue();
   }
 
+  private void makeComponentDb() throws IOException {
+    Path path = dbFolder.toPath().resolve("component/component.pcl");
+    Files.createDirectories(path.getParent());
+    Files.write(path, "DB".getBytes(StandardCharsets.UTF_8));
+  }
+
   @Test
   public void testManagesLifecycleOfVersionStore() throws Exception {
     upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()), modelVersionStore);
@@ -172,7 +180,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testUpgradeExistingInstallation() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
     when(modelVersionStore.load()).thenReturn(new HashMap<>(ImmutableMap.of("foo", "1.1", "bar", "1.1")));
 
     upgradeService.start();
@@ -213,7 +221,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testUpgradeOnlyAppliedOnce() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
 
     upgradeService.start();
 
@@ -265,7 +273,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadUpgradeRollsBack() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
 
     doThrow(new IOException()).when(upgradeBar_1_1).apply();
 
@@ -311,7 +319,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadCheckpointStopsUpgrade() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).begin(anyString());
 
@@ -349,7 +357,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadCommitRollsBack() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).commit();
 
@@ -400,7 +408,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testRollbackKeepsGoingOnError() throws Exception {
-    FileHelper.writeFile(dbFolder.toPath().resolve("component/component.pcl"), "DB");
+    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).commit();
     doThrow(new IOException()).when(checkpointBar).rollback();

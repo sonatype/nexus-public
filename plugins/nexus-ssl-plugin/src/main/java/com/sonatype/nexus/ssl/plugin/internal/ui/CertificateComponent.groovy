@@ -27,6 +27,8 @@ import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.hibernate.validator.constraints.NotBlank
@@ -61,6 +63,8 @@ extends DirectComponentSupport
    * @return certificate
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   CertificateXO retrieveFromHost(final @NotEmpty String host,
                                  final @Nullable Integer port,
@@ -90,6 +94,8 @@ extends DirectComponentSupport
    * @return certificate
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   CertificateXO details(final @NotBlank @PemCertificate String pem) {
     Certificate certificate = decodePEMFormattedCertificate(pem)

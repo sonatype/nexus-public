@@ -25,6 +25,8 @@ import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.search.SearchService
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
@@ -69,6 +71,8 @@ class SearchComponent
    * @return search results
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:search:read')
   PagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
     QueryBuilder query = buildQuery(parameters)

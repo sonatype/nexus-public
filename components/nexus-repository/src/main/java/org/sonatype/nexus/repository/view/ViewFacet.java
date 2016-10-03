@@ -27,4 +27,10 @@ public interface ViewFacet
    * Dispatch request to router.
    */
   Response dispatch(Request request) throws Exception;
+
+  /**
+   * Dispatch request to router with an existing context to pull attributes from.
+   * @since 3.1
+   */
+  Response dispatch(Request request, Context context) throws Exception;
 }

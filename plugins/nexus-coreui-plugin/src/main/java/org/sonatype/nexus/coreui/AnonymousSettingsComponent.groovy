@@ -23,6 +23,8 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration
 import org.sonatype.nexus.security.anonymous.AnonymousManager
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
@@ -47,6 +49,8 @@ class AnonymousSettingsComponent
    * @return anonymous security settings
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   AnonymousSettingsXO read() {
     def config = anonymousManager.configuration
@@ -62,6 +66,8 @@ class AnonymousSettingsComponent
    * @return updated anonymous security settings
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   AnonymousSettingsXO update(final @NotNull @Valid AnonymousSettingsXO anonymousXO) {

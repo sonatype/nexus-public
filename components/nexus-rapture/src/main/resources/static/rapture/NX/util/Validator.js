@@ -47,22 +47,6 @@ Ext.define('NX.util.Validator', {
   nxEmailRegex : /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.){1,5}([A-Za-z]){2,60}$/,
 
   /**
-   * @private
-   */
-  vtypes : [
-    {
-      'nx-name': function(val) {
-        return NX.util.Validator.nxNameRegex.test(val);
-      },
-      'nx-nameText': NX.I18n.get('Util_Validator_Text'),
-      'nx-email': function(val) {
-        return NX.util.Validator.nxEmailRegex.test(val);
-      },
-      'nx-emailText': Ext.form.field.VTypes.emailText
-    }
-  ],
-
-  /**
    * @public
    * @param vtype {object}
    */
@@ -72,6 +56,19 @@ Ext.define('NX.util.Validator', {
 
   constructor: function () {
     var me = this;
+
+    me.vtypes = [
+      {
+        'nx-name': function(val) {
+          return NX.util.Validator.nxNameRegex.test(val);
+        },
+        'nx-nameText': NX.I18n.get('Util_Validator_Text'),
+        'nx-email': function(val) {
+          return NX.util.Validator.nxEmailRegex.test(val);
+        },
+        'nx-emailText': Ext.form.field.VTypes.emailText
+      }
+    ];
 
     Ext.each(me.vtypes, function(vtype) {
       me.registerVtype(vtype);

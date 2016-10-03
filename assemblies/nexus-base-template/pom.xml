@@ -113,8 +113,8 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
         <executions>
           <execution>
             <id>pax-url-settings</id>
@@ -123,14 +123,16 @@
               <goal>execute</goal>
             </goals>
             <configuration>
-              <source>
-                // workaround https://issues.apache.org/jira/browse/KARAF-4288
-                def settingsFile = session.request.userSettingsFile
-                if (settingsFile?.isFile()) {
-                  // pass custom settings file to pax-url as karaf-maven-plugin may need it to fetch content
-                  System.setProperty('org.ops4j.pax.url.mvn.settings', session.request.userSettingsFile.path)
-                }
-              </source>
+              <scripts>
+                <script>
+                  // workaround https://issues.apache.org/jira/browse/KARAF-4288
+                  def settingsFile = session.request.userSettingsFile
+                  if (settingsFile?.isFile()) {
+                    // pass custom settings file to pax-url as karaf-maven-plugin may need it to fetch content
+                    System.setProperty('org.ops4j.pax.url.mvn.settings', session.request.userSettingsFile.path)
+                  }
+                </script>
+              </scripts>
             </configuration>
           </execution>
         </executions>

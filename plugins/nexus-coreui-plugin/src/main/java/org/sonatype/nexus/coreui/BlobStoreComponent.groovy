@@ -30,6 +30,8 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
@@ -62,11 +64,15 @@ class BlobStoreComponent
   RepositoryManager repositoryManager
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<BlobStoreXO> read() {
     blobStoreManager.browse().collect { asBlobStore(it) }
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<ReferenceXO> readTypes() {
     blobstorePrototypes.collect { key, provider ->
       new ReferenceXO(id: key, name: key)
@@ -74,6 +80,8 @@ class BlobStoreComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate(groups = [Create.class, Default.class])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
@@ -87,6 +95,8 @@ class BlobStoreComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void remove(final @NotEmpty String name) {
@@ -97,6 +107,8 @@ class BlobStoreComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   PathSeparatorXO defaultWorkDirectory() {
     return new PathSeparatorXO(
         path: applicationDirectories.getWorkDirectory('blobs'),

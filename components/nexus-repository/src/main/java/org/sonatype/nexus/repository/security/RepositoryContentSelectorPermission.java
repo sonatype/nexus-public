@@ -50,7 +50,7 @@ public class RepositoryContentSelectorPermission
     this.name = checkNotNull(name);
     this.actions = checkNotNull(actions);
 
-    setParts(String.format("%s:%s:%s:%s:%s:%s",
+    setParts(Joiner.on(':').join(
         SYSTEM,
         DOMAIN,
         selector,

@@ -15400,39 +15400,38 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 }
 
 .x-tab-nx-light-over {
-  border-color: #ebebeb;
-  background-color: #dddddd;
+  border-color: #dddddd;
+  background-color: #ebebeb;
 }
 .x-tab-nx-light-over .x-tab-glyph {
   color: white;
 }
 .x-ie8m .x-tab-nx-light-over .x-tab-glyph {
-  color: #eeeeee;
+  color: #f5f5f5;
 }
 
 .x-tab-nx-light-active {
-  border-color: #cbcbcb;
-  background-color: #2476c3;
+  border-color: white;
+  background-color: white;
 }
 .x-tab-nx-light-active .x-tab-inner {
-  color: white;
-  font-weight: bold;
+  color: #333333;
 }
 .x-tab-nx-light-active .x-tab-glyph {
   color: #444444;
 }
 .x-ie8m .x-tab-nx-light-active .x-tab-glyph {
-  color: #345d83;
+  color: #a1a1a1;
 }
 
 .x-tab-nx-light-top-active,
 .x-tab-nx-light-left-active,
 .x-tab-nx-light-right-active {
-  border-bottom: 1px solid #2476c3;
+  border-bottom: 1px solid white;
 }
 
 .x-tab-nx-light-bottom-active {
-  border-top: 1px solid #2476c3;
+  border-top: 1px solid white;
 }
 
 .x-tab-nx-light-disabled {
@@ -15440,7 +15439,6 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 }
 .x-tab-nx-light-disabled .x-tab-inner {
   color: #333333;
-  font-weight: bold;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=30);
   opacity: 0.3;
 }
@@ -15454,7 +15452,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
   filter: none;
 }
 .x-ie8m .x-tab-nx-light-disabled .x-tab-glyph {
-  color: white;
+  color: #f7f7f7;
 }
 
 .x-tab-nx-light-top-disabled,
@@ -15502,7 +15500,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 .x-tab-nx-light-top-over .x-frame-mc,
 .x-tab-nx-light-left-over .x-frame-mc,
 .x-tab-nx-light-right-over .x-frame-mc {
-  background-color: #dddddd;
+  background-color: #ebebeb;
 }
 
 .x-tab-nx-light-bottom-over .x-frame-tl,
@@ -15518,7 +15516,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
   background-image: url(images/tab/tab-nx-light-bottom-over-sides.gif);
 }
 .x-tab-nx-light-bottom-over .x-frame-mc {
-  background-color: #dddddd;
+  background-color: #ebebeb;
 }
 
 .x-tab-nx-light-top-active .x-frame-tl,
@@ -15552,7 +15550,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 .x-tab-nx-light-top-active .x-frame-mc,
 .x-tab-nx-light-left-active .x-frame-mc,
 .x-tab-nx-light-right-active .x-frame-mc {
-  background-color: #2476c3;
+  background-color: white;
 }
 
 .x-tab-nx-light-bottom-active .x-frame-tl,
@@ -15568,7 +15566,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
   background-image: url(images/tab/tab-nx-light-bottom-active-sides.gif);
 }
 .x-tab-nx-light-bottom-active .x-frame-mc {
-  background-color: #2476c3;
+  background-color: white;
 }
 
 .x-tab-nx-light-top-disabled .x-frame-tl,
@@ -15602,7 +15600,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 .x-tab-nx-light-top-disabled .x-frame-mc,
 .x-tab-nx-light-left-disabled .x-frame-mc,
 .x-tab-nx-light-right-disabled .x-frame-mc {
-  background-color: white;
+  background-color: #f4f4f4;
 }
 
 .x-tab-nx-light-bottom-disabled .x-frame-tl,
@@ -15618,7 +15616,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
   background-image: url(images/tab/tab-nx-light-bottom-disabled-sides.gif);
 }
 .x-tab-nx-light-bottom-disabled .x-frame-mc {
-  background-color: white;
+  background-color: #f4f4f4;
 }
 
 .x-nbr .x-tab-nx-light-top,

@@ -13,43 +13,40 @@
 /*global Ext, NX*/
 
 /**
- * A {@link Ext.grid.column.Column} which renders its value as a link.
+ * Copy window controller
  *
  * @since 3.0
  */
-Ext.define('NX.ext.grid.column.Link', {
-  extend: 'Ext.grid.column.Column',
-  alias: ['widget.nx-linkcolumn'],
-  requires: [
-    'NX.util.Url'
+Ext.define('NX.controller.Copy', {
+  extend: 'NX.app.Controller',
+
+  views: [
+    'CopyWindow'
   ],
 
-  stateId: 'url',
-
-  /**
-   * Renders value as a link.
-   */
-  defaultRenderer: function (value) {
-    var me = this;
-    if (value) {
-      value = value.replace(/\$baseUrl/, NX.util.Url.baseUrl);
-      return NX.util.Url.asLink(value, me.label(value), me.target('_blank'));
+  refs: [
+    {
+      ref: 'copyModal',
+      selector: 'nx-copywindow'
     }
-    return undefined;
-  },
+  ],
 
   /**
-   * @protected
+   * @override
    */
-  target: function (value) {
-    return value;
+  init: function () {
+    var me = this;
+
+    me.listen({
+      component: {
+        'nx-copywindow button[action=close]': {
+          click: me.copyToClipboard
+        }
+      }
+    });
   },
 
-  /**
-   * @protected
-   */
-  label: function (value) {
-    return value;
+  copyToClipboard: function() {
+    this.getCopyModal().close();
   }
-
 });

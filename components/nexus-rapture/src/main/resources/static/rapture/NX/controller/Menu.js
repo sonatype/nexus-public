@@ -26,7 +26,8 @@ Ext.define('NX.controller.Menu', {
     'NX.Permissions',
     'NX.Security',
     'NX.State',
-    'NX.view.header.Mode'
+    'NX.view.header.Mode',
+    'NX.I18n'
   ],
 
   views: [

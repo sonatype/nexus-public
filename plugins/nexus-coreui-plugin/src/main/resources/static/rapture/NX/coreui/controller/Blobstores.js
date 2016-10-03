@@ -53,20 +53,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Repository/Blobstores',
-    text: NX.I18n.get('Blobstores_Text'),
-    description: NX.I18n.get('Blobstores_Description'),
-    view: { xtype: 'nx-coreui-blobstore-feature' },
-    iconConfig: {
-      file: 'drive_network.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:blobstores:read') && NX.State.getUser();
-    }
-  },
+
   permission: 'nexus:blobstores',
 
   /**
@@ -74,6 +61,21 @@ Ext.define('NX.coreui.controller.Blobstores', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Repository/Blobstores',
+      text: NX.I18n.get('Blobstores_Text'),
+      description: NX.I18n.get('Blobstores_Description'),
+      view: {xtype: 'nx-coreui-blobstore-feature'},
+      iconConfig: {
+        file: 'drive_network.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:blobstores:read') && NX.State.getUser();
+      }
+    };
 
     me.callParent();
 

@@ -48,6 +48,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
@@ -88,11 +90,15 @@ class RepositoryComponent
   List<Format> formats
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<RepositoryXO> read() {
     browse().collect { asRepository(it) }
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<ReferenceXO> readRecipes() {
     recipes.collect { key, value ->
       new ReferenceXO(
@@ -106,6 +112,8 @@ class RepositoryComponent
    * Retrieve a list of available repositories references.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<RepositoryReferenceXO> readReferences(final @Nullable StoreLoadParameters parameters) {
     return filter(parameters).collect { Repository repository ->
       new RepositoryReferenceXO(
@@ -123,6 +131,8 @@ class RepositoryComponent
    * Retrieve a list of available repositories references + add an entry for all repositories '*".
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<RepositoryReferenceXO> readReferencesAddingEntryForAll(final @Nullable StoreLoadParameters parameters) {
     def references = readReferences(parameters)
     references <<
@@ -135,6 +145,8 @@ class RepositoryComponent
    * format 'All (format) repositories' '*(format)'".
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<RepositoryReferenceXO> readReferencesAddingEntriesForAllFormats(
       final @Nullable StoreLoadParameters parameters)
   {
@@ -147,6 +159,8 @@ class RepositoryComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate(groups = [Create.class, Default.class])
   RepositoryXO create(final @NotNull @Valid RepositoryXO repositoryXO) {
@@ -162,6 +176,8 @@ class RepositoryComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate(groups = [Update.class, Default.class])
   RepositoryXO update(final @NotNull @Valid RepositoryXO repositoryXO) {
@@ -183,6 +199,8 @@ class RepositoryComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void remove(final @NotEmpty String name) {
@@ -192,6 +210,8 @@ class RepositoryComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   String rebuildIndex(final @NotEmpty String name) {
@@ -206,6 +226,8 @@ class RepositoryComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void invalidateCache(final @NotEmpty String name) {
@@ -232,6 +254,8 @@ class RepositoryComponent
     return attributes
   }
 
+  @Timed
+  @ExceptionMetered
   @DirectPollMethod(event = "coreui_Repository_readStatus")
   @RequiresAuthentication
   List<RepositoryStatusXO> readStatus(final Map<String, String> params) {

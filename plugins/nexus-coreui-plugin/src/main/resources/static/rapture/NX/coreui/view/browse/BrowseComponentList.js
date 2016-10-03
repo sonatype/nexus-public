@@ -84,24 +84,9 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
         }
       ],
 
-      tbar: {
-        xtype: 'nx-actions',
-        items: [
-          '->',
-          {
-            xtype: 'nx-searchbox',
-            itemId: 'filter',
-            emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
-            width: 200
-          }
-        ]
-      },
-
-      plugins: {
-        ptype: 'bufferedrenderer',
-        trailingBufferZone: 20,
-        leadingBufferZone: 50
-      }
+      plugins: [
+        {ptype: 'remotegridfilterbox'}
+      ]
     });
 
     this.callParent();

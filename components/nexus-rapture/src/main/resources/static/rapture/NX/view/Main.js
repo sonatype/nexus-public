@@ -22,77 +22,78 @@ Ext.define('NX.view.Main', {
   alias: 'widget.nx-main',
   requires: [
     'NX.I18n',
+    'NX.Icons',
     'NX.view.header.QuickSearch'
   ],
 
   layout: 'border',
-
-  items: [
-    {
-      xtype: 'panel',
-      layout: {
-        type: 'vbox',
-        align: 'stretch'
-      },
-      items: [
-        {
-          xtype: 'panel',
-          ui: 'nx-license-warning',
-          id: 'nx-license-warning',
-          iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-          hidden: true
-        },
-        {
-          xtype: 'nx-header-panel'
-        }
-      ],
-      region: 'north',
-      collapsible: false
-    },
-
-    {
-      xtype: 'nx-feature-menu',
-      region: 'west',
-      border: false,
-      collapsible: true,
-      collapsed: false,
-      resizable: true,
-      resizeHandles: 'e'
-    },
-
-    {
-      xtype: 'nx-feature-content',
-      region: 'center',
-      border: true
-    },
-
-    {
-      xtype: 'nx-footer',
-      region: 'south',
-      hidden: false
-    },
-
-    {
-      xtype: 'nx-dev-panel',
-      region: 'south',
-      collapsible: true,
-      collapsed: true,
-      resizable: true,
-      resizeHandles: 'n',
-
-      // keep initial constraints to prevent huge panels
-      height: 300,
-
-      // default to hidden, only show if debug enabled
-      hidden: true
-    }
-  ],
 
   /**
    * @override
    */
   initComponent: function () {
     var me = this;
+
+    me.items = [
+      {
+        xtype: 'panel',
+        layout: {
+          type: 'vbox',
+          align: 'stretch'
+        },
+        items: [
+          {
+            xtype: 'panel',
+            ui: 'nx-license-warning',
+            id: 'nx-license-warning',
+            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+            hidden: true
+          },
+          {
+            xtype: 'nx-header-panel'
+          }
+        ],
+        region: 'north',
+        collapsible: false
+      },
+
+      {
+        xtype: 'nx-feature-menu',
+        region: 'west',
+        border: false,
+        collapsible: true,
+        collapsed: false,
+        resizable: true,
+        resizeHandles: 'e'
+      },
+
+      {
+        xtype: 'nx-feature-content',
+        region: 'center',
+        border: true
+      },
+
+      {
+        xtype: 'nx-footer',
+        region: 'south',
+        hidden: false
+      },
+
+      {
+        xtype: 'nx-dev-panel',
+        region: 'south',
+        collapsible: true,
+        collapsed: true,
+        resizable: true,
+        resizeHandles: 'n',
+
+        // keep initial constraints to prevent huge panels
+        height: 300,
+
+        // default to hidden, only show if debug enabled
+        hidden: true
+      }
+    ];
 
     me.callParent();
 

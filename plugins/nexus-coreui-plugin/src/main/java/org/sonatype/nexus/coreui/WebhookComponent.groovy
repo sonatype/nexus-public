@@ -23,6 +23,8 @@ import org.sonatype.nexus.webhooks.GlobalWebhook
 import org.sonatype.nexus.webhooks.WebhookService
 import org.sonatype.nexus.webhooks.WebhookType
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
@@ -54,6 +56,8 @@ class WebhookComponent
    * Returns all {@link GlobalWebhook} instances.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   List<ReferenceXO> listWithTypeGlobal() {
     return findWebhooksWithType(GlobalWebhook.TYPE)
@@ -63,6 +67,8 @@ class WebhookComponent
    * Returns all {@link RepositoryWebhook} instances.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   List<ReferenceXO> listWithTypeRepository() {
     return findWebhooksWithType(RepositoryWebhook.TYPE)

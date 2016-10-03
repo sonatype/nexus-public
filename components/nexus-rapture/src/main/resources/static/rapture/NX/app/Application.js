@@ -73,6 +73,7 @@ Ext.define('NX.app.Application', {
 
     // grid plugins
     'NX.ext.grid.plugin.FilterBox',
+    'NX.ext.grid.plugin.RemoteFilterBox',
     'NX.ext.grid.plugin.Filtering',
 
     // grid overrides
@@ -80,7 +81,7 @@ Ext.define('NX.app.Application', {
 
     // custom grid columns
     'NX.ext.grid.column.Icon',
-    'NX.ext.grid.column.Link'
+    'NX.ext.grid.column.CopyLink'
   ],
 
   name: 'NX',
@@ -104,6 +105,7 @@ Ext.define('NX.app.Application', {
    * Always active controllers.
    */
   controllers: [
+    'Copy',
     'Logging',
     'State',
     'Bookmarking',

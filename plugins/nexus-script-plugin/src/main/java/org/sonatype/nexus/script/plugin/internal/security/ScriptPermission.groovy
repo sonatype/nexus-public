@@ -41,6 +41,11 @@ class ScriptPermission
     this.name = checkNotNull(name)
     this.actions = checkNotNull(actions)
     
-    setParts("$SYSTEM:$DOMAIN:$name:${Joiner.on(',').join(actions)}")
+    setParts(Joiner.on(':').join(
+        SYSTEM,
+        DOMAIN,
+        name,
+        Joiner.on(',').join(actions)
+    ))
   }
 }

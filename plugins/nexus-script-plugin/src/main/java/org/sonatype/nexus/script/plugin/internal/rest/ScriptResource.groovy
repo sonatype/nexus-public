@@ -37,6 +37,7 @@ import org.sonatype.nexus.script.plugin.internal.security.ScriptPermission
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
 
+import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import org.slf4j.LoggerFactory
 
@@ -71,6 +72,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   List browse() {
     securityHelper.ensurePermitted(scriptPermission(ALL, BreadActions.BROWSE))
     return scriptManager.browse().collect { convert(it) }
@@ -78,6 +80,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   ScriptXO read(@PathParam('name') final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.READ))
     return convert(findOr404(name))
@@ -85,6 +88,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   void edit(@PathParam('name') final String name, @NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.EDIT))
     checkArgument(name == scriptXO.name, "Path parameter: $name does not match data name: ${scriptXO.name}")
@@ -95,6 +99,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   void add(@NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(ALL, BreadActions.ADD))
     log.debug('Adding Script named: {}', scriptXO.name)
@@ -103,6 +108,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   void delete(@PathParam('name') final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.DELETE))
     log.debug('Deleting Script named: {}', name)
@@ -111,6 +117,7 @@ class ScriptResource
 
   @Override
   @Timed
+  @ExceptionMetered
   ScriptResultXO run(final @PathParam('name') String name, final String args) {
     securityHelper.ensurePermitted(scriptPermission(name, RUN_ACTION))
     log.debug('Running Script named: {}', name)

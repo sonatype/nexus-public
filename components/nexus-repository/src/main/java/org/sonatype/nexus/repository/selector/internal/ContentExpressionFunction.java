@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
-import org.sonatype.nexus.selector.SelectorEvaluator;
+import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.collect.ImmutableMap;
@@ -61,17 +61,17 @@ public class ContentExpressionFunction
 
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
-  private final SelectorEvaluator selectorEvaluator;
+  private final SelectorManager selectorManager;
 
   private static final Logger log = LoggerFactory.getLogger(ContentExpressionFunction.class);
 
   @Inject
   public ContentExpressionFunction(final VariableResolverAdapterManager variableResolverAdapterManager,
-                                   final SelectorEvaluator selectorEvaluator)
+                                   final SelectorManager selectorManager)
   {
     super(NAME, 4, 4);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
-    this.selectorEvaluator = checkNotNull(selectorEvaluator);
+    this.selectorManager = checkNotNull(selectorManager);
   }
 
   @Override
@@ -142,7 +142,7 @@ public class ContentExpressionFunction
     selectorConfiguration.setName("preview");
 
     try {
-      return selectorEvaluator.evaluate(selectorConfiguration, variableSource);
+      return selectorManager.evaluate(selectorConfiguration, variableSource);
     }
     catch (SelectorEvaluationException e) {
       log.debug("Unable to evaluate expression {}.", jexlExpression, e);

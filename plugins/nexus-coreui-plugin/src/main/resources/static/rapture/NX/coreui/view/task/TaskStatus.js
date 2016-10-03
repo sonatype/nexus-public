@@ -25,13 +25,19 @@ Ext.define('NX.coreui.view.task.TaskStatus', {
     'NX.I18n'
   ],
 
-  items: {
-    xtype: 'grid',
-    columns: [
-      { text: NX.I18n.get('TaskFeature_Status_Node_Column'), dataIndex: 'nodeId', width: 400},
-      { text: NX.I18n.get('TaskFeature_Status_Status_Column'), dataIndex: 'statusDescription', width: 200 },
-      { text: NX.I18n.get('TaskFeature_Status_LastResult_Column'), dataIndex: 'lastRunResult', flex: 1 }
-    ]
+  initComponent: function() {
+    var me = this;
+
+    me.items = {
+      xtype: 'grid',
+          columns: [
+        { text: NX.I18n.get('TaskFeature_Status_Node_Column'), dataIndex: 'nodeId', width: 400},
+        { text: NX.I18n.get('TaskFeature_Status_Status_Column'), dataIndex: 'statusDescription', width: 200 },
+        { text: NX.I18n.get('TaskFeature_Status_LastResult_Column'), dataIndex: 'lastRunResult', flex: 1 }
+      ]
+    };
+
+    me.callParent();
   },
 
   getGrid: function() {

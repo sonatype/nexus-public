@@ -35,6 +35,8 @@ import org.sonatype.nexus.security.authz.WildcardPermission2;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.validation.Validate;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.SecurityUtils;
@@ -78,6 +80,8 @@ public class SecurityComponent
   // FIXME: Move authenticate to session servlet
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   public UserXO authenticate(@NotEmpty final String base64Username, @NotEmpty final String base64Password)
       throws Exception
@@ -102,6 +106,8 @@ public class SecurityComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   public String authenticationToken(@NotEmpty final String base64Username, @NotEmpty final String base64Password)
       throws Exception
@@ -134,6 +140,8 @@ public class SecurityComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   public UserXO getUser() {
     UserXO userXO = null;
 
@@ -161,6 +169,8 @@ public class SecurityComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   public List<PermissionXO> getPermissions() {
     List<PermissionXO> permissions = null;
     Subject subject = securitySystem.getSubject();

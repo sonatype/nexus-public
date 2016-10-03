@@ -35,6 +35,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.google.inject.Key
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
@@ -76,6 +78,8 @@ class UserComponent
    * @return a list of users
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:users:read')
   List<UserXO> read(@Nullable final StoreLoadParameters parameters) {
     def source = parameters?.getFilter('source')
@@ -93,6 +97,8 @@ class UserComponent
    * @return a list of available user sources (user managers)
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:users:read')
   List<ReferenceXO> readSources() {
     beanLocator.locate(Key.get(UserManager.class, Named.class)).collect { entry ->
@@ -108,6 +114,8 @@ class UserComponent
    * @return current logged in user account.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresUser
   UserAccountXO readAccount() {
     User user = securitySystem.currentUser()
@@ -126,6 +134,8 @@ class UserComponent
    * @return created user
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:users:create')
   @Validate(groups = [Create.class, Default.class])
@@ -150,6 +160,8 @@ class UserComponent
    * @return updated user
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:users:update')
   @Validate(groups = [Update.class, Default.class])
@@ -174,6 +186,8 @@ class UserComponent
    * @return updated user
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:users:update')
   @Validate(groups = [Update.class, Default.class])
@@ -203,6 +217,8 @@ class UserComponent
    * @return current logged in user account
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresUser
   @RequiresAuthentication
   @Validate
@@ -224,6 +240,8 @@ class UserComponent
    * @param password new password
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresUser
   @RequiresAuthentication
   @RequiresPermissions('nexus:userschangepw:create')
@@ -249,6 +267,8 @@ class UserComponent
    * @param source of user to be deleted
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:users:delete')
   @Validate

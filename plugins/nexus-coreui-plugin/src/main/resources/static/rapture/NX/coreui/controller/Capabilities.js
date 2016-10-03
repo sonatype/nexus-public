@@ -85,20 +85,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/System/Capabilities',
-    text: NX.I18n.get('Capabilities_Text'),
-    description: NX.I18n.get('Capabilities_Description'),
-    view: { xtype: 'nx-coreui-capability-feature' },
-    iconConfig: {
-      file: 'brick.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:capabilities:read');
-    }
-  },
+
   permission: 'nexus:capabilities',
 
   /**
@@ -106,6 +93,21 @@ Ext.define('NX.coreui.controller.Capabilities', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/System/Capabilities',
+      text: NX.I18n.get('Capabilities_Text'),
+      description: NX.I18n.get('Capabilities_Description'),
+      view: {xtype: 'nx-coreui-capability-feature'},
+      iconConfig: {
+        file: 'brick.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:capabilities:read');
+      }
+    };
 
     me.callParent();
 

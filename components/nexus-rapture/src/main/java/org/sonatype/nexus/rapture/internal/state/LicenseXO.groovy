@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.rapture.internal.state
 
-import javax.annotation.Nullable
-
 import groovy.transform.ToString
 
 /**
@@ -30,7 +28,6 @@ class LicenseXO
 
   boolean valid
 
-  @Nullable
   int daysToExpiry
 
   List<String> features

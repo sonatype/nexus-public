@@ -123,6 +123,19 @@ class ApiKeyStoreImplTest
     assertThat(principals.primaryPrincipal, equalTo("alpha"))
   }
 
+  @Test
+  void 'Can delete all API Keys'() {
+    PrincipalCollection principalA = makePrincipals("name-a")
+    PrincipalCollection principalB = makePrincipals("name-b")
+
+    underTest.createApiKey('foo', principalA)
+    underTest.createApiKey('bar', principalB)
+    underTest.deleteApiKeys()
+
+    assertThat(underTest.getApiKey('foo', principalA), equalTo(null))
+    assertThat(underTest.getApiKey('bar', principalB), equalTo(null))
+  }
+
   private PrincipalCollection makePrincipals(String name) {
     return new SimplePrincipalCollection(name, "foo")
   }

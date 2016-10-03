@@ -40,17 +40,10 @@ Ext.define('NX.coreui.migration.PhaseSyncScreen', {
           ui: 'default'
         },
         {
-          text: NX.I18n.render(me, 'Stop_Monitoring_Button'),
+          text: NX.I18n.render(me, 'Continue_Button'),
           action: 'continue',
           ui: 'nx-primary',
           disabled: true
-        },
-        {
-          text: NX.I18n.render(me, 'Finish_Button'),
-          action: 'finish',
-          ui: 'nx-primary',
-          disabled: true,
-          hidden: true
         }
       ]
     });

@@ -115,7 +115,7 @@ public class GroupHandler
       dispatched.add(member);
 
       final ViewFacet view = member.facet(ViewFacet.class);
-      final Response response = view.dispatch(request);
+      final Response response = view.dispatch(request, context);
       log.trace("Member {} response {}", member, response.getStatus());
       if (response.getStatus().isSuccessful()) {
         return response;
@@ -144,7 +144,7 @@ public class GroupHandler
       dispatched.add(member);
 
       final ViewFacet view = member.facet(ViewFacet.class);
-      final Response response = view.dispatch(request);
+      final Response response = view.dispatch(request, context);
       log.trace("Member {} response {}", member, response.getStatus());
 
       responses.put(member, response);

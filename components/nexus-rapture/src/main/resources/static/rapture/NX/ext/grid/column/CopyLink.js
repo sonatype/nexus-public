@@ -10,43 +10,51 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector;
-
-import java.util.List;
-
-import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.common.entity.EntityId;
+/*global Ext, NX*/
 
 /**
- * {@link SelectorConfiguration} store.
+ * A {@link Ext.grid.column.Column} which renders its value as a link.
  *
- * since 3.0
+ * @since 3.0
  */
-public interface SelectorConfigurationStore
-    extends Lifecycle
-{
-  /**
-   * @return all configuration
-   */
-  List<SelectorConfiguration> browse();
+Ext.define('NX.ext.grid.column.CopyLink', {
+  extend: 'Ext.grid.column.Column',
+  alias: ['widget.nx-copylinkcolumn'],
+  requires: [
+    'NX.util.Url'
+  ],
+
+  stateId: 'copylink',
+
+  constructor: function () {
+    var me = this;
+
+    me.listeners = {
+      click: function() {
+        // Prevent drilldown from triggering
+        return false;
+      }
+    };
+
+    me.callParent(arguments);
+  },
 
   /**
-   * @return configuration by id
+   * Renders value as a link.
    */
-  SelectorConfiguration read(EntityId entityId);
+  defaultRenderer: function (value) {
+    if (value) {
+      value = value.replace(/\$baseUrl/, NX.util.Url.baseUrl);
+      return NX.util.Url.asCopyWidget(value);
+    }
+    return undefined;
+  },
 
   /**
-   * Persist a new configuration.
+   * @protected
    */
-  void create(SelectorConfiguration configuration);
+  target: function (value) {
+    return value;
+  }
 
-  /**
-   * Persist an existing configuration.
-   */
-  void update(SelectorConfiguration configuration);
-
-  /**
-   * Delete an existing configuration.
-   */
-  void delete(SelectorConfiguration configuration);
-}
+});

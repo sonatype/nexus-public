@@ -155,8 +155,8 @@
         <defaultGoal>initialize</defaultGoal>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.gmaven</groupId>
-            <artifactId>gmaven-plugin</artifactId>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
             <executions>
               <execution>
                 <phase>initialize</phase>
@@ -164,7 +164,9 @@
                   <goal>execute</goal>
                 </goals>
                 <configuration>
-                  <source>${project.basedir}/src/main/script/driver.groovy</source>
+                  <scripts>
+                    <script>file://${project.basedir}/src/main/script/driver.groovy</script>
+                  </scripts>
                 </configuration>
               </execution>
             </executions>

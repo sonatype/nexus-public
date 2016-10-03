@@ -29,17 +29,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class UniqueSelectorNameValidator
     extends ConstraintValidatorSupport<UniqueSelectorName, String>
 {
-  private final SelectorConfigurationStore selectorConfigurationStore;
+  private final SelectorManager selectorManager;
 
   @Inject
-  public UniqueSelectorNameValidator(final SelectorConfigurationStore selectorConfigurationStore) {
-    this.selectorConfigurationStore = checkNotNull(selectorConfigurationStore);
+  public UniqueSelectorNameValidator(final SelectorManager selectorManager) {
+    this.selectorManager = checkNotNull(selectorManager);
   }
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
     log.trace("Validating unique selector name: {}", value);
-    for (SelectorConfiguration configuration : selectorConfigurationStore.browse()) {
+    for (SelectorConfiguration configuration : selectorManager.browse()) {
       if (value.equals(configuration.getName())) {
         return false;
       }

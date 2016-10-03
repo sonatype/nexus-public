@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.transaction;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.Loggers;
 
 import org.aopalliance.intercept.Joinpoint;
+import org.slf4j.Logger;
 
 /**
  * Wraps an intercepted method with transactional behaviour.
@@ -22,8 +23,9 @@ import org.aopalliance.intercept.Joinpoint;
  * @since 3.0
  */
 final class TransactionalWrapper
-    extends ComponentSupport
 {
+  private static final Logger log = Loggers.getLogger(TransactionalWrapper.class);
+
   private final Transactional spec;
 
   private final Joinpoint aspect;

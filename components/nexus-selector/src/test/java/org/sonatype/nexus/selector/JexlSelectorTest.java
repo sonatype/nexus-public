@@ -14,7 +14,6 @@ package org.sonatype.nexus.selector;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlInfo;
 import org.junit.Before;
@@ -59,9 +58,8 @@ public class JexlSelectorTest
     String expected = String.format("Invalid JEXL at line '%s' column '%s'. Error parsing string: '%s'.", line, column,
         detail);
     String returned = null;
-    System.out.println();
     try {
-      new JexlBuilder().create().createExpression(expression);
+      new JexlSelector(expression);
     }
     catch (JexlException e) {
       returned = JexlSelector.prettyExceptionMsg(e);

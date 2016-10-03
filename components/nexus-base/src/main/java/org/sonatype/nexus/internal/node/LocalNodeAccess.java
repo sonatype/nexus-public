@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named("local")
 @Singleton
-public class LocalNodeAccessImpl
+public class LocalNodeAccess
     extends LifecycleSupport
     implements NodeAccess
 {
@@ -49,7 +49,7 @@ public class LocalNodeAccessImpl
   private String id;
 
   @Inject
-  public LocalNodeAccessImpl(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
+  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
     this.keyStoreManager = checkNotNull(keyStoreManager);
   }
 

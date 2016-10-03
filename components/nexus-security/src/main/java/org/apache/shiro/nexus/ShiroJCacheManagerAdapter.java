@@ -56,6 +56,7 @@ public class ShiroJCacheManagerAdapter
     if (cache == null) {
       log.debug("Creating cache: {}", name);
       MutableConfiguration<K, V> cacheConfig = new MutableConfiguration<K, V>()
+          .setStoreByValue(false)
           .setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf())
           .setManagementEnabled(true)
           .setStatisticsEnabled(true);

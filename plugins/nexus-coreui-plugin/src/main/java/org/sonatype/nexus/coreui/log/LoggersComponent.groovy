@@ -23,6 +23,8 @@ import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.WithReadLock
@@ -55,6 +57,8 @@ extends DirectComponentSupport
    * @return a list of configured loggers
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @WithReadLock
   @RequiresPermissions('nexus:logging:read')
   List<LoggerXO> read() {
@@ -72,6 +76,8 @@ extends DirectComponentSupport
    * @return updated logger
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @WithWriteLock
   @RequiresPermissions('nexus:logging:update')
   @Validate
@@ -88,6 +94,8 @@ extends DirectComponentSupport
    * @param name logger name
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @WithWriteLock
   @RequiresAuthentication
   @RequiresPermissions('nexus:logging:update')
@@ -101,6 +109,8 @@ extends DirectComponentSupport
    * Resets all loggers to their default levels.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @WithWriteLock
   @RequiresAuthentication
   @RequiresPermissions('nexus:logging:update')

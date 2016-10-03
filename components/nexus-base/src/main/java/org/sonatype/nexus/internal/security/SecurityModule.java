@@ -16,10 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.internal.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.internal.security.anonymous.OrientAnonymousConfigurationStore;
 import org.sonatype.nexus.internal.security.realm.OrientRealmConfigurationStore;
 import org.sonatype.nexus.security.FilterProviderSupport;
-import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;

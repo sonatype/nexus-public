@@ -18,6 +18,8 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.karaf.bundle.core.BundleService
@@ -42,6 +44,8 @@ class BundleComponent
   BundleService bundleService
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:bundles:read')
   List<BundleXO> read() {
     def result = []

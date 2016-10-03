@@ -49,25 +49,8 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
     {ref: 'feature', selector: 'nx-coreui-browseassetfeature'},
     {ref: 'repositoryList', selector: 'nx-coreui-browseassetfeature nx-coreui-browse-repository-list'},
     {ref: 'assetList', selector: 'nx-coreui-browseassetfeature nx-coreui-browse-asset-list'},
-    {ref: 'assetFilter', selector: 'nx-coreui-browseassetfeature nx-coreui-browse-asset-list #filter'},
     {ref: 'assetContainer', selector: 'nx-coreui-browseassetfeature nx-coreui-component-assetcontainer'}
   ],
-
-  features: {
-    mode: 'browse',
-    path: '/Browse/Assets',
-    text: NX.I18n.get('Browse_Assets_Title_Feature'),
-    description: NX.I18n.get('Browse_Assets_Description_Feature'),
-    view: 'NX.coreui.view.browse.BrowseAssetFeature',
-    iconConfig: {
-      file: 'page_white_stack.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
-    },
-    authenticationRequired: false
-  },
 
   icons: {
     'browse-asset-default': {
@@ -81,6 +64,22 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'browse',
+      path: '/Browse/Assets',
+      text: NX.I18n.get('Browse_Assets_Title_Feature'),
+      description: NX.I18n.get('Browse_Assets_Description_Feature'),
+      view: 'NX.coreui.view.browse.BrowseAssetFeature',
+      iconConfig: {
+        file: 'page_white_stack.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
+      },
+      authenticationRequired: false
+    };
 
     me.callParent();
 
@@ -96,10 +95,6 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
         },
         'nx-coreui-browseassetfeature nx-coreui-component-assetcontainer': {
           updated: me.setAssetIcon
-        },
-        'nx-coreui-browseassetfeature nx-coreui-browse-asset-list #filter': {
-          search: me.onSearch,
-          searchcleared: me.onSearchCleared
         }
       }
     });
@@ -137,7 +132,7 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
     var me = this,
         assetStore = me.getStore('Asset'),
         assetList = me.getAssetList(),
-        assetFilter = me.getAssetFilter();
+        filter = assetList.findPlugin('remotegridfilterbox');
 
     // If the list hasn’t loaded, don't do anything
     if (!assetList) {
@@ -145,7 +140,7 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
     }
 
     assetStore.filters.removeAtKey('filter');
-    assetFilter.clearSearch();
+    filter.clearSearch();
     assetList.getSelectionModel().deselectAll();
     assetStore.addFilter([
       {
@@ -249,57 +244,6 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
         me.reselect();
       }
     });
-  },
-
-  /**
-   * Filter grid.
-   *
-   * @private
-   * @param {NX.ext.SearchBox} searchBox component
-   * @param {String} value to be searched
-   */
-  onSearch: function(searchBox, value) {
-    var grid = searchBox.up('grid'),
-        store = grid.getStore(),
-        emptyText = grid.getView().emptyTextFilter;
-
-    if (!grid.emptyText) {
-      grid.emptyText = grid.getView().emptyText;
-    }
-    grid.getView().emptyText = '<div class="x-grid-empty">' + emptyText.replace(/\$filter/, value) + '</div>';
-    grid.getSelectionModel().deselectAll();
-    store.addFilter([
-      {
-        id: 'filter',
-        property: 'filter',
-        value: value
-      }
-    ]);
-  },
-
-  /**
-   * Clear filtering on grid.
-   *
-   * @private
-   * @param {NX.ext.SearchBox} searchBox component
-   */
-  onSearchCleared: function(searchBox) {
-    var grid = searchBox.up('grid'),
-        store = grid.getStore();
-
-    if (grid.emptyText) {
-      grid.getView().emptyText = grid.emptyText;
-    }
-    grid.getSelectionModel().deselectAll();
-    // we have to remove filter directly as store#removeFilter() does not work when store#remoteFilter = true
-    if (store.filters.removeAtKey('filter')) {
-      if (store.filters.length) {
-        store.filter();
-      }
-      else {
-        store.clearFilter();
-      }
-    }
   },
 
   /**

@@ -87,21 +87,6 @@ Ext.define('NX.coreui.controller.Privileges', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Security/Privileges',
-    text: NX.I18n.get('Privileges_Text'),
-    description: NX.I18n.get('Privileges_Description'),
-    view: {xtype: 'nx-coreui-privilege-feature'},
-    iconConfig: {
-      file: 'medal_gold_green.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function () {
-      return NX.Permissions.check('nexus:privileges:read');
-    },
-    weight: 10
-  },
 
   permission: 'nexus:privileges',
 
@@ -110,6 +95,22 @@ Ext.define('NX.coreui.controller.Privileges', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Security/Privileges',
+      text: NX.I18n.get('Privileges_Text'),
+      description: NX.I18n.get('Privileges_Description'),
+      view: {xtype: 'nx-coreui-privilege-feature'},
+      iconConfig: {
+        file: 'medal_gold_green.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:privileges:read');
+      },
+      weight: 10
+    };
 
     me.callParent();
 

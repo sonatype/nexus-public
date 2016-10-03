@@ -28,6 +28,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -59,6 +61,8 @@ class RoleComponent
    * @return a list of roles
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:roles:read')
   List<RoleXO> read() {
     return securitySystem.listRoles(DEFAULT_SOURCE).collect {input ->
@@ -71,6 +75,8 @@ class RoleComponent
    * @return a list of role references
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:roles:read')
   List<ReferenceXO> readReferences() {
     return securitySystem.listRoles(DEFAULT_SOURCE).collect {input ->
@@ -86,6 +92,8 @@ class RoleComponent
    * @return list of sources
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<ReferenceXO> readSources() {
     return authorizationManagers.findResults {manager ->
       return manager.source == DEFAULT_SOURCE ? null : manager
@@ -103,6 +111,8 @@ class RoleComponent
    * @return a list of roles
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:roles:read')
   @Validate
   List<RoleXO> readFromSource(@NotEmpty final String source) {
@@ -117,6 +127,8 @@ class RoleComponent
    * @return created role
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:roles:create')
   @Validate(groups = [Create.class, Default.class])
@@ -144,6 +156,8 @@ class RoleComponent
    * @return updated role
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:roles:update')
   @Validate(groups = [Update.class, Default.class])
@@ -167,6 +181,8 @@ class RoleComponent
    * @param id of role to be deleted
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:roles:delete')
   @Validate

@@ -20,7 +20,8 @@
 Ext.define('NX.coreui.migration.PhaseSyncStep', {
   extend: 'NX.coreui.migration.ProgressStepSupport',
   requires: [
-    'NX.coreui.migration.PhaseSyncScreen'
+    'NX.coreui.migration.PhaseSyncScreen',
+    'NX.I18n'
   ],
 
   screen: 'NX.coreui.migration.PhaseSyncScreen',
@@ -38,9 +39,6 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
       },
       'button[action=continue]': {
         click: me.doContinue
-      },
-      'button[action=finish]': {
-        click: me.doFinish
       }
     });
 
@@ -54,6 +52,12 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
   checkSyncStatus: true,
 
   /**
+   * @private
+   * @type {boolean}
+   */
+  waitingToFinish: false,
+
+  /**
    * @override
    */
   prepare: function () {
@@ -61,6 +65,7 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
         selectedRepos = me.controller.getContext().get('selected-repositories');
 
     me.checkSyncStatus = selectedRepos && selectedRepos.length;
+    me.waitingToFinish = false;
     me.callParent();
   },
 
@@ -74,8 +79,6 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
     if (screen) {
       screen.down('button[action=continue]').setVisible(true);
       screen.down('button[action=continue]').disable();
-      screen.down('button[action=finish]').setVisible(false);
-      screen.down('button[action=finish]').disable();
       screen.down('button[action=abort]').enable();
     }
     me.callParent();
@@ -92,8 +95,9 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
 
     if (screen && (me.checkSyncStatus || me.controller.getContext().get('checkSyncStatus'))) {
       NX.direct.migration_Assistant.syncStatus(function (response, event) {
-        if (event.status && response.success && response.data.waitingForChanges && response.data.scanComplete) {
-          screen.down('button[action=continue]').enable();
+        var isComplete = response.success && response.data.waitingForChanges && response.data.scanComplete;
+        if (!me.waitingToFinish && event.status && isComplete) {
+          screen.down('button[action=continue]').enable().setText(NX.I18n.render(me.screen, 'Continue_Button'));
         }
       });
     }
@@ -103,17 +107,19 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
    * @override
    */
   doComplete: function() {
-    var me = this,
-        screen = me.getScreenCmp();
+    var me = this;
 
-    // if there are no repositories configured for migration, hide the 'Stop Monitoring' button
-    if (!me.checkSyncStatus) {
-      screen.down('button[action=continue]').setVisible(false);
-      screen.down('button[action=finish]').setVisible(true);
-    }
+    me.mask(NX.I18n.render(me, 'Finish_Mask'));
 
-    screen.down('button[action=finish]').enable();
-    screen.down('button[action=abort]').disable();
+    NX.direct.migration_Assistant.finish(function (response, event) {
+      me.unmask();
+
+      if (event.status && response.success) {
+        me.moveNext();
+
+        NX.Messages.success(NX.I18n.render(me, 'Finish_Message'));
+      }
+    });
   },
 
   /**
@@ -153,51 +159,14 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
       NX.I18n.render(me, 'Stop_Waiting_Confirm_Title'),
       NX.I18n.render(me, 'Stop_Waiting_Confirm_Text'),
       function () {
-        me.mask(NX.I18n.render(me, 'Stop_Waiting_Confirm_Mask'));
-
-        me.autoRefresh(false);
-        me.getScreenCmp().down('button[action=continue]').disable();
-
+        me.getScreenCmp().down('button[action=continue]').disable()
+            .setText(NX.I18n.render(me.screen, 'Continue_Button_Pending'));
         NX.direct.migration_Assistant.stopWaiting(function (response, event) {
-          me.unmask();
-
           if (event.status && response.success && response.data) {
-            me.getScreenCmp().down('button[action=continue]').setVisible(false);
-            me.getScreenCmp().down('button[action=finish]').setVisible(true);
-            NX.Messages.success(NX.I18n.render(me, 'Stop_Waiting_Confirm_Message'));
+            me.waitingToFinish = true;
           }
-          else {
-            me.getScreenCmp().down('button[action=continue]').enable();
-          }
-
-          me.autoRefresh(true);
         });
       }
-    );
-  },
-
-  /**
-   * @private
-   */
-  doFinish: function() {
-    var me = this;
-
-    NX.Dialogs.askConfirmation(
-        NX.I18n.render(me, 'Finish_Confirm_Title'),
-        NX.I18n.render(me, 'Finish_Confirm_Text'),
-        function () {
-          me.mask(NX.I18n.render(me, 'Finish_Mask'));
-
-          NX.direct.migration_Assistant.finish(function (response, event) {
-            me.unmask();
-
-            if (event.status && response.success) {
-              me.moveNext();
-
-              NX.Messages.success(NX.I18n.render(me, 'Finish_Message'));
-            }
-          });
-        }
     );
   }
 

@@ -35,7 +35,7 @@ Ext.define('NX.coreui.controller.Roles', {
     'Role',
     'RoleSource',
     'RoleBySource',
-    'Privilege'
+    'PrivilegeReference'
   ],
   views: [
     'role.RoleAdd',
@@ -59,21 +59,7 @@ Ext.define('NX.coreui.controller.Roles', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Security/Roles',
-    text: NX.I18n.get('Roles_Text'),
-    description: NX.I18n.get('Roles_Description'),
-    view: { xtype: 'nx-coreui-role-feature' },
-    iconConfig: {
-      file: 'user_policeman.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:roles:read') && NX.Permissions.check('nexus:privileges:read');
-    },
-    weight: 20
-  },
+
   permission: 'nexus:roles',
 
   /**
@@ -81,6 +67,22 @@ Ext.define('NX.coreui.controller.Roles', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Security/Roles',
+      text: NX.I18n.get('Roles_Text'),
+      description: NX.I18n.get('Roles_Description'),
+      view: {xtype: 'nx-coreui-role-feature'},
+      iconConfig: {
+        file: 'user_policeman.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:roles:read') && NX.Permissions.check('nexus:privileges:read');
+      },
+      weight: 20
+    };
 
     me.callParent();
 

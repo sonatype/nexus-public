@@ -161,6 +161,14 @@ public class ApiKeyStoreImpl
 
   @Override
   @Guarded(by = STARTED)
+  public void deleteApiKeys() {
+    try (ODatabaseDocumentTx db = openDb()) {
+      entityAdapter.deleteAll.execute(db);
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public void purgeApiKeys() {
     try (ODatabaseDocumentTx db = openDb()) {
       List<ApiKey> delete = new ArrayList<>();

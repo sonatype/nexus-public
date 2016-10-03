@@ -30,7 +30,6 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheKey;
-import org.sonatype.nexus.repository.cache.PathNegativeCacheKey;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.view.Context;
@@ -138,6 +137,7 @@ public class NegativeCacheFacetImpl
 
       MutableConfiguration<NegativeCacheKey, Status> cacheConfig = new MutableConfiguration<>();
       cacheConfig.setTypes(NegativeCacheKey.class, Status.class);
+      cacheConfig.setStoreByValue(false);
       cacheConfig.setExpiryPolicyFactory(
           CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, config.timeToLive))
       );

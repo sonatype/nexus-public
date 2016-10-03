@@ -27,7 +27,7 @@ import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.group.GroupFacet
+import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector
@@ -36,18 +36,16 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.storage.ComponentMaintenance
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
-import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
 import org.sonatype.nexus.selector.JexlExpressionValidator
 import org.sonatype.nexus.selector.VariableSource
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Lists
@@ -105,9 +103,6 @@ class ComponentComponent
   RepositoryManager repositoryManager
 
   @Inject
-  GroupType groupType
-
-  @Inject
   ContentPermissionChecker contentPermissionChecker
 
   @Inject
@@ -116,125 +111,43 @@ class ComponentComponent
   @Inject
   JexlExpressionValidator jexlExpressionValidator
 
+  @Inject
+  BrowseService browseService
+
   @DirectMethod
   @Timed
+  @ExceptionMetered
   PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
     Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
-
     if (!repository.configuration.online) {
       return null
     }
-
     def sort = parameters.sort?.get(0)
-    def querySuffix = ''
-    if (sort) {
-      if (GroupType.NAME != repository.type.value) {
-        // optimization to match component-bucket-group-name-version index when querying on a single repository
-        querySuffix += " ORDER BY ${MetadataNodeEntityAdapter.P_BUCKET} ${sort.direction},${sort.property} ${sort.direction}"
-      }
-      else {
-        querySuffix += " ORDER BY ${sort.property} ${sort.direction}"
-      }
-      if (sort.property == ComponentEntityAdapter.P_GROUP) {
-        querySuffix += ", ${MetadataNodeEntityAdapter.P_NAME} ASC,${ComponentEntityAdapter.P_VERSION} ASC"
-      }
-      else if (sort.property == MetadataNodeEntityAdapter.P_NAME) {
-        querySuffix += ", ${ComponentEntityAdapter.P_VERSION} ASC,${ComponentEntityAdapter.P_GROUP} ASC"
-      }
-    }
-    if (parameters.start) {
-      querySuffix += " SKIP ${parameters.start}"
-    }
-    if (parameters.limit) {
-      querySuffix += " LIMIT ${parameters.limit}"
-    }
-
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-
-      def repositories
-      if (groupType == repository.type) {
-        repositories = repository.facet(GroupFacet).leafMembers()
-        querySuffix = " GROUP BY ${ComponentEntityAdapter.P_GROUP},${MetadataNodeEntityAdapter.P_NAME},${ComponentEntityAdapter.P_VERSION}" +
-            querySuffix
-      }
-      else {
-        repositories = ImmutableList.of(repository)
-      }
-
-      def whereClause = "contentAuth(@this) == true"
-      def queryParams = null
-      def filter = parameters.getFilter('filter')
-      if (filter) {
-        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter OR ${ComponentEntityAdapter.P_GROUP} LIKE :groupFilter OR ${ComponentEntityAdapter.P_VERSION} LIKE :versionFilter"
-        queryParams = [
-            'nameFilter'   : "%${filter}%",
-            'groupFilter'  : "%${filter}%",
-            'versionFilter': "%${filter}%"
-        ]
-      }
-
-      def countComponents = storageTx.countComponents(whereClause, queryParams, repositories, null)
-      List<ComponentXO> results = storageTx.findComponents(whereClause, queryParams, repositories, querySuffix)
-          .collect(COMPONENT_CONVERTER.rcurry(repository.name))
-
-      return new PagedResponse<ComponentXO>(
-          countComponents,
-          results
-      )
-    }
-    finally {
-      storageTx.close()
-    }
+    def result = browseService.browseComponents(
+        repository,
+        parameters.getFilter('filter'),
+        sort?.property,
+        sort?.direction,
+        parameters.start,
+        parameters.limit);
+    return new PagedResponse<ComponentXO>(
+        result.total,
+        result.results.collect(COMPONENT_CONVERTER.rcurry(repository.name)))
   }
 
   @DirectMethod
   @Timed
+  @ExceptionMetered
   List<AssetXO> readComponentAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)
-
     if (!repository.configuration.online) {
       return null
     }
-
-    def componentId = parameters.getFilter('componentId')
-    return readRepositoryComponentAssets(repository, componentId)
+    def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'));
+    return result.results.collect(ASSET_CONVERTER.rcurry(parameters.getFilter('componentName'), repository.name))
   }
 
-  /**
-   * Find all Assets related to the given component. Note that the Repository passed in is not necessarily the
-   * Repository where the component resides (in the case of a group Repository).
-   */
-  private List<AssetXO> readRepositoryComponentAssets(final Repository repository, final String componentId) {
-    checkNotNull(repository)
-    checkNotNull(componentId)
-    List<Asset> assets
-    Component component
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-      component = storageTx.findComponent(new DetachedEntityId(componentId))
-      if (component == null) {
-        log.warn 'Component {} not found', componentId
-        return null
-      }
-      assets = Lists.newArrayList(storageTx.browseAssets(component))
-    }
-    finally {
-      storageTx.close()
-    }
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format())
-    return assets.findAll {
-      contentPermissionChecker.isPermitted(
-          repository.name,
-          it.format(),
-          BreadActions.BROWSE,
-          variableResolverAdapter.fromAsset(it))
-    }.collect(ASSET_CONVERTER.rcurry(component.name(), repository.name))
-  }
-  
   private List<Repository> getPreviewRepositories(String repositoryName) {
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
     if (!repositorySelector.allRepositories) {
@@ -250,134 +163,63 @@ class ComponentComponent
     return repositoryManager.browse().collect()
   }
 
-  String parseJexlExpression(String expression) {
-    //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
-    return expression.replaceAll('"', '\'').replaceAll('\\s', ' ')
-  }
-
   @DirectMethod
   @Timed
+  @ExceptionMetered
   PagedResponse<AssetXO> previewAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     String jexlExpression = parameters.getFilter('jexlExpression')
-
     if (!jexlExpression || !repositoryName) {
       return null
     }
 
     jexlExpressionValidator.validate(jexlExpression)
-
     List<Repository> selectedRepositories = getPreviewRepositories(repositoryName)
-
     if (!selectedRepositories.size()) {
       return null
     }
 
-    def querySuffix = getQuerySuffix(selectedRepositories, parameters)
-
-    StorageTx storageTx = selectedRepositories[0].facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-
-      def repositories
-      def repositoriesAsString = ''
-      if (selectedRepositories.size() == 1 && groupType == selectedRepositories[0].type) {
-        repositories = selectedRepositories[0].facet(GroupFacet).leafMembers()
-        repositoriesAsString = (repositories*.name).join(',')
-      }
-      else {
-        repositories = selectedRepositories
-      }
-
-      def whereClause = 'contentAuth(@this) == true and contentExpression(@this, :jexlExpression, :repositoryName, ' +
-          ':repositoriesAsString) == true'
-      def queryParams = [repositoryName: repositoryName, jexlExpression: parseJexlExpression(jexlExpression), repositoriesAsString:
-          repositoriesAsString]
-      def filter = parameters.getFilter('filter')
-      if (filter) {
-        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
-        queryParams['nameFilter'] = "%${filter}%"
-      }
-
-      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
-      List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix).
-          collect(ASSET_CONVERTER.rcurry(null, null))
-
-      return new PagedResponse<AssetXO>(
-          countAssets,
-          results
-      )
-    }
-    finally {
-      storageTx.close()
-    }
+    def sort = parameters.sort?.get(0)
+    def result = browseService.previewAssets(
+        selectedRepositories,
+        jexlExpression,
+        parameters.getFilter('filter'),
+        sort?.property,
+        sort?.direction,
+        parameters.start,
+        parameters.limit);
+    return new PagedResponse<AssetXO>(
+        result.total,
+        result.results.collect(ASSET_CONVERTER.rcurry(null, null))
+    );
   }
 
   @DirectMethod
   @Timed
+  @ExceptionMetered
   PagedResponse<AssetXO> readAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)
-
     if (!repository.configuration.online) {
       return null
     }
-
-    def querySuffix = getQuerySuffix(ImmutableList.of(repository), parameters)
-
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    try {
-      storageTx.begin()
-
-      def repositories
-      if (groupType == repository.type) {
-        repositories = repository.facet(GroupFacet).leafMembers()
-      }
-      else {
-        repositories = ImmutableList.of(repository)
-      }
-
-      def whereClause = 'contentAuth(@this) == true'
-      def queryParams = null
-      def filter = parameters.getFilter('filter')
-      if (filter) {
-        whereClause += " AND ${MetadataNodeEntityAdapter.P_NAME} LIKE :nameFilter"
-        queryParams = [
-            'nameFilter': "%${filter}%"
-        ]
-      }
-
-      def countAssets = storageTx.countAssets(whereClause, queryParams, repositories, null)
-      List<AssetXO> results = storageTx.findAssets(whereClause, queryParams, repositories, querySuffix).
-          collect(ASSET_CONVERTER.rcurry(null, repositoryName))
-
-      return new PagedResponse<AssetXO>(
-          countAssets,
-          results
-      )
-    }
-    finally {
-      storageTx.close()
-    }
-  }
-
-  private def getQuerySuffix(List<Repository> repositories, StoreLoadParameters parameters) {
-    def querySuffix = ''
     def sort = parameters.sort?.get(0)
-    if (sort) {
-      querySuffix += " ORDER BY ${sort.property} ${sort.direction} "
-    }
-    if (parameters.start) {
-      querySuffix += " SKIP ${parameters.start}"
-    }
-    if (parameters.limit) {
-      querySuffix += " LIMIT ${parameters.limit}"
-    }
-
-    return querySuffix
+    def result = browseService.browseAssets(repository,
+        parameters.getFilter('filter'),
+        sort?.property,
+        sort?.direction,
+        parameters.start,
+        parameters.limit
+    )
+    return new PagedResponse<AssetXO>(
+        result.total,
+        result.results.collect(ASSET_CONVERTER.rcurry(null, repositoryName))
+    )
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void deleteComponent(@NotEmpty final String componentId, @NotEmpty final String repositoryName) {
@@ -387,6 +229,8 @@ class ComponentComponent
   }
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
@@ -416,6 +260,8 @@ class ComponentComponent
    * @return found component or null
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   @Nullable
   ComponentXO readComponent(@NotEmpty String componentId, @NotEmpty String repositoryName) {
@@ -441,6 +287,8 @@ class ComponentComponent
    * @return found asset or null
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @Validate
   @Nullable
   AssetXO readAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
@@ -474,8 +322,7 @@ class ComponentComponent
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format)
     for (Asset asset : assets) {
       VariableSource variableSource = variableResolverAdapter.fromAsset(asset)
-      if (contentPermissionChecker
-          .isPermitted(repository.getName(), format, action, variableSource)) {
+      if (contentPermissionChecker.isPermitted(repository.getName(), format, action, variableSource)) {
         return
       }
     }

@@ -20,6 +20,8 @@ import javax.inject.Singleton;
 import org.sonatype.gossip.Level;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.ImmutableMap;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
@@ -49,6 +51,8 @@ public class LogEventComponent
   );
 
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   public void recordEvent(final LogEventXO event) {
     checkNotNull(event);
 

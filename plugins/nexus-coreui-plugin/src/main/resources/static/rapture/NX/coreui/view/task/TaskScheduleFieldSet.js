@@ -30,46 +30,54 @@ Ext.define('NX.coreui.view.task.TaskScheduleFieldSet', {
   defaults: {
     allowBlank: false
   },
-  items: [
-    {
-      xtype: 'combo',
-      name: 'schedule',
-      itemId: 'schedule',
-      fieldLabel: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_FieldLabel'),
-      helpText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_HelpText'),
-      emptyText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_EmptyText'),
-      editable: false,
-      store: [
-        ['manual', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_ManualItem')],
-        ['once', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_OnceItem')],
-        ['hourly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_HourlyItem')],
-        ['daily', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_DailyItem')],
-        ['weekly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_WeeklyItem')],
-        ['monthly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_MonthlyItem')],
-        ['advanced', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_AdvancedItem')]
-      ],
-      queryMode: 'local',
-      listeners: {
-        change: function (combo, newValue, oldValue) {
-          var form = combo.up('form'),
-              oldCmp;
 
-          if (oldValue) {
-            oldCmp = combo.ownerCt.down('nx-coreui-task-schedule-' + oldValue);
-            if (oldCmp) {
-              combo.ownerCt.remove(oldCmp);
+  initComponent: function() {
+    var me = this;
+
+    me.items = [
+      {
+        xtype: 'combo',
+        name: 'schedule',
+        itemId: 'schedule',
+        fieldLabel: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_FieldLabel'),
+        helpText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_HelpText'),
+        emptyText: NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_EmptyText'),
+        editable: false,
+        store: [
+          ['manual', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_ManualItem')],
+          ['once', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_OnceItem')],
+          ['hourly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_HourlyItem')],
+          ['daily', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_DailyItem')],
+          ['weekly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_WeeklyItem')],
+          ['monthly', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_MonthlyItem')],
+          ['advanced', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_AdvancedItem')]
+        ],
+        queryMode: 'local',
+        listeners: {
+          change: function (combo, newValue, oldValue) {
+            var form = combo.up('form'),
+                oldCmp;
+
+            if (oldValue) {
+              oldCmp = combo.ownerCt.down('nx-coreui-task-schedule-' + oldValue);
+              if (oldCmp) {
+                combo.ownerCt.remove(oldCmp);
+              }
             }
-          }
 
-          if (newValue) {
-            combo.ownerCt.add({ xtype: 'nx-coreui-task-schedule-' + newValue });
-            form.getForm().checkValidity();
-            form.isValid();
+            if (newValue) {
+              combo.ownerCt.add({ xtype: 'nx-coreui-task-schedule-' + newValue });
+              form.getForm().checkValidity();
+              form.isValid();
+            }
           }
         }
       }
-    }
-  ],
+    ];
+
+    me.callParent();
+
+  },
 
   /**
    * @public

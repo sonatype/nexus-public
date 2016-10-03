@@ -21,6 +21,8 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.extdirect.model.PagedResponse
+import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.authz.AuthorizationManager
 import org.sonatype.nexus.security.privilege.Privilege
@@ -29,6 +31,8 @@ import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.Maps
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
@@ -37,6 +41,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
+import static com.google.common.base.Preconditions.checkArgument
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
 
 /**
@@ -61,11 +66,62 @@ class PrivilegeComponent
    * @return a list of privileges
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:privileges:read')
-  List<PrivilegeXO> read() {
-    return securitySystem.listPrivileges().collect { input ->
+  PagedResponse<PrivilegeXO> read(StoreLoadParameters parameters) {
+    return extractPage(parameters, securitySystem.listPrivileges().collect { input ->
       return convert(input)
+    })
+  }
+  
+  /**
+   * Retrieves privileges and extracts name and id fields only.
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:privileges:read')
+  List<ReferenceXO> readReferences() {
+    return securitySystem.listPrivileges().collect { Privilege privilege ->
+      return new ReferenceXO(id: privilege.id, name: privilege.name)
     }
+  }
+
+  /**
+   * Return only those records matching the given parameters. Will apply a filter and/or sort to client-exposed 
+   * properties of {@link PrivilegeXO}: name, description, permission, type.
+   */
+  @RequiresPermissions('nexus:privileges:read')
+  PagedResponse<PrivilegeXO> extractPage(final StoreLoadParameters parameters, final List<PrivilegeXO> xos) {
+    log.trace("requesting page with parameters: $parameters and size of: ${xos.size()}") 
+    
+    checkArgument(!parameters.start || parameters.start < xos.size(), "Requested to skip more results than available")
+    
+    List<PrivilegeXO> result = xos.collect() 
+    if(parameters.filter) {
+      def filter = parameters.filter.first().value
+      result = xos.findResults{ PrivilegeXO xo ->
+        (xo.name.contains(filter) || xo.description.contains(filter) || xo.permission.contains(filter) ||
+            xo.type.contains(filter)) ? xo : null
+      }  
+    }
+    
+    if(parameters.sort) {
+      //assume one sort, not multiple props
+      int order = parameters.sort[0].direction == 'ASC' ? 0 : 1
+      String sort = parameters.sort[0].property
+      result = result.sort { a, b ->
+        def desc = a."$sort" <=> b."$sort"
+        order ? -desc : desc
+      }
+    }
+    
+    int size = result.size()
+    int potentialFinalIndex = parameters.start + parameters.limit
+    int finalIndex = (size > potentialFinalIndex) ? potentialFinalIndex : size
+    Range indices = (parameters.start..<finalIndex)
+    return new PagedResponse(size, result[indices])
   }
 
   /**
@@ -73,6 +129,8 @@ class PrivilegeComponent
    * @return a list of privilege types
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:privileges:read')
   List<PrivilegeTypeXO> readTypes() {
     return privilegeDescriptors.collect { descriptor ->
@@ -90,6 +148,8 @@ class PrivilegeComponent
    * @return the created privilege XO
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:privileges:create')
   @Validate(groups = [Create.class, Default.class])
@@ -105,6 +165,8 @@ class PrivilegeComponent
    * @return the updated privilege XO
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:privileges:update')
   @Validate(groups = [Update.class, Default.class])
@@ -118,6 +180,8 @@ class PrivilegeComponent
    * @param id of privilege to be deleted
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:privileges:delete')
   @Validate

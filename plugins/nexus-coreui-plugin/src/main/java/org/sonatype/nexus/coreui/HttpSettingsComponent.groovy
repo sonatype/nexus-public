@@ -34,6 +34,8 @@ import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -62,6 +64,8 @@ class HttpSettingsComponent
    * Retrieves HTTP system settings
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   HttpSettingsXO read() {
     return convert(httpClientManager.configuration)
@@ -130,6 +134,8 @@ class HttpSettingsComponent
    * Updates HTTP system settings.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   @Validate

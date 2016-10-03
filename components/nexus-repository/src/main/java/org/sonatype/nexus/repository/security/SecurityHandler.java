@@ -21,6 +21,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Security handler.
  *
@@ -32,15 +34,20 @@ public class SecurityHandler
     extends ComponentSupport
     implements Handler
 {
+  @VisibleForTesting
+  static final String AUTHORIZED_KEY = "security.authorized";
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
     SecurityFacet securityFacet = context.getRepository().facet(SecurityFacet.class);
 
-    // TODO: May need to check/set some authorized flag in request-context to support group security?
-    // TODO: NX2 group security applies to all members, so checks on members when accessed via group are not checked
-
-    securityFacet.ensurePermitted(context.getRequest());
+    //we employ the model that one security check per request is all that is necessary, if this handler is in a nested
+    //repository (because this is a group repository), there is no need to check authz again
+    if (context.getAttributes().get(AUTHORIZED_KEY) == null) {
+      securityFacet.ensurePermitted(context.getRequest());
+      context.getAttributes().set(AUTHORIZED_KEY, true);
+    }
 
     return context.proceed();
   }

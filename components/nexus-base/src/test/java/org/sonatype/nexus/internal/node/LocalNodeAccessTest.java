@@ -47,7 +47,7 @@ public class LocalNodeAccessTest
     keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
-    nodeAccess = new LocalNodeAccessImpl(keyStoreManager);
+    nodeAccess = new LocalNodeAccess(keyStoreManager);
     nodeAccess.start();
   }
 

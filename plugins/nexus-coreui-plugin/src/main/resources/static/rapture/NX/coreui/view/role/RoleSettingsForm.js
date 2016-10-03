@@ -102,7 +102,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         buttons: ['add', 'remove'],
         fromTitle: NX.I18n.get('Role_RoleSettingsForm_Privileges_FromTitle'),
         toTitle: NX.I18n.get('Role_RoleSettingsForm_Privileges_ToTitle'),
-        store: 'Privilege',
+        store: 'PrivilegeReference',
         valueField: 'id',
         displayField: 'name',
         delimiter: null

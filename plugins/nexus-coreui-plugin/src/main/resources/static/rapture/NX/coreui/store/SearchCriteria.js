@@ -33,74 +33,85 @@ Ext.define('NX.coreui.store.SearchCriteria', {
     }
   },
 
-  data: [
-    {
-      id: 'format',
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_Format_FieldLabel')
-      }
-    },
-    {
-      id: 'keyword',
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_Keyword_FieldLabel'),
-        width: 250
-      }
-    },
-    {
-      id: 'version',
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_Version_FieldLabel')
-      }
-    },
-    {
-      id: 'group.raw',
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_Group_FieldLabel'),
-        width: 250
-      }
-    },
-    {
-      id: 'name.raw',
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_Name_FieldLabel'),
-        width: 200
-      }
-    },
-    {
-      id: 'assets.attributes.checksum.sha1',
-      group: NX.I18n.get('SearchCriteria_Checksum_Group'),
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_SHA1_FieldLabel'),
-        width: 250
-      }
-    },
-    {
-      id: 'assets.attributes.checksum.sha256',
-      group: NX.I18n.get('SearchCriteria_Checksum_Group'),
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_SHA256_FieldLabel'),
-        width: 250
-      }
-    },
-    {
-      id: 'assets.attributes.checksum.sha512',
-      group: NX.I18n.get('SearchCriteria_Checksum_Group'),
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_SHA2_FieldLabel'),
-        width: 250
-      }
-    },
-    {
-      id: 'assets.attributes.checksum.md5',
-      group: NX.I18n.get('SearchCriteria_Checksum_Group'),
-      config: {
-        fieldLabel: NX.I18n.get('SearchCriteria_MD5_FieldLabel'),
-        width: 250
-      }
-    }
-  ],
+  sorters: { property: 'id', direction: 'ASC' },
 
-  sorters: { property: 'id', direction: 'ASC' }
+  constructor: function () {
+    var me = this;
+
+    me.data = [
+      {
+        id: 'format',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_Format_FieldLabel')
+        }
+      },
+      {
+        id: 'keyword',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_Keyword_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'version',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_Version_FieldLabel')
+        }
+      },
+      {
+        id: 'group.raw',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_Group_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'name.raw',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_Name_FieldLabel'),
+          width: 200
+        }
+      },
+      {
+        id: 'assets.attributes.checksum.sha1',
+        group: NX.I18n.get('SearchCriteria_Checksum_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_SHA1_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.checksum.sha256',
+        group: NX.I18n.get('SearchCriteria_Checksum_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_SHA256_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.checksum.sha512',
+        group: NX.I18n.get('SearchCriteria_Checksum_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_SHA2_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.checksum.md5',
+        group: NX.I18n.get('SearchCriteria_Checksum_Group'),
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_MD5_FieldLabel'),
+          width: 250
+        }
+      }
+    ];
+
+    me.callParent(arguments);
+
+    me.on('beforeselect', function(sm, record, i, opts) {
+      // only allow selection of supported records
+      return record.get('supported');
+    });
+  }
 
 });

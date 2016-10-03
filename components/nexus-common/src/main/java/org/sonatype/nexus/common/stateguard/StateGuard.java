@@ -284,6 +284,8 @@ public class StateGuard
    */
   public static class Builder
   {
+    private static final Logger defaultLogger = Loggers.getLogger(StateGuard.class);
+
     private Logger logger;
 
     private ReadWriteLock lock;
@@ -316,7 +318,7 @@ public class StateGuard
 
     public StateGuard create() {
       return new StateGuard(
-          logger != null ? logger : Loggers.getLogger(StateGuard.class),
+          logger != null ? logger : defaultLogger,
           lock != null ? lock : new ReentrantReadWriteLock(),
           initial,
           failure

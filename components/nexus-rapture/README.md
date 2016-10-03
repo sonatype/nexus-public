@@ -17,7 +17,7 @@
 This module provides the baseapp muck for ExtJS 4+ pre-compiled with
 [Sencha CMD](http://docs.sencha.com/extjs/4.2.5/#!/guide/command).
 
-Requires Sencha CMD 4.x (latest 4.x should work newer 5.x and 6.x will **not** work yet).
+Requires Sencha CMD 4.x (macOS 10.12+ requires Sencha CMD 6.2+).
 
 May completely revisit this solution later.
 

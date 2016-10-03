@@ -72,6 +72,7 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
 
       viewConfig: {
         emptyText: NX.I18n.get('Privilege_PrivilegeList_EmptyText'),
+        emptyTextFilter: NX.I18n.get('Privilege_PrivilegeList_Filter_EmptyText'),
         deferEmptyText: false
       },
 
@@ -89,7 +90,7 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
       }],
 
       plugins: [
-        { ptype: 'gridfilterbox', emptyText: NX.I18n.get('Privilege_PrivilegeList_Filter_EmptyText') }
+        {ptype: 'remotegridfilterbox'}
       ]
     });
 

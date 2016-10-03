@@ -24,6 +24,8 @@ import org.sonatype.nexus.security.realm.RealmConfiguration
 import org.sonatype.nexus.security.realm.RealmManager
 import org.sonatype.nexus.validation.Validate
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.google.inject.Key
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
@@ -54,6 +56,8 @@ class RealmSettingsComponent
    * @return security realm settings
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   RealmSettingsXO read() {
     return new RealmSettingsXO(
@@ -66,6 +70,8 @@ class RealmSettingsComponent
    * @return a list of realm types
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   List<ReferenceXO> readRealmTypes() {
     beanLocator.locate(Key.get(Realm.class, Named.class)).collect { entry ->
@@ -81,6 +87,8 @@ class RealmSettingsComponent
    * @return updated security realm settings
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   @Validate

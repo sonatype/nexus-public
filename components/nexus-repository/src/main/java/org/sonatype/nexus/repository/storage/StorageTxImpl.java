@@ -246,6 +246,13 @@ public class StorageTxImpl
     return bucketOf(repository.getName());
   }
 
+  @Nullable
+  @Override
+  @Guarded(by = ACTIVE)
+  public Iterable<Bucket> findBuckets(final Iterable<Repository> repositories) {
+    return bucketsOf(repositories);
+  }
+
   @Override
   @Guarded(by = ACTIVE)
   public Iterable<Bucket> browseBuckets() {

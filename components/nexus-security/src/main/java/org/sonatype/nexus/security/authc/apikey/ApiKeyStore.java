@@ -65,6 +65,13 @@ public interface ApiKeyStore
   void deleteApiKeys(PrincipalCollection principals);
 
   /**
+   * Deletes all API-Keys.
+   * 
+   * @since 3.1
+   */
+  void deleteApiKeys();
+
+  /**
    * Purges any API-Keys associated with missing/deleted users.
    */
   void purgeApiKeys();

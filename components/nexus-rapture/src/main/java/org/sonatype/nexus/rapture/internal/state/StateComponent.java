@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -66,6 +67,7 @@ public class StateComponent
   }
 
   @Timed
+  @ExceptionMetered
   @DirectPollMethod(event = "rapture_State_get")
   public Map<String, Object> getState(final Map<String, String> hashes) {
     HashMap<String, Object> values = new HashMap<>();

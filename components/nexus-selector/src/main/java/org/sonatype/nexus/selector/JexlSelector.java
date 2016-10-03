@@ -36,13 +36,16 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class JexlSelector
     implements Selector
 {
+  // this stops JEXL from using expensive new Throwable().getStackTrace() to find caller info
+  private static final JexlInfo CALLER_INFO = new JexlInfo(JexlSelector.class.getName(), 0, 0);
+
   private static final JexlEngine engine = new JexlBuilder().create();
 
   private final Optional<JexlExpression> expression;
 
   public JexlSelector(final String expression) {
     this.expression = isNullOrEmpty(expression) ? Optional.<JexlExpression>empty()
-        : Optional.of(engine.createExpression(expression));
+        : Optional.of(engine.createExpression(CALLER_INFO, expression));
   }
 
   @Override

@@ -23,12 +23,14 @@ import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.selector.JexlExpressionValidator
 import org.sonatype.nexus.selector.SelectorConfiguration
-import org.sonatype.nexus.selector.SelectorConfigurationStore
+import org.sonatype.nexus.selector.SelectorManager
 import org.sonatype.nexus.validation.ConstraintViolationFactory
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
 
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresAuthentication
@@ -48,7 +50,7 @@ class SelectorComponent
 {
 
   @Inject
-  SelectorConfigurationStore store
+  SelectorManager selectorManager
 
   @Inject
   ConstraintViolationFactory constraintViolationFactory
@@ -60,15 +62,19 @@ class SelectorComponent
    * @return a list of selectors
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:selectors:read')
   List<SelectorXO> read() {
-    return store.browse().collect { asSelector(it) }
+    return selectorManager.browse().collect { asSelector(it) }
   }
 
   /**
    * Creates a selector.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate(groups = [Create.class, Default.class])
   SelectorXO create(final @NotNull @Valid SelectorXO selectorXO) {
@@ -79,7 +85,7 @@ class SelectorComponent
         description: selectorXO.description,
         attributes: ['expression': selectorXO.expression]
     )
-    store.create(configuration)
+    selectorManager.create(configuration)
     return asSelector(configuration)
   }
 
@@ -87,11 +93,13 @@ class SelectorComponent
    * Updates a selector.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate(groups = [Update.class, Default.class])
   SelectorXO update(final @NotNull @Valid SelectorXO selectorXO) {
     jexlExpressionValidator.validate(selectorXO.expression)
-    store.update(store.read(new DetachedEntityId(selectorXO.id)).with {
+    selectorManager.update(selectorManager.read(new DetachedEntityId(selectorXO.id)).with {
       description = selectorXO.description
       attributes = ['expression': selectorXO.expression]
       return it
@@ -103,18 +111,22 @@ class SelectorComponent
    * Deletes a selector.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   void remove(final @NotEmpty String id) {
-    store.delete(store.read(new DetachedEntityId(id)))
+    selectorManager.delete(selectorManager.read(new DetachedEntityId(id)))
   }
 
   /**
    * Retrieve a list of available selector references.
    */
   @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<ReferenceXO> readReferences() {
-    return store.browse().collect { new ReferenceXO(id: it.name, name: it.name) }
+    return selectorManager.browse().collect { new ReferenceXO(id: it.name, name: it.name) }
   }
 
   static SelectorXO asSelector(final SelectorConfiguration configuration) {

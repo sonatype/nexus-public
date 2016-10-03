@@ -23,7 +23,6 @@ Ext.define('NX.coreui.store.Privilege', {
 
   proxy: {
     type: 'direct',
-    paramsAsHash: false,
 
     api: {
       read: 'NX.direct.coreui_Privilege.read'
@@ -37,5 +36,13 @@ Ext.define('NX.coreui.store.Privilege', {
     }
   },
 
+  buffered: true,
+  pageSize: 300,
+  trailingBufferZone: 20,
+  leadingBufferZone: 50,
+
+  remoteFilter: true,
+  remoteSort: true,
+  
   sorters: { property: 'name', direction: 'ASC' }
 });

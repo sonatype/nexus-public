@@ -70,20 +70,7 @@ Ext.define('NX.coreui.controller.Tasks', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/System/Tasks',
-    text: NX.I18n.get('Tasks_Text'),
-    description: NX.I18n.get('Tasks_Description'),
-    view: { xtype: 'nx-coreui-task-feature' },
-    iconConfig: {
-      file: 'time.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:tasks:read');
-    }
-  },
+
   permission: 'nexus:tasks',
 
   /**
@@ -91,6 +78,21 @@ Ext.define('NX.coreui.controller.Tasks', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/System/Tasks',
+      text: NX.I18n.get('Tasks_Text'),
+      description: NX.I18n.get('Tasks_Description'),
+      view: {xtype: 'nx-coreui-task-feature'},
+      iconConfig: {
+        file: 'time.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:tasks:read');
+      }
+    };
 
     me.callParent();
 

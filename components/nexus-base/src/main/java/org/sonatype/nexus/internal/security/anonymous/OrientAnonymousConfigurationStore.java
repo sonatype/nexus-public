@@ -23,7 +23,6 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
-import org.sonatype.nexus.security.anonymous.AnonymousConfigurationStore;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 

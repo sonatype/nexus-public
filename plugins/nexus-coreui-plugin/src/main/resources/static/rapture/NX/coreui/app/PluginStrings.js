@@ -1314,8 +1314,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Title: 'Synchronizing',
       Description: '<p>Upgrade is synchronizing changes.</p>',
       Abort_Button: 'Abort',
-      Stop_Monitoring_Button: 'Stop Monitoring',
-      Finish_Button: 'Finish'
+      Continue_Button: 'Continue',
+      Continue_Button_Pending: '<i class="fa fa-spinner fa-spin fa-fw"></i> Continue'
     },
 
     'NX.coreui.migration.PhaseSyncStep': {
@@ -1331,8 +1331,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Stop_Waiting_Confirm_Mask: 'Finalizing changes',
       Stop_Waiting_Confirm_Message: 'Changes finalized',
 
-      Finish_Confirm_Title: 'Finish Upgrade',
-      Finish_Confirm_Text: 'Do you want to finish the upgrade?',
       Finish_Mask: 'Upgrade finishing',
       Finish_Message: 'Upgrade finishing'
     },

@@ -88,6 +88,12 @@ public interface StorageTx
   Bucket findBucket(Repository repository);
 
   /**
+   * Finds buckets based on the repositories.
+   */
+  @Nullable
+  Iterable<Bucket> findBuckets(final Iterable<Repository> repositories);
+
+  /**
    * Gets all buckets.
    */
   Iterable<Bucket> browseBuckets();

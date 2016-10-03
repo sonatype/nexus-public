@@ -27,6 +27,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.PbeCompression;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -156,6 +157,8 @@ public class ApiKeyEntityAdapter
   //
   // Actions
   //
+
+  public final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
 
   /**
    * Browse all entities which have matching primary principal.

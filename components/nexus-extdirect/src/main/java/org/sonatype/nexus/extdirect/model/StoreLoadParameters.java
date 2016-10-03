@@ -86,6 +86,17 @@ public class StoreLoadParameters
     this.sort = sort;
   }
 
+  @Override
+  public String toString() {
+    return "StoreLoadParameters{" +
+        "page=" + page +
+        ", start=" + start +
+        ", limit=" + limit +
+        ", sort=" + sort +
+        ", filter=" + filter +
+        '}';
+  }
+  
   public static class Filter
   {
     private String property;
@@ -106,6 +117,14 @@ public class StoreLoadParameters
 
     public void setValue(final String value) {
       this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return "Filter{" +
+          "property='" + property + '\'' +
+          ", value='" + value + '\'' +
+          '}';
     }
   }
 
@@ -129,6 +148,14 @@ public class StoreLoadParameters
 
     public void setDirection(final String value) {
       this.direction = value;
+    }
+
+    @Override
+    public String toString() {
+      return "Sort{" +
+          "property='" + property + '\'' +
+          ", direction='" + direction + '\'' +
+          '}';
     }
   }
 }

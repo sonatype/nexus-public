@@ -39,7 +39,7 @@ public class ApplicationPermission
     this.domain = checkNotNull(domain);
     this.actions = checkNotNull(actions);
 
-    setParts(String.format("%s:%s:%s",
+    setParts(Joiner.on(':').join(
         SYSTEM,
         domain,
         Joiner.on(',').join(actions)

@@ -73,8 +73,8 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
         <executions>
           <execution>
             <id>mvn-coordinates</id>
@@ -83,12 +83,14 @@
               <goal>execute</goal>
             </goals>
             <configuration>
-              <source>
-                project.artifactMap.each{k,v->
-                  // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
-                  project.properties['mvn:'+v.artifactId]='mvn:'+v.groupId+'/'+v.artifactId+'/'+v.version
-                }
-              </source>
+              <scripts>
+                <script>
+                  project.artifactMap.each{k,v->
+                    // add 'mvn:artifactId' properties representing Pax-URL path for each transitive artifact
+                    project.properties['mvn:'+v.artifactId]='mvn:'+v.groupId+'/'+v.artifactId+'/'+v.version
+                  }
+                </script>
+              </scripts>
             </configuration>
           </execution>
         </executions>

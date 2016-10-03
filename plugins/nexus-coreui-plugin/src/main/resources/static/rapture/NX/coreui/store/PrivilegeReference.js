@@ -10,15 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector;
+/*global Ext*/
 
 /**
- * Evaluate selectors using a provided VariableSource
+ * Privilege reference store.
  *
  * @since 3.1
  */
-public interface SelectorEvaluator
-{
-  boolean evaluate(SelectorConfiguration selectorConfiguration, VariableSource variableSource)
-      throws SelectorEvaluationException;
-}
+Ext.define('NX.coreui.store.PrivilegeReference', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.Reference',
+
+  proxy: {
+    type: 'direct',
+
+    api: {
+      read: 'NX.direct.coreui_Privilege.readReferences'
+    },
+
+    reader: {
+      type: 'json',
+      root: 'data',
+      idProperty: 'id',
+      successProperty: 'success'
+    }
+  },
+  
+  sorters: { property: 'name', direction: 'ASC' }
+});

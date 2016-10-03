@@ -164,12 +164,13 @@
   border-bottom: 1px solid #f4f4f4;
 }
 
-.x-tab-nx-light-top-active {
-  border-bottom: 1px solid #cbcbcb;
+.x-tab-nx-light-top-active,
+.x-tab-nx-light-top-active.x-tab-nx-light-top-over {
+  border-bottom: 1px solid #f4f4f4;
 }
 
 .x-tab-nx-light-top-over {
-  border-bottom: 1px solid #ebebeb;
+  border-bottom: 1px solid #dddddd;
 }
 
 .x-tab-bar + .x-panel-body {

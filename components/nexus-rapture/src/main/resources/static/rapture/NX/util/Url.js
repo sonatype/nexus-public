@@ -82,6 +82,16 @@ Ext.define('NX.util.Url', {
   },
 
   /**
+   * Allows text to be easily copy/pasted.
+   *
+   * @public
+   * @param {String} value to copy
+   */
+  asCopyWidget: function (value) {
+    return '<button onclick="Ext.widget(\'nx-copywindow\', { copyText: \'' + value + '\' });" title="' + value + '"><i class="fa fa-clipboard"></i> copy</button>';
+  },
+
+  /**
    * Helper to append cache busting suffix to given url.
    *
    * @param {string} url

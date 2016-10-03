@@ -73,37 +73,7 @@ Ext.define('NX.coreui.controller.Users', {
       variants: ['x16']
     }
   },
-  features: [
-    {
-      mode: 'admin',
-      path: '/Security/Users',
-      text: NX.I18n.get('User_Text'),
-      description: NX.I18n.get('User_Description'),
-      view: { xtype: 'nx-coreui-user-feature' },
-      iconConfig: {
-        file: 'group.png',
-        variants: ['x16', 'x32']
-      },
-      visible: function() {
-        return NX.Permissions.check('nexus:users:read') && NX.Permissions.check('nexus:roles:read');
-      },
-      weight: 30
-    },
-    {
-      mode: 'user',
-      path: '/Account',
-      text: NX.I18n.get('Users_Text'),
-      description: NX.I18n.get('Users_Description'),
-      view: { xtype: 'nx-coreui-user-account' },
-      iconConfig: {
-        file: 'user.png',
-        variants: ['x16', 'x32']
-      },
-      visible: function() {
-        return NX.Security.hasUser();
-      }
-    }
-  ],
+
   permission: 'nexus:users',
 
   /**
@@ -111,6 +81,38 @@ Ext.define('NX.coreui.controller.Users', {
    */
   init: function() {
     var me = this;
+
+    me.features = [
+      {
+        mode: 'admin',
+        path: '/Security/Users',
+        text: NX.I18n.get('User_Text'),
+        description: NX.I18n.get('User_Description'),
+        view: {xtype: 'nx-coreui-user-feature'},
+        iconConfig: {
+          file: 'group.png',
+          variants: ['x16', 'x32']
+        },
+        visible: function() {
+          return NX.Permissions.check('nexus:users:read') && NX.Permissions.check('nexus:roles:read');
+        },
+        weight: 30
+      },
+      {
+        mode: 'user',
+        path: '/Account',
+        text: NX.I18n.get('Users_Text'),
+        description: NX.I18n.get('Users_Description'),
+        view: {xtype: 'nx-coreui-user-account'},
+        iconConfig: {
+          file: 'user.png',
+          variants: ['x16', 'x32']
+        },
+        visible: function() {
+          return NX.Security.hasUser();
+        }
+      }
+    ];
 
     me.callParent();
 

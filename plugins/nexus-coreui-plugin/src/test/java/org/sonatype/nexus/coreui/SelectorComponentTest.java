@@ -18,7 +18,7 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Path;
 
 import org.sonatype.goodies.testsupport.inject.InjectedTestSupport;
-import org.sonatype.nexus.selector.SelectorConfigurationStore;
+import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.inject.Binder;
@@ -48,7 +48,7 @@ public class SelectorComponentTest
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
     ConstraintViolation constraintViolation = mock(ConstraintViolation.class);
     binder.bind(ConstraintViolationFactory.class).toInstance(constraintViolationFactory);
-    binder.bind(SelectorConfigurationStore.class).toInstance(mock(SelectorConfigurationStore.class));
+    binder.bind(SelectorManager.class).toInstance(mock(SelectorManager.class));
     when(constraintViolationFactory.createViolation(eq("expression"), anyString())).thenReturn(constraintViolation);
     when(constraintViolation.getPropertyPath()).thenReturn(path);
   }

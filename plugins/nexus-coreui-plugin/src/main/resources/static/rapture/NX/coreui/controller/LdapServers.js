@@ -68,20 +68,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
       variants: ['x16']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Security/LDAP',
-    text: NX.I18n.get('LdapServers_Text'),
-    description: NX.I18n.get('LdapServers_Description'),
-    view: { xtype: 'nx-coreui-ldapserver-feature' },
-    iconConfig: {
-      file: 'book_addresses.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:ldap:read');
-    }
-  },
+
   permission: 'nexus:ldap',
 
   /**
@@ -89,6 +76,21 @@ Ext.define('NX.coreui.controller.LdapServers', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Security/LDAP',
+      text: NX.I18n.get('LdapServers_Text'),
+      description: NX.I18n.get('LdapServers_Description'),
+      view: {xtype: 'nx-coreui-ldapserver-feature'},
+      iconConfig: {
+        file: 'book_addresses.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:ldap:read');
+      }
+    };
 
     me.callParent();
 

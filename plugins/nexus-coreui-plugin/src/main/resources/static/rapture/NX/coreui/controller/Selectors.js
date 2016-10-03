@@ -62,21 +62,7 @@ Ext.define('NX.coreui.controller.Selectors', {
       variants: ['x16', 'x32']
     }
   },
-  features: {
-    mode: 'admin',
-    path: '/Repository/Selectors',
-    text: NX.I18n.get('Selectors_Text'),
-    description: NX.I18n.get('Selectors_Description'),
-    view: {xtype: 'nx-coreui-selector-feature'},
-    iconConfig: {
-      file: 'content_selector.png',
-      variants: ['x16', 'x32']
-    },
-    visible: function() {
-      return NX.Permissions.check('nexus:selectors:read');
-    },
-    weight: 300
-  },
+
   permission: 'nexus:selectors',
 
   /**
@@ -84,6 +70,22 @@ Ext.define('NX.coreui.controller.Selectors', {
    */
   init: function() {
     var me = this;
+
+    me.features = {
+      mode: 'admin',
+      path: '/Repository/Selectors',
+      text: NX.I18n.get('Selectors_Text'),
+      description: NX.I18n.get('Selectors_Description'),
+      view: {xtype: 'nx-coreui-selector-feature'},
+      iconConfig: {
+        file: 'content_selector.png',
+        variants: ['x16', 'x32']
+      },
+      visible: function() {
+        return NX.Permissions.check('nexus:selectors:read');
+      },
+      weight: 300
+    };
 
     me.callParent();
 

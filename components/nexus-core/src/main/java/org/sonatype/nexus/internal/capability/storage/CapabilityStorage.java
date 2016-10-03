@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -28,9 +27,8 @@ public interface CapabilityStorage
    * Adds a capability
    *
    * @param item to be added
-   * @throws IOException IOException If any problem encountered while read/store of capabilities storage
    */
-  CapabilityIdentity add(CapabilityStorageItem item) throws IOException;
+  CapabilityIdentity add(CapabilityStorageItem item);
 
   // FIXME: update() and remove() return values are never used, probably should return void instead
 
@@ -39,24 +37,21 @@ public interface CapabilityStorage
    *
    * @param item to be updated
    * @return false if capability to be updated does not exist in storage, true otherwise
-   * @throws IOException If any problem encountered while read/store of capabilities storage
    */
-  boolean update(CapabilityIdentity id, CapabilityStorageItem item) throws IOException;
+  boolean update(CapabilityIdentity id, CapabilityStorageItem item);
 
   /**
    * Deletes stored capability if exists.
    *
    * @param id of capability to be deleted
    * @return false if capability to be deleted does not exist in storage, true otherwise
-   * @throws IOException If any problem encountered while read/store of capabilities storage
    */
-  boolean remove(CapabilityIdentity id) throws IOException;
+  boolean remove(CapabilityIdentity id);
 
   /**
    * Retrieves stored capabilities.
    *
    * @return capabilities (never null)
-   * @throws IOException If any problem encountered while read/store of capabilities storage
    */
-  Map<CapabilityIdentity, CapabilityStorageItem> getAll() throws IOException;
+  Map<CapabilityIdentity, CapabilityStorageItem> getAll();
 }
