@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class BrowseAssetsSqlBuilder
 
   public String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this) == true");
+    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     if (queryOptions.getFilter() != null) {
       whereClauses.add(MetadataNodeEntityAdapter.P_NAME + " LIKE :nameFilter");
     }
@@ -67,10 +67,12 @@ public class BrowseAssetsSqlBuilder
   }
 
   public Map<String, Object> buildSqlParams() {
+    Map<String, Object> params = new HashMap<>();
+    params.put("browsedRepository", queryOptions.getBrowsedRepository());
     String filter = queryOptions.getFilter();
-    if (filter == null) {
-      return Collections.emptyMap();
+    if (filter != null) {
+      params.put("nameFilter", "%" + filter + "%");
     }
-    return Collections.singletonMap("nameFilter", "%" + filter + "%");
+    return params;
   }
 }

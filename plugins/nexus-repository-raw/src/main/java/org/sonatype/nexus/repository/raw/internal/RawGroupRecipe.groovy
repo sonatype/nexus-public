@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.group.GroupFacetImpl
+import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.security.SecurityHandler
@@ -59,7 +59,7 @@ class RawGroupRecipe
   Provider<ConfigurableViewFacet> viewFacet
 
   @Inject
-  Provider<GroupFacetImpl> groupFacet
+  Provider<GroupFacet> groupFacet
 
   @Inject
   ExceptionHandler exceptionHandler

@@ -71,6 +71,7 @@ Ext.define('NX.coreui.controller.Repositories', {
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},
+    {ref: 'content', selector: 'nx-feature-content'},
     {ref: 'list', selector: 'nx-coreui-repository-list'},
     {ref: 'settings', selector: 'nx-coreui-repository-feature nx-coreui-repository-settings'},
     {ref: 'proxyFacetContentMaxAge', selector: 'nx-coreui-repository-add numberfield[name=attributes.proxy.contentMaxAge]'}
@@ -286,7 +287,9 @@ Ext.define('NX.coreui.controller.Repositories', {
     var me = this,
         description = me.getDescription(model);
 
+    me.getContent().getEl().mask(NX.I18n.get('Repositories_Delete_Mask'));
     NX.direct.coreui_Repository.remove(model.getId(), function (response) {
+      me.getContent().getEl().unmask();
       me.getStore('Repository').load();
       if (Ext.isObject(response) && response.success) {
         NX.Messages.add({text: 'Repository deleted: ' + description, type: 'success'});

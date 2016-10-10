@@ -17,7 +17,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 import javax.validation.ValidationException
 
-import org.sonatype.nexus.coreui.search.SearchContribution
+import org.sonatype.nexus.coreui.internal.search.SearchContribution
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse

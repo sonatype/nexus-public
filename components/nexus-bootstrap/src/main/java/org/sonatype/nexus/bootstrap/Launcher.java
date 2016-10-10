@@ -24,6 +24,7 @@ import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 /**
  * Nexus bootstrap launcher.
@@ -54,10 +55,7 @@ public class Launcher
 
   public Launcher(final File configFile) throws Exception {
 
-    if (HAS_JUL_BRIDGE) {
-      org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();
-      org.slf4j.bridge.SLF4JBridgeHandler.install();
-    }
+    configureLogging();
 
     ClassLoader cl = getClass().getClassLoader();
 
@@ -139,5 +137,18 @@ public class Launcher
 
   public void stop() throws Exception {
     server.stop();
+  }
+
+  /**
+   * Customize logging of the application as necessary. 
+   */
+  private void configureLogging() {
+    SysOutOverSLF4J.registerLoggingSystem("org.ops4j.pax.logging.slf4j");
+    SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
+
+    if (HAS_JUL_BRIDGE) {
+      org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();
+      org.slf4j.bridge.SLF4JBridgeHandler.install();
+    }
   }
 }

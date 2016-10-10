@@ -29,10 +29,10 @@ public class MavenSecurityFacet
     extends SecurityFacetSupport
 {
   @Inject
-  public MavenSecurityFacet(final MavenFormatSecurityConfigurationResource securityResource,
+  public MavenSecurityFacet(final MavenFormatSecurityContributor securityContributor,
                             @Named(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,
                             final ContentPermissionChecker contentPermissionChecker)
   {
-    super(securityResource, variableResolverAdapter, contentPermissionChecker);
+    super(securityContributor, variableResolverAdapter, contentPermissionChecker);
   }
 }

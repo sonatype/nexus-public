@@ -45,7 +45,7 @@ public class InitialStep
 
   @Override
   public boolean satisfies(final String model, final String version) {
-    return version.equals(modelVersions.getOrDefault(model, "1.0"));
+    return VersionComparator.INSTANCE.compare(modelVersions.getOrDefault(model, "1.0"), version) >= 0;
   }
 
   @Override

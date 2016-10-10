@@ -14,6 +14,7 @@ package org.sonatype.nexus.script.plugin.internal.provisioning
 
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
+import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -27,7 +28,6 @@ import org.sonatype.nexus.repository.maven.VersionPolicy
 import org.sonatype.nexus.repository.storage.WritePolicy
 import org.sonatype.nexus.script.plugin.RepositoryApi
 
-import com.google.inject.Inject
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 

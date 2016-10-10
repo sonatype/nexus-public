@@ -31,13 +31,13 @@ import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
-import org.sonatype.nexus.security.config.DynamicSecurityConfigurationResource;
+import org.sonatype.nexus.security.config.DynamicSecurityContributor;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
-import org.sonatype.nexus.security.config.StaticSecurityConfigurationResource;
+import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
@@ -67,9 +67,9 @@ public class SecurityConfigurationManagerImpl
 
   private final EventBus eventBus;
 
-  private final List<StaticSecurityConfigurationResource> staticResources;
+  private final List<SecurityContributor> staticContributors;
 
-  private final List<DynamicSecurityConfigurationResource> dynamicResources;
+  private final List<DynamicSecurityContributor> dynamicContributors;
 
   private volatile SecurityConfiguration defaultConfiguration;
 
@@ -77,15 +77,15 @@ public class SecurityConfigurationManagerImpl
 
   @Inject
   public SecurityConfigurationManagerImpl(final SecurityConfigurationSource configurationSource,
-                                          final List<StaticSecurityConfigurationResource> staticResources,
-                                          final List<DynamicSecurityConfigurationResource> dynamicResources,
+                                          final List<SecurityContributor> staticContributors,
+                                          final List<DynamicSecurityContributor> dynamicContributors,
                                           final SecurityConfigurationCleaner configCleaner,
                                           final PasswordService passwordService,
                                           final EventBus eventBus)
   {
     this.configurationSource = configurationSource;
-    this.dynamicResources = dynamicResources;
-    this.staticResources = staticResources;
+    this.dynamicContributors = dynamicContributors;
+    this.staticContributors = staticContributors;
     this.eventBus = eventBus;
     this.configCleaner = configCleaner;
     this.passwordService = passwordService;
@@ -146,7 +146,7 @@ public class SecurityConfigurationManagerImpl
     if (!found) {
       throw new NoSuchPrivilegeException(id);
     }
-    cleanRemovedPrivilege(id);
+    configCleaner.privilegeRemoved(getDefaultConfiguration(), id);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class SecurityConfigurationManagerImpl
     if (!found) {
       throw new NoSuchRoleException(id);
     }
-    cleanRemovedRole(id);
+    configCleaner.roleRemoved(getDefaultConfiguration(), id);
   }
 
   @Override
@@ -265,18 +265,9 @@ public class SecurityConfigurationManagerImpl
     }
   }
 
-  @Override
-  public void cleanRemovedPrivilege(String privilegeId) {
-    configCleaner.privilegeRemoved(getDefaultConfiguration(), privilegeId);
-  }
-
-  @Override
-  public void cleanRemovedRole(String roleId) {
-    configCleaner.roleRemoved(getDefaultConfiguration(), roleId);
-  }
-
   private SecurityConfiguration getDefaultConfiguration() {
-    // Assign configuration to local variable first, as calls to clearCache can null it out at any time
+    // Assign configuration to local variable first, in case it's nulled out by asynchronous event
+    // (currently there is no such event because the orient configuration handles its own reloading)
     SecurityConfiguration configuration = this.defaultConfiguration;
     if (configuration == null) {
       synchronized (this) {
@@ -292,12 +283,11 @@ public class SecurityConfigurationManagerImpl
   }
 
   private SecurityConfiguration doGetDefaultConfiguration() {
-    configurationSource.loadConfiguration();
-    return configurationSource.getConfiguration();
+    return configurationSource.loadConfiguration();
   }
 
   private SecurityConfiguration getMergedConfiguration() {
-    // Assign configuration to local variable first, as calls to clearCache can null it out at any time
+    // Assign configuration to local variable first, in case it's nulled out by asynchronous event
     SecurityConfiguration configuration = this.mergedConfiguration;
     if (configuration == null || isDirty()) {
       boolean rebuiltConfiguration = false;
@@ -322,8 +312,8 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public boolean isDirty() {
-    for (DynamicSecurityConfigurationResource resource : dynamicResources) {
-      if (resource.isDirty()) {
+    for (DynamicSecurityContributor contributor : dynamicContributors) {
+      if (contributor.isDirty()) {
         return true;
       }
     }
@@ -333,35 +323,35 @@ public class SecurityConfigurationManagerImpl
   private MemorySecurityConfiguration doGetMergedConfiguration() {
     final MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
 
-    for (StaticSecurityConfigurationResource resource : staticResources) {
-      SecurityConfiguration resConfig = resource.getConfiguration();
+    for (SecurityContributor contributor : staticContributors) {
+      SecurityConfiguration contribution = contributor.getContribution();
 
-      if (resConfig != null) {
+      if (contribution != null) {
         checkState(
-            resConfig.getUsers() == null || resConfig.getUsers().isEmpty(),
-            "Static resources cannot have users"
+            contribution.getUsers() == null || contribution.getUsers().isEmpty(),
+            "Static contributions cannot have users"
         );
         checkState(
-            resConfig.getUserRoleMappings() == null || resConfig.getUserRoleMappings().isEmpty(),
-            "Static resources cannot have user/role mappings"
+            contribution.getUserRoleMappings() == null || contribution.getUserRoleMappings().isEmpty(),
+            "Static contributions cannot have user/role mappings"
         );
-        appendConfig(configuration, resConfig);
+        appendConfig(configuration, contribution);
       }
     }
 
-    for (DynamicSecurityConfigurationResource resource : dynamicResources) {
-      SecurityConfiguration resConfig = resource.getConfiguration();
+    for (DynamicSecurityContributor contributor : dynamicContributors) {
+      SecurityConfiguration contribution = contributor.getContribution();
 
-      if (resConfig != null) {
+      if (contribution != null) {
         checkState(
-            resConfig.getUsers() == null || resConfig.getUsers().isEmpty(),
-            "Dynamic resources cannot have users"
+            contribution.getUsers() == null || contribution.getUsers().isEmpty(),
+            "Dynamic contributions cannot have users"
         );
         checkState(
-            resConfig.getUserRoleMappings() == null || resConfig.getUserRoleMappings().isEmpty(),
-            "Dynamic resources cannot have user/role mappings"
+            contribution.getUserRoleMappings() == null || contribution.getUserRoleMappings().isEmpty(),
+            "Dynamic contributions cannot have user/role mappings"
         );
-        appendConfig(configuration, resConfig);
+        appendConfig(configuration, contribution);
       }
     }
 

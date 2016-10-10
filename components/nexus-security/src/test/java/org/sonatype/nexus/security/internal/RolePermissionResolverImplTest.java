@@ -16,7 +16,6 @@ import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.security.SecurityConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
@@ -62,21 +61,15 @@ public class RolePermissionResolverImplTest
     verify(securityConfigurationManager).readRole(any());
 
     //simulate event being fired, which clears cache
-    underTest.on(new SecurityConfigurationChanged());
-
-    underTest.resolvePermissionsInRole("role1");
-    verify(securityConfigurationManager, times(2)).readRole(any());
-
-    //simulate event being fired, which clears cache
     underTest.on(new AuthorizationConfigurationChanged());
 
     underTest.resolvePermissionsInRole("role1");
-    verify(securityConfigurationManager, times(3)).readRole(any());
+    verify(securityConfigurationManager, times(2)).readRole(any());
 
     //and finally make sure we are hitting cache again
     underTest.resolvePermissionsInRole("role1");
     underTest.resolvePermissionsInRole("role1");
     underTest.resolvePermissionsInRole("role1");
-    verify(securityConfigurationManager, times(3)).readRole(any());
+    verify(securityConfigurationManager, times(2)).readRole(any());
   }
 }

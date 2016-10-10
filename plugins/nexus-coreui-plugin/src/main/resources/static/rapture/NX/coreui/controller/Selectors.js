@@ -243,7 +243,10 @@ Ext.define('NX.coreui.controller.Selectors', {
   loadPreviewAssetStore: function(store, records, successful) {
     var me = this;
 
-    me.getPreviewWindowPreviewButton().enable();
+    var previewWindowPreviewButton = me.getPreviewWindowPreviewButton();
+    if (previewWindowPreviewButton) {
+      previewWindowPreviewButton.enable();
+    }
 
     //since we are dealing with a store, there isn't typical api for mapping an error to a form field
     //so we do it manually

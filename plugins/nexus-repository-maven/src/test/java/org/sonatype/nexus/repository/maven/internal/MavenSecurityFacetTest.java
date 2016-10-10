@@ -44,7 +44,7 @@ public class MavenSecurityFacetTest
   ContentPermissionChecker contentPermissionChecker;
 
   @Mock
-  MavenFormatSecurityConfigurationResource mavenFormatSecurityConfigurationResource;
+  MavenFormatSecurityContributor securityContributor;
 
   @Mock
   VariableResolverAdapter variableResolverAdapter;
@@ -59,7 +59,7 @@ public class MavenSecurityFacetTest
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.getName()).thenReturn("MavenSecurityFacetTest");
 
-    mavenSecurityFacet = new MavenSecurityFacet(mavenFormatSecurityConfigurationResource,
+    mavenSecurityFacet = new MavenSecurityFacet(securityContributor,
         variableResolverAdapter, contentPermissionChecker);
 
     mavenSecurityFacet.attach(repository);

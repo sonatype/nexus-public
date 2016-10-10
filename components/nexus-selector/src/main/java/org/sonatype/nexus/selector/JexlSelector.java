@@ -39,13 +39,22 @@ public class JexlSelector
   // this stops JEXL from using expensive new Throwable().getStackTrace() to find caller info
   private static final JexlInfo CALLER_INFO = new JexlInfo(JexlSelector.class.getName(), 0, 0);
 
-  private static final JexlEngine engine = new JexlBuilder().create();
+  private static final JexlBuilder jexlBuilder = new JexlBuilder();
+
+  // provide a JEXL engine per-thread to avoid contention on the parsing lock
+  private static final ThreadLocal<JexlEngine> threadLocalJexl = new ThreadLocal<JexlEngine>()
+  {
+    @Override
+    protected JexlEngine initialValue() {
+      return jexlBuilder.create();
+    }
+  };
 
   private final Optional<JexlExpression> expression;
 
   public JexlSelector(final String expression) {
     this.expression = isNullOrEmpty(expression) ? Optional.<JexlExpression>empty()
-        : Optional.of(engine.createExpression(CALLER_INFO, expression));
+        : Optional.of(threadLocalJexl.get().createExpression(CALLER_INFO, expression));
   }
 
   @Override

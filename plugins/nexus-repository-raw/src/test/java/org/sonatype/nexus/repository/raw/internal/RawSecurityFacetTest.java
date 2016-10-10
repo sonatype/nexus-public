@@ -48,7 +48,7 @@ public class RawSecurityFacetTest
   VariableResolverAdapter variableResolverAdapter;
 
   @Mock
-  RawFormatSecurityConfigurationResource rawFormatSecurityConfigurationResource;
+  RawFormatSecurityContributor securityContributor;
 
   RawSecurityFacet rawSecurityFacet;
 
@@ -60,7 +60,7 @@ public class RawSecurityFacetTest
     when(repository.getFormat()).thenReturn(new Format("raw") { });
     when(repository.getName()).thenReturn("RawSecurityFacetTest");
 
-    rawSecurityFacet = new RawSecurityFacet(rawFormatSecurityConfigurationResource,
+    rawSecurityFacet = new RawSecurityFacet(securityContributor,
         variableResolverAdapter, contentPermissionChecker);
 
     rawSecurityFacet.attach(repository);

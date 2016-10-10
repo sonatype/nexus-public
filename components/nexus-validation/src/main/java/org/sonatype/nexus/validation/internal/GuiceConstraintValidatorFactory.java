@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.validation.internal;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.google.inject.Inject;
 import com.google.inject.Key;
 import org.eclipse.sisu.inject.BeanLocator;
 

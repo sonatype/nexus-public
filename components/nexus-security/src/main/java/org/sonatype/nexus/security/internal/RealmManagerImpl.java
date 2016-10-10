@@ -25,7 +25,6 @@ import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.security.SecurityConfigurationChanged;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
@@ -300,15 +299,6 @@ public class RealmManagerImpl
   public void onEvent(final AuthorizationConfigurationChanged event) {
     // TODO: we could do this better, not flushing whole cache for single user roles being updated
     clearAuthzRealmCaches();
-  }
-
-  @Subscribe
-  public void onEvent(final SecurityConfigurationChanged event) {
-    clearAuthcRealmCaches();
-    clearAuthzRealmCaches();
-    // FIXME: What is the purpose of nulling the configuration model here?
-    //securitySettingsManager.clearCache();
-    installRealms();
   }
 
   /**

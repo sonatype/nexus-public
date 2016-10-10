@@ -44,7 +44,7 @@ class StaticSecurityConfigurationSource
             ),
             new CUser(
                 id: 'anonymous',
-                // TODO: password=???
+                // password='anonymous'
                 password: '$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==',
                 firstName: 'Anonymous',
                 lastName: 'User',

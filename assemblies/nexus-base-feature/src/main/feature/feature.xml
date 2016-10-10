@@ -32,9 +32,6 @@
     <bundle>wrap:${mvn:resteasy-validator-provider-11}$Bundle-SymbolicName=resteasy-validator-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-client}$Bundle-SymbolicName=resteasy-client&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
 
-    <!-- TEMP: workaround orientdb distributed bug (http://www.prjhub.com/#/issues/7430) where core bundle needs wider access for deserialization -->
-    <bundle>wrap:${mvn:orientdb-core}$overwrite=merge&amp;DynamicImport-Package=com.orientechnologies.*</bundle>
-
     <!--
     Give our extender bundle its own start level (distinct from the boot start-level)
     -->

@@ -31,10 +31,6 @@ import org.sonatype.nexus.upgrade.plan.DependencyResolver;
 import org.sonatype.nexus.upgrade.plan.DependencySource;
 
 import com.google.common.collect.ImmutableList;
-import org.eclipse.aether.util.version.GenericVersionScheme;
-import org.eclipse.aether.version.InvalidVersionSpecificationException;
-import org.eclipse.aether.version.Version;
-import org.eclipse.aether.version.VersionScheme;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -49,8 +45,6 @@ import static java.util.stream.Collectors.toList;
 public class UpgradeManager
     extends ComponentSupport
 {
-  private static final VersionScheme VERSION_SCHEME = new GenericVersionScheme();
-
   private final List<Checkpoint> managedCheckpoints;
 
   private final List<Upgrade> managedUpgrades;
@@ -130,22 +124,14 @@ public class UpgradeManager
     Upgrades upgrades = upgrades(upgrade);
 
     String current = modelVersions.getOrDefault(upgrades.model(), "1.0");
-    try {
-      Version currentVersion = VERSION_SCHEME.parseVersion(current);
-      Version fromVersion = VERSION_SCHEME.parseVersion(upgrades.from());
-      Version toVersion = VERSION_SCHEME.parseVersion(upgrades.to());
 
-      // sanity check the upgrade increases the version
-      checkArgument(toVersion.compareTo(fromVersion) > 0,
-          "%s upgrade version '%s' is not after '%s'",
-          upgrade.getClass(), upgrades.to(), upgrades.from());
+    // sanity check the upgrade increases the version
+    checkArgument(VersionComparator.INSTANCE.compare(upgrades.to(), upgrades.from()) > 0,
+        "%s upgrade version '%s' is not after '%s'",
+        upgrade.getClass(), upgrades.to(), upgrades.from());
 
-      // does the upgrade go past the current version?
-      return toVersion.compareTo(currentVersion) > 0;
-    }
-    catch (final InvalidVersionSpecificationException e) {
-      throw new IllegalArgumentException(e);
-    }
+    // does the upgrade go past the current version?
+    return VersionComparator.INSTANCE.compare(upgrades.to(), current) > 0;
   }
 
   /**
@@ -170,12 +156,6 @@ public class UpgradeManager
    * Partial ordering for independent/unrelated {@link UpgradeStep}s (earliest first).
    */
   static int byVersion(final UpgradeStep lhs, final UpgradeStep rhs) {
-    try {
-      return VERSION_SCHEME.parseVersion(lhs.getVersion())
-          .compareTo(VERSION_SCHEME.parseVersion(rhs.getVersion()));
-    }
-    catch (InvalidVersionSpecificationException e) {
-      throw new IllegalArgumentException(e);
-    }
+    return VersionComparator.INSTANCE.compare(lhs.getVersion(), rhs.getVersion());
   }
 }

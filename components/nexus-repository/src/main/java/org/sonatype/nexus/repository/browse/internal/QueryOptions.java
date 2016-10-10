@@ -19,6 +19,7 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Data carrier with fields commonly used by SQL builders for the {@link BrowseServiceImpl} implementation. Also does
@@ -42,11 +43,14 @@ public class QueryOptions
 
   private final Integer limit;
 
+  private final String browsedRepository;
+
   public QueryOptions(@Nullable String filter,
                       @Nullable String sortProperty,
                       @Nullable String sortDirection,
                       @Nullable Integer start,
-                      @Nullable Integer limit)
+                      @Nullable Integer limit,
+                      String browsedRepository)
   {
     checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
     checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
@@ -55,6 +59,7 @@ public class QueryOptions
     this.sortDirection = sortDirection;
     this.start = start;
     this.limit = limit;
+    this.browsedRepository = checkNotNull(browsedRepository);
   }
 
   @Nullable
@@ -80,5 +85,9 @@ public class QueryOptions
   @Nullable
   public Integer getLimit() {
     return limit;
+  }
+
+  public String getBrowsedRepository() {
+    return browsedRepository;
   }
 }

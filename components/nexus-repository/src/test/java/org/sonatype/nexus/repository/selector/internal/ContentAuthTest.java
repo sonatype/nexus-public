@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -115,28 +116,43 @@ public class ContentAuthTest
   @Test
   public void testAssetPermitted() {
     when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument }, null), is(true));
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME }, null), is(true));
     verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testAssetNotPermitted() {
     when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument }, null), is(false));
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME }, null), is(false));
     verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testComponentPermitted() {
     when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument }, null), is(true));
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME }, null), is(true));
     verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 
   @Test
   public void testComponentNotPermitted() {
     when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument }, null), is(false));
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME }, null), is(false));
     verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+  }
+
+  @Test
+  public void testComponentPermitted_withGroupRepo() {
+    when(contentPermissionChecker.isPermitted("group_repo", FORMAT, BROWSE, variableSource)).thenReturn(true);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo" }, null), is(true));
+    verify(contentPermissionChecker).isPermitted("group_repo", FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, never()).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+  }
+
+  @Test
+  public void testComponentNotPermitted_withGroupRepo() {
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo" }, null), is(false));
+    verify(contentPermissionChecker).isPermitted("group_repo", FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, never()).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
   }
 }

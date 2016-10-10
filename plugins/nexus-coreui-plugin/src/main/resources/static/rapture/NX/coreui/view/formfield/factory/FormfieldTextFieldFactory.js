@@ -24,7 +24,8 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextFieldFactory', {
   alias: [
     'nx.formfield.factory.textfield',
     'nx.formfield.factory.string',
-    'nx.formfield.factory.password'
+    'nx.formfield.factory.password',
+    'nx.formfield.factory.url'
   ],
 
   /**
@@ -34,12 +35,12 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextFieldFactory', {
    */
   create: function (formField) {
     var item = {
-      xtype: 'textfield',
+      xtype: formField.type === 'url' ? 'nx-url' : 'textfield',
       htmlDecode: true,
       fieldLabel: formField.label,
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,
-      allowBlank: !formField.required,
+      allowBlank: formField.type === 'url' || !formField.required,
       regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null
     };
     if (formField.type === 'password') {

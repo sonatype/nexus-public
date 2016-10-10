@@ -20,7 +20,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,24 +38,19 @@ public class RepositoryLifecycle
 {
   private final Provider<BlobStoreManager> blobStoreManager;
 
-  private final Provider<ConfigurationStore> configurationStore;
-
   private final Provider<RepositoryManager> repositoryManager;
 
   @Inject
   public RepositoryLifecycle(final Provider<BlobStoreManager> blobStoreManager,
-                             final Provider<ConfigurationStore> configurationStore,
                              final Provider<RepositoryManager> repositoryManager)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.configurationStore = checkNotNull(configurationStore);
     this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Override
   protected void doStart() throws Exception {
     add(blobStoreManager.get());
-    add(configurationStore.get());
     add(repositoryManager.get());
 
     super.doStart();

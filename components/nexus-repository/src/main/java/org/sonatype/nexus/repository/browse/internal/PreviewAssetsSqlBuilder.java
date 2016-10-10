@@ -13,12 +13,11 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
-
-import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,7 +48,7 @@ public class PreviewAssetsSqlBuilder
 
   public String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this) == true");
+    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     whereClauses.add("contentExpression(@this, :jexlExpression, :repositoryName, :repositoriesAsString) == true");
     if (queryOptions.getFilter() != null) {
       whereClauses.add(String.format("%s LIKE :nameFilter", MetadataNodeEntityAdapter.P_NAME));
@@ -81,15 +80,17 @@ public class PreviewAssetsSqlBuilder
   }
 
   public Map<String, Object> buildSqlParams() {
+    Map<String, Object> params = new HashMap<>();
+    params.put("browsedRepository", queryOptions.getBrowsedRepository());
+    params.put("repositoryName", repositoryName);
+    params.put("jexlExpression", buildJexlExpression());
+    params.put("repositoriesAsString", buildRepositoriesAsString());
+
     String filter = queryOptions.getFilter();
-    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder();
-    builder.put("repositoryName", repositoryName)
-        .put("jexlExpression", buildJexlExpression())
-        .put("repositoriesAsString", buildRepositoriesAsString());
     if (filter != null) {
-      builder.put("nameFilter", "%" + filter + "%");
+      params.put("nameFilter", "%" + filter + "%");
     }
-    return builder.build();
+    return params;
   }
 
   private String buildJexlExpression() {

@@ -27,7 +27,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.security.SecurityConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -98,12 +97,6 @@ public class RolePermissionResolverImpl
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AuthorizationConfigurationChanged event) {
-    invalidate();
-  }
-
-  @AllowConcurrentEvents
-  @Subscribe
-  public void on(final SecurityConfigurationChanged event) {
     invalidate();
   }
 

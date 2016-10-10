@@ -262,7 +262,7 @@ setupDebugOptions() {
 }
 
 setupDefaults() {
-    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass "
+    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/data/log/jvm.log "
 
     #Set the JVM_VENDOR specific JVM flags
     if [ "$JVM_VENDOR" = "SUN" ]; then

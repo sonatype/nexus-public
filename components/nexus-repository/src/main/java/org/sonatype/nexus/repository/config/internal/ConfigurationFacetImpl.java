@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.validation.ConstraintViolations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.selector.VariableSource;
 
@@ -63,7 +62,7 @@ public class ContentAuth
   public ContentAuth(@Nonnull final ContentPermissionChecker contentPermissionChecker,
                      final VariableResolverAdapterManager variableResolverAdapterManager)
   {
-    super(NAME, 1, 1);
+    super(NAME, 2, 2);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
   }
@@ -77,35 +76,33 @@ public class ContentAuth
   {
     OIdentifiable identifiable = (OIdentifiable) iParams[0];
     ODocument document = identifiable.getRecord();
+    String browsedRepositoryName = (String) iParams[1];
     switch (document.getClassName()) {
       case "asset":
-        return checkAssetPermissions(document);
+        return checkAssetPermissions(document, browsedRepositoryName);
       case "component":
-        return checkComponentAssetPermissions(document);
+        return checkComponentAssetPermissions(document, browsedRepositoryName);
       default:
         return false;
     }
   }
 
-  private boolean checkComponentAssetPermissions(final ODocument component) {
+  private boolean checkComponentAssetPermissions(final ODocument component, final String sourceRepositoryName) {
     checkNotNull(component);
     for (ODocument asset : browseComponentAssets(component)) {
-      if (checkAssetPermissions(asset)) {
+      if (checkAssetPermissions(asset, sourceRepositoryName)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean checkAssetPermissions(final ODocument asset) {
-    OIdentifiable bucketId = asset.field(AssetEntityAdapter.P_BUCKET, OIdentifiable.class);
-    ODocument bucket = bucketId.getRecord();
-    String repositoryName = bucket.field(BucketEntityAdapter.P_REPOSITORY_NAME, String.class);
+  private boolean checkAssetPermissions(final ODocument asset, final String sourceRepositoryName) {
     String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
     return withOtherDatabase(() -> contentPermissionChecker
-        .isPermitted(repositoryName, format, BROWSE, variableSource));
+        .isPermitted(sourceRepositoryName, format, BROWSE, variableSource));
   }
 
   @Override

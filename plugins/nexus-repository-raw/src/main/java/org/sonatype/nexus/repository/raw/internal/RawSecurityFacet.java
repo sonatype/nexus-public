@@ -29,10 +29,10 @@ public class RawSecurityFacet
     extends SecurityFacetSupport
 {
   @Inject
-  public RawSecurityFacet(final RawFormatSecurityConfigurationResource securityResource,
+  public RawSecurityFacet(final RawFormatSecurityContributor securityContributor,
                           @Named("simple") final VariableResolverAdapter variableResolverAdapter,
                           final ContentPermissionChecker contentPermissionChecker)
   {
-    super(securityResource, variableResolverAdapter, contentPermissionChecker);
+    super(securityContributor, variableResolverAdapter, contentPermissionChecker);
   }
 }

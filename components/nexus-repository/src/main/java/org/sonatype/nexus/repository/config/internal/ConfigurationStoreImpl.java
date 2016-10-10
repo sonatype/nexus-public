@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

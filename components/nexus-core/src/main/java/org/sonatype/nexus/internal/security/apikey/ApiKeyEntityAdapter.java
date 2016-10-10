@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
-import org.sonatype.nexus.orient.PbeCompression;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
@@ -82,7 +81,7 @@ public class ApiKeyEntityAdapter
   @Override
   protected void defineType(final ODatabaseDocumentTx db, final OClass type) {
     super.defineType(db, type);
-    PbeCompression.enableRecordEncryption(db, type);
+    enableRecordEncryption(db, type);
   }
 
   @Override

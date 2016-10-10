@@ -92,7 +92,7 @@ public class BrowseServiceImpl
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       List<Bucket> buckets = getBuckets(storageTx, repositories);
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit);
+      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
       BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(groupType.equals(repository.getType()),
           buckets, options);
       return new BrowseResult<>(
@@ -137,7 +137,7 @@ public class BrowseServiceImpl
     final List<Repository> repositories = getRepositories(repository);
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit);
+      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
       BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(options);
       return new BrowseResult<>(
           storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories, null),
@@ -167,7 +167,7 @@ public class BrowseServiceImpl
       else {
         previewRepositories = repositories;
       }
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit);
+      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
       PreviewAssetsSqlBuilder builder = new PreviewAssetsSqlBuilder(
           repository.getName(),
           jexlExpression,

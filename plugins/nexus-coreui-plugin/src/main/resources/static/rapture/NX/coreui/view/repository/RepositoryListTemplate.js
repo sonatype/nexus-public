@@ -72,8 +72,7 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
       {
         xtype: 'nx-copylinkcolumn',
         header: NX.I18n.get('Repository_RepositoryList_URL_Header'),
-        dataIndex: 'url',
-        flex: 1
+        dataIndex: 'url'
       }
     ];
 

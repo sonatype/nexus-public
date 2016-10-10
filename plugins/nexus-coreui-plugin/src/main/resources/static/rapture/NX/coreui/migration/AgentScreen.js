@@ -42,6 +42,7 @@ Ext.define('NX.coreui.migration.AgentScreen', {
         },
         {
           xtype: 'textfield',
+          inputType: 'password',
           name: 'accessToken',
           fieldLabel: NX.I18n.render(me, "Token_FieldLabel"),
           helpText: NX.I18n.render(me, "Token_HelpText"),

@@ -36,11 +36,11 @@ public class SecurityFacetSupportTest
   private static final class TestSecurityFacetSupport
       extends SecurityFacetSupport
   {
-    public TestSecurityFacetSupport(final RepositoryFormatSecurityConfigurationResource securityResource,
+    public TestSecurityFacetSupport(final RepositoryFormatSecurityContributor securityContributor,
                                     final VariableResolverAdapter variableResolverAdapter,
                                     final ContentPermissionChecker contentPermissionChecker)
     {
-      super(securityResource, variableResolverAdapter, contentPermissionChecker);
+      super(securityContributor, variableResolverAdapter, contentPermissionChecker);
     }
   }
 
@@ -57,7 +57,7 @@ public class SecurityFacetSupportTest
   VariableResolverAdapter variableResolverAdapter;
 
   @Mock
-  RepositoryFormatSecurityConfigurationResource repositoryFormatSecurityConfigurationResource;
+  RepositoryFormatSecurityContributor securityContributor;
 
   TestSecurityFacetSupport testSecurityFacetSupport;
 
@@ -69,7 +69,7 @@ public class SecurityFacetSupportTest
     when(repository.getFormat()).thenReturn(new Format("test") { });
     when(repository.getName()).thenReturn("SecurityFacetSupportTest");
 
-    testSecurityFacetSupport = new TestSecurityFacetSupport(repositoryFormatSecurityConfigurationResource,
+    testSecurityFacetSupport = new TestSecurityFacetSupport(securityContributor,
         variableResolverAdapter, contentPermissionChecker);
 
     testSecurityFacetSupport.attach(repository);

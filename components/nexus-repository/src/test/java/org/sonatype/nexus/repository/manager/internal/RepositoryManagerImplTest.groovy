@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.config.ConfigurationStore
+import org.sonatype.nexus.repository.config.internal.ConfigurationStore
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 
 import com.google.common.collect.ImmutableMap
@@ -52,7 +52,7 @@ class RepositoryManagerImplTest
   Provider<ConfigurationStore> configurationFacetProvider
 
   @Mock
-  RepositoryAdminSecurityConfigurationResource repositoryAdminSecurityConfigurationResource
+  RepositoryAdminSecurityContributor securityContributor
 
   @Mock
   List<DefaultRepositoriesContributor> defaultRepositoriesContributorList
@@ -109,7 +109,7 @@ class RepositoryManagerImplTest
 
     //initialize and start the repository manager
     repositoryManager = new RepositoryManagerImpl(eventBus, configurationStore, repositoryFactory,
-        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), repositoryAdminSecurityConfigurationResource,
+        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, false)
 
     repositoryManager.doStart()

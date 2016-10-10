@@ -33,29 +33,29 @@ public abstract class SecurityFacetSupport
     extends FacetSupport
     implements SecurityFacet
 {
-  private final RepositoryFormatSecurityConfigurationResource securityResource;
+  private final RepositoryFormatSecurityContributor securityContributor;
 
   private final VariableResolverAdapter variableResolverAdapter;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
-  public SecurityFacetSupport(final RepositoryFormatSecurityConfigurationResource securityResource,
+  public SecurityFacetSupport(final RepositoryFormatSecurityContributor securityContributor,
                               final VariableResolverAdapter variableResolverAdapter,
                               final ContentPermissionChecker contentPermissionChecker)
   {
-    this.securityResource = checkNotNull(securityResource);
+    this.securityContributor = checkNotNull(securityContributor);
     this.variableResolverAdapter = checkNotNull(variableResolverAdapter);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
 
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
-    securityResource.add(getRepository());
+    securityContributor.add(getRepository());
   }
 
   @Override
   protected void doDestroy() throws Exception {
-    securityResource.remove(getRepository());
+    securityContributor.remove(getRepository());
   }
 
   @Override

@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.internal.provisioning
 
+import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.BlobStoreApi
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
-
-import com.google.inject.Inject
 
 import static com.google.common.base.Preconditions.checkNotNull
 

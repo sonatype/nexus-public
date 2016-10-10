@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,8 +23,6 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
-
-import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -73,21 +71,23 @@ public class BrowseComponentsSqlBuilder
    * Returns the SQL parameters for performing the browse query.
    */
   public Map<String, Object> buildSqlParams() {
+    Map<String, Object> params = new HashMap<>();
+    params.put("browsedRepository", queryOptions.getBrowsedRepository());
+
     String filter = queryOptions.getFilter();
-    if (filter == null) {
-      return Collections.emptyMap();
+    if (filter != null) {
+      String filterValue = "%" + filter + "%";
+      params.put("nameFilter", filterValue);
+      params.put("groupFilter", filterValue);
+      params.put("versionFilter", filterValue);
     }
-    String filterValue = "%" + filter + "%";
-    return ImmutableMap.<String, Object>builder()
-        .put("nameFilter", filterValue)
-        .put("groupFilter", filterValue)
-        .put("versionFilter", filterValue)
-        .build();
+
+    return params;
   }
 
   private String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this) == true");
+    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     whereClauses.add(buckets.stream()
         .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + AttachedEntityHelper.id(bucket))
         .collect(Collectors.joining(" OR ")));

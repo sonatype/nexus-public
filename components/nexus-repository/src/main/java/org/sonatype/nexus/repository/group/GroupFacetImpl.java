@@ -53,7 +53,7 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
  *
  * @since 3.0
  */
-@Named
+@Named("default")
 public class GroupFacetImpl
     extends FacetSupport
     implements GroupFacet

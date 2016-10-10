@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.orient.entity;
 
+import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 
 import javax.annotation.Nullable;
@@ -26,14 +27,19 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
 import org.sonatype.nexus.orient.RecordIdObfuscator;
+import org.sonatype.nexus.orient.internal.PbeCompression;
 
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -148,6 +154,30 @@ public abstract class EntityAdapter<T extends Entity>
   }
 
   protected abstract void defineType(final OClass type);
+
+  /**
+   * Enables password-based-encryption for records of the given type.
+   *
+   * Can only be called when creating the schema.
+   *
+   * @since 3.1
+   */
+  protected void enableRecordEncryption(final ODatabaseDocumentTx db, final OClass type) {
+    OStorage storage = db.getStorage();
+    for (int clusterId : type.getClusterIds()) {
+      OCluster cluster = storage.getClusterById(clusterId);
+      try {
+        log.debug("Enabling PBE compression for cluster: {}", cluster.getName());
+        cluster.set(OCluster.ATTRIBUTES.COMPRESSION, PbeCompression.NAME);
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+      catch (IllegalArgumentException | OStorageException | OSecurityException e) {
+        log.warn("Cannot enable PBE compression for cluster: {}", cluster.getName(), e);
+      }
+    }
+  }
 
   public String getDbName() {
     checkState(dbName != null, "Not registered");

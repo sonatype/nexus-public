@@ -190,6 +190,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Admin -> Repository -> Repositories
     Repositories_Text: 'Repositories',
     Repositories_Description: 'Manage repositories',
+    Repositories_Delete_Mask: 'Deleting repository',
     Repositories_Create_Title: 'Create Repository: {0}',
     Repositories_SelectRecipe_Title: 'Select Recipe',
     Repository_RepositoryAdd_Create_Success: 'Repository created: ',
@@ -335,6 +336,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Admin -> Repository -> Blob Stores
     Blobstores_Text: 'Blob Stores',
     Blobstores_Description: 'Manage blob stores',
+    Blobstores_Delete_Mask: 'Deleting blob store',
     Blobstores_Create_Title: 'Create blob store',
     Blobstore_BlobstoreAdd_Create_Success: 'Blob store created: ',
     Blobstore_BlobstoreAdd_Create_Error: 'You do not have permission to create blob stores',

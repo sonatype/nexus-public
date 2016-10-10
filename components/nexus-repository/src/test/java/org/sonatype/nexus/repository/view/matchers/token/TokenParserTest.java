@@ -100,6 +100,38 @@ public class TokenParserTest
   }
 
   @Test
+  public void testOptionalParens() {
+    final String pattern = "/{operation:[^/()]+}{parens:\\\\Q()\\\\E|}";
+    final TokenParser parser = new TokenParser(pattern);
+    log(parser);
+
+    {
+      final Map<String, String> tokens = parser.parse("/Packages");
+
+      assertThat(tokens, notNullValue());
+      assertThat(tokens.entrySet(), hasSize(2));
+
+      assertThat(tokens.get("operation"), equalTo("Packages"));
+      assertThat(tokens.get("parens"), equalTo(""));
+    }
+    {
+      final Map<String, String> tokens = parser.parse("/Packages()");
+
+      assertThat(tokens, notNullValue());
+      assertThat(tokens.entrySet(), hasSize(2));
+
+      assertThat(tokens.get("operation"), equalTo("Packages"));
+      assertThat(tokens.get("parens"), equalTo("()"));
+    }
+
+    assertThat(parser.parse("/Packages("), nullValue());
+
+    assertThat(parser.parse("/Packages)"), nullValue());
+
+    assertThat(parser.parse("/Packages(foobar)"), nullValue());
+  }
+
+  @Test
   public void slashesInTheSecondGroup() {
     final String pattern = "/{singleSegment}/{manySegments:.+}";
     final TokenParser parser = new TokenParser(pattern);

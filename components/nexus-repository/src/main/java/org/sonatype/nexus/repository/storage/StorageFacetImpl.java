@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  *
  * @since 3.0
  */
-@Named
+@Named("default")
 public class StorageFacetImpl
     extends FacetSupport
     implements StorageFacet

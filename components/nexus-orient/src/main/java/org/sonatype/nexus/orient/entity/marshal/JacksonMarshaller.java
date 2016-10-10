@@ -14,8 +14,6 @@ package org.sonatype.nexus.orient.entity.marshal;
 
 import java.util.Map;
 
-import org.sonatype.nexus.common.reflect.InstanceCreator;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;

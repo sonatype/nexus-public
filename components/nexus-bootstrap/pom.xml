@@ -50,6 +50,11 @@
     </dependency>
 
     <dependency>
+      <groupId>uk.org.lidalia</groupId>
+      <artifactId>sysout-over-slf4j</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <optional>true</optional>

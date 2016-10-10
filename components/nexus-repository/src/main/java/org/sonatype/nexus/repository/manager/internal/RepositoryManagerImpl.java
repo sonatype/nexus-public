@@ -34,8 +34,8 @@ import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.ConfigurationEvent;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
+import org.sonatype.nexus.repository.config.internal.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
@@ -80,7 +80,7 @@ public class RepositoryManagerImpl
 
   private final Provider<ConfigurationFacet> configFacet;
 
-  private final RepositoryAdminSecurityConfigurationResource securityResource;
+  private final RepositoryAdminSecurityContributor securityContributor;
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
 
@@ -94,7 +94,7 @@ public class RepositoryManagerImpl
                                final RepositoryFactory factory,
                                final Provider<ConfigurationFacet> configFacet,
                                final Map<String, Recipe> recipes,
-                               final RepositoryAdminSecurityConfigurationResource securityResource,
+                               final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories)
   {
@@ -103,7 +103,7 @@ public class RepositoryManagerImpl
     this.factory = checkNotNull(factory);
     this.configFacet = checkNotNull(configFacet);
     this.recipes = checkNotNull(recipes);
-    this.securityResource = checkNotNull(securityResource);
+    this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
     this.skipDefaultRepositories = skipDefaultRepositories;
   }
@@ -159,7 +159,7 @@ public class RepositoryManagerImpl
    */
   private void track(final Repository repository) {
     // configure security
-    securityResource.add(repository);
+    securityContributor.add(repository);
 
     log.debug("Tracking: {}", repository);
     repositories.put(repository.getName(), repository);
@@ -173,13 +173,14 @@ public class RepositoryManagerImpl
     repositories.remove(repository.getName());
 
     // tear down security
-    securityResource.remove(repository);
+    securityContributor.remove(repository);
   }
 
   // TODO: Generally need to consider exception handling to ensure proper state is maintained always
 
   @Override
   protected void doStart() throws Exception {
+    store.start();
     List<Configuration> configurations = store.list();
 
     // attempt to provision default repositories if allowed
@@ -244,6 +245,7 @@ public class RepositoryManagerImpl
     }
 
     repositories.clear();
+    store.stop();
   }
 
   @Override
