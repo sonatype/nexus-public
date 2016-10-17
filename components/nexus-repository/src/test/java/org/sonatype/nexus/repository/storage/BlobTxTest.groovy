@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.hasEntry
 import static org.hamcrest.Matchers.is
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 
 /**
@@ -110,6 +111,45 @@ class BlobTxTest
     assertThat(assetBlob.contentType, is(equalTo(contentType)))
     assertThat(assetBlob.size, is(equalTo(blobSize)))
     assertThat(assetBlob.hashesVerified, is(false))
+    assertThat(assetBlob.hashes, hasEntry(SHA1, HashCode.fromString('356a192b7913b04c54574d18c28d46e6395428ab')))
+    assertThat(assetBlob.blob, is(blob))
+  }
+
+  @Test
+  void 'create blob from existing blob'() {
+
+    long blobSize = 1L
+    String contentType = 'text/plain'
+    Map<String, String> headers = [(CONTENT_TYPE_HEADER): contentType]
+    Map<HashAlgorithm, HashCode> hashes = [(SHA1): HashCode.fromString('356a192b7913b04c54574d18c28d46e6395428ab')]
+
+    NodeAccess nodeAccess = mock(NodeAccess.class)
+    when(nodeAccess.getId()).thenReturn('id')
+
+    BlobStoreConfiguration blobStoreConfiguration = mock(BlobStoreConfiguration.class)
+    when(blobStoreConfiguration.getName()).thenReturn('blobStoreConfiguration')
+
+    BlobMetrics blobMetrics = mock(BlobMetrics.class)
+    when(blobMetrics.getContentSize()).thenReturn(blobSize)
+    when(blobMetrics.getSha1Hash()).thenReturn('356a192b7913b04c54574d18c28d46e6395428ab')
+
+    BlobId blobId = new BlobId('blobid')
+    Blob blob = mock(Blob.class)
+    when(blob.getMetrics()).thenReturn(blobMetrics)
+    when(blob.getId()).thenReturn(blobId)
+
+    BlobStore blobStore = [
+        getBlobStoreConfiguration: { blobStoreConfiguration },
+        get                      : { BlobId id -> blob },
+        copy                     : { BlobId id, Map<String, String> map -> blob }
+    ] as BlobStore
+
+    BlobTx testSubject = new BlobTx(nodeAccess, blobStore)
+    AssetBlob assetBlob = testSubject.createByCopying(blobId, headers, hashes, true)
+
+    assertThat(assetBlob.contentType, is(equalTo(contentType)))
+    assertThat(assetBlob.size, is(equalTo(blobSize)))
+    assertThat(assetBlob.hashesVerified, is(true))
     assertThat(assetBlob.hashes, hasEntry(SHA1, HashCode.fromString('356a192b7913b04c54574d18c28d46e6395428ab')))
     assertThat(assetBlob.blob, is(blob))
   }

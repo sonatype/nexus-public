@@ -23,11 +23,10 @@ import java.util.Random;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
@@ -43,12 +42,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
+import static org.sonatype.nexus.blobstore.file.internal.FileBlobStore.TEMPORARY_BLOB_ID_PREFIX;
 
 /**
  * {@link FileBlobStore} integration tests.
@@ -63,24 +71,46 @@ public class FileBlobStoreIT
       BLOB_NAME_HEADER, "test/randomData.bin"
   );
 
+  public static final ImmutableMap<String, String> TEMP_HEADERS = ImmutableMap.of(
+      CREATED_BY_HEADER, "test",
+      BLOB_NAME_HEADER, "test/randomData.bin",
+      TEMPORARY_BLOB_HEADER, ""
+  );
+
   private FileBlobStore underTest;
 
   private Path blobStoreDirectory;
 
+  private Path contentDirectory;
+
   private BlobStoreMetricsStore metricsStore;
+
+  private SimpleFileOperations fileOperations;
+
+  private VolumeChapterLocationStrategy volumeChapterLocationStrategy;
+
+  private TemporaryLocationStrategy temporaryLocationStrategy;
 
   @Before
   public void setUp() throws Exception {
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
+    contentDirectory = blobStoreDirectory.resolve("content");
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
 
     metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl());
 
+    fileOperations = spy(new SimpleFileOperations());
+
+    volumeChapterLocationStrategy = new VolumeChapterLocationStrategy();
+
+    temporaryLocationStrategy = new TemporaryLocationStrategy();
+
     final BlobStoreConfiguration config = new BlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    underTest = new FileBlobStore(new VolumeChapterLocationStrategy(),
-        new SimpleFileOperations(),
+    underTest = new FileBlobStore(volumeChapterLocationStrategy,
+        temporaryLocationStrategy,
+        fileOperations,
         applicationDirectories,
         metricsStore);
     underTest.init(config);
@@ -100,6 +130,11 @@ public class FileBlobStoreIT
     new Random().nextBytes(content);
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
 
     final byte[] output = extractContent(blob);
     assertThat("data must survive", content, is(equalTo(output)));
@@ -145,6 +180,11 @@ public class FileBlobStoreIT
 
     // Attempt to make a hard link to the file we're importing
     final Blob blob = underTest.create(sourceFile, TEST_HEADERS, content.length, sha1);
+    assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
 
     // Now append some telltale bytes to the end of the original file
     final byte[] appendMe = new byte[100];
@@ -153,6 +193,81 @@ public class FileBlobStoreIT
 
     // Now see if the blob was modified. This isn't a real use case, but checks the hard link.
     assertThat("blob must have been modified", extractContent(blob), is(equalTo(extractContent(sourceFile))));
+  }
+
+  @Test
+  public void blobCopyingPreservesBytesUsingHardLink() throws Exception {
+
+    byte[] content = testData();
+    HashCode sha1 = Hashing.sha1().hashBytes(content);
+    Path sourceFile = testFile(content);
+
+    Blob temp = underTest.create(sourceFile, TEMP_HEADERS, content.length, sha1);
+
+    BlobId copyId = underTest.copy(temp.getId(), TEST_HEADERS).getId();
+
+    underTest.delete(temp.getId());
+
+    Blob copy = underTest.get(copyId);
+
+    try (InputStream inputStream = copy.getInputStream()) {
+      byte[] copiedBytes = ByteStreams.toByteArray(inputStream);
+      assertThat(content, is(copiedBytes));
+    }
+
+    assertThat(Files.exists(contentDirectory.resolve(temporaryLocationStrategy.location(temp.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(temporaryLocationStrategy.location(temp.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(copy.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(copy.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+
+    assertThat(temp.getId().asUniqueString(), startsWith(TEMPORARY_BLOB_ID_PREFIX));
+    assertThat(copy.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
+  }
+
+  @Test
+  public void blobCopyingPreservesBytesUsingInputStream() throws Exception {
+
+    byte[] content = testData();
+    HashCode sha1 = Hashing.sha1().hashBytes(content);
+    Path sourceFile = testFile(content);
+
+    Blob temp = underTest.create(sourceFile, TEMP_HEADERS, content.length, sha1);
+
+    doThrow(new IOException()).when(fileOperations).hardLink(any(), any());
+
+    underTest.copy(temp.getId(), TEST_HEADERS).getId();
+
+    BlobId copyId = underTest.copy(temp.getId(), TEST_HEADERS).getId();
+
+    underTest.delete(temp.getId());
+
+    Blob copy = underTest.get(copyId);
+
+    try (InputStream inputStream = copy.getInputStream()) {
+      byte[] copiedBytes = ByteStreams.toByteArray(inputStream);
+      assertThat(content, is(copiedBytes));
+    }
+
+    assertThat(Files.exists(contentDirectory.resolve(temporaryLocationStrategy.location(temp.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(temporaryLocationStrategy.location(temp.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(copy.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
+    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(copy.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+
+    assertThat(temp.getId().asUniqueString(), startsWith(TEMPORARY_BLOB_ID_PREFIX));
+    assertThat(copy.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
+
+    verify(fileOperations, times(2)).hardLink(any(), any());
+    verify(fileOperations, times(2)).create(any(), any());
   }
 
   private byte[] testData() {

@@ -42,128 +42,16 @@ Ext.define('NX.coreui.migration.ContentScreen', {
           allowBlank: false,
           items: [
             {
-              xtype: 'checkboxgroup',
-              fieldLabel: NX.I18n.render(me, 'Repositories_FieldLabel'),
-              columns: 1,
-              allowBlank: true,
-              items: [
-                {
-                  xtype: 'checkbox',
-                  name: 'repositories.usermanaged',
-                  boxLabel: NX.I18n.render(me, 'Repositories_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'repository.targets',
-                  boxLabel: NX.I18n.render(me, 'RepositoryTargets_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'capability.healthcheck',
-                  boxLabel: NX.I18n.render(me, 'Repositories_HealthCheck_BoxLabel'),
-                  checked: true
-                }
-              ]
+              xtype: 'checkbox',
+              name: 'repositories',
+              boxLabel: NX.I18n.render(me, 'Repositories_FieldLabel'),
+              checked: true
             },
             {
-              xtype: 'checkboxgroup',
-              fieldLabel: NX.I18n.render(me, 'Security_FieldLabel'),
-              columns: 1,
-              allowBlank: true,
-              items: [
-                {
-                  xtype: 'checkbox',
-                  name: 'security.anonymous',
-                  boxLabel: NX.I18n.render(me, 'Security_Anonymous_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: (NX.State.requiresLicense() && NX.State.isLicenseValid()) ? 'ldapPro' : 'ldap',
-                  boxLabel: NX.I18n.render(me, 'Security_LDAP_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'nuget.apikey',
-                  boxLabel: NX.I18n.render(me, 'Security_NuGet_API_Key_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.realms',
-                  boxLabel: NX.I18n.render(me, 'Security_Realms_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.roles',
-                  boxLabel: NX.I18n.render(me, 'Security_Roles_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.target-privileges',
-                  boxLabel: NX.I18n.render(me, 'Security_TargetPrivileges_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.trust',
-                  boxLabel: NX.I18n.render(me, 'Security_SSL_Certificates_BoxLabel'),
-                  checked: true,
-                  hidden: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.user-tokens',
-                  boxLabel: NX.I18n.render(me, 'Security_User_Tokens_BoxLabel'),
-                  checked: true,
-                  hidden: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.crowd',
-                  boxLabel: NX.I18n.render(me, 'Security_Crowd_BoxLabel'),
-                  checked: true,
-                  hidden: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'security.users',
-                  boxLabel: NX.I18n.render(me, 'Security_Users_BoxLabel'),
-                  checked: true
-                }
-              ]
-            },
-            {
-              xtype: 'checkboxgroup',
-              fieldLabel: NX.I18n.render(me, 'System_FieldLabel'),
-              columns: 1,
-              allowBlank: true,
-              items: [
-                {
-                  xtype: 'checkbox',
-                  name: 'system.email',
-                  boxLabel: NX.I18n.render(me, 'System_Email_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'system.http',
-                  boxLabel: NX.I18n.render(me, 'System_HTTP_BoxLabel'),
-                  checked: true
-                },
-                {
-                  xtype: 'checkbox',
-                  name: 'capability.iq',
-                  boxLabel: NX.I18n.render(me, 'Repositories_Clm_BoxLabel'),
-                  checked: true,
-                  hidden: true
-                }
-              ]
+              xtype: 'checkbox',
+              name: 'configuration',
+              boxLabel: NX.I18n.render(me, 'Configuration_FieldLabel'),
+              checked: true
             }
           ]
         }

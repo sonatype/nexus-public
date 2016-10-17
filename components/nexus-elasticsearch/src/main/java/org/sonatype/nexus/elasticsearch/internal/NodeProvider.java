@@ -103,7 +103,7 @@ public class NodeProvider
   }
 
   private Node create() throws Exception {
-    File file = new File(directories.getInstallDirectory(), "etc/elasticsearch.yml");
+    File file = new File(directories.getConfigDirectory("fabric"), "elasticsearch.yml");
     checkState(file.exists(), "Missing configuration: %s", file);
     log.info("Creating node with config: {}", file);
 

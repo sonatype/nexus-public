@@ -20,17 +20,20 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
@@ -62,12 +65,9 @@ class BlobTx
                           final Iterable<HashAlgorithm> hashAlgorithms,
                           final String contentType)
   {
-    final MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
+    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
     Blob blob = blobStore.create(hashingStream, headers);
-    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
-    AssetBlob assetBlob = new AssetBlob(blobRef, blob, hashingStream.count(), contentType, hashingStream.hashes(), true);
-    newlyCreatedBlobs.add(assetBlob);
-    return assetBlob;
+    return createAssetBlob(blob, hashingStream.hashes(), true, contentType);
   }
 
   /**
@@ -87,9 +87,39 @@ class BlobTx
                                        final long size)
   {
     Blob blob = blobStore.create(sourceFile, headers, size, hashes.get(SHA1));
-    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(), blob.getId().asUniqueString());
+    return createAssetBlob(blob, hashes, false, contentType);
+  }
+
+  /**
+   * Create an asset blob by copying the source blob. Throws an exception if the blob has already been deleted.
+   *
+   * @param blobId      blobId of a blob already present in the blobstore
+   * @param headers     a map of headers to be applied to the resulting blob
+   * @param hashes      the algorithms and precalculated hashes of the content
+   * @return {@link AssetBlob}
+   * @since 3.1
+   */
+  public AssetBlob createByCopying(final BlobId blobId,
+                                   final Map<String, String> headers,
+                                   final Map<HashAlgorithm, HashCode> hashes,
+                                   final boolean hashesVerified)
+  {
+    checkArgument(!Strings2.isBlank(headers.get(BlobStore.CONTENT_TYPE_HEADER)), "Blob content type is required");
+    // This might be a place where we might consider passing in a BlobRef instead of a BlobId, for a post-fabric world
+    // where repositories could be writing/reading from multiple blob stores.
+    Blob blob = blobStore.copy(blobId, headers);
+    return createAssetBlob(blob, hashes, hashesVerified, headers.get(BlobStore.CONTENT_TYPE_HEADER));
+  }
+
+  private AssetBlob createAssetBlob(final Blob blob,
+                                    final Map<HashAlgorithm, HashCode> hashes,
+                                    final boolean hashesVerified,
+                                    final String contentType)
+  {
+    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(),
+        blob.getId().asUniqueString());
     long bytes = blob.getMetrics().getContentSize();
-    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes, false);
+    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes, hashesVerified);
     newlyCreatedBlobs.add(assetBlob);
     return assetBlob;
   }

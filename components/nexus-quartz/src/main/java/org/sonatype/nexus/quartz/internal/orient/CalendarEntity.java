@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.quartz.internal.orient;
 
-import org.sonatype.nexus.orient.entity.marshal.MarshalledEntity;
-
 import org.quartz.Calendar;
 
 /**

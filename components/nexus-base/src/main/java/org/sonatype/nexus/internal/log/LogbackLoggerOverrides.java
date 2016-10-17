@@ -62,7 +62,7 @@ public class LogbackLoggerOverrides
   @Inject
   public LogbackLoggerOverrides(final ApplicationDirectories applicationDirectories) {
     checkNotNull(applicationDirectories);
-    this.file = new File(applicationDirectories.getWorkDirectory("logback"), "logback-overrides.xml");
+    this.file = new File(applicationDirectories.getWorkDirectory("etc/logback"), "logback-overrides.xml");
     log.info("File: {}", file);
   }
 

@@ -66,7 +66,7 @@ if not "%KARAF_DATA%" == "" (
     )
 )
 if "%KARAF_DATA%" == "" (
-    set "KARAF_DATA=%KARAF_BASE%\..\sonatype-work\nexus3\data"
+    set "KARAF_DATA=%KARAF_BASE%\..\sonatype-work\nexus3"
 )
 
 if not "%KARAF_ETC%" == "" (
@@ -76,7 +76,7 @@ if not "%KARAF_ETC%" == "" (
     )
 )
 if "%KARAF_ETC%" == "" (
-    set "KARAF_ETC=%KARAF_BASE%\etc"
+    set "KARAF_ETC=%KARAF_BASE%\etc\karaf"
 )
 
 set LOCAL_CLASSPATH=%CLASSPATH%
@@ -312,7 +312,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     rem SONATYPE: removed -Djavax.management.builder.initial
     rem SONATYPE: removed -Djava.endorsed.dirs="%JAVA_HOME%\jre\lib\endorsed;%JAVA_HOME%\lib\endorsed;%KARAF_HOME%\lib\endorsed"
     rem SONATYPE: removed -Djava.ext.dirs="%JAVA_HOME%\jre\lib\ext;%JAVA_HOME%\lib\ext;%KARAF_HOME%\lib\ext"
-    "%JAVA%" %JAVA_OPTS% %OPTS% -classpath "%CLASSPATH%" -Dkaraf.instances="%KARAF_DATA%\instances" -Dkaraf.home="%KARAF_HOME%" -Dkaraf.base="%KARAF_BASE%" -Dkaraf.etc="%KARAF_ETC%" -Djava.io.tmpdir="%KARAF_DATA%\tmp" -Dkaraf.data="%KARAF_DATA%" -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" %KARAF_OPTS% %MAIN% %ARGS%
+    "%JAVA%" %JAVA_OPTS% %OPTS% -classpath "%CLASSPATH%" -Dkaraf.instances="%KARAF_DATA%\instances" -Dkaraf.home="%KARAF_HOME%" -Dkaraf.base="%KARAF_BASE%" -Dkaraf.etc="%KARAF_ETC%" -Djava.io.tmpdir="%KARAF_DATA%\tmp" -Dkaraf.data="%KARAF_DATA%" -Djava.util.logging.config.file="%KARAF_ETC%\java.util.logging.properties" %KARAF_OPTS% %MAIN% %ARGS%
 
 rem # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

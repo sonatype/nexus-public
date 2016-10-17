@@ -90,9 +90,14 @@ public class FileBlobStore
   @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
 
+  @VisibleForTesting
+  public static final String TEMPORARY_BLOB_ID_PREFIX = "tmp$";
+
   private Path contentDir;
 
-  private final LocationStrategy locationStrategy;
+  private final LocationStrategy permanentLocationStrategy;
+
+  private final LocationStrategy temporaryLocationStrategy;
 
   private final FileOperations fileOperations;
 
@@ -106,27 +111,33 @@ public class FileBlobStore
 
   private QueueFile deletedBlobIndex;
 
+  private boolean supportsHardLinkCopy;
+
   @Inject
-  public FileBlobStore(final LocationStrategy locationStrategy,
+  public FileBlobStore(@Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
+                       @Named("temporary") final LocationStrategy temporaryLocationStrategy,
                        final FileOperations fileOperations,
                        final ApplicationDirectories directories,
                        final BlobStoreMetricsStore storeMetrics)
   {
-    this.locationStrategy = checkNotNull(locationStrategy);
+    this.permanentLocationStrategy = checkNotNull(permanentLocationStrategy);
+    this.temporaryLocationStrategy = checkNotNull(temporaryLocationStrategy);
     this.fileOperations = checkNotNull(fileOperations);
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.supportsHardLinkCopy = true;
   }
 
   @VisibleForTesting
   public FileBlobStore(final Path contentDir,
-                       final LocationStrategy locationStrategy,
+                       @Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
+                       @Named("temporary") final LocationStrategy temporaryLocationStrategy,
                        final FileOperations fileOperations,
                        final BlobStoreMetricsStore storeMetrics,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories)
   {
-    this(locationStrategy, fileOperations, directories, storeMetrics);
+    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -169,13 +180,24 @@ public class FileBlobStore
    * Returns path for blob-id content file relative to root directory.
    */
   private Path contentPath(final BlobId id) {
-    String location = locationStrategy.location(id);
-    return contentDir.resolve(location + BLOB_CONTENT_SUFFIX);
+    return contentDir.resolve(getLocation(id) + BLOB_CONTENT_SUFFIX);
   }
 
+  /**
+   * Returns path for blob-id attribute file relative to root directory.
+   */
   private Path attributePath(final BlobId id) {
-    String location = locationStrategy.location(id);
-    return contentDir.resolve(location + BLOB_ATTRIBUTE_SUFFIX);
+    return contentDir.resolve(getLocation(id) + BLOB_ATTRIBUTE_SUFFIX);
+  }
+
+  /**
+   * Returns the location for a blob ID based on whether or not the blob ID is for a temporary or permanent blob.
+   */
+  private String getLocation(final BlobId id) {
+    if (id.asUniqueString().startsWith(TEMPORARY_BLOB_ID_PREFIX)) {
+      return temporaryLocationStrategy.location(id);
+    }
+    return permanentLocationStrategy.location(id);
   }
 
   @Override
@@ -204,7 +226,13 @@ public class FileBlobStore
     checkArgument(headers.containsKey(CREATED_BY_HEADER), "Missing header: %s", CREATED_BY_HEADER);
 
     // Generate a new blobId
-    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    BlobId blobId;
+    if (headers.containsKey(TEMPORARY_BLOB_HEADER)) {
+      blobId = new BlobId(TEMPORARY_BLOB_ID_PREFIX + UUID.randomUUID().toString());
+    }
+    else {
+      blobId = new BlobId(UUID.randomUUID().toString());
+    }
 
     final Path blobPath = contentPath(blobId);
     final Path attributePath = attributePath(blobId);
@@ -235,6 +263,33 @@ public class FileBlobStore
     }
     finally {
       lock.unlock();
+    }
+  }
+
+  @Override
+  public Blob copy(final BlobId blobId, final Map<String, String> headers) {
+    Blob sourceBlob = checkNotNull(get(blobId));
+    if (supportsHardLinkCopy) {
+      try {
+        return create(headers, destination -> {
+          fileOperations.hardLink(contentPath(sourceBlob.getId()), destination);
+          BlobMetrics metrics = sourceBlob.getMetrics();
+          return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
+        });
+      }
+      catch (BlobStoreException e) {
+        supportsHardLinkCopy = false;
+        log.trace("Disabling copy by hard link for blob store {}, could not hard link blob {}",
+            blobStoreConfiguration.getName(), sourceBlob.getId(), e);
+      }
+    }
+    log.trace("Using fallback mechanism for blob store {}, copying blob {}", blobStoreConfiguration.getName(),
+        sourceBlob.getId());
+    try (InputStream inputStream = sourceBlob.getInputStream()) {
+      return create(inputStream, headers);
+    }
+    catch (IOException e) {
+      throw new BlobStoreException(e, blobId);
     }
   }
 

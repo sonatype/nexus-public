@@ -49,6 +49,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.quartz-scheduler</groupId>
       <artifactId>quartz</artifactId>
     </dependency>
@@ -80,6 +85,17 @@
         <configuration>
           <forkCount>1</forkCount>
           <reuseForks>false</reuseForks>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions>
+            <Import-Package>
+              sun.reflect.*;resolution:=optional,*
+            </Import-Package>
+          </instructions>
         </configuration>
       </plugin>
     </plugins>

@@ -189,6 +189,9 @@ public class EmailManagerImpl
       Email prepared = apply(model, mail);
       prepared.send();
     }
+    else {
+      log.warn("No email enabled but asked to send anyway.");
+    }
   }
 
   @Override

@@ -47,7 +47,7 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsStep', {
     // toggle step enabled when content-options change
     me.getContext().on('add', function(index, value, key, opts) {
       if (key === 'content-options') {
-        me.setEnabled(value['repositories.usermanaged']);
+        me.setEnabled(value['repositories']);
       }
     });
   },

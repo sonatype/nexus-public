@@ -61,28 +61,6 @@ Ext.define('NX.coreui.migration.ContentStep', {
   },
 
   /**
-   * @override
-   */
-  doActivate: function() {
-    var me = this,
-        screen = me.getScreenCmp();
-
-    me.callParent();
-
-    if (screen && NX.State.requiresLicense() && NX.State.isLicenseValid()) {
-      //don't show the ssl plugin when a license is not installed, as nx2 oss did not support ssl plugin
-      screen.down('checkbox[name=security.trust]').show();
-      // user-tokens and crowd are pro features
-      screen.down('checkbox[name=security.user-tokens]').show();
-      screen.down('checkbox[name=security.crowd]').show();
-      // only show the IQ server ("CLM") migration capability when that feature is available
-      if (NX.State.hasFeature('SonatypeCLM')) {
-        screen.down('checkbox[name=capability.iq]').show();
-      }
-    }
-  },
-
-  /**
    * @private
    */
   doNext: function() {
@@ -90,7 +68,7 @@ Ext.define('NX.coreui.migration.ContentStep', {
     this.set('content-options', values);
 
     // when options indicate repositories, move to next
-    if (values['repositories.usermanaged']) {
+    if (values['repositories']) {
       this.moveNext();
     }
     else {

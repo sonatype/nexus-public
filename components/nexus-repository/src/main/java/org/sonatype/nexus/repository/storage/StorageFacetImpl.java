@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import javax.annotation.Nonnull;
@@ -21,9 +23,12 @@ import javax.inject.Provider;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardAspect;
@@ -32,11 +37,14 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -203,6 +211,29 @@ public class StorageFacetImpl
         return openStorageTx(databaseInstanceProvider.get().acquire());
       }
     };
+  }
+
+  @Override
+  public TempBlob createTempBlob(final InputStream inputStream, final Iterable<HashAlgorithm> hashAlgorithms) {
+    BlobStore blobStore = checkNotNull(blobStoreManager.get(config.blobStoreName));
+    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
+    Blob blob = blobStore.create(hashingStream,
+        ImmutableMap.of(
+            BlobStore.BLOB_NAME_HEADER, "temp",
+            BlobStore.CREATED_BY_HEADER, createdBy(),
+            BlobStore.TEMPORARY_BLOB_HEADER, ""));
+    return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
+  }
+
+  @Override
+  public TempBlob createTempBlob(final Payload payload, final Iterable<HashAlgorithm> hashAlgorithms)
+  {
+    try (InputStream inputStream = payload.openInputStream()) {
+      return createTempBlob(inputStream, hashAlgorithms);
+    }
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

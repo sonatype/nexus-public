@@ -49,6 +49,12 @@ public interface BlobStore
   String CREATED_BY_HEADER = "BlobStore.created-by";
 
   /**
+   * Header whose presence indicates a temporary blob (may be handled differently by the underlying implementation).
+   * @since 3.1
+   */
+  String TEMPORARY_BLOB_HEADER = "BlobStore.temporary-blob";
+
+  /**
    * Creates a new blob. The header map must contain at least two keys:
    *
    * <ul>
@@ -71,6 +77,14 @@ public interface BlobStore
    * @since 3.1
    */
   Blob create(Path sourceFile, Map<String, String> headers, long size, HashCode sha1);
+
+  /**
+   * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be
+   * in this blob store; moving blobs between blob stores is not supported.
+   *
+   * @since 3.1
+   */
+  Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
    * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete

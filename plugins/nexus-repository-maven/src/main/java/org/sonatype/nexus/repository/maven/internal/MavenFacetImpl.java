@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -45,6 +43,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -54,7 +53,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -198,8 +196,8 @@ public class MavenFacetImpl
   {
     log.debug("PUT {} : {}", getRepository().getName(), path.getPath());
 
-    try (TempStreamSupplier streamSupplier = new TempStreamSupplier(payload.openInputStream())) {
-      return doPut(path, payload, streamSupplier);
+    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
+      return doPut(path, payload, tempBlob);
     }
   }
 
@@ -217,18 +215,27 @@ public class MavenFacetImpl
     return doPut(path, sourceFile, contentType, contentAttributes, hashes, size);
   }
 
+  @Override
+  public Content put(final MavenPath path,
+                     final TempBlob blob,
+                     final String contentType,
+                     final AttributesMap contentAttributes)
+      throws IOException
+  {
+    return doPut(path, blob, contentType, contentAttributes);
+  }
+
   @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
   protected Content doPut(final MavenPath path,
       final Payload payload,
-      final Supplier<InputStream> streamSupplier)
+      final TempBlob tempBlob)
       throws IOException
   {
     final StorageTx tx = UnitOfWork.currentTx();
 
     final AssetBlob assetBlob = tx.createBlob(
         path.getPath(),
-        streamSupplier,
-        HashType.ALGORITHMS,
+        tempBlob,
         null,
         payload.getContentType(),
         false
@@ -238,12 +245,7 @@ public class MavenFacetImpl
       contentAttributes = ((Content) payload).getAttributes();
     }
 
-    if (path.getCoordinates() != null) {
-      return toContent(putArtifact(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
-    }
-    else {
-      return toContent(putFile(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
-    }
+    return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
   }
 
   @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
@@ -266,6 +268,29 @@ public class MavenFacetImpl
         size
     );
 
+    return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
+  }
+
+  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  protected Content doPut(final MavenPath path,
+                          final TempBlob blob,
+                          final String contentType,
+                          final AttributesMap contentAttributes)
+      throws IOException
+  {
+    StorageTx tx = UnitOfWork.currentTx();
+
+    AssetBlob assetBlob = tx.createBlob(path.getPath(), blob, null, contentType, true);
+
+    return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
+  }
+
+  private Content doPutAssetBlob(final MavenPath path,
+                                 final AttributesMap contentAttributes,
+                                 final StorageTx tx,
+                                 final AssetBlob assetBlob)
+      throws IOException
+  {
     if (path.getCoordinates() != null) {
       return toContent(putArtifact(tx, path, assetBlob, contentAttributes), assetBlob.getBlob());
     }

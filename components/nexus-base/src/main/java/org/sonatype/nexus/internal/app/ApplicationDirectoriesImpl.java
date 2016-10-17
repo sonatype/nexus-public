@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.app;
 
 import java.io.File;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -40,6 +39,8 @@ public class ApplicationDirectoriesImpl
 {
   private final File installDir;
 
+  private final File configDir;
+
   private final File workDir;
 
   private final File tempDir;
@@ -51,6 +52,9 @@ public class ApplicationDirectoriesImpl
     this.installDir = resolve(installDir, false);
     log.debug("Install dir: {}", this.installDir);
 
+    this.configDir = resolve(new File(installDir, "etc"), false);
+    log.debug("Config dir: {}", this.configDir);
+
     this.workDir = resolve(workDir, true);
     log.debug("Work dir: {}", this.workDir);
 
@@ -60,10 +64,15 @@ public class ApplicationDirectoriesImpl
     log.debug("Temp dir: {}", this.tempDir);
   }
 
-  @Nullable
   @Override
   public File getInstallDirectory() {
     return installDir;
+  }
+
+  @Override
+  public File getConfigDirectory(final String subsystem) {
+    checkNotNull(subsystem);
+    return new File(configDir, subsystem);
   }
 
   @Override

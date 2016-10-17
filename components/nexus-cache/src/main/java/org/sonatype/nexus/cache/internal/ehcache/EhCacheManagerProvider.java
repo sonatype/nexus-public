@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * EhCache JCache {@link CacheManager} provider.
  *
- * Loads configuration from {@code etc/ehcache.xml} if missing will use {@code ehcache-default.xml} resource.
+ * Loads configuration from {@code etc/fabric/ehcache.xml} if missing will use {@code ehcache-default.xml} resource.
  *
  * @since 3.0
  */
@@ -61,7 +61,7 @@ public class EhCacheManagerProvider
     checkNotNull(directories);
 
     URI uri = null;
-    File file = new File(directories.getInstallDirectory(), "etc/" + CONFIG_FILE);
+    File file = new File(directories.getConfigDirectory("fabric"), CONFIG_FILE);
     if (file.exists()) {
       uri = file.toURI();
     }

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
-import java.util.regex.Pattern;
-
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -30,13 +28,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named("volume-chapter")
 public class VolumeChapterLocationStrategy
-    implements LocationStrategy
+    extends LocationStrategySupport
 {
   private static final int TIER_1_MODULO = 43;
 
   private static final int TIER_2_MODULO = 47;
-
-  private static final Pattern UNSAFE_TOKENS = Pattern.compile("[.\\\\:/]");
 
   @Override
   public String location(final BlobId blobId) {
@@ -51,9 +47,5 @@ public class VolumeChapterLocationStrategy
 
   private int tier(final BlobId blobId, final int modulo) {
     return Math.abs(blobId.hashCode() % modulo) + 1;
-  }
-
-  private String escapeFilename(final String value) {
-    return UNSAFE_TOKENS.matcher(value).replaceAll("-");
   }
 }

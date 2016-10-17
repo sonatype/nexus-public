@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.2.10</orientdb.version>
+    <orientdb.version>2.2.11</orientdb.version>
     <hazelcast.version>3.6.5</hazelcast.version>
   </properties>
 

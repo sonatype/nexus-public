@@ -14,8 +14,6 @@ package org.sonatype.nexus.quartz.internal.orient;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.orient.entity.marshal.MarshalledEntity;
-
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 

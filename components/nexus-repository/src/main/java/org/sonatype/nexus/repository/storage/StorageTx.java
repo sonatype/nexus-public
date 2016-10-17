@@ -343,6 +343,20 @@ public interface StorageTx
                     long size) throws IOException;
 
   /**
+   * Creates a new Blob by hard linking to a {@code TempBlob} and returns its {@link AssetBlob}. Otherwise behaves as
+   * the other {@code setBlob()} methods.
+   *
+   * @since 3.1
+   */
+  AssetBlob setBlob(Asset asset,
+                    String blobName,
+                    TempBlob originalBlob,
+                    @Nullable Map<String, String> headers,
+                    @Nullable String declaredContentType,
+                    boolean skipContentVerification)
+      throws IOException;
+
+  /**
    * Creates a new Blob and returns its {@link AssetBlob}. Blobs created but not attached in a scope of a TX to any
    * asset are considered as "orphans", and they will be deleted from blob store at the end of a TX.
    *
@@ -390,6 +404,19 @@ public interface StorageTx
                        @Nullable Map<String, String> headers,
                        String declaredContentType,
                        long size) throws IOException;
+
+  /**
+   * Creates a new Blob by hard linking to a {@code TempBlob} and returns its {@link AssetBlob}. Otherwise behaves as
+   * the other {@code createBlob()} methods.
+   *
+   * @since 3.1
+   */
+  AssetBlob createBlob(String blobName,
+                       TempBlob originalBlob,
+                       @Nullable Map<String, String> headers,
+                       @Nullable String declaredContentType,
+                       boolean skipContentVerification)
+      throws IOException;
 
   /**
    * Attaches a Blob to asset and updates the given asset with a reference to it, hash metadata, size, and content

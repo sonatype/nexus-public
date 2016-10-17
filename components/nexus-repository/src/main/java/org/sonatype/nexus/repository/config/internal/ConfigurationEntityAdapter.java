@@ -30,9 +30,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
-import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
-import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;

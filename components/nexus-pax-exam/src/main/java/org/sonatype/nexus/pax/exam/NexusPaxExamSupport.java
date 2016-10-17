@@ -37,6 +37,7 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Range;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
@@ -100,6 +101,14 @@ public abstract class NexusPaxExamSupport
   public static final String NEXUS_PAX_EXAM_INVOKER_DEFAULT = "junit";
 
   public static final int NEXUS_TEST_START_LEVEL = 200;
+
+  public static final String NEXUS_PROPERTIES_FILE = "etc/nexus-default.properties";
+
+  public static final String SYSTEM_PROPERTIES_FILE = "etc/karaf/system.properties";
+
+  public static final String PAX_URL_MAVEN_FILE = "etc/karaf/org.ops4j.pax.url.mvn.cfg";
+
+  public static final String KARAF_MANAGEMENT_FILE = "etc/karaf/org.apache.karaf.management.cfg";
 
   // -------------------------------------------------------------------------
 
@@ -346,6 +355,9 @@ public abstract class NexusPaxExamSupport
     File logbackXml = resolveBaseFile("target/test-classes/logback-test.xml");
     String logLevel = System.getProperty("it.test.log.level", "INFO");
 
+    // block ports which might be taken by Pax-Exam RMI
+    portRegistry.blockPorts(Range.closed(21000, 21099));
+
     return composite(
 
         // mimic nexus script
@@ -364,7 +376,14 @@ public abstract class NexusPaxExamSupport
 
         systemProperty("basedir").value(BASEDIR),
 
+        // Pax-Exam cuts the leading directory from all archive paths when unpacking,
+        // so 'sonatype-work/nexus3' ends up as 'nexus3' under the base.
+
+        // Karaf specific configuration is now under 'etc/karaf' relative to the base.
+
         karafDistributionConfiguration() //
+            .karafData("nexus3") //
+            .karafEtc("etc/karaf") //
             .karafMain("org.sonatype.nexus.karaf.NexusMain") //
             .karafVersion("4") //
             .frameworkUrl(frameworkZip) //
@@ -379,10 +398,10 @@ public abstract class NexusPaxExamSupport
 
         keepRuntimeFolder(), // keep files around in case we need to debug
 
-        editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", // so pax-exam can fetch its feature
+        editConfigurationFilePut(PAX_URL_MAVEN_FILE, // so pax-exam can fetch its feature
             "org.ops4j.pax.url.mvn.repositories", "https://repo1.maven.org/maven2@id=central"),
 
-        editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", // so we can fetch local snapshots
+        editConfigurationFilePut(PAX_URL_MAVEN_FILE, // so we can fetch local snapshots
             "org.ops4j.pax.url.mvn.localRepository", localRepo),
 
         useOwnKarafExamSystemConfiguration("nexus"),
@@ -399,13 +418,13 @@ public abstract class NexusPaxExamSupport
         systemProperty("root.level").value(logLevel),
 
         // randomize ports...
-        editConfigurationFilePut("etc/org.sonatype.nexus.cfg", //
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
             "application-port", Integer.toString(portRegistry.reservePort())),
-        editConfigurationFilePut("etc/org.sonatype.nexus.cfg", //
+        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
             "application-port-ssl", Integer.toString(portRegistry.reservePort())),
-        editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
+        editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiRegistryPort", Integer.toString(portRegistry.reservePort())),
-        editConfigurationFilePut("etc/org.apache.karaf.management.cfg", //
+        editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiServerPort", Integer.toString(portRegistry.reservePort()))
     );
   }
@@ -414,7 +433,7 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to change the context path for the Nexus distribution
    */
   public static Option withContextPath(final String contextPath) {
-    return editConfigurationFilePut("etc/org.sonatype.nexus.cfg", "nexus-context-path", contextPath);
+    return editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus-context-path", contextPath);
   }
 
   /**
@@ -422,7 +441,7 @@ public abstract class NexusPaxExamSupport
    */
   public static Option withHttps(final File keystore) {
     return composite(
-        editConfigurationFileExtend("etc/org.sonatype.nexus.cfg", "nexus-args", "${karaf.base}/etc/jetty-https.xml"),
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus-args", "${jetty.etc}/jetty-https.xml"),
         replaceConfigurationFile("etc/ssl/keystore.jks", keystore));
   }
 
@@ -437,7 +456,7 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus plugin from the given feature XML and name
    */
   public static Option nexusFeature(final MavenUrlReference featureXml, final String name) {
-    return composite(features(featureXml), editConfigurationFileExtend("etc/org.sonatype.nexus.cfg", "nexus-features", name));
+    return composite(features(featureXml), editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus-features", name));
   }
 
   /**
@@ -467,7 +486,7 @@ public abstract class NexusPaxExamSupport
 
     if (nexusFeatures.size() > 0) {
       // combine the nexus-features values into a single request
-      result.add(editConfigurationFileExtend("etc/org.sonatype.nexus.cfg", //
+      result.add(editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, //
           "nexus-features", Joiner.on(',').join(nexusFeatures)));
     }
 
@@ -494,6 +513,7 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("karaf.log", resolveWorkFile("log/karaf.log"));
     testIndex.recordAndCopyLink("nexus.log", resolveWorkFile("log/nexus.log"));
     testIndex.recordAndCopyLink("request.log", resolveWorkFile("log/request.log"));
+    testIndex.recordAndCopyLink("jvm.log", resolveWorkFile("log/jvm.log"));
 
     final String surefirePrefix = "target/surefire-reports/" + getClass().getName();
     testIndex.recordLink("surefire result", resolveBaseFile(surefirePrefix + ".txt"));

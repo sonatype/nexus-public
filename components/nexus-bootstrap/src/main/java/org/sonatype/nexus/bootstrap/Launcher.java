@@ -47,13 +47,15 @@ public class Launcher
 
   private static final boolean HAS_JUL_BRIDGE;
 
+  private static final boolean HAS_CONSOLE = Boolean.getBoolean("karaf.startLocalConsole");
+
   public static final String IGNORE_SHUTDOWN_HELPER = ShutdownHelper.class.getName() + ".ignore";
 
   public static final String SYSTEM_USERID = "*SYSTEM";
 
   private final JettyServer server;
 
-  public Launcher(final File configFile) throws Exception {
+  public Launcher(final File defaultsFile, @Nullable final File propertiesFile) throws Exception {
 
     configureLogging();
 
@@ -61,7 +63,8 @@ public class Launcher
 
     ConfigurationBuilder builder = new ConfigurationBuilder().defaults();
 
-    builder.properties(configFile, true);
+    builder.properties(defaultsFile, true);
+    builder.properties(propertiesFile, false);
     builder.override(System.getProperties());
 
     Map<String, String> props = builder.build();
@@ -143,8 +146,10 @@ public class Launcher
    * Customize logging of the application as necessary. 
    */
   private void configureLogging() {
-    SysOutOverSLF4J.registerLoggingSystem("org.ops4j.pax.logging.slf4j");
-    SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
+    if (!HAS_CONSOLE) {
+      SysOutOverSLF4J.registerLoggingSystem("org.ops4j.pax.logging.slf4j");
+      SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
+    }
 
     if (HAS_JUL_BRIDGE) {
       org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();

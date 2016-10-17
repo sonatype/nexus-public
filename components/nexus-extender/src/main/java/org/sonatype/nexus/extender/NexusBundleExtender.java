@@ -22,8 +22,6 @@ import org.eclipse.sisu.launch.SisuExtender;
 import org.eclipse.sisu.launch.SisuTracker;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.service.cm.ManagedService;
 
 /**
  * {@link Bundle} extender that manages bundles with Nexus components.
@@ -46,12 +44,10 @@ public class NexusBundleExtender
     listener = new NexusContextListener(this);
 
     final Dictionary<String, Object> listenerProperties = new Hashtable<>();
-    listenerProperties.put(Constants.SERVICE_PID, "org.sonatype.nexus");
     listenerProperties.put("name", "nexus");
 
     // register our listener; the bootstrap code will call us back with the servlet context
-    final String[] api = { ServletContextListener.class.getName(), ManagedService.class.getName() };
-    ctx.registerService(api, listener, listenerProperties);
+    ctx.registerService(ServletContextListener.class, listener, listenerProperties);
   }
 
   @Override

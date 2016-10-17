@@ -79,12 +79,8 @@ class LogCustomizer
       }
     }
 
-    // include karaf.log
-    if (System.properties['karaf.data']) {
-      maybeIncludeFile new File(System.getProperty('karaf.data'), 'log/karaf.log'), 'log', LOW
-    }
-
-    // include request.log
+    maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/karaf.log'), 'log', LOW
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/request.log'), 'log', LOW
+    maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/jvm.log'), 'log', LOW
   }
 }

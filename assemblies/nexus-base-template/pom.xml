@@ -191,16 +191,6 @@
                 <delete dir="${project.build.directory}/assembly/lib/ext"/>
                 <delete dir="${project.build.directory}/assembly/lib/endorsed"/>
 
-                <!-- overlay customizations -->
-                <copy todir="${project.build.directory}/assembly" overwrite="true">
-                  <fileset dir="${project.basedir}/src/main/resources/overlay"/>
-                </copy>
-
-                <!-- sonatype-work placeholders/templates -->
-                <copy todir="${project.build.directory}/sonatype-work" overwrite="true">
-                  <fileset dir="${project.basedir}/src/main/resources/sonatype-work"/>
-                </copy>
-
                 <!-- disable log4j backend so we can use logback -->
                 <replaceregexp file="${project.build.directory}/assembly/etc/startup.properties"
                                match="(.*pax-logging-service.*)" replace="# \1"/>
@@ -214,12 +204,28 @@
                 HACK: Include orientdb-studio plugin.
                 -->
                 <unzip src="${com.orientechnologies:orientdb-community:zip}"
-                       dest="${project.build.directory}/sonatype-work/nexus3/data/orient/plugins">
+                       dest="${project.build.directory}/sonatype-work/nexus3/orient/plugins">
                   <mergemapper to="studio.zip"/>
                   <patternset>
                     <include name="*/plugins/studio-*.zip"/>
                   </patternset>
                 </unzip>
+
+                <!-- move karaf config to etc/karaf -->
+                <move todir="${project.build.directory}/assembly/etc/karaf">
+                  <fileset dir="${project.build.directory}/assembly/etc"/>
+                </move>
+
+                <!-- overlay customizations -->
+                <copy todir="${project.build.directory}/assembly" overwrite="true">
+                  <fileset dir="${project.basedir}/src/main/resources/overlay"/>
+                </copy>
+
+                <!-- sonatype-work placeholders/templates -->
+                <copy todir="${project.build.directory}/sonatype-work" overwrite="true">
+                  <fileset dir="${project.basedir}/src/main/resources/sonatype-work"/>
+                </copy>
+
               </target>
             </configuration>
           </execution>

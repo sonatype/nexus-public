@@ -29,6 +29,13 @@ public interface ApplicationDirectories
   File getInstallDirectory();
 
   /**
+   * Configuration directory.
+   *
+   * @param subsystem Sub-system name
+   */
+  File getConfigDirectory(String subsystem);
+
+  /**
    * Temporary directory.
    */
   File getTemporaryDirectory();

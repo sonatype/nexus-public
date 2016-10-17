@@ -156,7 +156,7 @@ public class DatabaseServerImpl
   }
 
   private OServerConfiguration createConfiguration() {
-    File etcDir = new File(applicationDirectories.getInstallDirectory(), "etc");
+    File configDir = applicationDirectories.getConfigDirectory("fabric");
 
     // FIXME: Unsure what this directory is used for
     File orientDir = applicationDirectories.getWorkDirectory("orient");
@@ -169,7 +169,7 @@ public class DatabaseServerImpl
     config.location = "DYNAMIC-CONFIGURATION";
 
     File databaseDir = applicationDirectories.getWorkDirectory("db");
-    File securityFile = new File(etcDir, "orientdb-security.json");
+    File securityFile = new File(configDir, "orientdb-security.json");
 
     config.properties = new OServerEntryConfiguration[]{
         new OServerEntryConfiguration("server.database.path", databaseDir.getPath()),

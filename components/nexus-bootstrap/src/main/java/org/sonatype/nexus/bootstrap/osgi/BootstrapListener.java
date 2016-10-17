@@ -76,7 +76,7 @@ public class BootstrapListener
       }
 
       // pass bootstrap properties to embedded servlet listener
-      servletContext.setAttribute("org.sonatype.nexus.cfg", properties);
+      servletContext.setAttribute("nexus.properties", properties);
 
       File workDir = new File(properties.get("karaf.data")).getCanonicalFile();
       DirectoryHelper.mkdir(workDir.toPath());

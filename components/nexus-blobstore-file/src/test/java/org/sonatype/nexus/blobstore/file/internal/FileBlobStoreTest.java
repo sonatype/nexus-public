@@ -45,7 +45,10 @@ public class FileBlobStoreTest
     extends TestSupport
 {
   @Mock
-  private LocationStrategy locationStrategy;
+  private LocationStrategy permanentLocationStrategy;
+
+  @Mock
+  private TemporaryLocationStrategy temporaryLocationStrategy;
 
   @Mock
   private FileOperations fileOperations;
@@ -72,7 +75,7 @@ public class FileBlobStoreTest
 
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
-        locationStrategy, fileOperations, metrics, new BlobStoreConfiguration(),
+        permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, new BlobStoreConfiguration(),
         appDirs);
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
     underTest.setLiveBlobs(loadingCache);

@@ -13,8 +13,10 @@
 package org.sonatype.nexus.bootstrap.osgi;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.bootstrap.Launcher;
 import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
@@ -27,6 +29,7 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.launch.Framework;
 import org.slf4j.MDC;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.Collections.singletonMap;
 import static org.sonatype.nexus.bootstrap.Launcher.SYSTEM_USERID;
 
@@ -50,15 +53,16 @@ public class LauncherActivator
     framework = (Framework) bundleContext.getBundle(0);
     ShutdownHelper.setDelegate(this);
 
-    final String etcPath = bundleContext.getProperty("karaf.etc");
-    if (etcPath == null) {
-      throw new IllegalArgumentException("Missing karaf.etc");
-    }
+    final String baseDir = checkProperty(bundleContext, "karaf.base");
+    final String dataDir = checkProperty(bundleContext, "karaf.data");
 
-    final File configFile = new File(etcPath, "org.sonatype.nexus.cfg").getCanonicalFile();
+    final File defaultsFile = new File(baseDir, "etc/nexus-default.properties");
+    final File propertiesFile = new File(dataDir, "etc/nexus.properties");
+
+    maybeCopyDefaults(defaultsFile, propertiesFile);
 
     MDC.put("userId", SYSTEM_USERID);
-    launcher = new Launcher(configFile);
+    launcher = new Launcher(defaultsFile, propertiesFile);
     launcher.startAsync(
         () -> {
           connectorConfigurationTracker = new ConnectorConfigurationTracker(
@@ -75,6 +79,33 @@ public class LauncherActivator
         new JettyServerConfiguration(launcher.getServer().defaultConnectors()),
         properties
     );
+  }
+
+  private static void maybeCopyDefaults(final File defaultsFile, final File propertiesFile) throws Exception {
+    if (defaultsFile.exists() && !propertiesFile.exists()) {
+
+      File parentDir = propertiesFile.getParentFile();
+      if (parentDir != null && !parentDir.isDirectory()) {
+        Files.createDirectories(parentDir.toPath());
+      }
+
+      // copy defaults across, but commented
+      Files.write(
+          propertiesFile.toPath(),
+          Files.readAllLines(defaultsFile.toPath(), ISO_8859_1)
+              .stream()
+              .map(l -> l.startsWith("#") || l.isEmpty() ? l : "# " + l)
+              .collect(Collectors.toList()),
+          ISO_8859_1);
+    }
+  }
+
+  private static String checkProperty(final BundleContext bundleContext, final String name) {
+    String value = bundleContext.getProperty(name);
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("Missing property " + name);
+    }
+    return value;
   }
 
   public void stop(final BundleContext bundleContext) throws Exception {

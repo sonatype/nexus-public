@@ -50,4 +50,11 @@ public interface BlobStoreManager
    */
   void delete(String name) throws Exception;
 
+  /**
+   * Returns true if a blob store with the provided name already exists. Check is case-insensitive.
+   *
+   * @since 3.1
+   */
+  boolean exists(String name);
+
 }

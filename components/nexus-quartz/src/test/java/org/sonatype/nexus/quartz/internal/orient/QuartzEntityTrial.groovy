@@ -13,7 +13,6 @@
 package org.sonatype.nexus.quartz.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.orient.entity.marshal.FieldObjectMapper
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob
 
 import com.fasterxml.jackson.core.type.TypeReference

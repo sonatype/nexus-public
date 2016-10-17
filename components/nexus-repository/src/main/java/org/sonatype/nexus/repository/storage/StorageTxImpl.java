@@ -46,6 +46,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -543,32 +544,13 @@ public class StorageTxImpl
     checkNotNull(blobName);
     checkNotNull(streamSupplier);
     checkNotNull(hashAlgorithms);
-    checkArgument(
-        !skipContentVerification || !Strings2.isBlank(declaredContentType),
-        "skipContentVerification set true but no declaredContentType provided"
-    );
 
     if (!writePolicy.checkCreateAllowed()) {
       throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
-    ImmutableMap.Builder<String, String> storageHeaders = ImmutableMap.builder();
-    storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
-    storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
-    storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
-    if (!skipContentVerification) {
-      storageHeaders.put(
-          BlobStore.CONTENT_TYPE_HEADER,
-          determineContentType(streamSupplier, blobName, declaredContentType)
-      );
-    }
-    else {
-      storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
-    }
-    if (headers != null) {
-      storageHeaders.putAll(headers);
-    }
-    Map<String, String> storageHeadersMap = storageHeaders.build();
+    Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, streamSupplier, headers, declaredContentType,
+        skipContentVerification);
     return blobTx.create(
         streamSupplier.get(),
         storageHeadersMap,
@@ -595,21 +577,68 @@ public class StorageTxImpl
       throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
-    ImmutableMap.Builder<String, String> storageHeaders = ImmutableMap.builder();
-    storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
-    storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
-    storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
-    storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
-    if (headers != null) {
-      storageHeaders.putAll(headers);
-    }
+    Map<String, String> storageHeaders = buildStorageHeaders(blobName, null, headers, declaredContentType, true);
     return blobTx.createByHardLinking(
         sourceFile,
-        storageHeaders.build(),
+        storageHeaders,
         hashes,
         declaredContentType,
         size
     );
+  }
+
+  @Override
+  public AssetBlob createBlob(final String blobName,
+                              final TempBlob originalBlob,
+                              @Nullable final Map<String, String> headers,
+                              @Nullable final String declaredContentType,
+                              boolean skipContentVerification)
+      throws IOException
+  {
+    checkNotNull(blobName);
+    checkNotNull(originalBlob);
+
+    if (!writePolicy.checkCreateAllowed()) {
+      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+    }
+
+    Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, originalBlob, headers, declaredContentType,
+        skipContentVerification);
+    return blobTx.createByCopying(
+        originalBlob.getBlob().getId(),
+        storageHeadersMap,
+        originalBlob.getHashes(),
+        originalBlob.getHashesVerified()
+    );
+  }
+
+  private Map<String, String> buildStorageHeaders(final String blobName,
+                                                  @Nullable final Supplier<InputStream> streamSupplier,
+                                                  @Nullable final Map<String, String> headers,
+                                                  @Nullable final String declaredContentType,
+                                                  final boolean skipContentVerification) throws IOException
+  {
+    checkArgument(
+        !skipContentVerification || !Strings2.isBlank(declaredContentType),
+        "skipContentVerification set true but no declaredContentType provided"
+    );
+    Builder<String, String> storageHeaders = ImmutableMap.builder();
+    storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
+    storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
+    storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
+    if (!skipContentVerification) {
+      storageHeaders.put(
+          BlobStore.CONTENT_TYPE_HEADER,
+          determineContentType(streamSupplier, blobName, declaredContentType)
+      );
+    }
+    else {
+      storageHeaders.put(BlobStore.CONTENT_TYPE_HEADER, declaredContentType);
+    }
+    if (headers != null) {
+      storageHeaders.putAll(headers);
+    }
+    return storageHeaders.build();
   }
 
   @Override
@@ -712,6 +741,29 @@ public class StorageTxImpl
         declaredContentType,
         size
     );
+    attachBlob(asset, assetBlob);
+    return assetBlob;
+  }
+
+  @Override
+  public AssetBlob setBlob(final Asset asset,
+                           final String blobName,
+                           final TempBlob originalBlob,
+                           @Nullable final Map<String, String> headers,
+                           @Nullable String declaredContentType,
+                           boolean skipContentVerification)
+      throws IOException
+  {
+    checkNotNull(blobName);
+    checkNotNull(originalBlob);
+
+    // Enforce write policy ahead, as we have asset here
+    BlobRef oldBlobRef = asset.blobRef();
+    if (oldBlobRef != null && !writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
+      throw new IllegalOperationException(
+          "Repository does not allow updating assets: " + bucket.getRepositoryName());
+    }
+    AssetBlob assetBlob = createBlob(blobName, originalBlob, headers, declaredContentType, skipContentVerification);
     attachBlob(asset, assetBlob);
     return assetBlob;
   }

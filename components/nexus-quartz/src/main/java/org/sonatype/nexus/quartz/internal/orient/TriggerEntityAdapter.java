@@ -26,10 +26,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesWithPredicateAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
-import org.sonatype.nexus.orient.entity.marshal.FieldObjectMapper;
-import org.sonatype.nexus.orient.entity.marshal.JacksonMarshaller;
-import org.sonatype.nexus.orient.entity.marshal.MarshalledEntityAdapter;
-import org.sonatype.nexus.orient.entity.marshal.Marshaller;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

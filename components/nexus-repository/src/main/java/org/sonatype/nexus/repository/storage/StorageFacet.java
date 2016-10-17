@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.io.InputStream;
+
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Supplier;
@@ -37,4 +41,21 @@ public interface StorageFacet
    * Supplies transactions for use in {@link UnitOfWork}.
    */
   Supplier<StorageTx> txSupplier();
+
+  /**
+   * Creates a new temporary blob based using the contents of the input stream. Disposal of the temp blob must be
+   * managed by the caller, typically using a try-with-resources block.
+   *
+   * @since 3.1
+   */
+  TempBlob createTempBlob(InputStream inputStream, Iterable<HashAlgorithm> hashAlgorithms);
+
+  /**
+   * Creates a new temporary blob based using the contents of the payload. Disposal of the temp blob must be
+   * managed by the caller, typically using a try-with-resources block.
+   *
+   * @since 3.1
+   */
+  TempBlob createTempBlob(Payload payload, Iterable<HashAlgorithm> hashAlgorithms);
+
 }

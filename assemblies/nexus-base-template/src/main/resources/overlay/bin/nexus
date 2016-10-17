@@ -125,7 +125,7 @@ locateData() {
             die "KARAF_DATA is not valid: $KARAF_DATA"
         fi
     else
-        KARAF_DATA=$KARAF_BASE/../sonatype-work/nexus3/data
+        KARAF_DATA=$KARAF_BASE/../sonatype-work/nexus3
     fi
 }
 
@@ -135,7 +135,7 @@ locateEtc() {
             die "KARAF_ETC is not valid: $KARAF_ETC"
         fi
     else
-        KARAF_ETC=$KARAF_BASE/etc
+        KARAF_ETC=$KARAF_BASE/etc/karaf
     fi
 }
 
@@ -262,7 +262,7 @@ setupDebugOptions() {
 }
 
 setupDefaults() {
-    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/data/log/jvm.log "
+    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+HeapDumpOnOutOfMemoryError -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/log/jvm.log "
 
     #Set the JVM_VENDOR specific JVM flags
     if [ "$JVM_VENDOR" = "SUN" ]; then
@@ -403,7 +403,7 @@ run() {
     # SONATYPE: removed -Djavax.management.builder.initial
     # SONATYPE: removed -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}"
     # SONATYPE: removed -Djava.ext.dirs="${JAVA_EXT_DIRS}"
-    exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_BASE/etc/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
+    exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
 }
 
 main() {

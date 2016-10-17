@@ -83,6 +83,7 @@ public class FileBlobStoreConcurrencyIT
 
     this.underTest = new FileBlobStore(content,
         new VolumeChapterLocationStrategy(),
+        new TemporaryLocationStrategy(),
         new SimpleFileOperations(),
         metricsStore,
         config,

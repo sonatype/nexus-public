@@ -1164,26 +1164,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.ContentScreen': {
       Title: 'Content',
-      Description: '<p>Select the contents to upgrade from Nexus Repository Manager 2.</p>',
-      Security_FieldLabel: 'Security',
-      Security_Anonymous_BoxLabel: 'Anonymous',
-      Security_Realms_BoxLabel: 'Realms',
-      Security_Users_BoxLabel: 'Users',
-      Security_User_Tokens_BoxLabel: 'User Tokens',
-      Security_Crowd_BoxLabel: 'Crowd',
-      Security_Roles_BoxLabel: 'Roles',
-      Security_TargetPrivileges_BoxLabel: 'Target Privileges',
-      Security_LDAP_BoxLabel: 'LDAP Configuration',
-      Security_SSL_Certificates_BoxLabel: 'SSL Certificates',
-      Security_NuGet_API_Key_BoxLabel: 'NuGet API-Key',
-      System_FieldLabel: 'System',
-      System_Email_BoxLabel: 'Email',
-      System_HTTP_BoxLabel: 'HTTP Configuration',
-      Repositories_Clm_BoxLabel: 'IQ Server',
-      Repositories_HealthCheck_BoxLabel: 'Health Check',
-      Repositories_FieldLabel: 'Repositories',
-      Repositories_BoxLabel: 'User-Managed Repositories',
-      RepositoryTargets_BoxLabel: 'Repository Targets'
+      Description: '<p>What content from Nexus Repository Manager 2 would you like to transfer?</p>',
+      Repositories_FieldLabel: 'Repository configuration and content',
+      Configuration_FieldLabel: 'Server configuration'
     },
 
     'NX.coreui.migration.OverviewScreen': {
@@ -1191,7 +1174,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Description: '<p>This wizard will help you upgrade from Nexus Repository Manager 2.</p>' +
       '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
       '<ul>' +
-      '<li>Security: users, roles and privileges</li>' +
+      '<li>Configuration: security (users, roles and privileges) and other applicable system settings </li>' +
       '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
       '</ul>' +
       '</p>' +
@@ -1202,7 +1185,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
       '<li>Capabilities</li>' +
       '</ul>' +
       '</p>' +
-      '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Keep in mind that repository upgrade could take <strong>considerable time</strong> and needs <strong>special consideration</strong> for finalization upon completion.' +
+      '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Take note of the following:' +
+      '<ul>' +
+      '<li>Repository upgrade could take <strong>considerable time</strong>.</li>' +
+      '<li>Until upgrade has successfully completed, it is not recommended to make any configuration changes in Nexus Repository Manager 3, as the configuration is volatile during this time.</li>' +
+      '<li>Also during the upgrade, all of the repositories in Nexus Repository Manager 3 will be offline.</li>' +
+      '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
+      '</ul>' +
       '</p>'
     },
 

@@ -21,8 +21,8 @@ import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.supportzip.FileContentSourceSupport
 import org.sonatype.nexus.supportzip.SanitizedXmlSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
-import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
+import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority
@@ -66,11 +66,36 @@ class InstallConfigurationCustomizer
       }
     }
 
+    // helper to include a directory
+    def maybeIncludeDir = { File dir, String prefix, Priority priority = DEFAULT ->
+      if (dir.isDirectory()) {
+        log.debug 'Including dir: {}', dir
+        dir.eachFile {
+          maybeIncludeFile it, "$prefix/${dir.name}", priority
+        }
+      }
+      else {
+        log.warn 'Skipping: {}', dir
+      }
+    }
+
     def installDir = applicationDirectories.installDirectory
     if (installDir) {
-      new File(installDir, 'etc').eachFile {
-        maybeIncludeFile it, 'install/etc', HIGH
-      }
+      def etcDir = new File(installDir, 'etc')
+
+      maybeIncludeFile new File(etcDir, 'nexus-default.properties'), 'install/etc', HIGH
+      maybeIncludeDir new File(etcDir, 'fabric'), 'install/etc', HIGH
+      maybeIncludeDir new File(etcDir, 'jetty'), 'install/etc', HIGH
+      maybeIncludeDir new File(etcDir, 'karaf'), 'install/etc', HIGH
+      maybeIncludeDir new File(etcDir, 'logback'), 'install/etc', HIGH
+    }
+
+    def workDir = applicationDirectories.workDirectory
+    if (workDir) {
+      def etcDir = new File(workDir, 'etc')
+
+      maybeIncludeFile new File(etcDir, 'nexus.properties'), 'install/etc', HIGH
+      maybeIncludeDir new File(etcDir, 'logback'), 'install/etc', HIGH
     }
   }
 
