@@ -66,7 +66,7 @@ public class ConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<Configuration> list() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse.execute(db)));
+    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
   }
 
   @Override

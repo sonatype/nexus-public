@@ -63,6 +63,10 @@ public class CRoleEntityAdapter
       .property(P_ID)
       .build();
 
+  private final ReadEntityByPropertyAction<CRole> read = new ReadEntityByPropertyAction<>(this, P_ID);
+
+  private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
+
   public CRoleEntityAdapter() {
     super(DB_CLASS);
   }
@@ -127,7 +131,18 @@ public class CRoleEntityAdapter
   // Actions
   //
 
-  public final ReadEntityByPropertyAction<CRole> read = new ReadEntityByPropertyAction<>(this, P_ID);
+  /**
+   * @since 3.1
+   */
+  @Nullable
+  public CRole read(final ODatabaseDocumentTx db, final String id) {
+    return read.execute(db, id);
+  }
 
-  public final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
+  /**
+   * @since 3.1
+   */
+  public boolean delete(final ODatabaseDocumentTx db, final String id) {
+    return delete.execute(db, id);
+  }
 }

@@ -107,9 +107,9 @@ public class JobStoreImplTest
       calendarEntityAdapter.register(db);
 
       // nuke quartz data
-      jobDetailEntityAdapter.deleteAll.execute(db);
-      triggerEntityAdapter.deleteAll.execute(db);
-      calendarEntityAdapter.deleteAll.execute(db);
+      jobDetailEntityAdapter.deleteAll(db);
+      triggerEntityAdapter.deleteAll(db);
+      calendarEntityAdapter.deleteAll(db);
     }
 
     return new JobStoreImpl(

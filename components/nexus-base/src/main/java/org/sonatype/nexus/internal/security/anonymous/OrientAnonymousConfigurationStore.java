@@ -69,14 +69,14 @@ public class OrientAnonymousConfigurationStore
   @Nullable
   public AnonymousConfiguration load() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.singleton.get(db);
+      return entityAdapter.get(db);
     }
   }
 
   @Override
   public void save(final AnonymousConfiguration configuration) {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.singleton.set(db, configuration);
+      entityAdapter.set(db, configuration);
     }
   }
 }

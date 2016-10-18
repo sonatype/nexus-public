@@ -81,7 +81,7 @@ class JobDetailEntityAdapterTest
 
     // lookup the entity and verify its contents
     database.instance.acquire().withCloseable {db ->
-      def entity2 = underTest.read.execute(db, id1)
+      def entity2 = underTest.read(db, id1)
       println entity2
 
       assert entity2.name == entity1.name

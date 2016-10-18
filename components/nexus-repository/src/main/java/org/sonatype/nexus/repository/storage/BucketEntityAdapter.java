@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -54,6 +56,8 @@ public class BucketEntityAdapter
       .type(DB_CLASS)
       .property(P_REPOSITORY_NAME)
       .build();
+
+  private final ReadEntityByPropertyAction<Bucket> read = new ReadEntityByPropertyAction<>(this, P_REPOSITORY_NAME);
 
   @Inject
   public BucketEntityAdapter() {
@@ -95,5 +99,11 @@ public class BucketEntityAdapter
   // Actions
   //
 
-  public final ReadEntityByPropertyAction<Bucket> read = new ReadEntityByPropertyAction<>(this, P_REPOSITORY_NAME);
+  /**
+   * @since 3.1
+   */
+  @Nullable
+  public Bucket read(final ODatabaseDocumentTx db, final String name) {
+    return read.execute(db, name);
+  }
 }

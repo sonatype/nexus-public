@@ -69,14 +69,14 @@ public class OrientEmailConfigurationStore
   @Nullable
   public EmailConfiguration load() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.singleton.get(db);
+      return entityAdapter.get(db);
     }
   }
 
   @Override
   public void save(final EmailConfiguration configuration) {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.singleton.set(db, configuration);
+      entityAdapter.set(db, configuration);
     }
   }
 }

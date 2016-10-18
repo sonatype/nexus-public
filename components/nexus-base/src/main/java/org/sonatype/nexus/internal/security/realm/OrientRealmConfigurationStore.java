@@ -66,11 +66,11 @@ public class OrientRealmConfigurationStore
   @Override
   @Nullable
   public RealmConfiguration load() {
-    return inTx(databaseInstance, db -> entityAdapter.singleton.get(db));
+    return inTx(databaseInstance, db -> entityAdapter.get(db));
   }
 
   @Override
   public void save(final RealmConfiguration configuration) {
-    inTxNoReturn(databaseInstance, db -> entityAdapter.singleton.set(db, configuration));
+    inTxNoReturn(databaseInstance, db -> entityAdapter.set(db, configuration));
   }
 }

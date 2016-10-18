@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
@@ -31,7 +33,6 @@ import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
-import org.sonatype.nexus.security.config.DynamicSecurityContributor;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
@@ -46,6 +47,8 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.authc.credential.PasswordService;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -57,7 +60,7 @@ import static com.google.common.base.Preconditions.checkState;
 @Singleton
 public class SecurityConfigurationManagerImpl
     extends ComponentSupport
-    implements SecurityConfigurationManager
+    implements SecurityConfigurationManager, EventAware
 {
   private final SecurityConfigurationSource configurationSource;
 
@@ -67,25 +70,21 @@ public class SecurityConfigurationManagerImpl
 
   private final EventBus eventBus;
 
-  private final List<SecurityContributor> staticContributors;
-
-  private final List<DynamicSecurityContributor> dynamicContributors;
+  private final List<SecurityContributor> securityContributors = new ArrayList<>();
 
   private volatile SecurityConfiguration defaultConfiguration;
 
   private volatile SecurityConfiguration mergedConfiguration;
 
+  private boolean firstTimeConfiguration = true;
+
   @Inject
   public SecurityConfigurationManagerImpl(final SecurityConfigurationSource configurationSource,
-                                          final List<SecurityContributor> staticContributors,
-                                          final List<DynamicSecurityContributor> dynamicContributors,
                                           final SecurityConfigurationCleaner configCleaner,
                                           final PasswordService passwordService,
                                           final EventBus eventBus)
   {
     this.configurationSource = configurationSource;
-    this.dynamicContributors = dynamicContributors;
-    this.staticContributors = staticContributors;
     this.eventBus = eventBus;
     this.configCleaner = configCleaner;
     this.passwordService = passwordService;
@@ -265,6 +264,20 @@ public class SecurityConfigurationManagerImpl
     }
   }
 
+  public void addContributor(final SecurityContributor contributor) {
+    synchronized (this) {
+      securityContributors.add(contributor);
+    }
+    eventBus.post(new SecurityContributionChangedEvent());
+  }
+
+  public void removeContributor(final SecurityContributor contributor) {
+    synchronized (this) {
+      securityContributors.remove(contributor);
+    }
+    eventBus.post(new SecurityContributionChangedEvent());
+  }
+
   private SecurityConfiguration getDefaultConfiguration() {
     // Assign configuration to local variable first, in case it's nulled out by asynchronous event
     // (currently there is no such event because the orient configuration handles its own reloading)
@@ -286,19 +299,26 @@ public class SecurityConfigurationManagerImpl
     return configurationSource.loadConfiguration();
   }
 
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final SecurityContributionChangedEvent event) {
+    mergedConfiguration = null; // force rebuild on next request
+  }
+
   private SecurityConfiguration getMergedConfiguration() {
     // Assign configuration to local variable first, in case it's nulled out by asynchronous event
     SecurityConfiguration configuration = this.mergedConfiguration;
-    if (configuration == null || isDirty()) {
+    if (configuration == null) {
       boolean rebuiltConfiguration = false;
 
       synchronized (this) {
         // double-checked locking of volatile is apparently OK with java5+
         // http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
         configuration = this.mergedConfiguration;
-        if (configuration == null || isDirty()) {
-          rebuiltConfiguration = (configuration != null);
+        if (configuration == null) {
           this.mergedConfiguration = configuration = doGetMergedConfiguration();
+          rebuiltConfiguration = !firstTimeConfiguration;
+          firstTimeConfiguration = false;
         }
       }
 
@@ -310,46 +330,20 @@ public class SecurityConfigurationManagerImpl
     return configuration;
   }
 
-  @Override
-  public boolean isDirty() {
-    for (DynamicSecurityContributor contributor : dynamicContributors) {
-      if (contributor.isDirty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private MemorySecurityConfiguration doGetMergedConfiguration() {
     final MemorySecurityConfiguration configuration = new MemorySecurityConfiguration();
 
-    for (SecurityContributor contributor : staticContributors) {
+    for (SecurityContributor contributor : securityContributors) {
       SecurityConfiguration contribution = contributor.getContribution();
 
       if (contribution != null) {
         checkState(
             contribution.getUsers() == null || contribution.getUsers().isEmpty(),
-            "Static contributions cannot have users"
+            "Security contributions cannot have users"
         );
         checkState(
             contribution.getUserRoleMappings() == null || contribution.getUserRoleMappings().isEmpty(),
-            "Static contributions cannot have user/role mappings"
-        );
-        appendConfig(configuration, contribution);
-      }
-    }
-
-    for (DynamicSecurityContributor contributor : dynamicContributors) {
-      SecurityConfiguration contribution = contributor.getContribution();
-
-      if (contribution != null) {
-        checkState(
-            contribution.getUsers() == null || contribution.getUsers().isEmpty(),
-            "Dynamic contributions cannot have users"
-        );
-        checkState(
-            contribution.getUserRoleMappings() == null || contribution.getUserRoleMappings().isEmpty(),
-            "Dynamic contributions cannot have user/role mappings"
+            "Security contributions cannot have user/role mappings"
         );
         appendConfig(configuration, contribution);
       }

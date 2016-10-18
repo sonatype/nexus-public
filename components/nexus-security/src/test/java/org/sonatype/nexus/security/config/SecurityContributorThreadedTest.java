@@ -16,6 +16,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.security.AbstractSecurityTest;
 
 import com.google.inject.AbstractModule;
@@ -34,10 +35,13 @@ public class SecurityContributorThreadedTest
   private int expectedPrivilegeCount = 0;
 
   @Inject
-  private List<SecurityContributor> staticContributors;
+  private List<SecurityContributor> testContributors;
 
   @Inject
-  private List<DynamicSecurityContributor> dynamicContributors;
+  private List<MutableTestSecurityContributor> mutableTestContributors;
+
+  @Inject
+  private EventBus eventBus;
 
   @Override
   protected MemorySecurityConfiguration initialSecurityConfiguration() {
@@ -51,22 +55,27 @@ public class SecurityContributorThreadedTest
     {
       @Override
       protected void configure() {
-        bind(SecurityContributor.class).annotatedWith(Names.named("default"))
-            .toInstance(new TestSecurityContributor2());
-        bind(DynamicSecurityContributor.class).annotatedWith(Names.named("default"))
-            .toInstance(new MutableTestSecurityContributor());
+        bindStaticContributor("static-default", new TestSecurityContributor2());
+        bindDynamicContributor("dynamic-default", new MutableTestSecurityContributor());
 
         int staticResourceCount = 100;
-        for (int ii = 0; ii < staticResourceCount - 1; ii++) {
-          bind(SecurityContributor.class).annotatedWith(Names.named("test-" + ii))
-              .toInstance(new TestSecurityContributor3());
+        for (int ii = 0; ii < staticResourceCount - 1; ii++) { // 99 more
+          bindStaticContributor("static-" + ii, new TestSecurityContributor3());
         }
 
         int dynamicResourceCount = 100;
-        for (int ii = 0; ii < dynamicResourceCount - 1; ii++) {
-          bind(DynamicSecurityContributor.class).annotatedWith(Names.named("test-" + ii))
-              .toInstance(new MutableTestSecurityContributor());
+        for (int ii = 0; ii < dynamicResourceCount - 1; ii++) { // 99 more
+          bindDynamicContributor("dynamic-" + ii, new MutableTestSecurityContributor());
         }
+      }
+
+      private void bindStaticContributor(String name, SecurityContributor instance) {
+        bind(SecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
+      }
+
+      private void bindDynamicContributor(String name, MutableTestSecurityContributor instance) {
+        bind(MutableTestSecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
+        bind(SecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
       }
     });
   }
@@ -77,18 +86,16 @@ public class SecurityContributorThreadedTest
 
     this.manager = lookup(SecurityConfigurationManager.class);
 
-    // test the lookup, make sure we have 100
-    Assert.assertEquals(100, staticContributors.size());
-    Assert.assertEquals(100, dynamicContributors.size());
+    // mimic EventManager auto-registration
+    eventBus.register(manager);
+
+    // test the lookup, make sure we have 200
+    Assert.assertEquals(200, testContributors.size());
 
     this.expectedPrivilegeCount = this.manager.listPrivileges().size();
 
     // 100 static items with 3 privs each + 100 dynamic items + 2 from default config
     Assert.assertEquals((100 * 3) + 100 + 2, expectedPrivilegeCount);
-
-    for (DynamicSecurityContributor contributor : dynamicContributors) {
-      Assert.assertFalse(contributor.isDirty());
-    }
   }
 
   @Test
@@ -101,7 +108,7 @@ public class SecurityContributorThreadedTest
       // }
 
       public void thread1() {
-        ((MutableTestSecurityContributor) dynamicContributors.get(1)).setDirty(true);
+        mutableTestContributors.get(1).setDirty(true);
         Assert.assertEquals(expectedPrivilegeCount, manager.listPrivileges().size());
       }
 
@@ -110,7 +117,7 @@ public class SecurityContributorThreadedTest
       }
 
       public void thread3() {
-        ((MutableTestSecurityContributor) dynamicContributors.get(3)).setDirty(true);
+        mutableTestContributors.get(3).setDirty(true);
         Assert.assertEquals(expectedPrivilegeCount, manager.listPrivileges().size());
       }
 
@@ -119,20 +126,17 @@ public class SecurityContributorThreadedTest
       }
 
       public void thread5() {
-        ((MutableTestSecurityContributor) dynamicContributors.get(5)).setDirty(true);
+        mutableTestContributors.get(5).setDirty(true);
         Assert.assertEquals(expectedPrivilegeCount, manager.listPrivileges().size());
       }
 
     });// , Integer.MAX_VALUE, Integer.MAX_VALUE ); // uncomment this for debugging, if you don't the framework
     // will timeout and close your debug session
 
-    for (DynamicSecurityContributor contributor : dynamicContributors) {
-
-      Assert.assertFalse(contributor.isDirty());
-      Assert
-          .assertTrue("Get config should be called on each dynamic resource after set dirty is called on any of them: "
-              + ((MutableTestSecurityContributor) contributor).getId(),
-              ((MutableTestSecurityContributor) contributor).wasConfigRequested());
+    for (MutableTestSecurityContributor contributor : mutableTestContributors) {
+      Assert.assertTrue(
+          "Get config should be called on each contributor after any changed: " + contributor.getId(),
+          contributor.wasConfigRequested());
     }
   }
 }

@@ -100,13 +100,19 @@ public class RolePermissionResolverImpl
     invalidate();
   }
 
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final SecurityContributionChangedEvent event) {
+    invalidate();
+  }
+
   @Override
   public Collection<Permission> resolvePermissionsInRole(final String roleString) {
     checkNotNull(roleString);
 
     // check memory-sensitive cache; use cached value as long as config is not dirty
     Collection<Permission> cachedPermissions = rolePermissionsCache.getIfPresent(roleString);
-    if (cachedPermissions != null && !configuration.isDirty()) {
+    if (cachedPermissions != null) {
       return cachedPermissions;
     }
 
@@ -129,7 +135,7 @@ public class RolePermissionResolverImpl
         try {
           // try to re-use results when resolving the role tree
           cachedPermissions = rolePermissionsCache.getIfPresent(roleId);
-          if (cachedPermissions != null && !configuration.isDirty()) {
+          if (cachedPermissions != null) {
             permissions.addAll(cachedPermissions);
             continue; // use cached results
           }

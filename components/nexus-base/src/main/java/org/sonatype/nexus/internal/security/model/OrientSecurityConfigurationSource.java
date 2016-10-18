@@ -194,7 +194,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving all users");
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return Lists.newArrayList(userEntityAdapter.browse.execute(db));
+        return Lists.newArrayList(userEntityAdapter.browse(db));
       }
     }
 
@@ -204,7 +204,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving user: {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return userEntityAdapter.read.execute(db, id);
+        return userEntityAdapter.read(db, id);
       }
     }
 
@@ -255,7 +255,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Removing user: {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        if (userEntityAdapter.delete.execute(db, id)) {
+        if (userEntityAdapter.delete(db, id)) {
           removeUserRoleMapping(id, UserManager.DEFAULT_SOURCE);
           return true;
         }
@@ -275,7 +275,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving all privileges");
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return Lists.newArrayList(privilegeEntityAdapter.browse.execute(db));
+        return Lists.newArrayList(privilegeEntityAdapter.browse(db));
       }
     }
 
@@ -285,7 +285,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving privilege {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return privilegeEntityAdapter.read.execute(db, id);
+        return privilegeEntityAdapter.read(db, id);
       }
     }
 
@@ -327,7 +327,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Removing privilege: {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return privilegeEntityAdapter.delete.execute(db, id);
+        return privilegeEntityAdapter.delete(db, id);
       }
       catch (OConcurrentModificationException e) {
         throw concurrentlyModified("Privilege", id);
@@ -343,7 +343,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving all roles");
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return Lists.newArrayList(roleEntityAdapter.browse.execute(db));
+        return Lists.newArrayList(roleEntityAdapter.browse(db));
       }
     }
 
@@ -353,7 +353,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving role: {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return roleEntityAdapter.read.execute(db, id);
+        return roleEntityAdapter.read(db, id);
       }
     }
 
@@ -395,7 +395,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Removing role: {}", id);
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return roleEntityAdapter.delete.execute(db, id);
+        return roleEntityAdapter.delete(db, id);
       }
       catch (OConcurrentModificationException e) {
         throw concurrentlyModified("Role", id);
@@ -419,7 +419,7 @@ public class OrientSecurityConfigurationSource
       log.trace("Retrieving all user/role mappings");
 
       try (ODatabaseDocumentTx db = openDb()) {
-        return Lists.newArrayList(userRoleMappingEntityAdapter.browse.execute(db));
+        return Lists.newArrayList(userRoleMappingEntityAdapter.browse(db));
       }
     }
 

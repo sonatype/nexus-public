@@ -169,7 +169,7 @@ public class StorageFacetImpl
     // get or create the bucket for the repository and set bucketId for fast lookup later
     try (ODatabaseDocumentTx db = databaseInstanceProvider.get().acquire()) {
       String repositoryName = getRepository().getName();
-      bucket = bucketEntityAdapter.read.execute(db, repositoryName);
+      bucket = bucketEntityAdapter.read(db, repositoryName);
       if (bucket == null) {
         bucket = new Bucket();
         bucket.setRepositoryName(repositoryName);

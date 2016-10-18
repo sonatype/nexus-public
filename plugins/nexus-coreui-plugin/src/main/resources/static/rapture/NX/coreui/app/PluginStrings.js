@@ -60,8 +60,31 @@ Ext.define('NX.coreui.app.PluginStrings', {
     AssetInfo_Delete_Success: 'Asset deleted: {0}',
 
     ComponentDetails_Delete_Button: 'Delete component',
+    ComponentDetails_Analyze_Button: 'Analyze application',
     ComponentDetails_Delete_Title: 'Confirm deletion?',
     ComponentDetails_Delete_Success: 'Component deleted: {0}',
+    ComponentDetails_Analyze_Success: 'Analysis in process. Email will be sent when report is ready.',
+
+    AnalyzeApplicationWindow_Title: 'Analyze Application',
+    AnalyzeApplicationWindow_Form_Asset_FieldLabel: 'Application asset',
+    AnalyzeApplicationWindow_Form_Asset_HelpText: 'Select the asset that contains the application',
+    AnalyzeApplicationWindow_Form_Asset_EmptyText: 'Select an asset',
+    AnalyzeApplicationWindow_Form_Email_FieldLabel: 'Email address',
+    AnalyzeApplicationWindow_Form_Email_HelpText: 'The address where the summary report will be sent',
+    AnalyzeApplicationWindow_Form_Password_FieldLabel: 'Report password',
+    AnalyzeApplicationWindow_Form_Password_HelpText: 'A password to gain access to the detailed report',
+    AnalyzeApplicationWindow_Form_ProprietaryPackages_FieldLabel: 'Proprietary packages',
+    AnalyzeApplicationWindow_Form_ProprietaryPackages_HelpText: 'A comma separated list of proprietary packages',
+    AnalyzeApplicationWindow_Form_Label_FieldLabel: 'Report label',
+    AnalyzeApplicationWindow_Form_Label_HelpText: 'The name the report will be given',
+    AnalyzeApplicationWindow_Analyze_Button: 'Analyze',
+    AnalyzeApplicationWindow_Cancel_Button: 'Cancel',
+    AnalyzeApplicationWindow_Form_Html: '<p>Application analysis performs a deep inspection of this application, ' +
+    'identifying potential risks.  More information is available ' +
+    '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" class="x-link">here</a>.</p>',
+    AnalyzeApplicationWindow_Loading_Mask: 'Loading',
+    AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
+    AnalyzeApplicationWindow_No_Assets_Error_Message: 'The component you are analyzing has no application assets, please select another component for analysis.',
 
     HealthCheckInfo_Most_Popular_Version_Label: 'Most popular version',
     HealthCheckInfo_Age_Label: 'Age',

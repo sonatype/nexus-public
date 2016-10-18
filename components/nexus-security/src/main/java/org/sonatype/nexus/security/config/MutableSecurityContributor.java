@@ -16,36 +16,59 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Locks;
+import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.security.internal.SecurityContributionChangedEvent;
+
+import com.google.common.base.Preconditions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Mutable {@link DynamicSecurityContributor}.
+ * Mutable {@link SecurityContributor}.
  *
  * @since 3.1
  */
 public class MutableSecurityContributor
     extends ComponentSupport
-    implements DynamicSecurityContributor
+    implements SecurityContributor
 {
   private final SecurityConfiguration model = new MemorySecurityConfiguration();
 
   private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-  private volatile boolean dirty = true;
+  private boolean initialized;
 
-  @Override
-  public boolean isDirty() {
-    return dirty;
+  @Nullable
+  private EventBus eventBus;
+
+  @Inject
+  protected void initialize(final EventBus eventBus) {
+    checkState(!initialized, "already initialized");
+    this.eventBus = Preconditions.checkNotNull(eventBus);
+    initial(model);
+    initialized = true;
+  }
+
+  /**
+   * Initial security contribution.
+   *
+   * @since 3.1
+   */
+  protected void initial(final SecurityConfiguration model) {
+    // defaults to no initial contribution
   }
 
   @Override
   public SecurityConfiguration getContribution() {
+    checkState(initialized, "not initialized");
     Lock lock = Locks.read(readWriteLock);
     try {
-      dirty = false;
       return model;
     }
     finally {
@@ -62,15 +85,17 @@ public class MutableSecurityContributor
   }
 
   public void apply(final Mutator mutator) {
+    checkState(initialized, "not initialized");
     checkNotNull(mutator);
 
     Lock lock = Locks.write(readWriteLock);
     try {
       mutator.apply(model);
-      dirty = true;
     }
     finally {
       lock.unlock();
     }
+
+    eventBus.post(new SecurityContributionChangedEvent());
   }
 }

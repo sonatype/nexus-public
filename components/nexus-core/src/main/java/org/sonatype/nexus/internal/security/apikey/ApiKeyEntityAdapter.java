@@ -74,6 +74,11 @@ public class ApiKeyEntityAdapter
       .property(P_PRIMARY_PRINCIPAL)
       .build();
 
+  private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
+
+  private final BrowseEntitiesByPropertyAction<ApiKey> browseByPrimaryPrincipal =
+      new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
+
   public ApiKeyEntityAdapter() {
     super(DB_CLASS);
   }
@@ -157,13 +162,21 @@ public class ApiKeyEntityAdapter
   // Actions
   //
 
-  public final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
+  /**
+   * @since 3.1
+   */
+  public void deleteAll(final ODatabaseDocumentTx db) {
+    deleteAll.execute(db);
+  }
 
   /**
    * Browse all entities which have matching primary principal.
+   * 
+   * @since 3.1
    */
-  public final BrowseEntitiesByPropertyAction<ApiKey> browseByPrimaryPrincipal =
-      new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
+  public Iterable<ApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {
+    return browseByPrimaryPrincipal.execute(db, value);
+  }
 
   private static final String SELECT_BY_API_KEY = String.format("SELECT FROM %s WHERE %s=? AND %s=?", DB_CLASS, P_DOMAIN, P_APIKEY);
 

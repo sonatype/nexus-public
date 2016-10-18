@@ -59,14 +59,10 @@ public class ClusteredModelVersionsEntityAdapter
   }
 
   public ClusteredModelVersions get(ODatabaseDocumentTx db) {
-    ClusteredModelVersions entity = singleton.get(db);
+    ClusteredModelVersions entity = super.get(db);
     if (entity == null) {
       entity = newEntity();
     }
     return entity;
-  }
-
-  public void set(ODatabaseDocumentTx db, ClusteredModelVersions entity) {
-    singleton.set(db, entity);
   }
 }

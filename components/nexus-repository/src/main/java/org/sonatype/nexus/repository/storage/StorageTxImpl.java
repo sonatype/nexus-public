@@ -257,7 +257,7 @@ public class StorageTxImpl
   @Override
   @Guarded(by = ACTIVE)
   public Iterable<Bucket> browseBuckets() {
-    return bucketEntityAdapter.browse.execute(db);
+    return bucketEntityAdapter.browse(db);
   }
 
   @Override
@@ -290,7 +290,7 @@ public class StorageTxImpl
   public Asset findAsset(final EntityId id, final Bucket bucket) {
     checkNotNull(id);
     checkNotNull(bucket);
-    Asset asset = assetEntityAdapter.read.execute(db, id);
+    Asset asset = assetEntityAdapter.read(db, id);
     return bucketOwns(bucket, asset) ? asset : null;
   }
 
@@ -359,7 +359,7 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public Component findComponent(final EntityId id) {
     checkNotNull(id);
-    return componentEntityAdapter.read.execute(db, id);
+    return componentEntityAdapter.read(db, id);
   }
 
   @Nullable
@@ -821,7 +821,7 @@ public class StorageTxImpl
       return bucket;
     }
     else {
-      return bucketEntityAdapter.read.execute(db, repositoryName);
+      return bucketEntityAdapter.read(db, repositoryName);
     }
   }
 

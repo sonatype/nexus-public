@@ -15,12 +15,14 @@ package org.sonatype.nexus.orient.entity;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesAction;
 import org.sonatype.nexus.orient.entity.action.CountDocumentsAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByIdAction;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -31,6 +33,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public abstract class IterableEntityAdapter<T extends Entity>
     extends EntityAdapter<T>
 {
+  protected final ReadEntityByIdAction<T> read = new ReadEntityByIdAction<>(this);
+
+  protected final BrowseEntitiesAction<T> browse = new BrowseEntitiesAction<>(this);
+
+  protected final CountDocumentsAction count = new CountDocumentsAction(this);
+
   public IterableEntityAdapter(final String typeName) {
     super(typeName);
   }
@@ -53,9 +61,32 @@ public abstract class IterableEntityAdapter<T extends Entity>
   // Actions
   //
 
-  public final ReadEntityByIdAction<T> read = new ReadEntityByIdAction<>(this);
+  /**
+   * @since 3.1
+   */
+  @Nullable
+  public T read(final ODatabaseDocumentTx db, final EntityId id) {
+    return read.execute(db, id);
+  }
 
-  public final BrowseEntitiesAction<T> browse = new BrowseEntitiesAction<>(this);
+  /**
+   * @since 3.1
+   */
+  public Iterable<T> browse(final ODatabaseDocumentTx db) {
+    return browse.execute(db);
+  }
 
-  public final CountDocumentsAction count = new CountDocumentsAction(this);
+  /**
+   * @since 3.1
+   */
+  public long count(final ODatabaseDocumentTx db) {
+    return count.execute(db);
+  }
+
+  /**
+   * @since 3.1
+   */
+  public int countI(final ODatabaseDocumentTx db) {
+    return count.executeI(db);
+  }
 }

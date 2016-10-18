@@ -64,7 +64,7 @@ class CalendarEntityAdapterTest
     println id1
 
     database.instance.acquire().withCloseable {db ->
-      def entity2 = underTest.read.execute(db, id1)
+      def entity2 = underTest.read(db, id1)
       println entity2
 
       assert entity2.name == entity1.name
@@ -92,7 +92,7 @@ class CalendarEntityAdapterTest
     }
 
     database.instance.acquire().withCloseable {db ->
-      def entity2 = underTest.readByName.execute(db, entity1.name)
+      def entity2 = underTest.readByName(db, entity1.name)
 
       assert entity2.name == entity1.name
       assert entity2.value != null
@@ -117,7 +117,7 @@ class CalendarEntityAdapterTest
     }
 
     database.instance.acquire().withCloseable {db ->
-      boolean deleted = underTest.deleteByName.execute(db, entity1.name)
+      boolean deleted = underTest.deleteByName(db, entity1.name)
       assert deleted
     }
   }
@@ -140,7 +140,7 @@ class CalendarEntityAdapterTest
     }
 
     database.instance.acquire().withCloseable {db ->
-      List<String> names = underTest.browseNames.execute(db);
+      List<String> names = underTest.browseNames(db);
       assert names.size() == 2
       assert names.contains('test-calendar1')
       assert names.contains('test-calendar2')

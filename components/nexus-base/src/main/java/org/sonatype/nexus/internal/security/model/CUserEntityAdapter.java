@@ -63,6 +63,10 @@ public class CUserEntityAdapter
       .property(P_ID)
       .build();
 
+  private final ReadEntityByPropertyAction<CUser> read = new ReadEntityByPropertyAction<>(this, P_ID);
+
+  private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
+
   public CUserEntityAdapter() {
     super(DB_CLASS);
   }
@@ -131,7 +135,18 @@ public class CUserEntityAdapter
   // Actions
   //
 
-  public final ReadEntityByPropertyAction<CUser> read = new ReadEntityByPropertyAction<>(this, P_ID);
+  /**
+   * @since 3.1
+   */
+  @Nullable
+  public CUser read(final ODatabaseDocumentTx db, final String id) {
+    return read.execute(db, id);
+  }
 
-  public final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
+  /**
+   * @since 3.1
+   */
+  public boolean delete(final ODatabaseDocumentTx db, final String id) {
+    return delete.execute(db, id);
+  }
 }

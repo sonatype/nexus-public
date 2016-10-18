@@ -26,7 +26,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 
 public class ClusteredModelVersionsEntityAdapterTest
     extends TestSupport
@@ -55,23 +54,25 @@ public class ClusteredModelVersionsEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
 
-      assertThat(entityAdapter.singleton.get(db), is(nullValue()));
+      ClusteredModelVersions entity = entityAdapter.get(db);
+      assertThat(entity, is(notNullValue()));
+      assertThat(entity.getModelVersions().entrySet(), hasSize(0));
 
-      ClusteredModelVersions entity = new ClusteredModelVersions();
+      entity = new ClusteredModelVersions();
       entity.put("model-a", "1.2");
       entity.put("model-b", "2.1");
-      entityAdapter.singleton.set(db, entity);
+      entityAdapter.set(db, entity);
 
-      entity = entityAdapter.singleton.get(db);
+      entity = entityAdapter.get(db);
       assertThat(entity, is(notNullValue()));
       assertThat(entity.getModelVersions(), hasEntry("model-a", "1.2"));
       assertThat(entity.getModelVersions(), hasEntry("model-b", "2.1"));
       assertThat(entity.getModelVersions().entrySet(), hasSize(2));
 
       entity.put("model-a", "1.3");
-      entityAdapter.singleton.set(db, entity);
+      entityAdapter.set(db, entity);
 
-      entity = entityAdapter.singleton.get(db);
+      entity = entityAdapter.get(db);
       assertThat(entity, is(notNullValue()));
       assertThat(entity.getModelVersions(), hasEntry("model-a", "1.3"));
       assertThat(entity.getModelVersions(), hasEntry("model-b", "2.1"));

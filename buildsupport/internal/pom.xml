@@ -91,6 +91,12 @@
 
       <dependency>
         <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-scanner-archive</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
         <artifactId>insight-scanner-core</artifactId>
         <version>${insight-scanner.version}</version>
       </dependency>

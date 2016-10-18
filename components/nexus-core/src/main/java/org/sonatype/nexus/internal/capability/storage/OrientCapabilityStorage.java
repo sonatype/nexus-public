@@ -83,6 +83,6 @@ public class OrientCapabilityStorage
 
   @Override
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
-    return inTx(databaseInstance, db -> Maps.uniqueIndex(entityAdapter.browse.execute(db), this::identity));
+    return inTx(databaseInstance, db -> Maps.uniqueIndex(entityAdapter.browse(db), this::identity));
   }
 }

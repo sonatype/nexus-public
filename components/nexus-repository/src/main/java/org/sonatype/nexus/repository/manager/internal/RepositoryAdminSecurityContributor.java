@@ -39,22 +39,13 @@ import static org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport.A
 public class RepositoryAdminSecurityContributor
     extends MutableSecurityContributor
 {
-  public RepositoryAdminSecurityContributor() {
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        initial(model);
-      }
-    });
-  }
-
   // TODO: Sort out role[-naming] scheme
 
   /**
    * Initial (static) security configuration.
    */
-  private void initial(final SecurityConfiguration model) {
+  @Override
+  protected void initial(final SecurityConfiguration model) {
     model.addPrivilege(privilege(ALL, ALL, ALL));
     model.addPrivilege(privilege(ALL, ALL, BROWSE));
     model.addPrivilege(privilege(ALL, ALL, READ));

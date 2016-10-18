@@ -49,6 +49,13 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
             glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
             action: 'deleteComponent',
             disabled: true
+          },
+          {
+            xtype: 'button',
+            text: NX.I18n.get('ComponentDetails_Analyze_Button'),
+            glyph: 'xf085@FontAwesome' /* fa-gears */,
+            action: 'analyzeApplication',
+            disabled: true
           }
         ]
       },

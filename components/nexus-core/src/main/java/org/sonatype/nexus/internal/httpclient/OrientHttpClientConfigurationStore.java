@@ -65,11 +65,11 @@ public class OrientHttpClientConfigurationStore
   @Override
   @Nullable
   public HttpClientConfiguration load() {
-    return inTx(databaseInstance, db -> entityAdapter.singleton.get(db));
+    return inTx(databaseInstance, db -> entityAdapter.get(db));
   }
 
   @Override
   public void save(final HttpClientConfiguration configuration) {
-    inTxNoReturn(databaseInstance, db -> entityAdapter.singleton.set(db, configuration));
+    inTxNoReturn(databaseInstance, db -> entityAdapter.set(db, configuration));
   }
 }

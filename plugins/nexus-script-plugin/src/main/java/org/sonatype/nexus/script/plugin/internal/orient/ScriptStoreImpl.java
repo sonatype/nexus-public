@@ -68,7 +68,7 @@ public class ScriptStoreImpl
   @Guarded(by = STARTED)
   public List<Script> list() {
     try (ODatabaseDocumentTx db = openDb()) {
-      return Lists.newArrayList(entityAdapter.browse.execute(db));
+      return Lists.newArrayList(entityAdapter.browse(db));
     }
   }
 

@@ -66,7 +66,7 @@ public class BlobStoreConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<BlobStoreConfiguration> list() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse.execute(db)));
+    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
   }
 
   @Override

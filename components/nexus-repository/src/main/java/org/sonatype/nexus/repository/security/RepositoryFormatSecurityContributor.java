@@ -41,21 +41,13 @@ public class RepositoryFormatSecurityContributor
 
   public RepositoryFormatSecurityContributor(final Format format) {
     this.format = checkNotNull(format);
-
-    // apply initial configuration
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        initial(model);
-      }
-    });
   }
 
   /**
    * Initial (static) security configuration.
    */
-  private void initial(final SecurityConfiguration model) {
+  @Override
+  protected void initial(final SecurityConfiguration model) {
     String format = this.format.getValue();
 
     // add repository-view <format> ALL privileges

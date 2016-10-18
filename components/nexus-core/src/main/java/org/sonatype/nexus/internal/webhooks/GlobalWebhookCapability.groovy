@@ -30,7 +30,7 @@ import org.sonatype.nexus.capability.Taggable
 import org.sonatype.nexus.formfields.FormField
 import org.sonatype.nexus.formfields.ItemselectFormField
 import org.sonatype.nexus.formfields.PasswordFormField
-import org.sonatype.nexus.formfields.UrlFormField
+import org.sonatype.nexus.formfields.StringTextFormField
 import org.sonatype.nexus.webhooks.GlobalWebhook
 import org.sonatype.nexus.webhooks.WebhookConfiguration
 import org.sonatype.nexus.webhooks.WebhookService
@@ -201,7 +201,7 @@ class GlobalWebhookCapability
         return it
       }
 
-      this.url = new UrlFormField(
+      this.url = new StringTextFormField(
           P_URL,
           messages.urlLabel(),
           messages.urlHelp(),

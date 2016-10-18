@@ -10,30 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.formfields;
+package org.sonatype.nexus.security.internal;
 
 /**
- * URL field.
- *
+ * Emitted when a security contribution has changed.
+ * 
  * @since 3.1
  */
-public class UrlFormField
-    extends StringTextFormField
+public class SecurityContributionChangedEvent
 {
-  public UrlFormField(String id, String label, String helpText, boolean required, String regexValidation) {
-    super(id, label, helpText, required, regexValidation);
-  }
-
-  public UrlFormField(String id, String label, String helpText, boolean required) {
-    super(id, label, helpText, required);
-  }
-
-  public UrlFormField(String id) {
-    super(id);
-  }
-
-  public String getType() {
-    return "url";
-  }
-
 }

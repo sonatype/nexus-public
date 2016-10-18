@@ -75,7 +75,7 @@ public class ModelVersionStoreTest
       ClusteredModelVersions versions = new ClusteredModelVersions();
       versions.put("clustered", "1.2");
       versions.put("local", "99");
-      entityAdapter.singleton.set(db, versions);
+      entityAdapter.set(db, versions);
     }
     PropertiesFile modelProperties = new PropertiesFile(new File(dbFolder, ModelVersionStore.MODEL_PROPERTIES));
     modelProperties.put("clustered", "99");
@@ -93,7 +93,7 @@ public class ModelVersionStoreTest
     store.start();
     store.save(ImmutableMap.of("clustered", "1.2", "local", "2.1"));
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      ClusteredModelVersions versions = entityAdapter.singleton.get(db);
+      ClusteredModelVersions versions = entityAdapter.get(db);
       assertThat(versions.getModelVersions(), hasEntry("clustered", "1.2"));
       assertThat(versions.getModelVersions().entrySet(), hasSize(1));
     }

@@ -163,7 +163,7 @@ public class ApiKeyStoreImpl
   @Guarded(by = STARTED)
   public void deleteApiKeys() {
     try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.deleteAll.execute(db);
+      entityAdapter.deleteAll(db);
     }
   }
 
@@ -172,7 +172,7 @@ public class ApiKeyStoreImpl
   public void purgeApiKeys() {
     try (ODatabaseDocumentTx db = openDb()) {
       List<ApiKey> delete = new ArrayList<>();
-      for (ApiKey entity : entityAdapter.browse.execute(db)) {
+      for (ApiKey entity : entityAdapter.browse(db)) {
         // avoid leaking current DB when calling out
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
         try {
@@ -213,7 +213,7 @@ public class ApiKeyStoreImpl
                                                   final PrincipalCollection principals)
   {
     final String primaryPrincipal = checkNotNull(principals).getPrimaryPrincipal().toString();
-    return entityAdapter.browseByPrimaryPrincipal.execute(db, primaryPrincipal);
+    return entityAdapter.browseByPrimaryPrincipal(db, primaryPrincipal);
   }
 
   private char[] makeApiKey(final String domain, final PrincipalCollection principals) {

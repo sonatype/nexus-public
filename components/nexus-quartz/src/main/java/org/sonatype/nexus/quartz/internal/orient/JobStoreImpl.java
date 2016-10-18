@@ -230,7 +230,7 @@ public class JobStoreImpl
     execute(
         db -> {
           // check state of local triggers
-          for (TriggerEntity triggerEntity : local(triggerEntityAdapter.browse.execute(db))) {
+          for (TriggerEntity triggerEntity : local(triggerEntityAdapter.browse(db))) {
 
             // reset states
             switch (triggerEntity.getState()) {
@@ -296,9 +296,9 @@ public class JobStoreImpl
   @Override
   public void clearAllSchedulingData() throws JobPersistenceException {
     execute(db -> {
-      jobDetailEntityAdapter.deleteAll.execute(db);
-      triggerEntityAdapter.deleteAll.execute(db);
-      calendarEntityAdapter.deleteAll.execute(db);
+      jobDetailEntityAdapter.deleteAll(db);
+      triggerEntityAdapter.deleteAll(db);
+      calendarEntityAdapter.deleteAll(db);
       return null;
     });
   }
@@ -320,7 +320,7 @@ public class JobStoreImpl
   {
     log.debug("Store job: jobDetail={}, replaceExisting={}", jobDetail, replaceExisting);
 
-    JobDetailEntity entity = jobDetailEntityAdapter.readyByKey.execute(db, jobDetail.getKey());
+    JobDetailEntity entity = jobDetailEntityAdapter.readByKey(db, jobDetail.getKey());
     if (entity == null) {
       // no existing entity, add new one
       entity = new JobDetailEntity(jobDetail);
@@ -345,7 +345,7 @@ public class JobStoreImpl
   }
 
   private boolean removeJob(final ODatabaseDocumentTx db, final JobKey jobKey) throws JobPersistenceException {
-    boolean deleted = jobDetailEntityAdapter.deleteByKey.execute(db, jobKey);
+    boolean deleted = jobDetailEntityAdapter.deleteByKey(db, jobKey);
     triggerEntityAdapter.deleteByJobKey(db, jobKey);
     return deleted;
   }
@@ -366,26 +366,26 @@ public class JobStoreImpl
   @Nullable
   public JobDetail retrieveJob(final JobKey jobKey) throws JobPersistenceException {
     return execute(db -> {
-      JobDetailEntity entity = jobDetailEntityAdapter.readyByKey.execute(db, jobKey);
+      JobDetailEntity entity = jobDetailEntityAdapter.readByKey(db, jobKey);
       return entity != null ? entity.getValue() : null;
     });
   }
 
   @Override
   public boolean checkExists(final JobKey jobKey) throws JobPersistenceException {
-    return execute(db -> jobDetailEntityAdapter.existsByKey.execute(db, jobKey));
+    return execute(db -> jobDetailEntityAdapter.existsByKey(db, jobKey));
   }
 
   @Override
   public int getNumberOfJobs() throws JobPersistenceException {
-    return execute(db -> jobDetailEntityAdapter.count.executeI(db));
+    return execute(db -> jobDetailEntityAdapter.countI(db));
   }
 
   @Override
   public List<String> getJobGroupNames() throws JobPersistenceException {
     return execute(db -> {
       ArrayList<String> result = new ArrayList<>();
-      for (JobDetailEntity entity : jobDetailEntityAdapter.browse.execute(db)) {
+      for (JobDetailEntity entity : jobDetailEntityAdapter.browse(db)) {
         result.add(entity.getGroup());
       }
       return result.stream().distinct().collect(Collectors.toList());
@@ -401,7 +401,7 @@ public class JobStoreImpl
       throws JobPersistenceException
   {
     Iterable<JobDetailEntity> matches = jobDetailEntityAdapter.browseWithPredicate
-        .execute(db, input -> matcher.isMatch(input.getValue().getKey()));
+        (db, input -> matcher.isMatch(input.getValue().getKey()));
 
     Set<JobKey> result = new HashSet<>();
     for (JobDetailEntity entity : matches) {
@@ -536,7 +536,7 @@ public class JobStoreImpl
       trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
     }
 
-    TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, trigger.getKey());
+    TriggerEntity entity = triggerEntityAdapter.readByKey(db, trigger.getKey());
     if (entity == null) {
       // no existing entity, add new one
       entity = new TriggerEntity(trigger, WAITING);
@@ -563,7 +563,7 @@ public class JobStoreImpl
   private boolean removeTrigger(final ODatabaseDocumentTx db, final TriggerKey triggerKey)
       throws JobPersistenceException
   {
-    TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+    TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
     
     if (entity == null) {
       log.debug("No matching Trigger to remove for key: {}", triggerKey);
@@ -573,7 +573,7 @@ public class JobStoreImpl
     // resolve job-key before deleting for orphan cleanup
     JobKey jobKey = entity.getValue().getJobKey();
 
-    boolean deleted = triggerEntityAdapter.deleteByKey.execute(db, triggerKey);
+    boolean deleted = triggerEntityAdapter.deleteByKey(db, triggerKey);
     log.debug("Trigger deleted: {} for key: {}", deleted, triggerKey);
 
     // delete related job if there are no triggers for it
@@ -583,11 +583,11 @@ public class JobStoreImpl
       // if there are no other triggers for the job then delete it
       if (!jobTriggers.iterator().hasNext()) {
         // lookup the job-detail so we can check if its durable or not
-        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readyByKey.execute(db, jobKey);
+        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobKey);
 
         if (jobDetailEntity != null && !jobDetailEntity.getValue().isDurable()) {
           // job is not durable, delete it
-          boolean jobDeleted = jobDetailEntityAdapter.deleteByKey.execute(db, jobKey);
+          boolean jobDeleted = jobDetailEntityAdapter.deleteByKey(db, jobKey);
           log.debug("Job deleted: {} for jobKey: {}", deleted, jobKey);
 
           if (jobDeleted) {
@@ -625,7 +625,7 @@ public class JobStoreImpl
     }
 
     return execute(db -> {
-      TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+      TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       if (entity != null) {
         // if entity exists, ensure trigger is associate with the same job
         if (!entity.getValue().getJobKey().equals(trigger.getJobKey())) {
@@ -648,19 +648,19 @@ public class JobStoreImpl
   @Nullable
   public OperableTrigger retrieveTrigger(final TriggerKey triggerKey) throws JobPersistenceException {
     return execute(db -> {
-      TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+      TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       return entity != null ? entity.getValue() : null;
     });
   }
 
   @Override
   public boolean checkExists(final TriggerKey triggerKey) throws JobPersistenceException {
-    return execute(db -> triggerEntityAdapter.existsByKey.execute(db, triggerKey));
+    return execute(db -> triggerEntityAdapter.existsByKey(db, triggerKey));
   }
 
   @Override
   public int getNumberOfTriggers() throws JobPersistenceException {
-    return execute(db -> triggerEntityAdapter.count.executeI(db));
+    return execute(db -> triggerEntityAdapter.countI(db));
   }
 
   @Override
@@ -676,7 +676,7 @@ public class JobStoreImpl
       throws JobPersistenceException
   {
     Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
-        .execute(db, input -> matcher.isMatch(input.getValue().getKey()));
+        (db, input -> matcher.isMatch(input.getValue().getKey()));
 
     Set<TriggerKey> result = new HashSet<>();
     for (TriggerEntity entity : matches) {
@@ -717,7 +717,7 @@ public class JobStoreImpl
   @Override
   public TriggerState getTriggerState(final TriggerKey triggerKey) throws JobPersistenceException {
     return execute(db -> {
-      TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+      TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       if (entity == null) {
         return TriggerState.NONE;
       }
@@ -754,7 +754,7 @@ public class JobStoreImpl
   private void pauseTrigger(final ODatabaseDocumentTx db, final TriggerKey triggerKey) throws JobPersistenceException {
     log.debug("Pause trigger: {}", triggerKey);
 
-    TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+    TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
     if (entity == null) {
       return;
     }
@@ -821,7 +821,7 @@ public class JobStoreImpl
   private void resumeTrigger(final ODatabaseDocumentTx db, final TriggerKey triggerKey) throws JobPersistenceException {
     log.debug("Resume trigger: {}", triggerKey);
 
-    TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+    TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
     if (entity == null) {
       return;
     }
@@ -872,7 +872,7 @@ public class JobStoreImpl
           Set<String> pausedGroups = new HashSet<>();
           Set<String> groups = getTriggerGroups(db, GroupMatcher.anyGroup());
           for (String group : groups) {
-            boolean allPaused = !ImmutableList.copyOf(triggerEntityAdapter.browseByGroup.execute(db, group))
+            boolean allPaused = !ImmutableList.copyOf(triggerEntityAdapter.browseByGroup(db, group))
                 .stream().anyMatch(e -> PAUSED != e.getState() && PAUSED_BLOCKED != e.getState());
             if (allPaused) {
               pausedGroups.add(group);
@@ -893,7 +893,7 @@ public class JobStoreImpl
 
     return execute(db -> {
       // find all local triggers in WAITING state
-      Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState.execute(db, WAITING)).iterator();
+      Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState(db, WAITING)).iterator();
 
       // short-circuit if no matches
       if (!matches.hasNext()) {
@@ -943,7 +943,7 @@ public class JobStoreImpl
         TriggerEntity triggerEntity = triggerEntityIterator.next();
         OperableTrigger trigger = triggerEntity.getValue();
         JobKey jobKey = trigger.getJobKey();
-        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readyByKey.execute(db, jobKey);
+        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobKey);
         if (jobDetailEntity != null && jobDetailEntity.getValue().isConcurrentExectionDisallowed()) {
           if (jobsAcquired.contains(jobKey)) {
             // trigger for job disallowing concurrent execution already acquired
@@ -1004,7 +1004,7 @@ public class JobStoreImpl
     log.debug("Release acquired trigger: {}", trigger);
 
     executeAndPropagate(db -> {
-      TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, trigger.getKey());
+      TriggerEntity entity = triggerEntityAdapter.readByKey(db, trigger.getKey());
 
       // update state to WAITING if the current state is ACQUIRED
       if (entity != null && entity.getState() == ACQUIRED) {
@@ -1052,7 +1052,7 @@ public class JobStoreImpl
 
     // resolve the entity for fired trigger
     final TriggerKey triggerKey = firedTrigger.getKey();
-    TriggerEntity entity = triggerEntityAdapter.readyByKey.execute(db, triggerKey);
+    TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
 
     // skip if trigger was deleted
     if (entity == null) {
@@ -1092,7 +1092,7 @@ public class JobStoreImpl
     trigger = entity.getValue();
 
     // resolve the job-detail for this trigger
-    JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readyByKey.execute(db, trigger.getJobKey());
+    JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, trigger.getJobKey());
     checkState(jobDetailEntity != null, "Missing job-detail for trigger-key: %s", triggerKey);
     JobDetail jobDetail = jobDetailEntity.getValue();
 
@@ -1126,7 +1126,7 @@ public class JobStoreImpl
     log.trace("Blocking other triggers: firedTriggerKey={}, jobKey={}", firedTriggerKey, jobKey);
 
     Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
-        .execute(db, input -> {
+        (db, input -> {
           switch (input.getState()) {
             case WAITING:
             case PAUSED:
@@ -1159,8 +1159,8 @@ public class JobStoreImpl
     log.debug("Triggered job complete: trigger={}, jobDetail={}, instruction={}", trigger, jobDetail, instruction);
 
     executeAndPropagate(db -> {
-      TriggerEntity triggerEntity = triggerEntityAdapter.readyByKey.execute(db, trigger.getKey());
-      JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readyByKey.execute(db, jobDetail.getKey());
+      TriggerEntity triggerEntity = triggerEntityAdapter.readByKey(db, trigger.getKey());
+      JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobDetail.getKey());
 
       if (jobDetailEntity != null) {
         // save job-data-map if needed
@@ -1228,7 +1228,7 @@ public class JobStoreImpl
     log.trace("Unblock triggers: jobKey={}", jobKey);
 
     Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
-        .execute(db, input -> {
+        (db, input -> {
           switch (input.getState()) {
             case BLOCKED:
             case PAUSED_BLOCKED:
@@ -1327,7 +1327,7 @@ public class JobStoreImpl
         name, calendar, replaceExisting, updateTriggers);
 
     execute(db -> {
-      CalendarEntity entity = calendarEntityAdapter.readByName.execute(db, name);
+      CalendarEntity entity = calendarEntityAdapter.readByName(db, name);
       if (entity == null) {
         // no existing entity, add new one
         entity = new CalendarEntity(name, calendar);
@@ -1343,7 +1343,7 @@ public class JobStoreImpl
 
       if (updateTriggers) {
         // update all triggers using this calender
-        for (TriggerEntity triggerEntity : triggerEntityAdapter.browseByCalendarName.execute(db, name)) {
+        for (TriggerEntity triggerEntity : triggerEntityAdapter.browseByCalendarName(db, name)) {
           triggerEntity.getValue().updateWithNewCalendar(calendar, misfireThreshold);
           triggerEntityAdapter.editEntity(db, triggerEntity);
         }
@@ -1357,26 +1357,26 @@ public class JobStoreImpl
   public boolean removeCalendar(final String name) throws JobPersistenceException {
     log.debug("Remove calendar: {}", name);
 
-    return execute(db -> calendarEntityAdapter.deleteByName.execute(db, name));
+    return execute(db -> calendarEntityAdapter.deleteByName(db, name));
   }
 
   @Override
   @Nullable
   public Calendar retrieveCalendar(final String name) throws JobPersistenceException {
     return execute(db -> {
-      CalendarEntity entity = calendarEntityAdapter.readByName.execute(db, name);
+      CalendarEntity entity = calendarEntityAdapter.readByName(db, name);
       return entity != null ? entity.getValue() : null;
     });
   }
 
   @Override
   public int getNumberOfCalendars() throws JobPersistenceException {
-    return execute(db -> calendarEntityAdapter.count.executeI(db));
+    return execute(db -> calendarEntityAdapter.countI(db));
   }
 
   @Override
   public List<String> getCalendarNames() throws JobPersistenceException {
-    return execute(db -> calendarEntityAdapter.browseNames.execute(db));
+    return execute(db -> calendarEntityAdapter.browseNames(db));
   }
 
   /**
@@ -1384,7 +1384,7 @@ public class JobStoreImpl
    */
   @Nullable
   private Calendar findCalendar(final ODatabaseDocumentTx db, final String name) {
-    CalendarEntity calendarEntity = calendarEntityAdapter.readByName.execute(db, name);
+    CalendarEntity calendarEntity = calendarEntityAdapter.readByName(db, name);
     if (calendarEntity != null) {
       return calendarEntity.getValue();
     }

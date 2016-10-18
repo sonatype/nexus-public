@@ -113,7 +113,7 @@ public class OrientAuditStore
     ensureStarted();
 
     try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.count.execute(db);
+      return entityAdapter.count(db);
     }
   }
 

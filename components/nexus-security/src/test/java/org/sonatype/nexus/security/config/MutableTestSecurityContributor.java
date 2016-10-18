@@ -23,15 +23,9 @@ public class MutableTestSecurityContributor
 
   private String privId = "priv-" + INSTANCE_COUNT++;
 
-  public MutableTestSecurityContributor() {
-    // apply initial configuration
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        model.addPrivilege(WildcardPrivilegeDescriptor.privilege("foo:bar:" + privId + ":read"));
-      }
-    });
+  @Override
+  protected void initial(final SecurityConfiguration model) {
+    model.addPrivilege(WildcardPrivilegeDescriptor.privilege("foo:bar:" + privId + ":read"));
   }
 
   public String getId() {

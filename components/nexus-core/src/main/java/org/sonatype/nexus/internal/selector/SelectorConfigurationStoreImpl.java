@@ -70,7 +70,7 @@ public class SelectorConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<SelectorConfiguration> browse() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse.execute(db)));
+    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
   }
 
   @Override
@@ -78,7 +78,7 @@ public class SelectorConfigurationStoreImpl
   public SelectorConfiguration read(final EntityId entityId) {
     checkNotNull(entityId);
 
-    return inTx(databaseInstance, db -> entityAdapter.read.execute(db, entityId));
+    return inTx(databaseInstance, db -> entityAdapter.read(db, entityId));
   }
 
   @Override
