@@ -62,7 +62,7 @@ NX.define('Nexus.ext.GridFilterBox', {
           self.filteredGrid.view.emptyTextBackup = self.filteredGrid.view.emptyText;
         }
         self.filteredGrid.view.emptyText = self.filteredGrid.view.emptyTextWhileFiltering.replaceAll(
-            '{criteria}', self.getSearchValue()
+            '{criteria}', Ext.util.Format.htmlEncode(self.getSearchValue())
         );
       }
     });
