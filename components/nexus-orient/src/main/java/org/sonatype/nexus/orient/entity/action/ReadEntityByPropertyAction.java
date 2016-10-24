@@ -24,10 +24,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Read entity based on single property.
+ * Read entity based on one or more properties.
  *
  * @since 3.0
  */
@@ -38,19 +39,18 @@ public class ReadEntityByPropertyAction<T extends Entity>
 
   private final String query;
 
-  public ReadEntityByPropertyAction(final EntityAdapter<T> adapter, final String property) {
+  public ReadEntityByPropertyAction(final EntityAdapter<T> adapter, final String... properties) {
     this.adapter = checkNotNull(adapter);
-    checkNotNull(property);
-    this.query = String.format("SELECT FROM %s WHERE %s = ?", adapter.getTypeName(), property);
+    this.query = String.format("SELECT FROM %s WHERE %s", adapter.getTypeName(), QueryUtils.buildPredicate(properties));
   }
 
   @Nullable
-  public T execute(final ODatabaseDocumentTx db, final Object value) {
+  public T execute(final ODatabaseDocumentTx db, final Object... values) {
     checkNotNull(db);
-    checkNotNull(value);
+    checkArgument(values.length > 0);
 
     List<ODocument> results = db.command(new OSQLSynchQuery<>(query))
-        .execute(value);
+        .execute(values);
 
     if (results.isEmpty()) {
       return null;

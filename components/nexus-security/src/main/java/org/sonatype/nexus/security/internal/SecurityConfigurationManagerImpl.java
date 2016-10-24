@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -75,6 +76,8 @@ public class SecurityConfigurationManagerImpl
   private volatile SecurityConfiguration defaultConfiguration;
 
   private volatile SecurityConfiguration mergedConfiguration;
+
+  private final AtomicInteger mergedConfigurationDirty = new AtomicInteger(1);
 
   private boolean firstTimeConfiguration = true;
 
@@ -302,21 +305,19 @@ public class SecurityConfigurationManagerImpl
   @AllowConcurrentEvents
   @Subscribe
   public void on(final SecurityContributionChangedEvent event) {
-    mergedConfiguration = null; // force rebuild on next request
+    mergedConfigurationDirty.incrementAndGet(); // force rebuild on next request
   }
 
   private SecurityConfiguration getMergedConfiguration() {
-    // Assign configuration to local variable first, in case it's nulled out by asynchronous event
-    SecurityConfiguration configuration = this.mergedConfiguration;
-    if (configuration == null) {
+    if (mergedConfigurationDirty.get() != 0) {
       boolean rebuiltConfiguration = false;
 
       synchronized (this) {
-        // double-checked locking of volatile is apparently OK with java5+
-        // http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
-        configuration = this.mergedConfiguration;
-        if (configuration == null) {
-          this.mergedConfiguration = configuration = doGetMergedConfiguration();
+        int dirty = mergedConfigurationDirty.get();
+        if (dirty != 0) {
+          mergedConfiguration = doGetMergedConfiguration();
+          // NOTE: We only reset the dirty state if no concurrent mutations occurred since we rebuilt the config
+          mergedConfigurationDirty.compareAndSet(dirty, 0);
           rebuiltConfiguration = !firstTimeConfiguration;
           firstTimeConfiguration = false;
         }
@@ -327,7 +328,7 @@ public class SecurityConfigurationManagerImpl
         eventBus.post(new AuthorizationConfigurationChanged());
       }
     }
-    return configuration;
+    return mergedConfiguration;
   }
 
   private MemorySecurityConfiguration doGetMergedConfiguration() {

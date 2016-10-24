@@ -413,7 +413,7 @@ public abstract class NexusPaxExamSupport
             .instructions("Fragment-Host=org.ops4j.pax.tipi.hamcrest.core"),
 
         when(logbackXml.canRead()).useOptions( //
-            replaceConfigurationFile("data/logback/logback.xml", logbackXml)),
+            replaceConfigurationFile("etc/logback/logback.xml", logbackXml)),
 
         systemProperty("root.level").value(logLevel),
 

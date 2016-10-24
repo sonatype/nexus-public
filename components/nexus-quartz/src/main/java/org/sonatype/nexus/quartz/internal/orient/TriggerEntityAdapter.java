@@ -27,13 +27,13 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesWithPredicateAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
+import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.quartz.CronExpression;
 import org.quartz.JobKey;
@@ -111,6 +111,9 @@ public class TriggerEntityAdapter
   private final DeleteEntityByKeyAction deleteByKey = new DeleteEntityByKeyAction(this, P_NAME, P_GROUP);
 
   private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
+
+  private final DeleteEntityByPropertyAction deleteByJobKey = new DeleteEntityByPropertyAction(this, P_JOB_NAME,
+      P_JOB_GROUP);
 
   public TriggerEntityAdapter() {
     super(DB_CLASS, createMarshaller(), OperableTrigger.class.getClassLoader());
@@ -274,17 +277,11 @@ public class TriggerEntityAdapter
     return transform(results);
   }
 
-  private static final String DELETE_BY_JOB_KEY_QUERY = String.format("DELETE FROM %s WHERE %s = ? AND %s = ?",
-      DB_CLASS, P_JOB_NAME, P_JOB_GROUP);
-
   /**
    * Delete all entities matching {@link JobKey}.
    */
   public void deleteByJobKey(final ODatabaseDocumentTx db, final JobKey jobKey) {
-    checkNotNull(db);
-    checkNotNull(jobKey);
-
-    db.command(new OCommandSQL(DELETE_BY_JOB_KEY_QUERY)).execute(jobKey.getName(), jobKey.getGroup());
+    deleteByJobKey.execute(db, jobKey.getName(), jobKey.getGroup());
   }
 
   @Override

@@ -19,7 +19,6 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
-import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
@@ -31,7 +30,6 @@ import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector
-import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
@@ -223,9 +221,25 @@ class ComponentComponent
   @RequiresAuthentication
   @Validate
   void deleteComponent(@NotEmpty final String componentId, @NotEmpty final String repositoryName) {
-    deleteEntity(componentId, repositoryName, { ComponentMaintenance facet, EntityId entityId ->
-      facet.deleteComponent(entityId)
-    })
+    Repository repository = repositoryManager.get(repositoryName)
+    String format = repository.format.toString()
+    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+
+    try {
+      storageTx.begin()
+      VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format)
+      for (Asset asset : storageTx.browseAssets(storageTx.findComponent(new DetachedEntityId(componentId)))) {
+        if (!contentPermissionChecker.
+            isPermitted(repository.name, format, BreadActions.DELETE, variableResolverAdapter.fromAsset(asset))) {
+          throw new AuthorizationException()
+        }
+      }
+    }
+    finally {
+      storageTx.close()
+    }
+
+    getComponentMaintenanceFacet(repository).deleteComponent(new DetachedEntityId(componentId))
   }
 
   @DirectMethod
@@ -234,22 +248,32 @@ class ComponentComponent
   @RequiresAuthentication
   @Validate
   void deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
-    deleteEntity(assetId, repositoryName, { ComponentMaintenance facet, EntityId entityId ->
-      facet.deleteAsset(entityId)
-    })
-  }
-
-  void deleteEntity(final String entityId, final String repositoryName, final Closure action) {
     Repository repository = repositoryManager.get(repositoryName)
-    securityHelper.ensurePermitted(new RepositoryViewPermission(repository, BreadActions.DELETE))
+    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+    String format = repository.format.toString()
 
     try {
-      ComponentMaintenance componentMaintenanceFacet = repository.facet(ComponentMaintenance.class)
-      action.call(componentMaintenanceFacet, new DetachedEntityId(entityId))
+      storageTx.begin()
+      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
+      if (!contentPermissionChecker.isPermitted(repository.name, format, BreadActions.DELETE,
+          variableResolverAdapterManager.get(format).fromAsset(asset))) {
+        throw new AuthorizationException()
+      }
+    }
+    finally {
+      storageTx.close()
+    }
+
+    getComponentMaintenanceFacet(repository).deleteAsset(new DetachedEntityId(assetId))
+  }
+
+  private ComponentMaintenance getComponentMaintenanceFacet(Repository repository) {
+    try {
+      return repository.facet(ComponentMaintenance.class)
     }
     catch (MissingFacetException e) {
       throw new IllegalOperationException(
-          "Deleting from repository '$repositoryName' of type '$repository.type' is not supported"
+          "Deleting from repository '$repository.name' of type '$repository.type' is not supported"
       )
     }
   }

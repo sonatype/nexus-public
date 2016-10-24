@@ -35,7 +35,7 @@
   <logger name="org.apache.felix" level="WARN"/>
   <logger name="org.apache.karaf" level="WARN"/>
 
-  <include file="${karaf.data}/logback/logback-overrides.xml" optional="true"/>
+  <include file="${karaf.data}/etc/logback/logback-overrides.xml" optional="true"/>
 
   <root level="${root.level:-INFO}">
     <appender-ref ref="osgi"/>

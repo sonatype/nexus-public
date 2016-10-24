@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <pax-exam.version>4.9.1</pax-exam.version>
+    <pax-exam.version>4.9.2</pax-exam.version>
     <selenium.version>2.38.0</selenium.version>
   </properties>
 

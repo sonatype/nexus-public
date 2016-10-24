@@ -869,7 +869,6 @@
               -->
               <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
-              <exclude>**/nexus-pax-exam/**/org/ops4j/pax/exam/**</exclude>
             </excludes>
           </configuration>
         </plugin>

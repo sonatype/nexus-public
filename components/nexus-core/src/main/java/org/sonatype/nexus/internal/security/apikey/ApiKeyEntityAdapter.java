@@ -27,6 +27,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,8 +35,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -78,6 +77,9 @@ public class ApiKeyEntityAdapter
 
   private final BrowseEntitiesByPropertyAction<ApiKey> browseByPrimaryPrincipal =
       new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
+
+  private final ReadEntityByPropertyAction<ApiKey> findByApiKey =
+      new ReadEntityByPropertyAction<>(this, P_DOMAIN, P_APIKEY);
 
   public ApiKeyEntityAdapter() {
     super(DB_CLASS);
@@ -178,21 +180,10 @@ public class ApiKeyEntityAdapter
     return browseByPrimaryPrincipal.execute(db, value);
   }
 
-  private static final String SELECT_BY_API_KEY = String.format("SELECT FROM %s WHERE %s=? AND %s=?", DB_CLASS, P_DOMAIN, P_APIKEY);
-
   @Nullable
   public ApiKey findByApiKey(final ODatabaseDocumentTx db, final String domain, final char[] apiKey) {
     checkNotNull(domain);
     checkNotNull(apiKey);
-
-    final OResultSet<ODocument> resultSet = db
-        .command(new OSQLSynchQuery<ODocument>(SELECT_BY_API_KEY))
-        .execute(domain, String.valueOf(apiKey));
-
-    if (resultSet.isEmpty()) {
-      return null;
-    }
-
-    return readEntity(resultSet.iterator().next());
+    return findByApiKey.execute(db, domain, String.valueOf(apiKey));
   }
 }

@@ -18,10 +18,11 @@ import org.sonatype.nexus.orient.entity.EntityAdapter;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Delete entity based on single property.
+ * Delete entity based on one or more properties.
  *
  * @since 3.0
  */
@@ -30,18 +31,17 @@ public class DeleteEntityByPropertyAction
 {
   private final String query;
 
-  public DeleteEntityByPropertyAction(final EntityAdapter<?> adapter, final String property) {
+  public DeleteEntityByPropertyAction(final EntityAdapter<?> adapter, final String... properties) {
     checkNotNull(adapter);
-    checkNotNull(property);
-    this.query = String.format("DELETE FROM %s WHERE %s = ?", adapter.getTypeName(), property);
+    this.query = String.format("DELETE FROM %s WHERE %s", adapter.getTypeName(), QueryUtils.buildPredicate(properties));
   }
 
-  public boolean execute(final ODatabaseDocumentTx db, final Object value) {
+  public boolean execute(final ODatabaseDocumentTx db, final Object... values) {
     checkNotNull(db);
-    checkNotNull(value);
+    checkArgument(values.length > 0);
 
     int records = db.command(new OCommandSQL(query))
-        .execute(value);
+        .execute(values);
 
     return records == 1;
   }
