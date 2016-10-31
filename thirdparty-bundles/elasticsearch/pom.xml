@@ -23,7 +23,7 @@
     <version>3.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>org.sonatype.nexus.bundles.ehcache</artifactId>
+  <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
@@ -31,9 +31,45 @@
     Mark as optional to workaround MNG-5899
     -->
     <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache</artifactId>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
       <optional>true</optional>
+    </dependency>
+
+    <!--
+    Promote OSGi-enabled dependencies
+    -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-cbor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-smile</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.joda</groupId>
+      <artifactId>joda-convert</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ning</groupId>
+      <artifactId>compress-lzf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
     </dependency>
   </dependencies>
 
@@ -61,14 +97,17 @@
               http://www.apache.org/licenses/LICENSE-2.0
             </Bundle-License>
             <Export-Package>
-              net.sf.ehcache.*,
-              org.terracotta.context,
-              org.terracotta.statistics
+              org.elasticsearch.*
             </Export-Package>
             <Private-Package>
+              org.apache.lucene.*;-split-package:=merge-first,
+              org.joda.time.*;-split-package:=merge-first,
+              com.carrotsearch.hppc.*,
+              com.spatial4j.core.*,
+              com.tdunning.math.*,
+              com.twitter.jsr166e,
               META-INF.*
             </Private-Package>
-            <DynamicImport-Package>*</DynamicImport-Package>
             <Import-Package>
               *;resolution:=optional
             </Import-Package>
@@ -124,19 +163,22 @@
                   <!--
                   Embed non-OSGi and patched private dependencies
                   -->
-                  <include>net.sf.ehcache:ehcache</include>
+                  <include>org.elasticsearch:*</include>
+                  <include>org.apache.lucene:*</include>
+                  <include>joda-time:joda-time</include>
+                  <include>com.carrotsearch:hppc</include>
+                  <include>com.spatial4j:spatial4j</include>
+                  <include>com.tdunning:t-digest</include>
+                  <include>com.twitter:jsr166e</include>
                 </includes>
               </artifactSet>
               <filters>
                 <filter>
-                  <artifact>net.sf.ehcache:ehcache</artifact>
-                  <includes>
-                    <!-- 'core' subset of Ehcache -->
-                    <include>net/sf/ehcache/**</include>
-                    <include>org/terracotta/context/**</include>
-                    <include>org/terracotta/statistics/**</include>
-                    <include>ehcache-failsafe.xml</include>
-                  </includes>
+                  <artifact>joda-time:joda-time</artifact>
+                  <excludes>
+                    <!-- remove duplicate warning (ES replaces this class) -->
+                    <exclude>org/joda/time/base/BaseDateTime.class</exclude>
+                  </excludes>
                 </filter>
               </filters>
               <transformers>
@@ -167,10 +209,10 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>net.sf.ehcache</groupId>
-                      <artifactId>ehcache</artifactId>
+                      <groupId>org.elasticsearch</groupId>
+                      <artifactId>elasticsearch</artifactId>
                       <classifier>javadoc</classifier>
-                      <destFileName>ehcache-javadoc.jar</destFileName>
+                      <destFileName>elasticsearch-javadoc.jar</destFileName>
                     </artifactItem>
                   </artifactItems>
                 </configuration>
@@ -190,7 +232,7 @@
                 <configuration>
                   <artifacts>
                     <artifact>
-                      <file>${project.build.directory}/dependency/ehcache-javadoc.jar</file>
+                      <file>${project.build.directory}/dependency/elasticsearch-javadoc.jar</file>
                       <classifier>javadoc</classifier>
                       <type>jar</type>
                     </artifact>

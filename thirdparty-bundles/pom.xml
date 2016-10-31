@@ -30,6 +30,7 @@
 
   <modules>
     <module>ehcache</module>
+    <module>elasticsearch</module>
   </modules>
 
   <dependencyManagement>
@@ -50,6 +51,12 @@
       <dependency>
         <groupId>org.sonatype.nexus.bundles</groupId>
         <artifactId>org.sonatype.nexus.bundles.ehcache</artifactId>
+        <version>3.1.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.bundles</groupId>
+        <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
         <version>3.1.0-SNAPSHOT</version>
       </dependency>
 

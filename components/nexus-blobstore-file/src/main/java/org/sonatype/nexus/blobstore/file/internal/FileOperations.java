@@ -65,6 +65,27 @@ public interface FileOperations
   void hardLink(Path source, Path newLink) throws IOException;
 
   /**
+   * Copies a file.
+   * 
+   * @since 3.2
+   */
+  void copy(Path source, Path target) throws IOException;
+
+  /**
+   * Moves a file without any guarantee of atomicity.
+   *
+   * @since 3.2
+   */
+  void move(Path source, Path target) throws IOException;
+
+  /**
+   * Moves a file atomically, throwing <code>AtomicMoveNotSupportedException</code> if not supported.
+   *
+   * @since 3.2
+   */
+  void moveAtomic(Path source, Path target) throws IOException;
+
+  /**
    * Computes basic metrics about the file.
    */
   StreamMetrics computeMetrics(Path file) throws IOException;

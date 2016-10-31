@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -26,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import org.eclipse.sisu.Hidden;
+
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 /**
@@ -35,6 +38,8 @@ import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
  *
  * @see ErrorPageServlet
  */
+@Named
+@Hidden // hide from DynamicFilterChainManager because we statically install it in WebModule
 @Singleton
 public class ErrorPageFilter
     extends ComponentSupport

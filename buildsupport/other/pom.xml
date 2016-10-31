@@ -60,6 +60,18 @@
       </dependency>
 
       <dependency>
+        <groupId>org.joda</groupId>
+        <artifactId>joda-convert</artifactId>
+        <version>1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hdrhistogram</groupId>
+        <artifactId>HdrHistogram</artifactId>
+        <version>2.1.6</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.tika</groupId>
         <artifactId>tika-core</artifactId>
         <version>1.11</version>
@@ -114,36 +126,11 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.servicemix.bundles</groupId>
-        <artifactId>org.apache.servicemix.bundles.elasticsearch</artifactId>
-        <version>2.2.0_1</version>
-        <exclusions>
-          <!-- these dependencies are shaded into the servicemix bundle -->
-          <exclusion>
-            <groupId>com.carrotsearch</groupId>
-            <artifactId>hppc</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.tdunning</groupId>
-            <artifactId>t-digest</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.twitter</groupId>
-            <artifactId>jsr166e</artifactId>
-          </exclusion>
-          <!-- these dependencies are not used by the servicemix bundle -->
-          <exclusion>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>securesm</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.elasticsearch</groupId>
+        <artifactId>elasticsearch</artifactId>
+        <version>2.2.0</version>
       </dependency>
 
-      <!-- needed by elastic search -->
       <dependency>
         <groupId>com.vividsolutions</groupId>
         <artifactId>jts</artifactId>

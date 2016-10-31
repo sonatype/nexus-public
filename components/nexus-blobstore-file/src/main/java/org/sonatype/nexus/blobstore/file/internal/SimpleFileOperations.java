@@ -15,9 +15,11 @@ package org.sonatype.nexus.blobstore.file.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 import javax.inject.Named;
@@ -76,6 +78,35 @@ public class SimpleFileOperations
       throw new IOException(e);
     }
     log.debug("Hard link created from {} to {}", newLink, source);
+  }
+
+  @Override
+  public void copy(final Path source, final Path target) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    DirectoryHelper.mkdir(target.getParent());
+    Files.copy(source, target);
+  }
+
+  @Override
+  public void move(final Path source, final Path target) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    DirectoryHelper.mkdir(target.getParent());
+    Files.move(source, target);
+  }
+
+  @Override
+  public void moveAtomic(final Path source, final Path target) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    DirectoryHelper.mkdir(target.getParent());
+    try {
+      Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+    }
+    catch (UnsupportedOperationException e) { // NOSONAR
+      throw new AtomicMoveNotSupportedException(source.toString(), target.toString(), e.getMessage());
+    }
   }
 
   @Override

@@ -400,6 +400,9 @@ run() {
     fi
     cd "$KARAF_BASE"
 
+    # SONATYPE: prepare log and tmp directories
+    mkdir -p "$KARAF_DATA/log" "$KARAF_DATA/tmp"
+
     # SONATYPE: removed -Djavax.management.builder.initial
     # SONATYPE: removed -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}"
     # SONATYPE: removed -Djava.ext.dirs="${JAVA_EXT_DIRS}"

@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.web;
 import java.io.IOException;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -29,6 +30,8 @@ import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 
+import org.eclipse.sisu.Hidden;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.SERVER;
 import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
@@ -39,6 +42,8 @@ import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
  *
  * @since 3.0
  */
+@Named
+@Hidden // hide from DynamicFilterChainManager because we statically install it in WebModule
 @Singleton
 public class EnvironmentFilter
   extends ComponentSupport

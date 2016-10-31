@@ -165,7 +165,6 @@ Ext.define('NX.coreui.controller.Assets', {
       container.down('#componentInfo').showInfo(componentInfo);
 
       this.bindDeleteComponentButton(this.getDeleteComponentButton());
-      this.bindAnalyzeApplicationButton(this.getAnalyzeApplicationButton());
     }
   },
 
@@ -229,16 +228,7 @@ Ext.define('NX.coreui.controller.Assets', {
    * @private
    */
   bindDeleteComponentButton: function(button) {
-    this.bindButton(button, this.getComponentDetails().componentModel.get('repositoryName'), 'delete');
-  },
-
-  /**
-   * Enable 'Analyze' when user has 'read' permission.
-   *
-   * @private
-   */
-  bindAnalyzeApplicationButton: function(button) {
-    this.bindButton(button, this.getComponentDetails().componentModel.get('repositoryName'), 'read', true);
+    this.bindButton(button, this.getComponentDetails().componentModel.get('repositoryName'));
   },
 
   /**
@@ -247,7 +237,7 @@ Ext.define('NX.coreui.controller.Assets', {
    * @private
    */
   bindDeleteAssetButton: function(button) {
-    this.bindButton(button, this.getAssetContainer().assetModel.get('repositoryName'), 'delete');
+    this.bindButton(button, this.getAssetContainer().assetModel.get('repositoryName'));
   },
 
   /**
@@ -255,27 +245,16 @@ Ext.define('NX.coreui.controller.Assets', {
    *
    * @param button to be shown/hidden
    * @param repositoryName name of repository
-   * @param action the action to check permission against
-   * @param skipGroupCheck if true, will not hide the button when group repository is selected
    *
    * @private
    */
-  bindButton: function(button, repositoryName, action, skipGroupCheck) {
+  bindButton: function(button, repositoryName) {
     var repositoryStore = this.repositoryStore,
         repository,
         showButtonFunction = function(repository) {
-          if (repository && (skipGroupCheck || repository.get('type') !== 'group')) {
+          if (repository && repository.get('type') !== 'group') {
             button.show();
-            button.mon(
-                NX.Conditions.isPermitted(
-                    'nexus:repository-view:' + repository.get('format') + ':' + repository.get('name') + ':' + action
-                ),
-                {
-                  satisfied: button.enable,
-                  unsatisfied: button.disable,
-                  scope: button
-                }
-            );
+            button.enable();
           }
         };
 

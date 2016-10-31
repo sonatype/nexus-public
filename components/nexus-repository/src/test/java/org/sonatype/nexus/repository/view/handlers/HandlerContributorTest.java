@@ -55,6 +55,7 @@ public class HandlerContributorTest
     final Response response = underTest.handle(context);
 
     assertThat(response.getStatus().isSuccessful(), is(true));
+    assertThat(attributes.get(HandlerContributor.EXTENDED_MARKER), is(Boolean.TRUE));
 
     // Handle a second time to ensure the contributed handlers aren't injected twice
     underTest.handle(context);

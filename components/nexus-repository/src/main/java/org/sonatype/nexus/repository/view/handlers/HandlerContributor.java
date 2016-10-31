@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.view.Response;
 import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 
 /**
  * A {@link Handler} which diverts request processing through any {@link ContributedHandler}s that are active.
@@ -41,7 +42,8 @@ public class HandlerContributor
   private final List<ContributedHandler> contributedHandlers;
 
   @VisibleForTesting
-  static final String EXTENDED_MARKER = HandlerContributor.class.getName() + ".extended";
+  static final String EXTENDED_MARKER =
+      LOCAL_ATTRIBUTE_PREFIX + HandlerContributor.class.getName() + ".extended";
 
   @Inject
   public HandlerContributor(final List<ContributedHandler> contributedHandlers)

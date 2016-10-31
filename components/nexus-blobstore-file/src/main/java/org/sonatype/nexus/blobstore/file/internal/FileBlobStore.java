@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file.internal;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -113,6 +114,8 @@ public class FileBlobStore
 
   private boolean supportsHardLinkCopy;
 
+  private boolean supportsAtomicMove;
+
   @Inject
   public FileBlobStore(@Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
                        @Named("temporary") final LocationStrategy temporaryLocationStrategy,
@@ -126,6 +129,7 @@ public class FileBlobStore
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.storeMetrics = checkNotNull(storeMetrics);
     this.supportsHardLinkCopy = true;
+    this.supportsAtomicMove = true;
   }
 
   @VisibleForTesting
@@ -191,6 +195,20 @@ public class FileBlobStore
   }
 
   /**
+   * Returns a path for a temporary blob-id content file relative to root directory.
+   */
+  private Path temporaryContentPath(final BlobId id, final UUID suffix) {
+    return contentDir.resolve(temporaryLocationStrategy.location(id) + "." + suffix + BLOB_CONTENT_SUFFIX);
+  }
+
+  /**
+   * Returns path for a temporary blob-id attribute file relative to root directory.
+   */
+  private Path temporaryAttributePath(final BlobId id, final UUID suffix) {
+    return contentDir.resolve(temporaryLocationStrategy.location(id) + "." + suffix + BLOB_ATTRIBUTE_SUFFIX);
+  }
+
+  /**
    * Returns the location for a blob ID based on whether or not the blob ID is for a temporary or permanent blob.
    */
   private String getLocation(final BlobId id) {
@@ -237,19 +255,27 @@ public class FileBlobStore
     final Path blobPath = contentPath(blobId);
     final Path attributePath = attributePath(blobId);
 
+    final UUID uuidSuffix = UUID.randomUUID();
+    final Path temporaryBlobPath = temporaryContentPath(blobId, uuidSuffix);
+    final Path temporaryAttributePath = temporaryAttributePath(blobId, uuidSuffix);
+
     final FileBlob blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();
     try {
       log.debug("Writing blob {} to {}", blobId, blobPath);
 
-      final StreamMetrics streamMetrics = ingester.ingestTo(blobPath);
+      final StreamMetrics streamMetrics = ingester.ingestTo(temporaryBlobPath);
       final BlobMetrics metrics = new BlobMetrics(new DateTime(), streamMetrics.getSha1(), streamMetrics.getSize());
       blob.refresh(headers, metrics);
 
       // Write the blob attribute file
-      BlobAttributes blobAttributes = new BlobAttributes(attributePath, headers, metrics);
+      BlobAttributes blobAttributes = new BlobAttributes(temporaryAttributePath, headers, metrics);
       blobAttributes.store();
+
+      // Move the temporary files into their final location
+      move(temporaryBlobPath, blobPath);
+      move(temporaryAttributePath, attributePath);
 
       storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
 
@@ -257,6 +283,8 @@ public class FileBlobStore
     }
     catch (IOException e) {
       // Something went wrong, clean up the files we created
+      deleteQuietly(temporaryAttributePath);
+      deleteQuietly(temporaryBlobPath);
       deleteQuietly(attributePath);
       deleteQuietly(blobPath);
       throw new BlobStoreException(e, blobId);
@@ -269,10 +297,11 @@ public class FileBlobStore
   @Override
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     Blob sourceBlob = checkNotNull(get(blobId));
+    Path sourcePath = contentPath(sourceBlob.getId());
     if (supportsHardLinkCopy) {
       try {
         return create(headers, destination -> {
-          fileOperations.hardLink(contentPath(sourceBlob.getId()), destination);
+          fileOperations.hardLink(sourcePath, destination);
           BlobMetrics metrics = sourceBlob.getMetrics();
           return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
         });
@@ -285,12 +314,11 @@ public class FileBlobStore
     }
     log.trace("Using fallback mechanism for blob store {}, copying blob {}", blobStoreConfiguration.getName(),
         sourceBlob.getId());
-    try (InputStream inputStream = sourceBlob.getInputStream()) {
-      return create(inputStream, headers);
-    }
-    catch (IOException e) {
-      throw new BlobStoreException(e, blobId);
-    }
+    return create(headers, destination -> {
+      fileOperations.copy(sourcePath, destination);
+      BlobMetrics metrics = sourceBlob.getMetrics();
+      return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
+    });
   }
 
   @Nullable
@@ -480,6 +508,22 @@ public class FileBlobStore
     catch (IOException e) {
       log.warn("Blob store unable to delete {}", path, e);
     }
+  }
+
+  private void move(final Path source, final Path target) throws IOException {
+    if (supportsAtomicMove) {
+      try {
+        fileOperations.moveAtomic(source, target);
+        return;
+      }
+      catch (AtomicMoveNotSupportedException e) { // NOSONAR
+        supportsAtomicMove = false;
+        log.warn("Disabling atomic moves for blob store {}, could not move {} to {}, reason: {}",
+            blobStoreConfiguration.getName(), source, target, e.getReason());
+      }
+    }
+    log.trace("Using normal move for blob store {}, moving {} to {}", blobStoreConfiguration.getName(), source, target);
+    fileOperations.move(source, target);
   }
 
   private void setConfiguredBlobStorePath(final Path path) {

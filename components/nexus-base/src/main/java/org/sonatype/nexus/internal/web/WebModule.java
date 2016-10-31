@@ -44,9 +44,11 @@ public class WebModule
     {
       @Override
       protected void configureServlets() {
+        bind(HeaderPatternFilter.class);
         bind(EnvironmentFilter.class);
         bind(ErrorPageFilter.class);
 
+        filter("/*").through(HeaderPatternFilter.class);
         filter("/*").through(EnvironmentFilter.class);
         filter("/*").through(ErrorPageFilter.class);
 

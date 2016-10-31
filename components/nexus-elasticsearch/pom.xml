@@ -34,13 +34,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.servicemix.bundles</groupId>
-      <artifactId>org.apache.servicemix.bundles.elasticsearch</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.vividsolutions</groupId>
-      <artifactId>jts</artifactId>
+      <groupId>org.sonatype.nexus.bundles</groupId>
+      <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
     </dependency>
 
     <dependency>
@@ -49,5 +44,21 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <!--
+    Workaround use of maven-shade-plugin in thirdparty-bundles/elasticsearch reducing dependency visibility
+    -->
+    <profile>
+      <id>idea</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.elasticsearch</groupId>
+          <artifactId>elasticsearch</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
 </project>

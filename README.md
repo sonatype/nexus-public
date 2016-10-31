@@ -12,7 +12,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Sonatype Nexus Open-source Codebase 
+# Sonatype Nexus Repository Open Source Codebase 
 
 ## Requirements
 
@@ -28,9 +28,17 @@ To build the project and generate the template assembly use the included Maven w
 
 ## Running
 
-To run Nexus, after building, unzip the assembly and start the server:
+To run Nexus Repository, after building, unzip the assembly and start the server:
 
     unzip -d target assemblies/nexus-base-template/target/nexus-base-template-*.zip
     ./target/nexus-base-template-*/bin/nexus console
 
 The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus distributions.
+
+## Getting help
+
+Looking to contribute to our code but need some help? There's a few ways to get information or our attention:
+
+* File an issue in [our public JIRA](https://issues.sonatype.org/browse/NEXUS)
+* Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
+* Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)

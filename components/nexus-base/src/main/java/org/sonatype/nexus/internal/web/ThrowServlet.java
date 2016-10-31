@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.0
  */
+@Named
 @Singleton
 public class ThrowServlet
     extends HttpServlet

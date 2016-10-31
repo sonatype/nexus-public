@@ -78,6 +78,18 @@
         <version>1.2.13</version>
       </dependency>
 
+      <dependency>
+        <groupId>com.ning</groupId>
+        <artifactId>compress-lzf</artifactId>
+        <version>1.0.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty</artifactId>
+        <version>3.10.5.Final</version>
+      </dependency>
+
       <!--
       RESTEasy
       -->

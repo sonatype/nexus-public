@@ -126,8 +126,14 @@ public class NegativeCacheFacetImpl
   }
 
   @Override
-  protected void doDestroy() throws Exception {
+  protected void doDelete() throws Exception {
     maybeDestroyCache();
+    config = null;
+  }
+
+  @Override
+  protected void doDestroy() throws Exception {
+    cache = null;
     config = null;
   }
 

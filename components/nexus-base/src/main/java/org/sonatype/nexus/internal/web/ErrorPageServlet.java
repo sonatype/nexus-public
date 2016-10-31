@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -44,6 +45,7 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
  *
  * @see ErrorPageFilter
  */
+@Named
 @Singleton
 public class ErrorPageServlet
     extends HttpServlet

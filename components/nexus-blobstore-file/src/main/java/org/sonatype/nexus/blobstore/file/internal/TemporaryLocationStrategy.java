@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
-import java.util.regex.Pattern;
-
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobId;

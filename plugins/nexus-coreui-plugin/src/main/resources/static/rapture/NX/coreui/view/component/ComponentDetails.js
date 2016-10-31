@@ -54,8 +54,7 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
             xtype: 'button',
             text: NX.I18n.get('ComponentDetails_Analyze_Button'),
             glyph: 'xf085@FontAwesome' /* fa-gears */,
-            action: 'analyzeApplication',
-            disabled: true
+            action: 'analyzeApplication'
           }
         ]
       },

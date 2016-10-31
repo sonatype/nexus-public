@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,6 +38,8 @@ public class Router
   private final List<Route> routes;
 
   private final DefaultRoute defaultRoute;
+
+  public static final String LOCAL_ATTRIBUTE_PREFIX = "local.attribute.";
 
   public Router(final List<Route> routes, final DefaultRoute defaultRoute) {
     this.routes = checkNotNull(routes, "Missing routes");
@@ -62,14 +65,16 @@ public class Router
     return response;
   }
 
-  private Context maybeCopyContextAttributes(final Repository repository,
-                                             final Request request,
-                                             final Context existingContext)
+  @VisibleForTesting
+  Context maybeCopyContextAttributes(final Repository repository,
+                                     final Request request,
+                                     final Context existingContext)
   {
     Context context = new Context(repository, request);
 
     if (existingContext != null) {
-      existingContext.getAttributes().keys()
+      existingContext.getAttributes().keys().stream()
+          .filter(key -> !key.startsWith(LOCAL_ATTRIBUTE_PREFIX))
           .forEach(key -> context.getAttributes().set(key, existingContext.getAttributes().get(key)));
     }
 

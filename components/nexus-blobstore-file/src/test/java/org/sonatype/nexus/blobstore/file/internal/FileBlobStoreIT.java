@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -47,6 +48,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -130,11 +132,15 @@ public class FileBlobStoreIT
     new Random().nextBytes(content);
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    final Path contentPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    final Path attributesPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX);
     assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
-    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
-        FileBlobStore.BLOB_CONTENT_SUFFIX)), is(true));
-    assertThat(Files.exists(contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
-        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX)), is(true));
+    assertThat(Files.exists(contentPath), is(true));
+    assertThat(Files.exists(attributesPath), is(true));
+    verify(fileOperations).moveAtomic(any(), eq(contentPath));
+    verify(fileOperations).moveAtomic(any(), eq(attributesPath));
 
     final byte[] output = extractContent(blob);
     assertThat("data must survive", content, is(equalTo(output)));
@@ -169,6 +175,45 @@ public class FileBlobStoreIT
 
     // FIXME: This is no longer valid
     //assertThat("compacting should reclaim deleted blobs' space", storeMetrics3.getTotalSize(), is(equalTo(0L)));
+  }
+
+  @Test
+  public void temporaryBlobMoveFallback() throws Exception {
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    new Random().nextBytes(content);
+
+    doThrow(new AtomicMoveNotSupportedException("", "", "")).when(fileOperations).moveAtomic(any(), any());
+
+    final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    final Path contentPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    final Path attributesPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX);
+    assertThat(blob.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
+    assertThat(Files.exists(contentPath), is(true));
+    assertThat(Files.exists(attributesPath), is(true));
+    verify(fileOperations).move(any(), eq(contentPath));
+    verify(fileOperations).move(any(), eq(attributesPath));
+
+    final byte[] output = extractContent(blob);
+    assertThat("data must survive", content, is(equalTo(output)));
+
+    final BlobMetrics metrics = blob.getMetrics();
+    assertThat("size must be calculated correctly", metrics.getContentSize(), is(equalTo((long) TEST_DATA_LENGTH)));
+  }
+
+  @Test
+  public void temporaryBlobMoveFallbackPersists() throws Exception {
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    new Random().nextBytes(content);
+
+    doThrow(new AtomicMoveNotSupportedException("", "", "")).when(fileOperations).moveAtomic(any(), any());
+
+    underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+
+    verify(fileOperations, times(1)).moveAtomic(any(), any());
+    verify(fileOperations, times(4)).move(any(), any());
   }
 
   @Test
@@ -267,7 +312,8 @@ public class FileBlobStoreIT
     assertThat(copy.getId().asUniqueString(), not(startsWith(TEMPORARY_BLOB_ID_PREFIX)));
 
     verify(fileOperations, times(2)).hardLink(any(), any());
-    verify(fileOperations, times(2)).create(any(), any());
+    verify(fileOperations, times(2)).copy(any(), any());
+    verify(fileOperations, times(6)).moveAtomic(any(), any());
   }
 
   private byte[] testData() {

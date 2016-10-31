@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 
 /**
- * Tests for {@link NegativeCacheHandler}.
+ * Tests for {@link NegativeCacheFacetImpl}.
  */
 class NegativeCacheFacetImplTest
     extends TestSupport
@@ -150,7 +150,7 @@ class NegativeCacheFacetImplTest
     when(cache.name).thenReturn(cacheNameCaptor.value)
     underTest.stop()
     underTest.destroy()
-    verify(cacheManager).destroyCache(cacheNameCaptor.value)
+    verify(cacheManager, never()).destroyCache(any(String))
   }
 
   /**
