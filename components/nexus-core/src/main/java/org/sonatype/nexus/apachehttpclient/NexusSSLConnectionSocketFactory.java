@@ -13,6 +13,8 @@
 package org.sonatype.nexus.apachehttpclient;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.protocol.HttpContext;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-import sun.security.ssl.SSLSocketImpl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -55,6 +56,8 @@ public class NexusSSLConnectionSocketFactory
 
   private final String[] supportedCipherSuites;
 
+  private Class sslSocketFactoryClass = null;
+
   public NexusSSLConnectionSocketFactory(
       final SSLSocketFactory defaultSocketFactory,
       final X509HostnameVerifier hostnameVerifier,
@@ -65,6 +68,13 @@ public class NexusSSLConnectionSocketFactory
     this.selectors = selectors; // might be null
     this.supportedProtocols = split(System.getProperty("https.protocols"));
     this.supportedCipherSuites = split(System.getProperty("https.cipherSuites"));
+    try {
+      sslSocketFactoryClass = this.getClass().getClassLoader().loadClass("sun.security.ssl.SSLSocketImpl");
+    }
+    catch (ClassNotFoundException e) {
+      // no Oracle JDK
+    }
+
   }
 
   private SSLSocketFactory select(final HttpContext context) {
@@ -111,8 +121,20 @@ public class NexusSSLConnectionSocketFactory
     // Some CDN solutions requires this for HTTPS, as they choose certificate
     // to use based on "expected" hostname that is being passed here below
     // and is used during SSL handshake. Requires Java7+
-    if (sock instanceof SSLSocketImpl) {
-      ((SSLSocketImpl) sock).setHost(host.getHostName());
+    //
+    // Call sun.security.ssl.SSLSocketImpl.setHost using reflection
+    // Calling it directly introduces a hard dependency on Oracle JDK
+    if (sslSocketFactoryClass != null && sslSocketFactoryClass.isInstance(sock)) {
+      try {
+        Method setHost = sslSocketFactoryClass.getMethod("setHost", String.class);
+        setHost.invoke(sock, host.getHostName());
+      } catch (NoSuchMethodException e1) {
+        // do nothing - means old JRE
+      } catch (InvocationTargetException e1) {
+        // do nothing - should never happen
+      } catch (IllegalAccessException e1) {
+        // do nothing - should never happen
+      }
     }
     try {
       if (connectTimeout > 0 && sock.getSoTimeout() == 0) {
