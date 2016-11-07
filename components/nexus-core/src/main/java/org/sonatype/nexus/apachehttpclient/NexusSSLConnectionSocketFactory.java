@@ -13,6 +13,8 @@
 package org.sonatype.nexus.apachehttpclient;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -21,6 +23,8 @@ import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -31,7 +35,6 @@ import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.protocol.HttpContext;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-import sun.security.ssl.SSLSocketImpl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,6 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 2.8
  */
 public class NexusSSLConnectionSocketFactory
+    extends ComponentSupport
     implements LayeredConnectionSocketFactory
 {
   private static final Splitter propertiesSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
@@ -55,6 +59,10 @@ public class NexusSSLConnectionSocketFactory
 
   private final String[] supportedCipherSuites;
 
+  private Class sslSocketFactoryClass;
+
+  private Method setHostMethod;
+
   public NexusSSLConnectionSocketFactory(
       final SSLSocketFactory defaultSocketFactory,
       final X509HostnameVerifier hostnameVerifier,
@@ -65,6 +73,14 @@ public class NexusSSLConnectionSocketFactory
     this.selectors = selectors; // might be null
     this.supportedProtocols = split(System.getProperty("https.protocols"));
     this.supportedCipherSuites = split(System.getProperty("https.cipherSuites"));
+    try {
+      sslSocketFactoryClass = this.getClass().getClassLoader().loadClass("sun.security.ssl.SSLSocketImpl");
+      setHostMethod = sslSocketFactoryClass.getMethod("setHost", String.class);
+    }
+    catch (ClassNotFoundException | NoSuchMethodException e) {
+      log.warn("No Oracle JRE present for loading class sun.security.ssl.SSLSocketImpl. SNI will not be supported", e);
+    }
+
   }
 
   private SSLSocketFactory select(final HttpContext context) {
@@ -111,9 +127,18 @@ public class NexusSSLConnectionSocketFactory
     // Some CDN solutions requires this for HTTPS, as they choose certificate
     // to use based on "expected" hostname that is being passed here below
     // and is used during SSL handshake. Requires Java7+
-    if (sock instanceof SSLSocketImpl) {
-      ((SSLSocketImpl) sock).setHost(host.getHostName());
+    //
+    // Call sun.security.ssl.SSLSocketImpl.setHost using reflection
+    // Calling it directly introduces a hard dependency on Oracle JDK
+    if (sslSocketFactoryClass != null && setHostMethod != null && sslSocketFactoryClass.isInstance(sock) ) {
+      try {
+        setHostMethod.invoke(sock, host.getHostName());
+      }
+      catch (InvocationTargetException | IllegalAccessException e) {
+        log.warn("Unable to call 'setHost' method reflectively", e);
+      }
     }
+    
     try {
       if (connectTimeout > 0 && sock.getSoTimeout() == 0) {
         sock.setSoTimeout(connectTimeout);
