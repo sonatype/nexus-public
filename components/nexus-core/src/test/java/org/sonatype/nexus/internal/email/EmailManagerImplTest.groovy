@@ -17,6 +17,7 @@ import javax.net.ssl.SSLContext
 
 import org.sonatype.nexus.common.event.EventBus
 import org.sonatype.nexus.email.EmailConfiguration
+import org.sonatype.nexus.email.EmailConfigurationChangedEvent
 import org.sonatype.nexus.ssl.TrustStore
 
 import org.apache.commons.mail.Email
@@ -92,5 +93,27 @@ class EmailManagerImplTest
       null     | null     | null             | null
   }
 
+  def 'onStoreChanged only posts a changed event for remote events'() {
+    given: 'A configured EmailManagerImpl instance'
+      def eventBus = Mock(EventBus)
+      def emailConfigurationStore = Mock(EmailConfigurationStore)
+      emailConfigurationStore.load() >> Mock(EmailConfiguration)
+      EmailManagerImpl impl = new EmailManagerImpl(eventBus, emailConfigurationStore, Mock(TrustStore), Mock(Provider))
 
+    when: 'a local event is received'
+      def localEvent = Mock(EmailConfigurationEvent)
+      localEvent.isLocal() >> true
+      impl.onStoreChanged(localEvent)
+
+    then: 'the event is not posted'
+      0 * eventBus.post(_ as EmailConfigurationChangedEvent)
+
+    when: 'a remote event is received'
+      def remoteEvent = Mock(EmailConfigurationEvent)
+      remoteEvent.isLocal() >> false
+      impl.onStoreChanged(remoteEvent)
+
+    then: 'the event is posted'
+      1 * eventBus.post(_ as EmailConfigurationChangedEvent)
+  }
 }

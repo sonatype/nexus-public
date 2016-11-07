@@ -233,6 +233,17 @@ public class LogbackLogManager
     return loggers;
   }
 
+  /**
+   * @since 3.2
+   */
+  @Override
+  @Guarded(by = STARTED)
+  public Map<String, LoggerLevel> getOverriddenLoggers() {
+    Map<String, LoggerLevel> loggers = new HashMap<>();
+    overrides.forEach(override -> loggers.put(override.getKey(), override.getValue()));
+    return loggers;
+  }
+
   @Override
   @Guarded(by = STARTED)
   public void resetLoggers() {

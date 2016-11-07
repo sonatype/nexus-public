@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
 
 /**
  * Orient {@link AnonymousConfigurationStore}.
@@ -60,23 +62,16 @@ public class OrientAnonymousConfigurationStore
     }
   }
 
-  private ODatabaseDocumentTx openDb() {
-    ensureStarted();
-    return databaseInstance.get().acquire();
-  }
-
   @Override
   @Nullable
   public AnonymousConfiguration load() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      return entityAdapter.get(db);
-    }
+    ensureStarted();
+    return inTx(databaseInstance, db -> entityAdapter.get(db));
   }
 
   @Override
   public void save(final AnonymousConfiguration configuration) {
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.set(db, configuration);
-    }
+    ensureStarted();
+    inTxNoReturn(databaseInstance, db -> entityAdapter.set(db, configuration));
   }
 }

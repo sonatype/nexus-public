@@ -12,41 +12,33 @@
  */
 package org.sonatype.nexus.transaction;
 
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.goodies.common.ComponentSupport;
+
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import org.aopalliance.intercept.Joinpoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Utility class that lets you wrap arbitrary sections of code as &#064;{@link Transactional}.
+ * Fluent API for wrapping lambda operations with {@link Transactional} behaviour:
  *
  * <pre>
- * Operations.transactional(new Operation&lt;T, SomeException&gt;()
- * {
- *   &#064;Transactional(retryOn = IOException.class)
- *   public T call() throws SomeException {
- *     // ... do transactional work
- *   }
+ * Value value = Operations.transactional().retryOn(IOException.class).call(() -> {
+ *   // do transactional work which returns a value
+ * });
+ *
+ * Operations.transactional().retryOn(IOException.class).run(() -> {
+ *   // do transactional work which doesn't return a value
  * });
  * </pre>
  *
- * There's a builder API for situations where you can't annotate the code (such as lambdas):
- *
- * <pre>
- * Operations.transactional().retryOn(IOException.class).call(() -> {
- *   // do transactional work
- * });
- * </pre>
- *
- * or when you want to supply your own transactions instead of relying on {@link UnitOfWork}:
+ * You can choose to supply your own transactions instead of relying on {@link UnitOfWork}:
  *
  * <pre>
  * Operations.transactional(myTxSupplier).retryOn(IOException.class).call(() -> {
@@ -62,105 +54,182 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * });
  * </pre>
  *
+ * You can also use stereotype annotations meta-annotated with {@link Transactional}:
+ *
+ * <pre>
+ * Operations.transactional().stereotype(TransactionalGet.class).call(() -> {
+ *   // do transactional work
+ * });
+ * </pre>
+ *
+ * The result of each fluent step (except call and run) can be cached and re-used.
+ *
  * @since 3.0
  */
-public final class Operations
+@SuppressWarnings("unchecked")
+public class Operations<E extends Exception, B extends Operations<E, B>>
+    extends ComponentSupport
 {
-  private static final Logger log = LoggerFactory.getLogger(Operations.class);
+  private static final Class<?>[] NOTHING = {};
 
-  private Operations() {
-    // no instance
+  @VisibleForTesting
+  static final Transactional DEFAULT_SPEC = new TransactionalImpl(NOTHING, NOTHING, NOTHING);
+
+  @VisibleForTesting
+  final Transactional spec;
+
+  @Nullable
+  private final Class<E> throwing;
+
+  @Nullable
+  private final Supplier<? extends Transaction> db;
+
+  /**
+   * Assumes a surrounding {@link UnitOfWork} will supply {@link Transaction}s.
+   */
+  public static Operations<RuntimeException, ?> transactional() {
+    return new Operations<>();
   }
 
   /**
-   * Builds a {@link Transactional} specification that can be applied to {@link Operation}s.
+   * Uses the given supplier to acquire {@link Transaction}s.
    */
-  public static TransactionalBuilder<RuntimeException> transactional() {
-    return new TransactionalBuilder<>(null);
+  public static Operations<RuntimeException, ?> transactional(final Supplier<? extends Transaction> db) {
+    return transactional().withDb(db);
   }
 
   /**
-   * Builds a {@link Transactional} specification that can be applied to {@link Operation}s;
-   * uses the given supplier to acquire {@link Transaction}s.
+   * @see Transactional#commitOn()
    */
-  public static TransactionalBuilder<RuntimeException> transactional(final Supplier<? extends Transaction> db) {
-    return new TransactionalBuilder<>(checkNotNull(db));
+  @SafeVarargs
+  public final B commitOn(final Class<? extends Exception>... exceptionTypes) {
+    Class<?>[] commitOn = deepCheckNotNull(exceptionTypes).clone();
+    return (B) copy(new TransactionalImpl(commitOn, spec.retryOn(), spec.swallow()), throwing, db);
   }
 
   /**
-   * Applies the annotated {@link Transactional} behaviour to the given {@link Operation}.
+   * @see Transactional#retryOn()
    */
-  public static <T, E extends Exception> T transactional(final Operation<T, E> operation)
-      throws E
+  @SafeVarargs
+  public final B retryOn(final Class<? extends Exception>... exceptionTypes) {
+    Class<?>[] retryOn = deepCheckNotNull(exceptionTypes).clone();
+    return (B) copy(new TransactionalImpl(spec.commitOn(), retryOn, spec.swallow()), throwing, db);
+  }
+
+  /**
+   * @see Transactional#swallow()
+   */
+  @SafeVarargs
+  public final B swallow(final Class<? extends Exception>... exceptionTypes) {
+    Class<?>[] swallow = deepCheckNotNull(exceptionTypes).clone();
+    return (B) copy(new TransactionalImpl(spec.commitOn(), spec.retryOn(), swallow), throwing, db);
+  }
+
+  /**
+   * Applies the given stereotype annotation (meta-annotated with &#064;{@link Transactional}).
+   *
+   * @since 3.2
+   */
+  public final B stereotype(final Class<? extends Annotation> annotationType) {
+    Transactional metaSpec = annotationType.getAnnotation(Transactional.class);
+    checkArgument(metaSpec != null, "Stereotype annotation is not meta-annotated with @Transactional");
+    return (B) copy(metaSpec, throwing, db);
+  }
+
+  /**
+   * Assumes the lambda may throw the given checked exception.
+   */
+  public <X extends Exception> Operations<X, ?> throwing(final Class<X> exceptionType) {
+    return copy(spec, checkNotNull(exceptionType), db);
+  }
+
+  /**
+   * Uses the given supplier to acquire {@link Transaction}s.
+   *
+   * @since 3.2
+   */
+  public final B withDb(final Supplier<? extends Transaction> txSupplier) {
+    return (B) copy(spec, throwing, checkNotNull(txSupplier));
+  }
+
+  /**
+   * Calls the given operation with {@link Transactional} behaviour.
+   */
+  public final <T> T call(final Operation<T, E> operation) throws E {
+    return transactional(new OperationPoint<>(operation));
+  }
+
+  /**
+   * Runs the given operation with {@link Transactional} behaviour.
+   *
+   * @since 3.2
+   */
+  public final void run(final VoidOperation<E> operation) throws E {
+    transactional(new OperationPoint<>(operation));
+  }
+
+  /**
+   * Default settings.
+   */
+  protected Operations() {
+    this(DEFAULT_SPEC, null, null);
+  }
+
+  /**
+   * Custom settings.
+   */
+  protected Operations(final Transactional spec,
+                       @Nullable final Class<E> throwing,
+                       @Nullable final Supplier<? extends Transaction> db)
   {
-    return transactional(operation, null, null, null);
+    this.spec = checkNotNull(spec);
+    this.throwing = throwing;
+    this.db = db;
   }
 
   /**
-   * Applies the specified {@link Transactional} behaviour to the given {@link Operation}.
+   * Copies the given settings into a new fluent step.
    */
-  @SuppressWarnings("unchecked")
-  static <T, E extends Exception> T transactional(final Operation<T, E> operation,
-                                                  @Nullable final Transactional withSpec,
-                                                  @Nullable final Supplier<? extends Transaction> db,
-                                                  @Nullable final Class<E> throwing)
-      throws E
+  protected <X extends Exception> Operations<X, ?> copy(final Transactional spec,
+                                                        @Nullable final Class<X> throwing,
+                                                        @Nullable final Supplier<? extends Transaction> db)
   {
-    final Method method;
-    try {
-      method = operation.getClass().getMethod("call");
-    }
-    catch (final NoSuchMethodException e) {
-      throw new LinkageError("Problem intercepting 'call' method", e);
-    }
+    return new Operations<>(spec, throwing, db);
+  }
 
-    Transactional spec = withSpec;
-    if (spec == null) {
-      spec = method.getAnnotation(Transactional.class);
-      if (spec == null) {
-        spec = TransactionalBuilder.DEFAULT_SPEC;
-      }
-    }
-
-    log.trace("Invoking: {} -> {}", spec, method);
+  /**
+   * Invokes the given {@link OperationPoint} using the current settings.
+   */
+  private <T> T transactional(final OperationPoint<T, E> point) throws E {
+    log.trace("Invoking: {} -> {}", spec, point);
 
     final UnitOfWork work = UnitOfWork.createWork();
 
     if (work.isActive()) {
-      return operation.call(); // nested transaction, no need to wrap
+      return point.proceed(); // nested transaction, no need to wrap
     }
 
     try (final Transaction tx = work.acquireTransaction(db)) {
-      return (T) new TransactionalWrapper(spec, new Joinpoint()
-      {
-        @Override
-        public Object proceed() throws Throwable {
-          return operation.call();
-        }
-
-        @Override
-        public Object getThis() {
-          return operation;
-        }
-
-        @Override
-        public AccessibleObject getStaticPart() {
-          return method;
-        }
-      }).proceedWithTransaction(tx);
+      return (T) new TransactionalWrapper(spec, point).proceedWithTransaction(tx);
     }
     catch (final Throwable e) {
       if (throwing != null) {
         Throwables.propagateIfPossible(e, throwing);
-      }
-      final Class<?>[] thrownExceptions = method.getExceptionTypes();
-      if (thrownExceptions != null && thrownExceptions.length > 0) {
-        Throwables.propagateIfPossible(e, (Class<E>) thrownExceptions[0]);
       }
       throw Throwables.propagate(e);
     }
     finally {
       work.releaseTransaction();
     }
+  }
+
+  /**
+   * Checks that the given array and its elements are not null.
+   */
+  private static <T> T[] deepCheckNotNull(final T[] elements) {
+    for (T e : elements) {
+      checkNotNull(e);
+    }
+    return elements;
   }
 }

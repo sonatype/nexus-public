@@ -57,13 +57,7 @@ public class OperationsTest
   @Test
   public void testDefaultSpec() throws Exception {
 
-    Operations.transactional(new Operation<String, RuntimeException>()
-    {
-      // implicit default @Transactional
-      public String call() {
-        return methods.nonTransactional();
-      }
-    });
+    Operations.transactional().call(() -> methods.nonTransactional());
 
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
@@ -73,63 +67,7 @@ public class OperationsTest
   }
 
   @Test
-  public void testOperationRetrySuccess() throws Exception {
-    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
-
-    methods.setCountdownToSuccess(3);
-    Operations.transactional(new Operation<String, IOException>()
-    {
-      @Transactional(retryOn = IOException.class)
-      public String call() throws IOException {
-        return methods.retryOnCheckedException();
-      }
-    });
-
-    InOrder order = inOrder(tx);
-    order.verify(tx).begin();
-    order.verify(tx).rollback();
-    order.verify(tx).allowRetry(any(IOException.class));
-    order.verify(tx).begin();
-    order.verify(tx).rollback();
-    order.verify(tx).allowRetry(any(IOException.class));
-    order.verify(tx).begin();
-    order.verify(tx).rollback();
-    order.verify(tx).allowRetry(any(IOException.class));
-    order.verify(tx).begin();
-    order.verify(tx).commit();
-    order.verify(tx).close();
-    verifyNoMoreInteractions(tx);
-  }
-
-  @Test(expected = IOException.class)
-  public void testOperationRetryFailure() throws Exception {
-    when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
-
-    methods.setCountdownToSuccess(100);
-    try {
-      Operations.transactional(new Operation<String, IOException>()
-      {
-        @Transactional(retryOn = IOException.class)
-        public String call() throws IOException {
-          return methods.retryOnCheckedException();
-        }
-      });
-    }
-    finally {
-      InOrder order = inOrder(tx);
-      order.verify(tx).begin();
-      order.verify(tx).rollback();
-      order.verify(tx).allowRetry(any(IOException.class));
-      order.verify(tx).begin();
-      order.verify(tx).rollback();
-      order.verify(tx).allowRetry(any(IOException.class));
-      order.verify(tx).close();
-      verifyNoMoreInteractions(tx);
-    }
-  }
-
-  @Test
-  public void testLambdaRetrySuccess() throws Exception {
+  public void testRetrySuccess() throws Exception {
     when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
@@ -155,7 +93,7 @@ public class OperationsTest
   }
 
   @Test(expected = IOException.class)
-  public void testLambdaRetryFailure() throws Exception {
+  public void testRetryFailure() throws Exception {
     when(tx.allowRetry(any(Exception.class))).thenReturn(true).thenReturn(false);
 
     methods.setCountdownToSuccess(100);
@@ -179,6 +117,32 @@ public class OperationsTest
   }
 
   @Test
+  public void testCanUseStereotypeAnnotation() throws Exception {
+    when(tx.allowRetry(any(Exception.class))).thenReturn(true);
+
+    methods.setCountdownToSuccess(3);
+    Operations.transactional()
+        .stereotype(RetryOnIOException.class)
+        .throwing(IOException.class)
+        .call(() -> methods.retryOnCheckedException());
+
+    InOrder order = inOrder(tx);
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).rollback();
+    order.verify(tx).allowRetry(any(IOException.class));
+    order.verify(tx).begin();
+    order.verify(tx).commit();
+    order.verify(tx).close();
+    verifyNoMoreInteractions(tx);
+  }
+
+  @Test
   public void testBatchModeDoesntLeakOutsideScope() {
     final Transaction[] txHolder = new Transaction[2];
 
@@ -186,22 +150,8 @@ public class OperationsTest
     try {
       UnitOfWork.beginBatch(() -> Mockito.mock(Transaction.class));
       try {
-        Operations.transactional(new Operation<Void, RuntimeException>()
-        {
-          @Transactional
-          public Void call() {
-            txHolder[0] = UnitOfWork.currentTx();
-            return null;
-          }
-        });
-        Operations.transactional(new Operation<Void, RuntimeException>()
-        {
-          @Transactional
-          public Void call() {
-            txHolder[1] = UnitOfWork.currentTx();
-            return null;
-          }
-        });
+        Operations.transactional().run(() -> txHolder[0] = UnitOfWork.currentTx());
+        Operations.transactional().run(() -> txHolder[1] = UnitOfWork.currentTx());
 
         // batched: transactions should be same
         assertThat(txHolder[0], is(txHolder[1]));
@@ -210,22 +160,8 @@ public class OperationsTest
         UnitOfWork.end(); // ends inner-batch-work
       }
 
-      Operations.transactional(new Operation<Void, RuntimeException>()
-      {
-        @Transactional
-        public Void call() {
-          txHolder[0] = UnitOfWork.currentTx();
-          return null;
-        }
-      });
-      Operations.transactional(new Operation<Void, RuntimeException>()
-      {
-        @Transactional
-        public Void call() {
-          txHolder[1] = UnitOfWork.currentTx();
-          return null;
-        }
-      });
+      Operations.transactional().run(() -> txHolder[0] = UnitOfWork.currentTx());
+      Operations.transactional().run(() -> txHolder[1] = UnitOfWork.currentTx());
 
       // non-batched: transactions should differ
       assertThat(txHolder[0], is(not(txHolder[1])));

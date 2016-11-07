@@ -12,12 +12,16 @@
  */
 package org.sonatype.nexus.internal.email;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
@@ -137,5 +141,22 @@ public class EmailConfigurationEntityAdapter
     document.field(P_SSL_ON_CONNECT_ENABLED, entity.isSslOnConnectEnabled());
     document.field(P_SSL_CHECK_SERVER_IDENTITY_ENABLED, entity.isSslCheckServerIdentityEnabled());
     document.field(P_NEXUS_TRUST_STORE_ENABLED, entity.isNexusTrustStoreEnabled());
+  }
+
+  @Nullable
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    log.debug("Emitted {} event with metadata {}", eventKind, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new EmailConfigurationCreatedEvent(metadata);
+      case UPDATE:
+        return new EmailConfigurationUpdatedEvent(metadata);
+      case DELETE:
+        return new EmailConfigurationDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

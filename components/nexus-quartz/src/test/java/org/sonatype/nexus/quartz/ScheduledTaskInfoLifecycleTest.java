@@ -26,8 +26,6 @@ import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.jayway.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -68,7 +66,7 @@ public class ScheduledTaskInfoLifecycleTest
     assertThat(taskInfo.getConfiguration().getTypeId(), equalTo(taskConfiguration.getTypeId()));
     assertThat(taskInfo.getConfiguration().getCreated(), notNullValue());
     assertThat(taskInfo.getConfiguration().getUpdated(), notNullValue());
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(1));
+    assertRunningTaskCount(1);
 
     final CurrentState currentState = taskInfo.getCurrentState();
     assertThat(currentState, notNullValue());
@@ -87,15 +85,9 @@ public class ScheduledTaskInfoLifecycleTest
     final String result = (String) future.get();
     assertThat(result, equalTo(RESULT));
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskInfo.getCurrentState().getState().equals(State.DONE));
-
-    // taskInfo for DONE task is terminal
-    assertThat(taskInfo.getCurrentState().getState(), equalTo(State.DONE));
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertTaskState(taskInfo, State.DONE);
+    assertRunningTaskCount(0);
   }
 
   /**
@@ -122,7 +114,7 @@ public class ScheduledTaskInfoLifecycleTest
     assertThat(taskInfo.getConfiguration().getTypeId(), equalTo(taskConfiguration.getTypeId()));
     assertThat(taskInfo.getConfiguration().getCreated(), notNullValue());
     assertThat(taskInfo.getConfiguration().getUpdated(), notNullValue());
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(1));
+    assertRunningTaskCount(1);
 
     Date runStarted;
     {
@@ -149,13 +141,8 @@ public class ScheduledTaskInfoLifecycleTest
       assertThat(result, equalTo(RESULT));
     }
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskInfo.getCurrentState().getState().equals(State.WAITING));
-    
-    assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertTaskState(taskInfo, State.WAITING);
+    assertRunningTaskCount(0);
 
     // repeating tasks when done are waiting, call for state is okay at any time
     {

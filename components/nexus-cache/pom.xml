@@ -63,20 +63,4 @@
     </dependency>
   </dependencies>
 
-  <profiles>
-    <!--
-    Workaround use of maven-shade-plugin in thirdparty-bundles/ehcache reducing dependency visibility
-    -->
-    <profile>
-      <id>idea</id>
-      <dependencies>
-        <dependency>
-          <groupId>net.sf.ehcache</groupId>
-          <artifactId>ehcache</artifactId>
-          <scope>provided</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
-
 </project>

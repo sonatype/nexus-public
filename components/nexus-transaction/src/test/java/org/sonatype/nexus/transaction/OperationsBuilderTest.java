@@ -14,8 +14,12 @@ package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+
+import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
@@ -29,9 +33,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
 /**
- * Test {@link TransactionalBuilder} behaviour.
+ * Test {@link Operations} builder methods.
  */
-public class TransactionalBuilderTest
+public class OperationsBuilderTest
     extends TestSupport
 {
   private interface SampleAnnotations
@@ -50,13 +54,20 @@ public class TransactionalBuilderTest
 
     @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class, swallow = IOException.class)
     void customValues();
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class, swallow = IOException.class)
+    @interface Stereotype
+    {
+      // meta-annotated with @Transactional
+    }
   }
 
   @Test
   public void testBuilderChecksArguments() {
 
     try {
-      new TransactionalBuilder(null).commitOn(IOException.class, null, RuntimeException.class);
+      new Operations().commitOn(IOException.class, null, RuntimeException.class);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -64,7 +75,7 @@ public class TransactionalBuilderTest
     }
 
     try {
-      new TransactionalBuilder(null).commitOn((Class<? extends Exception>[]) null);
+      new Operations().commitOn((Class<? extends Exception>[]) null);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -72,7 +83,7 @@ public class TransactionalBuilderTest
     }
 
     try {
-      new TransactionalBuilder(null).retryOn(IOException.class, null, RuntimeException.class);
+      new Operations().retryOn(IOException.class, null, RuntimeException.class);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -80,7 +91,7 @@ public class TransactionalBuilderTest
     }
 
     try {
-      new TransactionalBuilder(null).retryOn((Class<? extends Exception>[]) null);
+      new Operations().retryOn((Class<? extends Exception>[]) null);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -88,7 +99,7 @@ public class TransactionalBuilderTest
     }
 
     try {
-      new TransactionalBuilder(null).swallow(IOException.class, null, RuntimeException.class);
+      new Operations().swallow(IOException.class, null, RuntimeException.class);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -96,10 +107,26 @@ public class TransactionalBuilderTest
     }
 
     try {
-      new TransactionalBuilder(null).swallow((Class<? extends Exception>[]) null);
+      new Operations().swallow((Class<? extends Exception>[]) null);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
+      // expected
+    }
+
+    try {
+      new Operations().stereotype(null);
+      fail("Expected NullPointerException");
+    }
+    catch (NullPointerException e) {
+      // expected
+    }
+
+    try {
+      new Operations().stereotype(Named.class);
+      fail("Expected IllegalArgumentException");
+    }
+    catch (IllegalArgumentException e) {
       // expected
     }
   }
@@ -108,33 +135,37 @@ public class TransactionalBuilderTest
   public void testBuilderAnnotionBehaviour() {
 
     assertBehaviour(
-        TransactionalBuilder.DEFAULT_SPEC,
+        Operations.DEFAULT_SPEC,
         sample("defaultValues"));
 
     assertBehaviour(
-        new TransactionalBuilder(null).build(),
+        new Operations().spec,
         sample("defaultValues"));
 
     assertBehaviour(
-        new TransactionalBuilder(null).commitOn(IOException.class).build(),
+        new Operations().commitOn(IOException.class).spec,
         sample("customCommitOn"));
 
     assertBehaviour(
-        new TransactionalBuilder(null).retryOn(InvocationTargetException.class, IllegalStateException.class).build(),
+        new Operations().retryOn(InvocationTargetException.class, IllegalStateException.class).spec,
         sample("customRetryOn"));
 
     assertBehaviour(
-        new TransactionalBuilder(null).swallow(RuntimeException.class, MalformedURLException.class).build(),
+        new Operations().swallow(RuntimeException.class, MalformedURLException.class).spec,
         sample("customSwallow"));
 
     assertBehaviour(
-        new TransactionalBuilder(null).commitOn(IllegalStateException.class).retryOn(RuntimeException.class).swallow(IOException.class).build(),
+        new Operations().commitOn(IllegalStateException.class).retryOn(RuntimeException.class).swallow(IOException.class).spec,
+        sample("customValues"));
+
+    assertBehaviour(
+        new Operations().stereotype(SampleAnnotations.Stereotype.class).spec,
         sample("customValues"));
   }
 
   private static void assertBehaviour(final Annotation lhs, final Annotation rhs) {
     assertThat(lhs.equals(null), is(rhs.equals(null)));
-    assertThat(lhs.equals(TransactionalBuilder.DEFAULT_SPEC), is(rhs.equals(TransactionalBuilder.DEFAULT_SPEC)));
+    assertThat(lhs.equals(Operations.DEFAULT_SPEC), is(rhs.equals(Operations.DEFAULT_SPEC)));
     assertThat(lhs.equals(rhs), is(rhs.equals(lhs)));
     assertThat(lhs.hashCode(), is(rhs.hashCode()));
     // cope with random order of properties in the JDK's default annotation toString() implementation

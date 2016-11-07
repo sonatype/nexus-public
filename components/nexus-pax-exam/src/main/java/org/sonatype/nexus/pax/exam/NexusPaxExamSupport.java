@@ -16,7 +16,6 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -90,8 +89,6 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 @ExamReactorStrategy(PerClass.class)
 public abstract class NexusPaxExamSupport
 {
-  public static final String BASEDIR = new File(System.getProperty("basedir", "")).getAbsolutePath();
-
   public static final String NEXUS_PAX_EXAM_TIMEOUT_KEY = "nexus.pax.exam.timeout";
 
   public static final int NEXUS_PAX_EXAM_TIMEOUT_DEFAULT = 300000;
@@ -103,6 +100,8 @@ public abstract class NexusPaxExamSupport
   public static final int NEXUS_TEST_START_LEVEL = 200;
 
   public static final String NEXUS_PROPERTIES_FILE = "etc/nexus-default.properties";
+
+  public static final String KARAF_CONFIG_PROPERTIES_FILE = "etc/karaf/config.properties";
 
   public static final String SYSTEM_PROPERTIES_FILE = "etc/karaf/system.properties";
 
@@ -116,8 +115,8 @@ public abstract class NexusPaxExamSupport
   public final TestDataRule testData = new TestDataRule(resolveBaseFile("src/test/it-resources"));
 
   @Rule
-  public final TestIndexRule testIndex = new TestIndexRule(resolveBaseFile("target/it-reports"),
-      resolveBaseFile("target/it-data"));
+  @Inject
+  public TestIndexRule testIndex;
 
   @Rule
   public final TestCleaner testCleaner = new TestCleaner();
@@ -156,7 +155,7 @@ public abstract class NexusPaxExamSupport
    * Resolves path against the basedir of the surrounding Maven project.
    */
   public static File resolveBaseFile(final String path) {
-    return Paths.get(BASEDIR, path).toFile();
+    return TestBaseDir.resolve(path);
   }
 
   /**
@@ -374,7 +373,7 @@ public abstract class NexusPaxExamSupport
         propagateSystemProperty(NEXUS_PAX_EXAM_TIMEOUT_KEY),
         propagateSystemProperty(TestCleaner.CLEAN_ON_SUCCESS_KEY),
 
-        systemProperty("basedir").value(BASEDIR),
+        systemProperty("basedir").value(TestBaseDir.get()),
 
         // Pax-Exam cuts the leading directory from all archive paths when unpacking,
         // so 'sonatype-work/nexus3' ends up as 'nexus3' under the base.
@@ -416,6 +415,10 @@ public abstract class NexusPaxExamSupport
             replaceConfigurationFile("etc/logback/logback.xml", logbackXml)),
 
         systemProperty("root.level").value(logLevel),
+
+        // disable unused shutdown port, one port less that could clash with reserved ports
+        editConfigurationFilePut(KARAF_CONFIG_PROPERTIES_FILE, //
+            "karaf.shutdown.port", "-1"),
 
         // randomize ports...
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //

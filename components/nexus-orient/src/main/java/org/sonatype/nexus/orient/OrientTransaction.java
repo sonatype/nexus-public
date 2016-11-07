@@ -12,22 +12,18 @@
  */
 package org.sonatype.nexus.orient;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Supplier;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.orient.OrientOperations.transactional;
 
 /**
  * {@link Transaction} backed by an OrientDB connection.
@@ -53,13 +49,6 @@ public class OrientTransaction
   }
 
   /**
-   * @return {@link Transaction} supplier for the given {@link DatabaseInstance}.
-   */
-  public static Supplier<? extends Transaction> txSupplier(final DatabaseInstance db) {
-    return () -> new OrientTransaction(db.acquire());
-  }
-
-  /**
    * @return current OrientDB connection.
    *
    * @throws IllegalArgumentException if no connection exists in the current context
@@ -82,14 +71,13 @@ public class OrientTransaction
    * Executes the operation in the context of an {@link OrientTransaction}.
    *
    * @since 3.1
+   * @deprecated
    */
+  @Deprecated // will soon be replaced
   public static void inTxNoReturn(final Provider<DatabaseInstance> databaseInstance,
-                                  final Consumer<ODatabaseDocumentTx> operation)
+                                  final OrientConsumer<RuntimeException> operation)
   {
-    inTx(databaseInstance, db -> {
-      operation.accept(db);
-      return (Void) null;
-    });
+    transactional(databaseInstance).retryOn(ONeedRetryException.class).run(operation);
   }
 
   /**
@@ -98,13 +86,13 @@ public class OrientTransaction
    * @return the result of the operation
    *
    * @since 3.1
+   * @deprecated
    */
+  @Deprecated // will soon be replaced
   public static <T> T inTx(final Provider<DatabaseInstance> databaseInstance,
-                           final Function<ODatabaseDocumentTx, T> operation)
+                           final OrientFunction<T, RuntimeException> operation)
   {
-    return Operations.transactional(txSupplier(databaseInstance.get()))
-        .retryOn(ONeedRetryException.class)
-        .call(() -> operation.apply(currentDb()));
+    return transactional(databaseInstance).retryOn(ONeedRetryException.class).call(operation);
   }
 
   @Override

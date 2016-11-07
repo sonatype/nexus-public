@@ -50,6 +50,13 @@ public interface LogManager
   Map<String, LoggerLevel> getLoggers();
 
   /**
+   * Return mapping of existing loggers which have been overridden by the user.
+   *
+   * @since 3.2
+   */
+  Map<String, LoggerLevel> getOverriddenLoggers();
+
+  /**
    * @since 2.7
    */
   void resetLoggers();

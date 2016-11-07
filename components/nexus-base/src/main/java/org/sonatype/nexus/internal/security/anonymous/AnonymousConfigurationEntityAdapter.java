@@ -12,10 +12,14 @@
  */
 package org.sonatype.nexus.internal.security.anonymous;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
@@ -79,5 +83,22 @@ public class AnonymousConfigurationEntityAdapter
     document.field(P_ENABLED, entity.isEnabled());
     document.field(P_USER_ID, entity.getUserId());
     document.field(P_REALM_NAME, entity.getRealmName());
+  }
+
+  @Override
+  @Nullable
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind)  {
+    EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    log.debug("Emitted {} event with metadata {}", eventKind, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new AnonymousConfigurationCreatedEvent(metadata);
+      case UPDATE:
+        return new AnonymousConfigurationUpdatedEvent(metadata);
+      case DELETE:
+        return new AnonymousConfigurationDeletedEvent(metadata);
+      default:
+        return null;
+    }
   }
 }

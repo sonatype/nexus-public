@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfigurationChangedEvent;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 
+import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 
@@ -42,7 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @ManagedObject
 public class AnonymousManagerImpl
   extends ComponentSupport
-  implements AnonymousManager
+  implements AnonymousManager, EventAware
 {
   private final EventBus eventBus;
 
@@ -159,5 +161,20 @@ public class AnonymousManagerImpl
         .authenticated(false)
         .sessionCreationEnabled(false)
         .buildSubject();
+  }
+
+  /**
+   * @since 3.2
+   */
+  @Subscribe
+  public void onStoreChanged(AnonymousConfigurationEvent event) {
+    if (!event.isLocal()) {
+      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
+      AnonymousConfiguration model;
+      synchronized (lock) {
+        configuration = model = loadConfiguration();
+      }
+      eventBus.post(new AnonymousConfigurationChangedEvent(model));
+    }
   }
 }

@@ -131,7 +131,6 @@
     <module>assemblies</module>
     <module>components</module>
     <module>plugins</module>
-    <module>thirdparty-bundles</module>
   </modules>
 
   <dependencyManagement>
@@ -1091,6 +1090,26 @@
       </activation>
       <modules>
         <module>private</module>
+      </modules>
+    </profile>
+
+    <!--
+    Includes building of thirdparty bundles when the recipes are present.
+
+    Deselect this profile when you don't want to continually rebuild them,
+    or as a workaround to https://youtrack.jetbrains.com/issue/IDEA-126596
+    (where IDEA adds red markers to code that refers to thirdparty classes
+     because it can't see the shaded/rebundled content.)
+    -->
+    <profile>
+      <id>include-thirdparty-bundles</id>
+      <activation>
+        <file>
+          <exists>thirdparty-bundles/pom.xml</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>thirdparty-bundles</module>
       </modules>
     </profile>
 

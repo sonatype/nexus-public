@@ -65,8 +65,7 @@ import org.quartz.spi.TriggerFiredResult;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.orient.OrientTransaction.currentDb;
-import static org.sonatype.nexus.orient.OrientTransaction.txSupplier;
+import static org.sonatype.nexus.orient.OrientOperations.transactional;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ACQUIRED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.BLOCKED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.COMPLETE;
@@ -74,7 +73,6 @@ import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ERRO
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUSED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUSED_BLOCKED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.WAITING;
-import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * Orient {@link JobStore}.
@@ -172,10 +170,10 @@ public class JobStoreImpl
   private <T> T execute(final Operation<T> operation) throws JobPersistenceException {
     try {
       synchronized (monitor) {
-        return transactional(txSupplier(databaseInstance.get()))
+        return transactional(databaseInstance)
             .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
             .throwing(JobPersistenceException.class)
-            .call(() -> operation.execute(currentDb()));
+            .call(operation::execute);
       }
     }
     catch (Exception e) {

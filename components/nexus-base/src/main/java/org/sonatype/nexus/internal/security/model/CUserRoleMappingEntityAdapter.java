@@ -22,6 +22,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 
 import com.google.common.collect.Sets;
@@ -30,7 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
@@ -58,6 +59,11 @@ public class CUserRoleMappingEntityAdapter
       .property(P_USER_ID)
       .property(P_SOURCE)
       .build();
+
+  private final ReadEntityByPropertyAction<CUserRoleMapping> read = new ReadEntityByPropertyAction<>(this, P_USER_ID,
+      P_SOURCE);
+
+  private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_USER_ID, P_SOURCE);
 
   public CUserRoleMappingEntityAdapter() {
     super(DB_CLASS);
@@ -104,12 +110,7 @@ public class CUserRoleMappingEntityAdapter
 
   @Nullable
   public CUserRoleMapping read(final ODatabaseDocumentTx db, final String userId, final String source) {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(READ_QUERY);
-    List<ODocument> results = db.command(query).execute(userId, source);
-    if (results.isEmpty()) {
-      return null;
-    }
-    return readEntity(results.get(0));
+    return read.execute(db, userId, source);
   }
 
   @Nullable
@@ -123,12 +124,7 @@ public class CUserRoleMappingEntityAdapter
     return results.get(0);
   }
 
-  private static final String DELETE_COMMAND =
-      String.format("DELETE FROM %s WHERE %s = ? AND %s = ?", DB_CLASS, P_USER_ID, P_SOURCE);
-
   public boolean delete(final ODatabaseDocumentTx db, final String userId, final String source) {
-    OCommandSQL command = new OCommandSQL(DELETE_COMMAND);
-    int records = db.command(command).execute(userId, source);
-    return records == 1;
+    return delete.execute(db, userId, source);
   }
 }

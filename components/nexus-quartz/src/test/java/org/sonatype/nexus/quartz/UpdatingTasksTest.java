@@ -23,8 +23,6 @@ import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.jayway.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThan;
@@ -96,7 +94,7 @@ public class UpdatingTasksTest
     assertThat(taskInfo.getConfiguration().getTypeId(), equalTo(taskConfiguration.getTypeId()));
     assertThat(taskInfo.getConfiguration().getCreated(), notNullValue());
     assertThat(taskInfo.getConfiguration().getUpdated(), notNullValue());
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(1));
+    assertRunningTaskCount(1);
 
     final CurrentState currentState = taskInfo.getCurrentState();
     assertThat(currentState, notNullValue());
@@ -127,16 +125,9 @@ public class UpdatingTasksTest
     final String result = (String) future.get();
     assertThat(result, equalTo(RESULT));
 
-    // taskInfo for DONE task is terminal
-    assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
-
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertTaskState(taskInfo, State.WAITING);
+    assertRunningTaskCount(0);
   }
 
   @Test
@@ -155,6 +146,7 @@ public class UpdatingTasksTest
     SleeperTask.meWait.countDown();
     Thread.yield();
     assertThat(future.get(), notNullValue());
+    assertTaskState(taskInfo, State.WAITING);
 
     SleeperTask.reset();
 

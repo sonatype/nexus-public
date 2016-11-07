@@ -23,6 +23,7 @@ import javax.net.ssl.SSLContext;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationChangedEvent;
@@ -31,6 +32,7 @@ import org.sonatype.nexus.ssl.TrustStore;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.eventbus.Subscribe;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailConstants;
 import org.apache.commons.mail.EmailException;
@@ -47,7 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class EmailManagerImpl
     extends ComponentSupport
-    implements EmailManager
+    implements EmailManager, EventAware
 {
   private final EventBus eventBus;
 
@@ -206,4 +208,17 @@ public class EmailManagerImpl
     mail = apply(configuration, mail);
     mail.send();
   }
+
+  @Subscribe
+  public void onStoreChanged(final EmailConfigurationEvent event) {
+    if (!event.isLocal()) {
+      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
+      EmailConfiguration model;
+      synchronized (lock) {
+        configuration = model = loadConfiguration();
+      }
+      eventBus.post(new EmailConfigurationChangedEvent(model));
+    }
+  }
+
 }

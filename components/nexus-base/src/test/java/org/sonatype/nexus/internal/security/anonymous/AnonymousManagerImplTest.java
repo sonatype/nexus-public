@@ -26,6 +26,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -53,6 +56,9 @@ public class AnonymousManagerImplTest
 
   @Mock
   private AnonymousConfiguration defaultConfigCopy;
+
+  @Mock
+  private AnonymousConfigurationEvent configurationEvent;
 
   private AnonymousManagerImpl manager;
 
@@ -84,5 +90,27 @@ public class AnonymousManagerImplTest
         .forClass(AnonymousConfigurationChangedEvent.class);
     verify(eventBus).post(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getConfiguration(), is(storeConfigCopy));
+  }
+
+  @Test
+  public void testHandleConfigurationEvent_FromLocalNode() {
+    when(configurationEvent.isLocal()).thenReturn(true);
+    when(store.load()).thenReturn(defaultConfig, storeConfig);
+    assertThat(manager.getConfiguration(), is(defaultConfigCopy));
+    manager.onStoreChanged(configurationEvent);
+    assertThat(manager.getConfiguration(), is(defaultConfigCopy));
+    verify(store).load();
+    verify(eventBus, never()).post(any(AnonymousConfigurationChangedEvent.class));
+  }
+
+  @Test
+  public void testHandleConfigurationEvent_FromRemoteNode() {
+    when(configurationEvent.isLocal()).thenReturn(false);
+    when(store.load()).thenReturn(defaultConfig, storeConfig);
+    assertThat(manager.getConfiguration(), is(defaultConfigCopy));
+    manager.onStoreChanged(configurationEvent);
+    assertThat(manager.getConfiguration(), is(storeConfigCopy));
+    verify(store, times(2)).load();
+    verify(eventBus).post(any(AnonymousConfigurationChangedEvent.class));
   }
 }

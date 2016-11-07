@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.Operations;
-import org.sonatype.nexus.transaction.TransactionalBuilder;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -60,7 +59,7 @@ public class AttributesFacetImpl
     });
   }
 
-  private TransactionalBuilder<RuntimeException> inTransaction() {
+  private Operations<RuntimeException, ?> inTransaction() {
     return Operations
         .transactional(facet(StorageFacet.class).txSupplier())
         .retryOn(ONeedRetryException.class);

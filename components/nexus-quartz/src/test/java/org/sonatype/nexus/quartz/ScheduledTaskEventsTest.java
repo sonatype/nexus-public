@@ -77,13 +77,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -113,13 +108,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -146,13 +136,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
@@ -179,13 +164,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
@@ -215,13 +195,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -240,13 +215,8 @@ public class ScheduledTaskEventsTest
     taskInfo.getCurrentState().getFuture().cancel(false);
     // do not use latches, as this task will not even start!
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.DONE));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.CANCELED));
 
@@ -297,13 +267,8 @@ public class ScheduledTaskEventsTest
     SleeperTask.meWait.countDown();
     Thread.yield();
 
-    // the fact that future.get returned still does not mean that the pool is done
-    // pool maintenance might not be done yet
-    // so let's sleep for some
-    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount() == 0);
-
     // done
-    assertThat(taskScheduler().getRunningTaskCount(), equalTo(0));
+    assertRunningTaskCount(0);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.CANCELED));
 

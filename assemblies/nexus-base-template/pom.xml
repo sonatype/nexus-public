@@ -226,6 +226,10 @@
                   <fileset dir="${project.basedir}/src/main/resources/sonatype-work"/>
                 </copy>
 
+                <!-- workaround maven-assembly-plugin bug where lineEnding configuration for fileSets is ineffective -->
+                <fixcrlf srcdir="${project.build.directory}/assembly/bin" includes="*" excludes="*.bat" eol="unix"/>
+                <fixcrlf srcdir="${project.build.directory}/assembly/bin" includes="*.bat" eol="dos"/>
+
               </target>
             </configuration>
           </execution>
