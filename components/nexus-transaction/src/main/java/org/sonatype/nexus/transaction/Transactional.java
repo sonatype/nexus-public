@@ -47,4 +47,11 @@ public @interface Transactional
    * updates where it's safe to proceed even if the commit threw an exception.
    */
   Class<? extends Exception>[] swallow() default {};
+
+  /**
+   * Helper to apply this transactional behaviour to lambdas.
+   *
+   * @since 3.2
+   */
+  Operations<RuntimeException, ?> operation = new Operations<>();
 }

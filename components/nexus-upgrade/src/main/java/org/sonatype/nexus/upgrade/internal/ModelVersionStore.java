@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Store for model versions.
@@ -112,7 +112,7 @@ public class ModelVersionStore
     save(modelVersions, upgradeManager.getClusteredModels(), clusteredModelVersions::put);
     try {
       localModelVersions.store();
-      inTxNoReturn(databaseInstance, db -> entityAdapter.set(db, clusteredModelVersions));
+      inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, clusteredModelVersions));
     }
     catch (IOException e) {
       throw new RuntimeException("Could not save upgraded model versions: " + modelVersions, e);

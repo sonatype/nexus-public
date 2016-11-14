@@ -10,20 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
-
-import javax.inject.Provider;
+package org.sonatype.nexus.orient.transaction;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.orient.OrientOperations.transactional;
 
 /**
  * {@link Transaction} backed by an OrientDB connection.
@@ -40,7 +36,7 @@ public class OrientTransaction
 
   private int retries = 0;
 
-  public OrientTransaction(final ODatabaseDocumentTx db) {
+  OrientTransaction(final ODatabaseDocumentTx db) {
     this.db = checkNotNull(db);
   }
 
@@ -65,34 +61,6 @@ public class OrientTransaction
     catch (final Exception e) {
       throw new IllegalArgumentException("Transaction " + tx + " has no public 'getDb' method", e);
     }
-  }
-
-  /**
-   * Executes the operation in the context of an {@link OrientTransaction}.
-   *
-   * @since 3.1
-   * @deprecated
-   */
-  @Deprecated // will soon be replaced
-  public static void inTxNoReturn(final Provider<DatabaseInstance> databaseInstance,
-                                  final OrientConsumer<RuntimeException> operation)
-  {
-    transactional(databaseInstance).retryOn(ONeedRetryException.class).run(operation);
-  }
-
-  /**
-   * Executes the operation in the context of an {@link OrientTransaction} and returns a result.
-   *
-   * @return the result of the operation
-   *
-   * @since 3.1
-   * @deprecated
-   */
-  @Deprecated // will soon be replaced
-  public static <T> T inTx(final Provider<DatabaseInstance> databaseInstance,
-                           final OrientFunction<T, RuntimeException> operation)
-  {
-    return transactional(databaseInstance).retryOn(ONeedRetryException.class).call(operation);
   }
 
   @Override

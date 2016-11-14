@@ -10,11 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.log;
+package org.sonatype.nexus.internal.log;
 
 import java.util.Map;
 
 import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.log.LoggerLevel;
 
 /**
  * Manages user-configured logger overrides.

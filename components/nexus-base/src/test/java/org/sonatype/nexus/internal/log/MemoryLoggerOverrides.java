@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LoggerLevel;
-import org.sonatype.nexus.common.log.LoggerOverrides;
 
 /**
  * In-memory {@link LoggerOverrides}.

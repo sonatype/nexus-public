@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -163,7 +164,7 @@ public class RemoveSnapshotsFacetImpl
    * Examine all snapshots in the given repo, delete those that match our configuration criteria and flag which GAVs
    * require a metadata update.
    */
-  @Transactional
+  @TransactionalDeleteBlob
   protected Collection<GAV> processRepository(final Repository repository, final RemoveSnapshotsConfig config) {
     StorageTx tx = UnitOfWork.currentTx();
 

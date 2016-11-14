@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Implementation of {@link KeyStoreStorageManager} for the SSL trust store. Uses OrientDB as backing storage to
@@ -95,16 +95,12 @@ public class KeyStoreStorageManagerImpl
   @Nullable
   public KeyStoreData load(final String keyStoreName) {
     checkNotNull(keyStoreName);
-    return inTx(databaseInstance, db -> {
-      return entityAdapter.load(db, keyStoreName);
-    });
+    return inTx(databaseInstance).call(db -> entityAdapter.load(db, keyStoreName));
   }
 
   @Guarded(by = STARTED)
   public void save(final KeyStoreData entity) {
     checkNotNull(entity);
-    inTxNoReturn(databaseInstance, db -> {
-      entityAdapter.save(db, entity);
-    });
+    inTxRetry(databaseInstance).run(db -> entityAdapter.save(db, entity));
   }
 }

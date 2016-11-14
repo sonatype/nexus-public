@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
@@ -81,7 +81,7 @@ public class PurgeUnusedFacetImpl
   /**
    * Delete all unused components.
    */
-  @Transactional
+  @TransactionalDeleteBlob
   protected void deleteUnusedComponents(final Date olderThan) {
     StorageTx tx = UnitOfWork.currentTx();
 
@@ -94,7 +94,7 @@ public class PurgeUnusedFacetImpl
   /**
    * Delete all unused assets.
    */
-  @Transactional
+  @TransactionalDeleteBlob
   protected void deleteUnusedAssets(final Date olderThan) {
     StorageTx tx = UnitOfWork.currentTx();
 

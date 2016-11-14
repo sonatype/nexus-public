@@ -35,14 +35,15 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -70,7 +71,7 @@ public class RawContentFacetImpl
 
   @Nullable
   @Override
-  @Transactional(retryOn = IllegalStateException.class, swallow = ONeedRetryException.class)
+  @TransactionalTouchBlob
   public Content get(final String path) {
     StorageTx tx = UnitOfWork.currentTx();
 
@@ -94,7 +95,7 @@ public class RawContentFacetImpl
     }
   }
 
-  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  @TransactionalStoreBlob
   protected Content doPutContent(final String path, final TempBlob tempBlob, final Payload payload)
       throws IOException
   {
@@ -121,7 +122,7 @@ public class RawContentFacetImpl
     return toContent(asset, assetBlob.getBlob());
   }
 
-  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  @TransactionalStoreMetadata
   public Asset getOrCreateAsset(final Repository repository, final String componentName, final String componentGroup,
                                 final String assetName) {
     final StorageTx tx = UnitOfWork.currentTx();
@@ -151,7 +152,7 @@ public class RawContentFacetImpl
   }
 
   @Override
-  @Transactional
+  @TransactionalDeleteBlob
   public boolean delete(final String path) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
 
@@ -165,7 +166,7 @@ public class RawContentFacetImpl
   }
 
   @Override
-  @Transactional(retryOn = ONeedRetryException.class)
+  @TransactionalTouchMetadata
   public void setCacheInfo(final String path, final Content content, final CacheInfo cacheInfo) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());

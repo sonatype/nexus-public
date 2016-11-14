@@ -27,14 +27,14 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Default {@link SelectorConfigurationStore} implementation.
@@ -70,7 +70,7 @@ public class SelectorConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<SelectorConfiguration> browse() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
+    return inTx(databaseInstance).call(db -> ImmutableList.copyOf(entityAdapter.browse(db)));
   }
 
   @Override
@@ -78,7 +78,7 @@ public class SelectorConfigurationStoreImpl
   public SelectorConfiguration read(final EntityId entityId) {
     checkNotNull(entityId);
 
-    return inTx(databaseInstance, db -> entityAdapter.read(db, entityId));
+    return inTx(databaseInstance).call(db -> entityAdapter.read(db, entityId));
   }
 
   @Override
@@ -86,7 +86,7 @@ public class SelectorConfigurationStoreImpl
   public void create(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 
-    inTx(databaseInstance, db -> entityAdapter.addEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, configuration));
   }
 
   @Override
@@ -94,7 +94,7 @@ public class SelectorConfigurationStoreImpl
   public void update(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 
-    inTx(databaseInstance, db -> entityAdapter.editEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, configuration));
   }
 
   @Override
@@ -102,6 +102,6 @@ public class SelectorConfigurationStoreImpl
   public void delete(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 
-    inTxNoReturn(databaseInstance, db -> entityAdapter.deleteEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
   }
 }

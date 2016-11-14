@@ -29,7 +29,8 @@ import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Orient {@link CapabilityStorage} implementation.
@@ -67,22 +68,22 @@ public class OrientCapabilityStorage
 
   @Override
   public CapabilityIdentity add(final CapabilityStorageItem item) {
-    inTx(databaseInstance, db -> entityAdapter.addEntity(db, item));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, item));
     return identity(item);
   }
 
   @Override
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
-    return inTx(databaseInstance, db -> entityAdapter.edit(db, id.toString(), item));
+    return inTxRetry(databaseInstance).call(db -> entityAdapter.edit(db, id.toString(), item));
   }
 
   @Override
   public boolean remove(final CapabilityIdentity id) {
-    return inTx(databaseInstance, db -> entityAdapter.delete(db, id.toString()));
+    return inTxRetry(databaseInstance).call(db -> entityAdapter.delete(db, id.toString()));
   }
 
   @Override
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
-    return inTx(databaseInstance, db -> Maps.uniqueIndex(entityAdapter.browse(db), this::identity));
+    return inTx(databaseInstance).call(db -> Maps.uniqueIndex(entityAdapter.browse(db), this::identity));
   }
 }

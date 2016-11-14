@@ -22,10 +22,9 @@ import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.Operations;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
 
 /**
  * Persists repository attributes in the repository's corresponding {@link Bucket}.
@@ -39,7 +38,7 @@ public class AttributesFacetImpl
 {
   @Override
   public ImmutableNestedAttributesMap getAttributes() {
-    return inTransaction().call(() -> {
+    return Transactional.operation.withDb(facet(StorageFacet.class).txSupplier()).call(() -> {
       final StorageTx tx = UnitOfWork.currentTx();
       final NestedAttributesMap attributes = tx.findBucket(getRepository()).attributes();
       return new ImmutableNestedAttributesMap(null, attributes.getKey(), attributes.backing());
@@ -48,7 +47,7 @@ public class AttributesFacetImpl
 
   @Override
   public void modifyAttributes(final AttributeChange change) {
-    inTransaction().call(() -> {
+    TransactionalStoreMetadata.operation.withDb(facet(StorageFacet.class).txSupplier()).call(() -> {
       final StorageTx tx = UnitOfWork.currentTx();
 
       final Bucket bucket = tx.findBucket(getRepository());
@@ -57,11 +56,5 @@ public class AttributesFacetImpl
 
       return null;
     });
-  }
-
-  private Operations<RuntimeException, ?> inTransaction() {
-    return Operations
-        .transactional(facet(StorageFacet.class).txSupplier())
-        .retryOn(ONeedRetryException.class);
   }
 }

@@ -48,6 +48,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Predicate;
@@ -82,7 +83,6 @@ import static org.apache.maven.index.reader.Utils.rootGroups;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
-import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * Helpers for MI index publishing.
@@ -209,7 +209,7 @@ public final class MavenIndexPublisher
    */
   public static void publishHostedIndex(final Repository repository) throws IOException {
     checkNotNull(repository);
-    transactional().throwing(IOException.class).call(
+    Transactional.operation.throwing(IOException.class).call(
         () -> {
           final StorageTx tx = UnitOfWork.currentTx();
           try (Maven2WritableResourceHandler resourceHandler = new Maven2WritableResourceHandler(repository)) {

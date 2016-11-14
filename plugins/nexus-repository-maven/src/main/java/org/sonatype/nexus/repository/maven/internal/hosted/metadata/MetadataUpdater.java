@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerg
 import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerger.Envelope;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Snapshot;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
@@ -42,7 +43,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashCode;
-import com.orientechnologies.common.concur.ONeedRetryException;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
 import org.apache.maven.artifact.repository.metadata.Versioning;
@@ -50,7 +50,6 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * Maven 2 repository metadata updater.
@@ -104,7 +103,7 @@ public class MetadataUpdater
   @VisibleForTesting
   void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
     try {
-      transactional().retryOn(ONeedRetryException.class).throwing(IOException.class).call(() -> {
+      TransactionalStoreBlob.operation.throwing(IOException.class).call(() -> {
         checkNotNull(mavenPath);
         checkNotNull(metadata);
 

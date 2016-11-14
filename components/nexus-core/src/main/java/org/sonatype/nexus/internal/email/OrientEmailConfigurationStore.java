@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Orient {@link EmailConfigurationStore}.
@@ -65,11 +65,11 @@ public class OrientEmailConfigurationStore
   @Override
   @Nullable
   public EmailConfiguration load() {
-    return inTx(databaseInstance, db -> entityAdapter.get(db));
+    return inTx(databaseInstance).call(entityAdapter::get);
   }
 
   @Override
   public void save(final EmailConfiguration configuration) {
-    inTxNoReturn(databaseInstance, db -> entityAdapter.set(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, configuration));
   }
 }

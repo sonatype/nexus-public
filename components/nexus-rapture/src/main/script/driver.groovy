@@ -11,9 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-String mode = project.properties['mode']
+/**
+ * gmavenplus-plugin doesn't set System properties on project.properties, but they are available to the AntBuilder
+ */
+String systemProperty(String key) {
+  ant.properties.project.properties[key]
+}
+
+String mode = systemProperty('mode')
 assert mode: 'Missing property: mode'
-println "Mode: $mode"
+log.info "Mode: $mode"
 
 // Sanity check sencha cmd
 def senchaExe = 'sencha'
@@ -92,14 +99,14 @@ def do_clobber = {
 //
 
 def do_build = {
-  def flavors = project.properties['flavors']
+  def flavors =  systemProperty('flavors')
   if (flavors) {
     flavors = flavors.split(',')
   }
   else {
     flavors = ['debug', 'prod']
   }
-  println "Flavors: $flavors"
+  log.info "Flavors: $flavors"
 
   do_ext()
 

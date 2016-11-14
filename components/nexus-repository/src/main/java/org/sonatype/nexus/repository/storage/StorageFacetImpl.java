@@ -36,10 +36,12 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -49,6 +51,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
@@ -81,6 +84,8 @@ public class StorageFacetImpl
   private final ContentValidatorSelector contentValidatorSelector;
 
   private final MimeRulesSourceSelector mimeRulesSourceSelector;
+
+  private final Supplier<StorageTx> txSupplier;
 
   @VisibleForTesting
   static final String CONFIG_KEY = "storage";
@@ -134,6 +139,8 @@ public class StorageFacetImpl
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.contentValidatorSelector = checkNotNull(contentValidatorSelector);
     this.mimeRulesSourceSelector = checkNotNull(mimeRulesSourceSelector);
+
+    this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
 
   @Override
@@ -167,7 +174,7 @@ public class StorageFacetImpl
 
   private void initBucket() {
     // get or create the bucket for the repository and set bucketId for fast lookup later
-    try (ODatabaseDocumentTx db = databaseInstanceProvider.get().acquire()) {
+    inTxRetry(databaseInstanceProvider).run(db -> {
       String repositoryName = getRepository().getName();
       bucket = bucketEntityAdapter.read(db, repositoryName);
       if (bucket == null) {
@@ -175,9 +182,8 @@ public class StorageFacetImpl
         bucket.setRepositoryName(repositoryName);
         bucket.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
         bucketEntityAdapter.addEntity(db, bucket);
-        db.commit();
       }
-    }
+    });
   }
 
   @Override
@@ -188,11 +194,10 @@ public class StorageFacetImpl
   @Override
   protected void doDelete() throws Exception {
     // TODO: Make this a soft delete and cleanup later so it doesn't block for large repos.
-    try (StorageTx tx = openStorageTx(databaseInstanceProvider.get().acquire())) {
-      tx.begin();
+    TransactionalDeleteBlob.operation.withDb(txSupplier).run(() -> {
+      StorageTx tx = UnitOfWork.currentTx();
       tx.deleteBucket(tx.findBucket(getRepository()));
-      tx.commit();
-    }
+    });
   }
 
   @Override
@@ -205,12 +210,7 @@ public class StorageFacetImpl
   @Override
   @Guarded(by = STARTED)
   public Supplier<StorageTx> txSupplier() {
-    return new Supplier<StorageTx>()
-    {
-      public StorageTx get() {
-        return openStorageTx(databaseInstanceProvider.get().acquire());
-      }
-    };
+    return txSupplier;
   }
 
   @Override

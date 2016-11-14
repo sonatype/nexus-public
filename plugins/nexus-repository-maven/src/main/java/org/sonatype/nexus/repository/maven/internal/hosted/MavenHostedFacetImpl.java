@@ -39,9 +39,10 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebu
 import org.sonatype.nexus.repository.storage.ComponentEvent;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
@@ -54,7 +55,6 @@ import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
-import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * A {@link MavenHostedFacet} implementation.
@@ -123,7 +123,7 @@ public class MavenHostedFacetImpl
     metadataRebuilder.deleteAndRebuild(getRepository(), groupId, artifactId, baseVersion);
   }
 
-  @Transactional
+  @TransactionalStoreBlob
   protected int doRebuildArchetypeCatalog() throws IOException {
     final Path path = Files.createTempFile("hosted-archetype-catalog", "xml");
     int count = 0;
@@ -191,7 +191,7 @@ public class MavenHostedFacetImpl
     if (deleteCatalog) {
       UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
       try {
-        transactional().throwing(IOException.class).call(() ->
+        TransactionalDeleteBlob.operation.throwing(IOException.class).call(() ->
             MavenFacetUtils.deleteWithHashes(mavenFacet, archetypeCatalogMavenPath)
         );
       }

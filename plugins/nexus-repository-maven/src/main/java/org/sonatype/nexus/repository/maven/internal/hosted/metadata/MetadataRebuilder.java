@@ -41,8 +41,10 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
@@ -51,7 +53,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,7 +65,6 @@ import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GRO
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
-import static org.sonatype.nexus.transaction.Operations.transactional;
 
 /**
  * Maven 2 repository metadata re-builder.
@@ -237,7 +237,7 @@ public class MetadataRebuilder
      * Finds the {@link Bucket}\s {@link ORID} for passed in {@link Repository}.
      */
     private ORID findBucketORID(final Repository repository) {
-      return transactional().call(() -> {
+      return Transactional.operation.call(() -> {
         final StorageTx tx = UnitOfWork.currentTx();
         return AttachedEntityHelper.id(tx.findBucket(repository));
       });
@@ -247,7 +247,7 @@ public class MetadataRebuilder
      * Returns {@link Iterable} with Orient documents for GAVs.
      */
     private Iterable<ODocument> browseGAVs() {
-      return transactional().call(() -> {
+      return Transactional.operation.call(() -> {
         final StorageTx tx = UnitOfWork.currentTx();
         return tx.browse(sql, sqlParams);
       });
@@ -305,7 +305,7 @@ public class MetadataRebuilder
       for (final String baseVersion : baseVersions) {
         metadataBuilder.onEnterBaseVersion(baseVersion);
 
-        transactional().retryOn(ONeedRetryException.class).call(() -> {
+        TransactionalStoreBlob.operation.call(() -> {
           final Iterable<Component> components = tx.findComponents(
               "group = :groupId and name = :artifactId and attributes.maven2." + Attributes.P_BASE_VERSION +
                   " = :baseVersion",

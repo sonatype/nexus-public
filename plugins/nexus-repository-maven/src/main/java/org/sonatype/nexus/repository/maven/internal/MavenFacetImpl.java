@@ -44,18 +44,18 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -165,7 +165,7 @@ public class MavenFacetImpl
 
   @Nullable
   @Override
-  @Transactional(retryOn = IllegalStateException.class, swallow = ONeedRetryException.class)
+  @TransactionalTouchBlob
   public Content get(final MavenPath path) throws IOException {
     log.debug("GET {} : {}", getRepository().getName(), path.getPath());
 
@@ -225,7 +225,7 @@ public class MavenFacetImpl
     return doPut(path, blob, contentType, contentAttributes);
   }
 
-  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  @TransactionalStoreBlob
   protected Content doPut(final MavenPath path,
       final Payload payload,
       final TempBlob tempBlob)
@@ -248,7 +248,7 @@ public class MavenFacetImpl
     return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
   }
 
-  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  @TransactionalStoreBlob
   protected Content doPut(final MavenPath path,
                           final Path sourceFile,
                           final String contentType,
@@ -271,7 +271,7 @@ public class MavenFacetImpl
     return doPutAssetBlob(path, contentAttributes, tx, assetBlob);
   }
 
-  @Transactional(retryOn = {ONeedRetryException.class, ORecordDuplicatedException.class})
+  @TransactionalStoreBlob
   protected Content doPut(final MavenPath path,
                           final TempBlob blob,
                           final String contentType,
@@ -411,7 +411,7 @@ public class MavenFacetImpl
   }
 
   @Override
-  @Transactional
+  @TransactionalDeleteBlob
   public boolean delete(final MavenPath... paths) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
 

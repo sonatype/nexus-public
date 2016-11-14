@@ -36,7 +36,6 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -44,6 +43,8 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * OrientDB impl of {@link ApiKeyStore}.
@@ -108,73 +109,67 @@ public class ApiKeyStoreImpl
     entity.setDomain(domain);
     entity.setApiKey(apiKey);
     entity.setPrincipals(principals);
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.addEntity(db, entity);
-    }
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, entity));
   }
 
   @Nullable
   @Override
   @Guarded(by = STARTED)
   public char[] getApiKey(final String domain, final PrincipalCollection principals) {
-    try (ODatabaseDocumentTx db = openDb()) {
+    return inTx(databaseInstance).call(db -> {
       for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
         if (entity.getDomain().equals(domain)) {
           return entity.getApiKey();
         }
       }
-    }
-    return null;
+      return null;
+    });
   }
 
   @Nullable
   @Override
   @Guarded(by = STARTED)
   public PrincipalCollection getPrincipals(final String domain, final char[] apiKey) {
-    try (ODatabaseDocumentTx db = openDb()) {
+    return inTx(databaseInstance).call(db -> {
       final ApiKey entity = entityAdapter.findByApiKey(db, domain, checkNotNull(apiKey));
       return entity == null ? null : entity.getPrincipals();
-    }
+    });
   }
 
   @Override
   @Guarded(by = STARTED)
   public void deleteApiKey(final String domain, final PrincipalCollection principals) {
-    try (ODatabaseDocumentTx db = openDb()) {
+    inTxRetry(databaseInstance).run(db -> {
       for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
         if (entity.getDomain().equals(domain)) {
           entityAdapter.deleteEntity(db, entity);
         }
       }
-    }
+    });
   }
 
   @Override
   @Guarded(by = STARTED)
   public void deleteApiKeys(final PrincipalCollection principals) {
-    try (ODatabaseDocumentTx db = openDb()) {
+    inTxRetry(databaseInstance).run(db -> {
       for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
         entityAdapter.deleteEntity(db, entity);
       }
-    }
+    });
   }
 
   @Override
   @Guarded(by = STARTED)
   public void deleteApiKeys() {
-    try (ODatabaseDocumentTx db = openDb()) {
-      entityAdapter.deleteAll(db);
-    }
+    inTxRetry(databaseInstance).run(entityAdapter::deleteAll);
   }
 
   @Override
   @Guarded(by = STARTED)
   public void purgeApiKeys() {
-    try (ODatabaseDocumentTx db = openDb()) {
+    inTxRetry(databaseInstance).run(db -> {
       List<ApiKey> delete = new ArrayList<>();
       for (ApiKey entity : entityAdapter.browse(db)) {
-        // avoid leaking current DB when calling out
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
         try {
           principalsHelper.getUserStatus(entity.getPrincipals());
         }
@@ -182,15 +177,11 @@ public class ApiKeyStoreImpl
           log.debug("Stale user found", e);
           delete.add(entity);
         }
-        finally {
-          // restore DB in case getUserStatus changed it
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
-        }
       }
       for (ApiKey entity : delete) {
         entityAdapter.deleteEntity(db, entity);
       }
-    }
+    });
   }
 
   @Subscribe
@@ -203,10 +194,6 @@ public class ApiKeyStoreImpl
     else {
       purgeApiKeys();
     }
-  }
-
-  private ODatabaseDocumentTx openDb() {
-    return databaseInstance.get().acquire();
   }
 
   private Iterable<ApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db,

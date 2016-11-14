@@ -29,7 +29,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.FileReplacer;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LoggerLevel;
-import org.sonatype.nexus.common.log.LoggerOverrides;
 
 import ch.qos.logback.classic.Logger;
 import com.google.common.annotations.VisibleForTesting;

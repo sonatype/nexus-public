@@ -17,10 +17,8 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -51,7 +49,7 @@ public class DefaultComponentMaintenanceImpl
     }
   }
 
-  @Transactional(retryOn = ONeedRetryException.class)
+  @TransactionalDeleteBlob
   protected void deleteComponentTx(final EntityId componentId) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
@@ -78,7 +76,7 @@ public class DefaultComponentMaintenanceImpl
     }
   }
 
-  @Transactional(retryOn = ONeedRetryException.class)
+  @TransactionalDeleteBlob
   protected void deleteAssetTx(final EntityId assetId) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));

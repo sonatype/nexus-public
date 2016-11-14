@@ -57,7 +57,7 @@ public class OperationsTest
   @Test
   public void testDefaultSpec() throws Exception {
 
-    Operations.transactional().call(() -> methods.nonTransactional());
+    Transactional.operation.call(() -> methods.nonTransactional());
 
     InOrder order = inOrder(tx);
     order.verify(tx).begin();
@@ -71,7 +71,7 @@ public class OperationsTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
-    Operations.transactional()
+    Transactional.operation
         .retryOn(IOException.class)
         .throwing(IOException.class)
         .call(() -> methods.retryOnCheckedException());
@@ -98,7 +98,7 @@ public class OperationsTest
 
     methods.setCountdownToSuccess(100);
     try {
-      Operations.transactional()
+      Transactional.operation
           .retryOn(IOException.class)
           .throwing(IOException.class)
           .call(() -> methods.retryOnCheckedException());
@@ -121,7 +121,7 @@ public class OperationsTest
     when(tx.allowRetry(any(Exception.class))).thenReturn(true);
 
     methods.setCountdownToSuccess(3);
-    Operations.transactional()
+    Transactional.operation
         .stereotype(RetryOnIOException.class)
         .throwing(IOException.class)
         .call(() -> methods.retryOnCheckedException());
@@ -150,8 +150,8 @@ public class OperationsTest
     try {
       UnitOfWork.beginBatch(() -> Mockito.mock(Transaction.class));
       try {
-        Operations.transactional().run(() -> txHolder[0] = UnitOfWork.currentTx());
-        Operations.transactional().run(() -> txHolder[1] = UnitOfWork.currentTx());
+        Transactional.operation.run(() -> txHolder[0] = UnitOfWork.currentTx());
+        Transactional.operation.run(() -> txHolder[1] = UnitOfWork.currentTx());
 
         // batched: transactions should be same
         assertThat(txHolder[0], is(txHolder[1]));
@@ -160,8 +160,8 @@ public class OperationsTest
         UnitOfWork.end(); // ends inner-batch-work
       }
 
-      Operations.transactional().run(() -> txHolder[0] = UnitOfWork.currentTx());
-      Operations.transactional().run(() -> txHolder[1] = UnitOfWork.currentTx());
+      Transactional.operation.run(() -> txHolder[0] = UnitOfWork.currentTx());
+      Transactional.operation.run(() -> txHolder[1] = UnitOfWork.currentTx());
 
       // non-batched: transactions should differ
       assertThat(txHolder[0], is(not(txHolder[1])));

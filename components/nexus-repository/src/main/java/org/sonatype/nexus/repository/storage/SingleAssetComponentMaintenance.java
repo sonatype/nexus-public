@@ -15,10 +15,8 @@ package org.sonatype.nexus.repository.storage;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
 
 /**
  * A component maintenance facet that assumes that Components have the same lifecycle as their
@@ -33,7 +31,7 @@ public class SingleAssetComponentMaintenance
   /**
    * Deletes both the asset and its component.
    */
-  @Transactional(retryOn = ONeedRetryException.class)
+  @TransactionalDeleteBlob
   protected void deleteAssetTx(final EntityId assetId) {
     StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));

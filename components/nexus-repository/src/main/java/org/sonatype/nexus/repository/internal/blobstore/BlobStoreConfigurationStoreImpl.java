@@ -25,13 +25,13 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Default {@link BlobStoreConfigurationStore} implementation.
@@ -66,7 +66,7 @@ public class BlobStoreConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<BlobStoreConfiguration> list() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
+    return inTx(databaseInstance).call(db -> ImmutableList.copyOf(entityAdapter.browse(db)));
   }
 
   @Override
@@ -74,7 +74,7 @@ public class BlobStoreConfigurationStoreImpl
   public void create(final BlobStoreConfiguration configuration) {
     checkNotNull(configuration);
 
-    inTx(databaseInstance, db -> entityAdapter.addEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, configuration));
   }
 
   @Override
@@ -82,6 +82,6 @@ public class BlobStoreConfigurationStoreImpl
   public void delete(final BlobStoreConfiguration configuration) {
     checkNotNull(configuration);
 
-    inTxNoReturn(databaseInstance, db -> entityAdapter.deleteEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
   }
 }

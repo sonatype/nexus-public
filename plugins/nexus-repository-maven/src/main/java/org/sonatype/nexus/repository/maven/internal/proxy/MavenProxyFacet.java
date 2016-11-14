@@ -29,12 +29,10 @@ import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
 
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
 
@@ -91,7 +89,7 @@ public class MavenProxyFacet
   }
 
   @Override
-  @Transactional(retryOn = ONeedRetryException.class)
+  @TransactionalTouchMetadata
   protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
       throws IOException
   {

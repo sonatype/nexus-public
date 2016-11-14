@@ -29,11 +29,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Fluent API for wrapping lambda operations with {@link Transactional} behaviour:
  *
  * <pre>
- * Value value = Operations.transactional().retryOn(IOException.class).call(() -> {
+ * Value value = Transactional.operation.retryOn(IOException.class).call(() -> {
  *   // do transactional work which returns a value
  * });
  *
- * Operations.transactional().retryOn(IOException.class).run(() -> {
+ * Transactional.operation.retryOn(IOException.class).run(() -> {
  *   // do transactional work which doesn't return a value
  * });
  * </pre>
@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * You can choose to supply your own transactions instead of relying on {@link UnitOfWork}:
  *
  * <pre>
- * Operations.transactional(myTxSupplier).retryOn(IOException.class).call(() -> {
+ * Transactional.operation.withDb(myTxSupplier).retryOn(IOException.class).call(() -> {
  *   // do transactional work
  * });
  * </pre>
@@ -49,7 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * If your lambda throws a checked exception then you need to explicitly declare this:
  *
  * <pre>
- * Operations.transactional().throwing(PersistenceException.class).call(() -> {
+ * Transactional.operation.throwing(PersistenceException.class).call(() -> {
  *   // do transactional work
  * });
  * </pre>
@@ -57,7 +57,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * You can also use stereotype annotations meta-annotated with {@link Transactional}:
  *
  * <pre>
- * Operations.transactional().stereotype(TransactionalGet.class).call(() -> {
+ * Transactional.operation.stereotype(TransactionalGet.class).call(() -> {
  *   // do transactional work
  * });
  * </pre>
@@ -83,20 +83,6 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
 
   @Nullable
   private final Supplier<? extends Transaction> db;
-
-  /**
-   * Assumes a surrounding {@link UnitOfWork} will supply {@link Transaction}s.
-   */
-  public static Operations<RuntimeException, ?> transactional() {
-    return new Operations<>();
-  }
-
-  /**
-   * Uses the given supplier to acquire {@link Transaction}s.
-   */
-  public static Operations<RuntimeException, ?> transactional(final Supplier<? extends Transaction> db) {
-    return transactional().withDb(db);
-  }
 
   /**
    * @see Transactional#commitOn()

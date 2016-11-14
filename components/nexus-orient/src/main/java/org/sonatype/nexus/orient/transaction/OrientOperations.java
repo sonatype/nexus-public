@@ -10,19 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package org.sonatype.nexus.orient.transaction;
 
 import javax.annotation.Nullable;
 import javax.inject.Provider;
 
+import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Supplier;
 
-import static org.sonatype.nexus.orient.OrientTransaction.currentDb;
+import static org.sonatype.nexus.orient.transaction.OrientTransaction.currentDb;
 
 /**
  * Orient specific fluent API for wrapping lambda operations with {@link Transactional} behaviour
@@ -34,20 +34,6 @@ import static org.sonatype.nexus.orient.OrientTransaction.currentDb;
 public class OrientOperations<E extends Exception, B extends OrientOperations<E, B>>
     extends Operations<E, B>
 {
-  /**
-   * Assumes a surrounding {@link UnitOfWork} will supply {@link Transaction}s.
-   */
-  public static OrientOperations<RuntimeException, ?> transactional() {
-    return new OrientOperations<>();
-  }
-
-  /**
-   * Uses the provided database to acquire {@link Transaction}s.
-   */
-  public static OrientOperations<RuntimeException, ?> transactional(final Provider<DatabaseInstance> db) {
-    return transactional().withDb(db);
-  }
-
   /**
    * Assumes the lambda may throw the given checked exception.
    */

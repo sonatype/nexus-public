@@ -37,9 +37,9 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Throwables;
@@ -156,7 +156,7 @@ public class PurgeUnusedSnapshotsFacetImpl
    *
    * @return the affected groups
    */
-  @Transactional
+  @TransactionalDeleteBlob
   protected Set<String> deleteUnusedSnapshotComponents(Date olderThan) {
     MavenFacet facet = facet(MavenFacet.class);
     StorageTx tx = UnitOfWork.currentTx();

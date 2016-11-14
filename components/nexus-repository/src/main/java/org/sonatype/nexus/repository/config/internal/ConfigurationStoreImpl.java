@@ -25,13 +25,13 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.config.Configuration;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.orient.OrientTransaction.inTx;
-import static org.sonatype.nexus.orient.OrientTransaction.inTxNoReturn;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * Orient {@link ConfigurationStore} implementation.
@@ -66,7 +66,7 @@ public class ConfigurationStoreImpl
   @Override
   @Guarded(by = STARTED)
   public List<Configuration> list() {
-    return inTx(databaseInstance, db -> Lists.newArrayList(entityAdapter.browse(db)));
+    return inTx(databaseInstance).call(db -> ImmutableList.copyOf(entityAdapter.browse(db)));
   }
 
   @Override
@@ -74,7 +74,7 @@ public class ConfigurationStoreImpl
   public void create(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTx(databaseInstance, db -> entityAdapter.addEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, configuration));
   }
 
   @Override
@@ -82,7 +82,7 @@ public class ConfigurationStoreImpl
   public void update(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTx(databaseInstance, db -> entityAdapter.editEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, configuration));
   }
 
   @Override
@@ -90,6 +90,6 @@ public class ConfigurationStoreImpl
   public void delete(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTxNoReturn(databaseInstance, db -> entityAdapter.deleteEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
   }
 }
