@@ -1463,7 +1463,7 @@ public abstract class AbstractProxyRepository
                 t = e;
               }
 
-              log.warn(
+              log.debug(
                   String.format(
                       "Got RemoteStorageException in proxy repository %s while retrieving remote artifact \"%s\" from URL %s, this is %s (re)try, cause: %s: %s",
                       RepositoryStringUtils.getHumanizedNameString(this), request.toString(),
@@ -1487,7 +1487,7 @@ public abstract class AbstractProxyRepository
                 t = e;
               }
 
-              log.warn(
+              log.debug(
                   "Got LocalStorageException in proxy repository {} while caching retrieved artifact \"{}\" got from URL {}, this is {} (re)try",
                   RepositoryStringUtils.getHumanizedNameString(this),
                   request,
