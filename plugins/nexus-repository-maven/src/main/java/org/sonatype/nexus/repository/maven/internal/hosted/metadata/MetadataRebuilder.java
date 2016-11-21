@@ -82,12 +82,15 @@ public class MetadataRebuilder
    * @param repository  The repository whose metadata needs rebuild (Maven2 format, Hosted type only).
    * @param update      if {@code true}, updates existing metadata, otherwise overwrites them with newly generated
    *                    ones.
+   * @param rebuildChecksums whether or not checksums should be checked and corrected if found                     
+   *                           missing or incorrect                    
    * @param groupId     scope the work to given groupId.
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
    */
   public void rebuild(final Repository repository,
                       final boolean update,
+                      final boolean rebuildChecksums,
                       @Nullable final String groupId,
                       @Nullable final String artifactId,
                       @Nullable final String baseVersion)
@@ -96,7 +99,7 @@ public class MetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      new Worker(repository, update, groupId, artifactId, baseVersion).rebuildMetadata();
+      new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion).rebuildMetadata();
     }
     finally {
       UnitOfWork.end();
@@ -112,8 +115,8 @@ public class MetadataRebuilder
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
    */
-  public void deleteAndRebuild(final Repository repository, final String groupId, final String artifactId,
-                               final String baseVersion)
+  public void deleteAndRebuild(final Repository repository, final String groupId,
+                               final String artifactId, final String baseVersion)
   {
     checkNotNull(repository);
     checkNotNull(groupId);
@@ -146,10 +149,10 @@ public class MetadataRebuilder
     }
 
     if (groupChange) {
-      rebuild(repository, true, groupId, null, null);
+      rebuild(repository, true, false, groupId, null, null);
     }
     else {
-      rebuild(repository, true, groupId, artifactId, null);
+      rebuild(repository, true, false, groupId, artifactId, null);
     }
   }
 
@@ -172,9 +175,12 @@ public class MetadataRebuilder
     private final Map<String, Object> sqlParams;
 
     private final String sql;
+    
+    private final boolean rebuildChecksums;
 
     public Worker(final Repository repository,
                   final boolean update,
+                  final boolean rebuildChecksums,
                   @Nullable final String groupId,
                   @Nullable final String artifactId,
                   @Nullable final String baseVersion)
@@ -186,6 +192,7 @@ public class MetadataRebuilder
       this.metadataUpdater = new MetadataUpdater(update, repository);
       this.sqlParams = Maps.newHashMap();
       this.sql = buildSql(groupId, artifactId, baseVersion);
+      this.rebuildChecksums = rebuildChecksums;
     }
 
     /**
@@ -325,8 +332,10 @@ public class MetadataRebuilder
                 continue;
               }
               metadataBuilder.addArtifactVersion(mavenPath);
-              mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
-              mayUpdateChecksum(asset, mavenPath, HashType.MD5);
+              if (rebuildChecksums) {
+                mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
+                mayUpdateChecksum(asset, mavenPath, HashType.MD5);
+              }
               final String packaging = component.formatAttributes().get(Attributes.P_PACKAGING, String.class);
               log.debug("POM packaging: {}", packaging);
               if ("maven-plugin".equals(packaging)) {
@@ -381,6 +390,7 @@ public class MetadataRebuilder
       }
       // we need to generate/write it
       try {
+        log.debug("Generating checksum file: {}", checksumPath);
         final StringPayload mavenChecksum = new StringPayload(assetChecksum, Constants.CHECKSUM_CONTENT_TYPE);
         mavenFacet.put(checksumPath, mavenChecksum);
       }

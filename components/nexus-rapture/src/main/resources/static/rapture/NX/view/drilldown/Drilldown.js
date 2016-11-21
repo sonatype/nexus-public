@@ -64,29 +64,30 @@ Ext.define('NX.view.drilldown.Drilldown', {
       views = Ext.Array.clone(me.masters);
     }
 
-    // Add the detail panel to the masters array
-    if (me.detail) {
-      // Use a custom detail panel
-      views.push(me.detail);
-    }
-    else {
-      // Use the default tab panel
-      views.push(
-        {
-          xtype: 'nx-drilldown-details',
-          header: false,
-          plain: true,
+    if (!me.skipDetail) {
+      if (me.detail) {
+        // Use a custom detail panel
+        views.push(me.detail);
+      }
+      else {
+        // Use the default tab panel
+        views.push(
+            {
+              xtype: 'nx-drilldown-details',
+              header: false,
+              plain: true,
 
-          layout: {
-            type: 'vbox',
-            align: 'stretch',
-            pack: 'start'
-          },
+              layout: {
+                type: 'vbox',
+                align: 'stretch',
+                pack: 'start'
+              },
 
-          tabs: Ext.clone(me.tabs),
-          actions: Ext.isArray(me.actions) ? Ext.Array.clone(me.actions) : me.actions
-        }
-      );
+              tabs: Ext.clone(me.tabs),
+              actions: Ext.isArray(me.actions) ? Ext.Array.clone(me.actions) : me.actions
+            }
+        );
+      }
     }
 
     // Stack all panels onto the items array

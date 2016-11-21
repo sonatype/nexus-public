@@ -44,11 +44,20 @@ Ext.define('NX.view.Main', {
         items: [
           {
             xtype: 'panel',
+            ui: 'nx-database-freeze-warning',
+            id: 'nx-database-freeze-warning',
+            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+            title: NX.I18n.get('Nodes_Read_only_mode_warning'),
+            hidden: !NX.State.getValue('db', {})['dbFrozen']
+          },
+          {
+            xtype: 'panel',
             ui: 'nx-license-warning',
             id: 'nx-license-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
             hidden: true
           },
+
           {
             xtype: 'nx-header-panel'
           }

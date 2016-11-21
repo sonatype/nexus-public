@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.orient.testsupport.internal;
 
+import java.util.Collections;
+import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -45,5 +48,10 @@ public class MinimalDatabaseServer
   @Override
   protected void doStop() throws Exception {
     Orient.instance().shutdown();
+  }
+
+  @Override
+  public List<String> databases() {
+    return Collections.emptyList();
   }
 }

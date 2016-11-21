@@ -34,10 +34,13 @@ public interface MavenHostedFacet
    * @param groupId     scope the work to given groupId.
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must be given).
+   * @param rebuildChecksums  whether or not checksums should be checked and corrected if found                     
+   *                           missing or incorrect 
    */
   void rebuildMetadata(@Nullable String groupId,
                        @Nullable String artifactId,
-                       @Nullable String baseVersion);
+                       @Nullable String baseVersion,
+                       boolean rebuildChecksums);
 
   /**
    * Rebuilds archetype catalog for given repository. Returns the number of archetypes hosted.

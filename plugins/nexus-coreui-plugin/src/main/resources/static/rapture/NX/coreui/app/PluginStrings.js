@@ -319,8 +319,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_NegativeCacheFacet_Enabled_HelpText: 'Cache responses for content not present in the proxied repository',
     Repository_Facet_NegativeCacheFacet_TTL_FieldLabel: 'Not found cache TTL',
     Repository_Facet_NegativeCacheFacet_TTL_HelpText: 'How long to cache the fact that a file was not found in the repository (in minutes)',
-    Repository_Facet_NegativeCacheFacet_QueryCacheSize_FieldLabel: 'Metadata query cache size',
-    Repository_Facet_NegativeCacheFacet_QueryCacheSize_HelpText: 'Maximum number of cached query results from the proxied repository',
     Repository_Facet_NugetProxyFacet_ItemMaxAge_FieldLabel: 'Metadata query cache age',
     Repository_Facet_NugetProxyFacet_ItemMaxAge_HelpText: 'How long to cache query results from the proxied repository (in seconds)',
     Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel: 'Authentication type',
@@ -975,6 +973,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Bundles_LastModified_Info: 'Last Modified',
     Bundles_Summary_Info: '{0}',
 
+    // Admin -> System -> Nodes
+    Nodes_Toggling_read_only_mode: 'Toggling read-only mode',
+    Nodes_Disable_read_only_mode: 'Disable read-only mode',
+    Nodes_Enable_read_only_mode: 'Enable read-only mode',
+    Nodes_Read_only_mode_warning: 'Nexus Repository is in read-only mode',
+    Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
+
     // Admin -> System -> Tasks
     Tasks_Text: 'Tasks',
     Tasks_Description: 'Manage scheduled tasks',
@@ -1023,7 +1028,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskSettingsForm_Update_Error: 'You do not have permission to update tasks or task is readonly',
     Tasks_Update_Success: 'Task updated: {0}',
     Task_TaskSettingsForm_Enabled_FieldLabel: 'Task enabled',
-    Task_TaskSettingsForm_Enabled_HelpText: 'This flag determines if the task is currently active.  To disable this task for a period of time, de-select this checkbox',
+    Task_TaskSettingsForm_Enabled_HelpText: 'This flag determines if the task is currently active.  To disable this task for a period of time, de-select this checkbox.',
     Task_TaskSettingsForm_Name_FieldLabel: 'Task name',
     Task_TaskSettingsForm_Name_HelpText: 'A name for the scheduled task',
     Task_TaskSettingsForm_Email_FieldLabel: 'Notification email',
@@ -1175,7 +1180,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Endpoint_FieldLabel: 'URL',
       Endpoint_HelpText: "The base URL of the remote server",
       Token_FieldLabel: 'Access Token',
-      Token_HelpText: "The access token copied from the remote server's upgrade-agent settings."
+      Token_HelpText: "The access token from the remote server's upgrade-agent settings"
     },
 
     'NX.coreui.migration.AgentStep': {

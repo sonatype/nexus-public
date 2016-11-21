@@ -176,7 +176,19 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.Nodes',
+      active: function () {
+            return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+      }
+    },
+    {
       id: 'NX.coreui.controller.Privileges',
+      active: function () {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.DatabaseFreezeWarnings',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }

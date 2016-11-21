@@ -27,6 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.BASEVERSION_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.GROUPID_FIELD_ID;
+import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.REBUILD_CHECKSUMS;
 
 /**
  * Maven 2 metadata rebuild task.
@@ -57,7 +58,8 @@ public class RebuildMaven2MetadataTask
     mavenHostedFacet.rebuildMetadata(
         getConfiguration().getString(GROUPID_FIELD_ID),
         getConfiguration().getString(ARTIFACTID_FIELD_ID),
-        getConfiguration().getString(BASEVERSION_FIELD_ID)
+        getConfiguration().getString(BASEVERSION_FIELD_ID),
+        getConfiguration().getBoolean(REBUILD_CHECKSUMS, false)
     );
   }
 

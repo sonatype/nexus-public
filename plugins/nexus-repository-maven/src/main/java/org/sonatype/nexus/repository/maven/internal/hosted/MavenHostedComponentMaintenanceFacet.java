@@ -55,7 +55,8 @@ public class MavenHostedComponentMaintenanceFacet
         });
     super.deleteComponent(componentId);
     if (coordinates != null) {
-      getRepository().facet(MavenHostedFacet.class).deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);
+      getRepository().facet(MavenHostedFacet.class)
+          .deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);
     }
   }
 }

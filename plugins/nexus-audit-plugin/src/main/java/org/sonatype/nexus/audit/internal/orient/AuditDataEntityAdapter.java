@@ -14,7 +14,6 @@ package org.sonatype.nexus.audit.internal.orient;
 
 import java.util.Map;
 
-import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -23,12 +22,12 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ODefaultClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
@@ -64,6 +63,19 @@ public class AuditDataEntityAdapter
   }
 
   @Override
+  public void register(final ODatabaseDocumentTx db, final Runnable initializer) {
+
+    // force single cluster to benefit from implicit event ordering
+    OStorageConfiguration dbConfig = db.getStorage().getConfiguration();
+    if (dbConfig.getMinimumClusters() != 1) {
+      dbConfig.setMinimumClusters(1);
+      dbConfig.update();
+    }
+
+    super.register(db, initializer);
+  }
+
+  @Override
   protected void defineType(final OClass type) {
     type.createProperty(P_DOMAIN, OType.STRING)
         .setNotNull(true);
@@ -78,9 +90,6 @@ public class AuditDataEntityAdapter
     type.createProperty(P_INITIATOR, OType.STRING)
         .setNotNull(true);
     type.createProperty(P_ATTRIBUTES, OType.EMBEDDEDMAP);
-
-    // ensure we have the default strategy, so that only the default cluster-id will be used for new documents
-    type.setClusterSelection(ODefaultClusterSelectionStrategy.NAME);
   }
 
   @Override
@@ -118,24 +127,21 @@ public class AuditDataEntityAdapter
 
   private static final String BROWSE_SKIP_LIMIT_QUERY = String.format("SELECT FROM %s SKIP ? LIMIT ?", DB_CLASS);
 
-  private static final String BROWSE_SKIP_QUERY = String.format("SELECT FROM %s SKIP ?", DB_CLASS);
-
-  @Nullable
-  public Iterable<ODocument> browseDocuments(final ODatabaseDocumentTx db, final long offset, @Nullable Long limit) {
+  /**
+   * @since 3.2
+   */
+  public Iterable<AuditData> browse(final ODatabaseDocumentTx db, final long offset, final long limit) {
     log.trace("Browse; offset: {}, limit: {}", offset, limit);
 
-    OResultSet<ODocument> results;
-    if (limit == null) {
-      results = db.query(new OSQLSynchQuery<ODocument>(BROWSE_SKIP_QUERY), offset);
-    }
-    else {
-      results = db.query(new OSQLSynchQuery<ODocument>(BROWSE_SKIP_LIMIT_QUERY), offset, limit);
-    }
+    return transform(db.query(new OSQLSynchQuery<ODocument>(BROWSE_SKIP_LIMIT_QUERY), offset, limit));
+  }
 
-    if (results.isEmpty()) {
-      log.trace("No results");
-      return null;
-    }
-    return results;
+  private static final String DELETE_ALL = String.format("TRUNCATE CLASS %s", DB_CLASS);
+
+  /**
+   * @since 3.2
+   */
+  public void clear(final ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL(DELETE_ALL)).execute();
   }
 }

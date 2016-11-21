@@ -31,6 +31,7 @@ import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.entity.EntityHook;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -253,5 +254,10 @@ public class DatabaseServerImpl
     Orient.instance().shutdown();
 
     log.info("Shutdown");
+  }
+
+  @Override
+  public List<String> databases() {
+    return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
   }
 }

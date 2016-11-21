@@ -104,14 +104,12 @@ class AuditCapability
 
   @Override
   protected void onActivate(final Configuration config) {
-    auditStore.start()
     auditRecorder.enabled = true
   }
 
   @Override
   protected void onPassivate(final Configuration config) {
     auditRecorder.enabled = false
-    auditStore.stop()
   }
 
   //

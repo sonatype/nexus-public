@@ -13,11 +13,10 @@
 
 package org.sonatype.nexus.audit.internal;
 
-import javax.annotation.Nullable;
+import java.util.List;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.audit.AuditData;
-import org.sonatype.nexus.common.collect.AutoClosableIterable;
 
 /**
  * Audit store.
@@ -33,5 +32,5 @@ public interface AuditStore
 
   long approximateSize() throws Exception;
 
-  AutoClosableIterable<AuditData> browse(long offset, @Nullable Long limit) throws Exception;
+  List<AuditData> browse(long offset, long limit) throws Exception;
 }

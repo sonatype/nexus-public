@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.audit.internal.ui
 
-import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -61,29 +60,9 @@ class AuditComponent
   }
 
   @RequiresPermissions('nexus:audit:read')
-  List<AuditData> read(final long start, final @Nullable Long limit) {
+  List<AuditData> read(final long start, final long limit) {
     log.debug "Listing audit records; start=$start limit=$limit"
-
-    List<AuditData> result = []
-    def count = 0
-
-    def entries = null
-    try {
-      entries = auditStore.browse(start, limit)
-
-      for (AuditData data : entries) {
-        result << data
-        count++
-        if (limit != null && limit > 0 && count >= limit) {
-          break
-        }
-      }
-    }
-    finally {
-      entries?.close()
-    }
-
-    return result
+    return auditStore.browse(start, limit)
   }
 
   /**

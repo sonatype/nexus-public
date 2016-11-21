@@ -283,12 +283,13 @@ public class ScheduledTaskEventsTest
     assertThat(listener.arrivedEvents.get(4), instanceOf(TaskEventStoppedCanceled.class));
   }
 
-  static class Listener
+  class Listener
   {
     final List<TaskEvent> arrivedEvents = Lists.newArrayList();
 
     @Subscribe
     public void on(final TaskEvent e) {
+      log("Observing task event {}", e);
       arrivedEvents.add(e);
     }
   }

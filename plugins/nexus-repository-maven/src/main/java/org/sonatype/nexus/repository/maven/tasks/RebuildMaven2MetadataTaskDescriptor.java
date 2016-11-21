@@ -15,11 +15,14 @@ package org.sonatype.nexus.repository.maven.tasks;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+
+import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 /**
  * Task descriptor for {@link RebuildMaven2MetadataTask}.
@@ -40,6 +43,8 @@ public class RebuildMaven2MetadataTaskDescriptor
   public static final String ARTIFACTID_FIELD_ID = "artifactId";
 
   public static final String BASEVERSION_FIELD_ID = "baseVersion";
+  
+  public static final String REBUILD_CHECKSUMS = "rebuildChecksums";
 
   public RebuildMaven2MetadataTaskDescriptor() {
     super(TYPE_ID,
@@ -69,9 +74,17 @@ public class RebuildMaven2MetadataTaskDescriptor
         new StringTextFormField(
             BASEVERSION_FIELD_ID,
             "Base Version (only if ArtifactId given)",
-            "Maven base version to narrow operation (limit to given groupId:artifactId:baseVersion, used if groupId and artifactId set!)",
+            "Maven base version to narrow operation (limit to given groupId:artifactId:baseVersion, used if groupId " +
+                "and artifactId set!)",
             false
-        )
+        ),
+        new CheckboxFormField(
+            REBUILD_CHECKSUMS,
+            "Rebuild checksums",
+            "Compare maven checksum files with recorded metadata, creating files if they are missing and updating " +
+                "them if they are incorrect. This can significantly increase the time needed for this task.",
+            OPTIONAL
+        ).withInitialValue(false)
     );
   }
 }

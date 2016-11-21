@@ -119,6 +119,11 @@ public abstract class TaskDescriptorSupport
         '}';
   }
 
+  @Override
+  public void initializeConfiguration(final TaskConfiguration configuration) {
+    // no-op
+  }
+
   /**
    * Creates a new {@link FormField} for tasks which can run on multiple-nodes at once.
    *

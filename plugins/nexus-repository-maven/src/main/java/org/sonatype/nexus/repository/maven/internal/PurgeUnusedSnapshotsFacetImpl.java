@@ -120,7 +120,7 @@ public class PurgeUnusedSnapshotsFacetImpl
   private void processAsHosted(final int numberOfDays) {
     Set<String> groups = purgeSnapshotsFromRepository(numberOfDays);
     for (String groupId : groups) {
-      metadataRebuilder.rebuild(getRepository(), false, groupId, null, null);
+      metadataRebuilder.rebuild(getRepository(), false, false, groupId, null, null);
     }
   }
 

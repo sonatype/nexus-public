@@ -98,16 +98,15 @@ public class MavenHostedFacetImpl
   }
 
   @Override
-  public void rebuildMetadata(@Nullable final String groupId,
-      @Nullable final String artifactId,
-      @Nullable final String baseVersion)
+  public void rebuildMetadata(@Nullable final String groupId, @Nullable final String artifactId,
+                              @Nullable final String baseVersion, final boolean rebuildChecksums)
   {
     final boolean update = !Strings.isNullOrEmpty(groupId)
         || !Strings.isNullOrEmpty(artifactId)
         || !Strings.isNullOrEmpty(baseVersion);
     log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, update={}, g={}, a={}, bV={}",
         getRepository().getName(), update, groupId, artifactId, baseVersion);
-    metadataRebuilder.rebuild(getRepository(), update, groupId, artifactId, baseVersion);
+    metadataRebuilder.rebuild(getRepository(), update, rebuildChecksums, groupId, artifactId, baseVersion);
   }
 
   @Override
@@ -134,18 +133,17 @@ public class MavenHostedFacetImpl
       Iterables.addAll(hostedCatalog.getArchetypes(), archetypes);
       count = hostedCatalog.getArchetypes().size();
 
-      Content content = MavenFacetUtils.createTempContent(
+      try (Content content = MavenFacetUtils.createTempContent(
           path,
           ContentTypes.APPLICATION_XML,
-          (OutputStream outputStream) -> {
-            MavenModels.writeArchetypeCatalog(outputStream, hostedCatalog);
-          }
-      );
-      MavenFacetUtils.putWithHashes(mavenFacet, archetypeCatalogMavenPath, content);
-      log.trace("Rebuilt hosted archetype catalog for {} with {} archetype", getRepository().getName(), count);
+          (OutputStream outputStream) -> MavenModels.writeArchetypeCatalog(outputStream, hostedCatalog))) {
+        MavenFacetUtils.putWithHashes(mavenFacet, archetypeCatalogMavenPath, content);
+        log.trace("Rebuilt hosted archetype catalog for {} with {} archetype", getRepository().getName(), count);
+      }
     }
     finally {
       Files.delete(path);
+      
     }
     return count;
   }

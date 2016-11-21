@@ -43,14 +43,6 @@ Ext.define('NX.coreui.view.repository.facet.NugetProxyFacet', {
         items: [
           {
             xtype: 'numberfield',
-            name: 'attributes.nugetProxy.queryCacheSize',
-            fieldLabel: NX.I18n.get('Repository_Facet_NegativeCacheFacet_QueryCacheSize_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_NegativeCacheFacet_QueryCacheSize_HelpText'),
-            minValue: 0,
-            value: 300
-          },
-          {
-            xtype: 'numberfield',
             name: 'attributes.nugetProxy.queryCacheItemMaxAge',
             fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_ItemMaxAge_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_NugetProxyFacet_ItemMaxAge_HelpText'),

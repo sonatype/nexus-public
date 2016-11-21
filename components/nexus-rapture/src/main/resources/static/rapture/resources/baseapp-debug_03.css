@@ -1,3 +1,37 @@
+.x-tab-bar-nx-light-right {
+  padding: 0 5px 0 2px;
+}
+
+.x-tab-bar-nx-light-horizontal {
+  height: 39px;
+}
+.x-content-box .x-tab-bar-nx-light-horizontal {
+  height: 32px;
+}
+
+.x-tab-bar-nx-light-vertical {
+  width: 39px;
+}
+.x-content-box .x-tab-bar-nx-light-vertical {
+  width: 32px;
+}
+
+.x-tab-bar-body-nx-light-top {
+  padding-bottom: 0;
+}
+
+.x-tab-bar-body-nx-light-bottom {
+  padding-top: 0;
+}
+
+.x-tab-bar-body-nx-light-left {
+  padding-right: 0;
+}
+
+.x-tab-bar-body-nx-light-right {
+  padding-left: 0;
+}
+
 .x-tab-bar-strip-nx-light {
   border-style: solid;
   border-color: #cbcbcb;

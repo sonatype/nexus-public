@@ -50,6 +50,19 @@
 }
 
 /**
+ * Style for the global "node frozen warning" header
+ */
+.x-panel-nx-database-freeze-warning {
+  @extend .x-panel-nx-license-warning;
+  background-color: $color-alert-purple;
+}
+
+.x-panel-header-text-container-nx-database-freeze-warning {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+/**
 * Style for the "transparent" inter-page panels
 *
 * ui: 'subsection'

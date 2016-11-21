@@ -45,6 +45,14 @@ public interface TaskDescriptor
    */
   List<FormField> getFormFields();
 
+  /**
+   * Directly manipulate task configuration before storing
+   *
+   * @since 3.2
+   * @param configuration task's configuration
+   */
+  void initializeConfiguration(TaskConfiguration configuration);
+
   // TODO: Figure out some clearer terms to use for the following state flags:
 
   /**

@@ -12,8 +12,8 @@
  */
 package com.google.common.eventbus;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import static com.google.common.eventbus.Dispatcher.immediate;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 /**
  * A Guava {@link EventBus} that differs from default one by dispatching events as they appear (is re-entrant).
@@ -24,42 +24,22 @@ import java.util.Queue;
 public class ReentrantEventBus
     extends EventBus
 {
-  /**
-   * Queues of events for the current thread to dispatch.
-   */
-  private final ThreadLocal<Queue<EventWithSubscriber>> eventsToDispatch =
-      new ThreadLocal<Queue<EventWithSubscriber>>()
-      {
-        @Override
-        protected Queue<EventWithSubscriber> initialValue() {
-          return new LinkedList<>();
-        }
-      };
-
   public ReentrantEventBus() {
-    // empty
+    this(LoggingHandler.INSTANCE);
   }
 
   public ReentrantEventBus(final String identifier) {
-    super(identifier);
+    this(identifier, LoggingHandler.INSTANCE);
   }
 
-  public ReentrantEventBus(final SubscriberExceptionHandler subscriberExceptionHandler) {
-    super(subscriberExceptionHandler);
+  public ReentrantEventBus(final SubscriberExceptionHandler exceptionHandler) {
+    this("reentrant", exceptionHandler);
   }
 
-  @Override
-  void enqueueEvent(Object event, EventSubscriber subscriber) {
-    eventsToDispatch.get().offer(new EventWithSubscriber(event, subscriber));
-  }
-
-  @Override
-  void dispatchQueuedEvents() {
-    Queue<EventWithSubscriber> events = eventsToDispatch.get();
-    eventsToDispatch.remove();
-    EventWithSubscriber eventWithSubscriber;
-    while ((eventWithSubscriber = events.poll()) != null) {
-      dispatch(eventWithSubscriber.event, eventWithSubscriber.subscriber);
-    }
+  /**
+   * @since 3.2
+   */
+  protected ReentrantEventBus(final String identifier, final SubscriberExceptionHandler exceptionHandler) {
+    super(identifier, directExecutor(), immediate(), exceptionHandler);
   }
 }

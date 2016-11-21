@@ -45,9 +45,9 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.types.GroupType;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -135,7 +135,7 @@ public class RemoveSnapshotsFacetImpl
     finally {
       UnitOfWork.end();
     }
-    
+
     //only update metadata for non-proxy repos
     if (!repository.optionalFacet(ProxyFacet.class).isPresent()) {
       log.info("Updating metadata on repository: {}", repository.getName());
@@ -212,42 +212,55 @@ public class RemoveSnapshotsFacetImpl
   /**
    * Delete all snapshots created before the retention period and potentially preserving a certain number.
    */
-  private Set<GAV> processSnapshots(final Repository repository, final RemoveSnapshotsConfig config, final StorageTx tx)
+  @VisibleForTesting
+  Set<GAV> processSnapshots(final Repository repository, final RemoveSnapshotsConfig config, final StorageTx tx)
   {
-    if(config.getMinimumRetained() == -1) {
+    if (config.getMinimumRetained() == -1) {
       log.info("Skipping processing of snapshots by age and minimum count due to configuration");
       return new HashSet<>();
     }
-    
+
     DateTime olderThan = DateTime.now().minusDays(Math.max(config.getSnapshotRetentionDays(), 0));
     Set<GAV> snapshotCandidates = Sets.newHashSet(findSnapshotCandidates(tx, repository, config.getMinimumRetained()));
     log.debug("Processing {} GAVs found with more than minimum {} snapshot versions", snapshotCandidates.size(),
         config.getMinimumRetained());
+
+    // only interested in the ones where we actually delete something, otherwise we would needlessly regenerate metadata
+    Set<GAV> gavsWithDeletions = new HashSet<>();
+
+    long deleted = 0;
     for (GAV snapshotCandidate : snapshotCandidates) {
       log.debug("Processing GAV = {}", snapshotCandidate);
-      List<Component> toDelete = Lists.newArrayList(findSnapshots(tx, repository, snapshotCandidate));
-      toDelete.sort((o1, o2) -> version(o2.version()).compareTo(version(o1.version())));
-      
-      // always keep this many at least
-      toDelete.subList(0, config.getMinimumRetained()).clear();
+      List<Component> components = Lists.newArrayList(findSnapshots(tx, repository, snapshotCandidate));
+      components.sort((o1, o2) -> version(o2.version()).compareTo(version(o1.version())));
 
-      for (Component component : toDelete) {
-        if(component.lastUpdated().isBefore(olderThan)) {
+      // always keep this many at least
+      components.subList(0, config.getMinimumRetained()).clear();
+
+      // filter out any components that don't meet time criteria
+      List<Component> toDelete = components.stream()
+          .filter(component -> component.lastUpdated().isBefore(olderThan))
+          .collect(Collectors.toList());
+
+      if (!toDelete.isEmpty()) {
+        deleted += toDelete.size();
+        gavsWithDeletions.add(snapshotCandidate);
+        for (Component component : toDelete) {
           log.debug("Deleting component: {}", component);
-          tx.deleteComponent(component);  
+          tx.deleteComponent(component);
         }
       }
     }
-    
+
     log.debug("Finished processing snapshots with more than {} versions created before {}", config.getMinimumRetained(),
         olderThan);
-    return snapshotCandidates;
+    log.debug("Deleted {} components from GAVs: {}", deleted, gavsWithDeletions);
+    return gavsWithDeletions;
   }
 
   /**
    * Find all snapshots in this repository that have an associated release, taking into account the grace period.
    */
-  @Transactional
   private Iterable<Component> findReleasedSnapshots(final StorageTx tx, final Repository repository,
                                                     final Date gracePeriod)
   {
@@ -260,8 +273,8 @@ public class RemoveSnapshotsFacetImpl
   /**
    * Find all snapshots in this repository for the given GAbV.
    */
-  @Transactional
-  private Iterable<Component> findSnapshots(final StorageTx tx, final Repository repository, final GAV gav)
+  @VisibleForTesting
+  Iterable<Component> findSnapshots(final StorageTx tx, final Repository repository, final GAV gav)
   {
     final Bucket bucket = tx.findBucket(repository);
     final OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_FOR_GABV))
@@ -272,8 +285,8 @@ public class RemoveSnapshotsFacetImpl
   /**
    * Find all GAVs that qualify for deletion.
    */
-  @Transactional
-  private Iterable<GAV> findSnapshotCandidates(final StorageTx tx, final Repository repository, int minimumCount)
+  @VisibleForTesting
+  Iterable<GAV> findSnapshotCandidates(final StorageTx tx, final Repository repository, int minimumCount)
   {
     final Bucket bucket = tx.findBucket(repository);
     final OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_WITH_MINIMUM_COUNT))
@@ -298,14 +311,14 @@ public class RemoveSnapshotsFacetImpl
   /**
    * Struct to track GAV we need to request metadata rebuild due to deletion.
    */
-  private static final class GAV
+  static final class GAV
   {
     final String group;
 
     final String name;
 
     final String baseVersion;
-    
+
     final int count;
 
     public GAV(final String group, final String name, final String baseVersion, final int count) {

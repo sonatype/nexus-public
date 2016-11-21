@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("rawtypes")
 public class DatabaseListenerSupport
-    implements ODatabaseLifecycleListener, ODatabaseListener, ORecordHook
+    implements ODatabaseLifecycleListener, ODatabaseListener, ORecordHook.Scoped
 {
   // ODatabaseLifecycleListener
 
@@ -151,5 +151,14 @@ public class DatabaseListenerSupport
   @Override
   public void onUnregister() {
     // no-op
+  }
+
+  // ORecordHook.Scoped
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 }
