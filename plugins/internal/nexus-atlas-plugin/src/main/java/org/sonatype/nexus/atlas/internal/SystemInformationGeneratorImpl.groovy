@@ -12,25 +12,26 @@
  */
 package org.sonatype.nexus.atlas.internal
 
-import org.sonatype.nexus.util.Tokens
+import java.nio.file.FileSystems
 
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
-import java.nio.file.FileSystems
 
 import org.sonatype.nexus.ApplicationStatusSource
 import org.sonatype.nexus.atlas.SystemInformationGenerator
 import org.sonatype.nexus.configuration.application.ApplicationConfiguration
 import org.sonatype.nexus.plugins.NexusPluginManager
+import org.sonatype.nexus.util.Tokens
 import org.sonatype.sisu.goodies.common.ComponentSupport
 import org.sonatype.sisu.goodies.common.Iso8601Date
 
 import com.google.inject.Key
 import org.eclipse.sisu.Parameters
-import org.eclipse.sisu.inject.BeanLocator;
+import org.eclipse.sisu.inject.BeanLocator
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.plugins.PluginActivationResult.MISSING
 
 /**
  * Default {@link SystemInformationGenerator}.
@@ -244,6 +245,10 @@ class SystemInformationGeneratorImpl
     def reportNexusPlugins = {
       def data = [:]
       pluginManager.pluginResponses.each { gav, response ->
+        if (response.achievedGoal == MISSING) {
+          return // ignore purely optional plugins that are simply missing from the distribution
+        }
+
         def item = data[gav.artifactId] = [
             'groupId': gav.groupId,
             'artifactId': gav.artifactId,
@@ -252,7 +257,7 @@ class SystemInformationGeneratorImpl
         ]
 
         // include dependency plugins
-        if (!response.pluginDescriptor.importedPlugins.empty) {
+        if (response?.pluginDescriptor?.importedPlugins) {
           item.importedPlugins = response.pluginDescriptor.importedPlugins.collect { it.toString() }.join(',')
         }
 

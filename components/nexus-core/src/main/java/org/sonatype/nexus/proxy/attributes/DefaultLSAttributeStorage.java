@@ -32,6 +32,7 @@ import org.sonatype.nexus.proxy.item.RepositoryItemUidLock;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
+import org.sonatype.nexus.proxy.storage.local.fs.DefaultFSPeer;
 
 import com.google.common.base.Preconditions;
 
@@ -52,20 +53,24 @@ public class DefaultLSAttributeStorage
 
   private final Marshaller marshaller;
 
+  private final boolean skipTempStorage;
+
   /**
    * Instantiates a new FSX stream attribute storage.
    */
   @Inject
-  public DefaultLSAttributeStorage() {
-    this(new JacksonJSONMarshaller());
+  public DefaultLSAttributeStorage(@Named("${nexus.fs.peer.skip.tmp.attribute.storage:-false}") boolean skipTempStorage) {
+    this(new JacksonJSONMarshaller(), skipTempStorage);
   }
 
   /**
    * Instantiates a new FSX stream attribute storage.
    */
-  public DefaultLSAttributeStorage(final Marshaller marshaller) {
+  public DefaultLSAttributeStorage(final Marshaller marshaller, boolean skipTempStorage) {
     this.marshaller = Preconditions.checkNotNull(marshaller);
-    log.info("Default FS AttributeStorage in place, using {} marshaller.", marshaller);
+    log.info("Default FS AttributeStorage in place, using {} marshaller. {}", marshaller,
+        skipTempStorage ? "Temporary storage disabled." : "");
+    this.skipTempStorage = skipTempStorage;
   }
 
   public boolean deleteAttributes(final RepositoryItemUid uid)
@@ -162,6 +167,12 @@ public class DefaultLSAttributeStorage
         final DefaultStorageFileItem attributeItem =
             new DefaultStorageFileItem(repository, new ResourceStoreRequest(getAttributePath(repository,
                 uid.getPath())), true, true, new ByteArrayContentLocator(bos.toByteArray(), "text/xml"));
+
+        //To work around very slow file systems, we will skip writing to temp storage and moving the file into place
+        //when complete, and write directly to the target location
+        if (skipTempStorage) {
+          attributeItem.getItemContext().put(DefaultFSPeer.SKIP_TMP_STORAGE_PROP, true);
+        }
 
         repository.getLocalStorage().storeItem(repository, attributeItem);
       }

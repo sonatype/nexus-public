@@ -14,6 +14,7 @@ package org.sonatype.nexus.plugins.capabilities.internal;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.inject.Provider;
@@ -442,6 +443,29 @@ public class DefaultCapabilityRegistryTest
     assertThat(
         ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"), is("bar")
     );
+  }
+
+  @Test
+  public void test_getAll_concurrentModification() throws Exception {
+    final CapabilityReference ref1 = underTest.add(CAPABILITY_TYPE, true, null, null);
+    final CapabilityReference ref2 = underTest.add(CAPABILITY_TYPE, true, null, null);
+    final CapabilityReference ref3 = underTest.add(CAPABILITY_TYPE, true, null, null);
+    assertThat(ref1, is(not(nullValue())));
+    assertThat(ref2, is(not(nullValue())));
+    assertThat(ref3, is(not(nullValue())));
+
+    Collection<DefaultCapabilityReference> refs = underTest.getAll();
+
+    Iterator iter = refs.iterator();
+
+    //get first item
+    iter.next();
+    underTest.remove(ref2.context().id());
+    //get second item previous to fix for NEXUS-10876 though would throw a ConcurrentModificationException
+    iter.next();
+    underTest.remove(ref3.context().id());
+    //get third item
+    iter.next();
   }
 
 }

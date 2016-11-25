@@ -73,6 +73,7 @@ public class UserPrincipalsHelperTest
       protected void configure() {
         bind(Realm.class).annotatedWith(Names.named("TestPrincipalsRealm")).to(TestRealm.class);
         bind(UserManager.class).annotatedWith(Names.named("TestPrincipalsUserManager")).to(TestUserManager.class);
+        bind(Realm.class).annotatedWith(Names.named("TestSSORealm")).to(TestSSORealm.class);
       }
     });
     return modules;
@@ -245,6 +246,47 @@ public class UserPrincipalsHelperTest
     }
   }
 
+  @Test
+  public void testGetUserStatusWithSSO()
+      throws Exception
+  {
+    // make sure status works with SSO-style setup where user-managed realm is not first in principals
+
+    final List<String> realms = securitySystem.getRealms();
+    realms.add("TestSSORealm");
+    realms.add("TestPrincipalsRealm");
+    securitySystem.setRealms(realms);
+
+    final Subject subject = securitySystem.login(new TestSSORealm.SSOToken("tempUser"));
+    try {
+      final PrincipalCollection principals = subject.getPrincipals();
+      assertThat(principals.getRealmNames().iterator().next(), is("TestSSORealm"));
+
+      // check status is passed through
+      assertThat(helper().getUserStatus(principals), is(UserStatus.active));
+      TestUserManager.status = UserStatus.disabled;
+      assertThat(helper().getUserStatus(principals), is(UserStatus.disabled));
+      TestUserManager.status = UserStatus.locked;
+      assertThat(helper().getUserStatus(principals), is(UserStatus.locked));
+      TestUserManager.status = UserStatus.active;
+      assertThat(helper().getUserStatus(principals), is(UserStatus.active));
+
+      TestUserManager.userDeleted = true;
+
+      try {
+        helper().getUserStatus(principals);
+
+        Assert.fail("Expected UserNotFoundException");
+      }
+      catch (final UserNotFoundException e) {
+        // expected...
+      }
+    }
+    finally {
+      subject.logout();
+    }
+  }
+
   private UserPrincipalsHelper helper() {
     try {
       return lookup(UserPrincipalsHelper.class);
@@ -317,6 +359,58 @@ public class UserPrincipalsHelperTest
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
       if ("tempUser".equals(((UsernamePasswordToken) token).getUsername())) {
         return new SimpleAuthenticationInfo("tempUser", "tempPass", "TestPrincipalsRealm");
+      }
+      return null;
+    }
+
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+      return null;
+    }
+  }
+
+  @Singleton
+  static final class TestSSORealm
+      extends AuthorizingRealm
+  {
+    static class SSOToken
+        implements AuthenticationToken
+    {
+      private final String userId;
+
+      public SSOToken(String userId) {
+        this.userId = userId;
+      }
+
+      @Override
+      public Object getPrincipal() {
+        return userId;
+      }
+
+      @Override
+      public Object getCredentials() {
+        return null;
+      }
+    }
+
+    @Override
+    public Class getAuthenticationTokenClass() {
+      return SSOToken.class;
+    }
+
+    @Override
+    protected void assertCredentialsMatch(AuthenticationToken token, AuthenticationInfo info)
+    {
+      // no credentials to match
+    }
+
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
+      if ("tempUser".equals(((SSOToken) token).getPrincipal())) {
+        // add user-managed principal as secondary realm to this one (as might happen with single-sign-on)
+        SimplePrincipalCollection principals = new SimplePrincipalCollection("tempUser", "TestSSORealm");
+        principals.add("tempUser", "TestPrincipalsRealm");
+        return new SimpleAuthenticationInfo(principals, null);
       }
       return null;
     }

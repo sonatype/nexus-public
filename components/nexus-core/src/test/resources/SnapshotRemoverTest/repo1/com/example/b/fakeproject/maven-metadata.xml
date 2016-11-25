@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.example.b</groupId>
+  <artifactId>fakeproject</artifactId>
+  <versioning>
+    <versions>
+      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.3-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20160707173137</lastUpdated>
+  </versioning>
+</metadata>

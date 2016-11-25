@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security;
 
-import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -85,18 +84,21 @@ public class UserPrincipalsHelper
   public UserManager findUserManager(final PrincipalCollection principals)
       throws NoSuchUserManagerException
   {
-    String primaryRealmName = null;
-    if (principals != null) {
-      final Iterator<String> itr = principals.getRealmNames().iterator();
-      if (itr.hasNext()) {
-        primaryRealmName = itr.next();
+    if (principals == null) {
+      throw new NoSuchUserManagerException("Missing principals");
+    }
+    boolean isPrimary = true;
+    for (String realmName : principals.getRealmNames()) {
+      // include secondary realms in the search as long as they have the same userId as the primary
+      if (isPrimary || principals.fromRealm(realmName).contains(principals.getPrimaryPrincipal())) {
         for (final UserManager userManager : userManagers) {
-          if (primaryRealmName.equals(userManager.getAuthenticationRealmName())) {
+          if (realmName.equals(userManager.getAuthenticationRealmName())) {
             return userManager;
           }
+          isPrimary = false;
         }
       }
     }
-    throw new NoSuchUserManagerException("No UserManager for realm: " + primaryRealmName);
+    throw new NoSuchUserManagerException("No UserManager for realm(s): " + principals.getRealmNames());
   }
 }

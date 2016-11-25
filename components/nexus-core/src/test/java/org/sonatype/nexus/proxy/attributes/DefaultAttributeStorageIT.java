@@ -132,6 +132,22 @@ public class DefaultAttributeStorageIT
   public void testZeroLenghtLSAttributeStorage()
       throws Exception
   {
+    final DefaultLSAttributeStorage lsStorage = new DefaultLSAttributeStorage(false);
+    zeroLengthLSAttributeStorage(lsStorage);
+  }
+
+  @Test
+  public void testZeroLenghtLSAttributeStorageWithoutTempFiles()
+      throws Exception
+  {
+    final DefaultLSAttributeStorage lsStorage = new DefaultLSAttributeStorage(true);
+    zeroLengthLSAttributeStorage(lsStorage);
+  }
+  
+
+  private void zeroLengthLSAttributeStorage(final DefaultLSAttributeStorage lsStorage)
+      throws IOException, InterruptedException
+  {
     // NEXUS-4871
     RepositoryItemUid uid = getRepositoryItemUidFactory().createUid(repository, "a/b/c.txt");
 
@@ -146,7 +162,6 @@ public class DefaultAttributeStorageIT
     attFile.createNewFile();
     assertThat(attFile, FileMatchers.sized(0L));
 
-    final DefaultLSAttributeStorage lsStorage = new DefaultLSAttributeStorage();
 
     // check getAttributes is gonna delete it
     Attributes att = lsStorage.getAttributes(uid);

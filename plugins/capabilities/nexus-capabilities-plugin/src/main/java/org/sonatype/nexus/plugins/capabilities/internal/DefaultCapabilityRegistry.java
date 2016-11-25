@@ -55,6 +55,7 @@ import org.sonatype.sisu.goodies.eventbus.EventBus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -293,7 +294,7 @@ public class DefaultCapabilityRegistry
     try {
       lock.readLock().lock();
 
-      return references.values();
+      return ImmutableList.copyOf(references.values());
     }
     finally {
       lock.readLock().unlock();
