@@ -81,10 +81,17 @@ public class BlobAttributes
   }
 
   /**
+   * @since 3.2
+   */
+  public Path getPath() {
+    return propertiesFile.getFile().toPath();
+  }
+
+  /**
    * Returns {@code false} if the attribute file is not found.
    */
   public boolean load() throws IOException {
-      if (!Files.exists(propertiesFile.getFile().toPath())) {
+      if (!Files.exists(getPath())) {
         return false;
       }
       propertiesFile.load();

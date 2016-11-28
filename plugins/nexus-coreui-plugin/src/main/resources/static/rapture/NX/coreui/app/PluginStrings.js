@@ -976,9 +976,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Admin -> System -> Nodes
     Nodes_Toggling_read_only_mode: 'Toggling read-only mode',
     Nodes_Disable_read_only_mode: 'Disable read-only mode',
+    Nodes_Disable_read_only_mode_dialog: 'Disable read-only mode?',
     Nodes_Enable_read_only_mode: 'Enable read-only mode',
+    Nodes_Enable_read_only_mode_dialog: 'Enable read-only mode?',
     Nodes_Read_only_mode_warning: 'Nexus Repository is in read-only mode',
     Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
+    Nodes_enable_read_only_mode_dialog_description: 'Are you sure you want to reject additions of new' +
+    ' components and changes to configuration?',
+    Nodes_disable_read_only_mode_dialog_description: 'Are you sure you want to stop rejecting additions of new' +
+    ' components and changes to configuration?',
 
     // Admin -> System -> Tasks
     Tasks_Text: 'Tasks',

@@ -29,17 +29,13 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import org.elasticsearch.common.Strings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,15 +55,10 @@ public class DatabaseBackupTask
 
   private String location;
 
-  private String nodeId;
-
-  private final NodeAccess nodeAccess;
-
   private final DatabaseBackup databaseBackup;
 
   @Inject
-  public DatabaseBackupTask(final NodeAccess nodeAccess, final DatabaseBackup databaseBackup) {
-    this.nodeAccess = checkNotNull(nodeAccess);
+  public DatabaseBackupTask(final DatabaseBackup databaseBackup) {
     this.databaseBackup = checkNotNull(databaseBackup);
   }
 
@@ -89,29 +80,27 @@ public class DatabaseBackupTask
   public void configure(final TaskConfiguration configuration) {
     super.configure(configuration);
     this.location = configuration.getString(DatabaseBackupTaskDescriptor.BACKUP_LOCATION);
-    this.nodeId = configuration.getString(DatabaseBackupTaskDescriptor.BACKUP_NODE_ID);
   }
 
   @Override
   protected Object execute() throws Exception {
     List<Callable<Void>> jobs = Lists.newArrayList();
-    log.info("task named '{}' database backup to location {} on node {}", getName(), location,
-        nodeId == null ? "NOT-CLUSTERED" : nodeId);
+    log.info("task named '{}' database backup to location {}", getName(), location);
     MultipleFailures failures = new MultipleFailures();
-    if (runOnMe()) {
-      for (String dbName : databaseBackup.dbNames()) {
-        try {
-          log.info("database backup of {} starting", dbName);
-          Callable<Void> job = databaseBackup.fullBackup(location, dbName);
-          jobs.add(job);
-        }
-        catch (Exception e) {
-          failures.add(new RuntimeException(String.format(
-              "database backup of %s to location: %s please check filesystem permissions and that the location exists",
-              dbName, location), e));
-        }
+
+    for (String dbName : databaseBackup.dbNames()) {
+      try {
+        log.info("database backup of {} starting", dbName);
+        Callable<Void> job = databaseBackup.fullBackup(location, dbName);
+        jobs.add(job);
+      }
+      catch (Exception e) {
+        failures.add(new RuntimeException(String.format(
+            "database backup of %s to location: %s please check filesystem permissions and that the location exists",
+            dbName, location), e));
       }
     }
+
     monitorBackupResults(jobs, failures);
     failures.maybePropagate();
     return null;
@@ -146,30 +135,6 @@ public class DatabaseBackupTask
     return NexusExecutorService.forFixedSubject(backing, FakeAlmightySubject.TASK_SUBJECT);
   }
 
-  @VisibleForTesting
-  boolean runOnMe() {
-    // not running in HA - only node, task should run
-    if (!nodeAccess.isClustered()){
-      return true;
-    }
-    // running in HA - but node was never specified (most likely that task was created before HA was configured)
-    if (nodeAccess.isClustered() && Strings.isNullOrEmpty(nodeId)) {
-      throw new IllegalStateException("backup task failed because it was not configured to run in a cluster");
-    }
-    // running in HA - this is the correct node to execute the task
-    if (nodeAccess.isClustered() && Objects.equal(nodeAccess.getId(), nodeId)) {
-      return true;
-    }
-    // running in HA - but the node that executes this task is no longer in the cluster, better inform admins
-    if (nodeAccess.isClustered() && !nodeAccess.getMemberIds().contains(nodeId)) {
-      throw new IllegalStateException(
-          String.format("backup task failed because node with nodeId %s was not found in the cluster", nodeId)
-      );
-    }
-    // only run if one of the correct cases above were met
-    return false;
-  }
-
   public String getLocation() {
     return location;
   }
@@ -177,13 +142,4 @@ public class DatabaseBackupTask
   public void setLocation(final String location) {
     this.location = location;
   }
-
-  public String getNodeId() {
-    return nodeId;
-  }
-
-  public void setNodeId(final String nodeId) {
-    this.nodeId = nodeId;
-  }
-
 }

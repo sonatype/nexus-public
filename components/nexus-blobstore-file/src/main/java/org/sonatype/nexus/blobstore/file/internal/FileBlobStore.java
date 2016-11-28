@@ -335,12 +335,12 @@ public class FileBlobStore
           BlobAttributes blobAttributes = new BlobAttributes(attributePath(blobId));
           boolean loaded = blobAttributes.load();
           if (!loaded) {
-            log.debug("Attempt to access non-existent blob {}", blobId);
+            log.warn("Attempt to access non-existent blob {} ({})", blobId, blobAttributes.getPath());
             return null;
           }
 
           if (blobAttributes.isDeleted()) {
-            log.debug("Attempt to get deleted blob {}", blobId);
+            log.warn("Attempt to access soft-deleted blob {} ({})", blobId, blobAttributes.getPath());
             return null;
           }
 

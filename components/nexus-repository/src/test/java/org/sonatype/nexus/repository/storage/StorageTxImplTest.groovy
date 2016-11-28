@@ -397,4 +397,33 @@ extends TestSupport
     verify(provenance, times(1)).set(HASHES_NOT_VERIFIED, !hashesVerified)
   }
 
+  /**
+   * Given:
+   * - a blob which is missing from the blobstore
+   * When:
+   * - requiring the blob
+   * Then:
+   * - exception is thrown
+   */
+  @Test(expected = MissingBlobException.class)
+  void 'requiring blob fails when blob is missing from blobstore'() {
+    def blobRef = mock(BlobRef)
+    when(bucket.getRepositoryName()).thenReturn('testRepo')
+    when(blobTx.get(blobRef)).thenReturn(null)
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW_ONCE,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+    underTest.requireBlob(blobRef)
+  }
+
 }

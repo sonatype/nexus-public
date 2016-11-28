@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.sonatype.nexus.formfields.CheckboxFormField;
+import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,6 +38,12 @@ public abstract class TaskDescriptorSupport
   public static final String MULTINODE_LABEL = "Multi node";
 
   public static final String MULTINODE_HELP = "Run task on all nodes in the cluster.";
+
+  public static final String LIMIT_NODE_KEY = "limitnode";
+
+  public static final String LIMIT_NODE_LABEL = "Select node";
+
+  public static final String LIMIT_NODE_HELP = "Run task on this node in the cluster.";
 
   // Constants to help document configuration, since these are final and we have no fluent builder ATM
 
@@ -131,5 +138,15 @@ public abstract class TaskDescriptorSupport
    */
   protected static CheckboxFormField newMultinodeFormField() {
     return new CheckboxFormField(MULTINODE_KEY, MULTINODE_LABEL, MULTINODE_HELP, false);
+  }
+
+  /**
+   * Creates a new {@link FormField} for tasks which are limited to a specific node.
+   *
+   * @since 3.2
+   */
+  protected static ComboboxFormField<String> newLimitNodeFormField() {
+    return new ComboboxFormField<String>(LIMIT_NODE_KEY, LIMIT_NODE_LABEL, LIMIT_NODE_HELP, true)
+        .withStoreApi("node_NodeAccess.nodes").withIdMapping("name");
   }
 }

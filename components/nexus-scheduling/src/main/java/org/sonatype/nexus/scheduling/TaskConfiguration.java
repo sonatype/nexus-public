@@ -305,4 +305,12 @@ public final class TaskConfiguration
       configuration.put(key, value);
     }
   }
+
+  /**
+   * @since 3.2
+   */
+  public boolean containsKey(final String key) {
+    checkNotNull(key);
+    return configuration.containsKey(key);
+  }
 }

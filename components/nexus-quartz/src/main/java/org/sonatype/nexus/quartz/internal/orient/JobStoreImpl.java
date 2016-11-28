@@ -35,6 +35,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
@@ -45,6 +46,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.quartz.Calendar;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
@@ -73,6 +75,7 @@ import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ERRO
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUSED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUSED_BLOCKED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.WAITING;
+import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 
 /**
  * Orient {@link JobStore}.
@@ -926,6 +929,11 @@ public class JobStoreImpl
           continue;
         }
 
+        // check after misfire logic to avoid repeated log-spam
+        if (isClustered() && isLimitedToMissingNode(trigger)) {
+          continue;
+        }
+
         // track result
         resultEntities.add(entity);
       }
@@ -1398,10 +1406,45 @@ public class JobStoreImpl
       Set<String> memberIds = nodeAccess.getMemberIds();
 
       return Iterables.filter(triggers, (entity) -> {
-        String owner = entity.getValue().getJobDataMap().getString(NODE_ID);
+        JobDataMap triggerDetail = entity.getValue().getJobDataMap();
+        if (triggerDetail.containsKey(LIMIT_NODE_KEY)) {
+          // filter limited triggers to those limited to run on this node, or orphaned
+          String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);
+          return localId.equals(limitedNodeId) || !memberIds.contains(limitedNodeId);
+        }
+        // filter all other triggers to those "owned" by this node, or orphaned
+        String owner = triggerDetail.getString(NODE_ID);
         return localId.equals(owner) || !memberIds.contains(owner);
       });
     }
     return triggers;
+  }
+
+  /**
+   * Helper to warn when a limited trigger won't fire because its node is missing.
+   */
+  private boolean isLimitedToMissingNode(final OperableTrigger trigger) {
+    JobDataMap triggerDetail = trigger.getJobDataMap();
+    if (triggerDetail.containsKey(LIMIT_NODE_KEY)) {
+      String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);
+      // can skip members check here because "local()" has already filtered limited triggers down to those
+      // which are either limited to run on the current node, or on a missing node (ie. have been orphaned)
+      if (!nodeAccess.getId().equals(limitedNodeId)) {
+        // not limited to this node, so must be an orphaned trigger
+        String description = trigger.getDescription();
+        if (Strings2.isBlank(description)) {
+          description = trigger.getJobKey().getName();
+        }
+        if (Strings2.isBlank(limitedNodeId)) {
+          log.warn("Cannot run task '{}' because it is not configured for HA", description);
+        }
+        else {
+          log.warn("Cannot run task '{}' because it uses node {} which is not a member of this cluster", description,
+              limitedNodeId);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }

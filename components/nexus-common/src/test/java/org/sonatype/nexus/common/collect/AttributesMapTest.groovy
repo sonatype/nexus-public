@@ -108,4 +108,16 @@ class AttributesMapTest
     assert value != null;
     assert underTest.contains(GetOrCreateAttribute.class)
   }
+
+  @Test
+  void 'handle Date as Date or Long'() {
+    Date testDate = new Date()
+    Long testDateLong = testDate.getTime()
+
+    underTest.set('foo', testDate)
+    underTest.set('bar', testDateLong)
+
+    assert underTest.get('foo', Date.class) == testDate
+    assert underTest.get('bar', Date.class) == testDate
+  }
 }

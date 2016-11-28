@@ -580,6 +580,7 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
           <configuration>
+            <trimStackTrace>false</trimStackTrace>
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
             <argLine>

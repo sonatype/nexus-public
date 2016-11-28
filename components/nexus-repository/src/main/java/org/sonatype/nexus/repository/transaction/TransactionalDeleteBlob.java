@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.transaction;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -24,11 +25,11 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Indicates the method will delete blobs.
+ * Indicates the method will delete blobs; while doing this it may touch other blobs.
  *
  * @since 3.2
  */
-@Transactional(retryOn = ONeedRetryException.class)
+@Transactional(retryOn = { ONeedRetryException.class, MissingBlobException.class })
 @Target(METHOD)
 @Retention(RUNTIME)
 public @interface TransactionalDeleteBlob

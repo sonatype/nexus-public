@@ -32,6 +32,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent;
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent;
@@ -55,6 +56,7 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -77,11 +79,13 @@ import org.quartz.spi.ThreadExecutor;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Maps.filterKeys;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
+import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 
 /**
  * Quartz {@link SchedulerSPI}.
@@ -98,6 +102,8 @@ public class QuartzSchedulerSPI
   private static final String SCHEDULER_NAME = "nexus";
 
   private static final String GROUP_NAME = "nexus";
+
+  private static final Set<String> INHERITED_CONFIG_KEYS = ImmutableSet.of(LIMIT_NODE_KEY);
 
   private final EventBus eventBus;
 
@@ -504,8 +510,8 @@ public class QuartzSchedulerSPI
             schedule
         );
 
-        Trigger trigger = buildTrigger(schedule, old.getJobKey());
         JobDetail jobDetail = buildJob(config, old.getJobKey());
+        Trigger trigger = buildTrigger(schedule, jobDetail);
 
         scheduler.addJob(jobDetail, true, true);
         scheduler.rescheduleJob(trigger.getKey(), trigger);
@@ -538,7 +544,8 @@ public class QuartzSchedulerSPI
         // get trigger, but use identity of jobKey
         // This is only for simplicity, as is not a requirement: NX job:triggers are 1:1 so tying them as this is ok
         // ! create the trigger before eventual TaskInfo remove bellow to avoid task removal in case of an invalid trigger
-        Trigger trigger = buildTrigger(schedule, jobKey);
+        JobDetail jobDetail = buildJob(config, jobKey);
+        Trigger trigger = buildTrigger(schedule, jobDetail);
 
         log.debug("Task {} : {} scheduled with key: {} and schedule: {}",
             config.getId(),
@@ -546,8 +553,6 @@ public class QuartzSchedulerSPI
             jobKey.getName(),
             schedule
         );
-
-        JobDetail jobDetail = buildJob(config, jobKey);
 
         // register job specific listener with initial state
         QuartzTaskJobListener listener = attachJobListener(jobDetail, trigger);
@@ -574,9 +579,11 @@ public class QuartzSchedulerSPI
         .build();
   }
 
-  private Trigger buildTrigger(final Schedule schedule, final JobKey jobKey) {
+  private Trigger buildTrigger(final Schedule schedule, final JobDetail jobDetail) {
     return ensureStartsInTheFuture(triggerConverter.convert(schedule)
-        .withIdentity(jobKey.getName(), jobKey.getGroup())
+        .withIdentity(jobDetail.getKey().getName(), jobDetail.getKey().getGroup())
+        .withDescription(jobDetail.getDescription())
+        .usingJobData(new JobDataMap(filterKeys(jobDetail.getJobDataMap(), INHERITED_CONFIG_KEYS::contains)))
         .build());
   }
 
@@ -665,17 +672,16 @@ public class QuartzSchedulerSPI
   /**
    * Used by {@link QuartzTaskInfo#runNow()}.
    */
-  public void runNow(final JobKey jobKey) throws TaskRemovedException, SchedulerException {
+  public void runNow(final JobKey jobKey, final TaskConfiguration config)
+      throws TaskRemovedException, SchedulerException
+  {
     ensureStarted();
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       // triggering with dataMap from "now" trigger as it contains metadata for back-conversion in listener
-      scheduler.triggerJob(
-          jobKey,
-          triggerConverter.convert(scheduleFactory().now())
-              .build()
-              .getJobDataMap()
-      );
+      JobDataMap triggerDetail = triggerConverter.convert(scheduleFactory().now()).build().getJobDataMap();
+      triggerDetail.putAll(filterKeys(config.asMap(), INHERITED_CONFIG_KEYS::contains));
+      scheduler.triggerJob(jobKey, triggerDetail);
     }
     catch (JobPersistenceException e) {
       throw new TaskRemovedException(jobKey.getName(), e);
@@ -751,6 +757,12 @@ public class QuartzSchedulerSPI
         quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
         quartzScheduler.notifySchedulerListenersSchduled(trigger);
       }
+      else if (isLimitedToThisNode(trigger)) {
+        // special "run-now" task which was created on a different node to where it will run
+        // when this happens we ping the scheduler to make sure it runs as soon as possible
+        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+        quartzScheduler.notifySchedulerListenersSchduled(trigger);
+      }
     }
   }
 
@@ -783,6 +795,28 @@ public class QuartzSchedulerSPI
         removeJobListener(trigger.getJobKey());
       }
     }
+  }
+
+  /**
+   * See {@link QuartzTaskInfo#runNow(String)}
+   *
+   * @since 3.2
+   */
+  public boolean isLimitedToAnotherNode(final TaskConfiguration config) {
+    if (nodeAccess.isClustered() && config.containsKey(LIMIT_NODE_KEY)) {
+      String limitedNodeId = config.getString(LIMIT_NODE_KEY);
+      checkState(!Strings2.isBlank(limitedNodeId),
+          "Task '%s' is not configured for HA", config.getName());
+      checkState(nodeAccess.getMemberIds().contains(limitedNodeId),
+          "Task '%s' uses node %s which is not a member of this cluster", config.getName(), limitedNodeId);
+      return !nodeAccess.getId().equals(limitedNodeId);
+    }
+    return false;
+  }
+
+  private boolean isLimitedToThisNode(final Trigger trigger) {
+    // can skip isClustered check because this method is only called when in HA mode
+    return nodeAccess.getId().equals(trigger.getJobDataMap().getString(LIMIT_NODE_KEY));
   }
 
   private static boolean isRunNow(final Trigger trigger) {

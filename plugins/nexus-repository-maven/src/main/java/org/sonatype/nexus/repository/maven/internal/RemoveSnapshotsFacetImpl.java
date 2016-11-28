@@ -104,16 +104,20 @@ public class RemoveSnapshotsFacetImpl
   private static final Function<Component, GAV> GROUPING_FUNCTION = t -> new GAV(t.group(), t.name(),
       (String) t.attributes().child(Maven2Format.NAME).get(P_BASE_VERSION), -1);
 
+  private final long batchSize;
+
   private final ComponentEntityAdapter componentEntityAdapter;
 
   private final Type groupType;
 
   @Inject
   public RemoveSnapshotsFacetImpl(final ComponentEntityAdapter componentEntityAdapter,
-                                  @Named(GroupType.NAME) final Type groupType)
+                                  @Named(GroupType.NAME) final Type groupType,
+                                  @Named("${nexus.removeSnapshots.batchSize:-500}") long batchSize)
   {
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.groupType = checkNotNull(groupType);
+    this.batchSize = batchSize;
   }
 
   @Override
@@ -171,12 +175,13 @@ public class RemoveSnapshotsFacetImpl
     //collect any GAVs we need to refresh metadata for
     Set<GAV> metadataUpdateRequired = new HashSet<>();
 
-    //process already released snapshots first as that may remove candidates for next phase
+    metadataUpdateRequired.addAll(processSnapshots(repository, config, tx));
+
+    // since this spans all maven repos it can be expensive to find deletion candidates, so we do it after deleting 
+    // based on other criteria
     if (config.getRemoveIfReleased()) {
       metadataUpdateRequired.addAll(processReleasedSnapshots(repository, config, tx));
     }
-
-    metadataUpdateRequired.addAll(processSnapshots(repository, config, tx));
 
     return metadataUpdateRequired;
   }
@@ -194,8 +199,10 @@ public class RemoveSnapshotsFacetImpl
     Iterable<Component> releasedSnapshots = findReleasedSnapshots(tx, repository, gracePeriod);
     Map<GAV, List<Component>> groupedReleasedSnapshots = stream(releasedSnapshots.spliterator(), false)
         .collect(Collectors.groupingBy(GROUPING_FUNCTION));
-    log.debug("Processing {} GAVs found that have already been released and for which the grace period has elapsed",
+    log.info("Processing {} GAVs found that have already been released and for which the grace period has elapsed",
         groupedReleasedSnapshots.size());
+
+    long deleted = 0;
 
     for (Entry<GAV, List<Component>> entry : groupedReleasedSnapshots.entrySet()) {
       GAV key = entry.getKey();
@@ -203,9 +210,18 @@ public class RemoveSnapshotsFacetImpl
       for (Component component : entry.getValue()) {
         log.debug("Deleting component: {}", component);
         tx.deleteComponent(component);
+        if (++deleted % batchSize == 0) {
+          log.debug("Committing batch delete");
+          tx.commit();
+          tx.begin();
+        }
       }
     }
-    log.debug("Finished processing snapshots with associated releases");
+    //commit any potential leftovers that didn't fit in the batch delete window
+    log.debug("Committing final batch delete");
+    tx.commit();
+    tx.begin();
+    log.info("Finished processing snapshots with associated releases");
     return groupedReleasedSnapshots.keySet();
   }
 
@@ -222,7 +238,7 @@ public class RemoveSnapshotsFacetImpl
 
     DateTime olderThan = DateTime.now().minusDays(Math.max(config.getSnapshotRetentionDays(), 0));
     Set<GAV> snapshotCandidates = Sets.newHashSet(findSnapshotCandidates(tx, repository, config.getMinimumRetained()));
-    log.debug("Processing {} GAVs found with more than minimum {} snapshot versions", snapshotCandidates.size(),
+    log.info("Processing {} GAVs found with more than minimum {} snapshot versions", snapshotCandidates.size(),
         config.getMinimumRetained());
 
     // only interested in the ones where we actually delete something, otherwise we would needlessly regenerate metadata
@@ -243,18 +259,25 @@ public class RemoveSnapshotsFacetImpl
           .collect(Collectors.toList());
 
       if (!toDelete.isEmpty()) {
-        deleted += toDelete.size();
         gavsWithDeletions.add(snapshotCandidate);
         for (Component component : toDelete) {
           log.debug("Deleting component: {}", component);
           tx.deleteComponent(component);
+          if (++deleted % batchSize == 0) {
+            log.debug("Committing batch delete");
+            tx.commit();
+            tx.begin();
+          }
         }
+        log.debug("Committing final batch delete");
+        tx.commit();
+        tx.begin();
       }
     }
 
-    log.debug("Finished processing snapshots with more than {} versions created before {}", config.getMinimumRetained(),
+    log.info("Finished processing snapshots with more than {} versions created before {}", config.getMinimumRetained(),
         olderThan);
-    log.debug("Deleted {} components from GAVs: {}", deleted, gavsWithDeletions);
+    log.info("Deleted {} components from {} distinct GAVs", deleted, gavsWithDeletions.size());
     return gavsWithDeletions;
   }
 
@@ -337,14 +360,15 @@ public class RemoveSnapshotsFacetImpl
         return false;
       }
       GAV gav = (GAV) o;
-      return Objects.equal(group, gav.group) &&
+      return count == gav.count &&
+          Objects.equal(group, gav.group) &&
           Objects.equal(name, gav.name) &&
           Objects.equal(baseVersion, gav.baseVersion);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(group, name, baseVersion);
+      return Objects.hashCode(group, name, baseVersion, count);
     }
 
     @Override
@@ -353,6 +377,7 @@ public class RemoveSnapshotsFacetImpl
           "group='" + group + '\'' +
           ", name='" + name + '\'' +
           ", baseVersion='" + baseVersion + '\'' +
+          ", count=" + count +
           '}';
     }
   }

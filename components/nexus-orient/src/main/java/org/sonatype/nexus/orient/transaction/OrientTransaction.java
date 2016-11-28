@@ -13,9 +13,13 @@
 package org.sonatype.nexus.orient.transaction;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
+import org.sonatype.nexus.common.sequence.NumberSequence;
+import org.sonatype.nexus.common.sequence.RandomExponentialSequence;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -30,11 +34,16 @@ public class OrientTransaction
     extends ComponentSupport
     implements Transaction
 {
+  private static final int INITIAL_DELAY_MS = SystemPropertiesHelper
+      .getInteger(OrientTransaction.class.getName() + ".retrydelay.initial", 10);
+
   private static final int MAX_RETRIES = 8;
 
   private final ODatabaseDocumentTx db;
 
   private int retries = 0;
+
+  private NumberSequence retryDelay;
 
   OrientTransaction(final ODatabaseDocumentTx db) {
     this.db = checkNotNull(db);
@@ -96,11 +105,30 @@ public class OrientTransaction
   @Override
   public boolean allowRetry(final Exception cause) {
     if (retries < MAX_RETRIES) {
+      try {
+        if (retryDelay == null) {
+          retryDelay = delaySequence();
+        }
+        long delay = retryDelay.next();
+        log.trace("Delaying tx retry for {}ms", delay);
+        Thread.sleep(delay);
+      }
+      catch (final InterruptedException e) {
+        Throwables.propagate(e);
+      }
       retries++;
       log.debug("Retrying operation: {}/{}", retries, MAX_RETRIES);
       return true;
     }
     log.warn("Reached max retries: {}/{}", retries, MAX_RETRIES);
     return false;
+  }
+
+  private static NumberSequence delaySequence() {
+    return RandomExponentialSequence.builder()
+        .start(INITIAL_DELAY_MS) // start at 10ms
+        .factor(2) // delay an average of 100% longer, each time
+        .maxDeviation(.5) // ±50%
+        .build();
   }
 }

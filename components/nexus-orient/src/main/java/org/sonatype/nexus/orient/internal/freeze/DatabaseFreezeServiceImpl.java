@@ -27,6 +27,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,7 +47,8 @@ public class DatabaseFreezeServiceImpl
 
   private final EventBus eventBus;
 
-  private volatile boolean frozen = false;
+  @VisibleForTesting
+  volatile boolean frozen = false;
 
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers, final EventBus eventBus) {
@@ -56,6 +58,10 @@ public class DatabaseFreezeServiceImpl
 
   @Override
   public synchronized void freezeAllDatabases() {
+    if (frozen) {
+      log.info("Databases already frozen, skipping freeze command.");
+      return;
+    }
     log.info("Freezing all databases.");
     frozen = true;
 
@@ -66,6 +72,11 @@ public class DatabaseFreezeServiceImpl
 
   @Override
   public synchronized void releaseAllDatabases() {
+    if (!frozen) {
+      log.info("Databases already released, skipping release command.");
+      return;
+    }
+
     log.info("Releasing all databases.");
     frozen = false;
 

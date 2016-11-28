@@ -30,12 +30,12 @@ class RemoveSnapshotsFacetImplTest
 {
   ComponentEntityAdapter componentEntityAdapter = Mock()
 
-  StorageTx tx = Mock ()
+  StorageTx tx = Mock()
 
   @Subject
   RemoveSnapshotsFacetImpl removeSnapshotsFacet =
-      Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType()])
-  
+      Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 500])
+
   /**
    * Test which GAVs are marked for future processing based on the deletion of Components.
    */
@@ -49,18 +49,53 @@ class RemoveSnapshotsFacetImplTest
       removeSnapshotsFacet.findSnapshotCandidates(_, _, _) >> candidates
       removeSnapshotsFacet.findSnapshots(_, _, _) >> comps
       gavs == expected
+      1 * removeSnapshotsFacet.processSnapshots(_, _, _)
+      dels * tx.deleteComponent(_)
+      commits * tx.commit()
+      commits * tx.begin()
+      0 * _  // no other interactions on Mocks/Spies
 
     where:
-      config                 | candidates | comps                                           || expected      | desc
-      config(1, 0, false, 0) | []         | []                                              || [] as HashSet |
-          'No candidate snaphshots should result in no GAVs with deletions'
-      config(1, 0, false, 0) | [gav()]    | [component()]                                   || [] as HashSet |
-          'Not enough candidate snapshots should result in no GAVs deleted'
-      config(1, 0, false, 0) | [gav(2)]   | [component(), component('1.0-20161110.233023')] ||
-          [gav(2)] as HashSet                                                                               |
-          'If available candidate qualifies (based on lastUpdated) we should see deletions'
-      config(1, 1, false, 0) | [gav(2)]   | [component(), component('1.0-20161110.233023')] || [] as HashSet |
-          'If available candidates are disqualified (based on lastUpdated) we should see no deletions'
+      // @formatter:off
+      config | candidates | comps || expected | dels | commits | desc
+      config() | []         | []                                              || [] as HashSet | 0 | 0 | 'No candidate snaphshots should result in no GAVs with deletions'
+      config() | [gav()]    | [component()]                                   || [] as HashSet | 0 | 0 | 'Not enough candidate snapshots should result in no GAVs deleted'
+      config() | [gav(2)]   | [component(), component('1.0-20161110.233023')] || [gav(2)] as HashSet | 1 | 1 | 'If available candidate qualifies (based on lastUpdated) we should see deletions'
+      config(1, 1, false, 0) | [gav(2)]   | [component(), component('1.0-20161110.233023')] || [] as HashSet | 0 | 0 | 'If available candidates are disqualified (based on lastUpdated) we should see no deletions'
+      config() | [gav(501)] | components(501)                                 || [gav(501)] as HashSet | 500 | 2 | 'More than 500 results should require more than one commit'
+      // @formatter:on 
+  }
+  
+  def 'Number of commits are based on batch size and number of GAVs'() {
+    given: 'A facet configured with a specific batch size'
+      RemoveSnapshotsFacetImpl facet =
+          Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 2])
+      def candidates = [gav(3), gav(4), gav(5)]
+      def components = [components(3), components(4), components(5)]
+      def expectedDeleteCount = candidates.sum { it.count - 1 }
+      def expectedCommitCount = Math.floor(expectedDeleteCount) / 2 + candidates.size()
+    
+    when: 'When triggered with multiple GAVs'
+      def gavs = facet.processSnapshots(null, config(), tx)
+
+    then: 'We expect a commit per GAV and 1 commit each time "batchSize" records are deleted'
+      // stubbing out Spy internal methods here to avoid need to overly mock data layer
+      facet.findSnapshotCandidates(_, _, _) >> candidates
+      facet.findSnapshots(_, _, _) >> components[0] >> components[1] >> components[2]
+      1 * facet.processSnapshots(_, _, _)
+      gavs == candidates as HashSet
+      candidates.sum { it.count - 1 } * tx.deleteComponent(_) // leave one per GAV
+      expectedCommitCount * tx.commit() // 1 commit/begin per involved GAV + 1 for every 2 deletions 
+      expectedCommitCount * tx.begin()
+      0 * _  // no other interactions on Mocks/Spies
+  }
+
+  def components(final int i) {
+    def results = []
+    i.times {
+      results << component()
+    }
+    results
   }
 
   GAV gav(int count = 1, String baseVersion = '1.0', String group = 'a', String name = 'b') {
@@ -71,8 +106,8 @@ class RemoveSnapshotsFacetImplTest
     new Component(group: group, version: version).name(name).lastUpdated(DateTime.now())
   }
 
-  RemoveSnapshotsConfig config(int minimumRetained, int snapshotRetentionDays, boolean removeIfReleased,
-                               int gracePeriod)
+  RemoveSnapshotsConfig config(int minimumRetained = 1, int snapshotRetentionDays = 0, boolean removeIfReleased = false,
+                               int gracePeriod = 0)
   {
     new RemoveSnapshotsConfig(minimumRetained, snapshotRetentionDays, removeIfReleased, gracePeriod)
   }

@@ -237,6 +237,29 @@ Ext.define('NX.controller.User', {
     me.logDebug('Sign-in user: "', values.username, '" ...');
     //</if>
 
+    me.doSignIn(b64username, b64password, values, button);
+  },
+
+  /**
+   * @private
+   */
+  doAuthenticateAction: function (button) {
+    var win = button.up('window');
+
+    // invoke optional authenticateAction callback registered on window
+    if (win.options && Ext.isFunction(win.options.authenticateAction)) {
+      win.options.authenticateAction.call(this, button);
+    }
+  },
+
+  // TODO: anything that may change the authentication/session should probably not be
+  // TODO: done via extjs as it can batch, and the batch operation could impact the
+  // TODO: sanity of the requests if authentication changes mid execution of batch operations
+
+  doSignIn: function(b64username, b64password, values, button) {
+    var me = this,
+        win = button.up('window');
+
     Ext.Ajax.request({
       url: NX.util.Url.urlOf('service/rapture/session'),
       method: 'POST',
@@ -273,24 +296,9 @@ Ext.define('NX.controller.User', {
   /**
    * @private
    */
-  doAuthenticateAction: function (button) {
-    var win = button.up('window');
-
-    // invoke optional authenticateAction callback registered on window
-    if (win.options && Ext.isFunction(win.options.authenticateAction)) {
-      win.options.authenticateAction.call(this, button);
-    }
-  },
-
-  // TODO: anything that may change the authentication/session should probably not be
-  // TODO: done via extjs as it can batch, and the batch operation could implact the
-  // TODO: sanity of the requests if authentication changes mid execution of batch operations
-
-  /**
-   * @private
-   */
   authenticate: function (button) {
-    var win = button.up('window'),
+    var me = this,
+        win = button.up('window'),
         form = button.up('form'),
         user = NX.State.getUser(),
         values = Ext.applyIf(form.getValues(), {username: user ? user.id : undefined}),
@@ -303,18 +311,7 @@ Ext.define('NX.controller.User', {
     this.logDebug('Authenticating user "', values.username, '" ...');
     //</if>
 
-    NX.direct.rapture_Security.authenticate(b64username, b64password, function (response) {
-      win.getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        NX.State.setUser(response.data);
-        win.close();
-
-        // invoke optional success callback registered on window
-        if (win.options && Ext.isFunction(win.options.success)) {
-          win.options.success.call(win.options.scope, win.options);
-        }
-      }
-    });
+    me.doSignIn(b64username, b64password, values, button);
   },
 
   /**

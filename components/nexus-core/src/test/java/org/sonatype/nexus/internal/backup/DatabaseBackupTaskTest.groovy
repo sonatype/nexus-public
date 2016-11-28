@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.backup
 import java.util.concurrent.Callable
 
 import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException
-import org.sonatype.nexus.common.node.NodeAccess
 
 import spock.lang.Specification
 
@@ -29,108 +28,28 @@ class DatabaseBackupTaskTest
     extends Specification
 {
 
-  def 'task should be able to identify if it is on the right node in a cluster'() {
-    setup:
-      def databaseBackup = Mock(DatabaseBackup)
-      def nodeAccess = Mock(NodeAccess)
-      def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
-
-    when: 'it is clustered setup and the right node'
-      nodeAccess.isClustered() >> true
-      nodeAccess.id >> 'myId'
-      dbBackupTask.nodeId = 'myId'
-
-    then: 'task should want to run'
-      assertThat(dbBackupTask.runOnMe(), is(true))
-  }
-
-  def 'task should be able to identify that it does not run the task in a cluster'() {
-    setup:
-      def databaseBackup = Mock(DatabaseBackup)
-      def nodeAccess = Mock(NodeAccess)
-      def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
-
-    when: 'it is clustered setup and the wrong node'
-      nodeAccess.isClustered() >> true
-      nodeAccess.id >> 'myId'
-      dbBackupTask.nodeId = 'notMyId'
-      nodeAccess.memberIds >> ['notMyId']
-
-    then: 'task should want to run'
-      assertThat(dbBackupTask.runOnMe(), is(false))
-  }
-
-  def 'task should know that it is not in a cluster and should run'() {
-    setup:
-      def databaseBackup = Mock(DatabaseBackup)
-      def nodeAccess = Mock(NodeAccess)
-      def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
-
-    when: 'it is not clustered setup'
-      nodeAccess.isClustered() >> false
-
-    then: 'task should want to run'
-      assertThat(dbBackupTask.runOnMe(), is(true))
-  }
-
-  def 'task should identify that it went from unclustered to clustered and complain'() {
-    setup:
-      def databaseBackup = Mock(DatabaseBackup)
-      def nodeAccess = Mock(NodeAccess)
-      def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
-
-    when: 'it is now a clustered setup, but nodeId was never specified'
-      nodeAccess.isClustered() >> true
-      dbBackupTask.nodeId = null
-      dbBackupTask.runOnMe()
-
-    then: 'should throw an exception'
-      thrown IllegalStateException
-  }
-
-  def 'task should identify when the configured node is not in the cluster and complain'() {
-    setup:
-      def databaseBackup = Mock(DatabaseBackup)
-      def nodeAccess = Mock(NodeAccess)
-      def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
-
-    when: 'it is a cluster, but the correct node is not found'
-      nodeAccess.isClustered() >> true
-      nodeAccess.getId() >> 'notMyId'
-      nodeAccess.getMemberIds() >> ['notMyId']
-      dbBackupTask.nodeId = 'myId'
-      dbBackupTask.runOnMe()
-
-    then: 'should throw an exception'
-      thrown IllegalStateException
-  }
-
   def 'task should execute properly'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def nodeAccess = Mock(NodeAccess)
-    def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
       dbBackupTask.execute()
 
     then: 'the databaseBackup service should be called appropriately'
-      1 * nodeAccess.isClustered() >> false
       1 * databaseBackup.dbNames() >> ['test']
       1 * databaseBackup.fullBackup('target', 'test') >> dumbBackupJob
   }
 
   def 'task should fail somewhat gracefully if the file cannot be created'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def nodeAccess = Mock(NodeAccess)
-    def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
       dbBackupTask.execute()
 
     then: 'the databaseBackup service should be called appropriately'
-      1 * nodeAccess.isClustered() >> false
       1 * databaseBackup.dbNames() >> ['test']
       1 * databaseBackup.fullBackup('target', 'test') >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
@@ -140,15 +59,13 @@ class DatabaseBackupTaskTest
 
   def 'task should try to backup all files when told to do so'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def nodeAccess = Mock(NodeAccess)
-    def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
       dbBackupTask.execute()
 
     then: 'the databaseBackup service should be called appropriately'
-      1 * nodeAccess.isClustered() >> false
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
       1 * databaseBackup.fullBackup('target', 'test1') >> dumbBackupJob
       1 * databaseBackup.fullBackup('target', 'test2') >> dumbBackupJob
@@ -157,15 +74,13 @@ class DatabaseBackupTaskTest
 
   def 'task should be okay if one file fails, but others can work'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def nodeAccess = Mock(NodeAccess)
-    def dbBackupTask = new DatabaseBackupTask(nodeAccess, databaseBackup)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
       dbBackupTask.execute()
 
     then: 'the databaseBackup service should be called appropriately'
-      1 * nodeAccess.isClustered() >> false
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
       1 * databaseBackup.fullBackup('target', 'test1') >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")

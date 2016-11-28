@@ -19,8 +19,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.formfields.ComboboxFormField;
-import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -41,8 +39,6 @@ public class DatabaseBackupTaskDescriptor
 
   public static final String BACKUP_LOCATION = "location";
 
-  public static final String BACKUP_NODE_ID = "nodeId";
-
   private interface Messages
       extends MessageBundle
   {
@@ -54,13 +50,6 @@ public class DatabaseBackupTaskDescriptor
 
     @DefaultMessage("Filesystem location for backup data")
     String locationHelpText();
-
-    @DefaultMessage("Node performing backup")
-    String backupNodeLabel();
-
-    @DefaultMessage("Where should backups be performed")
-    String backupNodeHelpText();
-
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -75,28 +64,13 @@ public class DatabaseBackupTaskDescriptor
             messages.locationHelpText(),
             MANDATORY
         ),
-        nodeFormField(nodeAccess));
+        nodeAccess.isClustered() ? newLimitNodeFormField() : null
+    );
   }
 
   @Override
   public void initializeConfiguration(final TaskConfiguration configuration) {
-    configuration.setBoolean(MULTINODE_KEY, true);
+    // cover upgrade from non-HA to HA: task will warn until a node is chosen
+    configuration.setString(LIMIT_NODE_KEY, "");
   }
-
-  private static FormField<String> nodeFormField(final NodeAccess nodeAccess) {
-    FormField<String> nodeField;
-    if (nodeAccess.isClustered()) {
-      nodeField = new ComboboxFormField<String>(
-          BACKUP_NODE_ID,
-          messages.backupNodeLabel(),
-          messages.backupNodeHelpText(),
-          MANDATORY
-      ).withStoreApi("node_NodeAccess.nodes").withIdMapping("name");
-    }
-    else {
-      nodeField = null;
-    }
-    return nodeField;
-  }
-
 }

@@ -116,20 +116,30 @@ Ext.define('NX.coreui.controller.Nodes', {
 
     me.getToggleFreezeButton().setText(
         me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') : NX.I18n.get('Nodes_Enable_read_only_mode'));
+
+    NX.State.setValue('db', { dbFrozen: me.dbFrozen });
   },
 
   toggleFreeze: function() {
     var me = this;
 
-    var settings = {frozen: !me.dbFrozen};
+    var dialogTitle = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
+        NX.I18n.get('Nodes_Enable_read_only_mode_dialog');
+    var dialogDescription = me.dbFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
+        NX.I18n.get('Nodes_enable_read_only_mode_dialog_description');
 
-    me.getContent().getEl().mask(NX.I18n.get('Nodes_Toggling_read_only_mode'));
-    NX.direct.coreui_DatabaseFreeze.update(settings, function(response) {
-      me.getContent().getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        me.updateFreezeStatus(response.data.frozen);
-      }
-    });
+    NX.Dialogs.askConfirmation(dialogTitle, dialogDescription, function() {
+      var settings = {frozen: !me.dbFrozen};
+
+      me.getContent().getEl().mask(NX.I18n.get('Nodes_Toggling_read_only_mode'));
+      NX.direct.coreui_DatabaseFreeze.update(settings, function(response) {
+        me.getContent().getEl().unmask();
+        if (Ext.isObject(response) && response.success) {
+          me.updateFreezeStatus(response.data.frozen);
+        }
+      });
+    }, {scope: me});
+
   },
 
   onSelection: function (list, model) {

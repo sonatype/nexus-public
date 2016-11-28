@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.Asset.HASHES_NOT_VERIFIED;
@@ -781,7 +780,9 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public Blob requireBlob(final BlobRef blobRef) {
     Blob blob = getBlob(blobRef);
-    checkState(blob != null, "Blob not found: %s", blobRef);
+    if (blob == null) {
+      throw new MissingBlobException(blobRef);
+    }
     return blob;
   }
 

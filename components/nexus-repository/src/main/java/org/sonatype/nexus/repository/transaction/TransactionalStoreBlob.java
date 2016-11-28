@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.transaction;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -29,7 +30,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *
  * @since 3.2
  */
-@Transactional(retryOn = { ONeedRetryException.class, ORecordDuplicatedException.class })
+@Transactional(retryOn = { ONeedRetryException.class, ORecordDuplicatedException.class, MissingBlobException.class })
 @Target(METHOD)
 @Retention(RUNTIME)
 public @interface TransactionalStoreBlob

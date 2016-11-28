@@ -142,9 +142,6 @@ public class QuartzTriggerConverter
       throw new IllegalArgumentException("Schedule unknown: " + schedule.getType());
     }
 
-    // make type as description
-    triggerBuilder.withDescription(schedule.getType());
-
     // store all the schedule properties for opposite conversion
     for (Map.Entry<String, String> entry : schedule.asMap().entrySet()) {
       triggerBuilder.usingJobData(entry.getKey(), entry.getValue());

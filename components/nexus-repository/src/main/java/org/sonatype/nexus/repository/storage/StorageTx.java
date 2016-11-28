@@ -431,7 +431,9 @@ public interface StorageTx
   Blob getBlob(BlobRef blobRef);
 
   /**
-   * Gets a Blob, or throws an {@code IllegalStateException} if it doesn't exist.
+   * Requires that a Blob exists in the blobstore.
+   *
+   * @throws MissingBlobException if the blob is missing
    */
   Blob requireBlob(BlobRef blobRef);
 }

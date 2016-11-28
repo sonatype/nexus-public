@@ -203,8 +203,12 @@ public class QuartzTaskJob
           log.trace("No blockers for task: {}", task);
           return;
         }
+        TaskInfo.RunState previousRunState = taskFuture.getRunState();
         taskFuture.setRunState(BLOCKED);
-        eventBus.post(new TaskBlockedEvent(taskInfo));
+        if (BLOCKED != previousRunState) {
+          // the loop might need multiple iterations but we only want to send the event for an actual state transition
+          eventBus.post(new TaskBlockedEvent(taskInfo));
+        }
       }
 
       log.trace("Task: {} is blocked by: {}", task, blockedBy);
