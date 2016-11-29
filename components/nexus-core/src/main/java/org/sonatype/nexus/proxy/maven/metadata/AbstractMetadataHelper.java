@@ -284,7 +284,6 @@ abstract public class AbstractMetadataHelper
                   new XmlPlexusConfiguration(Xpp3DomBuilder.build(new InputStreamReader(zip)));
 
               prefix = plexusConfig.getChild("goalPrefix").getValue();
-              zip.closeEntry();
               break;
             }
             zip.closeEntry();
