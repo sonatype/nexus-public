@@ -4,6 +4,5 @@ jdk:
   - oraclejdk7
   - openjdk6
   
-  before_install: 
-  - sudo rm /etc/mavenrc
-  - export maven_opts=-xmx1024m
+  before_install:
+  echo "MAVEN_OPTS='-Xmx2048m -XX:MaxPermSize=512m'" > ~/.mavenrc
