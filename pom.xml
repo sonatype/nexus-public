@@ -561,7 +561,7 @@
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
             <argLine>
-              -Xmx1024m
+              -Xmx2048m
               -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports
