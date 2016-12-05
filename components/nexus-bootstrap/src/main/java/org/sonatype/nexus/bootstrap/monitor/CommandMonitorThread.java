@@ -89,13 +89,14 @@ public class CommandMonitorThread
     boolean running = true;
     while (running) {
       try {
-        Socket client = socket.accept();
-        log.debug("Accepted client: {}", client);
+        String commandId;
+        try (Socket client = socket.accept()) {
+          log.debug("Accepted client: {}", client);
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-        String commandId = reader.readLine();
+          BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+          commandId = reader.readLine();
+        }
         log.debug("Read command: {}", commandId);
-        client.close();
 
         if (commandId == null) {
           commandId = PingCommand.NAME;
