@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 
@@ -76,8 +75,7 @@ public class DatabaseBackupImpl
   @VisibleForTesting
   File checkTarget(final String backupFolder, final String dbName) throws IOException {
     String filename = dbName + String.format("-%1$tY-%1$tm-%1$td-%1$tH-%1$tM-%1$tS.bak", Calendar.getInstance());
-    File parentDir = makeAbsolutePath(backupFolder).getCanonicalFile();
-    DirectoryHelper.mkdir(parentDir);
+    File parentDir = applicationDirectories.getWorkDirectory(backupFolder);
     File output = new File(parentDir, filename);
     if (output.createNewFile()) {
       return output;
@@ -85,15 +83,6 @@ public class DatabaseBackupImpl
     else {
       throw new IOException("file creation failed for file: " + output.getAbsolutePath());
     }
-  }
-
-  @VisibleForTesting
-  File makeAbsolutePath(final String location) {
-    File dir = new File(location);
-    if (!dir.isAbsolute()) {
-      dir = new File(applicationDirectories.getWorkDirectory(), location);
-    }
-    return dir;
   }
 
   @Override

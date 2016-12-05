@@ -30,6 +30,7 @@ import org.sonatype.nexus.capability.Taggable
 import org.sonatype.nexus.coreui.FormFieldXO
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -135,11 +136,12 @@ extends DirectComponentSupport
   @RequiresPermissions('nexus:capabilities:update')
   @Validate(groups = [Update.class, Default.class])
   CapabilityXO update(final @NotNull @Valid CapabilityXO capabilityXO) {
+    def reference = capabilityRegistry.get(capabilityIdentity(capabilityXO.id))
     return asCapability(capabilityRegistry.update(
         capabilityIdentity(capabilityXO.id),
         capabilityXO.enabled,
         capabilityXO.notes,
-        capabilityXO.properties
+        unfilterProperties(capabilityXO.properties, reference.context().properties())
     ))
   }
 
@@ -219,7 +221,7 @@ extends DirectComponentSupport
         error: reference.context().hasFailure(),
         state: 'disabled',
         stateDescription: reference.context().stateDescription(),
-        properties: reference.context().properties()
+        properties: filterProperties(reference.context().properties(), capability)
     )
 
     if (capabilityXO.enabled && capabilityXO.error) {
@@ -271,4 +273,26 @@ extends DirectComponentSupport
     return capabilityXO
   }
 
+  private Map<String, String> filterProperties(final Map<String, String> properties, final Capability capability) {
+    properties.collectEntries { key, value ->
+      if (capability.isPasswordProperty(key)) {
+        [key, PasswordPlaceholder.get()]
+      }
+      else {
+        [key, value]
+      }
+    }
+  }
+
+  private Map<String, String> unfilterProperties(final Map<String, String> properties,
+                                                 final Map<String, String> referenceProperties) {
+    properties.collectEntries { key, value ->
+      if (PasswordPlaceholder.is(value)) {
+        [key, referenceProperties[key]]
+      }
+      else {
+        [key, value]
+      }
+    }
+  }
 }

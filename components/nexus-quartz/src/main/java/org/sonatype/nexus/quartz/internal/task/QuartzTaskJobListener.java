@@ -17,7 +17,7 @@ import java.util.Date;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo.EndState;
@@ -54,19 +54,19 @@ public class QuartzTaskJobListener
 {
   private final String name;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final QuartzSchedulerSPI scheduler;
 
   private final QuartzTaskInfo taskInfo;
 
   public QuartzTaskJobListener(final String name,
-                               final EventBus eventBus,
+                               final EventManager eventManager,
                                final QuartzSchedulerSPI scheduler,
                                final QuartzTaskInfo taskInfo)
   {
     this.name = checkNotNull(name);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.scheduler = checkNotNull(scheduler);
     this.taskInfo = checkNotNull(taskInfo);
   }
@@ -148,7 +148,7 @@ public class QuartzTaskJobListener
     context.put(QuartzTaskFuture.FUTURE_KEY, future);
     context.put(QuartzTaskInfo.TASK_INFO_KEY, taskInfo);
 
-    eventBus.post(new TaskEventStarted(taskInfo));
+    eventManager.post(new TaskEventStarted(taskInfo));
   }
 
   @Override
@@ -209,15 +209,15 @@ public class QuartzTaskJobListener
     // fire events
     switch (endState) {
       case OK:
-        eventBus.post(new TaskEventStoppedDone(taskInfo));
+        eventManager.post(new TaskEventStoppedDone(taskInfo));
         break;
 
       case FAILED:
-        eventBus.post(new TaskEventStoppedFailed(taskInfo, failure));
+        eventManager.post(new TaskEventStoppedFailed(taskInfo, failure));
         break;
 
       case CANCELED:
-        eventBus.post(new TaskEventStoppedCanceled(taskInfo));
+        eventManager.post(new TaskEventStoppedCanceled(taskInfo));
         break;
     }
   }

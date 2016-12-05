@@ -23,7 +23,7 @@ import javax.inject.Singleton
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.goodies.common.InternalAccessible
 import org.sonatype.nexus.common.event.EventAware
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.webhooks.Webhook
 import org.sonatype.nexus.webhooks.WebhookRequest
 import org.sonatype.nexus.webhooks.WebhookRequestSendEvent
@@ -66,7 +66,7 @@ class WebhookServiceImpl
   private static final String WEBHOOK_SIGNATURE_HEADER = 'X-Nexus-Webhook-Signature'
 
   @Inject
-  EventBus eventBus
+  EventManager eventManager
 
   @Inject
   Provider<CloseableHttpClient> httpClientProvider
@@ -89,7 +89,7 @@ class WebhookServiceImpl
   @Override
   void queue(final WebhookRequest request) {
     checkNotNull(request)
-    eventBus.post(new WebhookRequestSendEvent(request))
+    eventManager.post(new WebhookRequestSendEvent(request))
   }
 
   /**

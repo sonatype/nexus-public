@@ -22,7 +22,7 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Evaluable;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -39,47 +39,47 @@ public class CapabilityConditionsImpl
 
   private final CapabilityRegistry capabilityRegistry;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final CapabilityDescriptorRegistry descriptorRegistry;
 
   @Inject
-  public CapabilityConditionsImpl(final EventBus eventBus,
+  public CapabilityConditionsImpl(final EventManager eventManager,
                                   final CapabilityDescriptorRegistry descriptorRegistry,
                                   final CapabilityRegistry capabilityRegistry)
   {
     this.descriptorRegistry = checkNotNull(descriptorRegistry);
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
   public Condition capabilityOfTypeExists(final CapabilityType type) {
-    return new CapabilityOfTypeExistsCondition(eventBus, descriptorRegistry, capabilityRegistry, type);
+    return new CapabilityOfTypeExistsCondition(eventManager, descriptorRegistry, capabilityRegistry, type);
   }
 
   @Override
   public Condition capabilityOfTypeActive(final CapabilityType type) {
-    return new CapabilityOfTypeActiveCondition(eventBus, descriptorRegistry, capabilityRegistry, type);
+    return new CapabilityOfTypeActiveCondition(eventManager, descriptorRegistry, capabilityRegistry, type);
   }
 
   @Override
   public Condition passivateCapabilityDuringUpdate() {
-    return new PassivateCapabilityDuringUpdateCondition(eventBus);
+    return new PassivateCapabilityDuringUpdateCondition(eventManager);
   }
 
   @Override
   public Condition passivateCapabilityWhenPropertyChanged(final String... propertyNames) {
-    return new PassivateCapabilityDuringUpdateCondition(eventBus, propertyNames);
+    return new PassivateCapabilityDuringUpdateCondition(eventManager, propertyNames);
   }
 
   @Override
   public Condition capabilityHasNoFailures() {
-    return new CapabilityHasNoFailuresCondition(eventBus);
+    return new CapabilityHasNoFailuresCondition(eventManager);
   }
 
   @Override
   public Condition evaluable(final Evaluable condition) {
-    return new EvaluableCondition(eventBus, condition);
+    return new EvaluableCondition(eventManager, condition);
   }
 }

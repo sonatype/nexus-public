@@ -34,7 +34,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextFieldFactory', {
    */
   create: function (formField) {
     var item = {
-      xtype: 'textfield',
+      xtype: formField.type === 'url' ? 'nx-url' : 'textfield',
       htmlDecode: true,
       fieldLabel: formField.label,
       itemCls: formField.required ? 'required-field' : '',

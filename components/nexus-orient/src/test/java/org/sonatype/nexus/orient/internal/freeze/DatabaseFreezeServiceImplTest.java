@@ -18,7 +18,7 @@ import java.util.Set;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -52,7 +52,7 @@ public class DatabaseFreezeServiceImplTest
   private static final String P_NAME = "name";
 
   @Mock
-  EventBus eventBus;
+  EventManager eventManager;
 
   DatabaseFreezeServiceImpl underTest;
 
@@ -67,7 +67,7 @@ public class DatabaseFreezeServiceImplTest
   @Before
   public void setup() {
     providerSet = of(database.getInstanceProvider(), database2.getInstanceProvider()).collect(toSet());
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventBus);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager);
 
     for (Provider<DatabaseInstance> provider : providerSet) {
       try (ODatabaseDocumentTx db = provider.get().connect()) {
@@ -89,7 +89,7 @@ public class DatabaseFreezeServiceImplTest
     underTest.releaseAllDatabases();
     verifyWrite(false);
 
-    verify(eventBus, times(2)).post(freezeChangeEventArgumentCaptor.capture());
+    verify(eventManager, times(2)).post(freezeChangeEventArgumentCaptor.capture());
 
     List<DatabaseFreezeChangeEvent> databaseFreezeChangeEvents = freezeChangeEventArgumentCaptor.getAllValues();
     assertThat(databaseFreezeChangeEvents.get(0).isFrozen(), is(true));
@@ -106,7 +106,7 @@ public class DatabaseFreezeServiceImplTest
     underTest.releaseAllDatabases();
     verifyWrite(false);
 
-    verify(eventBus, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+    verify(eventManager, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
   }
 
   @Test
@@ -121,7 +121,7 @@ public class DatabaseFreezeServiceImplTest
 
     underTest.freezeAllDatabases();
     verifyWrite(true);
-    verify(eventBus, times(3)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+    verify(eventManager, times(3)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
   }
 
   /**

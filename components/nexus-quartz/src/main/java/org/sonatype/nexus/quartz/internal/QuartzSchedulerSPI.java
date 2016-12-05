@@ -30,7 +30,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
@@ -105,7 +106,7 @@ public class QuartzSchedulerSPI
 
   private static final Set<String> INHERITED_CONFIG_KEYS = ImmutableSet.of(LIMIT_NODE_KEY);
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final NodeAccess nodeAccess;
 
@@ -126,14 +127,14 @@ public class QuartzSchedulerSPI
   private boolean active;
 
   @Inject
-  public QuartzSchedulerSPI(final EventBus eventBus,
+  public QuartzSchedulerSPI(final EventManager eventManager,
                             final NodeAccess nodeAccess,
                             final Provider<JobStore> jobStoreProvider,
                             final JobFactory jobFactory,
                             @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize)
       throws Exception
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStoreProvider = checkNotNull(jobStoreProvider);
     this.jobFactory = checkNotNull(jobFactory);
@@ -331,9 +332,9 @@ public class QuartzSchedulerSPI
 
     QuartzTaskJobListener listener = new QuartzTaskJobListener(
         listenerName(jobDetail.getKey()),
-        eventBus,
+        eventManager,
         this,
-        new QuartzTaskInfo(eventBus, this, jobDetail.getKey(), taskState, future)
+        new QuartzTaskInfo(eventManager, this, jobDetail.getKey(), taskState, future)
     );
 
     scheduler.getListenerManager().addJobListener(listener, keyEquals(jobDetail.getKey()));
@@ -489,6 +490,8 @@ public class QuartzSchedulerSPI
                                final Schedule schedule)
   {
     ensureStarted();
+
+    checkState(!EventHelper.isReplicating(), "Replication in progress");
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       // check for existing task with same id

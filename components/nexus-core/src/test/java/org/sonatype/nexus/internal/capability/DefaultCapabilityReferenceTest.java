@@ -30,10 +30,9 @@ import org.sonatype.nexus.capability.condition.internal.ConditionsImpl;
 import org.sonatype.nexus.capability.condition.internal.LogicalConditionsImpl;
 import org.sonatype.nexus.capability.condition.internal.NexusConditionsImpl;
 import org.sonatype.nexus.capability.condition.internal.NexusIsActiveCondition;
-import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.event.EventBusImpl;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
-import com.google.common.eventbus.ReentrantEventBus;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -59,7 +58,7 @@ public class DefaultCapabilityReferenceTest
 {
   static final Map<String, String> NULL_PROPERTIES = null;
 
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private NexusIsActiveCondition activeCondition;
 
@@ -85,13 +84,13 @@ public class DefaultCapabilityReferenceTest
 
   @Before
   public void setUp() {
-    eventBus = new EventBusImpl(new ReentrantEventBus());
+    eventManager = new SimpleEventManager();
 
-    activeCondition = new NexusIsActiveCondition(eventBus);
+    activeCondition = new NexusIsActiveCondition(eventManager);
 
     final Conditions conditions = new ConditionsImpl(
-        new LogicalConditionsImpl(eventBus),
-        new CapabilityConditionsImpl(eventBus, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
+        new LogicalConditionsImpl(eventManager),
+        new CapabilityConditionsImpl(eventManager, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
         new NexusConditionsImpl(activeCondition),
         mock(CryptoConditions.class)
     );
@@ -112,7 +111,7 @@ public class DefaultCapabilityReferenceTest
               throws Throwable
           {
             return new ActivationConditionHandler(
-                eventBus, conditions, (DefaultCapabilityReference) invocation.getArguments()[0]
+                eventManager, conditions, (DefaultCapabilityReference) invocation.getArguments()[0]
             );
           }
         }
@@ -126,7 +125,7 @@ public class DefaultCapabilityReferenceTest
               throws Throwable
           {
             return new ValidityConditionHandler(
-                eventBus, capabilityRegistry, conditions,
+                eventManager, capabilityRegistry, conditions,
                 (DefaultCapabilityReference) invocation.getArguments()[0]
             );
           }
@@ -135,7 +134,7 @@ public class DefaultCapabilityReferenceTest
 
     underTest = new DefaultCapabilityReference(
         capabilityRegistry,
-        eventBus,
+        eventManager,
         achf,
         vchf,
         capabilityIdentity("test"),
@@ -325,7 +324,7 @@ public class DefaultCapabilityReferenceTest
   public void loadIsForwardedToCapability() throws Exception {
     underTest = new DefaultCapabilityReference(
         capabilityRegistry,
-        eventBus,
+        eventManager,
         achf,
         vchf,
         capabilityIdentity("test"),
@@ -433,7 +432,7 @@ public class DefaultCapabilityReferenceTest
    */
   @Test
   public void automaticallyRemoveWhenValidityConditionIsUnsatisfied() throws Exception {
-    eventBus.post(new ConditionEvent.Unsatisfied(validityCondition));
+    eventManager.post(new ConditionEvent.Unsatisfied(validityCondition));
     verify(capabilityRegistry).remove(underTest.context().id());
   }
 

@@ -16,7 +16,7 @@ import javax.cache.CacheManager;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.sonatype.nexus.security.authc.AuthenticationEvent;
 
@@ -36,13 +36,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class NexusWebSecurityManager
     extends DefaultWebSecurityManager
 {
-  private final Provider<EventBus> eventBus;
+  private final Provider<EventManager> eventManager;
 
   @Inject
-  public NexusWebSecurityManager(final Provider<EventBus> eventBus,
+  public NexusWebSecurityManager(final Provider<EventManager> eventManager,
                                  final Provider<CacheManager> cacheManager)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     setCacheManager(new ShiroJCacheManagerAdapter(cacheManager));
     //explicitly disable rememberMe
     this.setRememberMeManager(null); 
@@ -52,7 +52,7 @@ public class NexusWebSecurityManager
    * Post {@link AuthenticationEvent}.
    */
   private void post(final AuthenticationToken token, final boolean successful) {
-    eventBus.get().post(new AuthenticationEvent(token.getPrincipal().toString(), successful));
+    eventManager.get().post(new AuthenticationEvent(token.getPrincipal().toString(), successful));
   }
 
   /**

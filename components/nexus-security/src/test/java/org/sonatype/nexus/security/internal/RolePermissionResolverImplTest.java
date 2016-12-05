@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.internal;
 import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
@@ -44,7 +44,7 @@ public class RolePermissionResolverImplTest
     securityConfigurationManager = mock(SecurityConfigurationManager.class);
     when(securityConfigurationManager.readRole(any())).thenThrow(new NoSuchRoleException("Role not found"));
     underTest = new RolePermissionResolverImpl(securityConfigurationManager, Collections.emptyList(),
-        mock(EventBus.class), 10);
+        mock(EventManager.class), 10);
   }
 
   @Test

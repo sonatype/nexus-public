@@ -20,7 +20,7 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
@@ -52,11 +52,11 @@ public abstract class RepositoryConditionSupport
 
   private String repositoryBeforeLastUpdate;
 
-  public RepositoryConditionSupport(final EventBus eventBus,
+  public RepositoryConditionSupport(final EventManager eventManager,
                                     final RepositoryManager repositoryManager,
                                     final Supplier<String> repositoryName)
   {
-    super(eventBus, false);
+    super(eventManager, false);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryName = checkNotNull(repositoryName);
     bindLock = new ReentrantReadWriteLock();
@@ -82,12 +82,12 @@ public abstract class RepositoryConditionSupport
     finally {
       bindLock.writeLock().unlock();
     }
-    getEventBus().register(this);
+    getEventManager().register(this);
   }
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   public abstract void handle(final RepositoryCreatedEvent event);

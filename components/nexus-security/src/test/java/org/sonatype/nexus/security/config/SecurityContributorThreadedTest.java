@@ -16,7 +16,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.AbstractSecurityTest;
 
 import com.google.inject.AbstractModule;
@@ -41,7 +41,7 @@ public class SecurityContributorThreadedTest
   private List<MutableTestSecurityContributor> mutableTestContributors;
 
   @Inject
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Override
   protected MemorySecurityConfiguration initialSecurityConfiguration() {
@@ -87,7 +87,7 @@ public class SecurityContributorThreadedTest
     this.manager = lookup(SecurityConfigurationManager.class);
 
     // mimic EventManager auto-registration
-    eventBus.register(manager);
+    eventManager.register(manager);
 
     // test the lookup, make sure we have 200
     Assert.assertEquals(200, testContributors.size());

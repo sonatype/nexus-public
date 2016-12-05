@@ -13,7 +13,6 @@
 package org.sonatype.nexus.orient.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.crypto.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
 

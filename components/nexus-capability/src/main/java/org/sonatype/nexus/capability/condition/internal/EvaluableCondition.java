@@ -18,7 +18,7 @@ import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.Evaluable;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -41,10 +41,10 @@ public class EvaluableCondition
 
   private final Evaluable evaluable;
 
-  public EvaluableCondition(final EventBus eventBus,
+  public EvaluableCondition(final EventManager eventManager,
                             final Evaluable evaluable)
   {
-    super(eventBus, false);
+    super(eventManager, false);
     this.evaluable = checkNotNull(evaluable);
   }
 
@@ -60,13 +60,13 @@ public class EvaluableCondition
   @Override
   protected void doBind() {
     checkState(capabilityIdentity != null, "Capability identity not specified");
-    getEventBus().register(this);
+    getEventManager().register(this);
     setSatisfied(evaluable.isSatisfied());
   }
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   @AllowConcurrentEvents

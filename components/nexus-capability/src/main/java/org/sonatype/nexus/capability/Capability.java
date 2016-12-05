@@ -130,4 +130,13 @@ public interface Capability
    */
   @Nullable
   Condition validityCondition();
+
+  /**
+   * Returns whether the property with the given name is a password and should not be passed to the UI in cleartext.
+   *
+   * @return true if the named property is a password
+   *
+   * @since 3.2
+   */
+  boolean isPasswordProperty(String propertyName);
 }

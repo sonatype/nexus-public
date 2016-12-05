@@ -20,7 +20,7 @@ import org.sonatype.nexus.capability.condition.internal.CapabilityConditionsImpl
 import org.sonatype.nexus.capability.condition.internal.CapabilityOfTypeActiveCondition;
 import org.sonatype.nexus.capability.condition.internal.CapabilityOfTypeExistsCondition;
 import org.sonatype.nexus.capability.condition.internal.PassivateCapabilityDuringUpdateCondition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -44,10 +44,10 @@ public class CapabilityConditionsImplTest
 
   @Before
   public final void setUpCapabilityConditions() {
-    final EventBus eventBus = mock(EventBus.class);
+    final EventManager eventManager = mock(EventManager.class);
     final CapabilityDescriptorRegistry descriptorRegistry = mock(CapabilityDescriptorRegistry.class);
     final CapabilityRegistry capabilityRegistry = mock(CapabilityRegistry.class);
-    underTest = new CapabilityConditionsImpl(eventBus, descriptorRegistry, capabilityRegistry);
+    underTest = new CapabilityConditionsImpl(eventManager, descriptorRegistry, capabilityRegistry);
   }
 
   /**

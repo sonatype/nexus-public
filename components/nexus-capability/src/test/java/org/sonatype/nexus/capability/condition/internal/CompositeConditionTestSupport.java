@@ -14,8 +14,8 @@ package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
  * @since capabilities 2.0
  */
 public class CompositeConditionTestSupport
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   @Mock
@@ -50,7 +50,7 @@ public class CompositeConditionTestSupport
   public final void setUpTestCondition()
       throws Exception
   {
-    underTest = new TestCondition(eventBus, c1, c2, c3);
+    underTest = new TestCondition(eventManager, c1, c2, c3);
     underTest.bind();
 
     verify(c1).bind();
@@ -76,7 +76,7 @@ public class CompositeConditionTestSupport
     underTest.handle(new ConditionEvent.Satisfied(c1));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -93,7 +93,7 @@ public class CompositeConditionTestSupport
     underTest.handle(new ConditionEvent.Satisfied(c2));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -107,7 +107,7 @@ public class CompositeConditionTestSupport
     underTest.handle(new ConditionEvent.Unsatisfied(c1));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -125,7 +125,7 @@ public class CompositeConditionTestSupport
     underTest.handle(new ConditionEvent.Unsatisfied(c2));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -137,17 +137,17 @@ public class CompositeConditionTestSupport
     verify(c1).release();
     verify(c2).release();
     verify(c3).release();
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
   private static class TestCondition
       extends CompositeConditionSupport
   {
 
-    public TestCondition(final EventBus eventBus,
+    public TestCondition(final EventManager eventManager,
                          final Condition... conditions)
     {
-      super(eventBus, conditions);
+      super(eventManager, conditions);
     }
 
     @Override

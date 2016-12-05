@@ -49,7 +49,7 @@ public class HttpClientAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final HttpClientConfigurationChangedEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       HttpClientConfiguration configuration = event.getConfiguration();
 
       AuditData data = new AuditData();

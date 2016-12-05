@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.security.anonymous;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousConfigurationChangedEvent;
 
@@ -37,7 +37,7 @@ public class AnonymousManagerImplTest
     extends TestSupport
 {
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Mock
   private AnonymousConfigurationStore store;
@@ -67,7 +67,7 @@ public class AnonymousManagerImplTest
     when(defaults.get()).thenReturn(defaultConfig);
     when(storeConfig.copy()).thenReturn(storeConfigCopy);
     when(defaultConfig.copy()).thenReturn(defaultConfigCopy);
-    manager = new AnonymousManagerImpl(eventBus, store, defaults);
+    manager = new AnonymousManagerImpl(eventManager, store, defaults);
   }
 
   @Test
@@ -88,7 +88,7 @@ public class AnonymousManagerImplTest
     verify(store).save(storeConfigCopy);
     ArgumentCaptor<AnonymousConfigurationChangedEvent> eventCaptor = ArgumentCaptor
         .forClass(AnonymousConfigurationChangedEvent.class);
-    verify(eventBus).post(eventCaptor.capture());
+    verify(eventManager).post(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getConfiguration(), is(storeConfigCopy));
   }
 
@@ -100,7 +100,7 @@ public class AnonymousManagerImplTest
     manager.onStoreChanged(configurationEvent);
     assertThat(manager.getConfiguration(), is(defaultConfigCopy));
     verify(store).load();
-    verify(eventBus, never()).post(any(AnonymousConfigurationChangedEvent.class));
+    verify(eventManager, never()).post(any(AnonymousConfigurationChangedEvent.class));
   }
 
   @Test
@@ -111,6 +111,6 @@ public class AnonymousManagerImplTest
     manager.onStoreChanged(configurationEvent);
     assertThat(manager.getConfiguration(), is(storeConfigCopy));
     verify(store, times(2)).load();
-    verify(eventBus).post(any(AnonymousConfigurationChangedEvent.class));
+    verify(eventManager).post(any(AnonymousConfigurationChangedEvent.class));
   }
 }

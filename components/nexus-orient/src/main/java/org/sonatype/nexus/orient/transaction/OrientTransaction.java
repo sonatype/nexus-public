@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.orient.transaction;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.sequence.NumberSequence;
 import org.sonatype.nexus.common.sequence.RandomExponentialSequence;
@@ -22,6 +21,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class OrientTransaction
-    extends ComponentSupport
     implements Transaction
 {
+  private static final Logger log = LoggerFactory.getLogger(OrientTransaction.class);
+
   private static final int INITIAL_DELAY_MS = SystemPropertiesHelper
       .getInteger(OrientTransaction.class.getName() + ".retrydelay.initial", 10);
 

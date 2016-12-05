@@ -29,7 +29,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.entity.EntityBatchEvent.Batchable;
 import org.sonatype.nexus.common.entity.EntityEvent;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.entity.EntityAdapter.EventKind;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -71,11 +72,11 @@ public final class EntityHook
 
   private final List<ODatabase> pendingDbs = synchronizedList(new ArrayList<>());
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   @Inject
-  public EntityHook(final EventBus eventBus) {
-    this.eventBus = checkNotNull(eventBus);
+  public EntityHook(final EventManager eventManager) {
+    this.eventManager = checkNotNull(eventManager);
   }
 
   /**
@@ -158,8 +159,15 @@ public final class EntityHook
     final Map<ODocument, EventKind> events = dbEvents.remove(db);
     if (events != null) {
       final UnitOfWork work = UnitOfWork.pause();
+      final String remoteNodeId = isRemote.get();
       try {
-        postEvents(db, events);
+        if (remoteNodeId == null) {
+          postEvents(db, events, null);
+        }
+        else {
+          // posting events from remote node, mark current thread as replicating
+          EventHelper.asReplicating(() -> postEvents(db, events, remoteNodeId));
+        }
       }
       finally {
         UnitOfWork.resume(work);
@@ -235,15 +243,13 @@ public final class EntityHook
     return false;
   }
 
-  private void postEvents(final ODatabase db, final Map<ODocument, EventKind> events) {
-    final String remoteNodeId = isRemote.get();
-
+  private void postEvents(final ODatabase db, final Map<ODocument, EventKind> events, final String remoteNodeId) {
     final List<EntityEvent> batchedEvents = new ArrayList<>();
     for (final Entry<ODocument, EventKind> entry : events.entrySet()) {
       final EntityEvent event = newEntityEvent(entry.getKey(), entry.getValue());
       if (event != null) {
         event.setRemoteNodeId(remoteNodeId);
-        eventBus.post(event);
+        eventManager.post(event);
         db.activateOnCurrentThread();
         if (event instanceof Batchable) {
           batchedEvents.add(event);
@@ -252,7 +258,7 @@ public final class EntityHook
     }
 
     if (!batchedEvents.isEmpty()) {
-      eventBus.post(new EntityBatchEvent(batchedEvents));
+      eventManager.post(new EntityBatchEvent(batchedEvents));
       db.activateOnCurrentThread();
     }
   }

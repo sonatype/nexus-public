@@ -17,7 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Cipher;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import org.junit.Before;
@@ -46,8 +46,8 @@ public class CipherRequiredConditionTest
 
   @Before
   public void setUp() throws Exception {
-    EventBus eventBus = mock(EventBus.class);
-    condition = new CipherRequiredCondition(eventBus, crypto, FAKE_TRANSFORMATION);
+    EventManager eventManager = mock(EventManager.class);
+    condition = new CipherRequiredCondition(eventManager, crypto, FAKE_TRANSFORMATION);
   }
 
   @Test

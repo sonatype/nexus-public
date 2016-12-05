@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.capability.condition;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.is;
  * @since capabilities 2.0
  */
 public class ConditionTestSupport
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   private TestCondition underTest;
@@ -36,7 +36,7 @@ public class ConditionTestSupport
   public final void setUpTestCondition()
       throws Exception
   {
-    underTest = new TestCondition(eventBus);
+    underTest = new TestCondition(eventManager);
     underTest.bind();
   }
 
@@ -56,7 +56,7 @@ public class ConditionTestSupport
     underTest.setSatisfied(true);
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -70,7 +70,7 @@ public class ConditionTestSupport
     underTest.setSatisfied(true);
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -86,7 +86,7 @@ public class ConditionTestSupport
     underTest.setSatisfied(false);
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -101,7 +101,7 @@ public class ConditionTestSupport
     underTest.setSatisfied(true);
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
   }
 
   /**
@@ -113,7 +113,7 @@ public class ConditionTestSupport
     underTest.setSatisfied(false);
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyNoEventBusEvents();
+    verifyNoEventManagerEvents();
   }
 
   /**
@@ -121,15 +121,15 @@ public class ConditionTestSupport
    */
   @Test
   public void getActivationContext() {
-    assertThat(underTest.getEventBus(), is(equalTo(eventBus)));
+    assertThat(underTest.getEventManager(), is(equalTo(eventManager)));
   }
 
   private static class TestCondition
       extends ConditionSupport
   {
 
-    public TestCondition(final EventBus eventBus) {
-      super(eventBus);
+    public TestCondition(final EventManager eventManager) {
+      super(eventManager);
     }
 
     @Override

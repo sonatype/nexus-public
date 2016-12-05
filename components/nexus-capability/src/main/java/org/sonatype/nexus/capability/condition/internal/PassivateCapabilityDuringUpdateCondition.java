@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -39,10 +39,10 @@ public class PassivateCapabilityDuringUpdateCondition
 
   private final String[] propertyNames;
 
-  public PassivateCapabilityDuringUpdateCondition(final EventBus eventBus,
+  public PassivateCapabilityDuringUpdateCondition(final EventManager eventManager,
                                                   final String... propertyNames)
   {
-    super(eventBus, true);
+    super(eventManager, true);
     this.propertyNames = propertyNames == null || propertyNames.length == 0 ? null : propertyNames;
   }
 
@@ -58,12 +58,12 @@ public class PassivateCapabilityDuringUpdateCondition
   @Override
   protected void doBind() {
     checkState(id != null, "Capability identity not specified");
-    getEventBus().register(this);
+    getEventManager().register(this);
   }
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   @AllowConcurrentEvents

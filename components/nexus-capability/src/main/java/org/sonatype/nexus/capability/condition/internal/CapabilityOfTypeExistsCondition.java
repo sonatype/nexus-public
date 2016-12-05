@@ -21,7 +21,7 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -45,12 +45,12 @@ public class CapabilityOfTypeExistsCondition
 
   final String typeName;
 
-  public CapabilityOfTypeExistsCondition(final EventBus eventBus,
+  public CapabilityOfTypeExistsCondition(final EventManager eventManager,
                                          final CapabilityDescriptorRegistry descriptorRegistry,
                                          final CapabilityRegistry capabilityRegistry,
                                          final CapabilityType type)
   {
-    super(eventBus);
+    super(eventManager);
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.type = checkNotNull(type);
     final CapabilityDescriptor descriptor = checkNotNull(descriptorRegistry).get(type);
@@ -69,12 +69,12 @@ public class CapabilityOfTypeExistsCondition
     finally {
       bindLock.writeLock().unlock();
     }
-    getEventBus().register(this);
+    getEventManager().register(this);
   }
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   @AllowConcurrentEvents

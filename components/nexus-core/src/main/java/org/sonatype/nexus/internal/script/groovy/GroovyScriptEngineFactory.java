@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.script.groovy;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,17 +23,13 @@ import javax.script.ScriptEngineFactory;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
-import com.google.common.collect.ImmutableMap;
 import groovy.lang.GroovyClassLoader;
-import groovy.transform.TimedInterrupt;
 import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 /**
  * A condition that applies a logical NOT on another condition.
@@ -27,10 +27,10 @@ public class InversionCondition
 
   private final Condition condition;
 
-  public InversionCondition(final EventBus eventBus,
+  public InversionCondition(final EventManager eventManager,
                             final Condition condition)
   {
-    super(eventBus, condition);
+    super(eventManager, condition);
     this.condition = condition;
   }
 

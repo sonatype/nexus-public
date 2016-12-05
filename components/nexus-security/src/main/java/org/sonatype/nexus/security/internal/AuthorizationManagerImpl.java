@@ -21,7 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -56,17 +56,17 @@ public class AuthorizationManagerImpl
 
   private final SecurityConfigurationManager configuration;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final List<PrivilegeDescriptor> privilegeDescriptors;
 
   @Inject
   public AuthorizationManagerImpl(final SecurityConfigurationManager configuration,
-                                  final EventBus eventBus,
+                                  final EventManager eventManager,
                                   final List<PrivilegeDescriptor> privilegeDescriptors)
   {
     this.configuration = configuration;
-    this.eventBus = eventBus;
+    this.eventManager = eventManager;
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
   }
 
@@ -186,7 +186,7 @@ public class AuthorizationManagerImpl
 
     configuration.createRole(secRole);
 
-    eventBus.post(new RoleCreatedEvent(role));
+    eventManager.post(new RoleCreatedEvent(role));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -200,7 +200,7 @@ public class AuthorizationManagerImpl
 
     configuration.updateRole(secRole);
 
-    eventBus.post(new RoleUpdatedEvent(role));
+    eventManager.post(new RoleUpdatedEvent(role));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -213,7 +213,7 @@ public class AuthorizationManagerImpl
     Role role = getRole(roleId);
     configuration.deleteRole(roleId);
 
-    eventBus.post(new RoleDeletedEvent(role));
+    eventManager.post(new RoleDeletedEvent(role));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -245,7 +245,7 @@ public class AuthorizationManagerImpl
     final CPrivilege secPriv = this.convert(privilege);
     configuration.createPrivilege(secPriv);
 
-    eventBus.post(new PrivilegeCreatedEvent(privilege));
+    eventManager.post(new PrivilegeCreatedEvent(privilege));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -259,7 +259,7 @@ public class AuthorizationManagerImpl
 
     configuration.updatePrivilege(secPriv);
 
-    eventBus.post(new PrivilegeUpdatedEvent(privilege));
+    eventManager.post(new PrivilegeUpdatedEvent(privilege));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -272,7 +272,7 @@ public class AuthorizationManagerImpl
     Privilege privilege = getPrivilege(privilegeId);
     configuration.deletePrivilege(privilegeId);
 
-    eventBus.post(new PrivilegeDeletedEvent(privilege));
+    eventManager.post(new PrivilegeDeletedEvent(privilege));
 
     // notify any listeners that the config changed
     this.fireAuthorizationChangedEvent();
@@ -284,6 +284,6 @@ public class AuthorizationManagerImpl
   }
 
   private void fireAuthorizationChangedEvent() {
-    this.eventBus.post(new AuthorizationConfigurationChanged());
+    this.eventManager.post(new AuthorizationConfigurationChanged());
   }
 }

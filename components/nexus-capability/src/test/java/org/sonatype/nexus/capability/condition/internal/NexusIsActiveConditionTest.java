@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,14 +26,14 @@ import static org.hamcrest.Matchers.is;
  * @since capabilities 2.0
  */
 public class NexusIsActiveConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   private NexusIsActiveCondition underTest;
 
   @Before
   public final void setUpNexusIsActiveCondition() throws Exception {
-    underTest = new NexusIsActiveCondition(eventBus);
+    underTest = new NexusIsActiveCondition(eventManager);
   }
 
   /**
@@ -52,7 +52,7 @@ public class NexusIsActiveConditionTest
     underTest.start();
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -64,7 +64,7 @@ public class NexusIsActiveConditionTest
     underTest.stop();
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
 }

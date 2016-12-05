@@ -16,30 +16,18 @@ import static com.google.common.eventbus.Dispatcher.immediate;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 /**
- * A Guava {@link EventBus} that differs from default one by dispatching events as they appear (is re-entrant).
- * Guava will queue up all event and dispatch them in the order they were posted, without re-entrance.
+ * Reentrant {@link EventBus} that dispatches events immediately as they appear on the same thread.
+ *
+ * (The old Guava behaviour used thread-local queues to provide strong non-reentrant ordering.)
  *
  * @since 3.0
  */
 public class ReentrantEventBus
     extends EventBus
 {
+  private static final String IDENTIFIER = "reentrant";
+
   public ReentrantEventBus() {
-    this(LoggingHandler.INSTANCE);
-  }
-
-  public ReentrantEventBus(final String identifier) {
-    this(identifier, LoggingHandler.INSTANCE);
-  }
-
-  public ReentrantEventBus(final SubscriberExceptionHandler exceptionHandler) {
-    this("reentrant", exceptionHandler);
-  }
-
-  /**
-   * @since 3.2
-   */
-  protected ReentrantEventBus(final String identifier, final SubscriberExceptionHandler exceptionHandler) {
-    super(identifier, directExecutor(), immediate(), exceptionHandler);
+    super(IDENTIFIER, directExecutor(), immediate(), new Slf4jSubscriberExceptionHandler(IDENTIFIER));
   }
 }

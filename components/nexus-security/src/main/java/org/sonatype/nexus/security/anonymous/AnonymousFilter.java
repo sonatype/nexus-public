@@ -22,7 +22,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;
 
 import com.google.common.collect.EvictingQueue;
@@ -57,15 +57,15 @@ public class AnonymousFilter
 
   private final Provider<AnonymousManager> anonymousManager;
   
-  private final EventBus eventBus;
+  private final Provider<EventManager> eventManager;
   
   // keep a record of the most recent accesses
   private final EvictingQueue<ClientInfo> cache = EvictingQueue.create(CACHE_SIZE);
 
   @Inject
-  public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final EventBus eventBus) {
+  public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final Provider<EventManager> eventManager) {
     this.anonymousManager = checkNotNull(anonymousManager);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -86,7 +86,7 @@ public class AnonymousFilter
             ((HttpServletRequest) request).getHeader(HttpHeaders.USER_AGENT));
         if(!cache.contains(clientInfo)) {
           log.trace("Tracking new anonymous access from: {}", clientInfo);
-          eventBus.post(new AnonymousAccessEvent(clientInfo, new Date()));
+          eventManager.get().post(new AnonymousAccessEvent(clientInfo, new Date()));
           cache.add(clientInfo);
         }
       }

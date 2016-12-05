@@ -16,11 +16,15 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import org.eclipse.sisu.space.ClassSpace;
 
@@ -40,6 +44,8 @@ public class NexusUberClassloader
 {
   private final List<ClassSpace> spaces;
 
+  private final Cache<String, Class<?>> classLookups = CacheBuilder.newBuilder().weakValues().build();
+
   @Inject
   public NexusUberClassloader(final List<ClassSpace> spaces) {
     this.spaces = checkNotNull(spaces);
@@ -52,15 +58,14 @@ public class NexusUberClassloader
 
   @Override
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-    for (ClassSpace space : spaces) {
-      try {
-        return space.loadClass(name);
-      }
-      catch (TypeNotPresentException e) {
-        // ignore it
-      }
+    try {
+      // cache successful results to save having to find them again
+      return classLookups.get(name, () -> searchSpacesForClass(name));
     }
-    throw new ClassNotFoundException(name);
+    catch (ExecutionException e) { // NOSONAR: only interested in the cause
+      Throwables.propagateIfPossible(e.getCause(), ClassNotFoundException.class);
+      throw new ClassNotFoundException(name, e.getCause());
+    }
   }
 
   @Override
@@ -83,5 +88,17 @@ public class NexusUberClassloader
       }
     }
     return Collections.enumeration(result);
+  }
+
+  private Class<?> searchSpacesForClass(final String name) throws ClassNotFoundException {
+    for (ClassSpace space : spaces) {
+      try {
+        return space.loadClass(name);
+      }
+      catch (TypeNotPresentException e) {
+        // ignore it
+      }
+    }
+    throw new ClassNotFoundException(name);
   }
 }

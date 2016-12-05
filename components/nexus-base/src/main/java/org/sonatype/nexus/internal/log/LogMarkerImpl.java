@@ -17,7 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LogMarkInsertedEvent;
 import org.sonatype.nexus.common.log.LogMarker;
@@ -40,12 +40,12 @@ public class LogMarkerImpl
 {
   private final LogManager logManager;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   @Inject
-  public LogMarkerImpl(final LogManager logManager, final EventBus eventBus) {
+  public LogMarkerImpl(final LogManager logManager, final EventManager eventManager) {
     this.logManager = checkNotNull(logManager);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -59,6 +59,6 @@ public class LogMarkerImpl
     String asterixes = Strings.repeat("*", message.length() + 4);
     log.info("\n{}\n* {} *\n{}", asterixes, message, asterixes);
 
-    eventBus.post(new LogMarkInsertedEvent(message));
+    eventManager.post(new LogMarkInsertedEvent(message));
   }
 }

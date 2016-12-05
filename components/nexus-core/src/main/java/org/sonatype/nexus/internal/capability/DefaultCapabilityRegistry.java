@@ -41,7 +41,7 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.AfterLoad;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
@@ -78,7 +78,7 @@ public class DefaultCapabilityRegistry
 
   private final CapabilityDescriptorRegistry capabilityDescriptorRegistry;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final ActivationConditionHandlerFactory activationConditionHandlerFactory;
 
@@ -96,7 +96,7 @@ public class DefaultCapabilityRegistry
   DefaultCapabilityRegistry(final CapabilityStorage capabilityStorage,
                             final CapabilityFactoryRegistry capabilityFactoryRegistry,
                             final CapabilityDescriptorRegistry capabilityDescriptorRegistry,
-                            final EventBus eventBus,
+                            final EventManager eventManager,
                             final ActivationConditionHandlerFactory activationConditionHandlerFactory,
                             final ValidityConditionHandlerFactory validityConditionHandlerFactory,
                             final PasswordHelper passwordHelper,
@@ -105,7 +105,7 @@ public class DefaultCapabilityRegistry
     this.capabilityStorage = checkNotNull(capabilityStorage);
     this.capabilityFactoryRegistry = checkNotNull(capabilityFactoryRegistry);
     this.capabilityDescriptorRegistry = checkNotNull(capabilityDescriptorRegistry);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.activationConditionHandlerFactory = checkNotNull(activationConditionHandlerFactory);
     this.validityConditionHandlerFactory = checkNotNull(validityConditionHandlerFactory);
     this.passwordHelper = checkNotNull(passwordHelper);
@@ -427,7 +427,7 @@ public class DefaultCapabilityRegistry
         reference.activate();
       }
     }
-    eventBus.post(new AfterLoad(this));
+    eventManager.post(new AfterLoad(this));
   }
 
   private DefaultCapabilityReference create(final CapabilityIdentity id,
@@ -447,7 +447,7 @@ public class DefaultCapabilityRegistry
 
     log.debug("Created capability '{}'", capability);
 
-    eventBus.post(new CapabilityEvent.Created(this, reference));
+    eventManager.post(new CapabilityEvent.Created(this, reference));
 
     return reference;
   }
@@ -460,7 +460,7 @@ public class DefaultCapabilityRegistry
   {
     return new DefaultCapabilityReference(
         this,
-        eventBus,
+        eventManager,
         activationConditionHandlerFactory,
         validityConditionHandlerFactory,
         id,

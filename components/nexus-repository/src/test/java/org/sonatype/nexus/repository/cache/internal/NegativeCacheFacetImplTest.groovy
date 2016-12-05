@@ -17,7 +17,7 @@ import javax.cache.CacheManager
 import javax.cache.configuration.MutableConfiguration
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.cache.NegativeCacheKey
 import org.sonatype.nexus.repository.config.Configuration
@@ -63,7 +63,7 @@ class NegativeCacheFacetImplTest
     cache = mock(Cache)
     when(cacheManager.createCache(any(String), any(MutableConfiguration))).thenReturn(cache)
     underTest = new NegativeCacheFacetImpl(cacheManager)
-    underTest.installDependencies(mock(EventBus))
+    underTest.installDependencies(mock(EventManager))
     key = mock(NegativeCacheKey)
     status = Status.failure(HttpStatus.NOT_FOUND, '404')
     repository = mock(Repository)

@@ -16,7 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.common.entity.EntityMetadata
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent
@@ -43,7 +43,7 @@ class RepositoryAssetWebhookTest
   private RepositoryAssetWebhook repositoryAssetWebhook
 
   @Mock
-  private EventBus eventBus
+  private EventManager eventManager
 
   @Mock
   private InitiatorProvider initiatorProvider
@@ -63,7 +63,7 @@ class RepositoryAssetWebhookTest
   @Before
   public void before() {
     repositoryAssetWebhook = new RepositoryAssetWebhook(
-        eventBus: eventBus,
+        eventManager: eventManager,
         initiatorProvider: initiatorProvider,
         nodeAccess: nodeAccess
     )
@@ -131,7 +131,7 @@ class RepositoryAssetWebhookTest
     repositoryAssetWebhook.on(assetEvent)
 
     def assetArgumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
-    verify(eventBus).post(assetArgumentCaptor.capture())
+    verify(eventManager).post(assetArgumentCaptor.capture())
 
     def assetPayload = (RepositoryAssetWebhookPayload) assetArgumentCaptor.value.request.payload
 
@@ -149,6 +149,6 @@ class RepositoryAssetWebhookTest
 
     repositoryAssetWebhook.on(assetEvent)
 
-    verify(eventBus, times(0)).post(any(WebhookRequestSendEvent.class))
+    verify(eventManager, times(0)).post(any(WebhookRequestSendEvent.class))
   }
 }

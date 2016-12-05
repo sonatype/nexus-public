@@ -136,7 +136,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void testFromDocument() throws Exception {
-    when(document.field("name", String.class)).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
+    when(document.field("name", String.class)).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
     when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
@@ -157,7 +157,7 @@ public class MavenVariableResolverAdapterTest
   @Test
   public void testFromDocument_snapshot() throws Exception {
     when(document.field("name", String.class))
-        .thenReturn("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
+        .thenReturn("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
     when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
@@ -178,7 +178,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void testFromDocument_withClassifier() throws Exception {
-    when(document.field("name", String.class)).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
+    when(document.field("name", String.class)).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
     when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromDocument(document);
@@ -198,7 +198,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void testFromAsset() throws Exception {
-    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
+    when(asset.name()).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
     when(asset.format()).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
@@ -218,7 +218,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void testFromAsset_snapshot() throws Exception {
-    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
+    when(asset.name()).thenReturn("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
     when(asset.format()).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
@@ -239,7 +239,7 @@ public class MavenVariableResolverAdapterTest
 
   @Test
   public void testFromAsset_withClassifier() throws Exception {
-    when(asset.name()).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
+    when(asset.name()).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
     when(asset.format()).thenReturn(Maven2Format.NAME);
 
     VariableSource source = mavenVariableResolverAdapter.fromAsset(asset);
@@ -260,7 +260,7 @@ public class MavenVariableResolverAdapterTest
   @Test
   public void testFromSourceLookup() throws Exception {
     when(sourceLookup.get("format")).thenReturn("maven2");
-    when(sourceLookupAsset.get("name")).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
+    when(sourceLookupAsset.get("name")).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0.jar");
 
     VariableSource source = mavenVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
 
@@ -281,7 +281,7 @@ public class MavenVariableResolverAdapterTest
   public void testFromSourceLookup_snapshot() throws Exception {
     when(sourceLookup.get("format")).thenReturn("maven2");
     when(sourceLookupAsset.get("name"))
-        .thenReturn("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
+        .thenReturn("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar");
 
     VariableSource source = mavenVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
 
@@ -302,7 +302,7 @@ public class MavenVariableResolverAdapterTest
   @Test
   public void testFromSourceLookup_withClassifier() throws Exception {
     when(sourceLookup.get("format")).thenReturn("maven2");
-    when(sourceLookupAsset.get("name")).thenReturn("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
+    when(sourceLookupAsset.get("name")).thenReturn("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar");
 
     VariableSource source = mavenVariableResolverAdapter.fromSourceLookup(sourceLookup, sourceLookupAsset);
 

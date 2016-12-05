@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.email
 import javax.inject.Provider
 import javax.net.ssl.SSLContext
 
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.email.EmailConfiguration
 import org.sonatype.nexus.email.EmailConfigurationChangedEvent
 import org.sonatype.nexus.ssl.TrustStore
@@ -35,7 +35,7 @@ class EmailManagerImplTest
     given: 'A configured EmailManagerImpl instance'
       TrustStore trustStore = Mock(TrustStore)
       trustStore.getSSLContext() >> SSLContext.getDefault()
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventBus), Mock(EmailConfigurationStore), trustStore, Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), trustStore, Mock(Provider))
     when: 'the specified email configuration is applied to the email instance'
       Email email = impl.apply(
           new EmailConfiguration(
@@ -71,7 +71,7 @@ class EmailManagerImplTest
   @Unroll
   def 'Configures emails credentials correctly for username #username and password #password.'() {
     given: 'A configured EmailManagerImpl instance'
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventBus), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Provider))
     when: 'the specified email configuration is applied to the email instance'
       Email email = impl.apply(
           new EmailConfiguration(
@@ -95,10 +95,10 @@ class EmailManagerImplTest
 
   def 'onStoreChanged only posts a changed event for remote events'() {
     given: 'A configured EmailManagerImpl instance'
-      def eventBus = Mock(EventBus)
+      def eventManager = Mock(EventManager)
       def emailConfigurationStore = Mock(EmailConfigurationStore)
       emailConfigurationStore.load() >> Mock(EmailConfiguration)
-      EmailManagerImpl impl = new EmailManagerImpl(eventBus, emailConfigurationStore, Mock(TrustStore), Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(eventManager, emailConfigurationStore, Mock(TrustStore), Mock(Provider))
 
     when: 'a local event is received'
       def localEvent = Mock(EmailConfigurationEvent)
@@ -106,7 +106,7 @@ class EmailManagerImplTest
       impl.onStoreChanged(localEvent)
 
     then: 'the event is not posted'
-      0 * eventBus.post(_ as EmailConfigurationChangedEvent)
+      0 * eventManager.post(_ as EmailConfigurationChangedEvent)
 
     when: 'a remote event is received'
       def remoteEvent = Mock(EmailConfigurationEvent)
@@ -114,6 +114,6 @@ class EmailManagerImplTest
       impl.onStoreChanged(remoteEvent)
 
     then: 'the event is posted'
-      1 * eventBus.post(_ as EmailConfigurationChangedEvent)
+      1 * eventManager.post(_ as EmailConfigurationChangedEvent)
   }
 }

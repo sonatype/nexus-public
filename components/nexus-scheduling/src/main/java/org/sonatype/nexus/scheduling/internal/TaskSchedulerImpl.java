@@ -22,7 +22,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.ClusteredTaskState;
 import org.sonatype.nexus.scheduling.ClusteredTaskStateStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -50,7 +50,7 @@ public class TaskSchedulerImpl
     extends ComponentSupport
     implements TaskScheduler
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final TaskFactory taskFactory;
 
@@ -59,12 +59,12 @@ public class TaskSchedulerImpl
   private final Provider<SchedulerSPI> scheduler;
 
   @Inject
-  public TaskSchedulerImpl(final EventBus eventBus,
+  public TaskSchedulerImpl(final EventManager eventManager,
                            final TaskFactory taskFactory,
                            final ClusteredTaskStateStore clusteredTaskStateStore,
                            final Provider<SchedulerSPI> scheduler)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.taskFactory = checkNotNull(taskFactory);
     this.clusteredTaskStateStore = checkNotNull(clusteredTaskStateStore);
     this.scheduler = checkNotNull(scheduler);
@@ -150,7 +150,7 @@ public class TaskSchedulerImpl
         taskInfo.getSchedule().getType()
     );
 
-    eventBus.post(new TaskScheduledEvent(taskInfo));
+    eventManager.post(new TaskScheduledEvent(taskInfo));
 
     return taskInfo;
   }

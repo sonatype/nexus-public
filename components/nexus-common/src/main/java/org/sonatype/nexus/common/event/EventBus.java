@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.common.event;
 
-// TODO: merge into EventManager
-
 /**
  * Interface exposing Guava {@link com.google.common.eventbus.EventBus} API.
  *
  * @since 3.0
+ *
+ * @deprecated use {@link EventManager} instead
  */
+@Deprecated
 public interface EventBus
 {
   /**
@@ -31,7 +32,7 @@ public interface EventBus
   /**
    * Unregisters an event handler from this event bus.
    *
-   * @param handler to be registered
+   * @param handler to be unregistered
    */
   void unregister(Object handler);
 

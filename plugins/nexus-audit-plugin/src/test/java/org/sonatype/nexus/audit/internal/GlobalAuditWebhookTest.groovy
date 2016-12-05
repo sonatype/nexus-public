@@ -16,7 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.audit.AuditData
 import org.sonatype.nexus.audit.AuditDataRecordedEvent
 import org.sonatype.nexus.audit.internal.GlobalAuditWebhook.AuditWebhookPayload
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.webhooks.WebhookConfiguration
 import org.sonatype.nexus.webhooks.WebhookRequestSendEvent
 
@@ -31,10 +31,10 @@ class GlobalAuditWebhookTest
 {
   @Test
   public void 'has the correct event id'() {
-    def eventBus = mock(EventBus.class)
+    def eventManager = mock(EventManager.class)
 
     def globalAuditWebhook = new GlobalAuditWebhook(
-        eventBus: eventBus
+        eventManager: eventManager
     )
 
     assert globalAuditWebhook.id == "rm:global:audit"
@@ -42,10 +42,10 @@ class GlobalAuditWebhookTest
 
   @Test
   public void 'queues audit webhook'() {
-    def eventBus = mock(EventBus.class)
+    def eventManager = mock(EventManager.class)
 
     def globalAuditWebhook = new GlobalAuditWebhook(
-        eventBus: eventBus
+        eventManager: eventManager
     )
 
     def configuration = mock(WebhookConfiguration.class)
@@ -65,7 +65,7 @@ class GlobalAuditWebhookTest
     globalAuditWebhook.on(auditRecordedEvent)
 
     def argumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
-    verify(eventBus).post(argumentCaptor.capture())
+    verify(eventManager).post(argumentCaptor.capture())
 
     def auditPayload = (AuditWebhookPayload) argumentCaptor.value.request.payload
 

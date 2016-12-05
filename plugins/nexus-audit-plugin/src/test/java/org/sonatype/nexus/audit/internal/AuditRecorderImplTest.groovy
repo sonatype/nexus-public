@@ -16,7 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.audit.AuditData
 import org.sonatype.nexus.audit.AuditDataRecordedEvent
 import org.sonatype.nexus.audit.InitiatorProvider
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 
 import org.junit.Before
@@ -36,7 +36,7 @@ class AuditRecorderImplTest
     extends TestSupport
 {
   @Mock
-  EventBus eventBus
+  EventManager eventManager
 
   @Mock
   NodeAccess nodeAccess
@@ -58,7 +58,7 @@ class AuditRecorderImplTest
     when(initiatorProvider.get()).thenReturn(initiator)
     when(nodeAccess.getId()).thenReturn(nodeId)
 
-    underTest = new AuditRecorderImpl(eventBus, nodeAccess, auditStore, initiatorProvider)
+    underTest = new AuditRecorderImpl(eventManager, nodeAccess, auditStore, initiatorProvider)
     underTest.enabled = true
   }
 
@@ -100,8 +100,8 @@ class AuditRecorderImplTest
     underTest.record(data)
 
     def argument = ArgumentCaptor.forClass(Object.class)
-    verify(eventBus).post(argument.capture())
-    verifyNoMoreInteractions(eventBus)
+    verify(eventManager).post(argument.capture())
+    verifyNoMoreInteractions(eventManager)
 
     Object captured = argument.value
     assert captured instanceof AuditDataRecordedEvent

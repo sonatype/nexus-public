@@ -21,7 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -41,14 +41,14 @@ public class NexusIsActiveCondition
     implements Lifecycle
 {
   @VisibleForTesting
-  public NexusIsActiveCondition(final EventBus eventBus) {
-    super(eventBus, false);
+  public NexusIsActiveCondition(final EventManager eventManager) {
+    super(eventManager, false);
     bind();
   }
 
   @Inject
-  public NexusIsActiveCondition(final Provider<EventBus> eventBus) {
-    super(eventBus, false);
+  public NexusIsActiveCondition(final Provider<EventManager> eventManager) {
+    super(eventManager, false);
     bind();
   }
 

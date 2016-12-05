@@ -32,7 +32,7 @@ import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityNotFoundException;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.formfields.Encrypted;
@@ -87,7 +87,7 @@ public class DefaultCapabilityRegistryTest
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Mock
   private CapabilityStorage capabilityStorage;
@@ -147,7 +147,7 @@ public class DefaultCapabilityRegistryTest
         capabilityFactoryRegistry,
 
         capabilityDescriptorRegistry,
-        eventBus,
+        eventManager,
         achf,
         vchf,
         passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl())),
@@ -169,7 +169,7 @@ public class DefaultCapabilityRegistryTest
     final CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
     assertThat(reference, is(not(nullValue())));
 
-    verify(eventBus, atLeastOnce()).post(rec.capture());
+    verify(eventManager, atLeastOnce()).post(rec.capture());
     assertThat(rec.getValue(), is(instanceOf(CapabilityEvent.Created.class)));
     assertThat(rec.getValue().getReference(), is(equalTo(reference)));
   }
@@ -188,7 +188,7 @@ public class DefaultCapabilityRegistryTest
 
     assertThat(reference1, is(equalTo(reference)));
 
-    verify(eventBus, atLeastOnce()).post(rec.capture());
+    verify(eventManager, atLeastOnce()).post(rec.capture());
     assertThat(rec.getAllValues().get(0), is(instanceOf(CapabilityEvent.Created.class)));
     assertThat(rec.getAllValues().get(0).getReference(), is(equalTo(reference1)));
     assertThat(rec.getAllValues().get(1), is(instanceOf(CapabilityEvent.AfterRemove.class)));
@@ -445,7 +445,7 @@ public class DefaultCapabilityRegistryTest
 
     ArgumentCaptor<Object> ebRec = ArgumentCaptor.forClass(Object.class);
 
-    verify(eventBus, atLeastOnce()).post(ebRec.capture());
+    verify(eventManager, atLeastOnce()).post(ebRec.capture());
     assertThat(
         ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"), is("bar")
     );

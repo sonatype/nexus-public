@@ -25,6 +25,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseExternalizer;
 import org.sonatype.nexus.orient.DatabaseExternalizerImpl;
+import org.sonatype.nexus.orient.DatabaseRestorer;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseManagerSupport;
 
@@ -50,17 +51,23 @@ public class DatabaseManagerImpl
 
   private final File databasesDirectory;
 
+  private final DatabaseRestorer databaseRestorer;
+
   @Inject
-  public DatabaseManagerImpl(final ApplicationDirectories applicationDirectories) {
+  public DatabaseManagerImpl(final ApplicationDirectories applicationDirectories,
+                             final DatabaseRestorer databaseRestorer) {
     checkNotNull(applicationDirectories);
     this.databasesDirectory = applicationDirectories.getWorkDirectory(WORK_PATH);
     log.debug("Databases directory: {}", databasesDirectory);
+    this.databaseRestorer = checkNotNull(databaseRestorer);
   }
 
   @VisibleForTesting
-  public DatabaseManagerImpl(final File databasesDirectory) {
+  public DatabaseManagerImpl(final File databasesDirectory,
+                             final DatabaseRestorer databaseRestorer) {
     this.databasesDirectory = checkNotNull(databasesDirectory);
     log.debug("Databases directory: {}", databasesDirectory);
+    this.databaseRestorer = checkNotNull(databaseRestorer);
   }
 
   @ManagedAttribute
@@ -92,7 +99,7 @@ public class DatabaseManagerImpl
   }
 
   /**
-   * When the database is being created, maybe import from the standard export location.
+   * When the database is being created, maybe import from the standard export location or restore backups.
    *
    * @see DatabaseExternalizer#EXPORT_FILENAME
    * @see DatabaseExternalizer#EXPORT_GZ_FILENAME
@@ -101,7 +108,9 @@ public class DatabaseManagerImpl
   @Override
   protected void created(final ODatabaseDocumentTx db, final String name) throws Exception {
     File dir = directory(name);
-    DatabaseExternalizerImpl externalizer = externalizer(name);
-    externalizer.maybeImportFromStandardLocation(db, dir);
+    if (!databaseRestorer.maybeRestoreDatabase(db, name)) {
+      DatabaseExternalizerImpl externalizer = externalizer(name);
+      externalizer.maybeImportFromStandardLocation(db, dir);
+    }
   }
 }

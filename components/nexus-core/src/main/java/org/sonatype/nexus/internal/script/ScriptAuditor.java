@@ -51,7 +51,7 @@ public class ScriptAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final ScriptEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       Script script = event.getScript();
 
       AuditData data = new AuditData();

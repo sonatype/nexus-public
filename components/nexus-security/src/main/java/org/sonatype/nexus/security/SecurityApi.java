@@ -13,7 +13,6 @@
 package org.sonatype.nexus.security;
 
 import java.util.List;
-import java.util.Set;
 
 import org.sonatype.nexus.common.script.ScriptApi;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;

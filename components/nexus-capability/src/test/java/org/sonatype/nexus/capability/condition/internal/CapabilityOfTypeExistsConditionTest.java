@@ -22,7 +22,7 @@ import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +42,7 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
  * @since capabilities 2.0
  */
 public class CapabilityOfTypeExistsConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   @Mock
@@ -75,11 +75,11 @@ public class CapabilityOfTypeExistsConditionTest
     when(descriptorRegistry.get(capabilityType)).thenReturn(descriptor);
 
     underTest = new CapabilityOfTypeExistsCondition(
-        eventBus, descriptorRegistry, capabilityRegistry, capabilityType
+        eventManager, descriptorRegistry, capabilityRegistry, capabilityType
     );
     underTest.bind();
 
-    verify(eventBus).register(underTest);
+    verify(eventManager).register(underTest);
   }
 
   /**
@@ -100,7 +100,7 @@ public class CapabilityOfTypeExistsConditionTest
     underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -113,7 +113,7 @@ public class CapabilityOfTypeExistsConditionTest
     underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -129,7 +129,7 @@ public class CapabilityOfTypeExistsConditionTest
     underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref2));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -149,7 +149,7 @@ public class CapabilityOfTypeExistsConditionTest
     underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -165,7 +165,7 @@ public class CapabilityOfTypeExistsConditionTest
     underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, ref1));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -175,7 +175,7 @@ public class CapabilityOfTypeExistsConditionTest
   public void releaseRemovesItselfAsHandler() {
     underTest.release();
 
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
 }

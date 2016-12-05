@@ -26,7 +26,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.httpclient.HttpClientManager;
@@ -77,7 +77,7 @@ public class HttpClientManagerImpl
 
   private final Logger outboundLog = LoggerFactory.getLogger(HTTPCLIENT_OUTBOUND_LOGGER_NAME);
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final HttpClientConfigurationStore store;
 
@@ -92,13 +92,13 @@ public class HttpClientManagerImpl
   private HttpClientConfiguration configuration;
 
   @Inject
-  public HttpClientManagerImpl(final EventBus eventBus,
+  public HttpClientManagerImpl(final EventManager eventManager,
       final HttpClientConfigurationStore store,
       @Named("initial") final Provider<HttpClientConfiguration> defaults,
       final SharedHttpClientConnectionManager sharedConnectionManager,
       final DefaultsCustomizer defaultsCustomizer)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
 
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);
@@ -185,7 +185,7 @@ public class HttpClientManagerImpl
       this.configuration = model;
     }
 
-    eventBus.post(new HttpClientConfigurationChangedEvent(model));
+    eventManager.post(new HttpClientConfigurationChangedEvent(model));
   }
 
   @Subscribe
@@ -196,7 +196,7 @@ public class HttpClientManagerImpl
       synchronized (lock) {
         configuration = model = loadConfiguration();
       }
-      eventBus.post(new HttpClientConfigurationChangedEvent(model));
+      eventManager.post(new HttpClientConfigurationChangedEvent(model));
     }
   }
 

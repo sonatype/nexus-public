@@ -27,7 +27,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -69,7 +69,7 @@ public class SecurityConfigurationManagerImpl
 
   private final PasswordService passwordService;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final List<SecurityContributor> securityContributors = new ArrayList<>();
 
@@ -85,10 +85,10 @@ public class SecurityConfigurationManagerImpl
   public SecurityConfigurationManagerImpl(final SecurityConfigurationSource configurationSource,
                                           final SecurityConfigurationCleaner configCleaner,
                                           final PasswordService passwordService,
-                                          final EventBus eventBus)
+                                          final EventManager eventManager)
   {
     this.configurationSource = configurationSource;
-    this.eventBus = eventBus;
+    this.eventManager = eventManager;
     this.configCleaner = configCleaner;
     this.passwordService = passwordService;
   }
@@ -271,14 +271,14 @@ public class SecurityConfigurationManagerImpl
     synchronized (this) {
       securityContributors.add(contributor);
     }
-    eventBus.post(new SecurityContributionChangedEvent());
+    eventManager.post(new SecurityContributionChangedEvent());
   }
 
   public void removeContributor(final SecurityContributor contributor) {
     synchronized (this) {
       securityContributors.remove(contributor);
     }
-    eventBus.post(new SecurityContributionChangedEvent());
+    eventManager.post(new SecurityContributionChangedEvent());
   }
 
   private SecurityConfiguration getDefaultConfiguration() {
@@ -325,7 +325,7 @@ public class SecurityConfigurationManagerImpl
 
       if (rebuiltConfiguration) {
         // signal rebuild (outside lock to avoid contention)
-        eventBus.post(new AuthorizationConfigurationChanged());
+        eventManager.post(new AuthorizationConfigurationChanged());
       }
     }
     return mergedConfiguration;

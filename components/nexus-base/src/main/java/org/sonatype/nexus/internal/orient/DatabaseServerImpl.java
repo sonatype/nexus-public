@@ -240,6 +240,9 @@ public class DatabaseServerImpl
     // latest advice is to disable DB compression as it doesn't buy much,
     // also snappy has issues with use of native lib (unpacked under tmp)
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
+    
+    // ensure we don't set a file lock, which can behave badly on NFS https://issues.sonatype.org/browse/NEXUS-11289
+    OGlobalConfiguration.FILE_LOCK.setValue(false);
 
     return config;
   }

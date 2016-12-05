@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.capability.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.capability.RepositoryConditions;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -39,8 +39,8 @@ public class RepositoryConditionsImplTest
 
   @Before
   public void setUpRepositoryConditions() {
-    final EventBus eventBus = mock(EventBus.class);
-    underTest = new RepositoryConditionsImpl(eventBus, mock(RepositoryManager.class));
+    final EventManager eventManager = mock(EventManager.class);
+    underTest = new RepositoryConditionsImpl(eventManager, mock(RepositoryManager.class));
   }
 
   /**

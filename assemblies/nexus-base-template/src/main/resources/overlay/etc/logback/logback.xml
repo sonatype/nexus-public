@@ -21,7 +21,7 @@
       <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${karaf.data}/log/nexus-%d{yyyy-MMdd}.log.gz</fileNamePattern>
+      <fileNamePattern>${karaf.data}/log/nexus-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
   </appender>

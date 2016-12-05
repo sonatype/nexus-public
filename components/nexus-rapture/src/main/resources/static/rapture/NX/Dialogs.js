@@ -37,7 +37,7 @@ Ext.define('NX.Dialogs', {
       msg: message,
       buttons: Ext.Msg.OK,
       icon: Ext.MessageBox.INFO,
-      closable: false
+      closable: true
     });
 
     Ext.Msg.show(options);
@@ -57,7 +57,7 @@ Ext.define('NX.Dialogs', {
       msg: message || NX.I18n.get('Dialogs_Error_Message'),
       buttons: Ext.Msg.OK,
       icon: Ext.MessageBox.ERROR,
-      closable: false
+      closable: true
     });
 
     Ext.Msg.show(options);

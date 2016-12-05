@@ -27,7 +27,7 @@ import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.newHashMap;
@@ -57,7 +57,7 @@ public class DefaultCapabilityReference
 
   private final CapabilityRegistry capabilityRegistry;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final ActivationConditionHandler activationHandler;
 
@@ -74,7 +74,7 @@ public class DefaultCapabilityReference
   private String failingAction;
 
   DefaultCapabilityReference(final CapabilityRegistry capabilityRegistry,
-                             final EventBus eventBus,
+                             final EventManager eventManager,
                              final ActivationConditionHandlerFactory activationListenerFactory,
                              final ValidityConditionHandlerFactory validityConditionHandlerFactory,
                              final CapabilityIdentity id,
@@ -83,7 +83,7 @@ public class DefaultCapabilityReference
                              final Capability capability)
   {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
 
     this.id = checkNotNull(id);
     this.type = checkNotNull(type);
@@ -344,7 +344,7 @@ public class DefaultCapabilityReference
       if (failure != null) {
         failure = null;
         failingAction = null;
-        eventBus.post(new CallbackFailureCleared(capabilityRegistry, this));
+        eventManager.post(new CallbackFailureCleared(capabilityRegistry, this));
       }
     }
     finally {
@@ -358,7 +358,7 @@ public class DefaultCapabilityReference
       failure = checkNotNull(e);
       failingAction = checkNotNull(action);
       log.error("Could not {} capability {} ({})", action.toLowerCase(), capability, id, e);
-      eventBus.post(new CallbackFailure(capabilityRegistry, this, action, e));
+      eventManager.post(new CallbackFailure(capabilityRegistry, this, action, e));
     }
     finally {
       stateLock.writeLock().unlock();
@@ -495,7 +495,7 @@ public class DefaultCapabilityReference
     @Override
     public void update(final Map<String, String> properties, final Map<String, String> previousProperties) {
       try {
-        eventBus.post(
+        eventManager.post(
             new CapabilityEvent.BeforeUpdate(
                 capabilityRegistry, DefaultCapabilityReference.this, properties, previousProperties
             )
@@ -508,7 +508,7 @@ public class DefaultCapabilityReference
         setFailure("Update", e);
       }
       finally {
-        eventBus.post(
+        eventManager.post(
             new CapabilityEvent.AfterUpdate(
                 capabilityRegistry, DefaultCapabilityReference.this, properties, previousProperties
             )
@@ -529,7 +529,7 @@ public class DefaultCapabilityReference
       }
       finally {
         state = new RemovedState();
-        eventBus.post(
+        eventManager.post(
             new CapabilityEvent.AfterRemove(capabilityRegistry, DefaultCapabilityReference.this)
         );
       }
@@ -578,7 +578,7 @@ public class DefaultCapabilityReference
           resetFailure();
           log.debug("Activated capability {} ({})", capability, id);
           state = new ActiveState();
-          eventBus.post(
+          eventManager.post(
               new CapabilityEvent.AfterActivated(capabilityRegistry, DefaultCapabilityReference.this)
           );
         }
@@ -627,7 +627,7 @@ public class DefaultCapabilityReference
       log.debug("Passivating capability {} ({})", capability, id);
       try {
         state = new EnabledState();
-        eventBus.post(
+        eventManager.post(
             new CapabilityEvent.BeforePassivated(capabilityRegistry, DefaultCapabilityReference.this)
         );
         capability.onPassivate();

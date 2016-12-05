@@ -29,7 +29,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -55,7 +55,7 @@ public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
     implements BlobStoreManager, EventAware
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final Map<String, BlobStore> stores = Maps.newHashMap();
 
@@ -64,11 +64,11 @@ public class BlobStoreManagerImpl
   private final Map<String, Provider<BlobStore>> blobstorePrototypes;
 
   @Inject
-  public BlobStoreManagerImpl(final EventBus eventBus,
+  public BlobStoreManagerImpl(final EventManager eventManager,
                               final BlobStoreConfigurationStore store,
                               Map<String, Provider<BlobStore>> blobstorePrototypes)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
   }
@@ -148,7 +148,7 @@ public class BlobStoreManagerImpl
 
     blobStore.start();
 
-    eventBus.post(new BlobStoreCreatedEvent(blobStore));
+    eventManager.post(new BlobStoreCreatedEvent(blobStore));
 
     return blobStore;
   }
@@ -173,7 +173,7 @@ public class BlobStoreManagerImpl
     untrack(name);
     store.delete(blobStore.getBlobStoreConfiguration());
 
-    eventBus.post(new BlobStoreDeletedEvent(blobStore));
+    eventManager.post(new BlobStoreDeletedEvent(blobStore));
   }
 
   @Override

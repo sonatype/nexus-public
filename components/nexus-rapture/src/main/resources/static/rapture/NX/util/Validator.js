@@ -85,11 +85,22 @@ Ext.define('NX.util.Validator', {
    * @returns {boolean}
    */
   isURL: function (str, options) {
+
+    // Ensure that the URL is of proper length
     if (!str || str.length >= 2083) {
       return false;
     }
+
+    // Apply options
     options = options || {};
     options = Ext.applyIf(options, this.default_url_options);
+
+    // Ensure that the URL is not blank
+    if (!options.allow_blank && Ext.isEmpty(str)) {
+      return false;
+    }
+
+    // Check the URL syntax
     var separators = '-?-?' + (options.allow_underscores ? '_?' : '');
     var url = new RegExp('^(?!mailto:)(?:(?:' + options.protocols.join('|') + ')://)' +
         (options.require_protocol ? '' : '?') +
@@ -97,9 +108,9 @@ Ext.define('NX.util.Validator', {
         separators + ')*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+' + separators +
         ')*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{1,}))' + (options.require_tld ? '' : '?') +
         ')|localhost)(?::(\\d{1,5}))?(?:(?:/|\\?|#)[^\\s]*)?$', 'i');
-
     var match = str.match(url),
         port = match ? match[1] : 0;
+
     return !!(match && (!port || (port > 0 && port <= 65535)));
   }
 

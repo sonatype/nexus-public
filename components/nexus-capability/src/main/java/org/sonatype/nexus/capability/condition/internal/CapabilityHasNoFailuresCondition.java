@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.CapabilityEvent.CallbackFailure;
 import org.sonatype.nexus.capability.CapabilityEvent.CallbackFailureCleared;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -40,8 +40,8 @@ public class CapabilityHasNoFailuresCondition
 
   private Exception failure;
 
-  public CapabilityHasNoFailuresCondition(final EventBus eventBus) {
-    super(eventBus);
+  public CapabilityHasNoFailuresCondition(final EventManager eventManager) {
+    super(eventManager);
   }
 
   @Override
@@ -56,7 +56,7 @@ public class CapabilityHasNoFailuresCondition
   @Override
   protected void doBind() {
     checkState(context != null, "Not yet contextualized");
-    getEventBus().register(this);
+    getEventManager().register(this);
     failingAction = context.failingAction();
     failure = context.failure();
     setSatisfied(failure == null);
@@ -64,7 +64,7 @@ public class CapabilityHasNoFailuresCondition
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   @AllowConcurrentEvents

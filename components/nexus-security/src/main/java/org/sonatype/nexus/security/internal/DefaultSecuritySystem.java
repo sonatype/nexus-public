@@ -28,7 +28,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
@@ -74,7 +74,7 @@ public class DefaultSecuritySystem
 {
   private static final String ALL_ROLES_KEY = "all";
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final RealmSecurityManager realmSecurityManager;
 
@@ -87,14 +87,14 @@ public class DefaultSecuritySystem
   private final Map<String, UserManager> userManagers;
 
   @Inject
-  public DefaultSecuritySystem(final EventBus eventBus,
+  public DefaultSecuritySystem(final EventManager eventManager,
                                final RealmSecurityManager realmSecurityManager,
                                final RealmManager realmManager,
                                final AnonymousManager anonymousManager,
                                final Map<String, AuthorizationManager> authorizationManagers,
                                final Map<String, UserManager> userManagers)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.realmSecurityManager = checkNotNull(realmSecurityManager);
     this.realmManager = checkNotNull(realmManager);
     this.anonymousManager = checkNotNull(anonymousManager);
@@ -232,7 +232,7 @@ public class DefaultSecuritySystem
     userManager.updateUser(user);
     if (oldUser.getStatus() == UserStatus.active && user.getStatus() != oldUser.getStatus()) {
       // clear the realm authc caches as user got disabled
-      eventBus.post(new UserPrincipalsExpired(user.getUserId(), user.getSource()));
+      eventManager.post(new UserPrincipalsExpired(user.getUserId(), user.getSource()));
     }
 
     // then save the users Roles
@@ -256,7 +256,7 @@ public class DefaultSecuritySystem
     }
 
     // clear the realm authz caches as user might get roles changed
-    eventBus.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new AuthorizationConfigurationChanged());
 
     return user;
   }
@@ -291,7 +291,7 @@ public class DefaultSecuritySystem
     userManager.deleteUser(userId);
 
     // flush authc
-    eventBus.post(new UserPrincipalsExpired(userId, source));
+    eventManager.post(new UserPrincipalsExpired(userId, source));
   }
 
   @Override
@@ -324,7 +324,7 @@ public class DefaultSecuritySystem
       throw new UserNotFoundException(userId);
     }
     // clear the authz realm caches
-    eventBus.post(new AuthorizationConfigurationChanged());
+    eventManager.post(new AuthorizationConfigurationChanged());
   }
 
   private User findUser(String userId, UserManager userManager) throws UserNotFoundException {
@@ -534,7 +534,7 @@ public class DefaultSecuritySystem
     }
 
     // flush authc
-    eventBus.post(new UserPrincipalsExpired(userId, user.getSource()));
+    eventManager.post(new UserPrincipalsExpired(userId, user.getSource()));
   }
 
   private Collection<UserManager> getUserManagers() {

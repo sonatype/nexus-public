@@ -13,7 +13,7 @@
 package org.sonatype.nexus.internal.httpclient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
@@ -41,7 +41,7 @@ public class HttpClientManagerImplTest
 {
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Mock
   private HttpClientConfigurationStore configStore;
@@ -59,7 +59,7 @@ public class HttpClientManagerImplTest
 
   @Before
   public void setUp() {
-    underTest = new HttpClientManagerImpl(eventBus, configStore, HttpClientConfiguration::new, connectionManager,
+    underTest = new HttpClientManagerImpl(eventManager, configStore, HttpClientConfiguration::new, connectionManager,
         defaultsCustomizer);
   }
 
@@ -98,7 +98,7 @@ public class HttpClientManagerImplTest
   public void testOnStoreChanged_LocalEvent() {
     when(configEvent.isLocal()).thenReturn(true);
     underTest.onStoreChanged(configEvent);
-    verifyZeroInteractions(eventBus, configStore);
+    verifyZeroInteractions(eventManager, configStore);
   }
 
   @Test
@@ -110,7 +110,7 @@ public class HttpClientManagerImplTest
     underTest.onStoreChanged(configEvent);
     ArgumentCaptor<HttpClientConfigurationChangedEvent> eventCaptor = ArgumentCaptor
         .forClass(HttpClientConfigurationChangedEvent.class);
-    verify(eventBus).post(eventCaptor.capture());
+    verify(eventManager).post(eventCaptor.capture());
     assertThat(eventCaptor.getValue().getConfiguration(), is(config));
   }
 }

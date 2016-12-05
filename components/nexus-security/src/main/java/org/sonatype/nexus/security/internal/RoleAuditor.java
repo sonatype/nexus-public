@@ -51,7 +51,7 @@ public class RoleAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final RoleEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       Role role = event.getRole();
 
       AuditData data = new AuditData();

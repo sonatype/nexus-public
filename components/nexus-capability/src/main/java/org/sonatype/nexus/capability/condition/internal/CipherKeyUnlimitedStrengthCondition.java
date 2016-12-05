@@ -18,7 +18,7 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -53,24 +53,24 @@ public class CipherKeyUnlimitedStrengthCondition
 
   private final String transformation;
 
-  public CipherKeyUnlimitedStrengthCondition(final EventBus eventBus,
+  public CipherKeyUnlimitedStrengthCondition(final EventManager eventManager,
                                              final CryptoHelper crypto,
                                              final String transformation)
   {
-    super(eventBus, false);
+    super(eventManager, false);
     this.crypto = checkNotNull(crypto);
     this.transformation = checkNotNull(transformation);
   }
 
   @Override
   protected void doBind() {
-    getEventBus().register(this);
+    getEventManager().register(this);
     verify();
   }
 
   @Override
   protected void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
   }
 
   @Override

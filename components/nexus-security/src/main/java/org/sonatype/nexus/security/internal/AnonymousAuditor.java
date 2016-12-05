@@ -42,7 +42,7 @@ public class AnonymousAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AnonymousConfigurationChangedEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       AnonymousConfiguration configuration = event.getConfiguration();
 
       AuditData data = new AuditData();

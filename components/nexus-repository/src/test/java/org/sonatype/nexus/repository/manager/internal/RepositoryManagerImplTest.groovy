@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.manager.internal
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
@@ -40,7 +40,7 @@ class RepositoryManagerImplTest
 
   //Dependencies for RepositoryManagerImpl
   @Mock
-  EventBus eventBus
+  EventManager eventManager
 
   @Mock
   ConfigurationStore configurationStore
@@ -108,7 +108,7 @@ class RepositoryManagerImplTest
         thenReturn(mavenCentralRepository, apacheSnapshotsRepository, thirdPartyRepository)
 
     //initialize and start the repository manager
-    repositoryManager = new RepositoryManagerImpl(eventBus, configurationStore, repositoryFactory,
+    repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, false)
 

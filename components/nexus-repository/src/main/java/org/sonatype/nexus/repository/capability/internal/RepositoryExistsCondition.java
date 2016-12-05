@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.capability.internal;
 
 import java.util.function.Supplier;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -31,11 +31,11 @@ public class RepositoryExistsCondition
     extends RepositoryConditionSupport
 {
 
-  public RepositoryExistsCondition(final EventBus eventBus,
+  public RepositoryExistsCondition(final EventManager eventManager,
                                    final RepositoryManager repositoryManager,
                                    final Supplier<String> repositoryName)
   {
-    super(eventBus, repositoryManager, repositoryName);
+    super(eventManager, repositoryManager, repositoryName);
   }
 
   @Override

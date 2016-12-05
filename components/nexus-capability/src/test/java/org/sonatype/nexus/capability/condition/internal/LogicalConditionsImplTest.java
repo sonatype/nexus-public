@@ -14,7 +14,7 @@ package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
  * @since capabilities 2.0
  */
 public class LogicalConditionsImplTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   static final boolean UNSATISFIED = false;
@@ -49,7 +49,7 @@ public class LogicalConditionsImplTest
   public final void setUpLogicalConditions()
       throws Exception
   {
-    underTest = new LogicalConditionsImpl(eventBus);
+    underTest = new LogicalConditionsImpl(eventManager);
   }
 
   public Condition prepare(final CompositeConditionSupport condition, boolean leftSatisfied,

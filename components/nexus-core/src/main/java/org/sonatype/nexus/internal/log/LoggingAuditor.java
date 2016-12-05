@@ -43,7 +43,7 @@ public class LoggingAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final LoggersResetEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);
       data.setType("reset");
@@ -55,7 +55,7 @@ public class LoggingAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final LoggerLevelChangedEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       String logger = event.getLogger();
       LoggerLevel level = event.getLevel();
 

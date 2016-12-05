@@ -19,6 +19,7 @@ import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
@@ -44,15 +45,15 @@ public abstract class FacetSupport
     extends ComponentSupport
     implements Facet, StateGuardAware
 {
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Inject
-  public void installDependencies(final EventBus eventBus) {
-    this.eventBus = checkNotNull(eventBus);
+  public void installDependencies(final EventManager eventManager) {
+    this.eventManager = checkNotNull(eventManager);
   }
 
-  protected EventBus getEventBus() {
-    return checkNotNull(eventBus);
+  protected EventManager getEventManager() {
+    return checkNotNull(eventManager);
   }
 
   private Repository repository;
@@ -153,7 +154,7 @@ public abstract class FacetSupport
   @Transitions(from = {INITIALISED, STOPPED}, to = STARTED)
   public void start() throws Exception {
     doStart();
-    eventBus.register(this);
+    eventManager.register(this);
   }
 
   protected void doStart() throws Exception {
@@ -163,7 +164,7 @@ public abstract class FacetSupport
   @Override
   @Transitions(from = STARTED, to = STOPPED)
   public void stop() throws Exception {
-    eventBus.unregister(this);
+    eventManager.unregister(this);
     doStop();
   }
 
@@ -222,5 +223,13 @@ public abstract class FacetSupport
   @Nonnull
   protected <T extends Facet> Optional<T> optionalFacet(final Class<T> type) {
     return getRepository().optionalFacet(type);
+  }
+
+  /**
+   * @deprecated use {@link EventManager} instead
+   */
+  @Deprecated
+  protected EventBus getEventBus() {
+    return eventManager;
   }
 }

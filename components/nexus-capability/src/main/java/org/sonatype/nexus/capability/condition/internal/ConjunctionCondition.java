@@ -13,7 +13,7 @@
 package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 /**
  * A condition that applies a logical AND between conditions.
@@ -27,10 +27,10 @@ public class ConjunctionCondition
 
   private Condition lastNotSatisfied;
 
-  public ConjunctionCondition(final EventBus eventBus,
+  public ConjunctionCondition(final EventManager eventManager,
                               final Condition... conditions)
   {
-    super(eventBus, conditions);
+    super(eventManager, conditions);
   }
 
   @Override

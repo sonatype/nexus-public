@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -31,12 +31,12 @@ public class CapabilityOfTypeActiveCondition
     extends CapabilityOfTypeExistsCondition
 {
 
-  public CapabilityOfTypeActiveCondition(final EventBus eventBus,
+  public CapabilityOfTypeActiveCondition(final EventManager eventManager,
                                          final CapabilityDescriptorRegistry descriptorRegistry,
                                          final CapabilityRegistry capabilityRegistry,
                                          final CapabilityType type)
   {
-    super(eventBus, descriptorRegistry, capabilityRegistry, type);
+    super(eventManager, descriptorRegistry, capabilityRegistry, type);
   }
 
   @Override

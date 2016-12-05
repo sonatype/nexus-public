@@ -24,7 +24,7 @@ import javax.validation.ConstraintViolationException;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuard;
 import org.sonatype.nexus.common.stateguard.StateGuardAware;
@@ -59,7 +59,7 @@ public class RepositoryImpl
     extends ComponentSupport
     implements Repository, StateGuardAware
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final Type type;
 
@@ -72,11 +72,11 @@ public class RepositoryImpl
   private String name;
 
   @Inject
-  public RepositoryImpl(final EventBus eventBus,
+  public RepositoryImpl(final EventManager eventManager,
                         @Assisted final Type type,
                         @Assisted final Format format)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.type = checkNotNull(type);
     this.format = checkNotNull(format);
   }
@@ -234,7 +234,7 @@ public class RepositoryImpl
     }
     failures.maybePropagate("Failed to start facets");
 
-    eventBus.post(new RepositoryStartedEvent(this));
+    eventManager.post(new RepositoryStartedEvent(this));
   }
 
   @Override
@@ -254,7 +254,7 @@ public class RepositoryImpl
     }
     failures.maybePropagate("Failed to stop facets");
 
-    eventBus.post(new RepositoryStoppedEvent(this));
+    eventManager.post(new RepositoryStoppedEvent(this));
   }
 
   @Override
@@ -298,7 +298,7 @@ public class RepositoryImpl
     facets.clear();
     configuration = null;
 
-    eventBus.post(new RepositoryDestroyedEvent(this));
+    eventManager.post(new RepositoryDestroyedEvent(this));
   }
 
   //

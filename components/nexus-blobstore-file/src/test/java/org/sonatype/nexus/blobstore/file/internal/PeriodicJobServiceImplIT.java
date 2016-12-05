@@ -23,10 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
 
 /**
  * Test for {@link PeriodicJobServiceImpl}

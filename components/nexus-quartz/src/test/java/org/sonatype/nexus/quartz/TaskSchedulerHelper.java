@@ -21,11 +21,12 @@ import javax.inject.Inject;
 import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
+import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
@@ -64,8 +65,7 @@ public class TaskSchedulerHelper
   @Inject
   private SchedulerSPI scheduler;
 
-  @Inject
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private ApplicationDirectories applicationDirectories;
 
@@ -80,6 +80,7 @@ public class TaskSchedulerHelper
   }
 
   public void init(@Nullable final Integer poolSize, @Nullable final JobFactory factory) throws Exception {
+    eventManager = new SimpleEventManager();
     applicationDirectories = mock(ApplicationDirectories.class);
     baseUrlManager = mock(BaseUrlManager.class);
     nodeAccess = mock(NodeAccess.class);
@@ -92,6 +93,8 @@ public class TaskSchedulerHelper
       }
       binder.bind(ParameterKeys.PROPERTIES)
           .toInstance(properties);
+
+      binder.bind(EventManager.class).toInstance(eventManager);
 
       File workDir = util.createTempDir(util.getTargetDir(), "workdir");
       when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(workDir);
@@ -140,7 +143,7 @@ public class TaskSchedulerHelper
     return scheduler;
   }
 
-  public EventBus getEventBus() {
-    return eventBus;
+  public EventManager getEventManager() {
+    return eventManager;
   }
 }

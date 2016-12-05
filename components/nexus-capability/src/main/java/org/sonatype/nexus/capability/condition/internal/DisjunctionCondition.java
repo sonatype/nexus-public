@@ -13,7 +13,7 @@
 package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 /**
  * A condition that applies a logical OR between conditions.
@@ -27,10 +27,10 @@ public class DisjunctionCondition
 
   private Condition lastSatisfied;
 
-  public DisjunctionCondition(final EventBus eventBus,
+  public DisjunctionCondition(final EventManager eventManager,
                               final Condition... conditions)
   {
-    super(eventBus, conditions);
+    super(eventManager, conditions);
   }
 
   @Override

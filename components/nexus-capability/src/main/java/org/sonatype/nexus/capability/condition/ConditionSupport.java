@@ -18,6 +18,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,38 +32,38 @@ public abstract class ConditionSupport
     implements Condition
 {
 
-  private final Provider<EventBus> eventBusProvider;
+  private final Provider<EventManager> eventManagerProvider;
 
   private boolean satisfied;
 
   private boolean active;
 
-  protected ConditionSupport(final EventBus eventBus) {
-    this(eventBus, false);
+  protected ConditionSupport(final EventManager eventManager) {
+    this(eventManager, false);
   }
 
-  protected ConditionSupport(final EventBus eventBus, final boolean satisfied) {
-    this(new Provider<EventBus>()
+  protected ConditionSupport(final EventManager eventManager, final boolean satisfied) {
+    this(new Provider<EventManager>()
     {
       @Override
-      public EventBus get() {
-        return eventBus;
+      public EventManager get() {
+        return eventManager;
       }
     }, satisfied);
   }
 
-  protected ConditionSupport(final Provider<EventBus> eventBusProvider) {
-    this(eventBusProvider, false);
+  protected ConditionSupport(final Provider<EventManager> eventManagerProvider) {
+    this(eventManagerProvider, false);
   }
 
-  protected ConditionSupport(final Provider<EventBus> eventBusProvider, final boolean satisfied) {
-    this.eventBusProvider = checkNotNull(eventBusProvider);
+  protected ConditionSupport(final Provider<EventManager> eventManagerProvider, final boolean satisfied) {
+    this.eventManagerProvider = checkNotNull(eventManagerProvider);
     this.satisfied = satisfied;
     active = false;
   }
 
-  public EventBus getEventBus() {
-    return eventBusProvider.get();
+  public EventManager getEventManager() {
+    return eventManagerProvider.get();
   }
 
   @Override
@@ -122,13 +123,37 @@ public abstract class ConditionSupport
       this.satisfied = satisfied;
       if (active) {
         if (this.satisfied) {
-          getEventBus().post(new ConditionEvent.Satisfied(this));
+          getEventManager().post(new ConditionEvent.Satisfied(this));
         }
         else {
-          getEventBus().post(new ConditionEvent.Unsatisfied(this));
+          getEventManager().post(new ConditionEvent.Unsatisfied(this));
         }
       }
     }
+  }
+
+  /**
+   * @deprecated use {@link EventManager} instead
+   */
+  @Deprecated
+  protected ConditionSupport(final EventBus eventBus) {
+    this((EventManager) eventBus, false);
+  }
+
+  /**
+   * @deprecated use {@link EventManager} instead
+   */
+  @Deprecated
+  protected ConditionSupport(final EventBus eventBus, final boolean satisfied) {
+    this((EventManager) eventBus, satisfied);
+  }
+
+  /**
+   * @deprecated use {@link EventManager} instead
+   */
+  @Deprecated
+  public EventBus getEventBus() {
+    return eventManagerProvider.get();
   }
 
 }

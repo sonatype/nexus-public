@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -37,18 +37,18 @@ public abstract class CompositeConditionSupport
 
   private final Condition[] conditions;
 
-  public CompositeConditionSupport(final EventBus eventBus,
+  public CompositeConditionSupport(final EventManager eventManager,
                                    final Condition... conditions)
   {
-    super(eventBus, false);
+    super(eventManager, false);
     this.conditions = checkNotNull(conditions);
     checkArgument(conditions.length > 1, "A composite mush have at least 2 conditions");
   }
 
-  public CompositeConditionSupport(final EventBus eventBus,
+  public CompositeConditionSupport(final EventManager eventManager,
                                    final Condition condition)
   {
-    super(eventBus, false);
+    super(eventManager, false);
     this.conditions = new Condition[]{checkNotNull(condition)};
   }
 
@@ -57,13 +57,13 @@ public abstract class CompositeConditionSupport
     for (final Condition condition : conditions) {
       condition.bind();
     }
-    getEventBus().register(this);
+    getEventManager().register(this);
     setSatisfied(reevaluate(conditions));
   }
 
   @Override
   public void doRelease() {
-    getEventBus().unregister(this);
+    getEventManager().unregister(this);
     for (final Condition condition : conditions) {
       condition.release();
     }

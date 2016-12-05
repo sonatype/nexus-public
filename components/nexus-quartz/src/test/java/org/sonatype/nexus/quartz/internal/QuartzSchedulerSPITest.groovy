@@ -15,8 +15,7 @@ package org.sonatype.nexus.quartz.internal
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
-import org.sonatype.nexus.common.event.EventBusImpl
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
@@ -31,6 +30,7 @@ import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
 import org.sonatype.nexus.scheduling.schedule.Now
 import org.sonatype.nexus.scheduling.schedule.Schedule
+import org.sonatype.nexus.testcommon.event.SimpleEventManager
 
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -67,7 +67,7 @@ class QuartzSchedulerSPITest
 
   JobStore jobStore
 
-  EventBus eventBus
+  EventManager eventManager
 
   @Before
   void before() {
@@ -76,13 +76,13 @@ class QuartzSchedulerSPITest
     def provider = mock(Provider)
     jobStore = mock(JobStore)
     when(provider.get()).thenReturn(jobStore)
-    eventBus = new EventBusImpl('standard')
+    eventManager = new SimpleEventManager()
 
     underTest = new QuartzSchedulerSPI(
-        eventBus, nodeAccess, provider, mock(JobFactoryImpl), 1
+        eventManager, nodeAccess, provider, mock(JobFactoryImpl), 1
     )
     underTest.start()
-    eventBus.register(underTest)
+    eventManager.register(underTest)
   }
 
   @After
@@ -120,7 +120,7 @@ class QuartzSchedulerSPITest
 
     def jobCreatedEvent = mock(JobCreatedEvent)
     when(jobCreatedEvent.job).thenReturn(jobDetailEntity)
-    eventBus.post(jobCreatedEvent)
+    eventManager.post(jobCreatedEvent)
 
     def recordCreate = ArgumentCaptor.forClass(JobDetail)
     verify(schedulerListener).jobAdded(recordCreate.capture())
@@ -132,7 +132,7 @@ class QuartzSchedulerSPITest
 
     def jobUpdateEvent = mock(JobUpdatedEvent)
     when(jobUpdateEvent.job).thenReturn(jobDetailEntity)
-    eventBus.post(jobUpdateEvent)
+    eventManager.post(jobUpdateEvent)
 
     def recordUpdate = ArgumentCaptor.forClass(JobDetail)
     verify(schedulerListener).jobAdded(recordUpdate.capture())
@@ -144,7 +144,7 @@ class QuartzSchedulerSPITest
 
     def jobDeletedEvent = mock(JobDeletedEvent)
     when(jobDeletedEvent.job).thenReturn(jobDetailEntity)
-    eventBus.post(jobDeletedEvent)
+    eventManager.post(jobDeletedEvent)
 
     def recordDelete = ArgumentCaptor.forClass(JobKey)
     verify(schedulerListener).jobDeleted(recordDelete.capture())
@@ -165,7 +165,7 @@ class QuartzSchedulerSPITest
 
     def triggerCreatedEvent = mock(TriggerCreatedEvent)
     when(triggerCreatedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerCreatedEvent)
+    eventManager.post(triggerCreatedEvent)
 
     def recordCreate = ArgumentCaptor.forClass(Trigger)
     verify(schedulerListener).jobScheduled(recordCreate.capture())
@@ -177,7 +177,7 @@ class QuartzSchedulerSPITest
 
     def triggerUpdatedEvent = mock(TriggerUpdatedEvent)
     when(triggerUpdatedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerUpdatedEvent)
+    eventManager.post(triggerUpdatedEvent)
 
     def recordUpdateUnschedule = ArgumentCaptor.forClass(TriggerKey)
     verify(schedulerListener).jobUnscheduled(recordUpdateUnschedule.capture())
@@ -193,7 +193,7 @@ class QuartzSchedulerSPITest
 
     def triggerDeletedEvent = mock(TriggerDeletedEvent)
     when(triggerDeletedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerDeletedEvent)
+    eventManager.post(triggerDeletedEvent)
 
     def recordDelete = ArgumentCaptor.forClass(TriggerKey)
     verify(schedulerListener).jobUnscheduled(recordDelete.capture())
@@ -213,7 +213,7 @@ class QuartzSchedulerSPITest
 
     def triggerCreatedEvent = mock(TriggerCreatedEvent)
     when(triggerCreatedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerCreatedEvent)
+    eventManager.post(triggerCreatedEvent)
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
 
@@ -221,7 +221,7 @@ class QuartzSchedulerSPITest
 
     def triggerUpdatedEvent = mock(TriggerUpdatedEvent)
     when(triggerUpdatedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerUpdatedEvent)
+    eventManager.post(triggerUpdatedEvent)
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
 
@@ -229,7 +229,7 @@ class QuartzSchedulerSPITest
 
     def triggerDeletedEvent = mock(TriggerDeletedEvent)
     when(triggerDeletedEvent.trigger).thenReturn(triggerEntity)
-    eventBus.post(triggerDeletedEvent)
+    eventManager.post(triggerDeletedEvent)
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
   }

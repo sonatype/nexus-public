@@ -58,7 +58,7 @@ public abstract class VariableResolverAdapterSupport
     String format = document.field(AssetEntityAdapter.P_FORMAT, String.class);
 
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(path, PATH));
+    builder.addResolver(new ConstantVariableResolver('/' + path, PATH));
     builder.addResolver(new ConstantVariableResolver(format, FORMAT));
     addFromDocument(builder, document);
 
@@ -70,7 +70,7 @@ public abstract class VariableResolverAdapterSupport
   @Override
   public VariableSource fromAsset(Asset asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(asset.name(), PATH));
+    builder.addResolver(new ConstantVariableResolver('/' + asset.name(), PATH));
     builder.addResolver(new ConstantVariableResolver(asset.format(), FORMAT));
     addFromAsset(builder, asset);
 
@@ -83,7 +83,7 @@ public abstract class VariableResolverAdapterSupport
   public VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(
-        new ConstantVariableResolver(checkNotNull(asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
+        new ConstantVariableResolver('/' + checkNotNull((String) asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
     builder.addResolver(
         new ConstantVariableResolver(checkNotNull(sourceLookup.get(DefaultComponentMetadataProducer.FORMAT)), FORMAT));
     addFromSourceLookup(builder, sourceLookup, asset);

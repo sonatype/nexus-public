@@ -32,7 +32,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
 import org.sonatype.nexus.ssl.CertificateDeletedEvent;
 import org.sonatype.nexus.ssl.CertificateUtil;
@@ -58,7 +58,7 @@ public class TrustStoreImpl
 {
   public static final SecureRandom DEFAULT_RANDOM = null;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final KeyManager[] keyManagers;
 
@@ -69,10 +69,10 @@ public class TrustStoreImpl
   private volatile SSLContext sslcontext;
 
   @Inject
-  public TrustStoreImpl(final EventBus eventBus,
+  public TrustStoreImpl(final EventManager eventManager,
                         @Named("ssl")final KeyStoreManager keyStoreManager) throws Exception
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
     this.keyManagers = getSystemKeyManagers();
     this.trustManagers = getTrustManagers(keyStoreManager);
@@ -84,7 +84,7 @@ public class TrustStoreImpl
   {
     keyStoreManager.importTrustCertificate(certificate, alias);
 
-    eventBus.post(new CertificateCreatedEvent(alias, certificate));
+    eventManager.post(new CertificateCreatedEvent(alias, certificate));
 
     return certificate;
   }
@@ -96,7 +96,7 @@ public class TrustStoreImpl
     final Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(certificateInPEM);
     keyStoreManager.importTrustCertificate(certificate, alias);
 
-    eventBus.post(new CertificateCreatedEvent(alias, certificate));
+    eventManager.post(new CertificateCreatedEvent(alias, certificate));
 
     return certificate;
   }
@@ -117,7 +117,7 @@ public class TrustStoreImpl
     keyStoreManager.removeTrustCertificate(alias);
     sslcontext = null;
 
-    eventBus.post(new CertificateDeletedEvent(alias, certificate));
+    eventManager.post(new CertificateDeletedEvent(alias, certificate));
   }
 
   @Override

@@ -53,6 +53,7 @@
     <module>nexus-main</module>
     <module>nexus-mime</module>
     <module>nexus-orient</module>
+    <module>nexus-orient-console</module>
     <module>nexus-oss-edition</module>
     <module>nexus-pax-exam</module>
     <module>nexus-pax-logging</module>

@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
  * @since capabilities 2.0
  */
 public class RepositoryOnlineConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   static final String TEST_REPOSITORY = "test-repository";
@@ -65,10 +65,10 @@ public class RepositoryOnlineConditionTest
     when(repository.getConfiguration()).thenReturn(configuration);
     when(configuration.isOnline()).thenReturn(true);
 
-    underTest = new RepositoryOnlineCondition(eventBus, repositoryManager, repositoryName);
+    underTest = new RepositoryOnlineCondition(eventManager, repositoryManager, repositoryName);
     underTest.bind();
 
-    verify(eventBus).register(underTest);
+    verify(eventManager).register(underTest);
 
     assertThat(underTest.isSatisfied(), is(false));
 
@@ -86,7 +86,7 @@ public class RepositoryOnlineConditionTest
     underTest.handle(new RepositoryUpdatedEvent(repository));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -103,7 +103,7 @@ public class RepositoryOnlineConditionTest
     underTest.handle(new RepositoryUpdatedEvent(repository));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
   }
 
   /**
@@ -116,7 +116,7 @@ public class RepositoryOnlineConditionTest
     underTest.handle(new RepositoryDeletedEvent(repository));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -126,7 +126,7 @@ public class RepositoryOnlineConditionTest
   public void releaseRemovesItselfAsHandler() {
     underTest.release();
 
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
 }

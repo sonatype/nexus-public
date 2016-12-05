@@ -18,7 +18,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.security.authc.AuthenticationEvent;
@@ -38,22 +38,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AuthenticationEventSubscriber
     implements EventAware
 {
-  private final Provider<EventBus> eventBus;
+  private final Provider<EventManager> eventManager;
 
   private final Provider<ClientInfoProvider> clientInfoProvider;
 
   @Inject
-  public AuthenticationEventSubscriber(final Provider<EventBus> eventBus,
+  public AuthenticationEventSubscriber(final Provider<EventManager> eventManager,
                                        final Provider<ClientInfoProvider> clientInfoProvider)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
   }
 
   @Subscribe
   public void on(final AuthenticationEvent event) {
     ClientInfo clientInfo = clientInfoProvider.get().getCurrentThreadClientInfo();
-    eventBus.get().post(new NexusAuthenticationEvent(
+    eventManager.get().post(new NexusAuthenticationEvent(
         clientInfo == null
             ? new ClientInfo(event.getUserId(), null, null)
             : new ClientInfo(event.getUserId(), clientInfo.getRemoteIP(), clientInfo.getUserAgent()),

@@ -18,10 +18,10 @@ import java.util.List;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityEvent;
-import org.sonatype.nexus.common.event.EventBus;
-import org.sonatype.nexus.common.event.EventBusImpl;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -119,10 +119,10 @@ public class EntityHookTest
 
   @Before
   public void setup() throws Exception {
-    EventBus eventBus = new EventBusImpl("reentrant");
-    entityHook = new EntityHook(eventBus);
+    EventManager eventManager = new SimpleEventManager();
+    entityHook = new EntityHook(eventManager);
     entityAdapter.enableEntityHook(entityHook);
-    eventBus.register(subscriber);
+    eventManager.register(subscriber);
   }
 
   @Test

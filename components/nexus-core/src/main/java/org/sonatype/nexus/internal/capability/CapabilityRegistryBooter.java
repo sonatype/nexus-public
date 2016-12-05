@@ -19,7 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
 
 import com.google.common.base.Throwables;
@@ -39,18 +39,18 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
 public class CapabilityRegistryBooter
   extends LifecycleSupport
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final Provider<DefaultCapabilityRegistry> capabilityRegistryProvider;
 
   private final Provider<OrientCapabilityStorage> capabilityStorageProvider;
 
   @Inject
-  public CapabilityRegistryBooter(final EventBus eventBus,
+  public CapabilityRegistryBooter(final EventManager eventManager,
                                   final Provider<DefaultCapabilityRegistry> capabilityRegistryProvider,
                                   final Provider<OrientCapabilityStorage> capabilityStorageProvider)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
     this.capabilityStorageProvider = checkNotNull(capabilityStorageProvider);
   }
@@ -64,7 +64,7 @@ public class CapabilityRegistryBooter
       registry.load();
 
       // fire event when the registry is loaded and ready for use
-      eventBus.post(new Ready(registry));
+      eventManager.post(new Ready(registry));
     }
     catch (final Exception e) {
       // fail hard with an error to stop further server activity

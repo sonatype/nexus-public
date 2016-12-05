@@ -57,7 +57,7 @@ public class CapabilityAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final CapabilityEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       CapabilityReference reference = event.getReference();
       CapabilityContext context = reference.context();
       CapabilityDescriptor descriptor = context.descriptor();

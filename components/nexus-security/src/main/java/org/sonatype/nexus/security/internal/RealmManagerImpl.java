@@ -22,7 +22,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Mutex;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
@@ -55,7 +55,7 @@ public class RealmManagerImpl
   extends StateGuardLifecycleSupport
   implements RealmManager
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final RealmConfigurationStore store;
 
@@ -70,13 +70,13 @@ public class RealmManagerImpl
   private RealmConfiguration configuration;
 
   @Inject
-  public RealmManagerImpl(final EventBus eventBus,
+  public RealmManagerImpl(final EventManager eventManager,
                           final RealmConfigurationStore store,
                           @Named("initial") final Provider<RealmConfiguration> defaults,
                           final RealmSecurityManager realmSecurityManager,
                           final Map<String, Realm> availableRealms)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);
     this.defaults = checkNotNull(defaults);
@@ -93,12 +93,12 @@ public class RealmManagerImpl
   protected void doStart() throws Exception {
     installRealms();
 
-    eventBus.register(this);
+    eventManager.register(this);
   }
 
   @Override
   protected void doStop() throws Exception {
-    eventBus.unregister(this);
+    eventManager.unregister(this);
 
     configuration = null;
 
@@ -185,7 +185,7 @@ public class RealmManagerImpl
 
     installRealms();
 
-    eventBus.post(new RealmConfigurationChangedEvent(model));
+    eventManager.post(new RealmConfigurationChangedEvent(model));
   }
 
   //

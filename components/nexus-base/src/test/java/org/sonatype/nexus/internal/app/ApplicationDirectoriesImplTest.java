@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -77,5 +78,15 @@ public class ApplicationDirectoriesImplTest
     File dir = underTest.getWorkDirectory("child", false);
     assertThat(dir, notNullValue());
     assertThat(dir, not(FileMatchers.exists()));
+  }
+
+  @Test
+  public void ensureWorkDir_referencesSonatypeWorkFolderUnlessAbsolute() throws Exception {
+    File tempDir = util.createTempDir("temp");
+
+    File relative = underTest.getWorkDirectory(".");
+    File absolute = underTest.getWorkDirectory(tempDir.getAbsolutePath());
+    assertThat(relative.getCanonicalFile(), equalTo(workDir.getCanonicalFile()));
+    assertThat(absolute.getCanonicalFile(), equalTo(tempDir.getCanonicalFile()));
   }
 }

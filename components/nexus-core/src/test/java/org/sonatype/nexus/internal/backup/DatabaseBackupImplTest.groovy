@@ -42,20 +42,6 @@ class DatabaseBackupImplTest
     then: 'the file should be intact'
       assertThat(temp, notNullValue())
       assertThat(temp.delete(), is(true))
-  }
-
-  def 'checks that relative files reference the sonatype-work folder'() {
-    def databaseManager = Mock(DatabaseManager)
-    def databaseServer = Mock(DatabaseServer)
-    def applicationDirectories = Mock(ApplicationDirectories)
-    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, 9, 1024, applicationDirectories)
-
-    when: 'a relative path is specified'
-      File projectTargetDir = databaseBackup.makeAbsolutePath('target')
-
-    then: 'the application directory should have been consulted'
-      1 * applicationDirectories.getWorkDirectory() >> new File('.')
-      assertThat(projectTargetDir, notNullValue())
-      assertThat(projectTargetDir.exists(), is(true))
+      1 * applicationDirectories.getWorkDirectory(_) >> { String name -> new File(name) }
   }
 }

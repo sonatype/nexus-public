@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.log;
 import java.util.EnumSet;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LogMarkInsertedEvent;
 import org.sonatype.nexus.common.log.LoggerLevel;
@@ -45,13 +45,13 @@ public class LogMarkerImplTest
   private LogManager logManager;
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private LogMarkerImpl logMarker;
 
   @Before
   public void setUp() {
-    logMarker = new LogMarkerImpl(logManager, eventBus);
+    logMarker = new LogMarkerImpl(logManager, eventManager);
     when(logManager.getLoggerEffectiveLevel(LOG_NAME)).thenReturn(LoggerLevel.INFO);
   }
 
@@ -59,7 +59,7 @@ public class LogMarkerImplTest
   public void testMarkLog_EmitEvent() {
     logMarker.markLog("test");
     ArgumentCaptor<LogMarkInsertedEvent> argCaptor = ArgumentCaptor.forClass(LogMarkInsertedEvent.class);
-    verify(eventBus).post(argCaptor.capture());
+    verify(eventManager).post(argCaptor.capture());
     assertThat(argCaptor.getValue().getMessage(), is("test"));
   }
 

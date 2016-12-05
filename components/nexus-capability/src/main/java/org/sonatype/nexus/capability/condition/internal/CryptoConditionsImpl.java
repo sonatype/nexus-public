@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.CryptoConditions;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,30 +33,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class CryptoConditionsImpl
     implements CryptoConditions
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final CryptoHelper crypto;
 
   @Inject
-  public CryptoConditionsImpl(final EventBus eventBus,
+  public CryptoConditionsImpl(final EventManager eventManager,
                           final CryptoHelper crypto)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.crypto = checkNotNull(crypto);
   }
 
   @Override
   public Condition requireCipher(final String algorithm) {
-    return new CipherRequiredCondition(eventBus, crypto, algorithm);
+    return new CipherRequiredCondition(eventManager, crypto, algorithm);
   }
 
   @Override
   public Condition highStrengthCipherKey(final String algorithm) {
-    return new CipherKeyHighStrengthCondition(eventBus, crypto, algorithm);
+    return new CipherKeyHighStrengthCondition(eventManager, crypto, algorithm);
   }
 
   @Override
   public Condition unlimitedStrengthCipherKey(final String algorithm) {
-    return new CipherKeyUnlimitedStrengthCondition(eventBus, crypto, algorithm);
+    return new CipherKeyUnlimitedStrengthCondition(eventManager, crypto, algorithm);
   }
 }

@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
@@ -45,15 +45,15 @@ public class DatabaseFreezeServiceImpl
 {
   private final Set<Provider<DatabaseInstance>> providers;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   @VisibleForTesting
   volatile boolean frozen = false;
 
   @Inject
-  public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers, final EventBus eventBus) {
+  public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers, final EventManager eventManager) {
     this.providers = checkNotNull(providers);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class DatabaseFreezeServiceImpl
 
     processAll(db -> db.freeze(true));
 
-    eventBus.post(new DatabaseFreezeChangeEvent(true));
+    eventManager.post(new DatabaseFreezeChangeEvent(true));
   }
 
   @Override
@@ -82,7 +82,7 @@ public class DatabaseFreezeServiceImpl
 
     processAll(ODatabaseDocumentTx::release);
 
-    eventBus.post(new DatabaseFreezeChangeEvent(false));
+    eventManager.post(new DatabaseFreezeChangeEvent(false));
   }
 
   @Override

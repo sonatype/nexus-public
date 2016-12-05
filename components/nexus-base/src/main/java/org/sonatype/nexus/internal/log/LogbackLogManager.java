@@ -33,7 +33,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
@@ -72,7 +72,7 @@ public class LogbackLogManager
     extends StateGuardLifecycleSupport
     implements LogManager
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final BeanLocator beanLocator;
 
@@ -81,11 +81,11 @@ public class LogbackLogManager
   private final LoggerOverrides overrides;
 
   @Inject
-  public LogbackLogManager(final EventBus eventBus,
+  public LogbackLogManager(final EventManager eventManager,
                            final BeanLocator beanLocator,
                            final LoggerOverrides overrides)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.beanLocator = checkNotNull(beanLocator);
     this.overrides = checkNotNull(overrides);
     this.customizations = new HashMap<>();
@@ -264,7 +264,7 @@ public class LogbackLogManager
     // re-apply customizations
     applyCustomizations();
 
-    eventBus.post(new LoggersResetEvent());
+    eventManager.post(new LoggersResetEvent());
 
     log.debug("Loggers reset to default levels");
   }
@@ -315,7 +315,7 @@ public class LogbackLogManager
       setLogbackLoggerLevel(name, LogbackLevels.convert(calculated));
     }
 
-    eventBus.post(new LoggerLevelChangedEvent(name, level));
+    eventManager.post(new LoggerLevelChangedEvent(name, level));
   }
 
   @Override
@@ -334,7 +334,7 @@ public class LogbackLogManager
       setLogbackLoggerLevel(name, null);
     }
 
-    eventBus.post(new LoggerLevelChangedEvent(name, null));
+    eventManager.post(new LoggerLevelChangedEvent(name, null));
   }
 
   @Override

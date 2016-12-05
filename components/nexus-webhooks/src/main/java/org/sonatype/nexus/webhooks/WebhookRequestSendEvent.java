@@ -13,14 +13,14 @@
 
 package org.sonatype.nexus.webhooks;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Event to queue up and send {@link WebhookRequest} asynchronously.
  *
- * Users may post this event directly to the {@link EventBus} or use {@link WebhookService#queue(WebhookRequest)}.
+ * Users may post this event directly to the {@link EventManager} or use {@link WebhookService#queue(WebhookRequest)}.
  *
  * @since 3.1
  */

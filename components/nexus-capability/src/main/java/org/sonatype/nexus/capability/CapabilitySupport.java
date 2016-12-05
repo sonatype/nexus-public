@@ -25,6 +25,7 @@ import org.sonatype.nexus.capability.condition.Conditions;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
+import org.sonatype.nexus.common.text.Strings2;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -269,5 +270,10 @@ public abstract class CapabilitySupport<ConfigT>
     return render("failure.vm", new TemplateParameters()
             .set("cause", new TemplateThrowableAdapter(cause))
     );
+  }
+
+  @Override
+  public boolean isPasswordProperty(final String propertyName) {
+    return Strings2.lower(propertyName).contains("password");
   }
 }

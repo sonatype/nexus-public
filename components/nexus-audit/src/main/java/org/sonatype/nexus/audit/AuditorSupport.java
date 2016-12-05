@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.base.Joiner;
@@ -102,8 +103,19 @@ public abstract class AuditorSupport
     return auditRecorder.get();
   }
 
+  /**
+   * @deprecated use {@link #isRecording()} instead
+   */
+  @Deprecated
   protected boolean isEnabled() {
-    return recorder().isEnabled();
+    return isRecording();
+  }
+
+  /**
+   * @since 3.2
+   */
+  protected boolean isRecording() {
+    return recorder().isEnabled() && !EventHelper.isReplicating();
   }
 
   protected void record(final AuditData data) {

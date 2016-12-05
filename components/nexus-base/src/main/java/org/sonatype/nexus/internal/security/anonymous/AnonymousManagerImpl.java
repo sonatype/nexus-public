@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -46,7 +46,7 @@ public class AnonymousManagerImpl
   extends ComponentSupport
   implements AnonymousManager, EventAware
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final AnonymousConfigurationStore store;
 
@@ -57,11 +57,11 @@ public class AnonymousManagerImpl
   private AnonymousConfiguration configuration;
 
   @Inject
-  public AnonymousManagerImpl(final EventBus eventBus,
+  public AnonymousManagerImpl(final EventManager eventManager,
                               final AnonymousConfigurationStore store,
                               @Named("initial") final Provider<AnonymousConfiguration> defaults)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);
     this.defaults = checkNotNull(defaults);
@@ -129,7 +129,7 @@ public class AnonymousManagerImpl
       this.configuration = model;
     }
 
-    eventBus.post(new AnonymousConfigurationChangedEvent(model));
+    eventManager.post(new AnonymousConfigurationChangedEvent(model));
   }
 
   //
@@ -174,7 +174,7 @@ public class AnonymousManagerImpl
       synchronized (lock) {
         configuration = model = loadConfiguration();
       }
-      eventBus.post(new AnonymousConfigurationChangedEvent(model));
+      eventManager.post(new AnonymousConfigurationChangedEvent(model));
     }
   }
 }

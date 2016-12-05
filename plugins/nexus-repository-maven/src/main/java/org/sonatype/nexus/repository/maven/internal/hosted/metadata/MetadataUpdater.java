@@ -12,44 +12,31 @@
  */
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
-import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
-import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
-import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerger;
 import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerger.Envelope;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Snapshot;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
-import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.payloads.BytesPayload;
-import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.hash.HashCode;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Maven 2 repository metadata updater.
@@ -63,8 +50,6 @@ public class MetadataUpdater
 
   private final Repository repository;
 
-  private final MavenFacet mavenFacet;
-
   private final RepositoryMetadataMerger repositoryMetadataMerger;
 
   /**
@@ -74,7 +59,6 @@ public class MetadataUpdater
   public MetadataUpdater(final boolean update, final Repository repository) {
     this.update = update;
     this.repository = checkNotNull(repository);
-    this.mavenFacet = repository.facet(MavenFacet.class);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
   }
 

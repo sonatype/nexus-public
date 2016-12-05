@@ -16,11 +16,11 @@ import java.lang.annotation.Annotation;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,8 +68,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @SuppressWarnings("unchecked")
 public class Operations<E extends Exception, B extends Operations<E, B>>
-    extends ComponentSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(Operations.class);
+
   private static final Class<?>[] NOTHING = {};
 
   @VisibleForTesting

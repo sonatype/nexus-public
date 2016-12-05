@@ -31,7 +31,7 @@ import org.sonatype.nexus.formfields.FormField
 import org.sonatype.nexus.formfields.ItemselectFormField
 import org.sonatype.nexus.formfields.PasswordFormField
 import org.sonatype.nexus.formfields.RepositoryCombobox
-import org.sonatype.nexus.formfields.StringTextFormField
+import org.sonatype.nexus.formfields.UrlFormField
 import org.sonatype.nexus.repository.capability.RepositoryConditions
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.webhooks.WebhookService
@@ -239,7 +239,7 @@ class RepositoryWebhookCapability
         return it
       }
 
-      this.url = new StringTextFormField(
+      this.url = new UrlFormField(
           P_URL,
           messages.urlLabel(),
           messages.urlHelp(),

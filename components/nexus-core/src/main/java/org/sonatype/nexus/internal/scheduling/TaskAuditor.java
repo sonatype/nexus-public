@@ -61,7 +61,7 @@ public class TaskAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final TaskEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       TaskInfo task = event.getTaskInfo();
       TaskConfiguration configuration = task.getConfiguration();
 

@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.EndState;
 import org.sonatype.nexus.scheduling.TaskInfo.RunState;
@@ -52,15 +52,15 @@ public class ScheduledTaskEventsTest
     extends QuartzTestSupport
 {
 
-  protected EventBus eventBus;
+  protected EventManager eventManager;
 
   protected Listener listener;
 
   @Before
   public void prepare() throws Exception {
-    eventBus = helper().getEventBus();
+    eventManager = helper().getEventManager();
     listener = new Listener();
-    eventBus.register(listener);
+    eventManager.register(listener);
     // reset the latch
     SleeperTask.reset();
   }

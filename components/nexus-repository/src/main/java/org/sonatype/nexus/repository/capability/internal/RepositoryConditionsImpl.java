@@ -19,7 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.capability.RepositoryConditions;
 import org.sonatype.nexus.repository.capability.internal.RepositoryExistsCondition;
 import org.sonatype.nexus.repository.capability.internal.RepositoryOnlineCondition;
@@ -37,24 +37,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RepositoryConditionsImpl
     implements RepositoryConditions
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final RepositoryManager repositoryManager;
 
   @Inject
-  public RepositoryConditionsImpl(final EventBus eventBus, 
+  public RepositoryConditionsImpl(final EventManager eventManager, 
                                   final RepositoryManager repositoryManager)  {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Override
   public Condition repositoryIsOnline(final Supplier<String> repositoryName) {
-    return new RepositoryOnlineCondition(eventBus, repositoryManager, repositoryName);
+    return new RepositoryOnlineCondition(eventManager, repositoryManager, repositoryName);
   }
 
   @Override
   public Condition repositoryExists(final Supplier<String> repositoryName) {
-    return new RepositoryExistsCondition(eventBus, repositoryManager, repositoryName);
+    return new RepositoryExistsCondition(eventManager, repositoryManager, repositoryName);
   }
 }

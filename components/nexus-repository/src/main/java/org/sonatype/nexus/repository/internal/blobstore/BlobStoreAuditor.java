@@ -50,7 +50,7 @@ public class BlobStoreAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final BlobStoreEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       BlobStore blobStore = event.getBlobStore();
       BlobStoreConfiguration configuration = blobStore.getBlobStoreConfiguration();
 

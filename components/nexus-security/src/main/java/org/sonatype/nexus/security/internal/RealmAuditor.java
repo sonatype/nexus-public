@@ -42,7 +42,7 @@ public class RealmAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final RealmConfigurationChangedEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       RealmConfiguration configuration = event.getConfiguration();
 
       AuditData data = new AuditData();

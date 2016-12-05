@@ -23,7 +23,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -70,7 +70,7 @@ public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final ConfigurationStore store;
 
@@ -89,7 +89,7 @@ public class RepositoryManagerImpl
   private final boolean skipDefaultRepositories;
 
   @Inject
-  public RepositoryManagerImpl(final EventBus eventBus,
+  public RepositoryManagerImpl(final EventManager eventManager,
                                final ConfigurationStore store,
                                final RepositoryFactory factory,
                                final Provider<ConfigurationFacet> configFacet,
@@ -98,7 +98,7 @@ public class RepositoryManagerImpl
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.factory = checkNotNull(factory);
     this.configFacet = checkNotNull(configFacet);
@@ -213,7 +213,7 @@ public class RepositoryManagerImpl
       Repository repository = newRepository(configuration);
       track(repository);
 
-      eventBus.post(new RepositoryLoadedEvent(repository));
+      eventManager.post(new RepositoryLoadedEvent(repository));
     }
 
     log.debug("Starting {} repositories", repositories.size());
@@ -221,7 +221,7 @@ public class RepositoryManagerImpl
       log.debug("Starting repository: {}", repository);
       repository.start();
 
-      eventBus.post(new RepositoryRestoredEvent(repository));
+      eventManager.post(new RepositoryRestoredEvent(repository));
     }
   }
 
@@ -282,7 +282,7 @@ public class RepositoryManagerImpl
 
     repository.start();
 
-    eventBus.post(new RepositoryCreatedEvent(repository));
+    eventManager.post(new RepositoryCreatedEvent(repository));
 
     return repository;
   }
@@ -305,7 +305,7 @@ public class RepositoryManagerImpl
     repository.update(configuration);
     repository.start();
 
-    eventBus.post(new RepositoryUpdatedEvent(repository));
+    eventManager.post(new RepositoryUpdatedEvent(repository));
 
     return repository;
   }
@@ -325,7 +325,7 @@ public class RepositoryManagerImpl
     store.delete(configuration);
     untrack(repository);
 
-    eventBus.post(new RepositoryDeletedEvent(repository));
+    eventManager.post(new RepositoryDeletedEvent(repository));
   }
 
   @Override

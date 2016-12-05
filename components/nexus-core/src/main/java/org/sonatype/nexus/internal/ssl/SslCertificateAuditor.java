@@ -54,7 +54,7 @@ public class SslCertificateAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final CertificateEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       Certificate certificate = event.getCertificate();
 
       AuditData data = new AuditData();

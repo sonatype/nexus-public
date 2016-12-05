@@ -22,6 +22,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
 /**
@@ -58,6 +60,13 @@ public class ExceptionHandler
       else {
         return HttpResponses.notFound(e.getMessage());
       }
+    }
+    catch (OModificationOperationProhibitedException e) { //NOSONAR
+      log.warn("Read-only system: {} {}: {}",
+          context.getRequest().getAction(),
+          context.getRequest().getPath(),
+          e.toString());
+      return HttpResponses.serviceUnavailable();
     }
   }
 }

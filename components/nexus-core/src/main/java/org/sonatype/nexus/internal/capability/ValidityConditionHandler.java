@@ -20,7 +20,7 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -37,7 +37,7 @@ public class ValidityConditionHandler
     extends ComponentSupport
 {
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final DefaultCapabilityReference reference;
 
@@ -50,12 +50,12 @@ public class ValidityConditionHandler
   private Condition validityCondition;
 
   @Inject
-  ValidityConditionHandler(final EventBus eventBus,
+  ValidityConditionHandler(final EventManager eventManager,
                            final CapabilityRegistry capabilityRegistry,
                            final Conditions conditions,
                            @Assisted final DefaultCapabilityReference reference)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.conditions = checkNotNull(conditions);
     this.reference = checkNotNull(reference);
@@ -90,7 +90,7 @@ public class ValidityConditionHandler
     if (nexusActiveCondition == null) {
       nexusActiveCondition = conditions.nexus().active();
       nexusActiveCondition.bind();
-      eventBus.register(this);
+      eventManager.register(this);
       if (nexusActiveCondition.isSatisfied()) {
         handle(new ConditionEvent.Satisfied(nexusActiveCondition));
       }
@@ -101,7 +101,7 @@ public class ValidityConditionHandler
   ValidityConditionHandler release() {
     if (nexusActiveCondition != null) {
       handle(new ConditionEvent.Unsatisfied(nexusActiveCondition));
-      eventBus.unregister(this);
+      eventManager.unregister(this);
       nexusActiveCondition.release();
     }
     return this;

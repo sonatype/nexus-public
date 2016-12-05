@@ -20,7 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -41,13 +41,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Webhook
     extends ComponentSupport
 {
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private final Set<SubscriptionImpl> subscriptions = new CopyOnWriteArraySet<>();
 
   @Inject
-  public void setEventBus(final EventBus eventBus) {
-    this.eventBus = checkNotNull(eventBus);
+  public void setEventManager(final EventManager eventManager) {
+    this.eventManager = checkNotNull(eventManager);
   }
 
   /**
@@ -114,7 +114,7 @@ public abstract class Webhook
 
       // maybe start listening for events
       if (subscriptions.size() == 1) {
-        eventBus.register(this);
+        eventManager.register(this);
         log.debug("Listening for events");
       }
       return subscription;
@@ -136,7 +136,7 @@ public abstract class Webhook
 
       // maybe stop listening for events
       if (subscriptions.isEmpty()) {
-        eventBus.unregister(this);
+        eventManager.unregister(this);
         log.debug("Stopped listening for events");
       }
     }
@@ -155,7 +155,7 @@ public abstract class Webhook
     request.setSecret(configuration.getSecret());
 
     // using event here to avoid cyclic dependency between WebhookService and Webhook impls
-    eventBus.post(new WebhookRequestSendEvent(request));
+    eventManager.post(new WebhookRequestSendEvent(request));
   }
 
   @Override

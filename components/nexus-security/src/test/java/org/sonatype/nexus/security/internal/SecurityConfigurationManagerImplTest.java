@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
@@ -45,14 +45,14 @@ public class SecurityConfigurationManagerImplTest
   private PasswordService passwordService;
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private SecurityConfigurationManagerImpl manager;
 
   @Before
   public void setUp() {
     when(configSource.loadConfiguration()).thenReturn(new MemorySecurityConfiguration());
-    manager = new SecurityConfigurationManagerImpl(configSource, configCleaner, passwordService, eventBus);
+    manager = new SecurityConfigurationManagerImpl(configSource, configCleaner, passwordService, eventManager);
   }
 
   @Test

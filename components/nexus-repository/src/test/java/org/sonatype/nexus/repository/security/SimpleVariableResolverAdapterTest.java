@@ -39,7 +39,9 @@ public class SimpleVariableResolverAdapterTest
 
   private static final String PATH_VARIABLE = "path";
 
-  private static final String TEST_PATH = "/some/path.txt";
+  private static final String TEST_PATH_WITHOUT_SLASH = "some/path.txt";
+
+  private static final String TEST_PATH_WITH_SLASH = '/' + TEST_PATH_WITHOUT_SLASH;
 
   private static final String TEST_FORMAT = "test";
 
@@ -63,7 +65,7 @@ public class SimpleVariableResolverAdapterTest
 
   @Test
   public void testFromRequest() throws Exception {
-    when(request.getPath()).thenReturn(TEST_PATH);
+    when(request.getPath()).thenReturn(TEST_PATH_WITH_SLASH);
     when(repository.getName()).thenReturn("SimpleVariableResolverAdapterTest");
     when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT) { });
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
@@ -71,12 +73,12 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
   }
 
   @Test
   public void testFromDocument() throws Exception {
-    when(document.field("name", String.class)).thenReturn(TEST_PATH);
+    when(document.field("name", String.class)).thenReturn(TEST_PATH_WITHOUT_SLASH);
     when(document.field(FORMAT_VARIABLE, String.class)).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
@@ -84,12 +86,12 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
   }
 
   @Test
   public void testFromAsset() throws Exception {
-    when(asset.name()).thenReturn(TEST_PATH);
+    when(asset.name()).thenReturn(TEST_PATH_WITHOUT_SLASH);
     when(asset.format()).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
@@ -97,12 +99,12 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
   }
 
   @Test
   public void testFromSourceLookup() throws Exception {
-    when(sourceLookupAsset.get("name")).thenReturn(TEST_PATH);
+    when(sourceLookupAsset.get("name")).thenReturn(TEST_PATH_WITHOUT_SLASH);
     when(sourceLookup.get("format")).thenReturn(TEST_FORMAT);
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
@@ -110,6 +112,6 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
   }
 }

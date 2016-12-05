@@ -42,7 +42,7 @@ public class EmailAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final EmailConfigurationChangedEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       EmailConfiguration configuration = event.getConfiguration();
 
       AuditData data = new AuditData();

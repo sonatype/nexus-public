@@ -19,7 +19,7 @@ import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -36,7 +36,7 @@ public class ActivationConditionHandler
     extends ComponentSupport
 {
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final DefaultCapabilityReference reference;
 
@@ -45,11 +45,11 @@ public class ActivationConditionHandler
   private Condition activationCondition;
 
   @Inject
-  ActivationConditionHandler(final EventBus eventBus,
+  ActivationConditionHandler(final EventManager eventManager,
                              final Conditions conditions,
                              @Assisted final DefaultCapabilityReference reference)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.conditions = checkNotNull(conditions);
     this.reference = checkNotNull(reference);
   }
@@ -98,14 +98,14 @@ public class ActivationConditionHandler
         );
       }
       activationCondition.bind();
-      eventBus.register(this);
+      eventManager.register(this);
     }
     return this;
   }
 
   ActivationConditionHandler release() {
     if (activationCondition != null) {
-      eventBus.unregister(this);
+      eventManager.unregister(this);
       activationCondition.release();
       activationCondition = null;
     }

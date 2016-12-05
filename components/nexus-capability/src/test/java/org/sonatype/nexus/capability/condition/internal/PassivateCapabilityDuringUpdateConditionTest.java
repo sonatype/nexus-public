@@ -17,7 +17,7 @@ import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
 import com.google.common.collect.Maps;
 import org.junit.Before;
@@ -37,7 +37,7 @@ import static org.sonatype.nexus.capability.CapabilityIdentity.capabilityIdentit
  * @since capabilities 2.0
  */
 public class PassivateCapabilityDuringUpdateConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   @Rule
@@ -62,11 +62,11 @@ public class PassivateCapabilityDuringUpdateConditionTest
 
     when(reference.context()).thenReturn(context);
 
-    underTest = new PassivateCapabilityDuringUpdateCondition(eventBus);
+    underTest = new PassivateCapabilityDuringUpdateCondition(eventManager);
     underTest.setContext(context);
     underTest.bind();
 
-    verify(eventBus).register(underTest);
+    verify(eventManager).register(underTest);
   }
 
   /**
@@ -81,7 +81,7 @@ public class PassivateCapabilityDuringUpdateConditionTest
         capabilityRegistry, reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()
     ));
 
-    verifyEventBusEvents(unsatisfied(underTest), satisfied(underTest));
+    verifyEventManagerEvents(unsatisfied(underTest), satisfied(underTest));
   }
 
   /**
@@ -91,7 +91,7 @@ public class PassivateCapabilityDuringUpdateConditionTest
   public void releaseRemovesItselfAsHandler() {
     underTest.release();
 
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
   /**
@@ -101,7 +101,7 @@ public class PassivateCapabilityDuringUpdateConditionTest
   public void bindWithoutIdBeingSet() {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Capability identity not specified");
-    new PassivateCapabilityDuringUpdateCondition(eventBus).bind();
+    new PassivateCapabilityDuringUpdateCondition(eventManager).bind();
   }
 
   /**
@@ -109,7 +109,7 @@ public class PassivateCapabilityDuringUpdateConditionTest
    */
   @Test
   public void bindAfterContextualization() {
-    new PassivateCapabilityDuringUpdateCondition(eventBus).setContext(reference.context()).bind();
+    new PassivateCapabilityDuringUpdateCondition(eventManager).setContext(reference.context()).bind();
   }
 
   /**
@@ -129,7 +129,7 @@ public class PassivateCapabilityDuringUpdateConditionTest
   public void contextualizationWhenAlreadyContextualized() {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Already contextualized");
-    new PassivateCapabilityDuringUpdateCondition(eventBus)
+    new PassivateCapabilityDuringUpdateCondition(eventManager)
         .setContext(reference.context())
         .setContext(reference.context());
   }

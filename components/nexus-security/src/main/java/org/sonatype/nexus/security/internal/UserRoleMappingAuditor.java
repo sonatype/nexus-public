@@ -50,7 +50,7 @@ public class UserRoleMappingAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final UserRoleMappingEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);
       data.setType(type(event.getClass()));

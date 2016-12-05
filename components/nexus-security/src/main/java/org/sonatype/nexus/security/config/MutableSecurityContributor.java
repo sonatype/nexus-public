@@ -21,7 +21,7 @@ import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Locks;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.internal.SecurityContributionChangedEvent;
 
 import com.google.common.base.Preconditions;
@@ -45,12 +45,12 @@ public class MutableSecurityContributor
   private boolean initialized;
 
   @Nullable
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Inject
-  protected void initialize(final EventBus eventBus) {
+  protected void initialize(final EventManager eventManager) {
     checkState(!initialized, "already initialized");
-    this.eventBus = Preconditions.checkNotNull(eventBus);
+    this.eventManager = Preconditions.checkNotNull(eventManager);
     initial(model);
     initialized = true;
   }
@@ -96,6 +96,6 @@ public class MutableSecurityContributor
       lock.unlock();
     }
 
-    eventBus.post(new SecurityContributionChangedEvent());
+    eventManager.post(new SecurityContributionChangedEvent());
   }
 }

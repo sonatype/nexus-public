@@ -14,7 +14,7 @@ package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.condition.internal.CipherKeyHighStrengthCondition;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import org.junit.Before;
@@ -43,8 +43,8 @@ public class CipherKeyHighStrengthConditionTest
 
   @Before
   public void setUp() throws Exception {
-    EventBus eventBus = mock(EventBus.class);
-    condition = new CipherKeyHighStrengthCondition(eventBus, crypto, FAKE_TRANSFORMATION);
+    EventManager eventManager = mock(EventManager.class);
+    condition = new CipherKeyHighStrengthCondition(eventManager, crypto, FAKE_TRANSFORMATION);
   }
 
   @Test

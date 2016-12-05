@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreatedEvent;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDeletedEvent;
@@ -58,13 +58,13 @@ public class OrientCapabilityStorageTest
   private OrientCapabilityStorage underTest;
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private EntityHook entityHook;
 
   @Before
   public void setUp() throws Exception {
-    entityHook = new EntityHook(eventBus);
+    entityHook = new EntityHook(eventManager);
 
     Orient.instance().addDbLifecycleListener(entityHook);
 
@@ -150,7 +150,7 @@ public class OrientCapabilityStorageTest
 
     // events (entity + batch)
     ArgumentCaptor<?> eventCaptor = ArgumentCaptor.forClass(Object.class);
-    verify(eventBus, times(3)).post(eventCaptor.capture());
+    verify(eventManager, times(3)).post(eventCaptor.capture());
 
     Object[] events = eventCaptor.getAllValues().toArray();
 

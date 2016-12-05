@@ -78,6 +78,9 @@ public class StorageTxImpl
 
   private static final long DELETE_BATCH_SIZE = 100L;
 
+  private static final int INITIAL_DELAY_MS = SystemPropertiesHelper
+      .getInteger(StorageTxImpl.class.getName() + ".retrydelay.initial", 10);
+
   private static final int MAX_RETRIES = 8;
 
   private final String createdBy;
@@ -110,8 +113,6 @@ public class StorageTxImpl
 
   private NumberSequence retryDelay;
 
-  private final int initialDelay;
-
   public StorageTxImpl(final String createdBy,
                        final BlobTx blobTx,
                        final ODatabaseDocumentTx db,
@@ -142,8 +143,6 @@ public class StorageTxImpl
     // To be discussed in future, or at the point when we will have need for nested TX
     // Note: orient DB sports some rudimentary support for nested TXes
     checkArgument(!db.getTransaction().isActive(), "Nested DB TX!");
-
-    initialDelay = SystemPropertiesHelper.getInteger(getClass().getName() + ".retrydelay.initial", 10);
   }
 
   public static final class State
@@ -843,7 +842,7 @@ public class StorageTxImpl
 
   private NumberSequence delaySequence() {
     return RandomExponentialSequence.builder()
-        .start(initialDelay) // start at 10ms
+        .start(INITIAL_DELAY_MS) // start at 10ms
         .factor(2) // delay an average of 100% longer, each time
         .maxDeviation(.5) // ±50%
         .build();

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.internal.log
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer
 import org.sonatype.nexus.common.log.LoggerLevel
 
@@ -55,7 +55,7 @@ public class LogbackLogManagerTest
       }
     }
 
-    def underTest = new LogbackLogManager(mock(EventBus.class), mock(BeanLocator.class), new MemoryLoggerOverrides())
+    def underTest = new LogbackLogManager(mock(EventManager.class), mock(BeanLocator.class), new MemoryLoggerOverrides())
 
     def context = LogbackLogManager.loggerContext()
 
@@ -91,7 +91,7 @@ public class LogbackLogManagerTest
 
     MemoryLoggerOverrides overrides = new MemoryLoggerOverrides()
     overrides.set(fooLoggerName, LoggerLevel.ERROR)
-    def underTest = new LogbackLogManager(mock(EventBus.class), mock(BeanLocator.class), overrides)
+    def underTest = new LogbackLogManager(mock(EventManager.class), mock(BeanLocator.class), overrides)
 
     def context = LogbackLogManager.loggerContext()
 

@@ -26,7 +26,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -75,13 +75,13 @@ public class RolePermissionResolverImpl
   @Inject
   public RolePermissionResolverImpl(final SecurityConfigurationManager configuration,
                                     final List<PrivilegeDescriptor> privilegeDescriptors,
-                                    final EventBus eventBus,
+                                    final EventManager eventManager,
                                     @Named("${security.roleNotFoundCacheSize:-100000}") final int roleNotFoundCacheSize)
   {
     this.configuration = checkNotNull(configuration);
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
     this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
-    eventBus.register(this);
+    eventManager.register(this);
   }
 
   /**

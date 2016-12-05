@@ -24,7 +24,7 @@ import javax.net.ssl.SSLContext;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.validation.ValidatingBehaviour;
 import org.sonatype.goodies.httpfixture.validation.ValidatingProxyServer;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testcommon.validation.HeaderValidator;
@@ -89,7 +89,7 @@ public class HttpClientManagerImplIT
 
   @Before
   public void before() {
-    underTest = new HttpClientManagerImpl(mock(EventBus.class), mock(HttpClientConfigurationStore.class),
+    underTest = new HttpClientManagerImpl(mock(EventManager.class), mock(HttpClientConfigurationStore.class),
         () -> mock(HttpClientConfiguration.class), mock(SharedHttpClientConnectionManager.class),
         mock(DefaultsCustomizer.class));
 

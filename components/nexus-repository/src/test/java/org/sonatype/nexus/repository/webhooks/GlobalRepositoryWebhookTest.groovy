@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.webhooks
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.audit.InitiatorProvider
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
@@ -41,7 +41,7 @@ class GlobalRepositoryWebhookTest
   private GlobalRepositoryWebhook globalRepositoryWebhook
 
   @Mock
-  private EventBus eventBus
+  private EventManager eventManager
 
   @Mock
   private InitiatorProvider initiatorProvider
@@ -69,7 +69,7 @@ class GlobalRepositoryWebhookTest
   @Before
   public void before() {
     globalRepositoryWebhook = new GlobalRepositoryWebhook(
-        eventBus: eventBus,
+        eventManager: eventManager,
         initiatorProvider: initiatorProvider,
         nodeAccess: nodeAccess
     )
@@ -115,7 +115,7 @@ class GlobalRepositoryWebhookTest
     globalRepositoryWebhook.on(repositoryEvent)
 
     def assetArgumentCaptor = new ArgumentCaptor<WebhookRequestSendEvent>()
-    verify(eventBus).post(assetArgumentCaptor.capture())
+    verify(eventManager).post(assetArgumentCaptor.capture())
 
     def repositoryPayload = (RepositoryWebhookPayload) assetArgumentCaptor.value.request.payload
 

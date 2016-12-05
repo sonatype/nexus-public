@@ -22,7 +22,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -55,18 +55,18 @@ public class KeyStoreStorageManagerImpl
 
   private final KeyStoreDataEntityAdapter entityAdapter;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final Collection<OrientKeyStoreStorage> storages = new ConcurrentLinkedQueue<>();
 
   @Inject
   public KeyStoreStorageManagerImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
                                     final KeyStoreDataEntityAdapter entityAdapter,
-                                    final EventBus eventBus)
+                                    final EventManager eventManager)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class KeyStoreStorageManagerImpl
 
   @Override
   protected void doStop() throws Exception {
-    storages.forEach(eventBus::unregister);
+    storages.forEach(eventManager::unregister);
   }
 
   @Override
@@ -86,7 +86,7 @@ public class KeyStoreStorageManagerImpl
   public KeyStoreStorage createStorage(final String keyStoreName) {
     checkNotNull(keyStoreName);
     OrientKeyStoreStorage storage = new OrientKeyStoreStorage(this, KeyStoreManagerImpl.NAME + '/' + keyStoreName);
-    eventBus.register(storage);
+    eventManager.register(storage);
     storages.add(storage);
     return storage;
   }

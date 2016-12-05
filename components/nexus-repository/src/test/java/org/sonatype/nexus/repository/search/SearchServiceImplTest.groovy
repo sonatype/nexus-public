@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.search
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -79,7 +79,7 @@ class SearchServiceImplTest
   List<IndexSettingsContributor> indexSettingsContributors
 
   @Mock
-  EventBus eventBus
+  EventManager eventManager
   
   SearchServiceImpl searchService
 
@@ -96,7 +96,7 @@ class SearchServiceImplTest
   public void testCreateIndexAlreadyExists() throws Exception {
     ArgumentCaptor<String> varArgs = captureRepoNameArg()
 
-    Repository repository = new RepositoryImpl(eventBus, new HostedType(), new TestFormat('test'))
+    Repository repository = new RepositoryImpl(eventManager, new HostedType(), new TestFormat('test'))
     repository.name = 'test'
     searchService.createIndex(repository)
 
@@ -111,7 +111,7 @@ class SearchServiceImplTest
   public void testCreateIndexRepositoryNameMapping() throws Exception {
     ArgumentCaptor<String> varArgs = captureRepoNameArg()
 
-    Repository repository = new RepositoryImpl(eventBus, new HostedType(), new TestFormat('test'))
+    Repository repository = new RepositoryImpl(eventManager, new HostedType(), new TestFormat('test'))
     repository.name = 'UPPERCASE'
     searchService.createIndex(repository)
 

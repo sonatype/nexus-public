@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -51,11 +51,11 @@ public class DebugEventInspector
 
   private volatile boolean enabled;
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   @Inject
-  public DebugEventInspector(final EventBus eventBus) {
-    this.eventBus = checkNotNull(eventBus);
+  public DebugEventInspector(final EventManager eventManager) {
+    this.eventManager = checkNotNull(eventManager);
     setEnabled(ENABLED_DEFAULT);
   }
 
@@ -68,10 +68,10 @@ public class DebugEventInspector
   public void setEnabled(boolean enabled) {
     try {
       if (enabled && !this.enabled) {
-        eventBus.register(this);
+        eventManager.register(this);
       }
       else if (!enabled && this.enabled) {
-        eventBus.unregister(this);
+        eventManager.unregister(this);
       }
     }
     finally {

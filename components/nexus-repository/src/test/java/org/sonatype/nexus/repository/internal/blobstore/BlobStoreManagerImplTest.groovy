@@ -17,7 +17,7 @@ import javax.inject.Provider
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 
 import com.google.common.collect.Lists
 import org.junit.Before
@@ -43,7 +43,7 @@ class BlobStoreManagerImplTest
   public TemporaryFolder temporaryFolder = new TemporaryFolder()
 
   @Mock
-  EventBus eventBus
+  EventManager eventManager
 
   @Mock
   BlobStoreConfigurationStore store
@@ -55,7 +55,7 @@ class BlobStoreManagerImplTest
 
   @Before
   void setup() {
-    underTest = spy(new BlobStoreManagerImpl(eventBus, store, [test: provider, File: provider]))
+    underTest = spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider]))
   }
 
   @Test

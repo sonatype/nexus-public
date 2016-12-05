@@ -14,7 +14,7 @@ package org.sonatype.nexus.capability.condition.internal;
 
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
-import org.sonatype.nexus.capability.condition.EventBusTestSupport;
+import org.sonatype.nexus.capability.condition.EventManagerTestSupport;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
  * @since capabilities 2.0
  */
 public class InversionConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   @Mock
@@ -43,10 +43,10 @@ public class InversionConditionTest
   public final void setUpInversionCondition()
       throws Exception
   {
-    underTest = new InversionCondition(eventBus, condition);
+    underTest = new InversionCondition(eventManager, condition);
     underTest.bind();
 
-    verify(eventBus).register(underTest);
+    verify(eventManager).register(underTest);
   }
 
   /**
@@ -66,7 +66,7 @@ public class InversionConditionTest
     underTest.handle(new ConditionEvent.Satisfied(condition));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -78,7 +78,7 @@ public class InversionConditionTest
     underTest.handle(new ConditionEvent.Unsatisfied(condition));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest));
   }
 
   /**
@@ -88,7 +88,7 @@ public class InversionConditionTest
   public void releaseRemovesItselfAsHandler() {
     underTest.release();
 
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
 }

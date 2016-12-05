@@ -23,7 +23,7 @@ import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.audit.InitiatorProvider;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,7 +39,7 @@ public class AuditRecorderImpl
     extends ComponentSupport
     implements AuditRecorder
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final NodeAccess nodeAccess;
 
@@ -50,12 +50,12 @@ public class AuditRecorderImpl
   private volatile boolean enabled = false;
 
   @Inject
-  public AuditRecorderImpl(final EventBus eventBus,
+  public AuditRecorderImpl(final EventManager eventManager,
                            final NodeAccess nodeAccess,
                            final AuditStore auditStore,
                            final InitiatorProvider initiatorProvider)
   {
-    this.eventBus = eventBus;
+    this.eventManager = eventManager;
     this.nodeAccess = nodeAccess;
     this.auditStore = auditStore;
     this.initiatorProvider = initiatorProvider;
@@ -89,7 +89,7 @@ public class AuditRecorderImpl
       log.debug("Record: {}", data);
       try {
         auditStore.add(data);
-        eventBus.post(new AuditDataRecordedEvent(data.copy()));
+        eventManager.post(new AuditDataRecordedEvent(data.copy()));
       }
       catch (Exception e) {
         log.warn("Failed to record audit data", e);

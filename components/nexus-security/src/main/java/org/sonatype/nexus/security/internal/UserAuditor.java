@@ -54,7 +54,7 @@ public class UserAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final UserEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       User user = event.getUser();
 
       AuditData data = new AuditData();

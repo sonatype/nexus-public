@@ -23,12 +23,14 @@ import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.internal.AuditStore;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
@@ -70,6 +72,8 @@ public class OrientAuditStore
   public void add(final AuditData data) throws Exception {
     checkNotNull(data);
     ensureStarted();
+
+    checkState(!EventHelper.isReplicating(), "Replication in progress");
 
     inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, data));
   }

@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.internal;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
@@ -40,7 +40,7 @@ public class RealmManagerImplTest
     extends TestSupport
 {
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   @Mock
   private RealmConfigurationStore configStore;
@@ -64,14 +64,14 @@ public class RealmManagerImplTest
     Map<String, Realm> realms = ImmutableMap.of("A", realmA, "B", realmB);
     RealmConfiguration defaultConfig = new RealmConfiguration();
     defaultConfig.setRealmNames(ImmutableList.of("A"));
-    manager = new RealmManagerImpl(eventBus, configStore, () -> defaultConfig, securityManager, realms);
+    manager = new RealmManagerImpl(eventManager, configStore, () -> defaultConfig, securityManager, realms);
   }
 
   @Test
   public void testOnStoreChanged_LocalEvent() {
     when(configEvent.isLocal()).thenReturn(true);
     manager.on(configEvent);
-    verifyZeroInteractions(eventBus, configStore);
+    verifyZeroInteractions(eventManager, configStore);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class RealmManagerImplTest
     ArgumentCaptor<RealmConfigurationChangedEvent> eventCaptor =
         ArgumentCaptor.forClass(RealmConfigurationChangedEvent.class);
 
-    verify(eventBus).post(eventCaptor.capture());
+    verify(eventManager).post(eventCaptor.capture());
 
     RealmConfiguration storeConfig = eventCaptor.getValue().getConfiguration();
     assertThat(storeConfig.getRealmNames(), is(eventConfig.getRealmNames()));

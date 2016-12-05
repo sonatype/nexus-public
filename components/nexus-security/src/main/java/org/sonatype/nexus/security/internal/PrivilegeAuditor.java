@@ -52,7 +52,7 @@ public class PrivilegeAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final PrivilegeEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       Privilege privilege = event.getPrivilege();
 
       AuditData data = new AuditData();

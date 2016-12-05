@@ -61,7 +61,7 @@ public class RepositoryAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final RepositoryEvent event) {
-    if (isEnabled()) {
+    if (isRecording()) {
       Repository repository = event.getRepository();
       AuditData data = new AuditData();
       data.setDomain(DOMAIN);

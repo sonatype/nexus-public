@@ -26,7 +26,7 @@ import javax.inject.Provider;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.app.BaseUrlManager;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.Task;
@@ -70,7 +70,7 @@ public class QuartzTaskJob
 {
   private static final Mutex MUTEX = new Mutex();
 
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final Provider<QuartzSchedulerSPI> scheduler;
 
@@ -87,12 +87,12 @@ public class QuartzTaskJob
   private Task task;
 
   @Inject
-  public QuartzTaskJob(final EventBus eventBus,
+  public QuartzTaskJob(final EventManager eventManager,
                        final Provider<QuartzSchedulerSPI> scheduler,
                        final TaskFactory taskFactory,
                        final BaseUrlManager baseUrlManager)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.scheduler = checkNotNull(scheduler);
     this.taskFactory = checkNotNull(taskFactory);
     this.baseUrlManager = checkNotNull(baseUrlManager);
@@ -139,7 +139,7 @@ public class QuartzTaskJob
 
           if (!taskFuture.isCancelled()) {
             taskFuture.setRunState(RUNNING);
-            eventBus.post(new TaskStartedRunningEvent(taskInfo));
+            eventManager.post(new TaskStartedRunningEvent(taskInfo));
             try {
               context.setResult(task.call());
             }
@@ -157,7 +157,7 @@ public class QuartzTaskJob
         QuartzTaskFuture future = taskInfo.getTaskFuture();
         if (future != null && !future.isCancelled()) {
           future.doCancel();
-          eventBus.post(new TaskEventCanceled(taskInfo));
+          eventManager.post(new TaskEventCanceled(taskInfo));
         }
       }
       catch (InterruptedException e) {
@@ -167,7 +167,7 @@ public class QuartzTaskJob
         QuartzTaskFuture future = taskInfo.getTaskFuture();
         if (future != null) {
           future.doCancel();
-          eventBus.post(new TaskEventCanceled(taskInfo));
+          eventManager.post(new TaskEventCanceled(taskInfo));
         }
       }
       catch (Exception e) {
@@ -207,7 +207,7 @@ public class QuartzTaskJob
         taskFuture.setRunState(BLOCKED);
         if (BLOCKED != previousRunState) {
           // the loop might need multiple iterations but we only want to send the event for an actual state transition
-          eventBus.post(new TaskBlockedEvent(taskInfo));
+          eventManager.post(new TaskBlockedEvent(taskInfo));
         }
       }
 
@@ -263,7 +263,7 @@ public class QuartzTaskJob
   public void interrupt() throws UnableToInterruptJobException {
     if (task instanceof Cancelable && !((Cancelable) task).isCanceled()) {
       ((Cancelable) task).cancel();
-      eventBus.post(new TaskEventCanceled(taskInfo));
+      eventManager.post(new TaskEventCanceled(taskInfo));
     }
     else if (task != null) {
       log.info("Task not cancelable: {}", task.taskConfiguration().getTaskLogName());

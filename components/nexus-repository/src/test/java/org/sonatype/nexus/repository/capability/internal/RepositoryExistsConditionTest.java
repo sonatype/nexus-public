@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
  * @since capabilities 2.0
  */
 public class RepositoryExistsConditionTest
-    extends EventBusTestSupport
+    extends EventManagerTestSupport
 {
 
   static final String TEST_REPOSITORY = "test-repository";
@@ -59,10 +59,10 @@ public class RepositoryExistsConditionTest
 
     when(repository.getName()).thenReturn(TEST_REPOSITORY);
 
-    underTest = new RepositoryExistsCondition(eventBus, repositoryManager, repositoryName);
+    underTest = new RepositoryExistsCondition(eventManager, repositoryManager, repositoryName);
     underTest.bind();
 
-    verify(eventBus).register(underTest);
+    verify(eventManager).register(underTest);
 
     assertThat(underTest.isSatisfied(), is(false));
 
@@ -88,7 +88,7 @@ public class RepositoryExistsConditionTest
     underTest.handle(new RepositoryCreatedEvent(repository));
     assertThat(underTest.isSatisfied(), is(true));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));
   }
 
   /**
@@ -101,7 +101,7 @@ public class RepositoryExistsConditionTest
     underTest.handle(new RepositoryDeletedEvent(repository));
     assertThat(underTest.isSatisfied(), is(false));
 
-    verifyEventBusEvents(satisfied(underTest), unsatisfied(underTest));
+    verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
   }
 
   /**
@@ -123,7 +123,7 @@ public class RepositoryExistsConditionTest
   public void releaseRemovesItselfAsHandler() {
     underTest.release();
 
-    verify(eventBus).unregister(underTest);
+    verify(eventManager).unregister(underTest);
   }
 
 }

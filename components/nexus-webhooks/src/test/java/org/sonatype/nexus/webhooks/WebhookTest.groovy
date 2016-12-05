@@ -13,7 +13,7 @@
 package org.sonatype.nexus.webhooks
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.event.EventBus
+import org.sonatype.nexus.common.event.EventManager
 
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +30,7 @@ class WebhookTest
   extends TestSupport
 {
   @Mock
-  private EventBus eventBus
+  private EventManager eventManager
 
   /**
    * Test {@link WebhookType}.
@@ -71,7 +71,7 @@ class WebhookTest
   @Before
   void setUp() {
     underTest = new TestWebhook(
-        eventBus: eventBus
+        eventManager: eventManager
     )
   }
 
@@ -90,7 +90,7 @@ class WebhookTest
     def subscription2 = underTest.subscribe(mock(WebhookConfiguration.class))
     assert underTest.subscriptions.size() == 2
 
-    verify(eventBus, times(1)).register(underTest)
+    verify(eventManager, times(1)).register(underTest)
   }
 
   @Test
@@ -104,6 +104,6 @@ class WebhookTest
     subscription2.cancel()
     assert underTest.subscriptions.size() == 0
 
-    verify(eventBus, times(1)).unregister(underTest)
+    verify(eventManager, times(1)).unregister(underTest)
   }
 }

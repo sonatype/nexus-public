@@ -24,7 +24,7 @@ import javax.net.ssl.SSLContext;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationChangedEvent;
 import org.sonatype.nexus.email.EmailManager;
@@ -51,7 +51,7 @@ public class EmailManagerImpl
     extends ComponentSupport
     implements EmailManager, EventAware
 {
-  private final EventBus eventBus;
+  private final EventManager eventManager;
 
   private final EmailConfigurationStore store;
 
@@ -64,12 +64,12 @@ public class EmailManagerImpl
   private EmailConfiguration configuration;
 
   @Inject
-  public EmailManagerImpl(final EventBus eventBus,
+  public EmailManagerImpl(final EventManager eventManager,
                           final EmailConfigurationStore store,
                           final TrustStore trustStore,
                           @Named("initial") final Provider<EmailConfiguration> defaults)
   {
-    this.eventBus = checkNotNull(eventBus);
+    this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.trustStore = checkNotNull(trustStore);
     this.defaults = checkNotNull(defaults);
@@ -133,7 +133,7 @@ public class EmailManagerImpl
       this.configuration = model;
     }
 
-    eventBus.post(new EmailConfigurationChangedEvent(model));
+    eventManager.post(new EmailConfigurationChangedEvent(model));
   }
 
   //
@@ -217,7 +217,7 @@ public class EmailManagerImpl
       synchronized (lock) {
         configuration = model = loadConfiguration();
       }
-      eventBus.post(new EmailConfigurationChangedEvent(model));
+      eventManager.post(new EmailConfigurationChangedEvent(model));
     }
   }
 

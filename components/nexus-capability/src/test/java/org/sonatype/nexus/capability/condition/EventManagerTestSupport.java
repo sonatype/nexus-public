@@ -19,7 +19,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent.Satisfied;
 import org.sonatype.nexus.capability.ConditionEvent.Unsatisfied;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 
 import org.hamcrest.Matcher;
 import org.junit.Before;
@@ -41,20 +41,20 @@ import static org.mockito.Mockito.doAnswer;
  *
  * @since capabilities 2.0
  */
-public class EventBusTestSupport
+public class EventManagerTestSupport
     extends TestSupport
 {
 
   @Mock
-  protected EventBus eventBus;
+  protected EventManager eventManager;
 
-  protected List<Object> eventBusEvents;
+  protected List<Object> eventManagerEvents;
 
   @Before
-  public final void setUpEventBus()
+  public final void setUpEventManager()
       throws Exception
   {
-    eventBusEvents = new ArrayList<Object>();
+    eventManagerEvents = new ArrayList<Object>();
 
     doAnswer(new Answer<Object>()
     {
@@ -63,19 +63,19 @@ public class EventBusTestSupport
       public Object answer(final InvocationOnMock invocation)
           throws Throwable
       {
-        eventBusEvents.add(invocation.getArguments()[0]);
+        eventManagerEvents.add(invocation.getArguments()[0]);
         return null;
       }
 
-    }).when(eventBus).post(any());
+    }).when(eventManager).post(any());
   }
 
-  protected void verifyEventBusEvents(final Matcher... matchers) {
-    assertThat(eventBusEvents, contains(matchers));
+  protected void verifyEventManagerEvents(final Matcher... matchers) {
+    assertThat(eventManagerEvents, contains(matchers));
   }
 
-  protected void verifyNoEventBusEvents() {
-    assertThat(eventBusEvents, empty());
+  protected void verifyNoEventManagerEvents() {
+    assertThat(eventManagerEvents, empty());
   }
 
   protected static Matcher<Object> satisfied(final Condition condition) {

@@ -27,8 +27,6 @@ import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * Group implementation of {@link MavenIndexFacet}.
  *

@@ -88,7 +88,10 @@ public class ApplicationDirectoriesImpl
   @Override
   public File getWorkDirectory(final String path, final boolean create) {
     checkNotNull(path);
-    File dir = new File(workDir, path);
+    File dir = new File(path);
+    if (!dir.isAbsolute()) {
+      dir = new File(getWorkDirectory(), path);
+    }
     return resolve(dir, create);
   }
 

@@ -13,7 +13,7 @@
 package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.event.EventBus;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
@@ -45,14 +45,14 @@ public class KeyStoreStorageManagerImplTest
   private KeyStoreDataEntityAdapter entityAdapter;
 
   @Mock
-  private EventBus eventBus;
+  private EventManager eventManager;
 
   private KeyStoreStorageManagerImpl storageManager;
 
   @Before
   public void setUp() {
     when(db.acquire()).thenReturn(tx);
-    storageManager = new KeyStoreStorageManagerImpl(Providers.of(db), entityAdapter, eventBus);
+    storageManager = new KeyStoreStorageManagerImpl(Providers.of(db), entityAdapter, eventManager);
   }
 
   @Test
@@ -60,14 +60,14 @@ public class KeyStoreStorageManagerImplTest
     KeyStoreStorage storage = storageManager.createStorage(KEY_STORE_NAME);
     assertThat(storage, is(instanceOf(OrientKeyStoreStorage.class)));
     assertThat(((OrientKeyStoreStorage) storage).getKeyStoreName(), is("ssl/" + KEY_STORE_NAME));
-    verify(eventBus).register(storage);
+    verify(eventManager).register(storage);
   }
 
   @Test
-  public void testStop_UnregisterFromEventBus() throws Exception {
+  public void testStop_UnregisterFromEventManager() throws Exception {
     KeyStoreStorage storage = storageManager.createStorage(KEY_STORE_NAME);
     storageManager.doStop();
-    verify(eventBus).unregister(storage);
+    verify(eventManager).unregister(storage);
   }
 
   @Test
