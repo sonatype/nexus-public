@@ -42,7 +42,7 @@ public class PlexusContainerConfigurationUtils
   public ContainerConfiguration buildContainerConfiguration(ServletContext servletContext) {
     ContainerConfiguration cc = new DefaultContainerConfiguration()
         .setName(servletContext.getServletContextName()).setContainerConfigurationURL(
-            buildConfigurationURL(servletContext)).setContext(buildContext(servletContext));
+            buildConfigurationURL(servletContext)).setContext(buildContext(servletContext)).setJSR250Lifecycle(true);
 
     return cc;
   }

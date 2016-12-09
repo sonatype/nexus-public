@@ -26,7 +26,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import net.sf.ehcache.CacheManager;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
@@ -46,7 +45,6 @@ import org.eclipse.sisu.space.SpaceModule;
 import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -108,13 +106,6 @@ public class SecurityWebModuleTest
     // test that injection of filters works
     assertThat(((SimpleAccessControlFilter) filterList.get(0)).getSecurityXMLFilePath(),
         equalTo("target/foo/security.xml"));
-  }
-
-  @After
-  public void stopCache() {
-    if (injector != null) {
-      injector.getInstance(CacheManager.class).shutdown();
-    }
   }
 
   private Module getWireModule() {

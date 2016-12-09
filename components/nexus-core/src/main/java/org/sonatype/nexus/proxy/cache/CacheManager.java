@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.proxy.cache;
 
+import org.sonatype.nexus.proxy.repository.Repository;
+
 public interface CacheManager
 {
-  PathCache getPathCache(String cache);
+  PathCache getPathCache(Repository repository);
 }

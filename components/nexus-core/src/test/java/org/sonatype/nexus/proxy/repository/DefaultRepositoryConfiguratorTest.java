@@ -49,7 +49,7 @@ public class DefaultRepositoryConfiguratorTest
 
     oldRepository.configure(cRepo);
 
-    oldRepository.getNotFoundCache().put("test-path", "test-object");
+    oldRepository.getNotFoundCache().put("test-path", Boolean.TRUE);
 
     // make sure the item is in NFC
     Assert.assertTrue(oldRepository.getNotFoundCache().contains("test-path"));
@@ -84,7 +84,7 @@ public class DefaultRepositoryConfiguratorTest
 
     oldRepository.configure(cRepo);
 
-    oldRepository.getNotFoundCache().put("test-path", "test-object");
+    oldRepository.getNotFoundCache().put("test-path", Boolean.TRUE);
 
     // make sure the item is in NFC
     // (cache is disabled )

@@ -103,7 +103,7 @@ public abstract class PlexusTestCaseSupport
     final String config = getCustomConfigurationName();
 
     final ContainerConfiguration containerConfiguration =
-        new DefaultContainerConfiguration().setName("test").setContext(context.getContextData());
+        new DefaultContainerConfiguration().setName("test").setContext(context.getContextData()).setJSR250Lifecycle(true);
 
     if (config != null) {
       containerConfiguration.setContainerConfiguration(config);

@@ -54,6 +54,7 @@ import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -542,7 +543,7 @@ public class M2RepositoryTest
     // we have two known entries in NFC
     assertThat(m2Repo.getNotFoundCache().listKeysInCache().size(), equalTo(2));
     assertThat(m2Repo.getNotFoundCache().listKeysInCache(),
-        contains("some/path/file.jar", "some/path/maven-metadata.xml"));
+        containsInAnyOrder("some/path/file.jar", "some/path/maven-metadata.xml"));
 
     m2Repo.getRepositoryMetadataManager().expireNotFoundMetadataCaches(new ResourceStoreRequest("/"));
 

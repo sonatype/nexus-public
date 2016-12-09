@@ -30,8 +30,8 @@ import org.apache.shiro.guice.ShiroModule;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.nexus5727.FixedDefaultSessionManager;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
@@ -69,10 +69,9 @@ public class SecurityModule
 
   @Override
   protected void bindSessionManager(AnnotatedBindingBuilder<SessionManager> bind) {
-    // workaround for NEXUS-5727, see FixedDefaultSessionManager javadoc for clues
-    bind.to(FixedDefaultSessionManager.class).asEagerSingleton();
-    // this is a PrivateModule, so explicitly binding the FixedDefaultSessionManager class
-    bind(FixedDefaultSessionManager.class);
+    bind.to(DefaultSessionManager.class).asEagerSingleton();
+    // this is a PrivateModule, so explicit binding needed
+    bind(DefaultSessionManager.class);
   }
 
   /**

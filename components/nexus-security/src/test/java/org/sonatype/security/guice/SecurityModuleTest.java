@@ -15,27 +15,26 @@ package org.sonatype.security.guice;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.cache.CacheManager;
+
 import org.sonatype.security.SecuritySystem;
-import org.sonatype.sisu.ehcache.CacheManagerComponent;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import net.sf.ehcache.CacheManager;
-import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
-import org.apache.shiro.nexus5727.FixedDefaultSessionManager;
+import org.apache.shiro.nexus.ShiroJCacheManagerAdapter;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
 import org.eclipse.sisu.space.BeanScanning;
 import org.eclipse.sisu.space.SpaceModule;
 import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,21 +72,14 @@ public class SecurityModuleTest
     assertThat(securityManager, instanceOf(DefaultSecurityManager.class));
     DefaultSecurityManager defaultSecurityManager = (DefaultSecurityManager) securityManager;
 
-    assertThat(defaultSecurityManager.getSessionManager(), instanceOf(FixedDefaultSessionManager.class));
-    FixedDefaultSessionManager sessionManager =
-        (FixedDefaultSessionManager) defaultSecurityManager.getSessionManager();
+    assertThat(defaultSecurityManager.getSessionManager(), instanceOf(DefaultSessionManager.class));
+    DefaultSessionManager sessionManager =
+        (DefaultSessionManager) defaultSecurityManager.getSessionManager();
     assertThat(sessionManager.getSessionDAO(), instanceOf(EnterpriseCacheSessionDAO.class));
     assertThat(
-        ((EhCacheManager) ((EnterpriseCacheSessionDAO) sessionManager.getSessionDAO()).getCacheManager())
-            .getCacheManager(),
-        sameInstance(injector.getInstance(CacheManagerComponent.class).getCacheManager()));
-  }
-
-  @After
-  public void stopCache() {
-    if (injector != null) {
-      injector.getInstance(CacheManager.class).shutdown();
-    }
+        ((ShiroJCacheManagerAdapter) ((EnterpriseCacheSessionDAO) sessionManager.getSessionDAO()).getCacheManager())
+            .manager(),
+        sameInstance(injector.getInstance(CacheManager.class)));
   }
 
   private Module getWireModule() {

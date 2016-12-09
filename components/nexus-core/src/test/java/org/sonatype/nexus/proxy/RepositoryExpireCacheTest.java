@@ -19,10 +19,12 @@ import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+
 public class RepositoryExpireCacheTest
     extends AbstractProxyTestEnvironment
 {
-
   private M2TestsuiteEnvironmentBuilder jettyTestsuiteEnvironmentBuilder;
 
   @Override
@@ -60,8 +62,7 @@ public class RepositoryExpireCacheTest
   {
     // make a bad request
     ResourceStoreRequest req = new ResourceStoreRequest(
-        "/activemq/activemq-core/1.2/activemq-core-1.2.jar-no-such",
-        false);
+        "/activemq/activemq-core/1.2/activemq-core-1.2.jar-no-such");
 
     try {
       getRepository().retrieveItem(req);
@@ -71,7 +72,7 @@ public class RepositoryExpireCacheTest
     }
 
     // make another bad request
-    req = new ResourceStoreRequest("/activemq1/activemq-core/1.2/activemq-core-1.2.jar-no-such", false);
+    req = new ResourceStoreRequest("/activemq1/activemq-core/1.2/activemq-core-1.2.jar-no-such");
 
     try {
       getRepository().retrieveItem(req);
@@ -80,17 +81,18 @@ public class RepositoryExpireCacheTest
       // good, but now we have NFC filled with stuff
     }
 
+    // TODO: omit stats, use listKeys instead
     // we have now two items in NFC
-    assertEquals(2L, getRepository().getNotFoundCache().getStatistics().getSize());
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(2));
 
     // remove one
     getRepository().expireCaches(new ResourceStoreRequest("/activemq1/activemq-core", true));
 
-    assertEquals(1L, getRepository().getNotFoundCache().getStatistics().getSize());
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(1));
 
     getRepository().expireCaches(new ResourceStoreRequest("/", true));
 
-    assertEquals(0L, getRepository().getNotFoundCache().getStatistics().getSize());
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(0));
 
     retrieveItem();
   }

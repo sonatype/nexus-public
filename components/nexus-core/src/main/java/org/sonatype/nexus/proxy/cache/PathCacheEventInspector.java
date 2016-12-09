@@ -51,12 +51,12 @@ public class PathCacheEventInspector
   @AllowConcurrentEvents
   public void inspect(final RepositoryRegistryEventRemove removedRepositoryEvent) {
     final Repository removedRepository = removedRepositoryEvent.getRepository();
-    final PathCache pathCache = cacheManager.getPathCache(removedRepository.getId());
+    final PathCache pathCache = cacheManager.getPathCache(removedRepository);
     if (log.isDebugEnabled()) {
       log.debug(
-          "Purging NFC PathCache of repository {}",
+          "Removing NFC PathCache of repository {}",
           RepositoryStringUtils.getHumanizedNameString(removedRepository));
     }
-    pathCache.purge();
+    pathCache.destroy();
   }
 }

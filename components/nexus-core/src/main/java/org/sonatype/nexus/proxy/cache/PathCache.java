@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.proxy.cache;
 
+import java.io.Closeable;
 import java.util.Collection;
 
 /**
@@ -21,6 +22,8 @@ import java.util.Collection;
  */
 public interface PathCache
 {
+  int ttl();
+
   boolean contains(String path);
 
   boolean isExpired(String path);
@@ -35,11 +38,13 @@ public interface PathCache
 
   boolean purge();
 
-  void put(String path, Object element);
+  void put(String path, Boolean element);
 
-  void put(String path, Object element, int expirationSeconds);
+  void put(String path, Boolean element, int expirationSeconds);
 
   CacheStatistics getStatistics();
 
   Collection<String> listKeysInCache();
+
+  void destroy();
 }

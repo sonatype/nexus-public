@@ -150,25 +150,25 @@ public class RepositoryRequestAsExpiredTest
     // do a request, as server does only 404s it should get into NFC
     retrieveItem(false);
     assertThat(record.getRequests(), hasSize(1));
-    assertThat(getRepository().getNotFoundCache().getStatistics().getSize(), equalTo(1L));
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(1));
     record.clear();
 
     // do 2nd request, path is already in NFC, no remote call should happen
     retrieveItem(false);
     assertThat(record.getRequests(), hasSize(0));
-    assertThat(getRepository().getNotFoundCache().getStatistics().getSize(), equalTo(1L));
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(1));
     record.clear();
 
     // do 3rd request "as expired", path should remain in NFC, but remote request should happen
     retrieveItem(true);
     assertThat(record.getRequests(), hasSize(1));
-    assertThat(getRepository().getNotFoundCache().getStatistics().getSize(), equalTo(1L));
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(1));
     record.clear();
 
     // do 4th request, path is already in NFC, no remote call should happen
     retrieveItem(false);
     assertThat(record.getRequests(), hasSize(0));
-    assertThat(getRepository().getNotFoundCache().getStatistics().getSize(), equalTo(1L));
+    assertThat(getRepository().getNotFoundCache().listKeysInCache(), hasSize(1));
     record.clear();
   }
 }

@@ -215,9 +215,8 @@ public abstract class AbstractRepository
       throws ConfigurationException
   {
     super.doConfigure();
-    if (notFoundCache == null) {
-      this.notFoundCache = cacheManager.getPathCache(getId());
-    }
+    // TODO: to support TTL updates, as JCache does not support per-entry TTL
+    this.notFoundCache = cacheManager.getPathCache(this);
   }
 
   @Override
