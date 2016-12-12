@@ -34,7 +34,7 @@ import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.shiro.authz.annotation.RequiresAuthentication
+import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
 /**
@@ -66,6 +66,7 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> read() {
     blobStoreManager.browse().collect { asBlobStore(it) }
   }
@@ -73,6 +74,7 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
   List<ReferenceXO> readTypes() {
     blobstorePrototypes.collect { key, provider ->
       new ReferenceXO(id: key, name: key)
@@ -82,7 +84,7 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresAuthentication
+  @RequiresPermissions('nexus:blobstores:create')
   @Validate(groups = [Create.class, Default.class])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
     return asBlobStore(blobStoreManager.create(
@@ -97,7 +99,7 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresAuthentication
+  @RequiresPermissions('nexus:blobstores:delete')
   @Validate
   void remove(final @NotEmpty String name) {
     if (repositoryManager.isBlobstoreUsed(name)) {
@@ -109,6 +111,7 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
   PathSeparatorXO defaultWorkDirectory() {
     return new PathSeparatorXO(
         path: applicationDirectories.getWorkDirectory('blobs'),

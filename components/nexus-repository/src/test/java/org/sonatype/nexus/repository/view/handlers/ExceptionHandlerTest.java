@@ -27,11 +27,14 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.orient.testsupport.OrientExceptionMocker.mockOrientException;
 
 public class ExceptionHandlerTest
     extends TestSupport
 {
   ExceptionHandler underTest;
+
+  Exception frozenException;
 
   @Mock
   Context context;
@@ -46,6 +49,8 @@ public class ExceptionHandlerTest
     when(request.getPath()).thenReturn("/test");
 
     underTest = new ExceptionHandler();
+
+    frozenException = mockOrientException(OModificationOperationProhibitedException.class);
   }
 
   @Test
@@ -67,12 +72,9 @@ public class ExceptionHandlerTest
     assertThat(underTest.handle(context).getStatus().getCode(), is(HttpStatus.BAD_REQUEST));
   }
 
-  @Mock
-  OModificationOperationProhibitedException oModificationOperationProhibitedException;
-
   @Test
   public void handleOModificationOperationProhibited() throws Exception {
-    when(context.proceed()).thenThrow(oModificationOperationProhibitedException);
+    when(context.proceed()).thenThrow(frozenException);
     assertThat(underTest.handle(context).getStatus().getCode(), is(HttpStatus.SERVICE_UNAVAILABLE));
   }
 }

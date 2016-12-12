@@ -124,6 +124,20 @@ public class DatabaseFreezeServiceImplTest
     verify(eventManager, times(3)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
   }
 
+  @Test
+  public void testVerifyUnfrozen() {
+    underTest.freezeAllDatabases();
+    try {
+      underTest.checkUnfrozen("test");
+      fail("Should have thrown OModificationProhibtedException");
+    }
+    catch (OModificationOperationProhibitedException e) {
+      assertThat(e.getMessage(), is("test"));
+    }
+    underTest.releaseAllDatabases();
+    underTest.checkUnfrozen(); //should be no errors
+  }
+
   /**
    * Check the status of the databases by attempting writes.
    *

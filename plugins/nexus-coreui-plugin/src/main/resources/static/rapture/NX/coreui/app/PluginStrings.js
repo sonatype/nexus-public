@@ -103,6 +103,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Search_SaveSearchFilter_Description_FieldLabel: 'Filter description',
     Search_Results_Limit_Message: 'Only showing the first {0} of {1} results',
     SearchCriteria_Keyword_FieldLabel: 'Keyword',
+    SearchCriteria_RepositoryName_FieldLabel: 'Repository Name',
     SearchCriteria_Name_FieldLabel: 'Name',
     SearchCriteria_Format_FieldLabel: 'Format',
     SearchCriteria_Group_FieldLabel: 'Group',

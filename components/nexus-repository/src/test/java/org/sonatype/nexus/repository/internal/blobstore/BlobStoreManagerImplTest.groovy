@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 
 import com.google.common.collect.Lists
 import org.junit.Before
@@ -51,11 +52,15 @@ class BlobStoreManagerImplTest
   @Mock
   Provider<BlobStore> provider
 
+  @Mock
+  DatabaseFreezeService databaseFreezeService
+
   BlobStoreManagerImpl underTest
 
   @Before
   void setup() {
-    underTest = spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider]))
+    underTest = spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
+        databaseFreezeService))
   }
 
   @Test
@@ -116,6 +121,7 @@ class BlobStoreManagerImplTest
     
     verify(blobStore).stop()
     verify(store).delete(configuration)
+    verify(databaseFreezeService).checkUnfrozen("Unable to delete a BlobStore while database is frozen.")
   }
 
   @Test

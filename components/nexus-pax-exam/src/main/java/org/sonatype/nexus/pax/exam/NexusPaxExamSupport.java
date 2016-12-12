@@ -13,9 +13,7 @@
 package org.sonatype.nexus.pax.exam;
 
 import java.io.File;
-import java.net.BindException;
 import java.net.HttpURLConnection;
-import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -111,7 +109,19 @@ public abstract class NexusPaxExamSupport
 
   public static final String KARAF_MANAGEMENT_FILE = "etc/karaf/org.apache.karaf.management.cfg";
 
-  private static final String LOCAL_PORT_PREFIX = "itLocalPort.";
+  private static final String PORT_REGISTRY_MIN_KEY = "it.portRegistry.min";
+
+  private static final String PORT_REGISTRY_MAX_KEY = "it.portRegistry.max";
+
+  // port range 10000-30000 chosen to not overlap with typical range for ephemeral ports
+
+  private static final int PORT_REGISTRY_MIN_MAIN = 10000;
+
+  private static final int PORT_REGISTRY_MAX_MAIN = 24999;
+
+  private static final int PORT_REGISTRY_MIN_FORK = PORT_REGISTRY_MAX_MAIN + 1;
+
+  private static final int PORT_REGISTRY_MAX_FORK = 30000;
 
   // -------------------------------------------------------------------------
 
@@ -128,7 +138,7 @@ public abstract class NexusPaxExamSupport
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
 
-  public static final PortRegistry portRegistry = new PortRegistry();
+  public static final PortRegistry portRegistry = createPortRegistry();
 
   @Inject
   @Named("http://localhost:${application-port}${nexus-context-path}")
@@ -151,6 +161,12 @@ public abstract class NexusPaxExamSupport
 
   protected Logger createLogger() {
     return Loggers.getLogger(this);
+  }
+
+  private static PortRegistry createPortRegistry() {
+    int portMin = Integer.getInteger(PORT_REGISTRY_MIN_KEY, PORT_REGISTRY_MIN_MAIN);
+    int portMax = Integer.getInteger(PORT_REGISTRY_MAX_KEY, PORT_REGISTRY_MAX_MAIN);
+    return new PortRegistry(portMin, portMax, 60 * 1000);
   }
 
   // -------------------------------------------------------------------------
@@ -264,12 +280,6 @@ public abstract class NexusPaxExamSupport
    */
   public static Callable<Boolean> responseFrom(final URL url) {
     return () -> {
-      // responseFrom() is primarily used to check NX is up and often ends up being called before Jetty has bound the
-      // server ports. The HTTP connection attempted below will use an ephemeral port for the local socket and could
-      // clash with the ports reserved for Jetty. To avoid this, we first try a plain socket connection using a
-      // reserved port for the local socket. If this works, Jetty opened the assigned ports and it's safe to perform
-      // the HTTP request.
-      checkPort(url);
       HttpURLConnection conn = null;
       try {
         conn = (HttpURLConnection) url.openConnection();
@@ -288,22 +298,6 @@ public abstract class NexusPaxExamSupport
         }
       }
     };
-  }
-
-  private static void checkPort(final URL url) throws Exception {
-    for (int i = 2; i >= 0; i--) {
-      try (Socket socket = new Socket(url.getHost(), url.getPort(), null, Integer.getInteger(LOCAL_PORT_PREFIX + i))) {
-        // have close() perform a connection reset to avoid TIME_WAIT state and allow immediate reuse of local port
-        socket.setSoLinger(true, 0);
-        return;
-      }
-      catch (BindException e) {
-        if (i <= 0) {
-          throw e;
-        }
-        // try another reserved local port which hopefully wasn't hijacked
-      }
-    }
   }
 
   /**
@@ -446,13 +440,11 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_CONFIG_PROPERTIES_FILE, //
             "karaf.shutdown.port", "-1"),
 
+        // configure port registry of forked JVM to use a different port range than main JVM driving the test
+        systemProperty(PORT_REGISTRY_MIN_KEY).value(Integer.toString(PORT_REGISTRY_MIN_FORK)),
+        systemProperty(PORT_REGISTRY_MAX_KEY).value(Integer.toString(PORT_REGISTRY_MAX_FORK)),
+
         // randomize ports...
-        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-            LOCAL_PORT_PREFIX + '0', Integer.toString(portRegistry.reservePort())),
-        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-            LOCAL_PORT_PREFIX + '1', Integer.toString(portRegistry.reservePort())),
-        editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
-            LOCAL_PORT_PREFIX + '2', Integer.toString(portRegistry.reservePort())),
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
             "application-port", Integer.toString(portRegistry.reservePort())),
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //

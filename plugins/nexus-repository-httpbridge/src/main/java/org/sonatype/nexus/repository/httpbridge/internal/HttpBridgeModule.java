@@ -46,14 +46,23 @@ public class HttpBridgeModule
       protected void configureServlets() {
         bind(ViewServlet.class);
         serve(MOUNT_POINT + "/*").with(ViewServlet.class);
-        filter(MOUNT_POINT + "/*").through(SecurityFilter.class);
+        bindViewFiltersFor(MOUNT_POINT + "/*");
 
         if (SUPPORT_LEGACY_CONTENT) {
           // this technically makes non-group repositories visible under /content/groups,
           // but this is acceptable since their IDs are unique and it keeps things simple
           serve("/content/groups/*", "/content/repositories/*").with(ViewServlet.class);
-          filter("/content/groups/*", "/content/repositories/*").through(SecurityFilter.class);
+          bindViewFiltersFor("/content/groups/*", "/content/repositories/*");
         }
+      }
+
+      /**
+       * Helper to make sure view-related filters are bound in the correct order.
+       */
+      private void bindViewFiltersFor(final String urlPattern, final String... morePatterns) {
+        FilterKeyBindingBuilder filter = filter(urlPattern, morePatterns);
+        filter.through(ExhaustRequestFilter.class);
+        filter.through(SecurityFilter.class);
       }
     });
 

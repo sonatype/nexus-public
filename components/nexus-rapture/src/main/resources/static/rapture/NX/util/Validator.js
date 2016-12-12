@@ -86,17 +86,17 @@ Ext.define('NX.util.Validator', {
    */
   isURL: function (str, options) {
 
-    // Ensure that the URL is of proper length
-    if (!str || str.length >= 2083) {
-      return false;
-    }
-
     // Apply options
     options = options || {};
     options = Ext.applyIf(options, this.default_url_options);
 
-    // Ensure that the URL is not blank
-    if (!options.allow_blank && Ext.isEmpty(str)) {
+    // Short-circuit when empty
+    if (Ext.isEmpty(str)) {
+      return options.allow_blank;
+    }
+
+    // Ensure that the URL is of proper length
+    if (str.length >= 2083) {
       return false;
     }
 

@@ -94,6 +94,7 @@ public class LauncherActivator
           propertiesFile.toPath(),
           Files.readAllLines(defaultsFile.toPath(), ISO_8859_1)
               .stream()
+              .filter(l -> !l.startsWith("##"))
               .map(l -> l.startsWith("#") || l.isEmpty() ? l : "# " + l)
               .collect(Collectors.toList()),
           ISO_8859_1);

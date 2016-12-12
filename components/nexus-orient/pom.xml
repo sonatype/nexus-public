@@ -67,8 +67,8 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.sonatype.goodies</groupId>
+      <artifactId>goodies-testsupport</artifactId>
       <optional>true</optional>
     </dependency>
 

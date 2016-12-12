@@ -16,6 +16,7 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
@@ -44,6 +45,9 @@ class RepositoryManagerImplTest
 
   @Mock
   ConfigurationStore configurationStore
+
+  @Mock
+  DatabaseFreezeService databaseFreezeService
 
   @Mock
   RepositoryFactory repositoryFactory
@@ -110,7 +114,7 @@ class RepositoryManagerImplTest
     //initialize and start the repository manager
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
-        defaultRepositoriesContributorList, false)
+        defaultRepositoriesContributorList, databaseFreezeService, false)
 
     repositoryManager.doStart()
   }
@@ -143,5 +147,11 @@ class RepositoryManagerImplTest
   public void 'blobstoreUsageCount returns number of repositories using a blob store'() {
     assertThat(repositoryManager.blobstoreUsageCount("default")).isEqualTo(2);
     assertThat(repositoryManager.blobstoreUsageCount("third-party")).isEqualTo(1);
+  }
+
+  @Test
+  public void 'test delete checks unfrozen'(){
+    repositoryManager.delete("maven-central")
+    verify(databaseFreezeService).checkUnfrozen("Unable to delete repository when database is frozen.")
   }
 }

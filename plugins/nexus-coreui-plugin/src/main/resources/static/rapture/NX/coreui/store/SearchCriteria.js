@@ -53,6 +53,13 @@ Ext.define('NX.coreui.store.SearchCriteria', {
         }
       },
       {
+        id: 'repository_name',
+        config: {
+          fieldLabel: NX.I18n.get('SearchCriteria_RepositoryName_FieldLabel'),
+          width: 250
+        }
+      },
+      {
         id: 'version',
         config: {
           fieldLabel: NX.I18n.get('SearchCriteria_Version_FieldLabel')

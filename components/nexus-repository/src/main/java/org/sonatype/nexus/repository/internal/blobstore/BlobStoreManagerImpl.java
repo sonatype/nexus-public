@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -63,14 +64,18 @@ public class BlobStoreManagerImpl
 
   private final Map<String, Provider<BlobStore>> blobstorePrototypes;
 
+  private final DatabaseFreezeService databaseFreezeService;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager,
                               final BlobStoreConfigurationStore store,
-                              Map<String, Provider<BlobStore>> blobstorePrototypes)
+                              Map<String, Provider<BlobStore>> blobstorePrototypes,
+                              final DatabaseFreezeService databaseFreezeService)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
+    this.databaseFreezeService = checkNotNull(databaseFreezeService);
   }
 
   @Override
@@ -166,6 +171,8 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
+    databaseFreezeService.checkUnfrozen("Unable to delete a BlobStore while database is frozen.");
+
     BlobStore blobStore = blobStore(name);
     log.debug("Deleting BlobStore: {}", name);
     blobStore.stop();

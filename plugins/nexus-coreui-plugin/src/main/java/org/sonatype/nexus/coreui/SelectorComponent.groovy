@@ -33,7 +33,6 @@ import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
@@ -75,7 +74,7 @@ class SelectorComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresAuthentication
+  @RequiresPermissions('nexus:selectors:create')
   @Validate(groups = [Create.class, Default.class])
   SelectorXO create(final @NotNull @Valid SelectorXO selectorXO) {
     jexlExpressionValidator.validate(selectorXO.expression)
@@ -95,7 +94,7 @@ class SelectorComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresAuthentication
+  @RequiresPermissions('nexus:selectors:update')
   @Validate(groups = [Update.class, Default.class])
   SelectorXO update(final @NotNull @Valid SelectorXO selectorXO) {
     jexlExpressionValidator.validate(selectorXO.expression)
@@ -113,7 +112,7 @@ class SelectorComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresAuthentication
+  @RequiresPermissions('nexus:selectors:delete')
   @Validate
   void remove(final @NotEmpty String id) {
     selectorManager.delete(selectorManager.read(new DetachedEntityId(id)))
@@ -125,6 +124,7 @@ class SelectorComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:selectors:read')
   List<ReferenceXO> readReferences() {
     return selectorManager.browse().collect { new ReferenceXO(id: it.name, name: it.name) }
   }

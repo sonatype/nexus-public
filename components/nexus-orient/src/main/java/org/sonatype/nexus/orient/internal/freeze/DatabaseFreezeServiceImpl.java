@@ -28,6 +28,7 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -88,6 +89,18 @@ public class DatabaseFreezeServiceImpl
   @Override
   public boolean isFrozen() {
     return frozen;
+  }
+
+  @Override
+  public void checkUnfrozen() {
+    checkUnfrozen("Database is frozen, unable to proceed.");
+  }
+
+  @Override
+  public void checkUnfrozen(final String message) {
+    if (frozen) {
+      throw new OModificationOperationProhibitedException(message);
+    }
   }
 
   private void processAll(final Consumer<ODatabaseDocumentTx> databaseDocumentTxConsumer) {

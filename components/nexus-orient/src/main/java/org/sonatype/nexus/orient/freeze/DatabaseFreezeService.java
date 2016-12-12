@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.freeze;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+
 /**
  * Service that freezes and releases all OrientDB databases.
  *
@@ -33,4 +35,19 @@ public interface DatabaseFreezeService
    * Returns whether databases are currently frozen.
    */
   boolean isFrozen();
+
+  /**
+   * Check if the database is frozen and throw a {@link OModificationOperationProhibitedException} if it is.
+   *
+   * @throws OModificationOperationProhibitedException thrown if database is frozen
+   */
+  void checkUnfrozen();
+
+  /**
+   * Check if the database is frozen and throw a {@link OModificationOperationProhibitedException} if it is.
+   *
+   * @param message Message used when constructing the  OModificationOperationProhibitedException
+   * @throws OModificationOperationProhibitedException thrown if database is frozen
+   */
+  void checkUnfrozen(String message);
 }

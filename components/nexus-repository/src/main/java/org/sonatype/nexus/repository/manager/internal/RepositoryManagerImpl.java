@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -70,6 +71,8 @@ public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
+  private final DatabaseFreezeService databaseFreezeService;
+
   private final EventManager eventManager;
 
   private final ConfigurationStore store;
@@ -96,6 +99,7 @@ public class RepositoryManagerImpl
                                final Map<String, Recipe> recipes,
                                final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+                               final DatabaseFreezeService databaseFreezeService,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories)
   {
     this.eventManager = checkNotNull(eventManager);
@@ -105,6 +109,7 @@ public class RepositoryManagerImpl
     this.recipes = checkNotNull(recipes);
     this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
+    this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
   }
 
@@ -314,6 +319,7 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
+    databaseFreezeService.checkUnfrozen("Unable to delete repository when database is frozen.");
 
     log.debug("Deleting repository: {}", name);
 
