@@ -75,6 +75,13 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-autorole-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-ssl-plugin</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
