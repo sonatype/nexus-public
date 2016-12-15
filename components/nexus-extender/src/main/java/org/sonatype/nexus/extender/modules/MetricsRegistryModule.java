@@ -29,7 +29,9 @@ public class MetricsRegistryModule
 
   @Override
   protected void configure() {
-    bind(MetricRegistry.class).toInstance(SharedMetricRegistries.getOrCreate("nexus"));
+    MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate("nexus");
+
+    bind(MetricRegistry.class).toInstance(metricRegistry);
     bind(HealthCheckRegistry.class).toInstance(HEALTH_CHECK_REGISTRY);
   }
 }

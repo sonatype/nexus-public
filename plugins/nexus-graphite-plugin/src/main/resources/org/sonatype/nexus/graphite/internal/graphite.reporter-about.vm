@@ -1,0 +1,15 @@
+<p>
+  Reports Dropwizard Metrics to Graphite.
+</p>
+
+<p>
+  Prefix configuration supports replacement tokens:
+<ul>
+  <li><tt>\${hostName}</tt>: <tt>${hostName}</tt></li>
+  <li><tt>\${host-name}</tt>: <tt>${host-name}</tt></li>
+  <li><tt>\${host_name}</tt>: <tt>${host_name}</tt></li>
+  <li><tt>\${canonicalHostName}</tt>: <tt>${canonicalHostName}</tt></li>
+  <li><tt>\${canonical-host-name}</tt>: <tt>${canonical-host-name}</tt></li>
+  <li><tt>\${canonical_host_name}</tt>: <tt>${canonical_host_name}</tt></li>
+</ul>
+</p>

@@ -28,39 +28,33 @@
   <packaging>pom</packaging>
 
   <properties>
-    <metrics.version>3.0.2</metrics.version>
+    <dropwizard-metrics.version>3.1.2</dropwizard-metrics.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-core</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-annotation</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.palominolabs.metrics</groupId>
-        <artifactId>metrics-guice</artifactId>
-        <version>${metrics.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-servlets</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-jetty9</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.eclipse.jetty</groupId>
@@ -70,21 +64,45 @@
       </dependency>
 
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-httpclient</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-logback</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-servlet</artifactId>
-        <version>${metrics.version}</version>
+        <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-healthchecks</artifactId>
+        <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jvm</artifactId>
+        <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-graphite</artifactId>
+        <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.palominolabs.metrics</groupId>
+        <artifactId>metrics-guice</artifactId>
+        <version>3.1.4</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

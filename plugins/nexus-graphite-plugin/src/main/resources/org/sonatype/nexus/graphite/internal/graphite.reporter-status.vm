@@ -1,0 +1,11 @@
+<h4>Configuration</h4>
+<p>
+  Prefix: <tt>${prefix}</tt>
+</p>
+
+<h4>Connection</h4>
+<p>
+  Connected: ${graphiteSender.connected}
+  <br/>
+  Failures: ${graphiteSender.failures}
+</p>
