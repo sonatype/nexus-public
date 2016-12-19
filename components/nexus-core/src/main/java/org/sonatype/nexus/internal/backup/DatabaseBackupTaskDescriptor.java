@@ -35,6 +35,8 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 public class DatabaseBackupTaskDescriptor
     extends TaskDescriptorSupport
 {
+  public static final String MSG = "Export configuration & metadata for backup";
+
   public static final String TYPE_ID = "db.backup";
 
   public static final String BACKUP_LOCATION = "location";
@@ -42,7 +44,7 @@ public class DatabaseBackupTaskDescriptor
   private interface Messages
       extends MessageBundle
   {
-    @DefaultMessage("Database backup")
+    @DefaultMessage(MSG)
     String name();
 
     @DefaultMessage("Backup location")

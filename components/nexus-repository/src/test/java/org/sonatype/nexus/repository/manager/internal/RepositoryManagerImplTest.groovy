@@ -31,7 +31,11 @@ import org.junit.Test
 import org.mockito.Mock
 
 import static java.util.Arrays.asList
+import static java.util.Collections.emptyList
+import static java.util.Collections.singletonList
 import static org.fest.assertions.api.Assertions.assertThat
+import static org.mockito.Matchers.any
+import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 
@@ -58,8 +62,10 @@ class RepositoryManagerImplTest
   @Mock
   RepositoryAdminSecurityContributor securityContributor
 
-  @Mock
   List<DefaultRepositoriesContributor> defaultRepositoriesContributorList
+
+  @Mock
+  DefaultRepositoriesContributor defaultRepositoriesContributor
 
   //Configurations and repositories
   @Mock
@@ -96,13 +102,14 @@ class RepositoryManagerImplTest
   RepositoryManagerImpl repositoryManager
 
   @Before
-  public void setup() {
-    when(configurationStore.list()).
-        thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
-
+  void setup() {
     //recipe setup
     when(recipe.getType()).thenReturn(type)
     when(recipe.getFormat()).thenReturn(format)
+
+    when(defaultRepositoriesContributor.getRepositoryConfigurations()).
+        thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
+    defaultRepositoriesContributorList = singletonList(defaultRepositoriesContributor)
 
     mockRepository(mavenCentralConfiguration, mavenCentralRepository, 'maven-central', 'default')
     mockRepository(apacheSnapshotsConfiguration, apacheSnapshotsRepository, 'apache-snapshots', 'default')
@@ -111,12 +118,7 @@ class RepositoryManagerImplTest
     when(repositoryFactory.create(type, format)).
         thenReturn(mavenCentralRepository, apacheSnapshotsRepository, thirdPartyRepository)
 
-    //initialize and start the repository manager
-    repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
-        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
-        defaultRepositoriesContributorList, databaseFreezeService, false)
 
-    repositoryManager.doStart()
   }
 
   private void mockRepository(Configuration configuration, Repository repository, String name, String blobstoreName) {
@@ -127,30 +129,88 @@ class RepositoryManagerImplTest
     when(repository.getName()).thenReturn(name)
   }
 
+  private RepositoryManagerImpl buildRepositoryManagerImpl(final boolean defaultsConfigured,
+                                                           final boolean skipDefaultRepositories)
+  {
+    if (defaultsConfigured) {
+      when(configurationStore.list()).
+          thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
+    }
+
+    //initialize and start the repository manager
+    repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
+        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
+        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories)
+
+    repositoryManager.doStart()
+    return repositoryManager
+  }
+
+  private RepositoryManagerImpl buildRepositoryManagerImpl(final boolean defaultsConfigured) {
+    return buildRepositoryManagerImpl(defaultsConfigured, false)
+  }
+
   @Test
-  public void 'it should correctly load existing configurations on startup'() {
+  void 'it should correctly load existing configurations on startup'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+    when(configurationStore.list()).
+        thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
+
     assertThat(repositoryManager.browse()).hasSize(3)
 
     verify(mavenCentralRepository).init(mavenCentralConfiguration)
+    verify(mavenCentralRepository).start()
+
     verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration)
+    verify(apacheSnapshotsRepository).start()
+
     verify(thirdPartyRepository).init(thirdPartyConfiguration)
+    verify(thirdPartyRepository).start()
   }
 
   @Test
-  public void 'exists checks name, is not case sensitive'() {
-    assertThat(repositoryManager.exists('maven-central')).isTrue();
-    assertThat(repositoryManager.exists('MAVEN-CENTRAL')).isTrue();
-    assertThat(repositoryManager.exists('missing-repository')).isFalse();
+  void 'it should correctly create default repositories if none are configured on startup'() {
+    repositoryManager = buildRepositoryManagerImpl(false)
+
+    verify(configurationStore).create(mavenCentralConfiguration)
+    verify(configurationStore).create(apacheSnapshotsConfiguration)
+    verify(configurationStore).create(thirdPartyConfiguration)
   }
 
   @Test
-  public void 'blobstoreUsageCount returns number of repositories using a blob store'() {
-    assertThat(repositoryManager.blobstoreUsageCount("default")).isEqualTo(2);
-    assertThat(repositoryManager.blobstoreUsageCount("third-party")).isEqualTo(1);
+  void 'should not create default repositories even if none are present if skip defaults is true'() {
+    repositoryManager = buildRepositoryManagerImpl(false, true)
+
+    verify(configurationStore, times(0)).create(any(Configuration.class))
   }
 
   @Test
-  public void 'test delete checks unfrozen'(){
+  void 'it should not create any repositories if no defaults are provided'() {
+    when(defaultRepositoriesContributor.getRepositoryConfigurations()).thenReturn(emptyList())
+
+    repositoryManager = buildRepositoryManagerImpl(false, false)
+
+    verify(configurationStore, times(0)).create(any(Configuration.class))
+  }
+
+  @Test
+  void 'exists checks name, is not case sensitive'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+    assertThat(repositoryManager.exists('maven-central')).isTrue()
+    assertThat(repositoryManager.exists('MAVEN-CENTRAL')).isTrue()
+    assertThat(repositoryManager.exists('missing-repository')).isFalse()
+  }
+
+  @Test
+  void 'blobstoreUsageCount returns number of repositories using a blob store'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+    assertThat(repositoryManager.blobstoreUsageCount("default")).isEqualTo(2)
+    assertThat(repositoryManager.blobstoreUsageCount("third-party")).isEqualTo(1)
+  }
+
+  @Test
+  void 'test delete checks unfrozen'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
     repositoryManager.delete("maven-central")
     verify(databaseFreezeService).checkUnfrozen("Unable to delete repository when database is frozen.")
   }

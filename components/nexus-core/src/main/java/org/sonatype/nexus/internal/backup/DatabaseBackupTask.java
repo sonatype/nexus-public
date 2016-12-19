@@ -65,7 +65,7 @@ public class DatabaseBackupTask
   private interface Messages
       extends MessageBundle
   {
-    @DefaultMessage("Database backup")
+    @DefaultMessage(DatabaseBackupTaskDescriptor.MSG)
     String message();
   }
 
