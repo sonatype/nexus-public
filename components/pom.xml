@@ -28,13 +28,14 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>nexus-hazelcast</module>
+    <module>nexus-cache</module>
     <module>base-configuration</module>
     <module>nexus-bootstrap</module>
     <module>nexus-client-core</module>
     <module>nexus-configuration-model</module>
     <module>nexus-core</module>
     <module>nexus-csrfguard</module>
-    <module>nexus-ehcache</module>
     <module>nexus-launcher</module>
     <module>nexus-ldap-common</module>
     <module>nexus-locks</module>

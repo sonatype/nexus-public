@@ -29,7 +29,6 @@ import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ISemaphore;
-import com.hazelcast.core.InstanceDestroyedException;
 import org.eclipse.sisu.inject.Logs;
 
 /**
@@ -170,21 +169,18 @@ final class HazelcastResourceLock
   protected void acquire(final int permits) {
     while (true) {
       try {
-        sem.acquireAttach(permits);
+        sem.acquire(permits);
         return;
       }
       catch (final InterruptedException e) {
         Thread.currentThread().interrupt();
-      }
-      catch (final InstanceDestroyedException e) {
-        throw new IllegalStateException(e);
       }
     }
   }
 
   @Override
   protected void release(final int permits) {
-    sem.releaseDetach(permits);
+    sem.release(permits);
   }
 
   @Override

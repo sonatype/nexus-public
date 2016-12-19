@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.cache.CacheManager;
 import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.configuration.validation.InvalidConfigurationException;
@@ -53,14 +55,13 @@ import org.sonatype.security.usermanagement.UserStatus;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 
 import com.google.common.eventbus.Subscribe;
-import net.sf.ehcache.CacheManager;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.cache.Cache;
-import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.mgt.RealmSecurityManager;
+import org.apache.shiro.nexus.ShiroJCacheManagerAdapter;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.realm.Realm;
@@ -85,7 +86,7 @@ public class DefaultSecuritySystem
 
   private RealmSecurityManager securityManager;
 
-  private CacheManager cacheManager;
+  private Provider<CacheManager> cacheManager;
 
   private UserManagerFacade userManagerFacade;
 
@@ -113,7 +114,7 @@ public class DefaultSecuritySystem
                                Map<String, Realm> realmMap,
                                SecurityConfigurationManager securityConfiguration,
                                RealmSecurityManager securityManager,
-                               CacheManager cacheManager,
+                               Provider<CacheManager> cacheManager,
                                UserManagerFacade userManagerFacade)
   {
     this.securityEmailers = securityEmailers;
@@ -764,9 +765,8 @@ public class DefaultSecuritySystem
 
     // setup the CacheManager ( this could be injected if we where less coupled with ehcache)
     // The plexus wrapper can interpolate the config
-    EhCacheManager ehCacheManager = new EhCacheManager();
-    ehCacheManager.setCacheManager(cacheManager);
-    this.getSecurityManager().setCacheManager(ehCacheManager);
+    ShiroJCacheManagerAdapter shiroCacheManager = new ShiroJCacheManagerAdapter(cacheManager);
+    this.getSecurityManager().setCacheManager(shiroCacheManager);
 
     if (org.apache.shiro.util.Initializable.class.isInstance(this.getSecurityManager())) {
       ((org.apache.shiro.util.Initializable) this.getSecurityManager()).init();

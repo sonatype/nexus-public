@@ -22,7 +22,6 @@ import org.sonatype.sisu.goodies.eventbus.EventBus;
 
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.Module;
-import net.sf.ehcache.CacheManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.shiro.util.ThreadContext;
 import org.codehaus.plexus.ContainerConfiguration;
@@ -82,7 +81,6 @@ public abstract class AbstractSecurityRestTest
     eventBus.post(new NexusStoppedEvent(null));
     try {
       lookup(SecuritySystem.class).stop();
-      lookup(CacheManager.class).shutdown();
     }
     finally {
       super.tearDown();

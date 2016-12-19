@@ -28,7 +28,6 @@ import org.sonatype.security.guice.SecurityModule;
 
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.Module;
-import net.sf.ehcache.CacheManager;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.PlexusConstants;
@@ -84,8 +83,6 @@ public abstract class LdapTestSupport
   public void tearDown()
       throws Exception
   {
-    lookup(CacheManager.class).shutdown();
-
     if (ldapServer != null && ldapServer.isStarted()) {
       ldapServer.stop();
       ldapServer = null;

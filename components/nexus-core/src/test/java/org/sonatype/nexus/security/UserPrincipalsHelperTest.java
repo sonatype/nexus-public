@@ -36,7 +36,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import junit.framework.Assert;
-import net.sf.ehcache.CacheManager;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -101,7 +100,6 @@ public class UserPrincipalsHelperTest
   {
     try {
       ThreadContext.remove();
-      lookup(CacheManager.class).shutdown();
     }
     finally {
       super.tearDown();

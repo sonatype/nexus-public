@@ -19,7 +19,7 @@ import org.sonatype.security.SecuritySystem;
 import org.sonatype.security.guice.SecurityModule;
 
 import com.google.inject.Module;
-import net.sf.ehcache.CacheManager;
+import com.walmart.warm.hazelcast.HazelcastManager;
 import org.codehaus.plexus.context.Context;
 
 /**
@@ -34,8 +34,6 @@ public abstract class AbstractRealmWithSecuritySystemTest
     extends AbstractRealmTest
 {
   private SecuritySystem securitySystem;
-
-  private CacheManager cacheManager;
 
   @Override
   protected void customizeContext(final Context ctx) {
@@ -56,7 +54,6 @@ public abstract class AbstractRealmWithSecuritySystemTest
     super.setUp();
 
     securitySystem = lookup(SecuritySystem.class);
-    cacheManager = lookup(CacheManager.class);
   }
 
   protected void tearDown()
@@ -64,9 +61,6 @@ public abstract class AbstractRealmWithSecuritySystemTest
   {
     if (securitySystem != null) {
       securitySystem.stop();
-    }
-    if (cacheManager != null) {
-      cacheManager.shutdown();
     }
     super.tearDown();
   }

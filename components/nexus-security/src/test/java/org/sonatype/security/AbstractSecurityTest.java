@@ -18,7 +18,6 @@ import java.util.Properties;
 import org.sonatype.security.guice.SecurityModule;
 
 import com.google.inject.Binder;
-import net.sf.ehcache.CacheManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.shiro.util.ThreadContext;
 import org.eclipse.sisu.launch.InjectedTestCase;
@@ -61,7 +60,6 @@ public abstract class AbstractSecurityTest
   {
     try {
       getSecuritySystem().stop();
-      lookup(CacheManager.class).shutdown();
     }
     finally {
       ThreadContext.remove();

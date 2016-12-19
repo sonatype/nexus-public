@@ -34,12 +34,12 @@ public abstract class AbstractPathCache
   }
 
   @Override
-  public final void put(final String path, final Object element) {
+  public final void put(final String path, final Boolean element) {
     doPut(makeKeyFromPath(path), element, -1);
   }
 
   @Override
-  public final void put(final String path, final Object element, final int expiration) {
+  public final void put(final String path, final Boolean element, final int expiration) {
     doPut(makeKeyFromPath(path), element, expiration);
   }
 
@@ -94,7 +94,7 @@ public abstract class AbstractPathCache
 
   protected abstract long doGetExpirationTime(String key);
 
-  protected abstract void doPut(String key, Object element, int expiration);
+  protected abstract void doPut(String key, Boolean element, int expiration);
 
   protected abstract boolean doRemove(String key);
 

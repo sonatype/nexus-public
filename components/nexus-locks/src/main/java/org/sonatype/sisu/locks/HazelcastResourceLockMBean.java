@@ -21,8 +21,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -30,7 +32,6 @@ import javax.management.ObjectName;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.Member;
-import com.hazelcast.core.MultiTask;
 import org.eclipse.sisu.inject.Logs;
 
 /**
@@ -97,12 +98,12 @@ final class HazelcastResourceLockMBean
    */
   public String[] multiInvoke(final String method, final String... args) {
     final HazelcastMBeansInvoker invoker = new HazelcastMBeansInvoker(jmxQuery, method, args);
-    final MultiTask<List<String>> task = new MultiTask<List<String>>(invoker, filterMembers(method, args));
     final Set<String> results = new HashSet<String>();
     try {
-      instance.getExecutorService().execute(task);
-      for (final List<String> result : task.get()) {
-        results.addAll(result);
+      Map<Member, Future<List<String>>> memberResults =
+          instance.getExecutorService("default").submitToMembers(invoker, filterMembers(method, args));
+      for (final Future<List<String>> result : memberResults.values()) {
+        results.addAll(result.get());
       }
     }
     catch (final Exception e) {

@@ -31,7 +31,6 @@ import org.sonatype.security.model.Configuration;
 import org.sonatype.security.model.io.xpp3.SecurityConfigurationXpp3Reader;
 
 import com.google.inject.Binder;
-import net.sf.ehcache.CacheManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.shiro.realm.Realm;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
@@ -95,7 +94,6 @@ public abstract class AbstractSecurityTestCase
   {
     try {
       lookup(SecuritySystem.class).stop();
-      lookup(CacheManager.class).shutdown();
     }
     finally {
       super.tearDown();

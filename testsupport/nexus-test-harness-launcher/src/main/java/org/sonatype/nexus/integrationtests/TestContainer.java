@@ -144,6 +144,7 @@ public class TestContainer
     containerConfiguration.setContainerConfiguration(plexusXml);
     containerConfiguration.setAutoWiring(true);
     containerConfiguration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
+    containerConfiguration.setJSR250Lifecycle(true);
 
     try {
       return new DefaultPlexusContainer(containerConfiguration, modules);

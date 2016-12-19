@@ -250,7 +250,12 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-ehcache</artifactId>
+      <artifactId>nexus-cache</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-hazelcast</artifactId>
     </dependency>
 
     <dependency>

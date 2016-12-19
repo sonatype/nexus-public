@@ -39,7 +39,7 @@ import org.apache.shiro.config.ConfigurationException;
 import org.apache.shiro.guice.web.ShiroWebModule;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.nexus.NexusWebSecurityManager;
-import org.apache.shiro.nexus5727.FixedDefaultWebSessionManager;
+import org.apache.shiro.nexus.NexusWebSessionManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
@@ -49,6 +49,7 @@ import org.apache.shiro.web.filter.mgt.FilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.filter.mgt.PathMatchingFilterChainResolver;
 import org.apache.shiro.web.mgt.WebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -108,11 +109,9 @@ public class SecurityWebModule
 
   @Override
   protected void bindSessionManager(AnnotatedBindingBuilder<SessionManager> bind) {
-    // use native web session management instead of delegating to servlet container
-    // workaround for NEXUS-5727, see FixedDefaultWebSessionManager javadoc for clues
-    bind.to(FixedDefaultWebSessionManager.class).asEagerSingleton();
-    // this is a PrivateModule, so explicitly binding the FixedDefaultSessionManager class
-    bind(FixedDefaultWebSessionManager.class);
+    bind.to(NexusWebSessionManager.class).asEagerSingleton();
+    // this is a PrivateModule, so explicit binding needed
+    bind(NexusWebSessionManager.class);
   }
 
   /**

@@ -80,18 +80,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-ehcache</artifactId>
-        <version>${apache-shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache-core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
