@@ -265,7 +265,7 @@ public class NexusClientFactoryImpl
         if (proxyInfo.getProxyAuthentication() != null) {
           if (proxyInfo.getProxyAuthentication() instanceof UsernamePasswordAuthenticationInfo) {
             final UsernamePasswordAuthenticationInfo upinfo =
-                (UsernamePasswordAuthenticationInfo) connectionInfo.getAuthenticationInfo();
+                (UsernamePasswordAuthenticationInfo) proxyInfo.getProxyAuthentication();
             config.getProperties().put(PROPERTY_PROXY_USERNAME, upinfo.getUsername());
             config.getProperties().put(PROPERTY_PROXY_PASSWORD, upinfo.getPassword());
           }
