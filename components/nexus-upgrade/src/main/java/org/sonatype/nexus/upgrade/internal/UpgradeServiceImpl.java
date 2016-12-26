@@ -23,9 +23,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
@@ -47,7 +47,7 @@ import static org.sonatype.nexus.upgrade.internal.UpgradeManager.upgrades;
 @ManagedLifecycle(phase = UPGRADE)
 @Singleton
 public class UpgradeServiceImpl
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements UpgradeService
 {
   private static final String BANNER =

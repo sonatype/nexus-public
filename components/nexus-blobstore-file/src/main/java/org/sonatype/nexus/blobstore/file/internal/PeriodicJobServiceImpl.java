@@ -20,10 +20,12 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Default implementation of {@link PeriodicJobService}, based on a ScheduledExecutorService.
@@ -33,7 +35,7 @@ import static com.google.common.base.Preconditions.checkState;
 @Named
 @Singleton
 public class PeriodicJobServiceImpl
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements PeriodicJobService
 {
   private ScheduledExecutorService executor;
@@ -70,8 +72,8 @@ public class PeriodicJobServiceImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public PeriodicJob schedule(final Runnable runnable, final int repeatPeriodSeconds) {
-    ensureStarted();
     ScheduledFuture<?> scheduledFuture = executor.scheduleAtFixedRate(
         wrap(runnable),
         repeatPeriodSeconds,

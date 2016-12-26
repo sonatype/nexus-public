@@ -20,14 +20,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Local {@link NodeAccess}.
@@ -37,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named("local")
 @Singleton
 public class LocalNodeAccess
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements NodeAccess
 {
   private final KeyStoreManager keyStoreManager;
@@ -88,24 +90,25 @@ public class LocalNodeAccess
   }
 
   @Override
+  @Guarded(by = STARTED)
   public Certificate getCertificate() {
-    ensureStarted();
     return certificate;
   }
 
   @Override
+  @Guarded(by = STARTED)
   public String getFingerprint() {
-    ensureStarted();
     return fingerprint;
   }
 
   @Override
+  @Guarded(by = STARTED)
   public String getId() {
-    ensureStarted();
     return id;
   }
 
   @Override
+  @Guarded(by = STARTED)
   public boolean isClustered() {
     return false;
   }

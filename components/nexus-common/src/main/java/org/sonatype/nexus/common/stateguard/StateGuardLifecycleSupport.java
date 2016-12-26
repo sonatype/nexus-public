@@ -71,6 +71,13 @@ public class StateGuardLifecycleSupport
     // nop
   }
 
+  /**
+   * @since 3.3
+   */
+  protected boolean isStarted() {
+    return getStateGuard().is(STARTED);
+  }
+
   @Override
   @Transitions(from = STARTED, to = STOPPED)
   public void stop() throws Exception {

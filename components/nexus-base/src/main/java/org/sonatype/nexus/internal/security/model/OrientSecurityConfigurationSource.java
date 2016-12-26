@@ -22,8 +22,8 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -58,7 +58,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientSecurityConfigurationSource
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements SecurityConfigurationSource
 {
   /**

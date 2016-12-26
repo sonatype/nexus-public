@@ -16,10 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
 
 import com.google.common.base.Throwables;
@@ -37,7 +37,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
 @ManagedLifecycle(phase = CAPABILITIES)
 @Singleton
 public class CapabilityRegistryBooter
-  extends LifecycleSupport
+    extends StateGuardLifecycleSupport
 {
   private final EventManager eventManager;
 

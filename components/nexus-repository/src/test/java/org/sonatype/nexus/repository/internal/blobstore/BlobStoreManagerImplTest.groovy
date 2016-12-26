@@ -18,21 +18,29 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 
 import com.google.common.collect.Lists
+import org.hamcrest.Matchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.junit.Assert.fail
+import static org.mockito.ArgumentCaptor.forClass
+import static org.mockito.Matchers.any
 import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.spy
+import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME
 
 /**
  * Tests for {@link BlobStoreManagerImpl}.
@@ -55,19 +63,54 @@ class BlobStoreManagerImplTest
   @Mock
   DatabaseFreezeService databaseFreezeService
 
+  @Mock
+  NodeAccess nodeAccess;
+
   BlobStoreManagerImpl underTest
 
   @Before
   void setup() {
-    underTest = spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
-        databaseFreezeService))
+    underTest = newBlobStoreManager()
+  }
+
+  private BlobStoreManagerImpl newBlobStoreManager(boolean provisionDefaults = false) {
+    spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
+        databaseFreezeService, nodeAccess, provisionDefaults))
   }
 
   @Test
   void 'Can start with nothing configured'() {
+    ArgumentCaptor<BlobStoreConfiguration> configurationArgumentCaptor = forClass(BlobStoreConfiguration.class)
     when(store.list()).thenReturn(Lists.newArrayList())
     underTest.doStart()
     assert !underTest.browse()
+
+    verify(store).create(configurationArgumentCaptor.capture())
+    assertThat(configurationArgumentCaptor.getValue().name, Matchers.is(DEFAULT_BLOBSTORE_NAME))
+  }
+
+  @Test
+  void 'Can start with nothing configured and does not create default when clustered'() {
+
+    when(nodeAccess.isClustered()).thenReturn(true)
+    when(store.list()).thenReturn(Lists.newArrayList())
+    underTest.doStart()
+
+    verify(store, times(0)).create(any(BlobStoreConfiguration.class))
+  }
+
+  @Test
+  void 'Can start with nothing configured and does create default when clustered if provisionDefaults is true'() {
+    underTest = newBlobStoreManager(true)
+
+    ArgumentCaptor<BlobStoreConfiguration> configurationArgumentCaptor = forClass(BlobStoreConfiguration.class)
+    when(nodeAccess.isClustered()).thenReturn(true)
+
+    when(store.list()).thenReturn(Lists.newArrayList())
+    underTest.doStart()
+
+    verify(store).create(configurationArgumentCaptor.capture())
+    assertThat(configurationArgumentCaptor.getValue().name, Matchers.is(DEFAULT_BLOBSTORE_NAME))
   }
 
   @Test

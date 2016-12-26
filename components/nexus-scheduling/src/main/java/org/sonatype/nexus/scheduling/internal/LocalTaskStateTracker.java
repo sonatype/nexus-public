@@ -16,10 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.ClusteredTaskStateStore;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @ManagedLifecycle(phase = Phase.TASKS)
 public class LocalTaskStateTracker
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements EventAware
 {
   private final ClusteredTaskStateStore clusteredTaskStateStore;

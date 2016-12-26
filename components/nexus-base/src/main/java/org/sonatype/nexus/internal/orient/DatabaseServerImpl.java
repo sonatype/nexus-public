@@ -22,9 +22,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
@@ -53,6 +54,7 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Default {@link DatabaseServer} implementation.
@@ -63,7 +65,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @ManagedObject
 public class DatabaseServerImpl
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements DatabaseServer
 {
   private final ApplicationDirectories applicationDirectories;
@@ -260,6 +262,7 @@ public class DatabaseServerImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public List<String> databases() {
     return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
   }

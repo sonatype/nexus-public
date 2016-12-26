@@ -30,6 +30,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -66,23 +67,31 @@ public class BlobStoreManagerImpl
 
   private final DatabaseFreezeService databaseFreezeService;
 
+  private final NodeAccess nodeAccess;
+
+  private final boolean provisionDefaults;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager,
                               final BlobStoreConfigurationStore store,
                               Map<String, Provider<BlobStore>> blobstorePrototypes,
-                              final DatabaseFreezeService databaseFreezeService)
+                              final DatabaseFreezeService databaseFreezeService,
+                              final NodeAccess nodeAccess,
+                              @Named("${nexus.blobstore.provisionDefaults:-false}") final boolean provisionDefaults)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.nodeAccess = checkNotNull(nodeAccess);
+    this.provisionDefaults = provisionDefaults;
   }
 
   @Override
   protected void doStart() throws Exception {
     store.start();
     List<BlobStoreConfiguration> configurations = store.list();
-    if (configurations.isEmpty()) {
+    if (configurations.isEmpty() && (provisionDefaults || !nodeAccess.isClustered())) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
       store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME).build());
       configurations = store.list();

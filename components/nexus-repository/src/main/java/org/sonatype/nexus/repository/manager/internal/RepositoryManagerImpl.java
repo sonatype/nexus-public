@@ -22,8 +22,11 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -53,6 +56,8 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.StreamSupport.stream;
+import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -62,6 +67,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @Named
 @Singleton
+@ManagedLifecycle(phase = SERVICES)
 @ManagedObject(
     domain = "org.sonatype.nexus.repository.manager",
     typeClass = RepositoryManager.class,
@@ -91,6 +97,10 @@ public class RepositoryManagerImpl
 
   private final boolean skipDefaultRepositories;
 
+  private final NodeAccess nodeAccess;
+
+  private final BlobStoreManager blobStoreManager;
+
   @Inject
   public RepositoryManagerImpl(final EventManager eventManager,
                                final ConfigurationStore store,
@@ -100,7 +110,9 @@ public class RepositoryManagerImpl
                                final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
                                final DatabaseFreezeService databaseFreezeService,
-                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories)
+                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
+                               final NodeAccess nodeAccess,
+                               final BlobStoreManager blobStoreManager)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -111,6 +123,8 @@ public class RepositoryManagerImpl
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
+    this.nodeAccess = checkNotNull(nodeAccess);
+    this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
   /**
@@ -185,24 +199,20 @@ public class RepositoryManagerImpl
 
   @Override
   protected void doStart() throws Exception {
+    blobStoreManager.start();
     store.start();
     List<Configuration> configurations = store.list();
 
     // attempt to provision default repositories if allowed
     if (configurations.isEmpty()) {
-      if (skipDefaultRepositories) {
+      if (!blobStoreManager.exists(DEFAULT_BLOBSTORE_NAME) && (nodeAccess.isClustered() || skipDefaultRepositories)) {
         log.debug("Skipping provisioning of default repositories");
         return;
       }
 
       // attempt to discover default repository configurations
       log.debug("No repositories configured; provisioning default repositories");
-      for (DefaultRepositoriesContributor contributor : defaultRepositoriesContributors) {
-        for (Configuration configuration : contributor.getRepositoryConfigurations()) {
-          log.debug("Provisioning default repository: {}", configuration);
-          store.create(configuration);
-        }
-      }
+      provisionDefaultRepositories();
       configurations = store.list();
 
       // if we still have no repository configurations, complain and stop
@@ -212,6 +222,21 @@ public class RepositoryManagerImpl
       }
     }
 
+    restoreRepositories(configurations);
+
+    startRepositories();
+  }
+
+  private void provisionDefaultRepositories() {
+    for (DefaultRepositoriesContributor contributor : defaultRepositoriesContributors) {
+      for (Configuration configuration : contributor.getRepositoryConfigurations()) {
+        log.debug("Provisioning default repository: {}", configuration);
+        store.create(configuration);
+      }
+    }
+  }
+
+  private void restoreRepositories(final List<Configuration> configurations) throws Exception {
     log.debug("Restoring {} repositories", configurations.size());
     for (Configuration configuration : configurations) {
       log.debug("Restoring repository: {}", configuration);
@@ -220,7 +245,9 @@ public class RepositoryManagerImpl
 
       eventManager.post(new RepositoryLoadedEvent(repository));
     }
+  }
 
+  private void startRepositories() throws Exception {
     log.debug("Starting {} repositories", repositories.size());
     for (Repository repository : repositories.values()) {
       log.debug("Starting repository: {}", repository);
@@ -251,6 +278,7 @@ public class RepositoryManagerImpl
 
     repositories.clear();
     store.stop();
+    blobStoreManager.stop();
   }
 
   @Override

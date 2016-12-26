@@ -26,9 +26,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
@@ -69,7 +69,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 @ManagedLifecycle(phase = SECURITY)
 @Singleton
 public class DefaultSecuritySystem
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements SecuritySystem
 {
   private static final String ALL_ROLES_KEY = "all";

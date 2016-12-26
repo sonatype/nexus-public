@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -29,9 +29,21 @@
   <packaging>karaf-assembly</packaging>
 
   <dependencies>
+    <!--
+    Custom launcher for Nexus
+    -->
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-main</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!--
+    Our preferred OSGi runtime
+    -->
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.framework</artifactId>
       <scope>provided</scope>
     </dependency>
 

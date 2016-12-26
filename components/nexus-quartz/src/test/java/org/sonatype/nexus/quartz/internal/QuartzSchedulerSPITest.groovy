@@ -54,6 +54,7 @@ import static org.mockito.Mockito.reset
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
 
 /**
  * {@link QuartzSchedulerSPI} tests.
@@ -82,6 +83,7 @@ class QuartzSchedulerSPITest
         eventManager, nodeAccess, provider, mock(JobFactoryImpl), 1
     )
     underTest.start()
+    underTest.states.current = STARTED
     eventManager.register(underTest)
   }
 

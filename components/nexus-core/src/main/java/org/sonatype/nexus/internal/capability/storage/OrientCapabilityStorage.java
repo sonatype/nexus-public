@@ -19,9 +19,10 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
@@ -29,6 +30,7 @@ import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
@@ -40,7 +42,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Named("orient")
 @Singleton
 public class OrientCapabilityStorage
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements CapabilityStorage
 {
   private final Provider<DatabaseInstance> databaseInstance;
@@ -67,22 +69,26 @@ public class OrientCapabilityStorage
   }
 
   @Override
+  @Guarded(by = STARTED)
   public CapabilityIdentity add(final CapabilityStorageItem item) {
     inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, item));
     return identity(item);
   }
 
   @Override
+  @Guarded(by = STARTED)
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
     return inTxRetry(databaseInstance).call(db -> entityAdapter.edit(db, id.toString(), item));
   }
 
   @Override
+  @Guarded(by = STARTED)
   public boolean remove(final CapabilityIdentity id) {
     return inTxRetry(databaseInstance).call(db -> entityAdapter.delete(db, id.toString()));
   }
 
   @Override
+  @Guarded(by = STARTED)
   public Map<CapabilityIdentity, CapabilityStorageItem> getAll() {
     return inTx(databaseInstance).call(db -> Maps.uniqueIndex(entityAdapter.browse(db), this::identity));
   }

@@ -35,7 +35,7 @@ public class PeriodicJobServiceImplTest
       service.schedule(() -> {} , 60).cancel();
       return true;
     }
-    catch (IllegalStateException e) {
+    catch (IllegalStateException | NullPointerException e) {
       return false;
     }
   }

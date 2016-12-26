@@ -20,10 +20,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -31,6 +32,7 @@ import com.google.common.base.Throwables;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * A {@link BlobStoreMetricsStore} implementation that retains blobstore metrics in memory, periodically
@@ -40,7 +42,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 @Named
 public class BlobStoreMetricsStoreImpl
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements BlobStoreMetricsStore
 {
   @VisibleForTesting
@@ -131,6 +133,7 @@ public class BlobStoreMetricsStoreImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
     return new BlobStoreMetrics()
     {
@@ -157,6 +160,7 @@ public class BlobStoreMetricsStoreImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void recordAddition(final long size) {
     blobCount.incrementAndGet();
     totalSize.addAndGet(size);
@@ -164,6 +168,7 @@ public class BlobStoreMetricsStoreImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void recordDeletion(final long size) {
     blobCount.decrementAndGet();
     totalSize.addAndGet(-size);

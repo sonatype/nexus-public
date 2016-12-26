@@ -19,11 +19,12 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.internal.AuditStore;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 
 import com.google.common.collect.ImmutableList;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
@@ -44,7 +46,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Singleton
 @ManagedLifecycle(phase = SCHEMAS)
 public class OrientAuditStore
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements AuditStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
@@ -69,9 +71,9 @@ public class OrientAuditStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void add(final AuditData data) throws Exception {
     checkNotNull(data);
-    ensureStarted();
 
     checkState(!EventHelper.isReplicating(), "Replication in progress");
 
@@ -79,23 +81,20 @@ public class OrientAuditStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void clear() throws Exception {
-    ensureStarted();
-
     inTxRetry(databaseInstance).run(entityAdapter::clear);
   }
 
   @Override
+  @Guarded(by = STARTED)
   public long approximateSize() throws Exception {
-    ensureStarted();
-
     return inTx(databaseInstance).call(entityAdapter::count);
   }
 
   @Override
+  @Guarded(by = STARTED)
   public List<AuditData> browse(final long offset, final long limit) throws Exception {
-    ensureStarted();
-
     return inTx(databaseInstance).call(db -> ImmutableList.copyOf(entityAdapter.browse(db, offset, limit)));
   }
 }

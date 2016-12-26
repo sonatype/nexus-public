@@ -27,12 +27,13 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent;
@@ -48,7 +49,6 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -85,6 +85,7 @@ import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 
@@ -97,7 +98,7 @@ import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY
 @ManagedLifecycle(phase = SERVICES)
 @Singleton
 public class QuartzSchedulerSPI
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements SchedulerSPI, EventAware
 {
   private static final String SCHEDULER_NAME = "nexus";
@@ -356,7 +357,7 @@ public class QuartzSchedulerSPI
     if (toBeUpdated != null) {
       QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
       taskInfo.setNexusTaskStateIfInState(
-          State.WAITING,
+          TaskInfo.State.WAITING,
           new QuartzTaskState(
               taskInfo.getConfiguration().apply(QuartzTaskJob.configurationOf(jobDetail)),
               taskInfo.getSchedule(),
@@ -372,7 +373,7 @@ public class QuartzSchedulerSPI
     if (toBeUpdated != null) {
       QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
       taskInfo.setNexusTaskStateIfInState(
-          State.WAITING,
+          TaskInfo.State.WAITING,
           new QuartzTaskState(
               taskInfo.getConfiguration(),
               triggerConverter.convert(trigger),
@@ -401,16 +402,14 @@ public class QuartzSchedulerSPI
   //
 
   @Override
+  @Guarded(by = STARTED)
   public ScheduleFactory scheduleFactory() {
-    ensureStarted();
-
     return scheduleFactory;
   }
 
   @Override
+  @Guarded(by = STARTED)
   public String renderStatusMessage() {
-    ensureStarted();
-
     StringBuilder buff = new StringBuilder();
 
     SchedulerMetaData metaData;
@@ -439,9 +438,8 @@ public class QuartzSchedulerSPI
   }
 
   @Override
+  @Guarded(by = STARTED)
   public String renderDetailMessage() {
-    ensureStarted();
-
     try {
       return scheduler.getMetaData().getSummary();
     }
@@ -452,9 +450,8 @@ public class QuartzSchedulerSPI
 
   @Override
   @Nullable
+  @Guarded(by = STARTED)
   public TaskInfo getTaskById(final String id) {
-    ensureStarted();
-
     try {
       QuartzTaskInfo task = findTaskById(id);
       if (task != null && !task.isRemovedOrDone()) {
@@ -471,9 +468,8 @@ public class QuartzSchedulerSPI
   }
 
   @Override
+  @Guarded(by = STARTED)
   public List<TaskInfo> listsTasks() {
-    ensureStarted();
-
     try {
       // returns all tasks which are NOT removed or done
       return allTasks().values().stream()
@@ -486,11 +482,10 @@ public class QuartzSchedulerSPI
   }
 
   @Override
+  @Guarded(by = STARTED)
   public TaskInfo scheduleTask(final TaskConfiguration config,
                                final Schedule schedule)
   {
-    ensureStarted();
-
     checkState(!EventHelper.isReplicating(), "Replication in progress");
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
@@ -521,7 +516,7 @@ public class QuartzSchedulerSPI
 
         // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
         old.setNexusTaskStateIfInState(
-            State.WAITING,
+            TaskInfo.State.WAITING,
             new QuartzTaskState(
                 config,
                 schedule,
@@ -591,9 +586,8 @@ public class QuartzSchedulerSPI
   }
 
   @Override
+  @Guarded(by = STARTED)
   public int getRunningTaskCount() {
-    ensureStarted();
-
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       return scheduler.getCurrentlyExecutingJobs().size();
     }
@@ -659,9 +653,9 @@ public class QuartzSchedulerSPI
   /**
    * Used by {@link QuartzTaskFuture#cancel(boolean)}.
    */
+  @Guarded(by = STARTED)
   public boolean cancelJob(final JobKey jobKey) {
     checkNotNull(jobKey);
-    ensureStarted();
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       return scheduler.interrupt(jobKey);
@@ -675,11 +669,10 @@ public class QuartzSchedulerSPI
   /**
    * Used by {@link QuartzTaskInfo#runNow()}.
    */
+  @Guarded(by = STARTED)
   public void runNow(final JobKey jobKey, final TaskConfiguration config)
       throws TaskRemovedException, SchedulerException
   {
-    ensureStarted();
-
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       // triggering with dataMap from "now" trigger as it contains metadata for back-conversion in listener
       JobDataMap triggerDetail = triggerConverter.convert(scheduleFactory().now()).build().getJobDataMap();
@@ -694,9 +687,8 @@ public class QuartzSchedulerSPI
   /**
    * Used by {@link QuartzTaskInfo#remove()}.
    */
+  @Guarded(by = STARTED)
   public boolean removeTask(final JobKey jobKey) {
-    ensureStarted();
-
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       boolean result = false;
       List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);

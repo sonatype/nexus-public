@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.manager.internal
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Recipe
@@ -38,6 +40,7 @@ import static org.mockito.Matchers.any
 import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME
 
 class RepositoryManagerImplTest
     extends TestSupport
@@ -98,6 +101,12 @@ class RepositoryManagerImplTest
   @Mock
   Format format
 
+  @Mock
+  NodeAccess nodeAccess
+
+  @Mock
+  BlobStoreManager blobStoreManager
+
   //Subject of the test
   RepositoryManagerImpl repositoryManager
 
@@ -140,7 +149,8 @@ class RepositoryManagerImplTest
     //initialize and start the repository manager
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
-        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories)
+        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, nodeAccess,
+        blobStoreManager)
 
     repositoryManager.doStart()
     return repositoryManager
@@ -182,6 +192,25 @@ class RepositoryManagerImplTest
     repositoryManager = buildRepositoryManagerImpl(false, true)
 
     verify(configurationStore, times(0)).create(any(Configuration.class))
+  }
+
+  @Test
+  void 'should not create default repositories if it is clustered'() {
+    when(nodeAccess.isClustered()).thenReturn(true)
+    repositoryManager = buildRepositoryManagerImpl(false)
+
+    verify(configurationStore, times(0)).create(any(Configuration.class))
+  }
+
+  @Test
+  void 'should still create default repositories if it is clustered and the default blobstore exists'() {
+    when(nodeAccess.isClustered()).thenReturn(true)
+    when(blobStoreManager.exists(DEFAULT_BLOBSTORE_NAME)).thenReturn(true)
+    repositoryManager = buildRepositoryManagerImpl(false)
+
+    verify(configurationStore).create(mavenCentralConfiguration)
+    verify(configurationStore).create(apacheSnapshotsConfiguration)
+    verify(configurationStore).create(thirdPartyConfiguration)
   }
 
   @Test

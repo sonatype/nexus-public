@@ -29,7 +29,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.Locks;
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -41,6 +40,8 @@ import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -54,6 +55,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
 
 /**
  * A {@link BlobStore} that stores its content on the file system.
@@ -62,7 +67,7 @@ import static com.google.common.cache.CacheLoader.from;
  */
 @Named(FileBlobStore.TYPE)
 public class FileBlobStore
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
     implements BlobStore
 {
   public static final String BASEDIR = "blobs";
@@ -219,6 +224,7 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public Blob create(final InputStream blobData, final Map<String, String> headers) {
     checkNotNull(blobData);
 
@@ -226,6 +232,7 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
     checkNotNull(sourceFile);
     checkNotNull(sha1);
@@ -295,6 +302,7 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     Blob sourceBlob = checkNotNull(get(blobId));
     Path sourcePath = contentPath(sourceBlob.getId());
@@ -323,6 +331,7 @@ public class FileBlobStore
 
   @Nullable
   @Override
+  @Guarded(by = STARTED)
   public Blob get(final BlobId blobId) {
     checkNotNull(blobId);
 
@@ -361,6 +370,7 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public boolean delete(final BlobId blobId) {
     checkNotNull(blobId);
 
@@ -404,6 +414,7 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public boolean deleteHard(final BlobId blobId) {
     checkNotNull(blobId);
 
@@ -426,11 +437,13 @@ public class FileBlobStore
   }
 
   @Override
+  @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
     return storeMetrics.getMetrics();
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void compact() {
     try {
       // only process each blob once (in-use blobs may be re-added to the index)
@@ -538,6 +551,7 @@ public class FileBlobStore
    * Delete files known to be part of the FileBlobStore implementation if the content directory is empty.
    */
   @Override
+  @Guarded(by = { NEW, STOPPED, FAILED })
   public void remove() {
     try {
       Path blobDir = getAbsoluteBlobDir();

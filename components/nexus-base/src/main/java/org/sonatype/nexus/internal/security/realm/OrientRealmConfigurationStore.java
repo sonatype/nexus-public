@@ -18,8 +18,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
@@ -29,6 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
@@ -41,7 +43,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientRealmConfigurationStore
-  extends LifecycleSupport
+  extends StateGuardLifecycleSupport
   implements RealmConfigurationStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
@@ -65,11 +67,13 @@ public class OrientRealmConfigurationStore
 
   @Override
   @Nullable
+  @Guarded(by = STARTED)
   public RealmConfiguration load() {
     return inTx(databaseInstance).call(entityAdapter::get);
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void save(final RealmConfiguration configuration) {
     inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, configuration));
   }

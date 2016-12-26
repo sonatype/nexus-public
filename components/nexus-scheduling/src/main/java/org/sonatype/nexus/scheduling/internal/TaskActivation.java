@@ -16,8 +16,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 @ManagedLifecycle(phase = TASKS)
 @Singleton
 public class TaskActivation
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
 {
   private final SchedulerSPI scheduler;
 

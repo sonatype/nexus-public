@@ -18,10 +18,10 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.goodies.lifecycle.Lifecycles;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 
@@ -43,7 +43,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 @Priority(Integer.MAX_VALUE) // make sure this starts first
 @Singleton
 public class OrientBootstrap
-    extends LifecycleSupport
+    extends StateGuardLifecycleSupport
 {
   private final NodeAccess nodeAccess;
 

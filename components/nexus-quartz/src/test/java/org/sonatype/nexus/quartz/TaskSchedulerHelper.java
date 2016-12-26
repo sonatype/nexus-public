@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
@@ -118,7 +119,7 @@ public class TaskSchedulerHelper
     };
 
     this.injector = Guice.createInjector(new WireModule(
-        module,
+        module, new StateGuardModule(),
         new SpaceModule(new URLClassSpace(TaskSchedulerHelper.class.getClassLoader()), BeanScanning.INDEX)
     ));
     injector.injectMembers(this);
