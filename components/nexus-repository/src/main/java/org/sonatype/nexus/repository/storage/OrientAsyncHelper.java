@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -186,7 +185,7 @@ class OrientAsyncHelper
         }
         catch (InterruptedException e) {
           log.warn("Interrupted poll", e);
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
       return next != SENTINEL;

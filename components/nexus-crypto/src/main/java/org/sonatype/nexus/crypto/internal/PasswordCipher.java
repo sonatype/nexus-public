@@ -14,6 +14,7 @@ package org.sonatype.nexus.crypto.internal;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
@@ -24,7 +25,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import org.bouncycastle.util.encoders.Base64Encoder;
 
@@ -84,7 +84,8 @@ public class PasswordCipher
       return bout.toByteArray();
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -108,7 +109,8 @@ public class PasswordCipher
       throw new IllegalArgumentException("Invalid payload (base64 problem)", e);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -124,7 +126,7 @@ public class PasswordCipher
     byte[] result;
     int currentPos = 0;
     while (currentPos < keyAndIv.length) {
-      digester.update(passPhrase.getBytes(Charsets.UTF_8));
+      digester.update(passPhrase.getBytes(StandardCharsets.UTF_8));
       if (salt != null) {
         // First 8 bytes of salt ONLY! That wasn't obvious to me
         // when using AES encrypted private keys in "Traditional

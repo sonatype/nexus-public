@@ -20,8 +20,6 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.base.Throwables;
-
 /**
  * Support for {@link Capability} configuration implementations.
  *
@@ -42,7 +40,7 @@ public abstract class CapabilityConfigurationSupport
       return new URI(value);
     }
     catch (URISyntaxException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

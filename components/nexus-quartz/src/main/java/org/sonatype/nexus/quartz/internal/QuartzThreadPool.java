@@ -26,7 +26,6 @@ import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import com.google.common.base.Throwables;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
@@ -105,7 +104,7 @@ public class QuartzThreadPool
         nexusExecutorService.awaitTermination(5L, TimeUnit.SECONDS);
       }
       catch (InterruptedException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   }
@@ -139,7 +138,7 @@ public class QuartzThreadPool
       }
     }
     catch (InterruptedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

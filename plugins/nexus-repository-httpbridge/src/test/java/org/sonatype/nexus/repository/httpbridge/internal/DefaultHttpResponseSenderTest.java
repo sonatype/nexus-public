@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +28,6 @@ import org.sonatype.nexus.repository.view.Headers;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 
-import com.google.common.base.Charsets;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -51,7 +51,7 @@ public class DefaultHttpResponseSenderTest
     extends TestSupport
 {
 
-  private static final byte[] TEST_CONTENT = "TEST CONTENT".getBytes(Charsets.UTF_8);
+  private static final byte[] TEST_CONTENT = "TEST CONTENT".getBytes(StandardCharsets.UTF_8);
 
   private final HttpResponseSender underTest = new DefaultHttpResponseSender();
 

@@ -17,7 +17,6 @@ import javax.validation.Valid;
 
 import org.sonatype.nexus.validation.constraint.PortNumber;
 
-import com.google.common.base.Throwables;
 import org.hibernate.validator.constraints.NotBlank;
 
 /**
@@ -85,7 +84,7 @@ public class ProxyServerConfiguration
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

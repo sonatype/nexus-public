@@ -31,7 +31,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import org.ehcache.jcache.JCacheCachingProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -87,7 +86,7 @@ public class EhCacheManagerProvider
         config = url.toURI();
       }
       catch (URISyntaxException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

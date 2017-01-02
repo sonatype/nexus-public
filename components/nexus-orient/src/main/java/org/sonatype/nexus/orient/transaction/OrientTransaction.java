@@ -18,7 +18,6 @@ import org.sonatype.nexus.common.sequence.RandomExponentialSequence;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.slf4j.Logger;
@@ -116,7 +115,7 @@ public class OrientTransaction
         Thread.sleep(delay);
       }
       catch (final InterruptedException e) {
-        Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       retries++;
       log.debug("Retrying operation: {}/{}", retries, MAX_RETRIES);

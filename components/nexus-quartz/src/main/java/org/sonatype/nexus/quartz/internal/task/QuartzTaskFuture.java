@@ -182,9 +182,9 @@ public class QuartzTaskFuture
 
   private void maybePropagateException() throws InterruptedException, ExecutionException {
     if (exception != null) {
-      Throwables.propagateIfPossible(exception);
-      Throwables.propagateIfInstanceOf(exception, InterruptedException.class);
-      Throwables.propagateIfInstanceOf(exception, ExecutionException.class);
+      Throwables.throwIfUnchecked(exception);
+      Throwables.throwIfInstanceOf(exception, InterruptedException.class);
+      Throwables.throwIfInstanceOf(exception, ExecutionException.class);
       throw new ExecutionException("Job failure", exception);
     }
   }

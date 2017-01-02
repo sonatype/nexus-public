@@ -211,7 +211,8 @@ public final class UnitOfWork
       SELF.remove(); // avoid dangling thread-local
     }
     if (throwing != null) {
-      Throwables.propagate(throwing);
+      Throwables.throwIfUnchecked(throwing);
+      throw new RuntimeException(throwing);
     }
   }
 }

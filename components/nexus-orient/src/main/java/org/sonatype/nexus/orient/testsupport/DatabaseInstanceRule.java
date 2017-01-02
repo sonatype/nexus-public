@@ -23,7 +23,6 @@ import org.sonatype.nexus.orient.testsupport.internal.MemoryDatabaseManager;
 import org.sonatype.nexus.orient.testsupport.internal.MinimalDatabaseServer;
 import org.sonatype.nexus.orient.testsupport.internal.PersistentDatabaseManager;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.junit.rules.ExternalResource;
 import org.junit.runners.model.MultipleFailureException;
@@ -149,7 +148,7 @@ public class DatabaseInstanceRule
 
     if (!errors.isEmpty()) {
       log.error("Failed to clean up database instance");
-      throw Throwables.propagate(new MultipleFailureException(errors));
+      throw new RuntimeException(new MultipleFailureException(errors));
     }
 
     log.info("Database instance cleaned up");

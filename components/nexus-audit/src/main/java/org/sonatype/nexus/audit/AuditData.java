@@ -22,8 +22,6 @@ import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import com.google.common.base.Throwables;
-
 /**
  * Audit data.
  *
@@ -144,7 +142,7 @@ public class AuditData
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

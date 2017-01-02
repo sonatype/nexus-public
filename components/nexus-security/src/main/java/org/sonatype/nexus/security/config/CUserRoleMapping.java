@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.sonatype.nexus.common.entity.Entity;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 
 /**
@@ -90,7 +89,7 @@ public class CUserRoleMapping
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -15,12 +15,12 @@ package org.sonatype.nexus.repository.maven.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -51,7 +51,8 @@ public class DigestExtractor
       throws IOException
   {
     checkNotNull(stream);
-    try (InputStreamReader isr = new InputStreamReader(ByteStreams.limit(stream, MAX_CHARS_NEEDED), Charsets.UTF_8)) {
+    try (InputStreamReader isr = new InputStreamReader(ByteStreams.limit(stream, MAX_CHARS_NEEDED),
+        StandardCharsets.UTF_8)) {
       return extract(CharStreams.toString(isr));
     }
     finally {

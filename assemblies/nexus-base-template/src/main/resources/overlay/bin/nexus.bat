@@ -21,10 +21,10 @@ if not "%KARAF_TITLE%" == "" (
 
 rem Check/Set up some easily accessible MIN/MAX params for JVM mem usage
 if "%JAVA_MIN_MEM%" == "" (
-    set JAVA_MIN_MEM=128M
+    set JAVA_MIN_MEM=1200M
 )
 if "%JAVA_MAX_MEM%" == "" (
-    set JAVA_MAX_MEM=512M
+    set JAVA_MAX_MEM=1200M
 )
 if "%DIRECT_MAX_MEM%" == "" (
     set DIRECT_MAX_MEM=2G
@@ -204,6 +204,10 @@ if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
         set JAVA_MODE=-client
     )
 )
+
+rem SONATYPE: preferred IPv4 by default
+if "%KARAF_OPTS%" == "" set KARAF_OPTS=-Djava.net.preferIPv4Stack=true
+
 rem SONATYPE: removed -Dcom.sun.management.jmxremote and unused derby properties
 set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass
 

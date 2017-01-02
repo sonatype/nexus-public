@@ -24,8 +24,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
-import com.google.common.base.Throwables;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -91,7 +89,7 @@ public class DefaultComponentMetadataProducer
       return JsonUtils.from(metadata);
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

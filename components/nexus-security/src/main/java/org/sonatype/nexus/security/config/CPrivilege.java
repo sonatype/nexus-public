@@ -17,7 +17,6 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.entity.Entity;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
 /**
@@ -124,7 +123,7 @@ public class CPrivilege
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -139,7 +139,8 @@ public class TrustStoreImpl
       }
       catch (Exception e) {
         log.debug("Could not create SSL context", e);
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
     return _sslcontext;

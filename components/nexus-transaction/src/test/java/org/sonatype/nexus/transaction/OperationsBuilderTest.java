@@ -23,7 +23,6 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
-import com.google.common.base.Throwables;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -178,7 +177,7 @@ public class OperationsBuilderTest
       return SampleAnnotations.class.getMethod(name).getAnnotation(Transactional.class);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

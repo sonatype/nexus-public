@@ -56,7 +56,6 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
@@ -241,7 +240,7 @@ public class QuartzSchedulerSPI
       setActive(false);
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -251,7 +250,7 @@ public class QuartzSchedulerSPI
       setActive(true);
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -417,7 +416,7 @@ public class QuartzSchedulerSPI
       metaData = scheduler.getMetaData();
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     if (metaData.isShutdown()) {
@@ -444,7 +443,7 @@ public class QuartzSchedulerSPI
       return scheduler.getMetaData().getSummary();
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -462,7 +461,7 @@ public class QuartzSchedulerSPI
       // no listener found in taskByKey, means no job exists
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return null;
   }
@@ -477,7 +476,7 @@ public class QuartzSchedulerSPI
           .collect(Collectors.toList());
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -565,7 +564,7 @@ public class QuartzSchedulerSPI
       }
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -592,7 +591,7 @@ public class QuartzSchedulerSPI
       return scheduler.getCurrentlyExecutingJobs().size();
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -699,7 +698,7 @@ public class QuartzSchedulerSPI
       return result;
     }
     catch (SchedulerException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.config.internal
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
-import org.sonatype.nexus.crypto.internal.MavenCipherImpl
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
@@ -25,6 +23,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mock
 
 /**
  * Tests for {@link ConfigurationEntityAdapter}.
@@ -35,11 +34,14 @@ class ConfigurationEntityAdapterTest
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
+  @Mock
+  private PasswordHelper passwordHelper
+
   private ConfigurationEntityAdapter underTest
 
   @Before
   void setUp() {
-    underTest = new ConfigurationEntityAdapter(new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl())))
+    underTest = new ConfigurationEntityAdapter(passwordHelper)
     underTest.enableObfuscation(new HexRecordIdObfuscator())
   }
 

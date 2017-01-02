@@ -14,7 +14,6 @@ package org.sonatype.nexus.httpclient.config;
 
 import java.util.Map;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -53,7 +52,7 @@ public abstract class AuthenticationConfiguration
       return (AuthenticationConfiguration) clone();
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

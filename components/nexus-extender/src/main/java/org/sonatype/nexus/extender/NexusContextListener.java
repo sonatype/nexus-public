@@ -169,7 +169,8 @@ public class NexusContextListener
     }
     catch (final Exception e) {
       log.error("Failed to initialize context", e);
-      Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -192,7 +193,8 @@ public class NexusContextListener
             bundleContext.getBundle(0).stop();
           }
           finally {
-            throw Throwables.propagate(e); // NOSONAR
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e); // NOSONAR
           }
         }
         // otherwise let Pax-Exam handle shutdown

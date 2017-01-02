@@ -21,8 +21,6 @@ import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
-import com.google.common.base.Throwables;
-
 /**
  * Maven 2 publish MI indexes task.
  *
@@ -39,7 +37,7 @@ public class PublishMavenIndexTask
       mavenIndexFacet.publishIndex();
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

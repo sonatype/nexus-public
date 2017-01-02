@@ -20,7 +20,6 @@ import java.security.NoSuchAlgorithmException;
 
 import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 
-import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.CountingInputStream;
 
@@ -66,7 +65,7 @@ public class MetricsInputStream
     }
     catch (NoSuchAlgorithmException e) {
       // should never happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

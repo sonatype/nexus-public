@@ -48,7 +48,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -142,7 +141,7 @@ public class MetadataRebuilder
       }
     }
     catch (IOException e) {
-      Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     finally {
       UnitOfWork.end();
@@ -396,7 +395,7 @@ public class MetadataRebuilder
       }
       catch (IOException e) {
         log.warn("Error writing {}", checksumPath, e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -413,7 +412,7 @@ public class MetadataRebuilder
       }
       catch (IOException e) {
         log.warn("Could not parse POM: {} @ {}", repository.getName(), mavenPath.getPath(), e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

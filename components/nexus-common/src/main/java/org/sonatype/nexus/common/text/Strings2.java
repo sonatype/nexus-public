@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.common.text;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -88,14 +88,14 @@ public final class Strings2
    * Converts bytes into a UTF-8 encoded string.
    */
   public static String utf8(final byte[] bytes) {
-    return new String(bytes, Charsets.UTF_8);
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   /**
    * Converts a string into UTF-8 encoded bytes.
    */
   public static byte[] utf8(final String string) {
-    return string.getBytes(Charsets.UTF_8);
+    return string.getBytes(StandardCharsets.UTF_8);
   }
 
   /**

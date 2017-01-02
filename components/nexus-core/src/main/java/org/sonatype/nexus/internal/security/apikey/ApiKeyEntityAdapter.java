@@ -29,7 +29,6 @@ import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
-import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -133,7 +132,7 @@ public class ApiKeyEntityAdapter
       return objects.readObject();
     }
     catch (IOException | ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     finally {
       Thread.currentThread().setContextClassLoader(tccl);
@@ -156,7 +155,7 @@ public class ApiKeyEntityAdapter
       return bytes.toByteArray();
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

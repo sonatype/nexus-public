@@ -52,7 +52,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.io.Closer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.maven.index.reader.ChunkReader;
@@ -315,7 +314,7 @@ public final class MavenIndexPublisher
       record.put(key, mavenFacet.get(tocheck) != null ? Boolean.TRUE : Boolean.FALSE);
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

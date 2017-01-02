@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,9 +39,7 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
 import org.sonatype.nexus.security.SecurityHelper;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -150,7 +149,7 @@ public class SearchServiceImpl
         String source = "{}";
         for (URL url : urls) {
           log.debug("Merging ElasticSearch mapping: {}", url);
-          String contributed = Resources.toString(url, Charsets.UTF_8);
+          String contributed = Resources.toString(url, StandardCharsets.UTF_8);
           log.trace("Contributed ElasticSearch mapping: {}", contributed);
           source = JsonUtils.merge(source, contributed);
         }
@@ -162,7 +161,7 @@ public class SearchServiceImpl
             .actionGet();
       }
       catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
     repositoryNameMapping.put(repository.getName(), indexName);

@@ -112,7 +112,8 @@ public class ApplicationDirectoriesImpl
     }
     catch (Exception e) {
       log.error("Failed to create directory: {}", dir);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -125,7 +126,8 @@ public class ApplicationDirectoriesImpl
     }
     catch (Exception e) {
       log.error("Failed to canonicalize directory: {}", dir);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
 
     if (create) {

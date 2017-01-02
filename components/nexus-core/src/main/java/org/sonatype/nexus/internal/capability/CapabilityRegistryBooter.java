@@ -78,7 +78,8 @@ public class CapabilityRegistryBooter
       capabilityStorageProvider.get().stop();
     }
     catch (final Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

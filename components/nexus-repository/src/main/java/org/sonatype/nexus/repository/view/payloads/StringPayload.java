@@ -16,12 +16,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.view.Payload;
-
-import com.google.common.base.Charsets;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,7 +45,7 @@ public class StringPayload
   }
 
   public StringPayload(final String content, @Nullable final String contentType) {
-    this(content, Charsets.UTF_8, contentType);
+    this(content, StandardCharsets.UTF_8, contentType);
   }
 
   public Charset getCharset() {

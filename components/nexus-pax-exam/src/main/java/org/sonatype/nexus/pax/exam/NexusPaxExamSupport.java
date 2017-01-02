@@ -209,7 +209,8 @@ public abstract class NexusPaxExamSupport
       return URI.create(url + "/" + path).normalize().toURL();
     }
     catch (final Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

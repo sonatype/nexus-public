@@ -45,7 +45,8 @@ public abstract class RecordIdObfuscatorSupport
     }
     catch (Exception e) {
       log.error("Failed to encode: {}->{}", type, rid);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -69,7 +70,8 @@ public abstract class RecordIdObfuscatorSupport
     }
     catch (Exception e) {
       log.error("Failed to decode: {}->{}", type, encoded);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
 
     // ensure rid points to the right type

@@ -139,7 +139,7 @@ public class WebSecurityModule
       return clazz.getConstructor(parameterTypes);
     }
     catch (Exception e) {
-      Throwables.propagateIfPossible(e);
+      Throwables.throwIfUnchecked(e);
       throw new ConfigurationException(e);
     }
   }

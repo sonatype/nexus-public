@@ -83,7 +83,8 @@ public class VelocityEngineProvider
       engine.init();
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
 
     return engine;

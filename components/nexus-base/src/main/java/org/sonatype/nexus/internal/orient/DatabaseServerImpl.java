@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.orient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +32,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.entity.EntityHook;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.OConstants;
@@ -144,7 +144,7 @@ public class DatabaseServerImpl
     // Log global configuration
     if (log.isDebugEnabled()) {
       // dumpConfiguration() only accepts ancient stream api
-      String encoding = Charsets.UTF_8.name();
+      String encoding = StandardCharsets.UTF_8.name();
       ByteArrayOutputStream buff = new ByteArrayOutputStream();
       OGlobalConfiguration.dumpConfiguration(new PrintStream(buff, true, encoding));
       log.debug("Global configuration:\n{}", new String(buff.toByteArray(), encoding));

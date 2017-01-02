@@ -590,7 +590,7 @@
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
             <argLine>
-              -Xmx300M
+              -Xmx400M
               -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/failsafe-reports

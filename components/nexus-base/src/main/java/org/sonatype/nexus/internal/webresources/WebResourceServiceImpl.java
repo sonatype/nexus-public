@@ -33,7 +33,6 @@ import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 import org.sonatype.nexus.webresources.WebResourceService;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
@@ -132,7 +131,7 @@ public class WebResourceServiceImpl
         }
       }
       catch (MalformedURLException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

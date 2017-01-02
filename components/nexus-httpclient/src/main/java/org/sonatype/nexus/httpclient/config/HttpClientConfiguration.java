@@ -17,8 +17,6 @@ import javax.validation.Valid;
 
 import org.sonatype.nexus.common.entity.Entity;
 
-import com.google.common.base.Throwables;
-
 /**
  * HTTP-client configuration.
  *
@@ -85,7 +83,7 @@ public class HttpClientConfiguration
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

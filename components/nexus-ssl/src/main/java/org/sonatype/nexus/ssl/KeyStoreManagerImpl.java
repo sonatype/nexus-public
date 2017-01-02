@@ -32,7 +32,6 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -126,7 +125,7 @@ public class KeyStoreManagerImpl
       }
       catch (KeystoreException e) {
         log.error("Failed to install default certificate", e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

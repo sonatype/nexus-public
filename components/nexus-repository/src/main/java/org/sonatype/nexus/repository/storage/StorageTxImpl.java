@@ -43,7 +43,6 @@ import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -201,7 +200,7 @@ public class StorageTxImpl
         Thread.sleep(delay);
       }
       catch (InterruptedException e) {
-        Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
 
       retries++;

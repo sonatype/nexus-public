@@ -203,7 +203,8 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
       if (throwing != null) {
         Throwables.propagateIfPossible(e, throwing);
       }
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     finally {
       work.releaseTransaction();

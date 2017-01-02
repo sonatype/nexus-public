@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Charsets;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.catalog.io.xpp3.ArchetypeCatalogXpp3Reader;
 import org.apache.maven.archetype.catalog.io.xpp3.ArchetypeCatalogXpp3Writer;
@@ -63,7 +63,7 @@ public final class MavenModels
    */
   @Nullable
   public static Xpp3Dom parseDom(final InputStream is) throws IOException {
-    try (InputStreamReader reader = new InputStreamReader(is, Charsets.UTF_8)) {
+    try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
       return Xpp3DomBuilder.build(reader);
     }
     catch (XmlPullParserException e) {

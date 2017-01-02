@@ -96,7 +96,8 @@ public class NodeProvider
       }
       catch (Exception e) {
         // If we can not acquire an ES node reference, give up
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
     return node;

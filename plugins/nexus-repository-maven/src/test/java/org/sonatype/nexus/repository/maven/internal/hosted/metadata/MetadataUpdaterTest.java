@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -31,7 +32,6 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
@@ -69,8 +69,8 @@ public class MetadataUpdaterTest
   private AttributesMap contentAttributes;
 
   private final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
-      HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", Charsets.UTF_8),
-      HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", Charsets.UTF_8)
+      HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", StandardCharsets.UTF_8),
+      HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", StandardCharsets.UTF_8)
   );
 
   private final MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/foo/bar");

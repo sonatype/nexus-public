@@ -171,7 +171,7 @@ public abstract class EntityAdapter<T extends Entity>
         cluster.set(OCluster.ATTRIBUTES.COMPRESSION, PbeCompression.NAME);
       }
       catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       catch (IllegalArgumentException | OStorageException | OSecurityException e) {
         log.warn("Cannot enable PBE compression for cluster: {}", cluster.getName(), e);
@@ -218,7 +218,8 @@ public abstract class EntityAdapter<T extends Entity>
       readFields(document, entity);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     attachMetadata(entity, document);
 
@@ -238,7 +239,8 @@ public abstract class EntityAdapter<T extends Entity>
       writeFields(document, entity);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     attachMetadata(entity, document);
 

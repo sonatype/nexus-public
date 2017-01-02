@@ -105,7 +105,7 @@ public class QuartzTaskJob
       doExecute();
     }
     catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, JobExecutionException.class);
+      Throwables.throwIfInstanceOf(e, JobExecutionException.class);
       throw new JobExecutionException(e);
     }
     finally {

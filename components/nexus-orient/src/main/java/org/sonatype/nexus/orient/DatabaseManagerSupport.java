@@ -152,7 +152,8 @@ public abstract class DatabaseManagerSupport
           created(db, name);
         }
         catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
       else {

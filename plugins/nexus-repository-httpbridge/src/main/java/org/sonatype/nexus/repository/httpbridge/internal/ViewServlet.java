@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.shiro.authz.AuthorizationException;
@@ -234,11 +233,11 @@ public class ViewServlet
     switch (type) {
       case HTML: {
         String html = descriptionRenderer.renderHtml(description);
-        return HttpResponses.ok(new StringPayload(html, Charsets.UTF_8, ContentTypes.TEXT_HTML));
+        return HttpResponses.ok(new StringPayload(html, ContentTypes.TEXT_HTML));
       }
       case JSON: {
         String json = descriptionRenderer.renderJson(description);
-        return HttpResponses.ok(new StringPayload(json, Charsets.UTF_8, ContentTypes.APPLICATION_JSON));
+        return HttpResponses.ok(new StringPayload(json, ContentTypes.APPLICATION_JSON));
       }
       default:
         throw new RuntimeException("Invalid describe-type: " + type);

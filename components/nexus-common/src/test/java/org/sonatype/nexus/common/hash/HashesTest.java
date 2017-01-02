@@ -14,10 +14,10 @@ package org.sonatype.nexus.common.hash;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
@@ -66,12 +66,12 @@ public class HashesTest
   }
 
   private static InputStream inputStream() {
-    return new ByteArrayInputStream(DATA.getBytes(Charsets.UTF_8));
+    return new ByteArrayInputStream(DATA.getBytes(StandardCharsets.UTF_8));
   }
 
   @Test
   public void hashStreamWithFunction() throws Exception {
-    byte[] bytes = DATA.getBytes(Charsets.UTF_8);
+    byte[] bytes = DATA.getBytes(StandardCharsets.UTF_8);
     String expected = Hashing.sha1().hashBytes(bytes).toString();
     HashCode found = Hashes.hash(Hashing.sha1(), new ByteArrayInputStream(bytes));
     assertThat(found.toString(), is(expected));

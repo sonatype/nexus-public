@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -21,7 +22,6 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.storage.Asset;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class ContentTest
     NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
     attributes.child(CHECKSUM).set(
         HashAlgorithm.SHA1.name(),
-        HashAlgorithm.SHA1.function().hashString("foobar", Charsets.UTF_8).toString()
+        HashAlgorithm.SHA1.function().hashString("foobar", StandardCharsets.UTF_8).toString()
     );
     return attributes;
   }

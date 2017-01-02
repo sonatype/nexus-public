@@ -17,8 +17,6 @@ import java.io.Serializable;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.base.Throwables;
-
 /**
  * Persistent user.
  */
@@ -106,7 +104,7 @@ public class CUser
       return (CUser) super.clone();
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

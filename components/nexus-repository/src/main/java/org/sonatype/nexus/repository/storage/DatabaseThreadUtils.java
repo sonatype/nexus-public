@@ -36,12 +36,12 @@ public final class DatabaseThreadUtils
       return function.call();
     }
     catch (Exception e) {
-      Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
     }
-    throw new IllegalStateException(); // shouldn't happen
   }
 
   private DatabaseThreadUtils() {

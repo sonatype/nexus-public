@@ -42,9 +42,3 @@ rem Additional available Karaf options
 rem SET KARAF_OPTS
 rem Enable debug mode
 rem SET KARAF_DEBUG
-
-SET JAVA_MIN_MEM=1200M
-SET JAVA_MAX_MEM=1200M
-SET DIRECT_MAX_MEM=2G
-
-SET KARAF_OPTS=-Djava.net.preferIPv4Stack=true

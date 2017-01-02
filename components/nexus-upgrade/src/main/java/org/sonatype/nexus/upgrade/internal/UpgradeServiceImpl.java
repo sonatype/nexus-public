@@ -139,7 +139,8 @@ public class UpgradeServiceImpl
       checkpoints.forEach(rollback());
       log.warn(BANNER, "Upgrade failed");
 
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     checkpoints.forEach(end());
     log.info(BANNER, "Upgrade complete");
@@ -154,7 +155,8 @@ public class UpgradeServiceImpl
       }
       catch (Throwable e) {
         log.warn("Problem checkpointing {}", model, e);
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     };
   }
@@ -172,7 +174,8 @@ public class UpgradeServiceImpl
       }
       catch (Throwable e) {
         log.warn("Problem upgrading {}", detail, e);
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     };
   }
@@ -186,7 +189,8 @@ public class UpgradeServiceImpl
       }
       catch (Throwable e) {
         log.warn("Problem committing {}", model, e);
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     };
   }

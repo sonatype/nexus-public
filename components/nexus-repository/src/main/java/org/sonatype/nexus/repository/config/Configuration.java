@@ -20,7 +20,6 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.orient.entity.FieldCopier;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -116,7 +115,7 @@ public class Configuration
       return c;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

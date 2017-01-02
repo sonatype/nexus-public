@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.httpclient
 
 import org.sonatype.goodies.common.Time
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
-import org.sonatype.nexus.crypto.internal.MavenCipherImpl
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.security.PasswordHelper
@@ -26,6 +24,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import groovy.transform.ToString
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
+
+import static org.mockito.Mockito.*
 
 /**
  * Tests for {@link AuthenticationConfigurationDeserializer}.
@@ -33,11 +34,15 @@ import org.junit.Test
 class AuthenticationConfigurationDeserializerTest
     extends TestSupport
 {
+  @Mock
+  PasswordHelper passwordHelper
+
   private ObjectMapper objectMapper
 
   @Before
   void setUp() {
-    final PasswordHelper passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()))
+    when(passwordHelper.encrypt(anyString())).then({ it.arguments[0] != null ? 'encrypted:' + it.arguments[0] : null })
+    when(passwordHelper.decrypt(anyString())).then({ it.arguments[0] ==~ /encrypted:.*/ ? it.arguments[0].substring(10) : it.arguments[0] })
     objectMapper = new ObjectMapper().registerModule(
         new SimpleModule().addSerializer(
             Time.class,
@@ -73,7 +78,7 @@ class AuthenticationConfigurationDeserializerTest
     assert json.contains('username')
     assert json.contains('admin')
     assert json.contains('password')
-    assert !json.contains('admin123')
+    assert json.contains('encrypted:admin123')
 
     def obj = objectMapper.readValue(json, AuthContainer.class)
     log obj

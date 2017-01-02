@@ -153,7 +153,8 @@ public class BlobStoreMetricsStoreImpl
           return Files.getFileStore(storageDirectory).getUsableSpace();
         }
         catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     };

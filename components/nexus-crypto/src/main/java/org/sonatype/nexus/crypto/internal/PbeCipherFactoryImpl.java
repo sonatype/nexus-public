@@ -99,7 +99,8 @@ public class PbeCipherFactoryImpl
         return cipher.doFinal(bytes, 0, bytes.length);
       }
       catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

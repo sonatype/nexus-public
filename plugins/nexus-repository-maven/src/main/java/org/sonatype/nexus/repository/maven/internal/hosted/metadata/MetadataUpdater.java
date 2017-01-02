@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metada
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -109,7 +108,7 @@ public class MetadataUpdater
       });
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -124,7 +123,7 @@ public class MetadataUpdater
       write(mavenPath, toMetadata(metadata));
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

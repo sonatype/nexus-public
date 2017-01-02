@@ -17,8 +17,6 @@ import java.util.Arrays;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 
-import com.google.common.base.Throwables;
-
 /**
  * Proxy configuration.
  *
@@ -81,7 +79,7 @@ public class ProxyConfiguration
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

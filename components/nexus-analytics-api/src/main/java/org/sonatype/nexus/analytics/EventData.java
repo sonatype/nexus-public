@@ -18,8 +18,6 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.entity.Entity;
 
-import com.google.common.base.Throwables;
-
 /**
  * Analytics event data.
  *
@@ -128,7 +126,7 @@ public class EventData
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

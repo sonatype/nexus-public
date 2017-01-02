@@ -216,7 +216,7 @@ public class StateGuard
           }
 
           Throwables.propagateIfPossible(t, Exception.class, Error.class);
-          throw Throwables.propagate(t);
+          throw new RuntimeException(t);
         }
       }
       finally {

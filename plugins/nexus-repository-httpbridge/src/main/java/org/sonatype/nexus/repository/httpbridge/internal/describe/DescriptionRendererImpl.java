@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.template.TemplateParameters;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.base.Throwables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -70,7 +69,7 @@ public class DescriptionRendererImpl
       return objectMapper.writeValueAsString(description);
     }
     catch (JsonProcessingException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

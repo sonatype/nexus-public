@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.security.SecurityHelper
 
-import com.google.common.base.Charsets
 import org.elasticsearch.action.ListenableActionFuture
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse

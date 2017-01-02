@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,7 +28,6 @@ import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -75,7 +75,7 @@ public class TemplateHelperImpl
 
     log.trace("Rendering template: {} w/params: {}", template, parameters);
 
-    try (Reader input = new InputStreamReader(template.openStream(), Charsets.UTF_8)) {
+    try (Reader input = new InputStreamReader(template.openStream(), StandardCharsets.UTF_8)) {
       StringWriter buff = new StringWriter();
       velocityEngine.evaluate(new VelocityContext(parameters.get()), buff, template.getFile(), input);
 
@@ -85,7 +85,8 @@ public class TemplateHelperImpl
       return result;
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

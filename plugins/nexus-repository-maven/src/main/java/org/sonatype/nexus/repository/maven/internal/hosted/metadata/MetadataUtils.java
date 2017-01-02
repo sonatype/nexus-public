@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
-import com.google.common.base.Throwables;
 import com.google.common.hash.HashCode;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.slf4j.Logger;
@@ -121,7 +120,7 @@ public final class MetadataUtils
       MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), mavenPath);
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

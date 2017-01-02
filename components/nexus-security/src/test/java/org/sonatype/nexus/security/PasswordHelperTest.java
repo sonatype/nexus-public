@@ -23,7 +23,12 @@ import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 /**
  * UT for {@link PasswordHelper}.
@@ -38,6 +43,46 @@ public class PasswordHelperTest
   @Before
   public void init() throws Exception {
     helper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()));
+  }
+
+  @Test
+  public void testEncrypt_NullInput() throws Exception {
+    assertThat(helper.encrypt(null), is(nullValue()));
+  }
+
+  @Test
+  public void testEncrypt_EmptyInput() throws Exception {
+    assertThat(helper.encrypt(""), allOf(startsWith("{"), endsWith("}")));
+  }
+
+  @Test
+  public void testEncrypt_PlainInput() throws Exception {
+    assertThat(helper.encrypt("test"), allOf(startsWith("{"), endsWith("}")));
+  }
+
+  @Test
+  public void testEncrypt_AlreadyEncryptedInput() throws Exception {
+    assertThat(helper.encrypt("{test}"), is("{test}"));
+  }
+
+  @Test
+  public void testDecrypt_NullInput() throws Exception {
+    assertThat(helper.decrypt(null), is(nullValue()));
+  }
+
+  @Test
+  public void testDecrypt_EmptyInput() throws Exception {
+    assertThat(helper.decrypt(""), is(""));
+  }
+
+  @Test
+  public void testDecrypt_EncryptedInput() throws Exception {
+    assertThat(helper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
+  }
+
+  @Test
+  public void testDecrypt_AlreadyDecryptedInput() throws Exception {
+    assertThat(helper.decrypt("test"), is("test"));
   }
 
   @Test
@@ -68,7 +113,8 @@ public class PasswordHelperTest
       thread.join();
     }
     if (error.get() != null) {
-      Throwables.propagate(error.get());
+      Throwables.throwIfUnchecked(error.get());
+      throw new RuntimeException(error.get());
     }
   }
 }

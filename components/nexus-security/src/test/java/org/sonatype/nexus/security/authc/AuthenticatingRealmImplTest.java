@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +23,6 @@ import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
 import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
 
-import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -179,7 +179,7 @@ public class AuthenticatingRealmImplTest
   }
 
   private String legacyHashPassword(String password) {
-    return Hashing.sha1().hashString(password, Charsets.UTF_8).toString();
+    return Hashing.sha1().hashString(password, StandardCharsets.UTF_8).toString();
   }
 
   private void buildLegacyTestAuthenticationConfig(String password) throws Exception {

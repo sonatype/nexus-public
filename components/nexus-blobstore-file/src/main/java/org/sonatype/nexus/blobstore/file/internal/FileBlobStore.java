@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file.internal;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +45,6 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.hash.HashCode;
@@ -397,7 +397,7 @@ public class FileBlobStore
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
-      deletedBlobIndex.add(blobId.toString().getBytes(Charsets.UTF_8));
+      deletedBlobIndex.add(blobId.toString().getBytes(StandardCharsets.UTF_8));
       blob.markStale();
 
       // TODO: should we only update the size when doing a hard delete?
@@ -454,7 +454,7 @@ public class FileBlobStore
             return;
           }
           deletedBlobIndex.remove();
-          BlobId blobId = new BlobId(new String(bytes, Charsets.UTF_8));
+          BlobId blobId = new BlobId(new String(bytes, StandardCharsets.UTF_8));
           FileBlob blob = liveBlobs.getIfPresent(blobId);
           if (blob == null || blob.isStale()) {
             // not in use, so it's safe to delete the file

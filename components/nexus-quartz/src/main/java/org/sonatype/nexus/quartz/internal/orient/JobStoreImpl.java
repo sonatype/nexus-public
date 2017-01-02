@@ -196,8 +196,8 @@ public class JobStoreImpl
     try {
       return execute(operation);
     }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
+    catch (JobPersistenceException e) {
+      throw new RuntimeException(e);
     }
   }
 

@@ -33,8 +33,6 @@ import org.sonatype.nexus.capability.CapabilityNotFoundException;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
-import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -62,6 +60,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -99,10 +98,15 @@ public class DefaultCapabilityRegistryTest
 
   private ArgumentCaptor<CapabilityEvent> rec;
 
+  @Mock
   private PasswordHelper passwordHelper;
 
   @Before
   public final void setUpCapabilityRegistry() throws Exception {
+    when(passwordHelper.encrypt(anyString())).thenAnswer(invoc -> "encrypted:" + invoc.getArguments()[0]);
+    when(passwordHelper.decrypt(anyString()))
+        .thenAnswer(invoc -> invoc.getArguments()[0].toString().startsWith("encrypted:")
+            ? invoc.getArguments()[0].toString().substring(10) : invoc.getArguments()[0]);
     final CapabilityFactory factory = mock(CapabilityFactory.class);
     when(factory.create()).thenAnswer(new Answer<Capability>()
     {
@@ -150,7 +154,7 @@ public class DefaultCapabilityRegistryTest
         eventManager,
         achf,
         vchf,
-        passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl())),
+        passwordHelper,
         validatorProvider
     );
 
@@ -415,8 +419,7 @@ public class DefaultCapabilityRegistryTest
     CapabilityStorageItem item = csiRec.getValue();
     assertThat(item, is(notNullValue()));
     String fooValue = item.getProperties().get("foo");
-    assertThat(fooValue, not(is("bar")));
-    assertThat(passwordHelper.decrypt(fooValue), is("bar"));
+    assertThat(fooValue, is("encrypted:bar"));
   }
 
   /**
@@ -427,7 +430,7 @@ public class DefaultCapabilityRegistryTest
       throws Exception
   {
     Map<String, String> properties = Maps.newHashMap();
-    properties.put("foo", passwordHelper.encrypt("bar"));
+    properties.put("foo", "encrypted:bar");
 
     final CapabilityStorageItem item = new CapabilityStorageItem(
         0, CAPABILITY_TYPE.toString(), true, null, properties

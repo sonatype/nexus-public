@@ -20,7 +20,6 @@ import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseManagerSupport;
 
-import com.google.common.base.Throwables;
 import com.orientechnologies.common.io.OFileUtils;
 
 /**
@@ -55,7 +54,7 @@ public class PersistentDatabaseManager
       return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

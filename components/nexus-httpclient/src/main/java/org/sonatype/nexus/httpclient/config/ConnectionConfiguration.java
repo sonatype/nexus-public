@@ -16,8 +16,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.Time;
 
-import com.google.common.base.Throwables;
-
 /**
  * Connection configuration.
  *
@@ -79,7 +77,7 @@ public class ConnectionConfiguration
       return (ConnectionConfiguration) clone();
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

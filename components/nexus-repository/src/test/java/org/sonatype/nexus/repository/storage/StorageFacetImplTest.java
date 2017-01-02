@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -32,7 +33,6 @@ import org.sonatype.nexus.repository.storage.StorageFacetImpl.Config;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.junit.Before;
 import org.junit.Test;
@@ -148,7 +148,7 @@ public class StorageFacetImplTest
 
   @Test
   public void createTempBlobFromInputStream() throws Exception {
-    byte[] contents = "hello, world".getBytes(Charsets.UTF_8);
+    byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
     when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>>any())).thenAnswer(
@@ -169,7 +169,7 @@ public class StorageFacetImplTest
 
   @Test
   public void createTempBlobFromPayload() throws Exception {
-    byte[] contents = "hello, world".getBytes(Charsets.UTF_8);
+    byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
     when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>>any())).thenAnswer(

@@ -112,7 +112,8 @@ public class AttachedEntityMetadata
       getOwner().readFields(getDocument(), newEntity);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
 
     return Optional.of((T) newEntity);

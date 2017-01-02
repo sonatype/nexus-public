@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 
-import com.google.common.base.Throwables;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadBase;
@@ -53,7 +52,7 @@ class HttpPartIteratorAdapter
       return new PayloadIterator(itemIterator);
     }
     catch (FileUploadException | IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -120,7 +119,7 @@ class HttpPartIteratorAdapter
         return itemIterator.hasNext();
       }
       catch (FileUploadException | IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -130,7 +129,7 @@ class HttpPartIteratorAdapter
         return new FileItemStreamPayload(itemIterator.next());
       }
       catch (FileUploadException | IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

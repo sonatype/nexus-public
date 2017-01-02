@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Entity;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
 /**
@@ -52,7 +51,7 @@ public class RealmConfiguration
       return copy;
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

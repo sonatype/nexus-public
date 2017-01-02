@@ -38,7 +38,6 @@ import org.sonatype.nexus.webresources.GeneratedWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -301,7 +300,7 @@ public class RaptureWebResourceBundle
       return new URI(String.format("%s/static/rapture/%s", BaseUrlHolder.get(), path));
     }
     catch (URISyntaxException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.internal.log;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -80,7 +82,8 @@ public class LogbackLoggerOverrides
         loggerLevels.putAll(read(file));
       }
       catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }
@@ -93,7 +96,8 @@ public class LogbackLoggerOverrides
       write(file, loggerLevels);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -106,7 +110,8 @@ public class LogbackLoggerOverrides
       write(file, loggerLevels);
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -182,23 +187,29 @@ public class LogbackLoggerOverrides
     final FileReplacer fileReplacer = new FileReplacer(outputFile);
     fileReplacer.setDeleteBackupFile(true);
     fileReplacer.replace(output -> {
-      try (final PrintWriter out = new PrintWriter(output)) {
-        out.println("<?xml version='1.0' encoding='UTF-8'?>");
-        out.println();
-        out.println("<!--");
-        out.println("DO NOT EDIT - Automatically generated; User-customized logging levels");
-        out.println("-->");
-        out.println();
-        out.println("<included>");
+      try (final BufferedWriter out = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
+        out.write("<?xml version='1.0' encoding='UTF-8'?>");
+        out.newLine();
+        out.newLine();
+        out.write("<!--");
+        out.newLine();
+        out.write("DO NOT EDIT - Automatically generated; User-customized logging levels");
+        out.newLine();
+        out.write("-->");
+        out.newLine();
+        out.newLine();
+        out.write("<included>");
+        out.newLine();
         for (Entry<String, LoggerLevel> entry : overrides.entrySet()) {
           if (Logger.ROOT_LOGGER_NAME.equals(entry.getKey())) {
-            out.format("  <property name='root.level' value='%s'/>%n", entry.getValue());
+            out.write(String.format("  <property name='root.level' value='%s'/>%n", entry.getValue()));
           }
           else {
-            out.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue());
+            out.write(String.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue()));
           }
         }
-        out.println("</included>");
+        out.write("</included>");
+        out.newLine();
       }
     });
   }

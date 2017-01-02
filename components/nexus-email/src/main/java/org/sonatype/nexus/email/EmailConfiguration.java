@@ -15,8 +15,6 @@ package org.sonatype.nexus.email;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.base.Throwables;
-
 /**
  * Email configuration.
  *
@@ -151,7 +149,7 @@ public class EmailConfiguration
       return (EmailConfiguration)clone();
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

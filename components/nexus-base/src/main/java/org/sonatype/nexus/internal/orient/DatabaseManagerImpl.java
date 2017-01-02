@@ -30,7 +30,6 @@ import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseManagerSupport;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -94,7 +93,7 @@ public class DatabaseManagerImpl
       return "plocal:" + OFileUtils.getPath(dir.getAbsolutePath()).replace("//", "/");
     }
     catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

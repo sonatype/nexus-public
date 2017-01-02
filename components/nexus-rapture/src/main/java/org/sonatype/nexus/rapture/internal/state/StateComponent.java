@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal.state;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,6 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
@@ -135,7 +135,7 @@ public class StateComponent
       // TODO: ... or something else which is more efficient than object->gson->sha1?
       String json = gson.toJson(value);
       log.trace("Hashing state: {}", json);
-      return Hashing.sha1().hashString(json, Charsets.UTF_8).toString();
+      return Hashing.sha1().hashString(json, StandardCharsets.UTF_8).toString();
     }
     return null;
   }

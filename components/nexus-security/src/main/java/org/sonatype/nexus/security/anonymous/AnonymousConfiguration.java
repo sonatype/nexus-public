@@ -15,8 +15,6 @@ package org.sonatype.nexus.security.anonymous;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 
-import com.google.common.base.Throwables;
-
 /**
  * Anonymous configuration.
  *
@@ -73,7 +71,7 @@ public class AnonymousConfiguration
       return (AnonymousConfiguration) clone();
     }
     catch (CloneNotSupportedException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

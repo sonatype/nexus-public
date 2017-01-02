@@ -44,7 +44,6 @@ import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
-import com.google.common.base.Throwables;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashingOutputStream;
 import org.eclipse.aether.util.version.GenericVersionScheme;
@@ -94,7 +93,7 @@ public final class MavenFacetUtils
     }
     catch (InvalidVersionSpecificationException e) {
       // this never happens, see implementation
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

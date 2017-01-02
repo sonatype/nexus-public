@@ -42,7 +42,6 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
@@ -179,7 +178,7 @@ public class PurgeUnusedSnapshotsFacetImpl
         MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
       }
       catch (IOException e) {
-        Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
 
       groups.add(groupId);

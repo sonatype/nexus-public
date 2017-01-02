@@ -15,11 +15,11 @@ fi
 # Set up some easily accessible MIN/MAX params for JVM mem usage
 #
 if [ "x$JAVA_MIN_MEM" = "x" ]; then
-    JAVA_MIN_MEM=128M
+    JAVA_MIN_MEM=1200M
     export JAVA_MIN_MEM
 fi
 if [ "x$JAVA_MAX_MEM" = "x" ]; then
-    JAVA_MAX_MEM=512M
+    JAVA_MAX_MEM=1200M
     export JAVA_MAX_MEM
 fi
 if [ "x$DIRECT_MAX_MEM" = "x" ]; then
@@ -262,6 +262,11 @@ setupDebugOptions() {
 }
 
 setupDefaults() {
+    # SONATYPE: preferred IPv4 by default
+    if [ "x$KARAF_OPTS" = "x" ]; then
+        KARAF_OPTS="-Djava.net.preferIPv4Stack=true"
+    fi
+
     DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/log/jvm.log "
 
     #Set the JVM_VENDOR specific JVM flags

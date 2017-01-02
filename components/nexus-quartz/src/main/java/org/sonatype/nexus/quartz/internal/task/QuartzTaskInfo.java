@@ -26,8 +26,8 @@ import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
-import com.google.common.base.Throwables;
 import org.quartz.JobKey;
+import org.quartz.SchedulerException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -273,9 +273,8 @@ public class QuartzTaskInfo
       // DONE jobs are removed, and here will fail
       scheduler.runNow(jobKey, config);
     }
-    catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, TaskRemovedException.class);
-      throw Throwables.propagate(e);
+    catch (SchedulerException e) {
+      throw new RuntimeException(e);
     }
     return this;
   }

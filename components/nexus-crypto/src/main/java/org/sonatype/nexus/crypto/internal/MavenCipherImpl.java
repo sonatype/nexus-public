@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
+import java.nio.charset.StandardCharsets;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,7 +22,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -54,7 +55,7 @@ public class MavenCipherImpl
   }
 
   private String doEncrypt(final String str, final String passPhrase) {
-    return new String(passwordCipher.encrypt(str.getBytes(Charsets.UTF_8), passPhrase), Charsets.UTF_8);
+    return new String(passwordCipher.encrypt(str.getBytes(StandardCharsets.UTF_8), passPhrase), StandardCharsets.UTF_8);
   }
 
   public String decrypt(final String str, final String passPhrase) {
@@ -66,7 +67,7 @@ public class MavenCipherImpl
   }
 
   private String doDecrypt(final String str, final String passPhrase) {
-    return new String(passwordCipher.decrypt(str.getBytes(Charsets.UTF_8), passPhrase), Charsets.UTF_8);
+    return new String(passwordCipher.decrypt(str.getBytes(StandardCharsets.UTF_8), passPhrase), StandardCharsets.UTF_8);
   }
 
   public boolean isPasswordCipher(final String str) {

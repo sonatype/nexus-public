@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.7.1</jackson2.version>
+    <jackson2.version>2.7.8</jackson2.version>
     <resteasy.version>3.0.14.Final</resteasy.version>
   </properties>
 
