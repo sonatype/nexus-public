@@ -14,6 +14,7 @@ package org.sonatype.nexus.bootstrap.jetty;
 
 import java.util.List;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import org.eclipse.jetty.server.ConnectionFactory;
 
@@ -28,7 +29,8 @@ public final class InstrumentedConnectionFactory
   private final ConnectionFactory connectionFactory;
 
   public InstrumentedConnectionFactory(final ConnectionFactory connectionFactory) {
-    super(connectionFactory, SharedMetricRegistries.getOrCreate("nexus").timer("connection-duration"));
+    super(connectionFactory, SharedMetricRegistries.getOrCreate("nexus")
+      .timer(MetricRegistry.name(InstrumentedConnectionFactory.class, "connection-duration")));
     this.connectionFactory = connectionFactory;
   }
 

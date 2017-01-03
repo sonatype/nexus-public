@@ -18,6 +18,7 @@
     <feature>nexus-audit-plugin</feature>
     <feature>nexus-ssl-plugin</feature>
     <feature>nexus-coreui-plugin</feature>
+    <feature>nexus-graphite-plugin</feature>
     <feature>nexus-repository-httpbridge</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-raw</feature>

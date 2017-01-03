@@ -14,46 +14,39 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.sonatype.nexus.assemblies</groupId>
-    <artifactId>nexus-assemblies</artifactId>
-    <version>3.3.0-SNAPSHOT</version>
+    <groupId>org.sonatype.nexus.plugins</groupId>
+    <artifactId>nexus-plugins</artifactId>
+    <version>3.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>nexus-system-feature</artifactId>
+  <artifactId>nexus-graphite-plugin</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <packaging>feature</packaging>
+  <packaging>bundle</packaging>
 
   <dependencies>
-    <!--
-    The following dependencies will be added to Karaf's startup.properties
-    -->
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-pax-logging</artifactId>
+      <artifactId>nexus-plugin-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-logback</artifactId>
+      <artifactId>metrics-core</artifactId>
     </dependency>
 
-    <!--
-    Install early to make sure pax-exam uses this over its 'atinject' bundle
-    -->
     <dependency>
-      <groupId>org.apache.servicemix.bundles</groupId>
-      <artifactId>org.apache.servicemix.bundles.javax-inject</artifactId>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-graphite</artifactId>
     </dependency>
 
-    <!--
-    Karaf 4 installs JNA too late, so explicitly install this at startup
-    -->
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-interpolation</artifactId>
     </dependency>
   </dependencies>
 
@@ -62,9 +55,6 @@
       <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
-        <configuration>
-          <startLevel>8</startLevel>
-        </configuration>
       </plugin>
     </plugins>
   </build>
