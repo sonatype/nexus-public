@@ -25,6 +25,8 @@ import org.sonatype.nexus.quartz.internal.orient.TriggerCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.TriggerDeletedEvent
 import org.sonatype.nexus.quartz.internal.orient.TriggerEntity
 import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent
+import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo
+import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
@@ -36,7 +38,9 @@ import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import org.mockito.ArgumentCaptor
 import org.quartz.Job
 import org.quartz.JobDataMap
@@ -49,7 +53,9 @@ import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
 import static org.mockito.Matchers.any
+import static org.mockito.Matchers.anyObject
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.never
 import static org.mockito.Mockito.reset
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
@@ -64,6 +70,9 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 class QuartzSchedulerSPITest
     extends TestSupport
 {
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none()
+
   QuartzSchedulerSPI underTest
 
   JobStore jobStore
@@ -234,6 +243,16 @@ class QuartzSchedulerSPITest
     eventManager.post(triggerDeletedEvent)
 
     verifyNoMoreInteractions(schedulerListener) // run-now triggers don't affect remote schedulerListeners
+  }
+
+  @Test
+  void 'Attempting to programmatically run a task when the scheduler is paused throws an exception'() {
+    thrown.expect(IllegalStateException.class)
+    def quartzTaskInfo = mock(QuartzTaskInfo)
+    def quartzTaskState = mock(QuartzTaskState)
+    underTest.pause()
+    underTest.runNow('trigger-source', new JobKey('name', 'group'), quartzTaskInfo, quartzTaskState)
+    verify(quartzTaskInfo, never()).setNexusTaskState(anyObject(), anyObject(), anyObject(), anyObject())
   }
 
   private JobDetailEntity mockJobDetailEntity() {

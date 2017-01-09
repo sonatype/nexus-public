@@ -140,9 +140,9 @@ public class LogbackLogManager
   public Set<File> getLogFiles() {
     HashSet<File> files = new HashSet<>();
 
-    for (Appender appender : appenders()) {
+    for (Appender<?> appender : appenders()) {
       if (appender instanceof FileAppender) {
-        String path = ((FileAppender) appender).getFile();
+        String path = ((FileAppender<?>) appender).getFile();
         files.add(new File(path));
       }
     }
@@ -420,8 +420,8 @@ public class LogbackLogManager
   /**
    * Returns all configured appenders.
    */
-  private static Collection<Appender> appenders() {
-    List<Appender> result = new ArrayList<>();
+  private static Collection<Appender<ILoggingEvent>> appenders() {
+    List<Appender<ILoggingEvent>> result = new ArrayList<>();
     for (Logger l : loggerContext().getLoggerList()) {
       ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) l;
       Iterator<Appender<ILoggingEvent>> iter = log.iteratorForAppenders();

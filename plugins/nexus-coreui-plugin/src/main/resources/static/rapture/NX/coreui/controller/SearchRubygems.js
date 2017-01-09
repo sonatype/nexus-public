@@ -35,6 +35,7 @@ Ext.define('NX.coreui.controller.SearchRubygems', {
         id: 'assets.attributes.rubygems.platform',
         group: NX.I18n.get('SearchRubygems_Group'),
         config: {
+          format: 'rubygems',
           fieldLabel: NX.I18n.get('SearchRubygems_Platform_FieldLabel'),
           width: 250
         }
@@ -43,6 +44,7 @@ Ext.define('NX.coreui.controller.SearchRubygems', {
         id: 'assets.attributes.rubygems.summary',
         group: NX.I18n.get('SearchRubygems_Group'),
         config: {
+          format: 'rubygems',
           fieldLabel: NX.I18n.get('SearchRubygems_Summary_FieldLabel'),
           width: 250
         }
@@ -51,6 +53,7 @@ Ext.define('NX.coreui.controller.SearchRubygems', {
         id: 'assets.attributes.rubygems.description',
         group: NX.I18n.get('SearchRubygems_Group'),
         config: {
+          format: 'rubygems',
           fieldLabel: NX.I18n.get('SearchRubygems_Description_FieldLabel'),
           width: 250
         }

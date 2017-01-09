@@ -12,41 +12,48 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
-import java.io.File;
-import java.nio.file.Path;
-
-import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
 /**
- * A service to store blobstore-level metrics.
+ * An implementation of {@link BlobStoreMetrics} that supports adding to the blobCount and totalSize fields.
  *
- * @since 3.0
+ * @since 3.3
  */
-public interface BlobStoreMetricsStore
-    extends Lifecycle
+public class AccumulatingBlobStoreMetrics
+    implements BlobStoreMetrics
 {
-  void setStorageDir(Path blobstoreRoot);
+  private long blobCount;
 
-  /**
-   * Provide the current metrics. This is an estimate.
-   */
-  BlobStoreMetrics getMetrics();
+  private long totalSize;
 
-  /**
-   * Indicate that a blob of the given size has been added.
-   */
-  void recordAddition(long size);
+  private long availableSpace;
 
-  /**
-   * Indicate that a blob of the given size has been removed.
-   */
-  void recordDeletion(long size);
+  public AccumulatingBlobStoreMetrics(final long blobCount, final long totalSize, final long availableSpace) {
+    this.blobCount = blobCount;
+    this.totalSize = totalSize;
+    this.availableSpace = availableSpace;
+  }
 
-  /**
-   * Provide an array of the metrics files backing the blobstore at the specified root.
-   *
-   * @since 3.3
-   */
-  File[] listBackingFiles(Path blobStoreRoot);
+  @Override
+  public long getBlobCount() {
+    return blobCount;
+  }
+
+  public void addBlobCount(long blobCount) {
+    this.blobCount += blobCount;
+  }
+
+  @Override
+  public long getTotalSize() {
+    return totalSize;
+  }
+
+  public void addTotalSize(long totalSize) {
+    this.totalSize += totalSize;
+  }
+
+  @Override
+  public long getAvailableSpace() {
+    return availableSpace;
+  }
 }

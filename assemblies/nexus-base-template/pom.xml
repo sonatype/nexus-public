@@ -65,17 +65,17 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-system-feature</artifactId>
+      <artifactId>nexus-startup-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <!--
-    Installed features (runtime-scope)
+    Installed/boot features (runtime-scope)
     -->
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-jetty-feature</artifactId>
+      <artifactId>nexus-boot-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -274,11 +274,10 @@
           <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
           <!-- override expected osgi.ee to match compilation target -->
           <javase>1.8</javase>
+          <!-- install startup jars 'by-reference' which avoids copying -->
+          <useReferenceUrls>true</useReferenceUrls>
           <startupFeatures>
             <feature>wrap</feature>
-            <feature>nexus-system-feature</feature>
-          </startupFeatures>
-          <bootFeatures>
             <feature>bundle</feature>
             <feature>config</feature>
             <feature>diagnostic</feature>
@@ -289,7 +288,10 @@
             <feature>shell</feature>
             <feature>service</feature>
             <feature>system</feature>
-            <feature>nexus-jetty-feature</feature>
+            <feature>nexus-startup-feature</feature>
+          </startupFeatures>
+          <bootFeatures>
+            <feature>nexus-boot-feature</feature>
           </bootFeatures>
           <installedFeatures>
             <feature>management</feature>

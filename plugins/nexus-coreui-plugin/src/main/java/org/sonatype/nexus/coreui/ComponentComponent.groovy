@@ -146,8 +146,7 @@ class ComponentComponent
     return result.results.collect(ASSET_CONVERTER.rcurry(parameters.getFilter('componentName'), repository.name))
   }
 
-  private List<Repository> getPreviewRepositories(String repositoryName) {
-    RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
+  private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
     if (!repositorySelector.allRepositories) {
       return ImmutableList.of(repositoryManager.get(repositorySelector.name))
     }
@@ -171,14 +170,17 @@ class ComponentComponent
       return null
     }
 
+    RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
+
     jexlExpressionValidator.validate(jexlExpression)
-    List<Repository> selectedRepositories = getPreviewRepositories(repositoryName)
+    List<Repository> selectedRepositories = getPreviewRepositories(repositorySelector)
     if (!selectedRepositories.size()) {
       return null
     }
 
     def sort = parameters.sort?.get(0)
     def result = browseService.previewAssets(
+        repositorySelector,
         selectedRepositories,
         jexlExpression,
         parameters.getFilter('filter'),

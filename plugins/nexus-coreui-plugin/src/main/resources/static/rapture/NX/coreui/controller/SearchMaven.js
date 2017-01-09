@@ -35,6 +35,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         id: 'attributes.maven2.groupId',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
+          format: 'maven2',
           fieldLabel: NX.I18n.get('SearchMaven_GroupID_FieldLabel'),
           width: 250
         }
@@ -43,6 +44,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         id: 'attributes.maven2.artifactId',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
+          format: 'maven2',
           fieldLabel: NX.I18n.get('SearchMaven_ArtifactID_FieldLabel'),
           width: 250
         }
@@ -51,6 +53,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         id: 'attributes.maven2.baseVersion',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
+          format: 'maven2',
           fieldLabel: NX.I18n.get('SearchMaven_BaseVersion_FieldLabel'),
           width: 250
         }
@@ -59,6 +62,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         id: 'assets.attributes.maven2.classifier',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
+          format: 'maven2',
           fieldLabel: NX.I18n.get('SearchMaven_Classifier_FieldLabel')
         }
       },
@@ -66,6 +70,7 @@ Ext.define('NX.coreui.controller.SearchMaven', {
         id: 'assets.attributes.maven2.extension',
         group: NX.I18n.get('SearchMaven_Group'),
         config: {
+          format: 'maven2',
           fieldLabel: NX.I18n.get('SearchMaven_Extension_FieldLabel')
         }
       }

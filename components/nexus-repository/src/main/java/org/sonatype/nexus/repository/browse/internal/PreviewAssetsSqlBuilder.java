@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class PreviewAssetsSqlBuilder
 {
-  private final String repositoryName;
+  private final RepositorySelector repositorySelector;
 
   private final String jexlExpression;
 
@@ -36,11 +37,11 @@ public class PreviewAssetsSqlBuilder
 
   private final QueryOptions queryOptions;
 
-  public PreviewAssetsSqlBuilder(final String repositoryName,
+  public PreviewAssetsSqlBuilder(final RepositorySelector repositorySelector,
                                  final String jexlExpression,
                                  final List<String> previewRepositories,
                                  final QueryOptions queryOptions) {
-    this.repositoryName = checkNotNull(repositoryName);
+    this.repositorySelector = checkNotNull(repositorySelector);
     this.jexlExpression = checkNotNull(jexlExpression);
     this.previewRepositories = checkNotNull(previewRepositories);
     this.queryOptions = checkNotNull(queryOptions);
@@ -48,8 +49,7 @@ public class PreviewAssetsSqlBuilder
 
   public String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
-    whereClauses.add("contentExpression(@this, :jexlExpression, :repositoryName, :repositoriesAsString) == true");
+    whereClauses.add("contentExpression(@this, :jexlExpression, :repositorySelector, :repositoriesAsString) == true");
     if (queryOptions.getFilter() != null) {
       whereClauses.add(String.format("%s LIKE :nameFilter", MetadataNodeEntityAdapter.P_NAME));
     }
@@ -81,8 +81,7 @@ public class PreviewAssetsSqlBuilder
 
   public Map<String, Object> buildSqlParams() {
     Map<String, Object> params = new HashMap<>();
-    params.put("browsedRepository", queryOptions.getBrowsedRepository());
-    params.put("repositoryName", repositoryName);
+    params.put("repositorySelector", repositorySelector.toSelector());
     params.put("jexlExpression", buildJexlExpression());
     params.put("repositoriesAsString", buildRepositoriesAsString());
 

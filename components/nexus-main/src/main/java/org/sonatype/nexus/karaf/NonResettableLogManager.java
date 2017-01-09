@@ -10,24 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.google.common.eventbus;
+package org.sonatype.nexus.karaf;
 
-import static com.google.common.eventbus.Dispatcher.immediate;
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import java.util.logging.LogManager;
 
 /**
- * Reentrant {@link EventBus} that dispatches events immediately as they appear on the same thread.
- *
- * (The old Guava behaviour used thread-local queues to provide strong non-reentrant ordering.)
- *
- * @since 3.0
+ * Custom JUL log manager that ignores {@link #reset()} requests.
+ * 
+ * @since 3.3
  */
-public class ReentrantEventBus
-    extends EventBus
+public class NonResettableLogManager
+    extends LogManager
 {
-  private static final String IDENTIFIER = "reentrant";
-
-  public ReentrantEventBus() {
-    super(IDENTIFIER, directExecutor(), immediate(), new Slf4jSubscriberExceptionHandler(IDENTIFIER));
+  @Override
+  public void reset() {
+    // overridden to be a noop
+    // reset() is called on several occasions where its standard behavior has undesired effects:
+    // - shortly after pax-logging has configured Logback, thereby undoing the efforts of LevelChangePropagator
+    // - during JVM shutdown, thereby disabling shutdown logging from components using JUL 
   }
 }

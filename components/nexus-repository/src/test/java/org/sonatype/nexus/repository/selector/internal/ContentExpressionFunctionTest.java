@@ -24,6 +24,7 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,6 +35,7 @@ import org.mockito.Mock;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -73,6 +75,9 @@ public class ContentExpressionFunctionTest
   @Mock
   private SelectorManager selectorManager;
 
+  @Mock
+  private ContentAuthHelper contentAuthHelper;
+
   ContentExpressionFunction underTest;
 
   @Before
@@ -93,14 +98,21 @@ public class ContentExpressionFunctionTest
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
-    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager);
+    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(true);
+
+    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager,
+        contentAuthHelper);
+
+    // Copied from the ContentAuthTest, I didn't need this to run the tests locally, but seems CI does
+    ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 
   @Test
   public void testMatchingAsset_SingleRepository() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
-        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, ""},
+        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, REPOSITORY_NAME},
             null), is(true));
   }
 
@@ -108,7 +120,7 @@ public class ContentExpressionFunctionTest
   public void testMatchingAsset_AllRepositories() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null,
-        new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), ""}, null), is(true));
+        new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), REPOSITORY_NAME}, null), is(true));
   }
 
   @Test
@@ -123,7 +135,7 @@ public class ContentExpressionFunctionTest
     //this isn't really necessary, just to prove that this isn't causing the execute call to return false
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
-        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "invalidname", ""},
+        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "invalidname", "invalidname"},
             null), is(false));
   }
 
@@ -143,5 +155,30 @@ public class ContentExpressionFunctionTest
     assertThat(underTest
             .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "doesntmatter", "repo1,repo2"}, null),
         is(false));
+  }
+
+  @Test
+  public void testNoPrivilege_SingleRepository() throws Exception {
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
+    assertThat(underTest
+        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, REPOSITORY_NAME},
+            null), is(false));
+  }
+
+  @Test
+  public void testNoPrivilege_AllRepositories() throws Exception {
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
+    assertThat(underTest.execute(underTest, null, null,
+        new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), ""}, null), is(false));
+  }
+
+  @Test
+  public void testNoPrivilege_GroupRepository() throws Exception {
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
+    assertThat(underTest.execute(underTest, null, null,
+        new Object[]{assetDocument, "ignored", "doesntmatter", "repo1," + REPOSITORY_NAME}, null), is(false));
   }
 }

@@ -16,10 +16,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -39,7 +35,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Tests for {@link ContentAuth}.
@@ -54,16 +49,7 @@ public class ContentAuthTest
   private static final String FORMAT = "format";
 
   @Mock
-  VariableSource variableSource;
-
-  @Mock
-  VariableResolverAdapter variableResolverAdapter;
-
-  @Mock
-  VariableResolverAdapterManager variableResolverAdapterManager;
-
-  @Mock
-  ContentPermissionChecker contentPermissionChecker;
+  ContentAuthHelper contentAuthHelper;
 
   @Mock
   ODocument assetDocument;
@@ -84,9 +70,6 @@ public class ContentAuthTest
 
   @Before
   public void setup() {
-    when(variableResolverAdapterManager.get(FORMAT)).thenReturn(variableResolverAdapter);
-    when(variableResolverAdapter.fromDocument(assetDocument)).thenReturn(variableSource);
-
     when(bucketDocument.getRecord()).thenReturn(bucketDocument);
     when(bucketDocument.field("repository_name", String.class)).thenReturn(REPOSITORY_NAME);
     when(bucketDocument.getIdentity()).thenReturn(mock(ORID.class));
@@ -106,7 +89,7 @@ public class ContentAuthTest
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
-    underTest = new ContentAuth(contentPermissionChecker, variableResolverAdapterManager);
+    underTest = new ContentAuth(contentAuthHelper);
 
     // This feels odd...
     ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
@@ -115,44 +98,44 @@ public class ContentAuthTest
 
   @Test
   public void testAssetPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME})).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME }, null), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper, times(1)).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 
   @Test
   public void testAssetNotPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
+    when(contentAuthHelper.checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME})).thenReturn(false);
     assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME }, null), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper, times(1)).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 
   @Test
   public void testComponentPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME})).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME }, null), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper, times(1)).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 
   @Test
   public void testComponentNotPermitted() {
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
+    when(contentAuthHelper.checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME})).thenReturn(false);
     assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME }, null), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper, times(1)).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 
   @Test
   public void testComponentPermitted_withGroupRepo() {
-    when(contentPermissionChecker.isPermitted("group_repo", FORMAT, BROWSE, variableSource)).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(assetDocument, new String[]{"group_repo"})).thenReturn(true);
     assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo" }, null), is(true));
-    verify(contentPermissionChecker).isPermitted("group_repo", FORMAT, BROWSE, variableSource);
-    verify(contentPermissionChecker, never()).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper).checkAssetPermissions(assetDocument, new String[]{"group_repo"});
+    verify(contentAuthHelper, never()).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 
   @Test
   public void testComponentNotPermitted_withGroupRepo() {
     assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo" }, null), is(false));
-    verify(contentPermissionChecker).isPermitted("group_repo", FORMAT, BROWSE, variableSource);
-    verify(contentPermissionChecker, never()).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentAuthHelper).checkAssetPermissions(assetDocument, new String[]{"group_repo"});
+    verify(contentAuthHelper, never()).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
 }

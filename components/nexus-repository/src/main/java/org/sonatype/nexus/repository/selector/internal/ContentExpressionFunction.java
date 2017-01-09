@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
+import java.util.Arrays;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -59,19 +60,23 @@ public class ContentExpressionFunction
 {
   public static final String NAME = "contentExpression";
 
+  private static final Logger log = LoggerFactory.getLogger(ContentExpressionFunction.class);
+
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
   private final SelectorManager selectorManager;
 
-  private static final Logger log = LoggerFactory.getLogger(ContentExpressionFunction.class);
+  private final ContentAuthHelper contentAuthHelper;
 
   @Inject
   public ContentExpressionFunction(final VariableResolverAdapterManager variableResolverAdapterManager,
-                                   final SelectorManager selectorManager)
+                                   final SelectorManager selectorManager,
+                                   final ContentAuthHelper contentAuthHelper)
   {
     super(NAME, 4, 4);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.selectorManager = checkNotNull(selectorManager);
+    this.contentAuthHelper = checkNotNull(contentAuthHelper);
   }
 
   @Override
@@ -83,49 +88,26 @@ public class ContentExpressionFunction
   {
     OIdentifiable identifiable = (OIdentifiable) iParams[0];
     ODocument asset = identifiable.getRecord();
-    return checkRepository(asset, (String) iParams[2], (String) iParams[3]) &&
-        checkJexlExpression(asset, (String) iParams[1], asset.field(AssetEntityAdapter.P_FORMAT, String.class));
+    String[] members = ((String) iParams[3]).split(",");
+    RepositorySelector repositorySelector = RepositorySelector.fromSelector((String) iParams[2]);
+    String jexlExpression = (String) iParams[1];
+    String[] membersForAuth = members;
+    //this would denote a single repository, so no need for any expanded list of member repos
+    //even in case of group, we only want to auth check the group, not its members
+    if (!repositorySelector.isAllRepositories()) {
+      membersForAuth = new String[]{repositorySelector.getName()};
+    }
+    return checkAssetRepository(asset, members) &&
+        contentAuthHelper.checkAssetPermissions(asset, membersForAuth) &&
+        checkJexlExpression(asset, jexlExpression, asset.field(AssetEntityAdapter.P_FORMAT, String.class));
   }
 
-  /**
-   * Will validate any one of the following conditions are true
-   * - request is for * (i.e. match anything
-   * - request is for *{format} and the asset format matches
-   * - request is for a single repository and the asset repository matches
-   * - request is for a group repository and the asset repository is contained in the memberRepositories list
-   */
-  private boolean checkRepository(ODocument asset, String repository, String memberRepositories) {
-    RepositorySelector repositorySelector = RepositorySelector.fromSelector(repository);
-
+  private boolean checkAssetRepository(ODocument asset, String[] repositoryNames) {
     OIdentifiable bucketId = asset.field(AssetEntityAdapter.P_BUCKET, OIdentifiable.class);
     ODocument bucket = bucketId.getRecord();
     String assetRepository = bucket.field(BucketEntityAdapter.P_REPOSITORY_NAME, String.class);
-    String assetFormat = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
 
-    if (!repositorySelector.isAllRepositories()) {
-      if (!Strings2.isBlank(memberRepositories)) {
-        String[] members = memberRepositories.split(",");
-        boolean found = false;
-        for (String member : members) {
-          if (member.equals(assetRepository)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          return false;
-        }
-      }
-      else if (!assetRepository.equals(repositorySelector.getName())){
-        return false;
-      }
-    }
-
-    if (!repositorySelector.isAllFormats() && !assetFormat.equals(repositorySelector.getFormat())) {
-      return false;
-    }
-
-    return true;
+    return Arrays.asList(repositoryNames).contains(assetRepository);
   }
 
   private boolean checkJexlExpression(final ODocument asset,

@@ -10,7 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+/*global Ext, NX*/
+
 /**
- * Customizations of Guava eventbus components, which expose API as package-private.
+ * BrowseableFormat model.
+ *
+ * @since 3.3
  */
-package com.google.common.eventbus;
+Ext.define('NX.coreui.model.BrowseableFormat', {
+  extend: 'Ext.data.Model',
+
+  fields: [
+    { name: 'id', type: 'string' }
+  ]
+});

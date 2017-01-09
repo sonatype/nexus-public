@@ -913,8 +913,8 @@ public class JobStoreImpl
           continue;
         }
 
-        // skip triggers which match misfire fudge logic
-        if (applyMisfire(db, entity)) {
+        // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
+        if (applyMisfire(db, entity) && trigger.getNextFireTime() == null) {
           continue;
         }
 

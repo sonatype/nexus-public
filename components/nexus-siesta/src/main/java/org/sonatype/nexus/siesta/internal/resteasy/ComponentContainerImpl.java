@@ -26,7 +26,6 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.siesta.ComponentContainer;
 
 import org.eclipse.sisu.BeanEntry;
-import org.jboss.resteasy.logging.Logger.LoggerType;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
@@ -49,9 +48,6 @@ public class ComponentContainerImpl
   private transient final ResteasyDeployment deployment = new SisuResteasyDeployment();
 
   public ComponentContainerImpl() {
-    // Configure RESTEasy to use SLF4j
-    org.jboss.resteasy.logging.Logger.setLoggerType(LoggerType.SLF4J);
-
     // Register RESTEasy with JAX-RS as early as possible
     RuntimeDelegate.setInstance(checkNotNull(deployment.getProviderFactory()));
   }

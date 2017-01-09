@@ -40,6 +40,7 @@ public class NexusMain
    * Adapted from {@link org.apache.karaf.main.Main#main(String[])} to call our constructor.
    */
   public static void main(final String[] args) throws Exception {
+    System.setProperty("java.util.logging.manager", "org.sonatype.nexus.karaf.NonResettableLogManager");
     while (true) {
       boolean restart = false;
       System.setProperty("karaf.restart", "false");

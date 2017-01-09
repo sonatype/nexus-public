@@ -35,6 +35,7 @@ Ext.define('NX.coreui.controller.SearchNpm', {
         id: 'group',
         group: NX.I18n.get('SearchNpm_Group'),
         config: {
+          format: 'npm',
           fieldLabel: NX.I18n.get('SearchNpm_Scope_FieldLabel'),
           width: 250
         }

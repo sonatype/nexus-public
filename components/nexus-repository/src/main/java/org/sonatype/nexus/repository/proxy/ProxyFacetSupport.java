@@ -168,7 +168,19 @@ public abstract class ProxyFacetSupport
           content = store(context, remote);
         }
       }
-      catch (ProxyServiceException | IOException e) {
+      catch (ProxyServiceException e) {
+        int sc = e.getHttpResponse().getStatusLine().getStatusCode();
+        String repoName = this.getRepository().getName();
+        String contextUrl = getUrl(context);
+        if (log.isDebugEnabled()) {
+          log.warn("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
+        }
+        else {
+          log.warn("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl);
+        }
+        throw e;
+      }
+      catch (IOException e) {
         log.warn("Failed to fetch: {}", getUrl(context), e);
         throw e;
       }

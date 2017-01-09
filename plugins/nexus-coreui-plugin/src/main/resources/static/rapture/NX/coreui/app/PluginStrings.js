@@ -165,7 +165,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // Browse -> Search -> Bower
     SearchBower_Text: 'Bower',
-    SearchBower_Description: 'Search for components in bower repositories',
+    SearchBower_Description: 'Search for components in Bower repositories',
 
     // Browse -> Search -> Docker
     SearchDocker_Text: 'Docker',

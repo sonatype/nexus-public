@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.rest.client.internal;
 
+import java.net.URI;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
@@ -24,14 +27,18 @@ import org.sonatype.nexus.httpclient.SSLContextSelector;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientFactory;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
+import org.jboss.resteasy.client.jaxrs.ProxyBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.cache.CacheLoader.from;
 
 /**
  * REST client factory.
@@ -44,6 +51,10 @@ public class RestClientFactoryImpl
     extends ComponentSupport
     implements RestClientFactory
 {
+  private final LoadingCache<ClassLoader, ClassLoader> bridgeClassLoaderCache =
+      CacheBuilder.newBuilder().build(from(
+          (loader) -> new BridgeClassLoader(loader, ProxyBuilder.class.getClassLoader())));
+
   private final Provider<HttpClient> httpClient;
 
   @Inject
@@ -77,5 +88,14 @@ public class RestClientFactoryImpl
 
       return builder.build();
     }
+  }
+
+  @Override
+  public <T> T proxy(final Class<T> api, final Client client, final URI baseUri) {
+    WebTarget target = client.target(baseUri);
+
+    return ProxyBuilder.builder(api, target)
+        .classloader(bridgeClassLoaderCache.getUnchecked(api.getClassLoader()))
+        .build();
   }
 }

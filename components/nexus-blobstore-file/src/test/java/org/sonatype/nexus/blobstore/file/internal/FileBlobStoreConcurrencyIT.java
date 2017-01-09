@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -30,10 +31,8 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
-import org.sonatype.nexus.blobstore.file.internal.MetricsInputStream;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +40,7 @@ import com.google.common.io.ByteStreams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.io.ByteStreams.nullOutputStream;
@@ -67,11 +67,15 @@ public class FileBlobStoreConcurrencyIT
 
   private BlobStoreMetricsStore metricsStore;
 
+  @Mock
+  NodeAccess nodeAccess;
 
   @Before
   public void setUp() throws Exception {
     Path root = util.createTempDir().toPath();
     Path content = root.resolve("content");
+
+    when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
 
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(root.toFile());
@@ -79,7 +83,7 @@ public class FileBlobStoreConcurrencyIT
     final BlobStoreConfiguration config = new BlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
-    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl());
+    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
 
     this.underTest = new FileBlobStore(content,
         new VolumeChapterLocationStrategy(),

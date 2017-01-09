@@ -25,7 +25,8 @@ Ext.define('NX.coreui.controller.Search', {
     'NX.Bookmarks',
     'NX.Conditions',
     'NX.Permissions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.coreui.util.BrowseableFormats'
   ],
   masters: [
     'nx-coreui-searchfeature nx-coreui-search-result-list',
@@ -196,6 +197,19 @@ Ext.define('NX.coreui.controller.Search', {
     });
   },
 
+  isBrowseableBasedOnFormatCriteria: function(model) {
+    var formatCriteria = Ext.Array.from(model.get('criterias')).filter(function(item) {
+      return item.id === 'format';
+    });
+
+    if (formatCriteria.length > 0) {
+      return NX.coreui.util.BrowseableFormats.check(formatCriteria[0].value);
+    }
+    else {
+      return true;
+    }
+  },
+
   /**
    * @private
    * Register feature for model.
@@ -231,7 +245,7 @@ Ext.define('NX.coreui.controller.Search', {
         description: model.get('description'),
         authenticationRequired: false,
         visible: function() {
-          return NX.Permissions.check('nexus:search:read');
+          return NX.Permissions.check('nexus:search:read') && me.isBrowseableBasedOnFormatCriteria(model);
         }
       }, owner);
     }
@@ -342,21 +356,24 @@ Ext.define('NX.coreui.controller.Search', {
 
     searchCriteriaStore.each(function(criteria) {
       var addTo = addCriteriaMenu,
-          group = criteria.get('group');
+          group = criteria.get('group'),
+          format = criteria.get('config').format;
 
-      if (group) {
-        if (!criteriasPerGroup[group]) {
-          criteriasPerGroup[group] = [];
+      if (!format || NX.coreui.util.BrowseableFormats.check(format)) {
+        if (group) {
+          if (!criteriasPerGroup[group]) {
+            criteriasPerGroup[group] = [];
+          }
+          addTo = criteriasPerGroup[group];
         }
-        addTo = criteriasPerGroup[group];
+        addTo.push({
+          text: criteria.get('config').fieldLabel,
+          criteria: criteria,
+          criteriaId: criteria.getId(),
+          action: 'add',
+          disabled: Ext.isDefined(criterias[criteria.getId()])
+        });
       }
-      addTo.push({
-        text: criteria.get('config').fieldLabel,
-        criteria: criteria,
-        criteriaId: criteria.getId(),
-        action: 'add',
-        disabled: Ext.isDefined(criterias[criteria.getId()])
-      });
     });
     Ext.Object.each(criteriasPerGroup, function(key, value) {
       addCriteriaMenu.push({

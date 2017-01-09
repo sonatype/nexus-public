@@ -17,6 +17,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
@@ -56,7 +57,8 @@ public interface BrowseService
   /**
    * Returns a {@link BrowseResult} for previewing the specified repository based on an arbitrary content selector.
    */
-  BrowseResult<Asset> previewAssets(final List<Repository> repositories,
+  BrowseResult<Asset> previewAssets(final RepositorySelector selectedRepository,
+                                    final List<Repository> repositories,
                                     final String jexlExpression,
                                     @Nullable final String filter,
                                     @Nullable final String sortProperty,

@@ -50,7 +50,7 @@ public class QueryOptions
                       @Nullable String sortDirection,
                       @Nullable Integer start,
                       @Nullable Integer limit,
-                      String browsedRepository)
+                      @Nullable String browsedRepository)
   {
     checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
     checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
@@ -59,7 +59,7 @@ public class QueryOptions
     this.sortDirection = sortDirection;
     this.start = start;
     this.limit = limit;
-    this.browsedRepository = checkNotNull(browsedRepository);
+    this.browsedRepository = browsedRepository;
   }
 
   @Nullable

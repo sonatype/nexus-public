@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -147,7 +148,8 @@ public class BrowseServiceImpl
   }
 
   @Override
-  public BrowseResult<Asset> previewAssets(final List<Repository> repositories,
+  public BrowseResult<Asset> previewAssets(final RepositorySelector repositorySelector,
+                                           final List<Repository> repositories,
                                            final String jexlExpression,
                                            @Nullable final String filter,
                                            @Nullable final String sortProperty,
@@ -167,14 +169,14 @@ public class BrowseServiceImpl
       else {
         previewRepositories = repositories;
       }
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
+      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, null);
       PreviewAssetsSqlBuilder builder = new PreviewAssetsSqlBuilder(
-          repository.getName(),
+          repositorySelector,
           jexlExpression,
           previewRepositories.stream().map(Repository::getName).collect(Collectors.toList()),
           options);
       return new BrowseResult<>(
-          storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories, null),
+          storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), previewRepositories, null),
           Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
               previewRepositories, builder.buildQuerySuffix()))
       );

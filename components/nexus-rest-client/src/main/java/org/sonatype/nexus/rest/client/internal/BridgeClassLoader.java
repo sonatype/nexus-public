@@ -10,25 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.google.common.eventbus;
+package org.sonatype.nexus.rest.client.internal;
 
-import java.util.concurrent.Executor;
-
-import static com.google.common.eventbus.Dispatcher.immediate;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Reentrant asynchronous {@link EventBus} that dispatches events immediately as they appear using the executor.
+ * ClassLoader which bridges two classloaders into a single classloader view.
  *
- * (The old Guava behaviour used a global queue to provide weak non-reentrant ordering before async dispatch.)
- *
- * @since 3.2
+ * @since 3.3
  */
-public class ReentrantAsyncEventBus
-    extends EventBus
+class BridgeClassLoader
+    extends ClassLoader
 {
-  private static final String IDENTIFIER = "reentrant.async";
+  private final ClassLoader secondary;
 
-  public ReentrantAsyncEventBus(final Executor executor) {
-    super(IDENTIFIER, executor, immediate(), new Slf4jSubscriberExceptionHandler(IDENTIFIER));
+  public BridgeClassLoader(final ClassLoader primary, final ClassLoader secondary) {
+    super(checkNotNull(primary));
+    this.secondary = checkNotNull(secondary);
+  }
+
+  @Override
+  protected Class<?> findClass(final String name) throws ClassNotFoundException {
+    return secondary.loadClass(name);
   }
 }

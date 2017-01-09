@@ -10,30 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest.client;
+package org.sonatype.nexus.coreui.internal.search
 
-import java.net.URI;
-
-import javax.ws.rs.client.Client;
+import groovy.transform.ToString
 
 /**
- * REST client factory.
+ * BrowseableFormat exchange object.
  *
- * @since 3.0
+ * @since 3.3
  */
-public interface RestClientFactory
+@ToString(includePackage = false, includeNames = true)
+class BrowseableFormatXO
 {
-
-  Client create(RestClientConfiguration configuration);
-
-  default Client create() {
-    return create(RestClientConfiguration.DEFAULTS);
-  }
-
-  /**
-   * Returns a proxy backed by the given client and URI.
-   *
-   * @since 3.3
-   */
-  <T> T proxy(Class<T> api, Client client, URI baseUri);
+  String id
 }

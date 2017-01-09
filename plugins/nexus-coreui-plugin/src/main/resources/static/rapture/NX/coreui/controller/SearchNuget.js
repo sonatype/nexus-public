@@ -35,6 +35,7 @@ Ext.define('NX.coreui.controller.SearchNuget', {
         id: 'attributes.nuget.id',
         group: NX.I18n.get('SearchNuget_Group'),
         config: {
+          format: 'nuget',
           fieldLabel: NX.I18n.get('SearchNuget_ID_FieldLabel'),
           width: 300
         }
@@ -43,6 +44,7 @@ Ext.define('NX.coreui.controller.SearchNuget', {
         id: 'assets.attributes.nuget.tags',
         group: NX.I18n.get('SearchNuget_Group'),
         config: {
+          format: 'nuget',
           fieldLabel: NX.I18n.get('SearchNuget_Tags_FieldLabel'),
           width: 300
         }

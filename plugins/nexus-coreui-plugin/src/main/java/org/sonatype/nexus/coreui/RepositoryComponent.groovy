@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.coreui
 
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
+
 import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
@@ -22,10 +25,12 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.app.BaseUrlHolder
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper
+import org.sonatype.nexus.coreui.internal.search.BrowseableFormatXO
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.PasswordPlaceholder
+import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Recipe
@@ -38,6 +43,7 @@ import org.sonatype.nexus.repository.search.RebuildIndexTask
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositorySelector
+import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
@@ -50,6 +56,7 @@ import org.sonatype.nexus.validation.group.Update
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
+import com.google.common.collect.ImmutableList
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
@@ -67,6 +74,7 @@ import org.hibernate.validator.constraints.NotEmpty
 @DirectAction(action = 'coreui_Repository')
 class RepositoryComponent
     extends DirectComponentSupport
+    implements StateContributor
 {
   @Inject
   RepositoryManager repositoryManager
@@ -106,6 +114,27 @@ class RepositoryComponent
           name: "${value.format} (${value.type})"
       )
     }
+  }
+
+  RepositoryViewPermission viewPermission(final Repository repository, final String action) {
+    return new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(),
+        ImmutableList.of(action))
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  List<BrowseableFormatXO> getBrowseableFormats() {
+    Set<String> repoIds = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+        .filter { repository -> securityHelper.allPermitted(viewPermission(repository, BreadActions.BROWSE)) }
+        .map { repository -> repository.getFormat().getValue() }
+        .collect(Collectors.toSet())
+    return repoIds.collect { id -> new BrowseableFormatXO(id: id) }
+  }
+
+  @Override
+  Map<String, Object> getState() {
+    return ['browseableformats': getBrowseableFormats()]
   }
 
   /**

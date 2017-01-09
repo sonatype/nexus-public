@@ -10,17 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.google.common.eventbus;
+package org.sonatype.nexus.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
 
 /**
  * Tests different EventBus behaviour.
@@ -63,7 +66,7 @@ public class EventBusBehaviourTest
   @Test
   public void verifyReentrantEventBusBehaviour() {
 
-    eventBus = new ReentrantEventBus();
+    eventBus = reentrantEventBus("test");
     eventBus.register(new Subscriber1());
     eventBus.register(new Subscriber2());
     eventBus.post(new EventA());

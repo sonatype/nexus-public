@@ -12,13 +12,20 @@
  */
 package org.sonatype.nexus.scheduling.internal;
 
+import java.util.concurrent.Future;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
+import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
+
+import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -33,6 +40,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 @Singleton
 public class TaskActivation
     extends StateGuardLifecycleSupport
+    implements EventAware
 {
   private final SchedulerSPI scheduler;
 
@@ -49,5 +57,26 @@ public class TaskActivation
   @Override
   protected void doStop() throws Exception {
     scheduler.pause();
+  }
+
+  /**
+   * @since 3.3
+   */
+  @Subscribe
+  public void onDatabaseFreezeChangeEvent(final DatabaseFreezeChangeEvent databaseFreezeChangeEvent) {
+    if (databaseFreezeChangeEvent.isFrozen()) {
+      scheduler.pause();
+      scheduler.listsTasks().stream()
+          .filter(taskInfo -> !maybeCancel(taskInfo))
+          .forEach(taskInfo -> log.warn("Unable to cancel task: {}", taskInfo.getName()));
+    }
+    else {
+      scheduler.resume();
+    }
+  }
+
+  private boolean maybeCancel(final TaskInfo taskInfo) {
+    Future future = taskInfo.getCurrentState().getFuture();
+    return future == null || future.cancel(false);
   }
 }

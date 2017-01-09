@@ -15,7 +15,9 @@ package org.sonatype.nexus.testcommon.event;
 import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.ReentrantEventBus;
+import com.google.common.eventbus.EventBus;
+
+import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
 
 /**
  * Simple {@link EventManager} for UT purposes. Requires manual registration, doesn't support asynchronous dispatch.
@@ -26,7 +28,7 @@ import com.google.common.eventbus.ReentrantEventBus;
 public class SimpleEventManager
     implements EventManager
 {
-  private final ReentrantEventBus eventBus = new ReentrantEventBus();
+  private final EventBus eventBus = reentrantEventBus("simple");
 
   @Override
   public void register(final Object handler) {

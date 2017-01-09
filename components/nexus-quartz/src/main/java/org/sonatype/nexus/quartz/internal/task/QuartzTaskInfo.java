@@ -239,7 +239,6 @@ public class QuartzTaskInfo
 
   @Override
   public TaskInfo runNow(final String triggerSource) throws TaskRemovedException {
-    final TaskConfiguration config;
 
     synchronized (this) {
       checkState(State.RUNNING != state, "Task already running");
@@ -248,30 +247,12 @@ public class QuartzTaskInfo
       if (isRemovedOrDone()) {
         throw new TaskRemovedException("Task removed: " + jobKey);
       }
-
-      config = taskState.getConfiguration();
-
-      log.info("Task {} runNow", config.getTaskLogName());
-
-      // avoid marking local state as running if task is limited to run on a different node
-      if (!scheduler.isLimitedToAnotherNode(config)) {
-        setNexusTaskState(
-            State.RUNNING,
-            taskState,
-            new QuartzTaskFuture(
-                scheduler,
-                jobKey,
-                config.getTaskLogName(),
-                new Date(),
-                scheduler.scheduleFactory().now(),
-                triggerSource
-            )
-        );
-      }
     }
     try {
+      log.info("Task {} runNow", taskState.getConfiguration().getTaskLogName());
+
       // DONE jobs are removed, and here will fail
-      scheduler.runNow(jobKey, config);
+      scheduler.runNow(triggerSource, jobKey, this, taskState);
     }
     catch (SchedulerException e) {
       throw new RuntimeException(e);

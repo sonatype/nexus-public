@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
@@ -38,7 +40,10 @@ import com.google.common.io.ByteStreams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
+import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -68,6 +73,8 @@ public class FileBlobStoreIT
 {
   public static final int TEST_DATA_LENGTH = 10;
 
+  private static final int METRICS_FLUSH_TIMEOUT = 5;
+
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin"
@@ -93,14 +100,18 @@ public class FileBlobStoreIT
 
   private TemporaryLocationStrategy temporaryLocationStrategy;
 
+  @Mock
+  NodeAccess nodeAccess;
+
   @Before
   public void setUp() throws Exception {
+    when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
     contentDirectory = blobStoreDirectory.resolve("content");
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
 
-    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl());
+    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
 
     fileOperations = spy(new SimpleFileOperations());
 
@@ -149,7 +160,7 @@ public class FileBlobStoreIT
     assertThat("size must be calculated correctly", metrics.getContentSize(), is(equalTo((long) TEST_DATA_LENGTH)));
 
     final BlobStoreMetrics storeMetrics = underTest.getMetrics();
-    assertThat(storeMetrics.getBlobCount(), is(equalTo(1L)));
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
 
     // FIXME: This is no longer valid
     //assertThat(storeMetrics.getTotalSize(), is(equalTo((long) TEST_DATA_LENGTH)));
@@ -158,6 +169,8 @@ public class FileBlobStoreIT
 
     final boolean deleted = underTest.delete(blob.getId());
     assertThat(deleted, is(equalTo(true)));
+    underTest.compact();
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
@@ -175,6 +188,41 @@ public class FileBlobStoreIT
 
     // FIXME: This is no longer valid
     //assertThat("compacting should reclaim deleted blobs' space", storeMetrics3.getTotalSize(), is(equalTo(0L)));
+  }
+
+  @Test
+  public void testDeleteHardUpdatesMetrics() {
+    long initialBlobCount = underTest.getMetrics().getBlobCount();
+
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+    final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
+        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+
+    underTest.deleteHard(blob.getId());
+
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
+        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));
+  }
+
+  @Test
+  public void testSoftDeleteMetricsOnlyUpdateOnCompact() {
+    long initialBlobCount = underTest.getMetrics().getBlobCount();
+    final byte[] content = new byte[TEST_DATA_LENGTH];
+
+    final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
+        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+
+    //Standard delete will not update metrics
+    underTest.delete(blob.getId());
+    assertThat(underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+
+    //Compact triggers hard delete, so metrics will be updated
+    underTest.compact();
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
+        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));
   }
 
   @Test

@@ -13,17 +13,22 @@
 package org.sonatype.nexus.blobstore.file.internal;
 
 import java.nio.file.Path;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.when;
 
 /**
  * {@link FileBlobStore} integration tests.
@@ -35,10 +40,16 @@ public class BlobStoreMetricsStoreImplIT
 
   private Path blobStoreDirectory;
 
+  private static final int METRICS_FLUSH_TIMEOUT = 5;
+
+  @Mock
+  NodeAccess nodeAccess;
+
   @Before
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
-    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl());
+    when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
+    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
     underTest.setStorageDir(blobStoreDirectory);
   }
 
@@ -54,15 +65,15 @@ public class BlobStoreMetricsStoreImplIT
     underTest.start();
 
     underTest.recordAddition(1000);
-    assertThat(underTest.getMetrics().getBlobCount(), is(1L));
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
     underTest.recordDeletion(1000);
-    assertThat(underTest.getMetrics().getBlobCount(), is(0L));
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
   }
 
   @Test
   public void metricsLoadsExistingPropertyFile() throws Exception {
     PropertiesFile props = new PropertiesFile(
-        blobStoreDirectory.resolve(BlobStoreMetricsStoreImpl.METRICS_FILENAME).toFile());
+        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + BlobStoreMetricsStoreImpl.METRICS_FILENAME).toFile());
 
     props.put(BlobStoreMetricsStoreImpl.BLOB_COUNT_PROP_NAME, "32");
     props.put(BlobStoreMetricsStoreImpl.TOTAL_SIZE_PROP_NAME, "200");
@@ -71,8 +82,7 @@ public class BlobStoreMetricsStoreImplIT
 
     underTest.start();
 
-    BlobStoreMetrics metrics = underTest.getMetrics();
-    assertThat(metrics.getBlobCount(), is(32L));
-    assertThat(metrics.getTotalSize(), is(200L));
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(32L));
+    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getTotalSize(), is(200L));
   }
 }

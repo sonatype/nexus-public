@@ -10,30 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest.client;
-
-import java.net.URI;
-
-import javax.ws.rs.client.Client;
+/*global Ext*/
 
 /**
- * REST client factory.
+ * BrowseableFormat store.
  *
- * @since 3.0
+ * @since 3.3
  */
-public interface RestClientFactory
-{
+Ext.define('NX.coreui.store.BrowseableFormat', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.BrowseableFormat',
 
-  Client create(RestClientConfiguration configuration);
+  proxy: {
+    type: 'direct',
 
-  default Client create() {
-    return create(RestClientConfiguration.DEFAULTS);
+    api: {
+      read: 'NX.direct.coreui_Repository.getBrowseableFormats'
+    },
+
+    reader: {
+      type: 'json',
+      root: 'data',
+      successProperty: 'success'
+    }
   }
-
-  /**
-   * Returns a proxy backed by the given client and URI.
-   *
-   * @since 3.3
-   */
-  <T> T proxy(Class<T> api, Client client, URI baseUri);
-}
+});

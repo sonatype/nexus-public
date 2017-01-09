@@ -14,17 +14,11 @@ package org.sonatype.nexus.repository.selector.internal;
 
 import java.util.List;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
-import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -37,8 +31,6 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.storage.DatabaseThreadUtils.withOtherDatabase;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Custom {@link OSQLFunction} for applying content selectors to an individual asset as part of a database query. When
@@ -54,17 +46,13 @@ public class ContentAuth
 {
   public static final String NAME = "contentAuth";
 
-  private final VariableResolverAdapterManager variableResolverAdapterManager;
-
-  private final ContentPermissionChecker contentPermissionChecker;
+  private final ContentAuthHelper contentAuthHelper;
 
   @Inject
-  public ContentAuth(@Nonnull final ContentPermissionChecker contentPermissionChecker,
-                     final VariableResolverAdapterManager variableResolverAdapterManager)
+  public ContentAuth(final ContentAuthHelper contentAuthHelper)
   {
     super(NAME, 2, 2);
-    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
+    this.contentAuthHelper = checkNotNull(contentAuthHelper);
   }
 
   @Override
@@ -79,7 +67,7 @@ public class ContentAuth
     String browsedRepositoryName = (String) iParams[1];
     switch (document.getClassName()) {
       case "asset":
-        return checkAssetPermissions(document, browsedRepositoryName);
+        return contentAuthHelper.checkAssetPermissions(document, browsedRepositoryName);
       case "component":
         return checkComponentAssetPermissions(document, browsedRepositoryName);
       default:
@@ -90,19 +78,11 @@ public class ContentAuth
   private boolean checkComponentAssetPermissions(final ODocument component, final String sourceRepositoryName) {
     checkNotNull(component);
     for (ODocument asset : browseComponentAssets(component)) {
-      if (checkAssetPermissions(asset, sourceRepositoryName)) {
+      if (contentAuthHelper.checkAssetPermissions(asset, sourceRepositoryName)) {
         return true;
       }
     }
     return false;
-  }
-
-  private boolean checkAssetPermissions(final ODocument asset, final String sourceRepositoryName) {
-    String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
-    VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
-    return withOtherDatabase(() -> contentPermissionChecker
-        .isPermitted(sourceRepositoryName, format, BROWSE, variableSource));
   }
 
   @Override

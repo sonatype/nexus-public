@@ -34,8 +34,6 @@ import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.ReentrantAsyncEventBus;
-import com.google.common.eventbus.ReentrantEventBus;
 import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
@@ -43,6 +41,8 @@ import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.EVENTS;
+import static org.sonatype.nexus.common.event.EventBusFactory.reentrantAsyncEventBus;
+import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
 
 /**
  * Default {@link EventManager}.
@@ -70,7 +70,7 @@ public class EventManagerImpl
   public EventManagerImpl(final BeanLocator beanLocator)
   {
     this.beanLocator = checkNotNull(beanLocator);
-    this.eventBus = new ReentrantEventBus();
+    this.eventBus = reentrantEventBus("nexus");
 
     // direct hand-off used! Host pool will use caller thread to execute async inspectors when pool full!
     this.threadPool = new ThreadPoolExecutor(
@@ -83,7 +83,8 @@ public class EventManagerImpl
         new CallerRunsPolicy()
     );
 
-    this.asyncBus = new ReentrantAsyncEventBus(new EventExecutor(NexusExecutorService.forCurrentSubject(threadPool)));
+    this.asyncBus = reentrantAsyncEventBus("nexus.async",
+        new EventExecutor(NexusExecutorService.forCurrentSubject(threadPool)));
   }
 
   /**

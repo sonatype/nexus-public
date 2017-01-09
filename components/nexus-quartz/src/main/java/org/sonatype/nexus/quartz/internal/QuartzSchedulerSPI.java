@@ -669,9 +669,32 @@ public class QuartzSchedulerSPI
    * Used by {@link QuartzTaskInfo#runNow()}.
    */
   @Guarded(by = STARTED)
-  public void runNow(final JobKey jobKey, final TaskConfiguration config)
+  public void runNow(final String triggerSource,
+                     final JobKey jobKey,
+                     final QuartzTaskInfo taskInfo,
+                     final QuartzTaskState taskState)
       throws TaskRemovedException, SchedulerException
   {
+    checkState(active, "Cannot run tasks while scheduler is paused");
+
+    TaskConfiguration config = taskState.getConfiguration();
+
+    // avoid marking local state as running if task is limited to run on a different node
+    if (!isLimitedToAnotherNode(config)) {
+      taskInfo.setNexusTaskState(
+          TaskInfo.State.RUNNING,
+          taskState,
+          new QuartzTaskFuture(
+              this,
+              jobKey,
+              config.getTaskLogName(),
+              new Date(),
+              scheduleFactory().now(),
+              triggerSource
+          )
+      );
+    }
+
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       // triggering with dataMap from "now" trigger as it contains metadata for back-conversion in listener
       JobDataMap triggerDetail = triggerConverter.convert(scheduleFactory().now()).build().getJobDataMap();

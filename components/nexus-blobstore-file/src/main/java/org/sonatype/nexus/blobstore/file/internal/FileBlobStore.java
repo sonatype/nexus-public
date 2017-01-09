@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -400,9 +401,6 @@ public class FileBlobStore
       deletedBlobIndex.add(blobId.toString().getBytes(StandardCharsets.UTF_8));
       blob.markStale();
 
-      // TODO: should we only update the size when doing a hard delete?
-      storeMetrics.recordDeletion(blobAttributes.getMetrics().getContentSize());
-
       return true;
     }
     catch (IOException e) {
@@ -419,12 +417,20 @@ public class FileBlobStore
     checkNotNull(blobId);
 
     try {
-      delete(attributePath(blobId));
+      log.debug("Hard deleting blob {}", blobId);
+
+      Path attributePath = attributePath(blobId);
+      BlobAttributes blobAttributes = new BlobAttributes(attributePath);
+      Long contentSize = getContentSizeForDeletion(blobAttributes);
 
       Path blobPath = contentPath(blobId);
-      boolean blobDeleted = delete(blobPath);
 
-      log.debug("Deleting-hard blob {}", blobId);
+      boolean blobDeleted = delete(blobPath);
+      delete(attributePath);
+
+      if (blobDeleted && contentSize != null) {
+        storeMetrics.recordDeletion(contentSize);
+      }
 
       return blobDeleted;
     }
@@ -435,6 +441,19 @@ public class FileBlobStore
       liveBlobs.invalidate(blobId);
     }
   }
+
+  @Nullable
+  private Long getContentSizeForDeletion(final BlobAttributes blobAttributes) {
+    try {
+      blobAttributes.load();
+      return blobAttributes.getMetrics() != null ? blobAttributes.getMetrics().getContentSize() : null;
+    }
+    catch (Exception e) {
+      log.warn("Unable to load attributes {}, delete will not be added to metrics.", blobAttributes.getPath(), e);
+      return null;
+    }
+  }
+
 
   @Override
   @Guarded(by = STARTED)
@@ -556,7 +575,7 @@ public class FileBlobStore
     try {
       Path blobDir = getAbsoluteBlobDir();
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        deleteQuietly(blobDir.resolve("metrics.properties"));
+        Stream.of(storeMetrics.listBackingFiles(blobDir)).forEach(metricsFile -> deleteQuietly(metricsFile.toPath()));
         deleteQuietly(blobDir.resolve("metadata.properties"));
         deleteQuietly(blobDir.resolve("deletions.index"));
         if (!fileOperations.deleteEmptyDirectory(blobDir)) {
