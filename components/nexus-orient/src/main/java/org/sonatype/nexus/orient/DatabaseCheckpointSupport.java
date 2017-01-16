@@ -63,7 +63,8 @@ public abstract class DatabaseCheckpointSupport
   public void begin(String version) throws Exception {
     upgradeDir = appDirectories.getWorkDirectory("upgrades/" + databaseName);
 
-    backupZip = new File(upgradeDir, databaseName + "-" + version + "-backup.zip");
+    String timestampSuffix = String.format("-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", System.currentTimeMillis());
+    backupZip = new File(upgradeDir, databaseName + "-" + version + timestampSuffix + "-backup.zip");
     failedZip = new File(upgradeDir, databaseName + "-failed.zip");
 
     log.debug("Backing up database to {}", backupZip);

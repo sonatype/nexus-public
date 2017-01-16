@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -55,10 +56,16 @@ public class DatabaseCheckpointSupportTest
     };
   }
 
+  private File[] findBackupFiles(final String dbName, final String version) {
+    return upgradeDir.listFiles(file -> {
+      return file.getName().startsWith(dbName + '-' + version + '-') && file.getName().endsWith("-backup.zip");
+    });
+  }
+
   @Test
   public void testBegin() throws Exception {
     checkpoint.begin("1.1");
-    assertThat(new File(upgradeDir, DB_NAME + "-1.1-backup.zip").isFile(), is(true));
+    assertThat(findBackupFiles(DB_NAME, "1.1"), is(arrayWithSize(1)));
   }
 
   @Test
@@ -69,6 +76,7 @@ public class DatabaseCheckpointSupportTest
       assertThat(schema.createClass("new_class"), is(notNullValue()));
     }
     checkpoint.rollback();
+    assertThat(findBackupFiles(DB_NAME, "1.1"), is(arrayWithSize(1)));
     assertThat(new File(upgradeDir, DB_NAME + "-failed.zip").isFile(), is(true));
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       OSchema schema = db.getMetadata().getSchema();
@@ -85,6 +93,7 @@ public class DatabaseCheckpointSupportTest
     }
     checkpoint.commit();
     checkpoint.rollback();
+    assertThat(findBackupFiles(DB_NAME, "1.1"), is(arrayWithSize(1)));
     assertThat(new File(upgradeDir, DB_NAME + "-failed.zip").isFile(), is(true));
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       OSchema schema = db.getMetadata().getSchema();
@@ -95,10 +104,9 @@ public class DatabaseCheckpointSupportTest
   @Test
   public void testEnd() throws Exception {
     checkpoint.begin("1.1");
-    assertThat(new File(upgradeDir, DB_NAME + "-1.1-backup.zip").isFile(), is(true));
+    assertThat(findBackupFiles(DB_NAME, "1.1"), is(arrayWithSize(1)));
     checkpoint.commit();
     checkpoint.end();
-    assertThat(new File(upgradeDir, DB_NAME + "-1.1-backup.zip").exists(), is(false));
     assertThat(upgradeDir.exists(), is(false));
   }
 }

@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -28,6 +31,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
+import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
@@ -43,6 +47,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -82,20 +87,15 @@ public class BrowseServiceImpl
 
   @Override
   public BrowseResult<Component> browseComponents(final Repository repository,
-                                                  @Nullable final String filter,
-                                                  @Nullable final String sortProperty,
-                                                  @Nullable final String sortDirection,
-                                                  @Nullable final Integer start,
-                                                  @Nullable final Integer limit)
+                                                  final QueryOptions queryOptions)
   {
     checkNotNull(repository);
     final List<Repository> repositories = getRepositories(repository);
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       List<Bucket> buckets = getBuckets(storageTx, repositories);
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
-      BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(groupType.equals(repository.getType()),
-          buckets, options);
+      BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
+          groupType.equals(repository.getType()), buckets, queryOptions);
       return new BrowseResult<>(
           getCount(storageTx.browse(builder.buildCountSql(), builder.buildSqlParams())),
           getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams())));
@@ -128,18 +128,13 @@ public class BrowseServiceImpl
 
   @Override
   public BrowseResult<Asset> browseAssets(final Repository repository,
-                                          @Nullable final String filter,
-                                          @Nullable final String sortProperty,
-                                          @Nullable final String sortDirection,
-                                          @Nullable final Integer start,
-                                          @Nullable final Integer limit)
+                                          final QueryOptions queryOptions)
   {
     checkNotNull(repository);
     final List<Repository> repositories = getRepositories(repository);
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, repository.getName());
-      BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(options);
+      BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), queryOptions);
       return new BrowseResult<>(
           storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories, null),
           Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories,
@@ -151,11 +146,7 @@ public class BrowseServiceImpl
   public BrowseResult<Asset> previewAssets(final RepositorySelector repositorySelector,
                                            final List<Repository> repositories,
                                            final String jexlExpression,
-                                           @Nullable final String filter,
-                                           @Nullable final String sortProperty,
-                                           @Nullable final String sortDirection,
-                                           @Nullable final Integer start,
-                                           @Nullable final Integer limit)
+                                           final QueryOptions queryOptions)
   {
     checkNotNull(repositories);
     checkNotNull(jexlExpression);
@@ -169,18 +160,34 @@ public class BrowseServiceImpl
       else {
         previewRepositories = repositories;
       }
-      QueryOptions options = new QueryOptions(filter, sortProperty, sortDirection, start, limit, null);
+
       PreviewAssetsSqlBuilder builder = new PreviewAssetsSqlBuilder(
           repositorySelector,
           jexlExpression,
-          previewRepositories.stream().map(Repository::getName).collect(Collectors.toList()),
-          options);
+          queryOptions,
+          getRepoToContainedGroupMap(repositories));
       return new BrowseResult<>(
           storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), previewRepositories, null),
           Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
               previewRepositories, builder.buildQuerySuffix()))
       );
     }
+  }
+
+  @VisibleForTesting
+  Map<String, List<String>> getRepoToContainedGroupMap(List<Repository> repositories) {
+    Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
+    for (Repository repository : repositories) {
+      List<String> groupNames = new ArrayList<>();
+      groupNames.add(repository.getName());
+      groupNames.addAll(repositories.stream().filter(groupRepository -> {
+        Optional<GroupFacet> groupFacet = groupRepository.optionalFacet(GroupFacet.class);
+        return groupFacet.isPresent() && groupFacet.get().leafMembers().stream()
+            .anyMatch(leafMember -> repository.getName().equals(leafMember.getName()));
+      }).map(groupRepository -> groupRepository.getName()).collect(Collectors.toSet()));
+      repoToContainedGroupMap.put(repository.getName(), groupNames);
+    }
+    return repoToContainedGroupMap;
   }
 
   private List<Repository> getRepositories(final Repository repository) {

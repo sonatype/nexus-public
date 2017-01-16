@@ -12,13 +12,17 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,23 +37,25 @@ public class PreviewAssetsSqlBuilder
 
   private final String jexlExpression;
 
-  private final List<String> previewRepositories;
-
   private final QueryOptions queryOptions;
+
+  private final Map<String, List<String>> repoToContainedGroupMap;
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public PreviewAssetsSqlBuilder(final RepositorySelector repositorySelector,
                                  final String jexlExpression,
-                                 final List<String> previewRepositories,
-                                 final QueryOptions queryOptions) {
+                                 final QueryOptions queryOptions,
+                                 final Map<String, List<String>> repoToContainedGroupMap) {
     this.repositorySelector = checkNotNull(repositorySelector);
     this.jexlExpression = checkNotNull(jexlExpression);
-    this.previewRepositories = checkNotNull(previewRepositories);
     this.queryOptions = checkNotNull(queryOptions);
+    this.repoToContainedGroupMap = checkNotNull(repoToContainedGroupMap);
   }
 
   public String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentExpression(@this, :jexlExpression, :repositorySelector, :repositoriesAsString) == true");
+    whereClauses.add("contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true");
     if (queryOptions.getFilter() != null) {
       whereClauses.add(String.format("%s LIKE :nameFilter", MetadataNodeEntityAdapter.P_NAME));
     }
@@ -83,7 +89,14 @@ public class PreviewAssetsSqlBuilder
     Map<String, Object> params = new HashMap<>();
     params.put("repositorySelector", repositorySelector.toSelector());
     params.put("jexlExpression", buildJexlExpression());
-    params.put("repositoriesAsString", buildRepositoriesAsString());
+
+    try {
+      //Ideally we could just pass a map around, workaround for http://www.prjhub.com/#/issues/8146
+      params.put("repoToContainedGroupMap", OBJECT_MAPPER.writeValueAsString(repoToContainedGroupMap));
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Unable to serialize the repository map", e);
+    }
 
     String filter = queryOptions.getFilter();
     if (filter != null) {
@@ -95,12 +108,5 @@ public class PreviewAssetsSqlBuilder
   private String buildJexlExpression() {
     //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
     return jexlExpression.replaceAll("\"", "'").replaceAll("\\s", " ");
-  }
-
-  private String buildRepositoriesAsString() {
-    if (previewRepositories.isEmpty()) {
-      return "";
-    }
-    return String.join(",", previewRepositories);
   }
 }

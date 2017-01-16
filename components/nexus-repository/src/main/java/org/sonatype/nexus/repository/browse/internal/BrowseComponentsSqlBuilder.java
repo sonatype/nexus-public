@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
+import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
@@ -33,6 +34,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class BrowseComponentsSqlBuilder
 {
+  private final String repositoryName;
+
   private final boolean group;
 
   private final List<Bucket> buckets;
@@ -40,10 +43,12 @@ public class BrowseComponentsSqlBuilder
   private final QueryOptions queryOptions;
 
   public BrowseComponentsSqlBuilder(
+      final String repositoryName,
       final boolean group,
       final List<Bucket> buckets,
       final QueryOptions queryOptions)
   {
+    this.repositoryName = checkNotNull(repositoryName);
     this.group = group;
     this.buckets = checkNotNull(buckets);
     this.queryOptions = checkNotNull(queryOptions);
@@ -72,7 +77,7 @@ public class BrowseComponentsSqlBuilder
    */
   public Map<String, Object> buildSqlParams() {
     Map<String, Object> params = new HashMap<>();
-    params.put("browsedRepository", queryOptions.getBrowsedRepository());
+    params.put("browsedRepository", repositoryName);
 
     String filter = queryOptions.getFilter();
     if (filter != null) {

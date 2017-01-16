@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseService
+import org.sonatype.nexus.repository.browse.QueryOptions
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector
@@ -120,14 +121,9 @@ class ComponentComponent
     if (!repository.configuration.online) {
       return null
     }
-    def sort = parameters.sort?.get(0)
     def result = browseService.browseComponents(
         repository,
-        parameters.getFilter('filter'),
-        sort?.property,
-        sort?.direction,
-        parameters.start,
-        parameters.limit);
+        toQueryOptions(parameters))
     return new PagedResponse<ComponentXO>(
         result.total,
         result.results.collect(COMPONENT_CONVERTER.rcurry(repository.name)))
@@ -178,20 +174,15 @@ class ComponentComponent
       return null
     }
 
-    def sort = parameters.sort?.get(0)
     def result = browseService.previewAssets(
         repositorySelector,
         selectedRepositories,
         jexlExpression,
-        parameters.getFilter('filter'),
-        sort?.property,
-        sort?.direction,
-        parameters.start,
-        parameters.limit);
+        toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
         result.results.collect(ASSET_CONVERTER.rcurry(null, null))
-    );
+    )
   }
 
   @DirectMethod
@@ -203,14 +194,7 @@ class ComponentComponent
     if (!repository.configuration.online) {
       return null
     }
-    def sort = parameters.sort?.get(0)
-    def result = browseService.browseAssets(repository,
-        parameters.getFilter('filter'),
-        sort?.property,
-        sort?.direction,
-        parameters.start,
-        parameters.limit
-    )
+    def result = browseService.browseAssets(repository, toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
         result.results.collect(ASSET_CONVERTER.rcurry(null, repositoryName))
@@ -330,6 +314,17 @@ class ComponentComponent
     }
     ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
     return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
+  }
+
+  private QueryOptions toQueryOptions(StoreLoadParameters storeLoadParameters) {
+    def sort = storeLoadParameters.sort?.get(0)
+
+    return new QueryOptions(
+        storeLoadParameters.getFilter('filter'),
+        sort?.property,
+        sort?.direction,
+        storeLoadParameters.start,
+        storeLoadParameters.limit)
   }
 
   /**

@@ -27,6 +27,9 @@ import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
 import org.sonatype.nexus.repository.view.Headers;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Status;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +45,9 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 
 /**
  * Tests for {@link DefaultHttpResponseSender}.
@@ -148,6 +153,30 @@ public class DefaultHttpResponseSenderTest
     order.verify(payload).close();
 
     order.verifyNoMoreInteractions();
+  }
+
+  @Test
+  public void customStatusMessageIsMaintained() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+
+    underTest.send(request, HttpResponses.forbidden("You can't see this"), httpServletResponse);
+
+    verify(httpServletResponse).sendError(403, "You can't see this");
+  }
+
+  @Test
+  public void customStatusMessageIsMaintainedWithPayload() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+
+    Payload detailedReason = new StringPayload("Please authenticate and try again", "text/plain");
+
+    Response response = new Response.Builder()
+        .status(Status.failure(FORBIDDEN, "You can't see this"))
+        .payload(detailedReason).build();
+
+    underTest.send(request, response, httpServletResponse);
+
+    verify(httpServletResponse).setStatus(403, "You can't see this");
   }
 
 }

@@ -57,9 +57,16 @@ public class DefaultHttpResponseSender
 
     // add status followed by payload if we have one
     Status status = response.getStatus();
+    String statusMessage = status.getMessage();
     try (Payload payload = response.getPayload()) {
       if (status.isSuccessful() || payload != null) {
-        httpResponse.setStatus(status.getCode());
+
+        if (statusMessage == null) {
+          httpResponse.setStatus(status.getCode());
+        }
+        else {
+          httpResponse.setStatus(status.getCode(), statusMessage);
+        }
 
         if (payload != null) {
           log.trace("Attaching payload: {}", payload);
@@ -79,7 +86,7 @@ public class DefaultHttpResponseSender
         }
       }
       else {
-        httpResponse.sendError(status.getCode(), status.getMessage());
+        httpResponse.sendError(status.getCode(), statusMessage);
       }
     }
   }

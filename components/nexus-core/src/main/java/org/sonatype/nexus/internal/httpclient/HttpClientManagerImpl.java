@@ -45,7 +45,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIUtils;
-import org.apache.http.conn.routing.RouteInfo;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
@@ -303,12 +302,13 @@ public class HttpClientManagerImpl
   }
 
   /**
-   * Creates absolute request URI with full path from passed in context, honoring proxy if in play.
+   * Creates absolute request URI with full path from passed in context.
    */
   @Nonnull
   private URI getRequestURI(final HttpContext context) {
     final HttpClientContext clientContext = HttpClientContext.adapt(context);
     final HttpRequest httpRequest = clientContext.getRequest();
+    final HttpHost target = clientContext.getTargetHost();
     try {
       URI uri;
       if (httpRequest instanceof HttpUriRequest) {
@@ -317,21 +317,11 @@ public class HttpClientManagerImpl
       else {
         uri = URI.create(httpRequest.getRequestLine().getUri());
       }
-      final RouteInfo routeInfo = clientContext.getHttpRoute();
-      if (routeInfo != null) {
-        if (routeInfo.getHopCount() == 1 && uri.isAbsolute()) {
-          return uri;
-        }
-        HttpHost target = routeInfo.getHopTarget(0);
-        return URIUtils.resolve(URI.create(target.toURI()), uri);
-      }
-      else {
-        return uri;
-      }
+      return uri.isAbsolute() ? uri : URIUtils.resolve(URI.create(target.toURI()), uri);
     }
     catch (Exception e) {
       log.warn("Could not create absolute request URI", e);
-      return URI.create(clientContext.getTargetHost().toURI());
+      return URI.create(target.toURI());
     }
   }
 }

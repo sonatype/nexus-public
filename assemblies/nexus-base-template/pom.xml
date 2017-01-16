@@ -222,9 +222,21 @@
                 <replaceregexp file="${project.build.directory}/assembly/etc/startup.properties"
                                match="(.*pax-logging-service.*)" replace="# \1"/>
 
-                <!-- disable automatic updates and retries -->
+                <!-- tweak generated karaf feature configuration -->
                 <concat destfile="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" append="true">
-                  serviceRequirements=disable${line.separator}updateSnapshots=false${line.separator}scheduleMaxRun=1
+                  <string>${line.separator}</string>
+                  <string>
+                    # SONATYPE: disable .cfg store on feature install
+                    configCfgStore=false
+
+                    # SONATYPE: disable automatic updates and retries
+                    serviceRequirements=disable
+                    updateSnapshots=false
+                    scheduleMaxRun=1
+                  </string>
+                  <filterchain>
+                    <trim/>
+                  </filterchain>
                 </concat>
 
                 <!--

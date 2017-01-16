@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
+package org.sonatype.nexus.repository.browse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,11 +18,12 @@ import java.util.Locale;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.repository.browse.BrowseService;
+
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Data carrier with fields commonly used by SQL builders for the {@link BrowseServiceImpl} implementation. Also does
+ * Data carrier with fields commonly used by SQL builders for the {@link BrowseService} implementation. Also does
  * a quick check on the sortProperty and sortDirection fields as defensive programming against SQL injection.
  *
  * @since 3.1
@@ -43,14 +44,11 @@ public class QueryOptions
 
   private final Integer limit;
 
-  private final String browsedRepository;
-
   public QueryOptions(@Nullable String filter,
                       @Nullable String sortProperty,
                       @Nullable String sortDirection,
                       @Nullable Integer start,
-                      @Nullable Integer limit,
-                      @Nullable String browsedRepository)
+                      @Nullable Integer limit)
   {
     checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
     checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
@@ -59,7 +57,6 @@ public class QueryOptions
     this.sortDirection = sortDirection;
     this.start = start;
     this.limit = limit;
-    this.browsedRepository = browsedRepository;
   }
 
   @Nullable
@@ -85,9 +82,5 @@ public class QueryOptions
   @Nullable
   public Integer getLimit() {
     return limit;
-  }
-
-  public String getBrowsedRepository() {
-    return browsedRepository;
   }
 }

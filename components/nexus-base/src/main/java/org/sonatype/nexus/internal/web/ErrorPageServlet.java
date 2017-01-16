@@ -116,18 +116,24 @@ public class ErrorPageServlet
       errorMessage = "Not found";
     }
 
-    // error message must always be non-null when rendering
+    // maintain custom status message when (re)setting the status code,
+    // we can't use sendError because it doesn't allow custom html body
     if (errorMessage == null) {
-      errorMessage = "Unknown error";
+      response.setStatus(errorCode);
+    }
+    else {
+      response.setStatus(errorCode, errorMessage);
     }
 
+    response.setContentType("text/html");
+
     // ensure sanity of passed in strings which are used to render html content
-    errorMessage = StringEscapeUtils.escapeHtml(errorMessage);
+    String errorDescription = errorMessage != null ? StringEscapeUtils.escapeHtml(errorMessage) : "Unknown error";
 
     TemplateParameters params = templateHelper.parameters();
     params.set("errorCode", errorCode);
     params.set("errorName", Status.fromStatusCode(errorCode).getReasonPhrase());
-    params.set("errorDescription", errorMessage);
+    params.set("errorDescription", errorDescription);
 
     // add cause if ?debug enabled and there is an exception
     if (cause != null && ServletHelper.isDebug(request)) {
@@ -135,8 +141,6 @@ public class ErrorPageServlet
     }
 
     String html = templateHelper.render(template, params);
-    response.setStatus(errorCode);
-    response.setContentType("text/html");
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(response.getOutputStream()))) {
       out.println(html);
     }

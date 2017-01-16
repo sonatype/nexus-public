@@ -19,6 +19,7 @@ import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet;
+import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
@@ -53,6 +54,7 @@ public class RemoveSnapshotsTaskDescriptor
             "Repository",
             "Select the Maven repository or repository group to remove snapshots from.",
             true).includingAnyOfFacets(RemoveSnapshotsFacet.class)
+            .excludingAnyOfVersionPolicies(VersionPolicy.RELEASE.name())
             .includeAnEntryForAllRepositories(),
         new NumberTextFormField(MINIMUM_SNAPSHOT_RETAINED_COUNT,
             "Minimum snapshot count",

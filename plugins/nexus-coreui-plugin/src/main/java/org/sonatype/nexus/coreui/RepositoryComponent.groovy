@@ -341,6 +341,10 @@ class RepositoryComponent
           return null
         }
       }
+      String versionPolicies = parameters.getFilter('versionPolicies')
+      repositories = filterIn(repositories, versionPolicies, { Repository repository ->
+        (String) repository?.configuration?.attributes?.maven?.versionPolicy
+      })
       // TODO: Add application of permissions back once the browse permissions are rationalized
       /*
       String applyPermissions = parameters.getFilter('applyPermissions')

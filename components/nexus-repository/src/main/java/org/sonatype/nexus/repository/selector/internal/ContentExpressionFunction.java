@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -28,6 +32,7 @@ import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -46,10 +51,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Required parameters for the functiona are
  * - asset (typically provided as @this)
  * - expression {a jexl expression string, i.e. "format == 'nuget'"}
- * - repository (a repository name, or a RepositorySelector based string, i.e. * or *maven2 etc.)
- * - memberRepositories (if repository is a group repository, this should be a comma seperated list of repository
- *   names that are included in the group repository, this should be all member repositories including those from
- *   child group repositories, see GroupFacet.leaftMembers, otherwise an empty string will suffice)
+ * - repositorySelector (a RepositorySelector based string, i.e. * or *maven2 or repoName directly, etc.)
+ * - repoToContainedGroupMap a serialized map containing all repoIds in the system, with a list of any groups that may
+ *   contain the repositories
  *
  * @since 3.1
  */
@@ -67,6 +71,8 @@ public class ContentExpressionFunction
   private final SelectorManager selectorManager;
 
   private final ContentAuthHelper contentAuthHelper;
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Inject
   public ContentExpressionFunction(final VariableResolverAdapterManager variableResolverAdapterManager,
@@ -88,26 +94,56 @@ public class ContentExpressionFunction
   {
     OIdentifiable identifiable = (OIdentifiable) iParams[0];
     ODocument asset = identifiable.getRecord();
-    String[] members = ((String) iParams[3]).split(",");
     RepositorySelector repositorySelector = RepositorySelector.fromSelector((String) iParams[2]);
     String jexlExpression = (String) iParams[1];
-    String[] membersForAuth = members;
-    //this would denote a single repository, so no need for any expanded list of member repos
-    //even in case of group, we only want to auth check the group, not its members
+    List<String> membersForAuth;
+
+    //if a single repo was selected, we want to auth against that member
     if (!repositorySelector.isAllRepositories()) {
-      membersForAuth = new String[]{repositorySelector.getName()};
+      membersForAuth = Arrays.asList(repositorySelector.getName());
     }
-    return checkAssetRepository(asset, members) &&
-        contentAuthHelper.checkAssetPermissions(asset, membersForAuth) &&
+    //if all repos (or all of format) was selected, use the repository the asset was in, as well as any groups
+    //that may contain that repository
+    else {
+      try {
+        //Ideally we could just pass a map around, workaround for http://www.prjhub.com/#/issues/8146
+        Map<String, List<String>> repoToContainedGroupMap = OBJECT_MAPPER.readValue((String) iParams[3], Map.class);
+
+        //find the repository that matches the asset
+        String assetRepository = getAssetRepository(asset);
+
+        //if can't find it, just back out, nothing more to see here
+        if (assetRepository == null) {
+          log.error("Asset {} references no repository", getAssetName(asset));
+          return false;
+        }
+
+        membersForAuth = repoToContainedGroupMap.get(assetRepository);
+
+        if (membersForAuth == null) {
+          log.error("Asset {} references an invalid repository: {}", getAssetName(asset), assetRepository);
+          return false;
+        }
+      }
+      catch (IOException e) {
+        log.error("Unable to deserialize the repository map: {} for asset: {}", iParams[3], getAssetName(asset), e);
+        return false;
+      }
+    }
+
+    return contentAuthHelper.checkAssetPermissions(asset, membersForAuth.toArray(new String[membersForAuth.size()])) &&
         checkJexlExpression(asset, jexlExpression, asset.field(AssetEntityAdapter.P_FORMAT, String.class));
   }
 
-  private boolean checkAssetRepository(ODocument asset, String[] repositoryNames) {
+  @Nullable
+  private String getAssetRepository(ODocument asset) {
     OIdentifiable bucketId = asset.field(AssetEntityAdapter.P_BUCKET, OIdentifiable.class);
     ODocument bucket = bucketId.getRecord();
-    String assetRepository = bucket.field(BucketEntityAdapter.P_REPOSITORY_NAME, String.class);
+    return bucket.field(BucketEntityAdapter.P_REPOSITORY_NAME, String.class);
+  }
 
-    return Arrays.asList(repositoryNames).contains(assetRepository);
+  private String getAssetName(ODocument asset) {
+    return asset.field(AssetEntityAdapter.P_NAME, String.class);
   }
 
   private boolean checkJexlExpression(final ODocument asset,

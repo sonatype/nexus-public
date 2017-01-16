@@ -13,11 +13,14 @@
 package org.sonatype.nexus.blobstore.file.internal;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -95,6 +98,9 @@ public class FileBlobStore
   public static final String TYPE_V1 = "file/1";
 
   @VisibleForTesting
+  public static final String REBUILD_DELETED_BLOB_INDEX_KEY = "rebuildDeletedBlobIndex";
+
+  @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
 
   @VisibleForTesting
@@ -169,7 +175,17 @@ public class FileBlobStore
       metadata.store();
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
-    deletedBlobIndex = new QueueFile(storageDir.resolve(DELETIONS_FILENAME).toFile());
+    File deletedIndexFile = storageDir.resolve(DELETIONS_FILENAME).toFile();
+    try {
+      deletedBlobIndex = new QueueFile(deletedIndexFile);
+    }
+    catch (IOException e) {
+      log.error("Unable to load deletions index file {}, run the compact blobstore task to rebuild", deletedIndexFile, e);
+      createEmptyDeletionsIndex(deletedIndexFile);
+      deletedBlobIndex = new QueueFile(deletedIndexFile);
+      metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
+      metadata.store();
+    }
     storeMetrics.setStorageDir(storageDir);
     storeMetrics.start();
   }
@@ -189,14 +205,16 @@ public class FileBlobStore
   /**
    * Returns path for blob-id content file relative to root directory.
    */
-  private Path contentPath(final BlobId id) {
+  @VisibleForTesting
+  Path contentPath(final BlobId id) {
     return contentDir.resolve(getLocation(id) + BLOB_CONTENT_SUFFIX);
   }
 
   /**
    * Returns path for blob-id attribute file relative to root directory.
    */
-  private Path attributePath(final BlobId id) {
+  @VisibleForTesting
+  Path attributePath(final BlobId id) {
     return contentDir.resolve(getLocation(id) + BLOB_ATTRIBUTE_SUFFIX);
   }
 
@@ -463,26 +481,25 @@ public class FileBlobStore
 
   @Override
   @Guarded(by = STARTED)
-  public void compact() {
+  public synchronized void compact() {
     try {
+      maybeRebuildDeletedBlobIndex();
       // only process each blob once (in-use blobs may be re-added to the index)
       for (int i = 0, numBlobs = deletedBlobIndex.size(); i < numBlobs; i++) {
-        synchronized (deletedBlobIndex) {
-          byte[] bytes = deletedBlobIndex.peek();
-          if (bytes == null) {
-            return;
-          }
-          deletedBlobIndex.remove();
-          BlobId blobId = new BlobId(new String(bytes, StandardCharsets.UTF_8));
-          FileBlob blob = liveBlobs.getIfPresent(blobId);
-          if (blob == null || blob.isStale()) {
-            // not in use, so it's safe to delete the file
-            deleteHard(blobId);
-          }
-          else {
-            // still in use, so move it to end of the queue
-            deletedBlobIndex.add(bytes);
-          }
+        byte[] bytes = deletedBlobIndex.peek();
+        if (bytes == null) {
+          return;
+        }
+        deletedBlobIndex.remove();
+        BlobId blobId = new BlobId(new String(bytes, StandardCharsets.UTF_8));
+        FileBlob blob = liveBlobs.getIfPresent(blobId);
+        if (blob == null || blob.isStale()) {
+          // not in use, so it's safe to delete the file
+          deleteHard(blobId);
+        }
+        else {
+          // still in use, so move it to end of the queue
+          deletedBlobIndex.add(bytes);
         }
       }
     }
@@ -620,6 +637,65 @@ public class FileBlobStore
       }
     }
     return configurationPath;
+  }
+
+  private void maybeRebuildDeletedBlobIndex() throws IOException {
+    PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
+    metadata.load();
+    String deletedBlobIndexRebuildRequired = metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false");
+    if (Boolean.parseBoolean(deletedBlobIndexRebuildRequired)) {
+      Path deletedIndex = getAbsoluteBlobDir().resolve(DELETIONS_FILENAME);
+      log.warn("Rebuilding deletions index file {}", deletedIndex);
+
+      deletedBlobIndex.clear();
+      int softDeletedBlobsFound = Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS)
+          .filter(this::isNonTemporaryAttributeFile)
+          .map(BlobAttributes::new)
+          .mapToInt(attributes -> {
+            try {
+              attributes.load();
+              if (attributes.isDeleted()) {
+                String filename = attributes.getPath().toFile().getName();
+                String blobId = filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
+                deletedBlobIndex.add(blobId.getBytes(StandardCharsets.UTF_8));
+                return 1;
+              }
+            }
+            catch (IOException e) {
+              log.warn("Failed to add blobId to index from attribute file {}", attributes.getPath(), e);
+            }
+            return 0;
+          })
+          .sum();
+      log.warn("Added {} soft deleted blob(s) to index file {}", softDeletedBlobsFound, deletedIndex);
+
+      metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
+      metadata.store();
+    }
+  }
+
+  private boolean isNonTemporaryAttributeFile(final Path path) {
+    File attributeFile = path.toFile();
+    return attributeFile.isFile() &&
+        attributeFile.getName().endsWith(BLOB_ATTRIBUTE_SUFFIX) &&
+        !attributeFile.getName().startsWith(TEMPORARY_BLOB_ID_PREFIX);
+  }
+
+  private void createEmptyDeletionsIndex(final File deletionsIndex) throws IOException {
+    // copy a fresh index on top of existing index to avoid problems
+    // with removing or renaming open files on Windows
+    Path tempFile = Files.createTempFile(DELETIONS_FILENAME, "tmp");
+    Files.delete(tempFile);
+    try {
+      new QueueFile(tempFile.toFile()).close();
+      try (RandomAccessFile raf = new RandomAccessFile(deletionsIndex, "rw")) {
+        raf.setLength(0);
+        raf.write(Files.readAllBytes(tempFile));
+      }
+    }
+    finally {
+      Files.deleteIfExists(tempFile);
+    }
   }
 
   class FileBlob

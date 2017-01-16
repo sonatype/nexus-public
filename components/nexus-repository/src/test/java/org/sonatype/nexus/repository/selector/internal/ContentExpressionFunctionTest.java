@@ -12,16 +12,19 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,7 +38,7 @@ import org.mockito.Mock;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -78,6 +81,8 @@ public class ContentExpressionFunctionTest
   @Mock
   private ContentAuthHelper contentAuthHelper;
 
+  ObjectMapper objectMapper;
+
   ContentExpressionFunction underTest;
 
   @Before
@@ -98,10 +103,9 @@ public class ContentExpressionFunctionTest
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
-    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(true);
+    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager, contentAuthHelper);
 
-    underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager,
-        contentAuthHelper);
+    objectMapper = new ObjectMapper();
 
     // Copied from the ContentAuthTest, I didn't need this to run the tests locally, but seems CI does
     ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
@@ -111,74 +115,59 @@ public class ContentExpressionFunctionTest
   @Test
   public void testMatchingAsset_SingleRepository() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME))).thenReturn(true);
     assertThat(underTest
-        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, REPOSITORY_NAME},
+        .execute(underTest, null, null, new Object[]{assetDocument, "jexlexpression", REPOSITORY_NAME, ""},
             null), is(true));
   }
 
   @Test
   public void testMatchingAsset_AllRepositories() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null,
-        new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), REPOSITORY_NAME}, null), is(true));
+    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME))).thenReturn(true);
+    Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
+    repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME));
+    assertThat(underTest.execute(underTest, null, null, new Object[]{
+        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+    }, null), is(true));
   }
 
   @Test
-  public void testMatchingAsset_GroupRepository() throws Exception {
+  public void testMatchingAsset_AllRepositories_inGroup() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    assertThat(underTest.execute(underTest, null, null,
-        new Object[]{assetDocument, "ignored", "doesntmatter", "repo1," + REPOSITORY_NAME}, null), is(true));
+    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME), eq("groupRepo"))).thenReturn(true);
+    Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
+    repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME, "groupRepo"));
+    assertThat(underTest.execute(underTest, null, null, new Object[]{
+        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+    }, null), is(true));
   }
 
   @Test
   public void testNonMatchingAsset_SingleRepository() throws Exception {
-    //this isn't really necessary, just to prove that this isn't causing the execute call to return false
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
     assertThat(underTest
-        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "invalidname", "invalidname"},
+        .execute(underTest, null, null, new Object[]{assetDocument, "jexlexpression", REPOSITORY_NAME, ""},
             null), is(false));
   }
 
   @Test
-  public void testNonMatchingAsset_SingleRepository_BadFormat() throws Exception {
-    //this isn't really necessary, just to prove that this isn't causing the execute call to return false
+  public void testNonMatchingAsset_AllRepositories() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
+    Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
+    repoToContainedGroupMap.put(REPOSITORY_NAME, Collections.emptyList());
     assertThat(underTest.execute(underTest, null, null, new Object[]{
-        assetDocument, "format == '" + FORMAT + "'", RepositorySelector.allOfFormat("bad").toSelector(), ""
+        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
     }, null), is(false));
   }
 
   @Test
-  public void testNonMatchingAsset_GroupRepository() throws Exception {
-    //this isn't really necessary, just to prove that this isn't causing the execute call to return false
+  public void testNonMatchingAsset_AllRepositories_inGroup() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    assertThat(underTest
-            .execute(underTest, null, null, new Object[]{assetDocument, "ignored", "doesntmatter", "repo1,repo2"}, null),
-        is(false));
-  }
-
-  @Test
-  public void testNoPrivilege_SingleRepository() throws Exception {
-    when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
-    assertThat(underTest
-        .execute(underTest, null, null, new Object[]{assetDocument, "ignored", REPOSITORY_NAME, REPOSITORY_NAME},
-            null), is(false));
-  }
-
-  @Test
-  public void testNoPrivilege_AllRepositories() throws Exception {
-    when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null,
-        new Object[]{assetDocument, "ignored", RepositorySelector.all().toSelector(), ""}, null), is(false));
-  }
-
-  @Test
-  public void testNoPrivilege_GroupRepository() throws Exception {
-    when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), anyVararg())).thenReturn(false);
-    assertThat(underTest.execute(underTest, null, null,
-        new Object[]{assetDocument, "ignored", "doesntmatter", "repo1," + REPOSITORY_NAME}, null), is(false));
+    Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
+    repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList("groupRepo"));
+    assertThat(underTest.execute(underTest, null, null, new Object[]{
+        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+    }, null), is(false));
   }
 }

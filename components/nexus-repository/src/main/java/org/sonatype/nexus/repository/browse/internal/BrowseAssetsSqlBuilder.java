@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,8 +30,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowseAssetsSqlBuilder
 {
   private final QueryOptions queryOptions;
+  private final String repositoryName;
 
-  public BrowseAssetsSqlBuilder(final QueryOptions queryOptions) {
+  public BrowseAssetsSqlBuilder(final String repositoryName, final QueryOptions queryOptions) {
+    this.repositoryName = checkNotNull(repositoryName);
     this.queryOptions = checkNotNull(queryOptions);
   }
 
@@ -68,7 +71,7 @@ public class BrowseAssetsSqlBuilder
 
   public Map<String, Object> buildSqlParams() {
     Map<String, Object> params = new HashMap<>();
-    params.put("browsedRepository", queryOptions.getBrowsedRepository());
+    params.put("browsedRepository", repositoryName);
     String filter = queryOptions.getFilter();
     if (filter != null) {
       params.put("nameFilter", "%" + filter + "%");

@@ -17,13 +17,21 @@ import java.io.File;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.log.LoggerLevelChangedEvent;
+import org.sonatype.nexus.common.log.LoggersResetEvent;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -34,6 +42,8 @@ import org.sonatype.nexus.orient.entity.EntityHook;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -66,8 +76,14 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class DatabaseServerImpl
     extends StateGuardLifecycleSupport
-    implements DatabaseServer
+    implements DatabaseServer, EventAware, EventAware.Asynchronous
 {
+  private static final String JUL_ROOT_LOGGER = "";
+
+  private static final String ORIENTDB_PARENT_LOGGER = "com";
+
+  private static final String ORIENTDB_LOGGER = ORIENTDB_PARENT_LOGGER + ".orientechnologies";
+
   private final ApplicationDirectories applicationDirectories;
 
   private final List<OServerHandlerConfiguration> injectedHandlers;
@@ -130,6 +146,7 @@ public class DatabaseServerImpl
 
     // instance startup
     OServer server = new OServer();
+    configureOrientMinimumLogLevel();
     server.setExtensionClassLoader(uberClassLoader);
     OServerConfiguration config = createConfiguration();
     server.startup(config);
@@ -265,5 +282,70 @@ public class DatabaseServerImpl
   @Guarded(by = STARTED)
   public List<String> databases() {
     return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
+  }
+
+  @Subscribe
+  public void onLoggerLevelChanged(final LoggerLevelChangedEvent event) {
+    String logger = event.getLogger();
+    if (ORIENTDB_LOGGER.startsWith(logger) || logger.startsWith(ORIENTDB_LOGGER)
+        || org.slf4j.Logger.ROOT_LOGGER_NAME.equals(logger)) {
+      configureOrientMinimumLogLevel();
+    }
+  }
+
+  @Subscribe
+  public void onLoggersReset(final LoggersResetEvent event) {
+    configureOrientMinimumLogLevel();
+  }
+
+  /**
+   * Until OrientDB cleans up its logging infrastructure, this synchronizes its global minimum log level to the minimum
+   * log level configured for any of its loggers.
+   * 
+   * @see http://www.prjhub.com/#/issues/3744
+   * @see http://www.prjhub.com/#/issues/5327
+   */
+  private void configureOrientMinimumLogLevel() {
+    int minimumLevel = getOrientMininumLogLevel();
+    log.debug("Configuring OrientDB global minimum log level to {}", minimumLevel);
+    OLogManager logManager = OLogManager.instance();
+    logManager.setDebugEnabled(minimumLevel <= Level.FINE.intValue());
+    logManager.setInfoEnabled(minimumLevel <= Level.INFO.intValue());
+    logManager.setWarnEnabled(minimumLevel <= Level.WARNING.intValue());
+    logManager.setErrorEnabled(minimumLevel <= Level.SEVERE.intValue());
+  }
+
+  private int getOrientMininumLogLevel() {
+    int minimumLogLevel = 0;
+    for (String loggerName : new String[] { ORIENTDB_LOGGER, ORIENTDB_PARENT_LOGGER, JUL_ROOT_LOGGER }) {
+      Integer logLevel = getSafeLogLevel(loggerName);
+      if (logLevel != null) {
+        minimumLogLevel = logLevel;
+        break;
+      }
+    }
+    String orientLoggerPrefix = ORIENTDB_LOGGER + '.';
+    for (Enumeration<String> en = LogManager.getLogManager().getLoggerNames(); en.hasMoreElements()
+        && minimumLogLevel > Level.FINE.intValue();) {
+      String loggerName = en.nextElement();
+      if (!loggerName.startsWith(orientLoggerPrefix)) {
+        continue;
+      }
+      Integer logLevel = getSafeLogLevel(loggerName);
+      if (logLevel != null && logLevel < minimumLogLevel) {
+        minimumLogLevel = logLevel;
+      }
+    }
+    return minimumLogLevel;
+  }
+
+  @Nullable
+  private Integer getSafeLogLevel(final String loggerName) {
+    Logger logger = LogManager.getLogManager().getLogger(loggerName);
+    if (logger == null) {
+      return null;
+    }
+    Level level = logger.getLevel();
+    return (level != null) ? level.intValue() : null;
   }
 }
