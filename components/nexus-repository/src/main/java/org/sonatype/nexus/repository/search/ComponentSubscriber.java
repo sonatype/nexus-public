@@ -19,11 +19,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.AssetEvent;
@@ -38,6 +40,9 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.FacetSupport.State.DELETED;
+import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED;
+import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED;
 
 /**
  * Subscriber of batched component/asset events, which are used to trigger search updates.
@@ -47,6 +52,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class ComponentSubscriber
+    extends ComponentSupport
     implements EventAware, Asynchronous
 {
   private final RepositoryManager repositoryManager;
@@ -81,24 +87,54 @@ public class ComponentSubscriber
 
     // distribute updates across repositories as necessary
     for (final String repositoryName : updatedComponents.keySet()) {
-      final Repository repository = repositoryManager.get(repositoryName);
-      if (repository != null) {
-        UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-        try {
-          final SearchFacet searchFacet = repository.facet(SearchFacet.class);
-          for (final EntityId componentId : updatedComponents.get(repositoryName)) {
-            if (deletedComponents.contains(componentId)) {
-              searchFacet.delete(componentId);
-            }
-            else {
-              searchFacet.put(componentId);
-            }
-          }
-        }
-        finally {
-          UnitOfWork.end();
+      maybeUpdateSearchIndex(repositoryName, updatedComponents.get(repositoryName), deletedComponents);
+    }
+  }
+
+  private void maybeUpdateSearchIndex(final String repositoryName,
+                                      final Iterable<EntityId> updatedComponents,
+                                      final Set<EntityId> deletedComponents)
+  {
+    final Repository repository = repositoryManager.get(repositoryName);
+    if (repository != null) {
+      try {
+        doUpdateSearchIndex(repository, updatedComponents, deletedComponents);
+      }
+      catch (InvalidStateException e) {
+        switch (e.getInvalidState()) {
+          case STOPPED:
+          case DELETED:
+          case DESTROYED:
+            log.debug("Ignoring async search update for {} repository {}", e.getInvalidState(), repositoryName, e);
+            break;
+          default:
+            throw e;
         }
       }
+    }
+    else {
+      log.debug("Ignoring async search update for missing repository {}", repositoryName);
+    }
+  }
+
+  private static void doUpdateSearchIndex(final Repository repository,
+                                          final Iterable<EntityId> updatedComponents,
+                                          final Set<EntityId> deletedComponents)
+  {
+    final SearchFacet searchFacet = repository.facet(SearchFacet.class);
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    try {
+      for (final EntityId componentId : updatedComponents) {
+        if (deletedComponents.contains(componentId)) {
+          searchFacet.delete(componentId);
+        }
+        else {
+          searchFacet.put(componentId);
+        }
+      }
+    }
+    finally {
+      UnitOfWork.end();
     }
   }
 }

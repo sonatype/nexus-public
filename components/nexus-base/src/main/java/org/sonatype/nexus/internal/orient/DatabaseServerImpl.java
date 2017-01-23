@@ -263,6 +263,10 @@ public class DatabaseServerImpl
     // ensure we don't set a file lock, which can behave badly on NFS https://issues.sonatype.org/browse/NEXUS-11289
     OGlobalConfiguration.FILE_LOCK.setValue(false);
 
+    // disable auto removal of servers, SharedHazelcastPlugin removes gracefully shutdown nodes but for crashes and
+    // especially network partitions we don't want the write quorum getting lowered and endanger consistency 
+    OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(-1);
+
     return config;
   }
 

@@ -62,7 +62,7 @@ public class BlockingHttpClient
     checkNotNull(config);
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
-    status = new RemoteConnectionStatus(blocked ? "Remote Manually Blocked" : "Remote Connection Pending...");
+    status = new RemoteConnectionStatus(blocked ? "Remote Manually Blocked" : "Ready to Connect");
     // TODO shall we use config.getConnectionConfig().getTimeout() * 2 as in NX2?
     autoBlockSequence = new FibonacciNumberSequence(Time.seconds(40).toMillis());
   }

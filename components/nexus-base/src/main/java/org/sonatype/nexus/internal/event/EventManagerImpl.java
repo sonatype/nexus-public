@@ -12,11 +12,6 @@
  */
 package org.sonatype.nexus.internal.event;
 
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
-import java.util.concurrent.TimeUnit;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -29,8 +24,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
-import org.sonatype.nexus.thread.NexusExecutorService;
-import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
@@ -55,36 +48,25 @@ public class EventManagerImpl
     extends LifecycleSupport
     implements EventManager
 {
-  private static final int HOST_THREAD_POOL_SIZE = SystemPropertiesHelper.getInteger(
+  static final int HOST_THREAD_POOL_SIZE = SystemPropertiesHelper.getInteger(
       EventManagerImpl.class.getName() + ".poolSize", 500);
 
   private final BeanLocator beanLocator;
 
-  private final EventBus eventBus;
+  private final EventExecutor eventExecutor;
 
-  private final ThreadPoolExecutor threadPool;
+  private final EventBus eventBus;
 
   private final EventBus asyncBus;
 
   @Inject
-  public EventManagerImpl(final BeanLocator beanLocator)
+  public EventManagerImpl(final BeanLocator beanLocator, final EventExecutor eventExecutor)
   {
     this.beanLocator = checkNotNull(beanLocator);
+    this.eventExecutor = checkNotNull(eventExecutor);
+
     this.eventBus = reentrantEventBus("nexus");
-
-    // direct hand-off used! Host pool will use caller thread to execute async inspectors when pool full!
-    this.threadPool = new ThreadPoolExecutor(
-        0,
-        HOST_THREAD_POOL_SIZE,
-        60L,
-        TimeUnit.SECONDS,
-        new SynchronousQueue<>(),
-        new NexusThreadFactory("event", "event-manager"),
-        new CallerRunsPolicy()
-    );
-
-    this.asyncBus = reentrantAsyncEventBus("nexus.async",
-        new EventExecutor(NexusExecutorService.forCurrentSubject(threadPool)));
+    this.asyncBus = reentrantAsyncEventBus("nexus.async", eventExecutor);
   }
 
   /**
@@ -108,18 +90,6 @@ public class EventManagerImpl
   protected void doStart() throws Exception {
     // watch for EventSubscriber components and register/unregister them
     beanLocator.watch(Key.get(EventAware.class, Named.class), new EventAwareMediator(), this);
-  }
-
-  @Override
-  protected void doStop() throws Exception {
-    // we need clean shutdown, wait all background event inspectors to finish to have consistent state
-    threadPool.shutdown();
-    try {
-      threadPool.awaitTermination(5L, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      log.debug("Interrupted while waiting for termination", e);
-    }
   }
 
   @Override
@@ -157,14 +127,10 @@ public class EventManagerImpl
     asyncBus.post(event);
   }
 
-  /**
-   * Used by UTs and ITs only, to "wait for calm period", when all the async event inspectors finished.
-   */
   @Override
   @VisibleForTesting
   @ManagedAttribute
   public boolean isCalmPeriod() {
-    // "calm period" is when we have no queued nor active threads
-    return threadPool.getQueue().isEmpty() && threadPool.getActiveCount() == 0;
+    return eventExecutor.isCalmPeriod();
   }
 }

@@ -88,13 +88,9 @@
 
   <build>
     <plugins>
-      <!--
-      NOTE: Seems like only version 3.1 of m-p-p works properly :-\
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.1</version>
         <executions>
           <execution>
             <goals>

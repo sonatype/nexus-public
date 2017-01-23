@@ -112,7 +112,7 @@ public class StateGuard
       }
     }
 
-    throw new IllegalStateException("Invalid state: " + current + "; allowed: " + Arrays.toString(allowed));
+    throw new InvalidStateException(current, allowed);
   }
 
   /**
