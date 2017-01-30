@@ -75,8 +75,6 @@ public class StorageTxImpl
 {
   private static final Logger log = LoggerFactory.getLogger(StorageTxImpl.class);
 
-  private static final long DELETE_BATCH_SIZE = 100L;
-
   private static final int INITIAL_DELAY_MS = SystemPropertiesHelper
       .getInteger(StorageTxImpl.class.getName() + ".retrydelay.initial", 10);
 
@@ -493,40 +491,6 @@ public class StorageTxImpl
       deleteBlob(blobRef, effectiveWritePolicy);
     }
     assetEntityAdapter.deleteEntity(db, asset);
-  }
-
-  @Override
-  @Guarded(by = ACTIVE)
-  public void deleteBucket(Bucket bucket) {
-    checkNotNull(bucket);
-
-    long count = 0;
-
-    // first delete all components and constituent assets
-    for (Component component : browseComponents(bucket)) {
-      deleteComponent(component, false);
-      count++;
-      if (count == DELETE_BATCH_SIZE) {
-        commit();
-        count = 0;
-      }
-    }
-    commit();
-
-    // then delete all standalone assets
-    for (Asset asset : browseAssets(bucket)) {
-      deleteAsset(asset, null);
-      count++;
-      if (count == DELETE_BATCH_SIZE) {
-        commit();
-        count = 0;
-      }
-    }
-    commit();
-
-    // finally, delete the bucket document
-    bucketEntityAdapter.deleteEntity(db, bucket);
-    commit();
   }
 
   @Override

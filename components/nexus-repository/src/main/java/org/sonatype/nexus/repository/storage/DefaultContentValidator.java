@@ -131,12 +131,22 @@ public class DefaultContentValidator
     if (Strings.isNullOrEmpty(declaredMediaType)) {
       return null;
     }
+
     try {
       MediaType mediaType = MediaType.parse(declaredMediaType);
       return mediaType.withoutParameters().toString();
     }
     catch (IllegalArgumentException e) {
-      throw new InvalidContentException("Invalid declared contentType: " + declaredMediaType, e);
+      //https://maven.oracle.com is sending out incomplete content-type header, so lets try to clean it up and reprocess
+      //i.e. 'Application/jar;charset='
+      int idx = declaredMediaType.indexOf(';');
+      if (idx >= 0) {
+        String parsedDeclaredMediaType = declaredMediaType.substring(0, idx);
+        log.debug("Invalid declared contentType {} will retry with {}", declaredMediaType, parsedDeclaredMediaType, e);
+        return mediaTypeWithoutParameters(parsedDeclaredMediaType);
+      }
+
+      throw new InvalidContentException("Content type could not be determined: " + declaredMediaType, e);
     }
   }
 

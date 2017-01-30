@@ -13,17 +13,23 @@
 package org.sonatype.nexus.httpclient.config
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.httpclient.HttpClientPlan
 import org.sonatype.nexus.httpclient.internal.NexusHttpRoutePlanner
 
 import org.apache.http.HttpHost
 import org.apache.http.HttpRequest
+import org.apache.http.client.config.CookieSpecs
 import org.apache.http.conn.routing.HttpRoute
+import org.apache.http.impl.client.BasicCookieStore
 import org.apache.http.protocol.HttpContext
 import org.junit.Test
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.instanceOf
+import static org.hamcrest.Matchers.nullValue
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.when
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS
 
@@ -33,7 +39,9 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS
 class ConfigurationCustomizerTest
     extends TestSupport
 {
-  ConfigurationCustomizer configurationCustomizer = new ConfigurationCustomizer(mock(HttpClientConfiguration))
+  HttpClientConfiguration httpClientConfiguration = mock(HttpClientConfiguration)
+
+  ConfigurationCustomizer configurationCustomizer = new ConfigurationCustomizer(httpClientConfiguration)
 
   HttpHost httpProxyHost = new HttpHost('http-proxy', 8080)
 
@@ -45,6 +53,25 @@ class ConfigurationCustomizerTest
         https: new ProxyServerConfiguration(host: httpsProxyHost.hostName, port: httpsProxyHost.port, enabled: true),
         nonProxyHosts: nonProxyHosts
     ))
+  }
+
+  @Test
+  void 'plan is updated with circular redirect and cookie settings from configuration'() {
+    when(httpClientConfiguration.getConnection()).thenReturn(new ConnectionConfiguration(enableCircularRedirects: true, enableCookies: true))
+    HttpClientPlan plan = new HttpClientPlan()
+    configurationCustomizer.customize(plan)
+    assertThat(plan.request.circularRedirectsAllowed, equalTo(true))
+    assertThat(plan.request.maxRedirects, equalTo(10))
+    assertThat(plan.request.cookieSpec, equalTo(CookieSpecs.DEFAULT))
+  }
+
+  @Test
+  void 'plan is not updated when circular redirect and cookie settings missing from configuration'() {
+    HttpClientPlan plan = new HttpClientPlan()
+    configurationCustomizer.customize(plan)
+    assertThat(plan.request.circularRedirectsAllowed, equalTo(false))
+    assertThat(plan.request.maxRedirects, equalTo(50))
+    assertThat(plan.request.cookieSpec, nullValue())
   }
 
   @Test

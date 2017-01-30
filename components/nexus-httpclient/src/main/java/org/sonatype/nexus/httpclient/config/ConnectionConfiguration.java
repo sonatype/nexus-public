@@ -37,6 +37,12 @@ public class ConnectionConfiguration
   private Boolean useTrustStore;
 
   @Nullable
+  private Boolean enableCircularRedirects;
+
+  @Nullable
+  private Boolean enableCookies;
+
+  @Nullable
   public Time getTimeout() {
     return timeout;
   }
@@ -72,6 +78,36 @@ public class ConnectionConfiguration
     this.useTrustStore = useTrustStore;
   }
 
+  /**
+   * @since 3.3
+   */
+  @Nullable
+  public Boolean getEnableCircularRedirects() {
+    return enableCircularRedirects;
+  }
+
+  /**
+   * @since 3.3
+   */
+  public void setEnableCircularRedirects(@Nullable final Boolean enableCircularRedirects) {
+    this.enableCircularRedirects = enableCircularRedirects;
+  }
+
+  /**
+   * @since 3.3
+   */
+  @Nullable
+  public Boolean getEnableCookies() {
+    return enableCookies;
+  }
+
+  /**
+   * @since 3.3
+   */
+  public void setEnableCookies(@Nullable final Boolean enableCookies) {
+    this.enableCookies = enableCookies;
+  }
+
   public ConnectionConfiguration copy() {
     try {
       return (ConnectionConfiguration) clone();
@@ -88,6 +124,8 @@ public class ConnectionConfiguration
         ", maximumRetries=" + maximumRetries +
         ", userAgentSuffix=" + userAgentSuffix +
         ", useTrustStore=" + useTrustStore +
+        ", enableCircularRedirects=" + enableCircularRedirects +
+        ", enableCookies=" + enableCookies +
         '}';
   }
 }

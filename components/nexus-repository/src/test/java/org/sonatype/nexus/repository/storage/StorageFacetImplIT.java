@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
 import com.google.common.collect.ImmutableMap;
@@ -109,6 +110,7 @@ public class StorageFacetImplIT
     assetEntityAdapter.enableObfuscation(recordIdObfuscator);
     ContentValidatorSelector contentValidatorSelector = new ContentValidatorSelector(Collections.<String, ContentValidator>emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
     MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.<String, MimeRulesSource>emptyMap());
+    StorageFacetManager storageFacetManager = mock(StorageFacetManager.class);
     underTest = new StorageFacetImpl(
         mockNodeAccess,
         mockBlobStoreManager,
@@ -118,7 +120,8 @@ public class StorageFacetImplIT
         assetEntityAdapter,
         mock(ClientInfoProvider.class),
         contentValidatorSelector,
-        mimeRulesSourceSelector
+        mimeRulesSourceSelector,
+        storageFacetManager
     );
     underTest.installDependencies(mock(EventManager.class));
 

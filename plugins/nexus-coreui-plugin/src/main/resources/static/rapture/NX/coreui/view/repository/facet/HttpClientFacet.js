@@ -132,6 +132,18 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
                 allowExponential: false,
                 minValue: 0,
                 maxValue: 3600
+              },
+              {
+                xtype: 'checkbox',
+                name: 'attributes.httpclient.connection.enableCircularRedirects',
+                fieldLabel: NX.I18n.get('Repository_Facet_HttpClientFacet_EnableCircularRedirects_FieldLabel'),
+                helpText: NX.I18n.get('Repository_Facet_HttpClientFacet_EnableCircularRedirects_HelpText')
+              },
+              {
+                xtype: 'checkbox',
+                name: 'attributes.httpclient.connection.enableCookies',
+                fieldLabel: NX.I18n.get('Repository_Facet_HttpClientFacet_EnableCookies_FieldLabel'),
+                helpText: NX.I18n.get('Repository_Facet_HttpClientFacet_EnableCookies_HelpText')
               }
             ]
           }

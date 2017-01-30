@@ -26,6 +26,9 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
+import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
+
 /**
  * Maven version policy handler.
  *
@@ -37,6 +40,9 @@ public class VersionPolicyHandler
     extends ComponentSupport
     implements Handler
 {
+
+  private static final String METADATA_SNAPSHOT_PATH_SUFFIX = SNAPSHOT_VERSION_SUFFIX + "/" + METADATA_FILENAME;
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
@@ -46,6 +52,10 @@ public class VersionPolicyHandler
     if (path.getCoordinates() != null && !allowsArtifactRepositoryPath(versionPolicy, path.getCoordinates())) {
       return HttpResponses.badRequest("Repository version policy: " + versionPolicy + " does not allow version: " +
           path.getCoordinates().getVersion());
+    }
+    if (!allowsMetadataRepositoryPath(versionPolicy, path.main().getPath())) {
+      return HttpResponses.badRequest("Repository version policy: " + versionPolicy +
+          " does not allow metadata in path: " + path.getPath());
     }
     return context.proceed();
   }
@@ -59,4 +69,13 @@ public class VersionPolicyHandler
     }
     return true;
   }
+
+  private boolean allowsMetadataRepositoryPath(final VersionPolicy versionPolicy, final String path) {
+    boolean isMetadataSnapshot = path.endsWith(METADATA_SNAPSHOT_PATH_SUFFIX);
+    if (isMetadataSnapshot && versionPolicy == VersionPolicy.RELEASE) {
+      return false;
+    }
+    return true;
+  }
+
 }

@@ -10,41 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package org.sonatype.nexus.common.event;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.function.Consumer;
 
 /**
- * Database instance.
+ * Consumer of events; like {@link Consumer} but throws a checked exception.
  *
- * @since 3.0
+ * @since 3.3
  */
-public interface DatabaseInstance
+public interface EventConsumer<E>
 {
-  /**
-   * Returns the name of this database instance.
-   */
-  String getName();
-
-  /**
-   * Open a non-pooled connection to the database.
-   */
-  ODatabaseDocumentTx connect();
-
-  /**
-   * Attempt to open a pooled connection to the database.
-   */
-  ODatabaseDocumentTx acquire();
-
-  /**
-   * Access the {@link DatabaseExternalizer} for the database.
-   */
-  DatabaseExternalizer externalizer();
-
-  /**
-   * Freeze or release database for read-only mode.
-   *
-   * @since 3.3
-   */
-  void setFrozen(boolean frozen);
+  void accept(E event) throws Exception;
 }

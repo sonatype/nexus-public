@@ -27,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -36,12 +37,11 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
+import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -86,6 +86,8 @@ public class StorageFacetImpl
 
   private final Supplier<StorageTx> txSupplier;
 
+  private final StorageFacetManager storageFacetManager;
+
   @VisibleForTesting
   static final String CONFIG_KEY = "storage";
 
@@ -126,7 +128,8 @@ public class StorageFacetImpl
                           final AssetEntityAdapter assetEntityAdapter,
                           final ClientInfoProvider clientInfoProvider,
                           final ContentValidatorSelector contentValidatorSelector,
-                          final MimeRulesSourceSelector mimeRulesSourceSelector)
+                          final MimeRulesSourceSelector mimeRulesSourceSelector,
+                          final StorageFacetManager storageFacetManager)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -138,6 +141,7 @@ public class StorageFacetImpl
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.contentValidatorSelector = checkNotNull(contentValidatorSelector);
     this.mimeRulesSourceSelector = checkNotNull(mimeRulesSourceSelector);
+    this.storageFacetManager = checkNotNull(storageFacetManager);
 
     this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
@@ -192,11 +196,10 @@ public class StorageFacetImpl
 
   @Override
   protected void doDelete() throws Exception {
-    // TODO: Make this a soft delete and cleanup later so it doesn't block for large repos.
-    TransactionalDeleteBlob.operation.withDb(txSupplier).run(() -> {
-      StorageTx tx = UnitOfWork.currentTx();
-      tx.deleteBucket(tx.findBucket(getRepository()));
-    });
+    // skip when replicating, origin node will delete the bucket blobs
+    if (!EventHelper.isReplicating()) {
+      storageFacetManager.enqueueDeletion(getRepository(), blobStoreManager.get(config.blobStoreName), bucket);
+    }
   }
 
   @Override

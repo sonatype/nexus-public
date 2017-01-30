@@ -283,15 +283,6 @@ public interface StorageTx
   void deleteAsset(Asset asset);
 
   /**
-   * Deletes an existing bucket and all components and assets within.
-   *
-   * NOTE: This is a potentially long-lived and non-atomic operation. Items within the bucket will be
-   * sequentially deleted in batches in order to keep memory use within reason. This method will automatically
-   * commit a transaction for each batch, and will return after committing the last batch.
-   */
-  void deleteBucket(Bucket bucket);
-
-  /**
    * Creates a new Blob and updates the given asset with a reference to it, hash metadata, size, and content type.
    * The old blob, if any, will be deleted.
    *

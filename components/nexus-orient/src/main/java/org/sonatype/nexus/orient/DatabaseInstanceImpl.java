@@ -83,4 +83,17 @@ public class DatabaseInstanceImpl
         "name='" + name + '\'' +
         '}';
   }
+
+  @Override
+  public void setFrozen(final boolean frozen) {
+    ensureStarted();
+    try (ODatabaseDocumentTx db = connect()) {
+      if (frozen) {
+        db.freeze(true);
+      }
+      else {
+        db.release();
+      }
+    }
+  }
 }

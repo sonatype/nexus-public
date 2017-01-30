@@ -16,6 +16,7 @@ import java.util.concurrent.Future
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI
@@ -26,6 +27,7 @@ import org.mockito.Mock
 
 import static java.util.Arrays.asList
 import static org.mockito.Mockito.doReturn
+import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.scheduling.TaskInfo.State.RUNNING
@@ -36,6 +38,9 @@ class TaskActivationTest
 {
   @Mock
   SchedulerSPI schedulerSpi
+
+  @Mock
+  DatabaseFreezeService databaseFreezeService
 
   @Mock
   TaskInfo runningTask
@@ -65,7 +70,7 @@ class TaskActivationTest
     doReturn(null).when(waitingTaskCurrentState).getFuture()
 
     when(schedulerSpi.listsTasks()).thenReturn(asList(runningTask, waitingTask))
-    underTest = new TaskActivation(schedulerSpi)
+    underTest = new TaskActivation(schedulerSpi, databaseFreezeService)
   }
 
   @Test
@@ -79,5 +84,12 @@ class TaskActivationTest
   void 'restart scheduler when database is unfrozen'() {
     underTest.onDatabaseFreezeChangeEvent(new DatabaseFreezeChangeEvent(false))
     verify(schedulerSpi).resume()
+  }
+
+  @Test
+  void 'scheduler not resumed on startup when database is frozen'() {
+    when(databaseFreezeService.isFrozen()).thenReturn(true)
+    underTest.start()
+    verify(schedulerSpi, times(0)).resume()
   }
 }

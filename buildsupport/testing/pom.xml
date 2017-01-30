@@ -153,6 +153,13 @@
         <type>zip</type>
       </dependency>
 
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-client</artifactId>
+        <version>6.1.0</version>
+        <classifier>shaded</classifier>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

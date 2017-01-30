@@ -121,6 +121,7 @@ class Maven2ProxyRecipe
     // Note: partialFetchHandler NOT added for Maven metadata
     builder.route(newMetadataRouteBuilder()
         .handler(negativeCacheHandler)
+        .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(proxyHandler)

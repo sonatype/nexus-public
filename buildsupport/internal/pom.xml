@@ -169,14 +169,6 @@
         <version>1.1.0</version>
       </dependency>
 
-      <!-- docker -->
-
-      <dependency>
-        <groupId>com.spotify</groupId>
-        <artifactId>docker-client</artifactId>
-        <version>6.1.0</version>
-        <classifier>shaded</classifier>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 

@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.storage.StorageFacetImpl.Config;
+import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
@@ -105,6 +106,9 @@ public class StorageFacetImplTest
   private MimeRulesSourceSelector mimeRulesSourceSelector;
 
   @Mock
+  private StorageFacetManager storageFacetManager;
+
+  @Mock
   private Configuration configuration;
 
   @Mock
@@ -141,7 +145,8 @@ public class StorageFacetImplTest
         assetEntityAdapter,
         clientInfoProvider,
         contentValidatorSelector,
-        mimeRulesSourceSelector
+        mimeRulesSourceSelector,
+        storageFacetManager
     );
     underTest.attach(repository);
   }

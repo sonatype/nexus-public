@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -25,6 +25,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventConsumer;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -310,7 +312,11 @@ public class RepositoryManagerImpl
     log.debug("Creating repository: {} -> {}", repositoryName, configuration);
 
     Repository repository = newRepository(configuration);
-    store.create(configuration);
+
+    if (!EventHelper.isReplicating()) {
+      store.create(configuration);
+    }
+
     track(repository);
 
     repository.start();
@@ -332,7 +338,10 @@ public class RepositoryManagerImpl
 
     // ensure configuration sanity
     repository.validate(configuration);
-    store.update(configuration);
+
+    if (!EventHelper.isReplicating()) {
+      store.update(configuration);
+    }
 
     repository.stop();
     repository.update(configuration);
@@ -353,110 +362,62 @@ public class RepositoryManagerImpl
 
     Repository repository = repository(name);
     Configuration configuration = repository.getConfiguration();
+
     repository.stop();
     repository.delete();
     repository.destroy();
-    store.delete(configuration);
+
+    if (!EventHelper.isReplicating()) {
+      store.delete(configuration);
+    }
+
     untrack(repository);
 
     eventManager.post(new RepositoryDeletedEvent(repository));
   }
 
-  @Override
-  public boolean isBlobstoreUsed(String blobStoreName) {
+  private Stream<Object> blobstoreUsageStream(final String blobStoreName) {
     return stream(browse().spliterator(), false)
       .map(Repository::getConfiguration)
       .map(Configuration::getAttributes)
       .map(a -> a.get("storage"))
       .map(s -> s.get("blobStoreName"))
-      .filter(blobStoreName::equals)
-      .findAny()
-      .isPresent();
+      .filter(blobStoreName::equals);
+  }
+
+  @Override
+  public boolean isBlobstoreUsed(final String blobStoreName) {
+    return blobstoreUsageStream(blobStoreName).findAny().isPresent();
   }
 
   @Override
   public long blobstoreUsageCount(final String blobStoreName) {
-    return stream(browse().spliterator(), false)
-        .map(Repository::getConfiguration)
-        .map(Configuration::getAttributes)
-        .map(a -> a.get("storage"))
-        .map(s -> s.get("blobStoreName"))
-        .filter(blobStoreName::equals)
-        .count();
-  }
-
-  @Subscribe
-  public void on(final ConfigurationDeletedEvent event) {
-    handleRemoteOnly(event, repositoryName -> {
-      // only delete if the repository is tracked
-      if (repositories.containsKey(repositoryName)) {
-        try {
-          log.trace("delete: {}", repositoryName);
-          Repository repository = repository(repositoryName);
-          repository.destroy();
-          untrack(repository);
-        }
-        catch (Exception e) {
-          log.warn("delete failed: {}", repositoryName, e);
-        }
-      }
-    });
-  }
-
-  @Subscribe
-  public void on(final ConfigurationUpdatedEvent event) {
-    handleRemoteOnly(event, repositoryName -> {
-      // only update if the repository is tracked
-      if (repositories.containsKey(repositoryName)) {
-        withConfiguration(repositoryName, c -> {
-          try {
-            log.trace("update: {} -- {}", repositoryName, c);
-            Repository repository = repository(repositoryName);
-            repository.stop();
-            repository.update(c);
-            repository.start();
-          }
-          catch (Exception e) {
-            log.warn("update failed: {}", repositoryName, e);
-          }
-        });
-      }
-    });
+    return blobstoreUsageStream(blobStoreName).count();
   }
 
   @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
-    handleRemoteOnly(event, repositoryName -> {
-      // only create if the repository is not tracked
-      if (!repositories.containsKey(repositoryName)) {
-        withConfiguration(repositoryName, c -> {
-          try {
-            log.trace("create: {} -- {}", repositoryName, c);
-            Repository repository = newRepository(c);
-            track(repository);
-            repository.start();
-          }
-          catch (Exception e) {
-            log.warn("create failed: {}", repositoryName, e);
-          }
-        });
-      }
-    });
+    handleReplication(event, e -> create(e.getConfiguration()));
   }
 
-  private void handleRemoteOnly(final ConfigurationEvent event, final Consumer<String> consumer) {
-    log.trace("handling: {}", event);
-    // skip local events
+  @Subscribe
+  public void on(final ConfigurationUpdatedEvent event) {
+    handleReplication(event, e -> update(e.getConfiguration()));
+  }
+
+  @Subscribe
+  public void on(final ConfigurationDeletedEvent event) {
+    handleReplication(event, e -> delete(e.getRepositoryName()));
+  }
+
+  private void handleReplication(final ConfigurationEvent event, final EventConsumer<ConfigurationEvent> consumer) {
     if (!event.isLocal()) {
-      String repositoryName = event.getRepositoryName();
-      consumer.accept(repositoryName);
+      try {
+        consumer.accept(event);
+      }
+      catch (Exception e) {
+        log.error("Failed to replicate: {}", event, e);
+      }
     }
-  }
-
-  private void withConfiguration(final String repositoryName, final Consumer<Configuration> consumer) {
-    store.list().stream()
-        .filter(c -> c.getRepositoryName().equals(repositoryName))
-        .findFirst()
-        .ifPresent(consumer);
   }
 }

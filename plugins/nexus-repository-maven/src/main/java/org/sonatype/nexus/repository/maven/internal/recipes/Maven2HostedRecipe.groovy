@@ -110,6 +110,7 @@ class Maven2HostedRecipe
 
     // Note: partialFetchHandler NOT added for Maven metadata
     builder.route(newMetadataRouteBuilder()
+        .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(hostedHandler)

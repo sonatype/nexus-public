@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -63,7 +65,7 @@ public class EntityHookTest
   static class TestEntity
       extends Entity
   {
-    // nothing to add
+    String text;
   }
 
   static class TestEntityAdapter
@@ -82,17 +84,17 @@ public class EntityHookTest
 
     @Override
     protected void defineType(OClass type) {
-      // nothing to add
+      type.createProperty("text", OType.STRING);
     }
 
     @Override
     protected void writeFields(ODocument document, TestEntity entity) throws Exception {
-      document.setDirty(); // nothing to add, but need to mark it as dirty to force update
+      document.field("text", entity.text);
     }
 
     @Override
     protected void readFields(ODocument document, TestEntity entity) throws Exception {
-      // nothing to add
+      entity.text = document.field("text");
     }
 
     @Override
@@ -127,6 +129,9 @@ public class EntityHookTest
 
   @Test
   public void testEntityEventsAreSent() {
+    TestEntity entityA = new TestEntity();
+    TestEntity entityB = new TestEntity();
+
     EntityEvent event;
 
     try (ODatabaseDocumentTx db = sendingDatabase.getInstance().acquire()) {
@@ -142,63 +147,81 @@ public class EntityHookTest
 
       // CREATE
       db.begin();
-      ODocument firstEntity = entityAdapter.addEntity(db, new TestEntity());
-      ODocument secondEntity = entityAdapter.addEntity(db, new TestEntity());
+      entityA.text = "A is new";
+      ODocument recordA = entityAdapter.addEntity(db, entityA);
+      entityB.text = "B is new";
+      ODocument recordB = entityAdapter.addEntity(db, entityB);
       db.commit();
 
       assertThat(subscriber.events, hasSize(2));
 
       event = subscriber.events.get(0);
       assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordA));
+      assertThat(event.<TestEntity> getEntity().text, is("A is new"));
       assertTrue(event.isLocal());
       assertThat(event.getRemoteNodeId(), is(nullValue()));
 
       event = subscriber.events.get(1);
       assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordB));
+      assertThat(event.<TestEntity> getEntity().text, is("B is new"));
       assertTrue(event.isLocal());
       assertThat(event.getRemoteNodeId(), is(nullValue()));
+
+      subscriber.events.clear();
 
       // UPDATE
       EntityHook.asRemote("REMOTE-NODE", () -> {
         db.begin();
-        entityAdapter.writeEntity(firstEntity, new TestEntity());
-        entityAdapter.writeEntity(secondEntity, new TestEntity());
+        entityA.text = "A was updated";
+        entityAdapter.editEntity(db, entityA);
+        entityB.text = "B was updated";
+        entityAdapter.editEntity(db, entityB);
         db.commit();
       });
 
-      assertThat(subscriber.events, hasSize(4));
+      assertThat(subscriber.events, hasSize(2));
 
-      event = subscriber.events.get(2);
+      event = subscriber.events.get(0);
       assertThat(event.getClass().getSimpleName(), is("EntityUpdatedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordA));
+      assertThat(event.<TestEntity> getEntity().text, is("A was updated"));
       assertFalse(event.isLocal());
       assertThat(event.getRemoteNodeId(), is("REMOTE-NODE"));
 
-      event = subscriber.events.get(3);
+      event = subscriber.events.get(1);
       assertThat(event.getClass().getSimpleName(), is("EntityUpdatedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordB));
+      assertThat(event.<TestEntity> getEntity().text, is("B was updated"));
       assertFalse(event.isLocal());
       assertThat(event.getRemoteNodeId(), is("REMOTE-NODE"));
+
+      subscriber.events.clear();
 
       // DELETE
       db.begin();
-      entityAdapter.deleteEntity(db, entityAdapter.readEntity(firstEntity));
-      entityAdapter.deleteEntity(db, entityAdapter.readEntity(secondEntity));
+      entityA.text = "A was deleted"; // not-persisted
+      entityAdapter.deleteEntity(db, entityA);
+      entityB.text = "B was deleted"; // not-persisted
+      entityAdapter.deleteEntity(db, entityB);
       db.commit();
 
-      assertThat(subscriber.events, hasSize(6));
+      assertThat(subscriber.events, hasSize(2));
 
-      event = subscriber.events.get(4);
+      event = subscriber.events.get(0);
       assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(firstEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordA));
+      // text field should reflect last *persisted* value before the delete
+      assertThat(event.<TestEntity> getEntity().text, is("A was updated"));
       assertTrue(event.isLocal());
       assertThat(event.getRemoteNodeId(), is(nullValue()));
 
-      event = subscriber.events.get(5);
+      event = subscriber.events.get(1);
       assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
-      assertThat(entityAdapter.recordIdentity(event.getId()), is(secondEntity));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(recordB));
+      // text field should reflect last *persisted* value before the delete
+      assertThat(event.<TestEntity> getEntity().text, is("B was updated"));
       assertTrue(event.isLocal());
       assertThat(event.getRemoteNodeId(), is(nullValue()));
 
@@ -207,6 +230,106 @@ public class EntityHookTest
       // make sure we're back to just the default listeners/hooks
       assertThat(ImmutableList.copyOf(db.getListeners()), is(listeners));
       assertThat(ImmutableList.copyOf(db.getHooks().keySet()), is(hooks));
+    }
+  }
+
+  @Test
+  public void eventsInSameTransactionAreMerged() {
+    TestEntity entity = new TestEntity();
+    EntityEvent event;
+
+    try (ODatabaseDocumentTx db = sendingDatabase.getInstance().acquire()) {
+      entityHook.onOpen(db);
+      entityAdapter.register(db);
+
+      // CREATE then DELETE phantom entity in single TX
+      db.begin();
+      ODocument phantomRecord = entityAdapter.addEntity(db, new TestEntity());
+      entityAdapter.deleteEntity(db, entityAdapter.readEntity(phantomRecord));
+      db.commit();
+
+      assertThat(subscriber.events, hasSize(0));
+
+      // CREATE then UPDATE entity in single TX
+      db.begin();
+      entity.text = "A";
+      entityAdapter.addEntity(db, entity);
+      entity.text = "B";
+      entityAdapter.editEntity(db, entity);
+      db.commit();
+
+      assertThat(subscriber.events, hasSize(1));
+
+      event = subscriber.events.get(0);
+      assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
+      assertThat(event.<TestEntity> getEntity().text, is("B"));
+
+      subscriber.events.clear();
+
+      // UPDATE entity multiple times in single TX
+      db.begin();
+      entity.text = "C";
+      entityAdapter.editEntity(db, entity);
+      entity.text = "D";
+      entityAdapter.editEntity(db, entity);
+      db.commit();
+
+      assertThat(subscriber.events, hasSize(1));
+
+      event = subscriber.events.get(0);
+      assertThat(event.getClass().getSimpleName(), is("EntityUpdatedEvent"));
+      assertThat(event.<TestEntity> getEntity().text, is("D"));
+
+      subscriber.events.clear();
+
+      // UPDATE then DELETE entity in single TX
+      db.begin();
+      entity.text = "E";
+      entityAdapter.editEntity(db, entity);
+      entity.text = "F"; // not-persisted
+      entityAdapter.deleteEntity(db, entity);
+      db.commit();
+
+      assertThat(subscriber.events, hasSize(1));
+
+      event = subscriber.events.get(0);
+      assertThat(event.getClass().getSimpleName(), is("EntityDeletedEvent"));
+      // text field should reflect last *persisted* value before the delete
+      assertThat(event.<TestEntity> getEntity().text, is("E"));
+
+      entityHook.onClose(db);
+    }
+  }
+
+  @Test
+  public void mergedEventRefersToLatestDocument() {
+    TestEntity entity = new TestEntity();
+    EntityEvent event;
+
+    try (ODatabaseDocumentTx db = sendingDatabase.getInstance().acquire()) {
+      entityHook.onOpen(db);
+      entityAdapter.register(db);
+
+      db.begin();
+      entity.text = "before";
+      ODocument originalRecord = entityAdapter.addEntity(db, entity);
+      entity.text = "after";
+      // perform write using fresh copy of document; original will become disconnected
+      ODocument updatedRecord = entityAdapter.writeEntity(originalRecord.copy(), entity);
+      db.commit();
+
+      assertTrue(originalRecord.getIdentity().isTemporary()); // disconnected
+      assertTrue(updatedRecord.getIdentity().isPersistent());
+
+      assertThat(subscriber.events, hasSize(1));
+
+      event = subscriber.events.get(0);
+      assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(not(originalRecord)));
+      assertThat(entityAdapter.recordIdentity(event.getId()), is(updatedRecord));
+      assertThat(event.<TestEntity> getEntity().text, is("after"));
+
+      entityHook.onClose(db);
     }
   }
 }

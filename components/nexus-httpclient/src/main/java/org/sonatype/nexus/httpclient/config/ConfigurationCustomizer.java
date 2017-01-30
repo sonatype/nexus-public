@@ -41,6 +41,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -143,6 +144,16 @@ public class ConfigurationCustomizer
 
     if (Boolean.TRUE.equals(connection.getUseTrustStore())) {
       plan.getAttributes().put(SSLContextSelector.USE_TRUST_STORE, Boolean.TRUE);
+    }
+
+    if (Boolean.TRUE.equals(connection.getEnableCircularRedirects())) {
+      plan.getRequest().setCircularRedirectsAllowed(true);
+      //down from default of 50, same logic as NX2
+      plan.getRequest().setMaxRedirects(10);
+    }
+
+    if (Boolean.TRUE.equals(connection.getEnableCookies())) {
+      plan.getRequest().setCookieSpec(CookieSpecs.DEFAULT);
     }
   }
 

@@ -186,12 +186,12 @@ public class StateGuard
         }
 
         try {
-          log.trace("Transitioning: {} -> {}", current, to);
+          log.debug("Transitioning: {} -> {}", current, to);
 
           V result = action.run();
           current = to;
 
-          log.trace("Transitioned: {}", to);
+          log.debug("Transitioned: {}", to);
 
           return result;
         }
@@ -199,7 +199,7 @@ public class StateGuard
           if (ignore(t)) {
             current = to;
 
-            log.trace("Transitioned: {} ignoring: {}", to, t.toString());
+            log.debug("Transitioned: {} ignoring: {}", to, t.toString());
           }
           else {
             if (silent) {

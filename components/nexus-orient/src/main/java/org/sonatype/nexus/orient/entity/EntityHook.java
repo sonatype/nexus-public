@@ -232,11 +232,13 @@ public final class EntityHook
             events = new LinkedHashMap<>();
             dbEvents.put(db, events);
           }
-          // only record the first event on a given document
-          if (!events.containsKey(document)) {
-            events.put(document, eventKind);
-            return true;
+          // replace mapping after merge so key always points to the latest document instance
+          // (avoids a risk that the original key became disconnected/detached at this point)
+          EventKind updatedEventKind = updateEventKind(events.remove(document), eventKind);
+          if (updatedEventKind != null) {
+            events.put(document, updatedEventKind);
           }
+          return true;
         }
       }
     }
@@ -280,5 +282,22 @@ public final class EntityHook
       default:
         return null;
     }
+  }
+
+  /**
+   * Merges new {@link EventKind} with previous recorded state, maintaining original state where possible.
+   */
+  @Nullable
+  private static EventKind updateEventKind(@Nullable final EventKind recorded, final EventKind update) {
+    if (recorded == null) {
+      return update; // record initial observation
+    }
+    if (update == EventKind.DELETE) {
+      if (recorded == EventKind.CREATE) {
+        return null; // phantom entity; discard
+      }
+      return EventKind.DELETE; // record final delete
+    }
+    return recorded; // maintain initial observation
   }
 }

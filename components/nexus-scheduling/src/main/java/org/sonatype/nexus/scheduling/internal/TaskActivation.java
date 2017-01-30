@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
@@ -44,14 +45,19 @@ public class TaskActivation
 {
   private final SchedulerSPI scheduler;
 
+  private final DatabaseFreezeService databaseFreezeService;
+
   @Inject
-  public TaskActivation(final SchedulerSPI scheduler) {
+  public TaskActivation(final SchedulerSPI scheduler, final DatabaseFreezeService databaseFreezeService) {
     this.scheduler = checkNotNull(scheduler);
+    this.databaseFreezeService = checkNotNull(databaseFreezeService);
   }
 
   @Override
   protected void doStart() throws Exception {
-    scheduler.resume();
+    if (!databaseFreezeService.isFrozen()) {
+      scheduler.resume();
+    }
   }
 
   @Override

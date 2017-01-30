@@ -10,41 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient;
+package org.sonatype.nexus.repository.storage.internal;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Database instance.
- *
- * @since 3.0
+ * @since 3.3
  */
-public interface DatabaseInstance
+@Named
+@Singleton
+public class StorageFacetCleanupTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  /**
-   * Returns the name of this database instance.
-   */
-  String getName();
+  public static final String TYPE_ID = "repository.storage-facet-cleanup";
 
-  /**
-   * Open a non-pooled connection to the database.
-   */
-  ODatabaseDocumentTx connect();
-
-  /**
-   * Attempt to open a pooled connection to the database.
-   */
-  ODatabaseDocumentTx acquire();
-
-  /**
-   * Access the {@link DatabaseExternalizer} for the database.
-   */
-  DatabaseExternalizer externalizer();
-
-  /**
-   * Freeze or release database for read-only mode.
-   *
-   * @since 3.3
-   */
-  void setFrozen(boolean frozen);
+  @Inject
+  public StorageFacetCleanupTaskDescriptor() {
+    super(TYPE_ID, StorageFacetCleanupTask.class, "Storage facet cleanup", NOT_VISIBLE, NOT_EXPOSED);
+  }
 }

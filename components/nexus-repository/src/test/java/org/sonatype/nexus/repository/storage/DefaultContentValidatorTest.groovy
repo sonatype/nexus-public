@@ -231,4 +231,27 @@ class DefaultContentValidatorTest
     )
     assertThat(type, equalTo('application/zip'))
   }
+
+  @Test
+  void 'declared charset missing'() {
+    def type = testSubject.determineContentType(
+        true,
+        supplier('simple text'.bytes),
+        MimeRulesSource.NOOP,
+        'test.txt',
+        ContentTypes.TEXT_PLAIN + '; charset='
+    )
+    assertThat(type, equalTo(ContentTypes.TEXT_PLAIN))
+  }
+
+  @Test(expected = InvalidContentException)
+  void 'completely invalid'() {
+    def type = testSubject.determineContentType(
+        true,
+        supplier('simple text'.bytes),
+        MimeRulesSource.NOOP,
+        'test.txt',
+        '@#$*(#&%$*(%)k;lasj;klfjsdfas'
+    )
+  }
 }
