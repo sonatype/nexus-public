@@ -117,7 +117,7 @@ public class PartialFetchHandler
 
     // ResponseSender takes care of Content-Length header, via payload.size
     builder.header(HttpHeaders.CONTENT_RANGE,
-        requestedRange.lowerEndpoint() + "-" + requestedRange.upperEndpoint() + "/" + payload.getSize());
+        "bytes " + requestedRange.lowerEndpoint() + "-" + requestedRange.upperEndpoint() + "/" + payload.getSize());
 
     return builder.build();
   }
