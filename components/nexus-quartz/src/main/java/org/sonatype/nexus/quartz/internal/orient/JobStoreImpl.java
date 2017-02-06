@@ -32,8 +32,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -67,6 +68,7 @@ import org.quartz.spi.TriggerFiredResult;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ACQUIRED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.BLOCKED;
@@ -83,9 +85,10 @@ import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY
  * @since 3.0
  */
 @Named("orient")
+@ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class JobStoreImpl
-    extends ComponentSupport
+    extends LifecycleSupport
     implements JobStore
 {
   private static final String NODE_ID = "node.identity";
@@ -206,6 +209,15 @@ public class JobStoreImpl
   //
 
   @Override
+  protected void doStart() throws Exception {
+    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
+      jobDetailEntityAdapter.register(db);
+      triggerEntityAdapter.register(db);
+      calendarEntityAdapter.register(db);
+    }
+  }
+
+  @Override
   public void initialize(final ClassLoadHelper loadHelper, final SchedulerSignaler signaler)
       throws SchedulerConfigException
   {
@@ -213,12 +225,6 @@ public class JobStoreImpl
 
     // TODO: Should we consider using ClassLoadHelper?
     this.signaler = checkNotNull(signaler);
-
-    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
-      jobDetailEntityAdapter.register(db);
-      triggerEntityAdapter.register(db);
-      calendarEntityAdapter.register(db);
-    }
 
     log.info("Initialized");
   }

@@ -61,7 +61,7 @@ class ConfigurationCustomizerTest
     HttpClientPlan plan = new HttpClientPlan()
     configurationCustomizer.customize(plan)
     assertThat(plan.request.circularRedirectsAllowed, equalTo(true))
-    assertThat(plan.request.maxRedirects, equalTo(10))
+    assertThat(plan.request.maxRedirects, equalTo(50))
     assertThat(plan.request.cookieSpec, equalTo(CookieSpecs.DEFAULT))
   }
 

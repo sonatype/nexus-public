@@ -33,7 +33,7 @@ public interface RestClientFactory
   /**
    * Returns a proxy backed by the given client and URI.
    *
-   * @since 3.3
+   * @since 3.2.1
    */
   <T> T proxy(Class<T> api, Client client, URI baseUri);
 }

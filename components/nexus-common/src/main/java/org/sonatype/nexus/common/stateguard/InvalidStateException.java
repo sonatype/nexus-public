@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Runtime exception thrown when {@link StateGuard} check fails.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 public class InvalidStateException
     extends IllegalStateException

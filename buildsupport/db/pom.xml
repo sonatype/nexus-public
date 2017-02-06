@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.2.SONATYPE-SNAPSHOT</orientdb.version>
+    <orientdb.version>2.2.16</orientdb.version>
     <hazelcast.version>3.6.6</hazelcast.version>
   </properties>
 

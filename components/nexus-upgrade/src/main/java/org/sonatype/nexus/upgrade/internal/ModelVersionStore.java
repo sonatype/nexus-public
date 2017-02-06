@@ -42,6 +42,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 /**
  * Store for model versions.
  * 
+ * Starts in UPGRADE phase (managed by {@link UpgradeServiceImpl}) rather than the usual SCHEMAS phase.
+ * 
  * @since 3.1
  */
 @Named

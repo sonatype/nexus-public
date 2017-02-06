@@ -17,7 +17,7 @@ import java.util.logging.LogManager;
 /**
  * Custom JUL log manager that ignores {@link #reset()} requests.
  * 
- * @since 3.3
+ * @since 3.2.1
  */
 public class NonResettableLogManager
     extends LogManager

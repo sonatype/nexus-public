@@ -45,7 +45,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 import static org.sonatype.nexus.repository.storage.internal.StorageFacetCleanupTaskDescriptor.TYPE_ID;
 
 /**
- * @since 3.3
+ * @since 3.2.1
  */
 @Named
 @ManagedLifecycle(phase = TASKS)

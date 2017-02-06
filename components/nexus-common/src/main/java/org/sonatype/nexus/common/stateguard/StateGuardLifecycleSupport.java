@@ -72,7 +72,7 @@ public class StateGuardLifecycleSupport
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   protected boolean isStarted() {
     return getStateGuard().is(STARTED);

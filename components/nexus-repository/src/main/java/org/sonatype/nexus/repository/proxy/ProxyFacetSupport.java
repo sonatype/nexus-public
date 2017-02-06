@@ -225,6 +225,9 @@ public abstract class ProxyFacetSupport
   protected Content fetch(String url, Context context, @Nullable Content stale) throws IOException {
     HttpClient client = httpClient.getHttpClient();
 
+    checkState(config.remoteUrl.isAbsolute(),
+        "Invalid remote URL '%s' for proxy repository %s, please fix your configuration", config.remoteUrl,
+        getRepository().getName());
     URI uri = config.remoteUrl.resolve(url);
     HttpRequestBase request = buildFetchHttpRequest(uri, context);
     if (stale != null) {

@@ -62,6 +62,13 @@ public class ComponentEntityAdapter
       .property(P_VERSION)
       .build();
 
+  private static final String I_BUCKET_NAME_VERSION = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_BUCKET)
+      .property(P_NAME)
+      .property(P_VERSION)
+      .build();
+
   @Inject
   public ComponentEntityAdapter(final BucketEntityAdapter bucketEntityAdapter) {
     super(DB_CLASS, bucketEntityAdapter);
@@ -81,6 +88,8 @@ public class ComponentEntityAdapter
         .field("mergeKeys", false);
     type.createIndex(I_BUCKET_GROUP_NAME_VERSION, INDEX_TYPE.UNIQUE.name(), null, metadata,
         new String[]{P_BUCKET, P_GROUP, P_NAME, P_VERSION});
+    type.createIndex(I_BUCKET_NAME_VERSION, INDEX_TYPE.NOTUNIQUE.name(), null, metadata,
+        new String[]{P_BUCKET, P_NAME, P_VERSION});
   }
 
   @Override

@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 /**
  * Consumer of events; like {@link Consumer} but throws a checked exception.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 public interface EventConsumer<E>
 {

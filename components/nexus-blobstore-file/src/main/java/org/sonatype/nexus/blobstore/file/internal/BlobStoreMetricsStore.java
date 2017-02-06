@@ -46,7 +46,7 @@ public interface BlobStoreMetricsStore
   /**
    * Provide an array of the metrics files backing the blobstore at the specified root.
    *
-   * @since 3.3
+   * @since 3.2.1
    */
   File[] listBackingFiles(Path blobStoreRoot);
 }

@@ -19,7 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * @since 3.3
+ * @since 3.2.1
  */
 @Named
 @Singleton

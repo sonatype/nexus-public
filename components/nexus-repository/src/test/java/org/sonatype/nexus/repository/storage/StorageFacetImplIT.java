@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
@@ -84,6 +85,8 @@ public class StorageFacetImplIT
   protected Repository testRepository2 = mock(Repository.class);
 
   protected TestFormat testFormat = new TestFormat();
+
+  private ComponentSchemaRegistration schemaRegistration;
 
   private AssetEntityAdapter assetEntityAdapter;
 
@@ -143,6 +146,14 @@ public class StorageFacetImplIT
     when(testRepository2.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
     when(testRepository2.facet(SearchFacet.class)).thenReturn(mock(SearchFacet.class));
 
+    schemaRegistration = new ComponentSchemaRegistration(
+        database.getInstanceProvider(),
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter);
+
+    schemaRegistration.start();
+
     underTest.attach(testRepository1);
     underTest.init();
     underTest.start();
@@ -151,6 +162,8 @@ public class StorageFacetImplIT
   @After
   public void tearDown() throws Exception {
     underTest.stop();
+
+    schemaRegistration.stop();
   }
 
   @Test

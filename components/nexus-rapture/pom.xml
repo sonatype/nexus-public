@@ -170,7 +170,7 @@
                 </goals>
                 <configuration>
                   <scripts>
-                    <script>file://${project.basedir}/src/main/script/driver.groovy</script>
+                    <script>${project.baseUri}/src/main/script/driver.groovy</script>
                   </scripts>
                 </configuration>
               </execution>

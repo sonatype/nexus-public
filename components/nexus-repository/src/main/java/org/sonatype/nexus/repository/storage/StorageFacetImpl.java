@@ -161,18 +161,9 @@ public class StorageFacetImpl
 
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
-    initSchema();
     initBucket();
     writePolicySelector = WritePolicySelector.DEFAULT;
     super.doInit(configuration);
-  }
-
-  private void initSchema() {
-    try (ODatabaseDocumentTx db = databaseInstanceProvider.get().connect()) {
-      bucketEntityAdapter.register(db);
-      componentEntityAdapter.register(db);
-      assetEntityAdapter.register(db);
-    }
   }
 
   private void initBucket() {

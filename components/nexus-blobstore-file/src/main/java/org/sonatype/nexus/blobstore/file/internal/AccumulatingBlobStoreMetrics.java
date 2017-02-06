@@ -17,7 +17,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 /**
  * An implementation of {@link BlobStoreMetrics} that supports adding to the blobCount and totalSize fields.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 public class AccumulatingBlobStoreMetrics
     implements BlobStoreMetrics

@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -29,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
@@ -39,6 +41,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  * @since 3.0
  */
 @Named
+@ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class ConfigurationStoreImpl
     extends StateGuardLifecycleSupport

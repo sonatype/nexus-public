@@ -15,7 +15,7 @@
 /**
  * BrowseableFormats management controller.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 Ext.define('NX.coreui.controller.BrowseableFormats', {
   extend: 'NX.app.Controller',

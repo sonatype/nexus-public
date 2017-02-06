@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * ClassLoader which bridges two classloaders into a single classloader view.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 class BridgeClassLoader
     extends ClassLoader

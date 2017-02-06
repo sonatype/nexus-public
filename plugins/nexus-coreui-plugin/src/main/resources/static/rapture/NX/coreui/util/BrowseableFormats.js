@@ -15,7 +15,7 @@
 /**
  * BrowseableFormats helper.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 Ext.define('NX.coreui.util.BrowseableFormats', {
   singleton: true,

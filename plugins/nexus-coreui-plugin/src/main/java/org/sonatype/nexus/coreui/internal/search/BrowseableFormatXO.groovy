@@ -17,7 +17,7 @@ import groovy.transform.ToString
 /**
  * BrowseableFormat exchange object.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 @ToString(includePackage = false, includeNames = true)
 class BrowseableFormatXO

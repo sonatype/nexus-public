@@ -95,14 +95,4 @@ class ScriptManagerImpl
     }
   }
 
-  @Override
-  protected void doStart() throws Exception {
-    scriptStore.start()
-  }
-
-  @Override
-  protected void doStop() throws Exception {
-    scriptStore.stop()
-  }
-
 }

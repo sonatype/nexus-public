@@ -79,7 +79,7 @@ public class ConnectionConfiguration
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   @Nullable
   public Boolean getEnableCircularRedirects() {
@@ -87,14 +87,14 @@ public class ConnectionConfiguration
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   public void setEnableCircularRedirects(@Nullable final Boolean enableCircularRedirects) {
     this.enableCircularRedirects = enableCircularRedirects;
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   @Nullable
   public Boolean getEnableCookies() {
@@ -102,7 +102,7 @@ public class ConnectionConfiguration
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   public void setEnableCookies(@Nullable final Boolean enableCookies) {
     this.enableCookies = enableCookies;

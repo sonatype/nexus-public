@@ -148,8 +148,6 @@ public class ConfigurationCustomizer
 
     if (Boolean.TRUE.equals(connection.getEnableCircularRedirects())) {
       plan.getRequest().setCircularRedirectsAllowed(true);
-      //down from default of 50, same logic as NX2
-      plan.getRequest().setMaxRedirects(10);
     }
 
     if (Boolean.TRUE.equals(connection.getEnableCookies())) {

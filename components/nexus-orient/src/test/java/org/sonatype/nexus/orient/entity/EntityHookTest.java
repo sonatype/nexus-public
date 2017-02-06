@@ -332,4 +332,30 @@ public class EntityHookTest
       entityHook.onClose(db);
     }
   }
+
+  @Test
+  public void eventsAreFlushedOutsideOfTransaction() {
+    TestEntity entity = new TestEntity();
+    EntityEvent event;
+
+    try (ODatabaseDocumentTx db = sendingDatabase.getInstance().acquire()) {
+      entityHook.onOpen(db);
+      entityAdapter.register(db);
+
+      entity.text = "A";
+      entityAdapter.addEntity(db, entity);
+      entity.text = "B";
+      entityAdapter.editEntity(db, entity);
+      entity.text = "C";
+      entityAdapter.editEntity(db, entity);
+
+      entityHook.onClose(db);
+
+      assertThat(subscriber.events, hasSize(1));
+
+      event = subscriber.events.get(0);
+      assertThat(event.getClass().getSimpleName(), is("EntityCreatedEvent"));
+      assertThat(event.<TestEntity> getEntity().text, is("C"));
+    }
+  }
 }

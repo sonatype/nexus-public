@@ -44,7 +44,7 @@ public interface DatabaseInstance
   /**
    * Freeze or release database for read-only mode.
    *
-   * @since 3.3
+   * @since 3.2.1
    */
   void setFrozen(boolean frozen);
 }

@@ -41,7 +41,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
@@ -52,7 +52,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  * @since 3.0
  */
 @Named
-@ManagedLifecycle(phase = SERVICES)
+@ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class ApiKeyStoreImpl
     extends StateGuardLifecycleSupport

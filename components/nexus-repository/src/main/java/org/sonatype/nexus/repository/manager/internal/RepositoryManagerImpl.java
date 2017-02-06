@@ -202,7 +202,6 @@ public class RepositoryManagerImpl
   @Override
   protected void doStart() throws Exception {
     blobStoreManager.start();
-    store.start();
     List<Configuration> configurations = store.list();
 
     // attempt to provision default repositories if allowed
@@ -279,7 +278,6 @@ public class RepositoryManagerImpl
     }
 
     repositories.clear();
-    store.stop();
     blobStoreManager.stop();
   }
 

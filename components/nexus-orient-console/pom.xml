@@ -25,104 +25,64 @@
 
   <artifactId>nexus-orient-console</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <description>Package an uber-jar with Main-Class set in its manifest to launch the OrientDB console app.</description>
+  <description>Support utility that launches the OrientDB console for Nexus.</description>
 
   <dependencies>
+    <!--
+    OrientDB's console application
+    -->
     <dependency>
       <groupId>com.orientechnologies</groupId>
       <artifactId>orientdb-tools</artifactId>
     </dependency>
 
+    <!--
+    Distribution's logging API bundle
+    -->
     <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-client</artifactId>
+      <groupId>org.ops4j.pax.logging</groupId>
+      <artifactId>pax-logging-api</artifactId>
     </dependency>
 
+    <!--
+    Include PBE compression support
+    -->
     <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-core</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-orient</artifactId>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.orientechnologies.orient.console.OConsoleDatabaseApp</mainClass>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <!-- NOTE: This deliberately runs always and not just during release to break immediately when the artifact is missing -->
-            <id>get-javadocs-for-staging-compliance</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <!-- we need some javadocs to pass the staging rules, this is closest to the JAR content -->
-                  <groupId>com.orientechnologies</groupId>
-                  <artifactId>orientdb-tools</artifactId>
-                  <classifier>javadoc</classifier>
-                  <destFileName>orientdb-tools-javadoc.jar</destFileName>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>
+                org.sonatype.nexus.orient.console.Main
+              </mainClass>
+              <!--
+              Generate classpath that links to the distribution's system repository
+              -->
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>../../system/</classpathPrefix>
+              <classpathLayoutType>repository</classpathLayoutType>
+              <useUniqueVersions>false</useUniqueVersions>
+            </manifest>
+            <manifestEntries>
+              <!--
+              Bouncycastle is located in parent directory, not the system repository
+              -->
+              <Class-Path>
+                ../${project.artifactMap(org.bouncycastle:bcprov-jdk15on).file.name}
+              </Class-Path>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>attach-artifact</goal>
-                </goals>
-                <configuration>
-                  <artifacts>
-                    <artifact>
-                      <file>${project.build.directory}/dependency/orientdb-tools-javadoc.jar</file>
-                      <classifier>javadoc</classifier>
-                      <type>jar</type>
-                    </artifact>
-                  </artifacts>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>

@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.quartz.internal.orient.JobStoreImpl;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
@@ -65,6 +66,9 @@ public class TaskSchedulerHelper
 
   @Inject
   private SchedulerSPI scheduler;
+
+  @Inject
+  private JobStoreImpl jobStore;
 
   private EventManager eventManager;
 
@@ -126,6 +130,7 @@ public class TaskSchedulerHelper
   }
 
   public void start() throws Exception {
+    jobStore.start();
     scheduler.start();
     scheduler.resume();
   }
@@ -133,6 +138,8 @@ public class TaskSchedulerHelper
   public void stop() throws Exception {
     scheduler.pause();
     scheduler.stop();
+    jobStore.stop();
+
     locator.clear();
   }
 

@@ -37,7 +37,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 /**
  * Encapsulates the operation of deleting a bucket and its contents. Used by {@code StorageFacetManagerImpl}.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 @Named
 @Singleton

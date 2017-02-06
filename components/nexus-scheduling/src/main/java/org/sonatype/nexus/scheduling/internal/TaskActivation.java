@@ -66,7 +66,7 @@ public class TaskActivation
   }
 
   /**
-   * @since 3.3
+   * @since 3.2.1
    */
   @Subscribe
   public void onDatabaseFreezeChangeEvent(final DatabaseFreezeChangeEvent databaseFreezeChangeEvent) {

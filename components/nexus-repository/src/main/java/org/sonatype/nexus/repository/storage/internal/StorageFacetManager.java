@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 /**
  * Contains StorageFacet-related operations that cannot be represented in individual StorageFacet instances.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 public interface StorageFacetManager
 {

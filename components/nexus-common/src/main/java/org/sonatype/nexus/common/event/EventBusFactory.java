@@ -25,7 +25,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 /**
  * Factory to create custom {@link EventBus} instances with behaviour not exposed via the public API.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 public class EventBusFactory
 {

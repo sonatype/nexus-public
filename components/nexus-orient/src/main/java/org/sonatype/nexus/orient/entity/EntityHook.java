@@ -139,6 +139,7 @@ public final class EntityHook
   public void onClose(final ODatabaseInternal db) {
     if (!pendingDbs.remove(db)) {
       stopRecording(db);
+      flushEvents(db);
     }
   }
 
@@ -156,23 +157,7 @@ public final class EntityHook
 
   @Override
   public void onAfterTxCommit(final ODatabase db) {
-    final Map<ODocument, EventKind> events = dbEvents.remove(db);
-    if (events != null) {
-      final UnitOfWork work = UnitOfWork.pause();
-      final String remoteNodeId = isRemote.get();
-      try {
-        if (remoteNodeId == null) {
-          postEvents(db, events, null);
-        }
-        else {
-          // posting events from remote node, mark current thread as replicating
-          EventHelper.asReplicating(() -> postEvents(db, events, remoteNodeId));
-        }
-      }
-      finally {
-        UnitOfWork.resume(work);
-      }
-    }
+    flushEvents(db);
   }
 
   @Override
@@ -193,7 +178,6 @@ public final class EntityHook
   private void stopRecording(final ODatabase db) {
     db.unregisterHook(this);
     db.unregisterListener(this);
-    dbEvents.remove(db);
   }
 
   private static <T> T withActiveDb(final ODatabase db, final Supplier<T> supplier) {
@@ -243,6 +227,26 @@ public final class EntityHook
       }
     }
     return false;
+  }
+
+  private void flushEvents(final ODatabase db) {
+    final Map<ODocument, EventKind> events = dbEvents.remove(db);
+    if (events != null) {
+      final UnitOfWork work = UnitOfWork.pause();
+      final String remoteNodeId = isRemote.get();
+      try {
+        if (remoteNodeId == null) {
+          postEvents(db, events, null);
+        }
+        else {
+          // posting events from remote node, mark current thread as replicating
+          EventHelper.asReplicating(() -> postEvents(db, events, remoteNodeId));
+        }
+      }
+      finally {
+        UnitOfWork.resume(work);
+      }
+    }
   }
 
   private void postEvents(final ODatabase db, final Map<ODocument, EventKind> events, final String remoteNodeId) {

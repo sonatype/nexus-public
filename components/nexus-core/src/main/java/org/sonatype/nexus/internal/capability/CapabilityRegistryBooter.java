@@ -20,9 +20,7 @@ import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Provider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,23 +41,17 @@ public class CapabilityRegistryBooter
 
   private final Provider<DefaultCapabilityRegistry> capabilityRegistryProvider;
 
-  private final Provider<OrientCapabilityStorage> capabilityStorageProvider;
-
   @Inject
   public CapabilityRegistryBooter(final EventManager eventManager,
-                                  final Provider<DefaultCapabilityRegistry> capabilityRegistryProvider,
-                                  final Provider<OrientCapabilityStorage> capabilityStorageProvider)
+                                  final Provider<DefaultCapabilityRegistry> capabilityRegistryProvider)
   {
     this.eventManager = checkNotNull(eventManager);
     this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
-    this.capabilityStorageProvider = checkNotNull(capabilityStorageProvider);
   }
 
   @Override
   protected void doStart() throws Exception {
     try {
-      capabilityStorageProvider.get().start();
-
       DefaultCapabilityRegistry registry = capabilityRegistryProvider.get();
       registry.load();
 
@@ -69,17 +61,6 @@ public class CapabilityRegistryBooter
     catch (final Exception e) {
       // fail hard with an error to stop further server activity
       throw new Error("Could not boot capabilities", e);
-    }
-  }
-
-  @Override
-  protected void doStop() throws Exception {
-    try {
-      capabilityStorageProvider.get().stop();
-    }
-    catch (final Exception e) {
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
     }
   }
 }

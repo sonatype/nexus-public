@@ -92,7 +92,7 @@ public class StorageTxImpl
 
   private final WritePolicySelector writePolicySelector;
 
-  private final StateGuard stateGuard = new StateGuard.Builder().initial(OPEN).create();
+  private final StateGuard stateGuard = new StateGuard.Builder().initial(OPEN).logger(log).create();
 
   private final BucketEntityAdapter bucketEntityAdapter;
 

@@ -106,11 +106,11 @@ public class DatabaseFreezeServiceImpl
 
     log.info("Releasing all databases.");
 
+    // release the databases locally
+    updateFrozenState(false);
     // post event to notify subscribers and update cluster in ha configurations
     // this will switch databases to master mode
     eventManager.post(new DatabaseFreezeChangeEvent(false));
-    // release the databases locally
-    updateFrozenState(false);
   }
 
   @Override

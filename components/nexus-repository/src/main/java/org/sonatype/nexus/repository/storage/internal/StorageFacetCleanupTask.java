@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Background task (hidden from users) that cleans up deleted storage facets. Triggered programmatically on repo delete
  * or on Nexus startup.
  *
- * @since 3.3
+ * @since 3.2.1
  */
 @Named
 public class StorageFacetCleanupTask

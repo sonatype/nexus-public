@@ -88,13 +88,15 @@ public class JobStoreImplTest
     ClassLoadHelper loadHelper = new CascadingClassLoadHelper();
     loadHelper.initialize();
     this.jobStore = createJobStore();
+    this.jobStore.start();
     this.jobStore.initialize(loadHelper, new SampleSignaler());
     this.jobStore.schedulerStarted();
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     jobStore.shutdown();
+    jobStore.stop();
   }
 
   private JobStoreImpl createJobStore() {

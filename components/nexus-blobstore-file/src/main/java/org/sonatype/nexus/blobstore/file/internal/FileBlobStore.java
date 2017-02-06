@@ -397,6 +397,8 @@ public class FileBlobStore
 
     Lock lock = blob.lock();
     try {
+      log.debug("Soft deleting blob {}", blobId);
+
       Path attribPath = attributePath(blobId);
       BlobAttributes blobAttributes = new BlobAttributes(attribPath);
 

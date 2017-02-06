@@ -30,7 +30,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Simple helper class that encapsulates the auth checks for reuse by the orientdb user defined functions
- * @since 3.3
+ * @since 3.2.1
  */
 @Named
 @Singleton

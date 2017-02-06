@@ -89,7 +89,6 @@ public class BlobStoreManagerImpl
 
   @Override
   protected void doStart() throws Exception {
-    store.start();
     List<BlobStoreConfiguration> configurations = store.list();
     if (configurations.isEmpty() && (provisionDefaults || !nodeAccess.isClustered())) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
