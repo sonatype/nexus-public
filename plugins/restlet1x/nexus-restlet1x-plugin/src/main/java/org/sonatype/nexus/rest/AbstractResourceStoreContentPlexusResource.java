@@ -313,6 +313,7 @@ public abstract class AbstractResourceStoreContentPlexusResource
     // honor the describe, add timing
     if (isDescribe(request)) {
       result.getRequestContext().put(REQUEST_RECEIVED_KEY, System.currentTimeMillis());
+      result.setDescribe(true);
     }
 
     // honor if-modified-since

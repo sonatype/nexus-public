@@ -42,6 +42,13 @@ public class RequestContext
   public static final String CTX_REQUEST_IS_EXTERNAL = "request.external";
 
   /**
+   * Context flag to mark that this is a 'describe' request.
+   *
+   * @since 2.14.3
+   */
+  public static final String CTX_REQUEST_IS_DESCRIBE = "request.describe";
+
+  /**
    * Context flag to mark a request local only. For {@link ProxyRepository} instances: do not attempt remote access
    * at
    * all, else: no effect.
@@ -399,6 +406,29 @@ public class RequestContext
    */
   public void setRequestIsExternal(boolean external) {
     put(CTX_REQUEST_IS_EXTERNAL, external);
+  }
+
+  /**
+   * Returns {@code true} if this is a 'describe' request; otherwise {@code false}.
+   *
+   * @since 2.14.3
+   */
+  public boolean isRequestIsDescribe() {
+    if (containsKey(CTX_REQUEST_IS_DESCRIBE)) {
+      return (Boolean) get(CTX_REQUEST_IS_DESCRIBE);
+    }
+    else {
+      return false;
+    }
+  }
+
+  /**
+   * Sets if this is a 'describe' request.
+   *
+   * @since 2.14.3
+   */
+  public void setRequestIsDescribe(boolean describe) {
+    put(CTX_REQUEST_IS_DESCRIBE, describe);
   }
 
   // ==

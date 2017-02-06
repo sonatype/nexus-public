@@ -354,6 +354,25 @@ public class ResourceStoreRequest
   }
 
   /**
+   * Returns {@code true} if this is a 'describe' request; otherwise {@code false}.
+   *
+   * @since 2.14.3
+   */
+  public boolean isDescribe() {
+    return getRequestContext().isRequestIsDescribe();
+  }
+
+  /**
+   * Sets if this is a 'describe' request.
+   *
+   * @since 2.14.3
+   */
+  public ResourceStoreRequest setDescribe(boolean describe) {
+    getRequestContext().setRequestIsDescribe(describe);
+    return this;
+  }
+
+  /**
    * Adds a list of applied mappings that happened in given repository.
    */
   public void addAppliedMappingsList(Repository repository, List<String> mappingList) {

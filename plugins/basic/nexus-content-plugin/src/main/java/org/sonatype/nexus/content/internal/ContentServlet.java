@@ -181,6 +181,11 @@ public class ContentServlet
     }
     result.setExternal(true);
 
+    // honor the describe
+    if (isDescribeRequest(request)) {
+      result.setDescribe(true);
+    }
+
     // honor if-modified-since
     final long ifModifiedSince = request.getDateHeader("if-modified-since");
     if (ifModifiedSince > -1) {

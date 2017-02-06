@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.proxy.repository;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -169,7 +171,8 @@ public abstract class AbstractGroupRepository
 
     final boolean isRequestGroupLocalOnly =
         request.isRequestGroupLocalOnly() || uid.getBooleanAttributeValue(IsGroupLocalOnlyAttribute.class);
-    final HashMap<Repository, Throwable> memberThrowables = Maps.newLinkedHashMap();
+
+    final Map<Repository, Throwable> memberThrowables = memberThrowablesFor(request);
 
     if (!isRequestGroupLocalOnly) {
       for (Repository repo : getMemberRepositories()) {
@@ -247,7 +250,7 @@ public abstract class AbstractGroupRepository
       request.getRequestContext().put(AccessManager.REQUEST_AUTHORIZED, Boolean.TRUE);
     }
 
-    final HashMap<Repository, Throwable> memberThrowables = Maps.newLinkedHashMap();
+    final Map<Repository, Throwable> memberThrowables = memberThrowablesFor(request);
 
     try {
       RepositoryItemUid uid = createUid(request.getRequestPath());
@@ -442,7 +445,7 @@ public abstract class AbstractGroupRepository
     final boolean isRequestGroupLocalOnly =
         request.isRequestGroupLocalOnly() || uid.getBooleanAttributeValue(IsGroupLocalOnlyAttribute.class);
 
-    final HashMap<Repository, Throwable> memberThrowables = Maps.newLinkedHashMap();
+    final Map<Repository, Throwable> memberThrowables = memberThrowablesFor(request);
 
     if (!isRequestGroupLocalOnly) {
       for (Repository repository : getRequestRepositories(request)) {
@@ -542,6 +545,32 @@ public abstract class AbstractGroupRepository
       ids.add(repo.getId());
     }
     return ids;
+  }
+
+  private static Map<Repository, Throwable> memberThrowablesFor(final ResourceStoreRequest request) {
+    if (request.isDescribe()) {
+      return Maps.newLinkedHashMap();
+    }
+    else {
+      return new DiscardingMap<>(); // don't bother storing throwables as they will never be used
+    }
+  }
+
+  /**
+   * Accepts puts, but never stores anything.
+   */
+  static final class DiscardingMap<K, V>
+      extends AbstractMap<K, V>
+  {
+    @Override
+    public Set<Entry<K, V>> entrySet() {
+      return Collections.emptySet();
+    }
+
+    @Override
+    public V put(final K key, final V value) {
+      return null;
+    }
   }
 
 }

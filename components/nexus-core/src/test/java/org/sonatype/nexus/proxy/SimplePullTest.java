@@ -430,8 +430,27 @@ public class SimplePullTest
     final GroupRepository group =
         getRepositoryRegistry().getRepositoryWithFacet("another-test", GroupRepository.class);
 
+    final String nonExistentPath = "/some/path/that/we/know/is/not/existing/123456/12.foo";
+
+    // first try without describe: the exception *should not* include member throwables
+
     try {
-      group.retrieveItem(new ResourceStoreRequest("/some/path/that/we/know/is/not/existing/123456/12.foo"));
+      group.retrieveItem(new ResourceStoreRequest(nonExistentPath));
+      // anything else should fail
+      Assert.fail("We expected an exception here!");
+    }
+    catch (GroupItemNotFoundException e) {
+      final String dumpStr = dumpNotFoundReasoning(e, 0);
+
+      // only one exception should appear in the reason
+      assertThat(dumpStr, containsString(GroupItemNotFoundException.class.getSimpleName()));
+      assertThat(countOccurence(dumpStr, "Exception"), equalTo(1));
+    }
+
+    // now try with describe: the exception *should* include member throwables
+
+    try {
+      group.retrieveItem(new ResourceStoreRequest(nonExistentPath).setDescribe(true));
       // anything else should fail
       Assert.fail("We expected an exception here!");
     }
