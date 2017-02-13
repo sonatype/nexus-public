@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.apachehttpclient.Hc4Provider;
+import org.sonatype.nexus.proxy.RemoteStorageTransportOverloadedException;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.FileContentLocator;
 import org.sonatype.nexus.proxy.item.PreparedContentLocator;
@@ -30,6 +31,7 @@ import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
 import com.bolyuba.nexus.plugin.npm.proxy.NpmProxyRepository;
+import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import com.bolyuba.nexus.plugin.npm.service.internal.PackageRootIterator;
@@ -46,6 +48,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +112,9 @@ public class HttpProxyMetadataTransport
       try {
         httpResponse = httpClient.execute(get, context);
       }
+      catch (ConnectionPoolTimeoutException e) {
+        throw new RemoteStorageTransportOverloadedException(npmProxyRepository, "npm HC overload: GET " + get.getURI(), e);
+      }
       finally {
         timerContext.stop();
         if (stopwatch != null) {
@@ -156,13 +162,16 @@ public class HttpProxyMetadataTransport
    * package root from this method is guaranteed to be present in the store too.
    */
   @Override
-  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository, final String packageName,
+  public PackageRoot fetchPackageRoot(final NpmProxyRepository npmProxyRepository,
+                                      final PackageRequest.PackageCoordinates packageCoordinates,
                                       final PackageRoot expired) throws IOException
   {
     final HttpClient httpClient = httpClientManager.create(npmProxyRepository,
         npmProxyRepository.getRemoteStorageContext());
     try {
-      final HttpGet get = new HttpGet(buildUri(npmProxyRepository, packageName));
+      final HttpGet get = packageCoordinates.isScoped() ? // the slash mush be manually escaped!
+              new HttpGet(buildUri(npmProxyRepository, '@' + packageCoordinates.getScope() + "%2f" + packageCoordinates.getName())) :
+              new HttpGet(buildUri(npmProxyRepository, packageCoordinates.getName()));
       get.addHeader("accept", NpmRepository.JSON_MIME_TYPE);
       if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
         get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));
@@ -182,6 +191,9 @@ public class HttpProxyMetadataTransport
       final HttpResponse httpResponse;
       try {
         httpResponse = httpClient.execute(get, context);
+      }
+      catch (ConnectionPoolTimeoutException e) {
+        throw new RemoteStorageTransportOverloadedException(npmProxyRepository, "npm HC overload: GET " + get.getURI(), e);
       }
       finally {
         timerContext.stop();
@@ -209,6 +221,7 @@ public class HttpProxyMetadataTransport
           }
           return fresh;
         }
+        log.info("[{}] {} -> {}; unexpected response", npmProxyRepository.getId(), get, statusLine);
         return null;
       }
       finally {

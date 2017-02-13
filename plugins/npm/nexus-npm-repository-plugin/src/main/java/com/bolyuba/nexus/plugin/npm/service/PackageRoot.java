@@ -49,6 +49,12 @@ public class PackageRoot
 
   public String getComponentId() {return getRepositoryId() + ":" + getName(); }
 
+  /**
+   * Returns package full name.
+   *
+   * @see PackageRequest#getPackageName()
+   * @see PackageRequest.PackageCoordinates#getPackageName()
+   */
   public String getName() {
     return (String) getRaw().get("name");
   }
@@ -148,7 +154,7 @@ public class PackageRoot
    * @see #overlayIgnoringOrigin(PackageRoot)
    */
   public void overlay(final PackageRoot packageRoot) {
-    checkArgument(getComponentId().equals(packageRoot.getComponentId()), "Cannot overlay different package roots!");
+    checkArgument(getComponentId().equals(packageRoot.getComponentId()), "Cannot overlay different package roots: %s vs %s", getComponentId(), packageRoot.getComponentId() );
     overlayIgnoringOrigin(packageRoot);
   }
 

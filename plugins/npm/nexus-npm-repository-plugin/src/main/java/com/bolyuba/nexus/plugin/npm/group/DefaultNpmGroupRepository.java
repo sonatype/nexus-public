@@ -13,6 +13,9 @@
 package com.bolyuba.nexus.plugin.npm.group;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
@@ -22,9 +25,13 @@ import org.sonatype.nexus.configuration.Configurator;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.CRepositoryExternalConfigurationHolderFactory;
 import org.sonatype.nexus.mime.MimeRulesSource;
+import org.sonatype.nexus.proxy.AccessDeniedException;
+import org.sonatype.nexus.proxy.IllegalOperationException;
+import org.sonatype.nexus.proxy.IllegalRequestException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.LocalStorageException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
+import org.sonatype.nexus.proxy.StorageException;
 import org.sonatype.nexus.proxy.item.AbstractStorageItem;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.DefaultStorageFileItem;
@@ -32,9 +39,12 @@ import org.sonatype.nexus.proxy.registry.ContentClass;
 import org.sonatype.nexus.proxy.repository.AbstractGroupRepository;
 import org.sonatype.nexus.proxy.repository.DefaultRepositoryKind;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
+import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryKind;
+import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
 
 import com.bolyuba.nexus.plugin.npm.NpmContentClass;
+import com.bolyuba.nexus.plugin.npm.hosted.NpmHostedRepository;
 import com.bolyuba.nexus.plugin.npm.internal.NpmMimeRulesSource;
 import com.bolyuba.nexus.plugin.npm.service.GroupMetadataService;
 import com.bolyuba.nexus.plugin.npm.service.MetadataServiceFactory;
@@ -139,11 +149,11 @@ public class DefaultNpmGroupRepository
             contentLocator = groupMetadataService.produceRegistryRoot(packageRequest);
           }
           else if (packageRequest.isPackageRoot()) {
-            log.debug("Serving package {} root...", packageRequest.getName());
+            log.debug("Serving package {} root...", packageRequest.getCoordinates().getPackageName());
             contentLocator = groupMetadataService.producePackageRoot(packageRequest);
           }
           else {
-            log.debug("Serving package {} version {}...", packageRequest.getName(), packageRequest.getVersion());
+            log.debug("Serving package {} version {}...", packageRequest.getCoordinates().getPackageName(), packageRequest.getCoordinates().getVersion());
             contentLocator = groupMetadataService.producePackageVersion(packageRequest);
           }
           if (contentLocator != null) {
@@ -152,12 +162,12 @@ public class DefaultNpmGroupRepository
         }
         else {
           // registry special
-          if (packageRequest.isRegistrySpecial() && packageRequest.getPath().startsWith("/-/all")) {
+          if (packageRequest.isRegistrySpecial() && packageRequest.getCoordinates().getPath().startsWith("/-/all")) {
             log.debug("Serving registry root from /-/all...");
             return new DefaultStorageFileItem(this, storeRequest, true, true,
                 groupMetadataService.produceRegistryRoot(packageRequest));
           }
-          log.debug("Unknown registry special {}", packageRequest.getPath());
+          log.debug("Unknown registry special {}", packageRequest.getCoordinates().getPath());
         }
       }
       log.debug("No NPM metadata for path {}", storeRequest.getRequestPath());
@@ -167,5 +177,42 @@ public class DefaultNpmGroupRepository
     catch (IOException e) {
       throw new LocalStorageException("Metadata service error", e);
     }
+  }
+
+  /**
+   * npm group will pass on to it's hosted member a publish request. npm publishes with single PUT request where
+   * tarball is inlined as JSON resource, hence, no danger that subsequent requests may end up in different place.
+   *
+   * @since 1.2.0
+   */
+  @Override
+  public void storeItem(ResourceStoreRequest request, InputStream is, Map<String, String> userAttributes)
+      throws UnsupportedStorageOperationException,
+             IllegalOperationException,
+             StorageException,
+             AccessDeniedException
+  {
+    List<Repository> members = getTransitiveMemberRepositories();
+    for (Repository member : members) {
+      NpmHostedRepository hosted = member.adaptToFacet(NpmHostedRepository.class);
+      if (hosted != null) {
+        try {
+          hosted.storeItem(request, is, userAttributes);
+          return;
+        }
+        catch (ItemNotFoundException e) {
+          IllegalRequestException ex = new IllegalRequestException(
+              request,
+              String.format("npm group %s member %s has failed publish request", getId(), hosted.getId())
+          );
+          ex.initCause(e);
+          throw ex;
+        }
+      }
+    }
+    throw new IllegalRequestException(
+        request,
+        String.format("npm group %s has no hosted member to pass on publish request", getId())
+    );
   }
 }

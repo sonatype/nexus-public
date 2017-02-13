@@ -15,7 +15,12 @@ package com.bolyuba.nexus.plugin.npm.group;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.configuration.ConfigurationException;
+import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
+import org.sonatype.nexus.configuration.model.CRepositoryCoreConfiguration;
 import org.sonatype.nexus.proxy.repository.AbstractGroupRepositoryConfigurator;
+import org.sonatype.nexus.proxy.repository.Repository;
+import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
 
 /**
  * @author Georgy Bolyuba (georgy@bolyuba.com)
@@ -25,4 +30,14 @@ import org.sonatype.nexus.proxy.repository.AbstractGroupRepositoryConfigurator;
 public class NpmGroupRepositoryConfigurator
     extends AbstractGroupRepositoryConfigurator
 {
+  @Override
+  protected void doApplyConfiguration(Repository repository, ApplicationConfiguration configuration,
+                                      CRepositoryCoreConfiguration coreConfiguration)
+      throws ConfigurationException
+  {
+    super.doApplyConfiguration(repository, configuration, coreConfiguration);
+
+    // npm groups are write-thru
+    repository.setWritePolicy(RepositoryWritePolicy.ALLOW_WRITE);
+  }
 }

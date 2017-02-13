@@ -21,11 +21,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.apachehttpclient.Hc4Provider;
+import org.sonatype.nexus.proxy.RemoteStorageTransportOverloadedException;
 import org.sonatype.nexus.util.DigesterUtils;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
@@ -47,6 +49,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +89,7 @@ public class HttpTarballTransport
     this.metricsRegistry = Metrics.defaultRegistry();
   }
 
+  @Nullable
   public NpmBlob getTarballForVersion(final NpmProxyRepository npmProxyRepository, final File target,
                                       final PackageVersion packageVersion)
       throws IOException
@@ -108,6 +112,9 @@ public class HttpTarballTransport
     final HttpResponse httpResponse;
     try {
       httpResponse = httpClient.execute(get, context);
+    }
+    catch (ConnectionPoolTimeoutException e) {
+      throw new RemoteStorageTransportOverloadedException(npmProxyRepository, "npm HC overload: GET " + get.getURI(), e);
     }
     finally {
       timerContext.stop();

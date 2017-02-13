@@ -14,8 +14,6 @@ package com.bolyuba.nexus.plugin.npm.service.internal;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -28,7 +26,6 @@ import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.PackageVersion;
 import com.bolyuba.nexus.plugin.npm.service.ProxyMetadataService;
 import com.bolyuba.nexus.plugin.npm.service.tarball.TarballRequest;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
@@ -74,70 +71,43 @@ public class ProxyMetadataServiceImpl
   }
 
   @Override
-  public boolean expireMetadataCaches(final PackageRequest request) {
-    checkNotNull(request);
-    if (request.isPackage()) {
-      final PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), request.getName());
-      if (packageRoot == null) {
-        return false;
-      }
-      log.info("Expiring package root {} in repository {}", request.getName(), getNpmRepository().getId());
-      packageRoot.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
-      metadataStore.updatePackage(getNpmRepository(), packageRoot);
-      return true;
-    }
-    else {
-      final PackageRoot registryRoot = metadataStore.getPackageByName(getNpmRepository(), REGISTRY_ROOT_PACKAGE_NAME);
-      if (registryRoot != null) {
-        log.info("Expiring registry root of {}", getNpmRepository().getId());
-        registryRoot.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
-        metadataStore.updatePackage(getNpmRepository(), registryRoot);
-      }
-      int count = metadataStore.updatePackages(getNpmRepository(), null, new Function<PackageRoot, PackageRoot>()
-      {
-        @Override
-        public PackageRoot apply(@Nullable final PackageRoot input) {
-          input.getProperties().put(PROP_EXPIRED, Boolean.TRUE.toString());
-          return input;
-        }
-      });
-      log.info("Expired registry root of {} with {} packages", getNpmRepository().getId(), count);
-      return count > 0;
-    }
-  }
-
-  @Override
   public PackageRoot consumeRawPackageRoot(final PackageRoot packageRoot) {
     checkNotNull(packageRoot);
     return metadataStore.updatePackage(getNpmRepository(), packageRoot);
   }
 
-  /**
-   * Regex for tarball requests. They are in form of {@code /pkgName/-/pkgName-pkgVersion.tgz}, with a catch, that
-   * pkgVersion might be suffixed by some suffix (ie. "beta", "alpha", etc). Groups in regexp: 1. the "packageName",
-   * 2. the complete filename after "/-/"
-   */
-  private final static Pattern TARBALL_PATH_PATTERN = Pattern
-      .compile("/([[a-z][A-Z][0-9]-_\\.]+)/-/([[a-z][A-Z][0-9]-_\\.]+\\.tgz)");
+  private final static String SLASH_DASH_SLASH = "/-/";
 
   @Nullable
   @Override
   public TarballRequest createTarballRequest(final ResourceStoreRequest request) throws IOException {
     checkNotNull(request);
-    final Matcher matcher = TARBALL_PATH_PATTERN.matcher(request.getRequestPath());
     TarballRequest tarballRequest = null;
+    final String requestPath = request.getRequestPath();
+    final int indexOfSlashDashSlash = requestPath.indexOf(SLASH_DASH_SLASH);
+    if (indexOfSlashDashSlash > -1
+        && requestPath.length() > indexOfSlashDashSlash + SLASH_DASH_SLASH.length()
+        && requestPath.endsWith(".tgz")) {
+      final String packageName = requestPath.substring(0, indexOfSlashDashSlash);
+      final String tarballFilename = requestPath
+          .substring(indexOfSlashDashSlash + SLASH_DASH_SLASH.length(), requestPath.length());
 
-    if (matcher.matches()) {
-      final String packageName = matcher.group(1);
-      final String tarballFilename = matcher.group(2);
+      try {
+        PackageRequest.PackageCoordinates coordinates = PackageRequest.PackageCoordinates
+            .coordinatesFromUrl(packageName);
 
-      tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, true), tarballFilename);
-      if (tarballRequest == null && !request.isRequestLocalOnly()) {
-        // might be new package so check the upstream metadata
-        tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, false), tarballFilename);
+        tarballRequest = requestTarball(request, mayUpdatePackageRoot(coordinates, true), tarballFilename);
+        if (tarballRequest == null && !request.isRequestLocalOnly()) {
+          // might be new package so check the upstream metadata
+          tarballRequest = requestTarball(request, mayUpdatePackageRoot(coordinates, false), tarballFilename);
+        }
+      }
+      catch (IllegalArgumentException e) {
+        // handle it as non tarball request
       }
     }
-    else {
+
+    if (tarballRequest == null) {
       log.debug("Not a tarball request: {}", request.getRequestPath());
     }
 
@@ -147,7 +117,7 @@ public class ProxyMetadataServiceImpl
   @Override
   protected PackageRootIterator doGenerateRegistryRoot(final PackageRequest request) throws IOException {
     // TODO: ContentServlet sets isLocal to paths ending with "/", so registry root will be local!
-    if (request.getPath().endsWith("/") || !request.getStoreRequest().isRequestLocalOnly()) {
+    if (request.getCoordinates().getPath().endsWith("/") || !request.getStoreRequest().isRequestLocalOnly()) {
       // doing what NPM CLI does it's in own cache, using an invalid document (name "-" is invalid)
       PackageRoot registryRoot = metadataStore.getPackageByName(getNpmRepository(), REGISTRY_ROOT_PACKAGE_NAME);
       final long now = System.currentTimeMillis();
@@ -189,7 +159,8 @@ public class ProxyMetadataServiceImpl
               registryRoot.getProperties().put(PROP_EXPIRED, Boolean.FALSE.toString());
               registryRoot.getProperties().put(PROP_CACHED, Long.toString(now));
               metadataStore.updatePackage(getNpmRepository(), registryRoot);
-            } else {
+            }
+            else {
               log.info("Registry root {} update not allowed", getNpmRepository().getId());
             }
           }
@@ -202,8 +173,7 @@ public class ProxyMetadataServiceImpl
   @Nullable
   @Override
   protected PackageRoot doGeneratePackageRoot(final PackageRequest request) throws IOException {
-    return mayUpdatePackageRoot(request.getName(),
-        request.getStoreRequest().isRequestLocalOnly());
+    return mayUpdatePackageRoot(request.getCoordinates(), request.getStoreRequest().isRequestLocalOnly());
   }
 
   // ==
@@ -212,7 +182,7 @@ public class ProxyMetadataServiceImpl
    * Attempts to find the given tarball in the cached package metadata, returns null if not found.
    */
   private TarballRequest requestTarball(final ResourceStoreRequest request, final PackageRoot packageRoot,
-      final String tarballFilename)
+                                        final String tarballFilename)
   {
     final String path = request.getRequestPath();
     if (packageRoot != null) {
@@ -238,19 +208,21 @@ public class ProxyMetadataServiceImpl
    * May fetch package root from remote if not found locally, or is found but is expired. The package root returned
    * document is NOT filtered, so this method should not be used to source documents sent downstream.
    */
-  private PackageRoot mayUpdatePackageRoot(final String packageName, final boolean localOnly) throws IOException {
+  private PackageRoot mayUpdatePackageRoot(final PackageRequest.PackageCoordinates packageCoordinates,
+                                           final boolean localOnly) throws IOException
+  {
     final long now = System.currentTimeMillis();
-    PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), packageName);
+    PackageRoot packageRoot = metadataStore.getPackageByName(getNpmRepository(), packageCoordinates.getPackageName());
     if (isRemoteAccessAllowed() && !localOnly && (packageRoot == null || isExpired(packageRoot, now))) {
-      packageRoot = proxyMetadataTransport.fetchPackageRoot(getNpmRepository(), packageName, packageRoot);
-      if (packageRoot == null) {
-        return null;
+      PackageRoot remotePackageRoot = proxyMetadataTransport.fetchPackageRoot(getNpmRepository(), packageCoordinates, packageRoot);
+      if (remotePackageRoot == null) {
+        return packageRoot;
       }
       // On remote fetch of metadata, evict /packageName and children from NFC
-      getNpmRepository().getNotFoundCache().removeWithChildren("/" + packageName);
-      packageRoot.getProperties().put(PROP_EXPIRED, Boolean.FALSE.toString());
-      packageRoot.getProperties().put(PROP_CACHED, Long.toString(now));
-      return metadataStore.replacePackage(getNpmRepository(), packageRoot);
+      getNpmRepository().getNotFoundCache().removeWithChildren("/" + packageCoordinates.getPackageName());
+      remotePackageRoot.getProperties().put(PROP_EXPIRED, Boolean.FALSE.toString());
+      remotePackageRoot.getProperties().put(PROP_CACHED, Long.toString(now));
+      return metadataStore.replacePackage(getNpmRepository(), remotePackageRoot);
     }
     else {
       return packageRoot;

@@ -22,6 +22,7 @@ import org.sonatype.nexus.configuration.Configurator;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.CRepositoryExternalConfigurationHolderFactory;
 import org.sonatype.nexus.mime.MimeRulesSource;
+import org.sonatype.nexus.proxy.AccessDeniedException;
 import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.LocalStorageException;
@@ -157,15 +158,7 @@ public class DefaultNpmProxyRepository
   protected boolean doExpireProxyCaches(final ResourceStoreRequest request, final WalkerFilter filter) {
     // for Walker to operate, we must shut down the metadata service
     request.getRequestContext().put(NpmRepository.NPM_METADATA_NO_SERVICE, Boolean.TRUE);
-    boolean result = super.doExpireProxyCaches(request, filter);
-    try {
-      boolean npmResult = proxyMetadataService.expireMetadataCaches(new PackageRequest(request));
-      return result || npmResult;
-    }
-    catch (IllegalArgumentException ignore) {
-      // ignore
-      return result;
-    }
+    return super.doExpireProxyCaches(request, filter);
   }
 
   // TODO: npm hosted and proxy repositories have similar retrieve code, factor it out or keep in sync
@@ -173,6 +166,8 @@ public class DefaultNpmProxyRepository
   protected AbstractStorageItem doRetrieveLocalItem(ResourceStoreRequest storeRequest)
       throws ItemNotFoundException, LocalStorageException
   {
+    maintainNotFoundCache(storeRequest); // bring it to lower level too
+
     try {
       if (!getMetadataService().isNpmMetadataServiced(storeRequest)) {
         // shut down NPM MD+tarball service completely
@@ -194,14 +189,18 @@ public class DefaultNpmProxyRepository
             contentLocator = proxyMetadataService.produceRegistryRoot(packageRequest);
           }
           else if (packageRequest.isPackageRoot()) {
-            log.debug("Serving package {} root...", packageRequest.getName());
+            log.debug("Serving package {} root...", packageRequest.getCoordinates().getPackageName());
             contentLocator = proxyMetadataService.producePackageRoot(packageRequest);
           }
           else {
-            log.debug("Serving package {} version {}...", packageRequest.getName(), packageRequest.getVersion());
+            log.debug("Serving package {} version {}...", packageRequest.getCoordinates().getPackageName(), packageRequest.getCoordinates().getVersion());
             contentLocator = proxyMetadataService.producePackageVersion(packageRequest);
           }
           if (contentLocator == null) {
+            // NFC handling, as npm imple loops on lower levels than NFC handling
+            if (shouldAddToNotFoundCache(storeRequest)) {
+              addToNotFoundCache(storeRequest);
+            }
             log.debug("No NPM metadata for path {}", storeRequest.getRequestPath());
             throw new ItemNotFoundException(
                 reasonFor(storeRequest, this, "No content for path %s", storeRequest.getRequestPath()));
@@ -210,12 +209,12 @@ public class DefaultNpmProxyRepository
         }
         else {
           // registry special
-          if (packageRequest.isRegistrySpecial() && packageRequest.getPath().startsWith("/-/all")) {
+          if (packageRequest.isRegistrySpecial() && packageRequest.getCoordinates().getPath().startsWith("/-/all")) {
             log.debug("Serving registry root from /-/all...");
             return createStorageFileItem(storeRequest,
                 proxyMetadataService.produceRegistryRoot(packageRequest));
           }
-          log.debug("Unknown registry special {}", packageRequest.getPath());
+          log.debug("Unknown registry special {}", packageRequest.getCoordinates().getPath());
           throw new ItemNotFoundException(
               reasonFor(storeRequest, this, "No content for path %s", storeRequest.getRequestPath()));
         }
@@ -285,16 +284,11 @@ public class DefaultNpmProxyRepository
     }
   }
 
-  /**
-   * Beside original behavior, only add to NFC non-metadata requests.
-   */
   @Override
-  protected boolean shouldAddToNotFoundCache(final ResourceStoreRequest request) {
-    boolean shouldAddToNFC = super.shouldAddToNotFoundCache(request);
-    if (shouldAddToNFC) {
-      return !request.getRequestContext().containsKey(NpmRepository.NPM_METADATA_SERVICED);
-    }
-    return shouldAddToNFC;
+  protected boolean doCheckRemoteItemExistence(StorageItem localItem, ResourceStoreRequest request)
+      throws RemoteAccessException, RemoteStorageException
+  {
+    return true; // npm own transport will perform conditional GET anyway, no need for extra HEAD+GET only to check remote
   }
 
   @Override
@@ -306,7 +300,7 @@ public class DefaultNpmProxyRepository
     try {
       ResourceStoreRequest storeRequest = item.getResourceStoreRequest();
       PackageRequest packageRequest = new PackageRequest(storeRequest);
-      log.info("NPM cache {}", packageRequest.getPath());
+      log.info("NPM cache {}", packageRequest.getCoordinates().getPath());
       if (packageRequest.isMetadata()) {
         // no cache, is done by MetadataService (should not get here at all)
         return item;
@@ -390,8 +384,9 @@ public class DefaultNpmProxyRepository
 
   // TODO: npm hosted and proxy repositories have same deleteItem code, factor it out or keep in sync
   @Override
-  public void deleteItem(boolean fromTask, ResourceStoreRequest storeRequest)
-      throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException, StorageException
+  public void deleteItem(ResourceStoreRequest storeRequest)
+      throws UnsupportedStorageOperationException, IllegalOperationException,
+             AccessDeniedException, ItemNotFoundException, StorageException
   {
     PackageRequest packageRequest = null;
     try {
@@ -408,13 +403,13 @@ public class DefaultNpmProxyRepository
           getMetadataService().deleteAllMetadata();
         }
         else if (packageRequest.isPackageRoot()) {
-          log.debug("Deleting package {} root...", packageRequest.getName());
-          supressItemNotFound = getMetadataService().deletePackage(packageRequest.getName());
+          log.debug("Deleting package {} root...", packageRequest.getCoordinates().getPackageName());
+          supressItemNotFound = getMetadataService().deletePackage(packageRequest.getCoordinates().getPackageName());
         }
       }
     }
     try {
-      super.deleteItem(fromTask, storeRequest);
+      super.deleteItem(storeRequest);
     }
     catch (ItemNotFoundException e) {
       // this allows to delete package metadata only, where no tarballs were cached/deployed for some reason

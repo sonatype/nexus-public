@@ -50,6 +50,7 @@
       <artifactId>nexus-orient-plugin</artifactId>
       <type>${nexus-plugin.type}</type>
       <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
