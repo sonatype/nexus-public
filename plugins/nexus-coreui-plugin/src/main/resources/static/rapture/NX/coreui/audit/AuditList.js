@@ -117,7 +117,8 @@ Ext.define('NX.coreui.audit.AuditList', {
           {
             xtype: 'pagingtoolbar',
             store: 'NX.coreui.audit.AuditStore',
-            border: false
+            border: false,
+            displayInfo: true
           }
         ]
       }],

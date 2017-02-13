@@ -130,6 +130,17 @@ class EventExecutor
    * Binds current "isReplicating" context to the {@link Runnable} regardless which thread executes it.
    */
   private static Runnable inheritIsReplicating(final Runnable command) {
-    return isReplicating() ? () -> asReplicating(command) : command;
+    if (!isReplicating()) {
+      return command; // no need to inherit flag
+    }
+    return () -> {
+      // check state from context of thread doing the running
+      if (!isReplicating()) {
+        asReplicating(command); // set flag for duration of command
+      }
+      else {
+        command.run(); // flag already set, maintain it
+      }
+    };
   }
 }

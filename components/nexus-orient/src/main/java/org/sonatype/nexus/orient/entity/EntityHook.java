@@ -243,6 +243,11 @@ public final class EntityHook
           EventHelper.asReplicating(() -> postEvents(db, events, remoteNodeId));
         }
       }
+      catch (Throwable e) { // NOSONAR
+        // exceptions as a result of posting events should not affect the commit,
+        // so log and swallow them rather than let them propagate back to Orient
+        log.error("Failed to post entity events", e);
+      }
       finally {
         UnitOfWork.resume(work);
       }

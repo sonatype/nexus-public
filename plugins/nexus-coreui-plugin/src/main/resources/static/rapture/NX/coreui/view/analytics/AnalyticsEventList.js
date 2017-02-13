@@ -134,7 +134,8 @@ Ext.define('NX.coreui.view.analytics.AnalyticsEventList', {
           {
             xtype: 'pagingtoolbar',
             store: 'AnalyticsEvent',
-            border: false
+            border: false,
+            displayInfo: true
           }
         ]
       }],

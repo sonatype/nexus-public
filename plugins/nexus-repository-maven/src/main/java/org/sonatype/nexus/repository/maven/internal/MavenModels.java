@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -131,7 +132,7 @@ public final class MavenModels
     try (InputStream is = inputStream) {
       return MODEL_READER.read(is, false);
     }
-    catch (XmlPullParserException e) {
+    catch (XmlPullParserException | EOFException e ) {
       log.debug("Could not parse XML into Model", e);
       return null;
     }

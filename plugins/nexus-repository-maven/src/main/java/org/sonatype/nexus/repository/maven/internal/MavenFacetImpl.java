@@ -366,7 +366,7 @@ public class MavenFacetImpl
   {
     Model model = MavenModels.readModel(assetBlob.getBlob().getInputStream());
     if (model == null) {
-      log.debug("Could not parse POM: {} @ {}", getRepository().getName(), mavenPath.getPath());
+      log.warn("Could not parse POM: {} @ {}", getRepository().getName(), mavenPath.getPath());
       return;
     }
     String packaging = model.getPackaging();

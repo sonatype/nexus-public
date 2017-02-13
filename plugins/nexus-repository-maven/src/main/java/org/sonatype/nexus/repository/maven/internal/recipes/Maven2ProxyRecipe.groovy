@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
+import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher
 import org.sonatype.nexus.repository.maven.internal.proxy.MavenProxyFacet
 import org.sonatype.nexus.repository.maven.internal.proxy.MavenProxyIndexFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
+import org.sonatype.nexus.repository.view.Route.Builder
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
 
@@ -143,6 +145,10 @@ class Maven2ProxyRecipe
         .handler(proxyHandler)
         .create())
 
+    builder.route(newNx2MetaFilesRouteBuilder()
+        .handler(notFound())
+        .create())
+
     builder.route(newMavenPathRouteBuilder()
         .handler(negativeCacheHandler)
         .handler(partialFetchHandler)
@@ -157,5 +163,9 @@ class Maven2ProxyRecipe
     facet.configure(builder.create())
 
     return facet
+  }
+
+  Builder newNx2MetaFilesRouteBuilder() {
+    return new Builder().matcher(new MavenNx2MetaFilesMatcher(mavenPathParser))
   }
 }

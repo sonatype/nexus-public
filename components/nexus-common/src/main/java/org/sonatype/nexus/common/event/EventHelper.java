@@ -14,6 +14,7 @@ package org.sonatype.nexus.common.event;
 
 import java.util.function.Supplier;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 
 /**
@@ -40,17 +41,13 @@ public class EventHelper
    * Calls the given {@link Supplier} while flagged as replicating remote events.
    */
   public static <T> T asReplicating(final Supplier<T> supplier) {
-    if (isReplicating()) {
+    checkState(!isReplicating(), "Replication already in progress");
+    isReplicating.set(TRUE);
+    try {
       return supplier.get();
     }
-    else {
-      isReplicating.set(TRUE);
-      try {
-        return supplier.get();
-      }
-      finally {
-        isReplicating.remove();
-      }
+    finally {
+      isReplicating.remove();
     }
   }
 
@@ -58,17 +55,13 @@ public class EventHelper
    * Calls the given {@link Runnable} while flagged as replicating remote events.
    */
   public static void asReplicating(final Runnable runnable) {
-    if (isReplicating()) {
-      runnable.run(); // NOSONAR
+    checkState(!isReplicating(), "Replication already in progress");
+    isReplicating.set(TRUE);
+    try {
+      runnable.run();
     }
-    else {
-      isReplicating.set(TRUE);
-      try {
-        runnable.run(); // NOSONAR
-      }
-      finally {
-        isReplicating.remove();
-      }
+    finally {
+      isReplicating.remove();
     }
   }
 }

@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 
+import com.google.common.base.Throwables;
 import com.google.common.eventbus.Subscribe;
 import org.eclipse.sisu.inject.DefaultBeanLocator;
 import org.junit.Test;
@@ -173,6 +174,19 @@ public class EventManagerImplTest
 
     assertThat(handler.handledByThread, hasSize(4));
     assertThat(handler.handledByThread.get(3), is(Thread.currentThread()));
+  }
+
+  @Test
+  public void singleThreadedOnShutdownWhenReplicating() throws Exception {
+    EventHelper.asReplicating(() -> {
+      try {
+        singleThreadedOnShutdown();
+      }
+      catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private class AsyncHandler

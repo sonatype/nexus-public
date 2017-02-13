@@ -115,6 +115,7 @@ public interface StorageTx
   /**
    * Gets first asset owned by the specified component.
    */
+  @Nullable
   Asset firstAsset(Component component);
 
   /**
