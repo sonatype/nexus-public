@@ -27,16 +27,24 @@ import org.sonatype.security.ldap.realms.persist.LdapConfiguration;
 import org.sonatype.security.usermanagement.RoleIdentifier;
 import org.sonatype.security.usermanagement.User;
 import org.sonatype.security.usermanagement.UserManager;
+import org.sonatype.security.usermanagement.UserNotFoundException;
+import org.sonatype.security.usermanagement.UserNotFoundTransientException;
 import org.sonatype.security.usermanagement.UserSearchCriteria;
 
 import com.google.inject.Module;
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class LdapUserManagerIT
     extends LdapTestSupport
 {
+
+  @Rule
+  public final ExpectedException expectedException = ExpectedException.none();
+
   @Override
   protected Module[] getTestCustomModules() {
     return new Module[]{new SecurityModule()};
@@ -97,6 +105,25 @@ public class LdapUserManagerIT
     Assert.assertEquals("cstamas", user.getUserId());
     Assert.assertEquals("cstamas@sonatype.com", user.getEmailAddress());
     Assert.assertEquals("Tamas Cservenak", user.getName());
+  }
+
+  @Test
+  public void testGetUserFailsLdapDown()
+      throws Exception
+  {
+    UserManager userManager = this.getUserManager();
+    getLdapServer().stop();
+    expectedException.expect(UserNotFoundTransientException.class);
+    userManager.getUser("cstamas");
+  }
+
+  @Test
+  public void testGetUserFailsUserDoesNotExist()
+      throws Exception
+  {
+    UserManager userManager = this.getUserManager();
+    expectedException.expect(UserNotFoundException.class);
+    userManager.getUser("not_a_user");
   }
 
   @Test

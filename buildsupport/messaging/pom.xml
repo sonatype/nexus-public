@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <apache-activemq.version>5.14.3</apache-activemq.version>
+    <apache-activemq.version>5.9.1</apache-activemq.version>
     <apache-camel.version>2.13.4</apache-camel.version>
   </properties>
 

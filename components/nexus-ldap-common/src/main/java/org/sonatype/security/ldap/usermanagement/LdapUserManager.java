@@ -58,13 +58,14 @@ public class LdapUserManager
       }
       catch (NoSuchLdapUserException e) {
         log.debug("User: " + userId + " not found.", e);
+        throw new UserNotFoundException(userId, e.getMessage(), e);
       }
       catch (LdapDAOException e) {
         log.debug("User: " + userId + " not found, cause: " + e.getMessage(), e);
         throw new UserNotFoundTransientException(userId, e.getMessage(), e);
       }
     }
-    throw new UserNotFoundException(userId);
+    throw new UserNotFoundTransientException(userId, "ldap user manager is not enabled");
   }
 
 
