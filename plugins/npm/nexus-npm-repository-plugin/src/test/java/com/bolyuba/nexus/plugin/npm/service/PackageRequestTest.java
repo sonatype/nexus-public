@@ -112,6 +112,21 @@ public class PackageRequestTest
     assertThat(packageRequest.getScope(), equalTo("sonatype"));
   }
 
+  @Test
+  public void scopedPackageWithVersion() throws IllegalArgumentException {
+    Mockito.when(mockRequest.getRequestPath()).thenReturn("/@sonatype/package/1.1.12");
+    PackageRequest packageRequest = new PackageRequest(mockRequest);
+
+    assertThat(packageRequest.isPackage(), is(true));
+    assertThat(packageRequest.isScoped(), is(true));
+    assertThat(packageRequest.isPackageRoot(), is(false));
+    assertThat(packageRequest.isPackageVersion(), is(true));
+    assertThat(packageRequest.isRegistrySpecial(), is(false));
+
+    assertThat(packageRequest.getName(), equalTo("@sonatype/package"));
+    assertThat(packageRequest.getVersion(), is("1.1.12"));    
+    assertThat(packageRequest.getScope(), equalTo("sonatype"));
+  }
 
   // Check that content cache escapes registry namespace
   @Test(expected = IllegalArgumentException.class)

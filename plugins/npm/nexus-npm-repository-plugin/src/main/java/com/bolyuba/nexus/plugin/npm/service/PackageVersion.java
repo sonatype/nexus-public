@@ -76,7 +76,17 @@ public class PackageVersion
     }
     else {
       //Unknown tarball, construct default
-      return getName() + "-" + getVersion() + ".tgz";
+      return getUnscopedName() + "-" + getVersion() + ".tgz";
+    }
+  }
+
+  private String getUnscopedName() {
+    String name = getName();
+    if (name.startsWith("@") && name.contains("/")) {
+      return name.substring(name.indexOf('/') + 1);
+    }
+    else {
+      return name;
     }
   }
 

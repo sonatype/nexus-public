@@ -117,14 +117,14 @@ public class ScopedPackagesIT
     assertThat(
         (String) registryScopedDoc.getJSONObject("versions").getJSONObject("0.0.1").getJSONObject("dist")
             .get("tarball"),
-        endsWith("/nexus/content/repositories/registry2/@registry2/testproject/-/testproject-0.0.1.tgz"));
+        endsWith("/nexus/content/groups/npmgroup/@registry2/testproject/-/testproject-0.0.1.tgz"));
 
-    // registry1 should been asked for metadata
+    // registry1 should been asked for metadata 2 times
     final List<String> registry1Paths = mockNpmRegistry1.getPathRecorder().getPathsForVerb("GET");
-    assertThat(registry1Paths, hasSize(1));
-    assertThat(registry1Paths, containsInAnyOrder("/testproject"));
+    assertThat(registry1Paths, hasSize(2));
+    assertThat(registry1Paths, containsInAnyOrder("/testproject", "/@registry2/testproject"));
 
-    // registry2 should been asked for metadata 2 times (scoped req did not touch reg1)
+    // registry2 should been asked for metadata 2 times  as well
     final List<String> registry2Paths = mockNpmRegistry2.getPathRecorder().getPathsForVerb("GET");
     assertThat(registry2Paths, hasSize(2));
     assertThat(registry2Paths, containsInAnyOrder("/testproject", "/@registry2/testproject"));

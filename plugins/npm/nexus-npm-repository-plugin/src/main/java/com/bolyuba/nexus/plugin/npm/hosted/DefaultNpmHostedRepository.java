@@ -56,6 +56,7 @@ import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
 import com.bolyuba.nexus.plugin.npm.service.PackageRequest;
 import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.PackageVersion;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -271,7 +272,8 @@ public class DefaultNpmHostedRepository
       PackageRequest packageRequest = null;
       try {
         packageRequest = new PackageRequest(request);
-      } catch (IllegalArgumentException e) {
+      }
+      catch (IllegalArgumentException e) {
         // TODO: This might be our tarball, but it also might be something stupid uploaded. Need to validate further
         // for now just store it
         super.storeItem(request, is, userAttributes);
@@ -306,8 +308,7 @@ public class DefaultNpmHostedRepository
               try {
                 final ResourceStoreRequest attachmentRequest = new ResourceStoreRequest(request);
                 attachmentRequest.setRequestPath(
-                    packageRequest.getPath() + RepositoryItemUid.PATH_SEPARATOR + NPM_REGISTRY_SPECIAL +
-                        RepositoryItemUid.PATH_SEPARATOR + attachment.getName());
+                    getStorageRequestPath(packageRequest, attachment));
                 super.storeItem(attachmentRequest, attachment.getContent(), userAttributes);
               }
               finally {
@@ -325,6 +326,20 @@ public class DefaultNpmHostedRepository
     catch (IOException e) {
       throw new LocalStorageException("Upload problem", e);
     }
+  }
+
+  @VisibleForTesting
+  String getStorageRequestPath(final PackageRequest packageRequest, final NpmBlob attachment) {
+
+    String name;
+    if (packageRequest.isScoped()) {
+      name = attachment.getName().substring(attachment.getName().indexOf("/") + 1);
+    }
+    else {
+      name = attachment.getName();
+    }
+    return packageRequest.getPath() + RepositoryItemUid.PATH_SEPARATOR + NPM_REGISTRY_SPECIAL +
+        RepositoryItemUid.PATH_SEPARATOR + name;
   }
 
   // TODO: npm hosted and proxy repositories have same deleteItem code, factor it out or keep in sync

@@ -175,6 +175,13 @@ public class PackageRequest
               requestPath;
       String[] explodedPath = correctedPath.split(RepositoryItemUid.PATH_SEPARATOR);
 
+      if (explodedPath.length == 3 && explodedPath[0].startsWith("@")) {
+        coordinates.type = Type.PACKAGE_VERSION;
+        coordinates.scope = validate(explodedPath[0].substring(1), "Invalid package scope: ");
+        coordinates.packageName = "@" + coordinates.scope + "/" + validate(explodedPath[1], "Invalid package name: ");
+        coordinates.packageVersion = validate(explodedPath[2], "Invalid package version: ");
+        return coordinates;
+      }
       if (explodedPath.length == 2) {
         if (explodedPath[0].startsWith("@")) {
           coordinates.type = Type.PACKAGE_ROOT;

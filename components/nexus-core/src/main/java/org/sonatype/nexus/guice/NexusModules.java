@@ -22,6 +22,7 @@ import org.sonatype.nexus.web.internal.BaseUrlHolderFilter;
 import org.sonatype.nexus.web.internal.CommonHeadersFilter;
 import org.sonatype.nexus.web.internal.ErrorPageFilter;
 import org.sonatype.nexus.web.internal.ErrorPageServlet;
+import org.sonatype.nexus.web.internal.HeaderPatternFilter;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.security.web.guice.SecurityWebModule;
 
@@ -90,6 +91,7 @@ public class NexusModules
       {
         @Override
         protected void configureServlets() {
+          filter("/*").through(HeaderPatternFilter.class);
           filter("/*").through(BaseUrlHolderFilter.class);
           filter("/*").through(ErrorPageFilter.class);
           filter("/*").through(CommonHeadersFilter.class);
