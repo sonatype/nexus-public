@@ -32,6 +32,8 @@ public class ClusteredModelVersions
 {
   private Map<String, String> modelVersions = new HashMap<>();
 
+  private boolean dirty;
+
   public Map<String, String> getModelVersions() {
     return modelVersions;
   }
@@ -48,12 +50,27 @@ public class ClusteredModelVersions
   public void put(final String model, final String version) {
     checkNotNull(model);
     checkNotNull(version);
-    modelVersions.put(model, version);
+    String oldVersion = modelVersions.put(model, version);
+    dirty = dirty || !version.equals(oldVersion);
   }
 
   @Override
   public Iterator<Entry<String, String>> iterator() {
     return modelVersions.entrySet().iterator();
+  }
+
+  /**
+   * @since 3.3
+   */
+  public boolean isDirty() {
+    return dirty;
+  }
+
+  /**
+   * @since 3.3
+   */
+  public void clearDirty() {
+    dirty = false;
   }
 
   @Override

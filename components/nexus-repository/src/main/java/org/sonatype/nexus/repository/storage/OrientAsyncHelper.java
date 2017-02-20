@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -104,12 +105,19 @@ class OrientAsyncHelper
   /**
    * A "sentinel" {@link ODocument} instance that marks non blocking result end.
    */
-  private static final ODocument SENTINEL = new ODocument();
+  @VisibleForTesting
+  static final ODocument SENTINEL = new ODocument();
+
+  private static String queueIdentity(final BlockingQueue<?> queue) {
+    // using the identity hash to denote the queue instance, not its contents as toString() would do
+    return Integer.toHexString(System.identityHashCode(queue));
+  }
 
   /**
    * The queue feeding {@link OCommandResultListener} implementation.
    */
-  private static final class QueueFeedingResultListener
+  @VisibleForTesting
+  static final class QueueFeedingResultListener
       extends ComponentSupport
       implements OCommandResultListener
   {
@@ -128,7 +136,11 @@ class OrientAsyncHelper
     public boolean result(final Object o) {
       final ODocument doc = (ODocument) o;
       try {
-        queue.offer(doc, timeoutSeconds, TimeUnit.SECONDS);
+        if (!queue.offer(doc, timeoutSeconds, TimeUnit.SECONDS)) {
+          log.warn("Timed out adding query result to queue {} after {} seconds, aborting query", queueIdentity(queue),
+              timeoutSeconds);
+          return false;
+        }
       }
       catch (InterruptedException e) {
         log.warn("Interrupted result", e);
@@ -140,7 +152,9 @@ class OrientAsyncHelper
     @Override
     public void end() {
       try {
-        queue.offer(SENTINEL, timeoutSeconds, TimeUnit.SECONDS);
+        if (!queue.offer(SENTINEL, timeoutSeconds, TimeUnit.SECONDS)) {
+          log.warn("Timed out adding end marker to queue {} after {} seconds", queueIdentity(queue), timeoutSeconds);
+        }
       }
       catch (InterruptedException e) {
         log.warn("Interrupted end", e);
@@ -156,7 +170,8 @@ class OrientAsyncHelper
   /**
    * The {@link Iterable} implementation returned to caller that is consuming the queue fed by SQL query result.
    */
-  private static final class QueueConsumingIterable
+  @VisibleForTesting
+  static final class QueueConsumingIterable
       extends ComponentSupport
       implements Iterable<ODocument>, Iterator<ODocument>
   {
@@ -182,6 +197,10 @@ class OrientAsyncHelper
       if (next == null) {
         try {
           next = queue.poll(timeoutSeconds, TimeUnit.SECONDS);
+          if (next == null) {
+            throw new IllegalStateException("Timed out reading query result from queue " + queueIdentity(queue)
+                + " after " + timeoutSeconds + " seconds");
+          }
         }
         catch (InterruptedException e) {
           log.warn("Interrupted poll", e);

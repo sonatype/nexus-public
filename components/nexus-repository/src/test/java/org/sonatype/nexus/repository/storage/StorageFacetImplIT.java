@@ -786,8 +786,8 @@ public class StorageFacetImplIT
   }
 
   @Test
-  public void assetLastAccessed() throws Exception {
-    final String ASSET_NAME = "assetLastAccessed";
+  public void assetLastDownloaded() throws Exception {
+    final String ASSET_NAME = "assetLastDownloaded";
     try (StorageTx tx = beginTX()) {
       Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.createAsset(bucket, testFormat).name(ASSET_NAME);
@@ -799,8 +799,8 @@ public class StorageFacetImplIT
       Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
-      assertThat(asset.lastAccessed(), nullValue());
-      assertThat(asset.markAsAccessed(), is(true));
+      assertThat(asset.lastDownloaded(), nullValue());
+      assertThat(asset.markAsDownloaded(), is(true));
       tx.saveAsset(asset);
       tx.commit();
     }
@@ -809,8 +809,8 @@ public class StorageFacetImplIT
       Bucket bucket = tx.findBucket(testRepository1);
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
-      assertThat(asset.lastAccessed(), notNullValue());
-      assertThat(asset.markAsAccessed(), is(false));
+      assertThat(asset.lastDownloaded(), notNullValue());
+      assertThat(asset.markAsDownloaded(), is(false));
     }
   }
 

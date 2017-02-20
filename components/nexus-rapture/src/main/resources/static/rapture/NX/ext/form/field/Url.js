@@ -29,9 +29,15 @@ Ext.define('NX.ext.form.field.Url', {
       allow_underscores: true,
       allow_blank: this.allowBlank
     });
-    if (valid) {
+
+    if (valid || isHandledByBlankValidation(value)) {
       return true;
     }
+
+    function isHandledByBlankValidation(value) {
+      return (Ext.isEmpty(value) && !this.allowBlank);
+    }
+
     return 'This field should be a URL in the format "http:/' + '/www.example.com"';
   },
 

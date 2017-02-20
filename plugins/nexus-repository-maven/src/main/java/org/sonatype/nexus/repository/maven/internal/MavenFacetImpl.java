@@ -175,7 +175,7 @@ public class MavenFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsAccessed()) {
+    if (asset.markAsDownloaded()) {
       tx.saveAsset(asset);
     }
 
@@ -351,7 +351,7 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-    asset.markAsAccessed();
+    asset.markAsDownloaded();
     tx.saveAsset(asset);
 
     return asset;
@@ -394,7 +394,7 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-    asset.markAsAccessed();
+    asset.markAsDownloaded();
     tx.saveAsset(asset);
 
     return asset;

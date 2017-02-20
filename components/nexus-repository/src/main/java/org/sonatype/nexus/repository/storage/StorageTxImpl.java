@@ -51,6 +51,7 @@ import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -615,14 +616,10 @@ public class StorageTxImpl
       throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
-    // Delete old blob if necessary
-    BlobRef oldBlobRef = asset.blobRef();
-    if (oldBlobRef != null) {
-      if (!effectiveWritePolicy.checkUpdateAllowed()) {
-        throw new IllegalOperationException(
-            "Repository does not allow updating assets: " + bucket.getRepositoryName());
-      }
-      deleteBlob(oldBlobRef, effectiveWritePolicy);
+    if (!maybeDeleteBlob(asset, assetBlob, effectiveWritePolicy)) {
+      DateTime now = DateTime.now();
+      asset.blobCreated(now);
+      asset.blobUpdated(now);
     }
 
     asset.blobRef(assetBlob.getBlobRef());
@@ -639,6 +636,53 @@ public class StorageTxImpl
     asset.attributes().child(PROVENANCE).set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
 
     assetBlob.setAttached(true);
+  }
+
+  /**
+   * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
+   * write policy will be enforced for this operation and will throw an exception if updates are not supported.
+   */
+  private boolean maybeDeleteBlob(final Asset asset,
+                                  final AssetBlob assetBlob,
+                                  final WritePolicy effectiveWritePolicy)
+  {
+    checkNotNull(asset);
+    checkNotNull(assetBlob);
+    checkNotNull(effectiveWritePolicy);
+    if (asset.blobRef() != null) {
+      if (!effectiveWritePolicy.checkUpdateAllowed()) {
+        throw new IllegalOperationException("Repository does not allow updating assets: " + bucket.getRepositoryName());
+      }
+      maybeUpdateBlobUpdated(asset, assetBlob, DateTime.now());
+      deleteBlob(asset.blobRef(), effectiveWritePolicy);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Updates the blob updated timestamp if the old blob and new blob do not share the same SHA1 hash. Assumes the blobs
+   * are different if the old blob has been lost for some reason. Note that this method only supports assets with a
+   * previously attached blob.
+   */
+  private void maybeUpdateBlobUpdated(final Asset asset, final AssetBlob assetBlob, final DateTime now) {
+    checkNotNull(asset);
+    checkNotNull(assetBlob);
+    checkNotNull(now);
+    BlobRef oldBlobRef = checkNotNull(asset.blobRef());
+    Blob oldBlob = blobTx.get(oldBlobRef);
+    if (oldBlob != null) {
+      String oldBlobSha1 = oldBlob.getMetrics().getSha1Hash();
+      String newBlobSha1 = assetBlob.getBlob().getMetrics().getSha1Hash();
+      if (!oldBlobSha1.equalsIgnoreCase(newBlobSha1)) {
+        asset.blobUpdated(now);
+      }
+    }
+    else {
+      log.warn("Could not access attached blob for asset {} and blob ref {} in repository {}, assuming updated", asset,
+          oldBlobRef, bucket.getRepositoryName());
+      asset.blobUpdated(now);
+    }
   }
 
   @Override

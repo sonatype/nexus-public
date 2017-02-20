@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.ConstraintViolation;
+import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -40,7 +41,6 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
@@ -70,7 +70,7 @@ public class GroupFacetImpl
   @VisibleForTesting
   static class Config
   {
-    @NotEmpty
+    @NotNull
     @JsonDeserialize(as = LinkedHashSet.class) // retain order
     public Set<String> memberNames;
 

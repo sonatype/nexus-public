@@ -16,6 +16,7 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.config.internal.ConfigurationStore
+import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 
 import com.google.common.collect.ImmutableMap
@@ -32,10 +34,12 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static java.util.Arrays.asList
+import static com.google.common.collect.Lists.asList
+import static com.google.common.collect.Lists.newArrayList
 import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
 import static org.fest.assertions.api.Assertions.assertThat
+import static org.junit.Assert.assertFalse
 import static org.mockito.Matchers.any
 import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
@@ -46,7 +50,12 @@ class RepositoryManagerImplTest
     extends TestSupport
 {
 
-  //Dependencies for RepositoryManagerImpl
+  static final String MAVEN_CENTRAL_NAME = 'maven-central'
+
+  static final String APACHE_SNAPSHOTS_NAME = 'apache-snapshots'
+
+  List<String> groupMembers
+
   @Mock
   EventManager eventManager
 
@@ -70,7 +79,6 @@ class RepositoryManagerImplTest
   @Mock
   DefaultRepositoriesContributor defaultRepositoriesContributor
 
-  //Configurations and repositories
   @Mock
   Configuration mavenCentralConfiguration
 
@@ -89,6 +97,12 @@ class RepositoryManagerImplTest
   @Mock
   Repository thirdPartyRepository
 
+  @Mock
+  Configuration groupConfiguration
+
+  @Mock
+  Repository groupRepository
+
   //Recipe for creating repositories
   @Mock
   Recipe recipe
@@ -99,6 +113,9 @@ class RepositoryManagerImplTest
   Type type
 
   @Mock
+  Type groupType
+
+  @Mock
   Format format
 
   @Mock
@@ -107,35 +124,61 @@ class RepositoryManagerImplTest
   @Mock
   BlobStoreManager blobStoreManager
 
+  @Mock
+  GroupFacet groupFacet
+
+  @Mock
+  NestedAttributesMap groupAttributesMap
+
   //Subject of the test
   RepositoryManagerImpl repositoryManager
 
   @Before
   void setup() {
-    //recipe setup
+    setupRecipe()
+    setupRepositories()
+  }
+
+  private void setupRecipe() {
     when(recipe.getType()).thenReturn(type)
     when(recipe.getFormat()).thenReturn(format)
+  }
 
+  private void setupRepositories() {
     when(defaultRepositoriesContributor.getRepositoryConfigurations()).
-        thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
+        thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration))
     defaultRepositoriesContributorList = singletonList(defaultRepositoriesContributor)
 
-    mockRepository(mavenCentralConfiguration, mavenCentralRepository, 'maven-central', 'default')
-    mockRepository(apacheSnapshotsConfiguration, apacheSnapshotsRepository, 'apache-snapshots', 'default')
+    mockRepository(mavenCentralConfiguration, mavenCentralRepository, MAVEN_CENTRAL_NAME, 'default')
+    mockRepository(apacheSnapshotsConfiguration, apacheSnapshotsRepository, APACHE_SNAPSHOTS_NAME, 'default')
     mockRepository(thirdPartyConfiguration, thirdPartyRepository, 'third-party', 'third-party')
+    mockRepository(groupConfiguration, groupRepository, 'group', 'group')
 
     when(repositoryFactory.create(type, format)).
-        thenReturn(mavenCentralRepository, apacheSnapshotsRepository, thirdPartyRepository)
+        thenReturn(mavenCentralRepository, apacheSnapshotsRepository, thirdPartyRepository, groupRepository)
 
+    setupGroupRepository()
+  }
 
+  private void setupGroupRepository() {
+    groupMembers = newArrayList(MAVEN_CENTRAL_NAME, "apache-snapshots")
+    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet))
+    when(groupFacet.member(mavenCentralRepository)).thenReturn(true)
+    when(groupFacet.member(apacheSnapshotsRepository)).thenReturn(true)
+    when(groupRepository.getType()).thenReturn(groupType)
+    when(groupType.getValue()).thenReturn("group")
+    when(groupConfiguration.attributes("group")).thenReturn(groupAttributesMap)
+    when(groupAttributesMap.get("memberNames", Collection.class)).thenReturn(groupMembers)
   }
 
   private void mockRepository(Configuration configuration, Repository repository, String name, String blobstoreName) {
     when(configuration.getRecipeName()).thenReturn(recipeName)
+    when(configuration.getRepositoryName()).thenReturn(name)
     when(configuration.getAttributes()).thenReturn([storage: [blobStoreName: blobstoreName]])
-
     when(repository.getConfiguration()).thenReturn(configuration)
     when(repository.getName()).thenReturn(name)
+    when(repository.optionalFacet(any(Class.class))).thenReturn(Optional.empty())
   }
 
   private RepositoryManagerImpl buildRepositoryManagerImpl(final boolean defaultsConfigured,
@@ -143,10 +186,14 @@ class RepositoryManagerImplTest
   {
     if (defaultsConfigured) {
       when(configurationStore.list()).
-          thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
+          thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+              groupConfiguration))
     }
 
-    //initialize and start the repository manager
+    return initializeAndStartRepositoryManager(skipDefaultRepositories)
+  }
+
+  private RepositoryManagerImpl initializeAndStartRepositoryManager(boolean skipDefaultRepositories) {
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, nodeAccess,
@@ -166,7 +213,7 @@ class RepositoryManagerImplTest
     when(configurationStore.list()).
         thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration))
 
-    assertThat(repositoryManager.browse()).hasSize(3)
+    assertThat(repositoryManager.browse()).hasSize(4)
 
     verify(mavenCentralRepository).init(mavenCentralConfiguration)
     verify(mavenCentralRepository).start()
@@ -225,8 +272,8 @@ class RepositoryManagerImplTest
   @Test
   void 'exists checks name, is not case sensitive'() {
     repositoryManager = buildRepositoryManagerImpl(true)
-    assertThat(repositoryManager.exists('maven-central')).isTrue()
-    assertThat(repositoryManager.exists('MAVEN-CENTRAL')).isTrue()
+    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME)).isTrue()
+    assertThat(repositoryManager.exists(MAVEN_CENTRAL_NAME.toUpperCase())).isTrue()
     assertThat(repositoryManager.exists('missing-repository')).isFalse()
   }
 
@@ -243,4 +290,17 @@ class RepositoryManagerImplTest
     repositoryManager.delete("maven-central")
     verify(databaseFreezeService).checkUnfrozen("Unable to delete repository when database is frozen.")
   }
+
+  @Test
+  void 'remove repository from any group repository configurations on delete'() {
+    buildRepositoryManagerImpl(true).delete(MAVEN_CENTRAL_NAME)
+    assertFalse(groupMembers.contains(MAVEN_CENTRAL_NAME))
+  }
+
+  @Test
+  void 'update group repository when a member repository is deleted'() {
+    buildRepositoryManagerImpl(true).delete(MAVEN_CENTRAL_NAME)
+    verify(configurationStore).update(groupConfiguration)
+  }
+
 }

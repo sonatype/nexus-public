@@ -91,6 +91,13 @@ public class BrowseComponentsSqlBuilder
   }
 
   private String buildWhereClause() {
+    if (buckets.isEmpty()) {
+      return "false";
+    }
+    return buildWhereClauseWithBuckets();
+  }
+
+  private String buildWhereClauseWithBuckets() {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     whereClauses.add(buckets.stream()

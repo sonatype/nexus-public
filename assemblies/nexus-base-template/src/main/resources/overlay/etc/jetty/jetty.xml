@@ -29,9 +29,6 @@
           <Item>
             <Ref refid="NexusHandler"/>
           </Item>
-          <Item>
-            <New id="DefaultHandler" class="org.eclipse.jetty.server.handler.DefaultHandler"/>
-          </Item>
         </Array>
       </Set>
     </New>

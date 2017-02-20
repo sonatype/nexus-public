@@ -56,4 +56,18 @@ public interface NodeAccess
    * Returns identifiers of clustered nodes.
    */
   Set<String> getMemberIds();
+
+  /**
+   * Is this a newly created node?
+   *
+   * @since 3.3
+   */
+  boolean isFreshNode();
+
+  /**
+   * Is this a newly created cluster?
+   *
+   * @since 3.3
+   */
+  boolean isFreshCluster();
 }

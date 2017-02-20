@@ -55,7 +55,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_ACCESSED;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_DOWNLOADED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
@@ -72,8 +72,8 @@ public class PurgeUnusedSnapshotsFacetImpl
 {
 
   private static final String FIND_SNAPSHOTS_SQL = String.format(
-      "SELECT FROM (SELECT %s, MAX(%s) AS lastAccessed FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastAccessed < :olderThan AND %s.%s['%s']['%s'] LIKE '%%%s'",
-      P_COMPONENT, P_LAST_ACCESSED, P_BUCKET, P_COMPONENT, P_COMPONENT, P_COMPONENT,
+      "SELECT FROM (SELECT %s, MAX(%s) AS lastDownloaded FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastDownloaded < :olderThan AND %s.%s['%s']['%s'] LIKE '%%%s'",
+      P_COMPONENT, P_LAST_DOWNLOADED, P_BUCKET, P_COMPONENT, P_COMPONENT, P_COMPONENT,
       P_ATTRIBUTES, NAME, P_BASE_VERSION, SNAPSHOT_VERSION_SUFFIX
   );
 

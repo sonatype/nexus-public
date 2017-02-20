@@ -67,7 +67,11 @@ public class Asset
 
   private BlobRef blobRef;
 
-  private DateTime lastAccessed;
+  private DateTime lastDownloaded;
+
+  private DateTime blobCreated;
+
+  private DateTime blobUpdated;
 
   /**
    * Gets the component's {@link EntityId} this asset is part of, or {@code null} if it's standalone.
@@ -155,30 +159,31 @@ public class Asset
   }
 
   /**
-   * Gets the last accessed timestamp or {@code null} if undefined.
+   * Gets the last downloaded timestamp or {@code null} if undefined. Note that this can also reflect the timestamp for
+   * initial upload if the artifact has not yet been downloaded.
    */
   @Nullable
-  public DateTime lastAccessed() {
-    return lastAccessed;
+  public DateTime lastDownloaded() {
+    return lastDownloaded;
   }
 
   /**
-   * Sets the last accessed timestamp.
+   * Sets the last downloaded timestamp.
    */
-  Asset lastAccessed(final DateTime lastAccessed) {
-    this.lastAccessed = lastAccessed;
+  Asset lastDownloaded(final DateTime lastDownloaded) {
+    this.lastDownloaded = lastDownloaded;
     return this;
   }
 
   /**
-   * Sets the last accessed timestamp to now, if it has been more than a minute.
+   * Sets the last downloaded timestamp to now, if it has been more than a minute.
    *
    * @return {@code true} if the timestamp was changed, otherwise {@code false}
    */
-  public boolean markAsAccessed() {
+  public boolean markAsDownloaded() {
     DateTime now = DateTime.now();
-    if (lastAccessed == null || lastAccessed.isBefore(now.minusMinutes(1))) {
-      lastAccessed(now);
+    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusMinutes(1))) {
+      lastDownloaded(now);
       return true;
     }
     return false;
@@ -209,6 +214,46 @@ public class Asset
       return HashCode.fromString(hashCode);
     }
     return null;
+  }
+
+  /**
+   * Gets the blob_created timestamp or null if undefined.
+   *
+   * @since 3.3
+   */
+  @Nullable
+  public DateTime blobCreated() {
+    return blobCreated;
+  }
+
+  /**
+   * Sets the blob_created timestamp.
+   *
+   * @since 3.3
+   */
+  public Asset blobCreated(@Nullable final DateTime blobCreated) {
+    this.blobCreated = blobCreated;
+    return this;
+  }
+
+  /**
+   * Gets the blob_updated timestamp or null if undefined.
+   *
+   * @since 3.3
+   */
+  @Nullable
+  public DateTime blobUpdated() {
+    return blobUpdated;
+  }
+
+  /**
+   * Sets the blob_updated timestamp.
+   *
+   * @since 3.3
+   */
+  public Asset blobUpdated(@Nullable final DateTime blobUpdated) {
+    this.blobUpdated = blobUpdated;
+    return this;
   }
 
   @Override

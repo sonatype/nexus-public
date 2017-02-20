@@ -12,19 +12,18 @@
  */
 package org.sonatype.nexus.upgrade.internal;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
@@ -34,6 +33,7 @@ import org.sonatype.nexus.upgrade.UpgradeService;
 import com.google.common.base.Throwables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.alwaysTrue;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 import static org.sonatype.nexus.upgrade.internal.UpgradeManager.checkpoints;
 import static org.sonatype.nexus.upgrade.internal.UpgradeManager.upgrades;
@@ -59,20 +59,18 @@ public class UpgradeServiceImpl
 
   private final ModelVersionStore modelVersionStore;
 
+  private final NodeAccess nodeAccess;
+
   private Map<String, String> modelVersions;
 
-  private final Path componentDatabase;
-
   @Inject
-  public UpgradeServiceImpl(final ApplicationDirectories applicationDirectories,
-                            final UpgradeManager upgradeManager,
-                            final ModelVersionStore modelVersionStore)
+  public UpgradeServiceImpl(final UpgradeManager upgradeManager,
+                            final ModelVersionStore modelVersionStore,
+                            final NodeAccess nodeAccess)
   {
     this.upgradeManager = checkNotNull(upgradeManager);
     this.modelVersionStore = checkNotNull(modelVersionStore);
-
-    File dbDirectory = applicationDirectories.getWorkDirectory("db");
-    componentDatabase = dbDirectory.toPath().resolve("component/component.pcl");
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
@@ -87,7 +85,7 @@ public class UpgradeServiceImpl
     }
 
     try {
-      if (firstTimeInstall()) {
+      if (nodeAccess.isFreshNode()) {
         doInventory(upgrades);
       }
       else {
@@ -108,15 +106,20 @@ public class UpgradeServiceImpl
     modelVersionStore.stop();
   }
 
-  private boolean firstTimeInstall() {
-    return !Files.exists(componentDatabase); // this won't exist out-of-the-box
-  }
-
   /**
    * Takes an inventory of all upgrades bundled into this first-time installation.
    */
   private void doInventory(List<Upgrade> upgrades) {
+    Predicate<Upgrades> inventoryFilter = alwaysTrue();
+
+    if (nodeAccess.isClustered() && !nodeAccess.isFreshCluster()) {
+      // new node joining existing cluster; only take local inventory as cluster inventory is already taken
+      Set<String> localModels = upgradeManager.getLocalModels();
+      inventoryFilter = (upgrade) -> localModels.contains(upgrade.model());
+    }
+
     upgrades.stream().map(UpgradeManager::upgrades)
+        .filter(inventoryFilter)
         .forEach(upgrade -> modelVersions.put(upgrade.model(), upgrade.to()));
   }
 

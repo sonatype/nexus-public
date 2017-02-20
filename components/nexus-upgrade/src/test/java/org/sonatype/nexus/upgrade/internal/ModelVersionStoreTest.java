@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.entity.EntityVersion;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
@@ -102,5 +103,29 @@ public class ModelVersionStoreTest
     modelProperties.load();
     assertThat(modelProperties, hasEntry("local", "2.1"));
     assertThat(modelProperties.entrySet(), hasSize(1));
+  }
+
+  @Test
+  public void testSameDataOnlySavedOnce() throws Exception {
+    store.start();
+    store.save(ImmutableMap.of("clustered", "1.3"));
+
+    EntityVersion persistedVersion;
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      ClusteredModelVersions versions = entityAdapter.get(db);
+      persistedVersion = versions.getEntityMetadata().getVersion();
+    }
+
+    // force complete reload of entity
+    store.stop();
+    store.start();
+
+    // trying to save the same data should not bump the database record
+    store.save(ImmutableMap.of("clustered", "1.3"));
+
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      ClusteredModelVersions versions = entityAdapter.get(db);
+      assertThat(versions.getEntityMetadata().getVersion(), is(persistedVersion));
+    }
   }
 }

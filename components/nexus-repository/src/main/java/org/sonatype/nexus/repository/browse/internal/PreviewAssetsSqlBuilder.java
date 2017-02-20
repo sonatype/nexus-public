@@ -12,19 +12,16 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.security.RepositorySelector;
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.internal.AssetWhereClauseBuilder.whereClause;
+import static org.sonatype.nexus.repository.browse.internal.SuffixSqlBuilder.buildSuffix;
 
 /**
  * Class that encapsulates building the SQL queries for previewing assets in the {@link BrowseServiceImpl}.
@@ -41,8 +38,6 @@ public class PreviewAssetsSqlBuilder
 
   private final Map<String, List<String>> repoToContainedGroupMap;
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
   public PreviewAssetsSqlBuilder(final RepositorySelector repositorySelector,
                                  final String jexlExpression,
                                  final QueryOptions queryOptions,
@@ -54,49 +49,19 @@ public class PreviewAssetsSqlBuilder
   }
 
   public String buildWhereClause() {
-    List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true");
-    if (queryOptions.getFilter() != null) {
-      whereClauses.add(String.format("%s LIKE :nameFilter", MetadataNodeEntityAdapter.P_NAME));
-    }
-    return String.join(" AND ", whereClauses);
+    return whereClause("contentExpression(@this, :jexlExpression, :repositorySelector, " +
+        ":repoToContainedGroupMap) == true", queryOptions.getFilter() != null);
   }
 
   public String buildQuerySuffix() {
-    String sortProperty = queryOptions.getSortProperty();
-    String sortDirection = queryOptions.getSortDirection();
-    Integer start = queryOptions.getStart();
-    Integer limit = queryOptions.getLimit();
-    StringBuilder sb = new StringBuilder();
-    if (sortProperty != null && sortDirection != null) {
-      sb.append(" ORDER BY ");
-      sb.append(sortProperty);
-      sb.append(' ');
-      sb.append(sortDirection);
-    }
-    if (start != null) {
-      sb.append(" SKIP ");
-      sb.append(start);
-    }
-    if (limit != null) {
-      sb.append(" LIMIT ");
-      sb.append(limit);
-    }
-    return sb.toString();
+    return buildSuffix(queryOptions);
   }
 
   public Map<String, Object> buildSqlParams() {
     Map<String, Object> params = new HashMap<>();
     params.put("repositorySelector", repositorySelector.toSelector());
     params.put("jexlExpression", buildJexlExpression());
-
-    try {
-      //Ideally we could just pass a map around, workaround for http://www.prjhub.com/#/issues/8146
-      params.put("repoToContainedGroupMap", OBJECT_MAPPER.writeValueAsString(repoToContainedGroupMap));
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Unable to serialize the repository map", e);
-    }
+    params.put("repoToContainedGroupMap", repoToContainedGroupMap);
 
     String filter = queryOptions.getFilter();
     if (filter != null) {

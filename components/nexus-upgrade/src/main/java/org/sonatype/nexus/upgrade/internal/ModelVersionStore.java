@@ -114,7 +114,11 @@ public class ModelVersionStore
     save(modelVersions, upgradeManager.getClusteredModels(), clusteredModelVersions::put);
     try {
       localModelVersions.store();
-      inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, clusteredModelVersions));
+      // avoid touching database if the clustered versions haven't changed
+      if (clusteredModelVersions.isDirty()) {
+        inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, clusteredModelVersions));
+        clusteredModelVersions.clearDirty();
+      }
     }
     catch (IOException e) {
       throw new RuntimeException("Could not save upgraded model versions: " + modelVersions, e);

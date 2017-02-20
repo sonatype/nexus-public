@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
+import org.sonatype.nexus.validation.constraint.Url;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -67,6 +68,7 @@ public abstract class ProxyFacetSupport
   @VisibleForTesting
   static class Config
   {
+    @Url
     @NotNull
     public URI remoteUrl;
 

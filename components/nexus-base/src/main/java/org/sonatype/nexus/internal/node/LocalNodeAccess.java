@@ -50,6 +50,8 @@ public class LocalNodeAccess
 
   private String id;
 
+  private boolean freshNode;
+
   @Inject
   public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
     this.keyStoreManager = checkNotNull(keyStoreManager);
@@ -70,6 +72,8 @@ public class LocalNodeAccess
           "Silver Spring",
           "MD",
           "US");
+
+      freshNode = true; // nodes with newly created identities are considered 'fresh'
     }
 
     certificate = keyStoreManager.getCertificate();
@@ -116,6 +120,16 @@ public class LocalNodeAccess
   @Override
   public Set<String> getMemberIds() {
     return ImmutableSet.of(getId());
+  }
+
+  @Override
+  public boolean isFreshNode() {
+    return freshNode;
+  }
+
+  @Override
+  public boolean isFreshCluster() {
+    throw new UnsupportedOperationException("not in clustered mode");
   }
 
   @Override

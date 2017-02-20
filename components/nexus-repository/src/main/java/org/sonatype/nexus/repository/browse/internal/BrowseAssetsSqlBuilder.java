@@ -12,15 +12,14 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.browse.QueryOptions;
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.internal.AssetWhereClauseBuilder.whereClause;
+import static org.sonatype.nexus.repository.browse.internal.SuffixSqlBuilder.buildSuffix;
 
 /**
  * Class that encapsulates building the SQL queries for browsing assets in the {@link BrowseServiceImpl}.
@@ -38,35 +37,11 @@ public class BrowseAssetsSqlBuilder
   }
 
   public String buildWhereClause() {
-    List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
-    if (queryOptions.getFilter() != null) {
-      whereClauses.add(MetadataNodeEntityAdapter.P_NAME + " LIKE :nameFilter");
-    }
-    return String.join(" AND ", whereClauses);
+    return whereClause("contentAuth(@this, :browsedRepository) == true", queryOptions.getFilter() != null);
   }
 
   public String buildQuerySuffix() {
-    String sortProperty = queryOptions.getSortProperty();
-    String sortDirection = queryOptions.getSortDirection();
-    Integer start = queryOptions.getStart();
-    Integer limit = queryOptions.getLimit();
-    StringBuilder sb = new StringBuilder();
-    if (sortProperty != null && sortDirection != null) {
-      sb.append(" ORDER BY ");
-      sb.append(sortProperty);
-      sb.append(' ');
-      sb.append(sortDirection);
-    }
-    if (start != null) {
-      sb.append(" SKIP ");
-      sb.append(start);
-    }
-    if (limit != null) {
-      sb.append(" LIMIT ");
-      sb.append(limit);
-    }
-    return sb.toString();
+    return buildSuffix(queryOptions);
   }
 
   public Map<String, Object> buildSqlParams() {

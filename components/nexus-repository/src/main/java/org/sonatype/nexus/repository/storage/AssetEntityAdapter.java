@@ -83,9 +83,9 @@ public class AssetEntityAdapter
   public static final String P_CONTENT_TYPE = "content_type";
 
   /**
-   * Key of {@link Asset} attribute denoting when it was last accessed.
+   * Key of {@link Asset} attribute denoting when it was last downloaded.
    */
-  public static final String P_LAST_ACCESSED = "last_accessed";
+  public static final String P_LAST_DOWNLOADED = "last_downloaded";
 
   /**
    * Key of {@link Asset} size attribute (if asset has backing content).
@@ -93,6 +93,16 @@ public class AssetEntityAdapter
    * @see StorageTx#attachBlob(Asset, AssetBlob)
    */
   public static final String P_SIZE = "size";
+
+  /**
+   * Key of {@link Asset} attribute indicating when a blob was first attached to this asset.
+   */
+  public static final String P_BLOB_CREATED = "blob_created";
+
+  /**
+   * Key of {@link Asset} attribute indicating when a blob was updated (on creation or attaching a different blob).
+   */
+  public static final String P_BLOB_UPDATED = "blob_updated";
 
   private static final String I_BUCKET_COMPONENT_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -127,7 +137,9 @@ public class AssetEntityAdapter
     type.createProperty(P_SIZE, OType.LONG);
     type.createProperty(P_CONTENT_TYPE, OType.STRING);
     type.createProperty(P_BLOB_REF, OType.STRING);
-    type.createProperty(P_LAST_ACCESSED, OType.DATETIME);
+    type.createProperty(P_LAST_DOWNLOADED, OType.DATETIME);
+    type.createProperty(P_BLOB_CREATED, OType.DATETIME);
+    type.createProperty(P_BLOB_UPDATED, OType.DATETIME);
 
     ODocument metadata = db.newInstance()
         .field("ignoreNullValues", false)
@@ -152,7 +164,9 @@ public class AssetEntityAdapter
     Long size = document.field(P_SIZE, OType.LONG);
     String contentType = document.field(P_CONTENT_TYPE, OType.STRING);
     String blobRef = document.field(P_BLOB_REF, OType.STRING);
-    Date lastAccessed = document.field(P_LAST_ACCESSED, OType.DATETIME);
+    Date lastDownloaded = document.field(P_LAST_DOWNLOADED, OType.DATETIME);
+    Date blobCreated = document.field(P_BLOB_CREATED, OType.DATETIME);
+    Date blobUpdated = document.field(P_BLOB_UPDATED, OType.DATETIME);
 
     if (componentId != null) {
       entity.componentId(new AttachedEntityId(componentEntityAdapter, componentId));
@@ -163,8 +177,14 @@ public class AssetEntityAdapter
     if (blobRef != null) {
       entity.blobRef(BlobRef.parse(blobRef));
     }
-    if (lastAccessed != null) {
-      entity.lastAccessed(new DateTime(lastAccessed));
+    if (lastDownloaded != null) {
+      entity.lastDownloaded(new DateTime(lastDownloaded));
+    }
+    if (blobCreated != null) {
+      entity.blobCreated(new DateTime(blobCreated));
+    }
+    if (blobUpdated != null) {
+      entity.blobUpdated(new DateTime(blobUpdated));
     }
   }
 
@@ -179,8 +199,12 @@ public class AssetEntityAdapter
     document.field(P_CONTENT_TYPE, entity.contentType());
     BlobRef blobRef = entity.blobRef();
     document.field(P_BLOB_REF, blobRef != null ? blobRef.toString() : null);
-    DateTime lastAccessed = entity.lastAccessed();
-    document.field(P_LAST_ACCESSED, lastAccessed != null ? lastAccessed.toDate() : null);
+    DateTime lastDownloaded = entity.lastDownloaded();
+    document.field(P_LAST_DOWNLOADED, lastDownloaded != null ? lastDownloaded.toDate() : null);
+    DateTime blobCreated = entity.blobCreated();
+    document.field(P_BLOB_CREATED, blobCreated != null ? blobCreated.toDate() : null);
+    DateTime blobUpdated = entity.blobUpdated();
+    document.field(P_BLOB_UPDATED, blobUpdated != null ? blobUpdated.toDate() : null);
   }
 
   Asset findByProperty(final ODatabaseDocumentTx db,

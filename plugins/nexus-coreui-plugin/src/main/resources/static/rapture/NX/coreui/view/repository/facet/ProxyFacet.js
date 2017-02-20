@@ -50,6 +50,7 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
             fieldLabel: NX.I18n.get('Repository_Facet_ProxyFacet_Remote_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_ProxyFacet_Remote_HelpText'),
             emptyText: NX.I18n.get('Repository_Facet_ProxyFacet_Remote_EmptyText'),
+            allowBlank: false,
             useTrustStore: function (field) {
               if (Ext.String.startsWith(field.getValue(), 'https://')) {
                 return {

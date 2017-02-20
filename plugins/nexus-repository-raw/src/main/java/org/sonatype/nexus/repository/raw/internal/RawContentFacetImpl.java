@@ -79,7 +79,7 @@ public class RawContentFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsAccessed()) {
+    if (asset.markAsDownloaded()) {
       tx.saveAsset(asset);
     }
 
@@ -146,7 +146,7 @@ public class RawContentFacetImpl
       asset = tx.firstAsset(component);
     }
 
-    asset.markAsAccessed();
+    asset.markAsDownloaded();
 
     return asset;
   }

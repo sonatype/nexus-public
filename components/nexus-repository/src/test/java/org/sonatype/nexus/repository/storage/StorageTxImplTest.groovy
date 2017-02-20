@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.storage
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.blobstore.api.Blob
+import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobRef
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.common.collect.NestedAttributesMap
@@ -25,6 +27,7 @@ import com.google.common.base.Supplier
 import com.google.common.hash.HashCode
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import com.orientechnologies.orient.core.tx.OTransaction
+import org.joda.time.DateTime
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -426,4 +429,163 @@ extends TestSupport
     underTest.requireBlob(blobRef)
   }
 
+  /**
+   * Given:
+   * - an asset with no attached blob
+   * When:
+   * - attaching a blob
+   * Then:
+   * - the blob created timestamp will be updated
+   * - the blob updated timestamp will be updated
+   */
+  @Test
+  void 'attaching a blob to an asset without a blob sets the blob created and blob updated timestamps'() {
+    when(asset.attributes()).thenReturn(new NestedAttributesMap('key', [key: [:]]))
+    def blobMetrics = mock(BlobMetrics)
+    when(blobMetrics.getSha1Hash()).thenReturn('sha1')
+    def blob = mock(Blob)
+    when(blob.getMetrics()).thenReturn(blobMetrics)
+    def assetBlob = mock(AssetBlob)
+    when(assetBlob.getBlob()).thenReturn(blob)
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW_ONCE,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+    underTest.attachBlob(asset, assetBlob)
+    verify(asset).blobCreated(any(DateTime))
+    verify(asset).blobUpdated(any(DateTime))
+  }
+
+  /**
+   * Given:
+   * - an asset with an attached blob
+   * When:
+   * - attaching a blob with a different hash
+   * Then:
+   * - the blob created timestamp will NOT be updated
+   * - the blob updated timestamp will be updated
+   */
+  @Test
+  void 'attaching a blob with different hash to an asset with a blob only updates the blob created timestamp'() {
+    def oldBlobMetrics = mock(BlobMetrics)
+    when(oldBlobMetrics.getSha1Hash()).thenReturn('old-sha1')
+    def oldBlob = mock(Blob)
+    when(oldBlob.getMetrics()).thenReturn(oldBlobMetrics)
+    def blobRef = mock(BlobRef)
+    when(blobTx.get(blobRef)).thenReturn(oldBlob)
+    when(asset.attributes()).thenReturn(new NestedAttributesMap('key', [key: [:]]))
+    when(asset.blobRef()).thenReturn(blobRef)
+    def newBlobMetrics = mock(BlobMetrics)
+    when(newBlobMetrics.getSha1Hash()).thenReturn('new-sha1')
+    def newBlob = mock(Blob)
+    when(newBlob.getMetrics()).thenReturn(newBlobMetrics)
+    def assetBlob = mock(AssetBlob)
+    when(assetBlob.getBlob()).thenReturn(newBlob)
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+    underTest.attachBlob(asset, assetBlob)
+    verify(asset, never()).blobCreated(any(DateTime))
+    verify(asset).blobUpdated(any(DateTime))
+  }
+
+  /**
+   * Given:
+   * - an asset with an attached blob
+   * When:
+   * - attaching a blob with the same hash
+   * Then:
+   * - the blob created timestamp will NOT be updated
+   * - the blob updated timestamp will NOT be updated
+   */
+  void 'attaching a blob with the same hash to an asset with an existing blob does not update any timestamps'() {
+    def oldBlobMetrics = mock(BlobMetrics)
+    when(oldBlobMetrics.getSha1Hash()).thenReturn('sha1')
+    def oldBlob = mock(Blob)
+    when(oldBlob.getMetrics()).thenReturn(oldBlobMetrics)
+    def blobRef = mock(BlobRef)
+    when(blobTx.get(blobRef)).thenReturn(oldBlob)
+    when(asset.attributes()).thenReturn(new NestedAttributesMap('key', [key: [:]]))
+    when(asset.blobRef()).thenReturn(blobRef)
+    def newBlobMetrics = mock(BlobMetrics)
+    when(newBlobMetrics.getSha1Hash()).thenReturn('sha1')
+    def newBlob = mock(Blob)
+    when(newBlob.getMetrics()).thenReturn(newBlobMetrics)
+    def assetBlob = mock(AssetBlob)
+    when(assetBlob.getBlob()).thenReturn(newBlob)
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+    underTest.attachBlob(asset, assetBlob)
+    verify(asset, never()).blobCreated(any(DateTime))
+    verify(asset, never()).blobUpdated(any(DateTime))
+  }
+
+  /**
+   * Given:
+   * - an asset with an attached blob that has disappeared from the blob store
+   * When:
+   * - attaching a blob with any hash
+   * Then:
+   * - the blob created timestamp will NOT be updated
+   * - the blob updated timestamp will be updated
+   */
+  @Test
+  void 'attaching a blob to an asset with a missing blob only updates the blob created timestamp'() {
+    def blobRef = mock(BlobRef)
+    when(blobTx.get(blobRef)).thenReturn(null)
+    when(asset.attributes()).thenReturn(new NestedAttributesMap('key', [key: [:]]))
+    when(asset.blobRef()).thenReturn(blobRef)
+    def newBlobMetrics = mock(BlobMetrics)
+    when(newBlobMetrics.getSha1Hash()).thenReturn('new-sha1')
+    def newBlob = mock(Blob)
+    when(newBlob.getMetrics()).thenReturn(newBlobMetrics)
+    def assetBlob = mock(AssetBlob)
+    when(assetBlob.getBlob()).thenReturn(newBlob)
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+    underTest.attachBlob(asset, assetBlob)
+    verify(asset, never()).blobCreated(any(DateTime))
+    verify(asset).blobUpdated(any(DateTime))
+  }
 }

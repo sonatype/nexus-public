@@ -16,11 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.upgrade.DependsOn;
-import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,8 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Upgrades(model = TrustStoreCheckpoint.MODEL, from = "1.0", to = "2.0")
 @DependsOn(model = DatabaseInstanceNames.CONFIG, version = "1.1")
 public class TrustStoreUpgrade_2_0 // NOSONAR
-    extends ComponentSupport
-    implements Upgrade
+    extends DatabaseUpgradeSupport
 {
   private final LegacyKeyStoreUpgradeService upgradeService;
 

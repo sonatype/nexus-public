@@ -23,12 +23,11 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
-import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -56,8 +55,7 @@ import static java.util.stream.StreamSupport.stream;
 @Singleton
 @Upgrades(model = DatabaseInstanceNames.CONFIG, from = "1.1", to = "1.2")
 public class ConfigDatabaseUpgrade_1_2 // NOSONAR
-    extends ComponentSupport
-    implements Upgrade
+    extends DatabaseUpgradeSupport
 {
 
   static final String DB_CLASS = new OClassNameBuilder()
@@ -90,11 +88,19 @@ public class ConfigDatabaseUpgrade_1_2 // NOSONAR
 
   @Override
   public void apply() throws Exception {
-    Map<String, String> renames = renameDuplicateBlobStores();
-    updateRepositoriesForRenamedBlobStores(renames);
-    updateBlobStoreJobs(renames);
-    updateAssetBlobStoreRefs(renames);
-    upgradeSchemaToCaseInsensitiveName();
+    if (hasSchemaClass(configDatabaseInstance, DB_CLASS)) {
+      Map<String, String> renames = renameDuplicateBlobStores();
+      if (hasSchemaClass(configDatabaseInstance, "repository")) {
+        updateRepositoriesForRenamedBlobStores(renames);
+      }
+      if (hasSchemaClass(configDatabaseInstance, "quartz_job_detail")) {
+        updateBlobStoreJobs(renames);
+      }
+      if (hasSchemaClass(componentDatabaseInstance, "asset")) {
+        updateAssetBlobStoreRefs(renames);
+      }
+      upgradeSchemaToCaseInsensitiveName();
+    }
   }
 
   @VisibleForTesting
@@ -182,7 +188,7 @@ public class ConfigDatabaseUpgrade_1_2 // NOSONAR
   Map<String, String> renameDuplicateBlobStores() {
     try (ODatabaseDocumentTx db = configDatabaseInstance.get().connect()) {
 
-      List<ODocument> allBlobStores = stream(db.browseClass("repository_blobstore").spliterator(), false)
+      List<ODocument> allBlobStores = stream(db.browseClass(DB_CLASS).spliterator(), false)
           .collect(toList());
 
       log.debug("Found {} BlobStores to check for name collisions after case-insensitivity is added.",

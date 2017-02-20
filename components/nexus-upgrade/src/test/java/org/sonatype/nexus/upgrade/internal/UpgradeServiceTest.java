@@ -12,17 +12,12 @@
  */
 package org.sonatype.nexus.upgrade.internal;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
 import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.upgrade.UpgradeService;
@@ -38,9 +33,7 @@ import org.sonatype.nexus.upgrade.example.UpgradeWibble_2_0;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -62,16 +55,11 @@ import static org.mockito.Mockito.when;
 public class UpgradeServiceTest
     extends TestSupport
 {
-  @Rule
-  public TemporaryFolder tmpDir = new TemporaryFolder();
-
-  @Mock
-  private ApplicationDirectories directories;
-
   @Mock
   private ModelVersionStore modelVersionStore;
 
-  private File dbFolder;
+  @Mock
+  private NodeAccess nodeAccess;
 
   private Checkpoint checkpointFoo;
 
@@ -91,9 +79,6 @@ public class UpgradeServiceTest
 
   @Before
   public void setupService() throws Exception {
-    dbFolder = tmpDir.newFolder();
-
-    when(directories.getWorkDirectory("db")).thenReturn(dbFolder);
 
     CheckpointMock[] checkpoints = {
         new CheckpointFoo(),
@@ -117,8 +102,8 @@ public class UpgradeServiceTest
     upgradeBar_1_1 = upgrades[2].mock;
     upgradeWibble_2_0 = upgrades[3].mock;
 
-    upgradeService = new UpgradeServiceImpl(directories,
-        new UpgradeManager(Arrays.asList(checkpoints), Arrays.asList(upgrades)), modelVersionStore);
+    upgradeService = new UpgradeServiceImpl(
+        new UpgradeManager(asList(checkpoints), asList(upgrades)), modelVersionStore, nodeAccess);
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -128,15 +113,9 @@ public class UpgradeServiceTest
     return modelVersionsCaptor.getValue();
   }
 
-  private void makeComponentDb() throws IOException {
-    Path path = dbFolder.toPath().resolve("component/component.pcl");
-    Files.createDirectories(path.getParent());
-    Files.write(path, "DB".getBytes(StandardCharsets.UTF_8));
-  }
-
   @Test
   public void testManagesLifecycleOfVersionStore() throws Exception {
-    upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()), modelVersionStore);
+    upgradeService = new UpgradeServiceImpl(new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
 
     upgradeService.start();
     verify(modelVersionStore).start();
@@ -147,7 +126,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testNoUpgradesDoesNothing() throws Exception {
-    upgradeService = new UpgradeServiceImpl(directories, new UpgradeManager(asList(), asList()), modelVersionStore);
+    upgradeService = new UpgradeServiceImpl(new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
 
     upgradeService.start();
 
@@ -163,6 +142,9 @@ public class UpgradeServiceTest
 
   @Test
   public void testInventoryTakenForFreshInstallation() throws Exception {
+    when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isClustered()).thenReturn(false);
+
     upgradeService.start();
 
     assertThat(verifyModelVersionsSaved(),
@@ -179,8 +161,50 @@ public class UpgradeServiceTest
   }
 
   @Test
+  public void testInventoryTakenForFreshCluster() throws Exception {
+    when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.isFreshCluster()).thenReturn(true);
+
+    upgradeService.start();
+
+    assertThat(verifyModelVersionsSaved(),
+        is(ImmutableMap.of("foo", "1.2", "bar", "1.1", "wibble", "2.0")));
+
+    verifyNoMoreInteractions(
+        checkpointFoo,
+        checkpointBar,
+        checkpointWibble,
+        upgradeFoo_1_1,
+        upgradeFoo_1_2,
+        upgradeBar_1_1,
+        upgradeWibble_2_0);
+  }
+
+  @Test
+  public void testLocalInventoryTakenForFreshNodeJoiningExistingCluster() throws Exception {
+    when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.isFreshCluster()).thenReturn(false);
+
+    upgradeService.start();
+
+    assertThat(verifyModelVersionsSaved(),
+        is(ImmutableMap.of("foo", "1.2"))); // only foo is a local model
+
+    verifyNoMoreInteractions(
+        checkpointFoo,
+        checkpointBar,
+        checkpointWibble,
+        upgradeFoo_1_1,
+        upgradeFoo_1_2,
+        upgradeBar_1_1,
+        upgradeWibble_2_0);
+  }
+
+  @Test
   public void testUpgradeExistingInstallation() throws Exception {
-    makeComponentDb();
+
     when(modelVersionStore.load()).thenReturn(new HashMap<>(ImmutableMap.of("foo", "1.1", "bar", "1.1")));
 
     upgradeService.start();
@@ -221,7 +245,6 @@ public class UpgradeServiceTest
 
   @Test
   public void testUpgradeOnlyAppliedOnce() throws Exception {
-    makeComponentDb();
 
     upgradeService.start();
 
@@ -273,7 +296,6 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadUpgradeRollsBack() throws Exception {
-    makeComponentDb();
 
     doThrow(new IOException()).when(upgradeBar_1_1).apply();
 
@@ -319,7 +341,6 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadCheckpointStopsUpgrade() throws Exception {
-    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).begin(anyString());
 
@@ -357,7 +378,6 @@ public class UpgradeServiceTest
 
   @Test
   public void testBadCommitRollsBack() throws Exception {
-    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).commit();
 
@@ -408,7 +428,6 @@ public class UpgradeServiceTest
 
   @Test
   public void testRollbackKeepsGoingOnError() throws Exception {
-    makeComponentDb();
 
     doThrow(new IOException()).when(checkpointBar).commit();
     doThrow(new IOException()).when(checkpointBar).rollback();

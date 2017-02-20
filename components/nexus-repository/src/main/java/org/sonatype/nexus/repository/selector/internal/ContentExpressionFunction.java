@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -72,8 +70,6 @@ public class ContentExpressionFunction
 
   private final ContentAuthHelper contentAuthHelper;
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
   @Inject
   public ContentExpressionFunction(final VariableResolverAdapterManager variableResolverAdapterManager,
                                    final SelectorManager selectorManager,
@@ -105,28 +101,22 @@ public class ContentExpressionFunction
     //if all repos (or all of format) was selected, use the repository the asset was in, as well as any groups
     //that may contain that repository
     else {
-      try {
-        //Ideally we could just pass a map around, workaround for http://www.prjhub.com/#/issues/8146
-        Map<String, List<String>> repoToContainedGroupMap = OBJECT_MAPPER.readValue((String) iParams[3], Map.class);
+      @SuppressWarnings("unchecked")
+      Map<String, List<String>> repoToContainedGroupMap = (Map<String, List<String>>) iParams[3];
 
-        //find the repository that matches the asset
-        String assetRepository = getAssetRepository(asset);
+      //find the repository that matches the asset
+      String assetRepository = getAssetRepository(asset);
 
-        //if can't find it, just back out, nothing more to see here
-        if (assetRepository == null) {
-          log.error("Asset {} references no repository", getAssetName(asset));
-          return false;
-        }
-
-        membersForAuth = repoToContainedGroupMap.get(assetRepository);
-
-        if (membersForAuth == null) {
-          log.error("Asset {} references an invalid repository: {}", getAssetName(asset), assetRepository);
-          return false;
-        }
+      //if can't find it, just back out, nothing more to see here
+      if (assetRepository == null) {
+        log.error("Asset {} references no repository", getAssetName(asset));
+        return false;
       }
-      catch (IOException e) {
-        log.error("Unable to deserialize the repository map: {} for asset: {}", iParams[3], getAssetName(asset), e);
+
+      membersForAuth = repoToContainedGroupMap.get(assetRepository);
+
+      if (membersForAuth == null) {
+        log.error("Asset {} references an invalid repository: {}", getAssetName(asset), assetRepository);
         return false;
       }
     }

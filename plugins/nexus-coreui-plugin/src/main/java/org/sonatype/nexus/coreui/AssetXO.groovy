@@ -43,10 +43,11 @@ class AssetXO
   @NotEmpty
   String repositoryName
 
-  @NotEmpty
-  Date lastUpdated
+  Date blobCreated
 
-  Date lastAccessed
+  Date blobUpdated
+
+  Date lastDownloaded
   
   @NotEmpty
   String blobRef

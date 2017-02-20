@@ -87,8 +87,9 @@ class ComponentComponent
         contentType: asset.contentType() ?: 'unknown',
         size: asset.size() ?: 0,
         repositoryName: repositoryName,
-        lastUpdated: asset.lastUpdated().toDate(),
-        lastAccessed: asset.lastAccessed()?.toDate(),
+        blobCreated: asset.blobCreated()?.toDate(),
+        blobUpdated: asset.blobUpdated()?.toDate(),
+        lastDownloaded: asset.lastDownloaded()?.toDate(),
         blobRef: asset.blobRef() ? asset.blobRef().toString() : '',
         componentId: asset.componentId?.value,
         attributes: asset.attributes().backing()

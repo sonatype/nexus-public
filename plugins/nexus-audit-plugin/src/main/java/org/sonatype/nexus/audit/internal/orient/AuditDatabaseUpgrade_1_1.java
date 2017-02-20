@@ -17,10 +17,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,8 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Upgrades(model = AuditDatabase.NAME, from = "1.0", to = "1.1")
 public class AuditDatabaseUpgrade_1_1
-    extends ComponentSupport
-    implements Upgrade
+    extends DatabaseUpgradeSupport
 {
   private final Provider<DatabaseInstance> databaseInstance;
 

@@ -213,16 +213,20 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
               return String.format("%s=%s", P_BUCKET, bucketEntityAdapter.recordIdentity(bucket));
             }
           }).iterator());
+      if (whereClause == null) {
+        query.append(" where");
+      }
+      else {
+        query.append(" and");
+      }
       if (bucketConstraints.size() > 0) {
-        if (whereClause == null) {
-          query.append(" where");
-        }
-        else {
-          query.append(" and");
-        }
         query.append(" (");
         query.append(Joiner.on(" or ").join(bucketConstraints));
         query.append(")");
+      }
+      else {
+        //Brackets required here because of orient issue https://github.com/orientechnologies/orientdb/issues/7122
+        query.append(" (false)");
       }
     }
   }

@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_ACCESSED;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_DOWNLOADED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
 /**
@@ -112,8 +112,8 @@ public class PurgeUnusedFacetImpl
     final Bucket bucket = tx.findBucket(getRepository());
 
     String sql = String.format(
-        "SELECT FROM (SELECT %s, MAX(%s) AS lastAccessed FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastAccessed < :olderThan",
-        P_COMPONENT, P_LAST_ACCESSED, P_BUCKET, P_COMPONENT, P_COMPONENT
+        "SELECT FROM (SELECT %s, MAX(%s) AS lastDownloaded FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastDownloaded < :olderThan",
+        P_COMPONENT, P_LAST_DOWNLOADED, P_BUCKET, P_COMPONENT, P_COMPONENT
     );
 
     Map<String, Object> sqlParams = ImmutableMap.of(
@@ -129,7 +129,7 @@ public class PurgeUnusedFacetImpl
    * Find all assets without component that were last accessed before specified date.
    */
   private Iterable<Asset> findUnusedAssets(final StorageTx tx, final Date olderThan) {
-    String whereClause = String.format("%s IS NULL AND %s < :olderThan", P_COMPONENT, P_LAST_ACCESSED);
+    String whereClause = String.format("%s IS NULL AND %s < :olderThan", P_COMPONENT, P_LAST_DOWNLOADED);
     Map<String, Object> sqlParams = ImmutableMap.of("olderThan", olderThan);
 
     return tx.findAssets(whereClause, sqlParams, ImmutableList.of(getRepository()), null);

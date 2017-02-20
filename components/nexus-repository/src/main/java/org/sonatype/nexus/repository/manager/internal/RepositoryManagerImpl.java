@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -24,6 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -42,6 +45,7 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.config.internal.ConfigurationEvent;
 import org.sonatype.nexus.repository.config.internal.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationUpdatedEvent;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
@@ -361,6 +365,8 @@ public class RepositoryManagerImpl
     Repository repository = repository(name);
     Configuration configuration = repository.getConfiguration();
 
+    removeRepositoryFromAllGroups(repository);
+
     repository.stop();
     repository.delete();
     repository.destroy();
@@ -372,6 +378,21 @@ public class RepositoryManagerImpl
     untrack(repository);
 
     eventManager.post(new RepositoryDeletedEvent(repository));
+  }
+
+  private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {
+    for (Repository group : repositories.values()) {
+        Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
+        if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
+          removeRepositoryFromGroup(repositoryToRemove, group);
+      }
+    }
+  }
+
+  private void removeRepositoryFromGroup(final Repository repositoryToRemove, final Repository group) throws Exception {
+    NestedAttributesMap groupAttributes = group.getConfiguration().attributes("group");
+    groupAttributes.get("memberNames", Collection.class).remove(repositoryToRemove.getName());
+    update(group.getConfiguration());
   }
 
   private Stream<Object> blobstoreUsageStream(final String blobStoreName) {

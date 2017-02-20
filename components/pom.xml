@@ -70,6 +70,7 @@
     <module>nexus-siesta</module>
     <module>nexus-ssl</module>
     <module>nexus-supportzip-api</module>
+    <module>nexus-swagger</module>
     <module>nexus-test-common</module>
     <module>nexus-thread</module>
     <module>nexus-transaction</module>

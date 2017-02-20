@@ -26,7 +26,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Indicates the method will access blobs and "touch" their last-accessed times.
+ * Indicates the method will access blobs and "touch" their last-downloaded times.
  *
  * @since 3.2
  */

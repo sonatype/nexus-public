@@ -106,6 +106,15 @@
     </dependency>
 
     <!--
+    Provide access to Swagger-UI
+    -->
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>swagger-ui</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!--
     HACK: expose orientdb distribution to extract studio.zip plugin
     -->
     <dependency>
@@ -238,6 +247,35 @@
                     <trim/>
                   </filterchain>
                 </concat>
+
+                <!--
+                Include Swagger UI
+                -->
+                <unzip src="${org.webjars:swagger-ui:jar}"
+                       dest="${project.build.directory}/assembly/public/swagger-ui">
+                  <cutdirsmapper dirs="5"/>
+                  <patternset>
+                    <include name="META-INF/resources/webjars/swagger-ui/*/**"/>
+                    <exclude name="**/swagger-ui.js"/>
+                    <exclude name="**/*.gz"/>
+                  </patternset>
+                </unzip>
+                <delete dir="${project.build.directory}/assembly/system/org/webjars"/>
+
+                <!--
+                Customize Swagger UI
+                -->
+                <replace file="${project.build.directory}/assembly/public/swagger-ui/index.html">
+                  <replacefilter token="swagger-ui.js" value="swagger-ui.min.js"/>
+                  <!-- point to local documentation -->
+                  <replacefilter token="http://petstore.swagger.io/v2" value="../service/siesta"/>
+                  <!-- list operations, apply alpha sorting -->
+                  <replacefilter token="docExpansion: &quot;none&quot;"
+                                 value="docExpansion:'list', apisSorter:'alpha', operationsSorter:'alpha'"/>
+                  <!-- remove unused API selector form -->
+                  <replacefilter token="&lt;form" value="&lt;!-- &lt;form"/>
+                  <replacefilter token="form&gt;" value="form&gt; --&gt;"/>
+                </replace>
 
                 <!--
                 HACK: Include orientdb-studio plugin.

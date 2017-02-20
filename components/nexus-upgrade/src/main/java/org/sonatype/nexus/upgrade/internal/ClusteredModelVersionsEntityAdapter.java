@@ -51,6 +51,7 @@ public class ClusteredModelVersionsEntityAdapter
   @Override
   protected void readFields(ODocument document, ClusteredModelVersions entity) throws Exception {
     document.forEach(entry -> entity.put(entry.getKey(), entry.getValue().toString()));
+    entity.clearDirty(); // make sure this is reset after populating entity
   }
 
   @Override

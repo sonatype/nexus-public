@@ -57,10 +57,13 @@ public class ClusteredModelVersionsEntityAdapterTest
       ClusteredModelVersions entity = entityAdapter.get(db);
       assertThat(entity, is(notNullValue()));
       assertThat(entity.getModelVersions().entrySet(), hasSize(0));
+      assertThat(entity.isDirty(), is(false));
 
       entity = new ClusteredModelVersions();
+      assertThat(entity.isDirty(), is(false));
       entity.put("model-a", "1.2");
       entity.put("model-b", "2.1");
+      assertThat(entity.isDirty(), is(true));
       entityAdapter.set(db, entity);
 
       entity = entityAdapter.get(db);
@@ -69,7 +72,9 @@ public class ClusteredModelVersionsEntityAdapterTest
       assertThat(entity.getModelVersions(), hasEntry("model-b", "2.1"));
       assertThat(entity.getModelVersions().entrySet(), hasSize(2));
 
+      assertThat(entity.isDirty(), is(false));
       entity.put("model-a", "1.3");
+      assertThat(entity.isDirty(), is(true));
       entityAdapter.set(db, entity);
 
       entity = entityAdapter.get(db);
@@ -77,6 +82,7 @@ public class ClusteredModelVersionsEntityAdapterTest
       assertThat(entity.getModelVersions(), hasEntry("model-a", "1.3"));
       assertThat(entity.getModelVersions(), hasEntry("model-b", "2.1"));
       assertThat(entity.getModelVersions().entrySet(), hasSize(2));
+      assertThat(entity.isDirty(), is(false));
     }
   }
 }

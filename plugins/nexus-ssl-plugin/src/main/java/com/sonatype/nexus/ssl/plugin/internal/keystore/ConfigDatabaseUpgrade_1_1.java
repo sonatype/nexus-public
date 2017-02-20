@@ -16,10 +16,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,8 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Upgrades(model = DatabaseInstanceNames.CONFIG, from = "1.0", to = "1.1")
 public class ConfigDatabaseUpgrade_1_1 // NOSONAR
-    extends ComponentSupport
-    implements Upgrade
+    extends DatabaseUpgradeSupport
 {
   private final LegacyKeyStoreUpgradeService upgradeService;
 

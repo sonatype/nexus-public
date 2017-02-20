@@ -24,7 +24,6 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -81,8 +80,6 @@ public class ContentExpressionFunctionTest
   @Mock
   private ContentAuthHelper contentAuthHelper;
 
-  ObjectMapper objectMapper;
-
   ContentExpressionFunction underTest;
 
   @Before
@@ -105,8 +102,6 @@ public class ContentExpressionFunctionTest
 
     underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager, contentAuthHelper);
 
-    objectMapper = new ObjectMapper();
-
     // Copied from the ContentAuthTest, I didn't need this to run the tests locally, but seems CI does
     ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
@@ -128,7 +123,7 @@ public class ContentExpressionFunctionTest
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME));
     assertThat(underTest.execute(underTest, null, null, new Object[]{
-        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+        assetDocument, "jexlexpression", "*", repoToContainedGroupMap
     }, null), is(true));
   }
 
@@ -139,7 +134,7 @@ public class ContentExpressionFunctionTest
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME, "groupRepo"));
     assertThat(underTest.execute(underTest, null, null, new Object[]{
-        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+        assetDocument, "jexlexpression", "*", repoToContainedGroupMap
     }, null), is(true));
   }
 
@@ -157,7 +152,7 @@ public class ContentExpressionFunctionTest
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Collections.emptyList());
     assertThat(underTest.execute(underTest, null, null, new Object[]{
-        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+        assetDocument, "jexlexpression", "*", repoToContainedGroupMap
     }, null), is(false));
   }
 
@@ -167,7 +162,7 @@ public class ContentExpressionFunctionTest
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList("groupRepo"));
     assertThat(underTest.execute(underTest, null, null, new Object[]{
-        assetDocument, "jexlexpression", "*", objectMapper.writeValueAsString(repoToContainedGroupMap)
+        assetDocument, "jexlexpression", "*", repoToContainedGroupMap
     }, null), is(false));
   }
 }
