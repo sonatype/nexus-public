@@ -14,6 +14,10 @@
 -->
 # Sonatype Nexus Repository Open Source Codebase 
 
+## Downloadable Bundles
+
+See: https://www.sonatype.com/download-oss-sonatype
+
 ## Requirements
 
 * Apache Maven 3.3.3+
