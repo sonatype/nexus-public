@@ -18,17 +18,15 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
  * {@link TestMarshalledEntity} entity-adapter.
  */
 public class TestMarshalledEntityAdapter
-  extends MarshalledEntityAdapter<TestMarshalledEntity>
+    extends MarshalledEntityAdapter<TestMarshalledEntity>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .prefix("test")
       .type("marshalled_entity")
       .build();
 
-  public TestMarshalledEntityAdapter(final Marshaller marshaller,
-                                     final ClassLoader classLoader)
-  {
-    super(DB_CLASS, marshaller, classLoader);
+  public TestMarshalledEntityAdapter() {
+    super(DB_CLASS, new JacksonMarshaller(new FieldObjectMapper()), TestMarshalledValue.class.getClassLoader());
   }
 
   @Override

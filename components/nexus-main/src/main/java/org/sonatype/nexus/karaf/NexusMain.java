@@ -27,8 +27,8 @@ import org.osgi.framework.Version;
 public class NexusMain
     extends org.apache.karaf.main.Main
 {
-
-  private static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
+  //Visibile for testing
+  static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
 
   Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -139,12 +139,28 @@ public class NexusMain
     System.setProperty(propertyName, new File(parent, child).getAbsolutePath());
   }
 
-  private static void requireMinimumJavaVersion() {
-    String currentVersion = System.getProperty("java.version");
-    if (MINIMUM_JAVA_VERSION.compareTo(new Version(currentVersion.replace('_', '.'))) > 0) {
+  //Visible for testing
+  static void requireMinimumJavaVersion() {
+    if (isNotSupportedVersion(System.getProperty("java.version"))) {
       // logging is not configured yet, so use console
       System.err.println("Nexus requires minimum java.version: " + MINIMUM_JAVA_VERSION);
-      System.exit(-1);
+      if (versionCheckRequired()) {
+        System.exit(-1);
+      }
     }
+  }
+
+  private static boolean isNotSupportedVersion(final String currentVersion) {
+    try {
+      return MINIMUM_JAVA_VERSION.compareTo(new Version(currentVersion.replace('_', '.'))) > 0;
+    }
+    catch (IllegalArgumentException e) { // NOSONAR
+      System.err.println(e.getMessage()); // NOSONAR
+      return true;
+    }
+  }
+
+  private static boolean versionCheckRequired() {
+    return Boolean.parseBoolean(System.getProperty("nexus.vmCheck", "true"));
   }
 }

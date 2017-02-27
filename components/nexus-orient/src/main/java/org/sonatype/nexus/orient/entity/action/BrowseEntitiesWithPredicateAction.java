@@ -12,16 +12,14 @@
  */
 package org.sonatype.nexus.orient.entity.action;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Entity;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
+import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,9 +31,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowseEntitiesWithPredicateAction<T extends Entity>
     extends ComponentSupport
 {
-  private final EntityAdapter<T> adapter;
+  private final IterableEntityAdapter<T> adapter;
 
-  public BrowseEntitiesWithPredicateAction(final EntityAdapter<T> adapter) {
+  public BrowseEntitiesWithPredicateAction(final IterableEntityAdapter<T> adapter) {
     this.adapter = checkNotNull(adapter);
   }
 
@@ -43,15 +41,7 @@ public class BrowseEntitiesWithPredicateAction<T extends Entity>
     checkNotNull(db);
     checkNotNull(predicate);
 
-    List<T> result = new ArrayList<>();
-    for (ODocument document : adapter.browseDocuments(db)) {
-      T entity = adapter.readEntity(document);
-      if (predicate.test(entity)) {
-        result.add(entity);
-      }
-    }
-
-    return result;
+    return Iterables.filter(adapter.transform(adapter.browseDocuments(db)), predicate::test);
   }
 
   @Override

@@ -100,7 +100,7 @@ Ext.define('NX.coreui.controller.Nodes', {
    * @override
    */
   getDescription: function (model) {
-    return model.get('uuid');
+    return model.get('nodeIdentity');
   },
 
   dbFrozen: false,
@@ -149,14 +149,16 @@ Ext.define('NX.coreui.controller.Nodes', {
 
     if (Ext.isDefined(model)) {
       info = {};
-      info['UUID'] = model.get('uuid');
+      info['Node Identity'] = model.get('nodeIdentity');
       info['Local'] = model.get('local');
       info['Socket Address'] = model.get('socketAddress');
 
       attributes = model.get('attributes');
       if (attributes) {
         Ext.iterate(attributes, function (key, value) {
-          info[key] = value;
+          if (key !== 'node.identity') {
+            info[key] = value;
+          }
         });
       }
 

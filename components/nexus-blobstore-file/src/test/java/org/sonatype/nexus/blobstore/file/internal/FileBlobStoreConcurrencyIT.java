@@ -91,7 +91,7 @@ public class FileBlobStoreConcurrencyIT
         new SimpleFileOperations(),
         metricsStore,
         config,
-        applicationDirectories);
+        applicationDirectories, nodeAccess);
     underTest.start();
   }
 

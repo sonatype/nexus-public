@@ -12,16 +12,11 @@
  */
 package org.sonatype.nexus.orient.entity.action;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Entity;
-import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,23 +28,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowseEntitiesAction<T extends Entity>
     extends ComponentSupport
 {
-  private final EntityAdapter<T> adapter;
+  private final IterableEntityAdapter<T> adapter;
 
-  public BrowseEntitiesAction(final EntityAdapter<T> adapter) {
+  public BrowseEntitiesAction(final IterableEntityAdapter<T> adapter) {
     this.adapter = checkNotNull(adapter);
   }
 
   public Iterable<T> execute(final ODatabaseDocumentTx db) {
     checkNotNull(db);
 
-    return Iterables.transform(adapter.browseDocuments(db), new Function<ODocument, T>()
-    {
-      @Nullable
-      @Override
-      public T apply(@Nullable final ODocument input) {
-        return input != null ? adapter.readEntity(input) : null;
-      }
-    });
+    return adapter.transform(adapter.browseDocuments(db));
   }
 
   @Override

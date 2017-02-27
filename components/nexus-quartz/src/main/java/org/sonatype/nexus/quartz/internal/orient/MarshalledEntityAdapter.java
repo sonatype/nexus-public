@@ -59,10 +59,12 @@ public abstract class MarshalledEntityAdapter<T extends MarshalledEntity>
   @Override
   protected void readFields(final ODocument document, final MarshalledEntity entity) throws Exception {
     String valueType = document.field(P_VALUE_TYPE);
+    checkState(valueType != null, "Marshalled document missing value_type: %s", document);
     Class valueClass = classLoader.loadClass(valueType);
 
     // read value data
     Object valueData = document.field(P_VALUE_DATA);
+    checkState(valueData != null, "Marshalled document missing value_data: %s", document);
 
     // unmarshall
     try (TcclBlock tccl = TcclBlock.begin(classLoader)) {

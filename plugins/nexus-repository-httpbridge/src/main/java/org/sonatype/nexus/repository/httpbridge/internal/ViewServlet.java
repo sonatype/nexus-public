@@ -118,7 +118,7 @@ public class ViewServlet
     }
     catch (Exception e) {
       if (!(e instanceof AuthorizationException)) {
-        log.warn("Service failure", e);
+        log.warn("Failure servicing: {} {}", httpRequest.getMethod(), uri, e);
       }
       Throwables.propagateIfPossible(e, ServletException.class, IOException.class);
       throw new ServletException(e);

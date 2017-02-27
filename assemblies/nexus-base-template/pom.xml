@@ -280,13 +280,17 @@
                 <!--
                 HACK: Include orientdb-studio plugin.
                 -->
-                <unzip src="${com.orientechnologies:orientdb-community:zip}"
-                       dest="${project.build.directory}/sonatype-work/nexus3/orient/plugins">
+                <property name="studio.dir" value="${project.build.directory}/sonatype-work/nexus3/orient/plugins"/>
+                <property name="studio.file" value="${studio.dir}/studio.zip"/>
+                <unzip src="${com.orientechnologies:orientdb-community:zip}" dest="${studio.dir}">
                   <mergemapper to="studio.zip"/>
                   <patternset>
-                    <include name="*/plugins/studio-*.zip"/>
+                    <include name="*/plugins/*studio-*.zip"/>
                   </patternset>
                 </unzip>
+                <!-- ensure that plugin is actually copied -->
+                <available file="${studio.file}" property="studio.exists"/>
+                <fail message="File missing: ${studio.file}" unless="studio.exists"/>
 
                 <!-- move karaf config to etc/karaf -->
                 <move todir="${project.build.directory}/assembly/etc/karaf">

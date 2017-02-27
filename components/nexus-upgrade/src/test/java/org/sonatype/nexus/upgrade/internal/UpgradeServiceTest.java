@@ -55,6 +55,7 @@ import static org.mockito.Mockito.when;
 public class UpgradeServiceTest
     extends TestSupport
 {
+
   @Mock
   private ModelVersionStore modelVersionStore;
 
@@ -115,7 +116,8 @@ public class UpgradeServiceTest
 
   @Test
   public void testManagesLifecycleOfVersionStore() throws Exception {
-    upgradeService = new UpgradeServiceImpl(new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
+    upgradeService = new UpgradeServiceImpl(
+        new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
 
     upgradeService.start();
     verify(modelVersionStore).start();
@@ -126,7 +128,8 @@ public class UpgradeServiceTest
 
   @Test
   public void testNoUpgradesDoesNothing() throws Exception {
-    upgradeService = new UpgradeServiceImpl(new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
+    upgradeService = new UpgradeServiceImpl(
+        new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
 
     upgradeService.start();
 
@@ -476,4 +479,5 @@ public class UpgradeServiceTest
         upgradeBar_1_1,
         upgradeWibble_2_0);
   }
+
 }

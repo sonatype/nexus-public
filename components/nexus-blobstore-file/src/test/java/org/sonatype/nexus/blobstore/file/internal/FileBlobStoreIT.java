@@ -125,7 +125,7 @@ public class FileBlobStoreIT
         temporaryLocationStrategy,
         fileOperations,
         applicationDirectories,
-        metricsStore);
+        metricsStore, nodeAccess);
     underTest.init(config);
     underTest.start();
   }

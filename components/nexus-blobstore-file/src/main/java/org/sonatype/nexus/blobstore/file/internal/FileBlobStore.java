@@ -19,8 +19,8 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
 import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -44,6 +44,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -59,6 +60,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
+import static java.nio.file.Files.exists;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -124,6 +126,8 @@ public class FileBlobStore
 
   private QueueFile deletedBlobIndex;
 
+  private final NodeAccess nodeAccess;
+
   private boolean supportsHardLinkCopy;
 
   private boolean supportsAtomicMove;
@@ -133,13 +137,15 @@ public class FileBlobStore
                        @Named("temporary") final LocationStrategy temporaryLocationStrategy,
                        final FileOperations fileOperations,
                        final ApplicationDirectories directories,
-                       final BlobStoreMetricsStore storeMetrics)
+                       final BlobStoreMetricsStore storeMetrics,
+                       final NodeAccess nodeAccess)
   {
     this.permanentLocationStrategy = checkNotNull(permanentLocationStrategy);
     this.temporaryLocationStrategy = checkNotNull(temporaryLocationStrategy);
     this.fileOperations = checkNotNull(fileOperations);
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
   }
@@ -151,9 +157,10 @@ public class FileBlobStore
                        final FileOperations fileOperations,
                        final BlobStoreMetricsStore storeMetrics,
                        final BlobStoreConfiguration configuration,
-                       final ApplicationDirectories directories)
+                       final ApplicationDirectories directories,
+                       final NodeAccess nodeAccess) //NOSONAR
   {
-    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics);
+    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics, nodeAccess);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -175,12 +182,14 @@ public class FileBlobStore
       metadata.store();
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
-    File deletedIndexFile = storageDir.resolve(DELETIONS_FILENAME).toFile();
+    File deletedIndexFile = storageDir.resolve(getDeletionsFilename()).toFile();
     try {
+      maybeUpgradeLegacyIndexFile(deletedIndexFile.toPath());
       deletedBlobIndex = new QueueFile(deletedIndexFile);
     }
     catch (IOException e) {
-      log.error("Unable to load deletions index file {}, run the compact blobstore task to rebuild", deletedIndexFile, e);
+      log.error("Unable to load deletions index file {}, run the compact blobstore task to rebuild", deletedIndexFile,
+          e);
       createEmptyDeletionsIndex(deletedIndexFile);
       deletedBlobIndex = new QueueFile(deletedIndexFile);
       metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
@@ -188,6 +197,21 @@ public class FileBlobStore
     }
     storeMetrics.setStorageDir(storageDir);
     storeMetrics.start();
+  }
+
+  private void maybeUpgradeLegacyIndexFile(final Path deletedIndexPath) throws IOException {
+    //While Path#getParent can return null we don't expect that from a configured blob store directory.
+    Path legacyDeletionsIndex = deletedIndexPath.getParent().resolve(DELETIONS_FILENAME); //NOSONAR
+
+    if (!exists(deletedIndexPath) && exists(legacyDeletionsIndex)) {
+      log.info("Found 'deletions.index' file in blob store {}, renaming to {}", getAbsoluteBlobDir(),
+          deletedIndexPath);
+      Files.move(legacyDeletionsIndex, deletedIndexPath);
+    }
+  }
+
+  private String getDeletionsFilename() {
+    return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
   }
 
   @Override
@@ -255,7 +279,7 @@ public class FileBlobStore
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
     checkNotNull(sourceFile);
     checkNotNull(sha1);
-    checkArgument(Files.exists(sourceFile));
+    checkArgument(exists(sourceFile));
 
     return create(headers, destination -> {
       fileOperations.hardLink(sourceFile, destination);
@@ -506,7 +530,6 @@ public class FileBlobStore
       }
     }
     catch (IOException e) {
-      log.warn("Problem maintaining deletions index for: {}", getConfiguredBlobStorePath());
       throw new BlobStoreException(e, null);
     }
   }
@@ -589,14 +612,15 @@ public class FileBlobStore
    * Delete files known to be part of the FileBlobStore implementation if the content directory is empty.
    */
   @Override
-  @Guarded(by = { NEW, STOPPED, FAILED })
+  @Guarded(by = {NEW, STOPPED, FAILED})
   public void remove() {
     try {
       Path blobDir = getAbsoluteBlobDir();
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
         Stream.of(storeMetrics.listBackingFiles(blobDir)).forEach(metricsFile -> deleteQuietly(metricsFile.toPath()));
         deleteQuietly(blobDir.resolve("metadata.properties"));
-        deleteQuietly(blobDir.resolve("deletions.index"));
+        Stream.of(blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME)))
+            .forEach(deletionIndex -> deleteQuietly(deletionIndex.toPath()));
         if (!fileOperations.deleteEmptyDirectory(blobDir)) {
           log.warn("Unable to delete non-empty blob store directory {}", blobDir);
         }
@@ -646,7 +670,7 @@ public class FileBlobStore
     metadata.load();
     String deletedBlobIndexRebuildRequired = metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false");
     if (Boolean.parseBoolean(deletedBlobIndexRebuildRequired)) {
-      Path deletedIndex = getAbsoluteBlobDir().resolve(DELETIONS_FILENAME);
+      Path deletedIndex = getAbsoluteBlobDir().resolve(getDeletionsFilename());
       log.warn("Rebuilding deletions index file {}", deletedIndex);
 
       deletedBlobIndex.clear();

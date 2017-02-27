@@ -13,10 +13,17 @@
 package org.sonatype.nexus.quartz.internal.orient;
 
 /**
- * Test {@link MarshalledEntity}.
+ * Test value for marshalling purposes.
  */
-public class TestMarshalledEntity
-    extends MarshalledEntity<TestMarshalledValue>
+public class TestMarshalledValue
 {
-  // empty
+  private String text;
+
+  public void setText(final String text) {
+    this.text = text;
+  }
+
+  public String getText() {
+    return text;
+  }
 }

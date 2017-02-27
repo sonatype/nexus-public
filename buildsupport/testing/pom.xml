@@ -160,6 +160,11 @@
         <classifier>shaded</classifier>
       </dependency>
 
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>1.16.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

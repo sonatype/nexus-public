@@ -10,13 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz.internal.orient;
+package org.sonatype.nexus.orient.freeze;
 
 /**
- * Test {@link MarshalledEntity}.
+ * Saves the database frozen state.
+ *
+ * @since 3.3
  */
-public class TestMarshalledEntity
-    extends MarshalledEntity<TestMarshalledValue>
+public interface DatabaseFrozenStateManager
 {
-  // empty
+  /**
+   * Gets the saved state.
+   */
+  boolean get();
+
+  /**
+   * Saves the state.
+   */
+  void set(boolean frozen);
 }

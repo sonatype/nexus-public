@@ -31,7 +31,7 @@ Ext.define('NX.coreui.store.Node', {
     reader: {
       type: 'json',
       root: 'data',
-      idProperty: 'uuid',
+      idProperty: 'nodeIdentity',
       successProperty: 'success'
     }
   },

@@ -19,9 +19,9 @@
  */
 Ext.define('NX.coreui.model.Node', {
   extend: 'Ext.data.Model',
-  idProperty: 'uuid',
+  idProperty: 'nodeIdentity',
   fields: [
-    { name: 'uuid', type: 'string' },
+    { name: 'nodeIdentity', type: 'string' },
     { name: 'local', type: 'bool' },
     { name: 'socketAddress', type: 'string' },
     { name: 'attributes', type: 'auto' /*object*/}

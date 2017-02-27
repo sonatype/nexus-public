@@ -77,7 +77,8 @@ Ext.define('NX.ext.grid.plugin.FilterBox', {
     var me = this;
 
     if (me.emptyText) {
-      me.grid.getView().emptyText = '<div class="x-grid-empty">' + me.emptyText.replace(/\$filter/, value) + '</div>';
+      var encoded = Ext.util.Format.htmlEncode(value);
+      me.grid.getView().emptyText = '<div class="x-grid-empty">' + me.emptyText.replace(/\$filter/, encoded) + '</div>';
     }
     me.filter(value);
   },

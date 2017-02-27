@@ -41,9 +41,9 @@ Ext.define('NX.coreui.view.system.NodeList', {
       }
     },
     {
-      header: 'UUID',
-      dataIndex: 'uuid',
-      stateId: 'uuid',
+      header: 'Node Identity',
+      dataIndex: 'nodeIdentity',
+      stateId: 'nodeIdentity',
       flex: 1
     },
     {

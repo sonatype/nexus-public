@@ -16,8 +16,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
@@ -37,7 +37,7 @@ public class CompactBlobStoreTaskDescriptor
   public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
   @Inject
-  public CompactBlobStoreTaskDescriptor(final NodeAccess nodeAccess) {
+  public CompactBlobStoreTaskDescriptor() {
     super(TYPE_ID,
         CompactBlobStoreTask.class,
         "Compact blob store",
@@ -48,9 +48,12 @@ public class CompactBlobStoreTaskDescriptor
             "Blob store",
             "Select the blob store to compact",
             MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
-
-        nodeAccess.isClustered() ? newMultinodeFormField() : null
+        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name")
     );
+  }
+
+  @Override
+  public void initializeConfiguration(final TaskConfiguration configuration) {
+    configuration.setBoolean(MULTINODE_KEY, true);
   }
 }

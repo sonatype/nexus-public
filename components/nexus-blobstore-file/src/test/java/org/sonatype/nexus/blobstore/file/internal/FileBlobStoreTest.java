@@ -20,8 +20,8 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
@@ -61,6 +61,9 @@ public class FileBlobStoreTest
 
   @Mock
   private LoadingCache loadingCache;
+  
+  @Mock
+  NodeAccess nodeAccess;
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
@@ -76,7 +79,7 @@ public class FileBlobStoreTest
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
         permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, new BlobStoreConfiguration(),
-        appDirs);
+        appDirs, nodeAccess);
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
     underTest.setLiveBlobs(loadingCache);
   }

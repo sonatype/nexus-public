@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
-import java.io.IOException;
-import java.io.File;
-import java.nio.file.Files;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -32,8 +28,8 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -52,31 +48,28 @@ public class DatabaseFreezeServiceImpl
     extends StateGuardLifecycleSupport
     implements DatabaseFreezeService, EventAware
 {
-  @VisibleForTesting
-  static final String FROZEN_MARKER = "frozen.marker";
-
   private final Set<Provider<DatabaseInstance>> providers;
 
   private final EventManager eventManager;
 
-  private final File frozenMarkerFile;
+  private final DatabaseFrozenStateManager databaseFrozenStateManager;
 
   private boolean frozen;
 
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers,
                                    final EventManager eventManager,
-                                   final ApplicationDirectories applicationDirectories) {
+                                   final DatabaseFrozenStateManager databaseFrozenStateManager) {
     this.providers = checkNotNull(providers);
     this.eventManager = checkNotNull(eventManager);
-    this.frozenMarkerFile = new File(applicationDirectories.getWorkDirectory("db"), FROZEN_MARKER);
+    this.databaseFrozenStateManager = checkNotNull(databaseFrozenStateManager);
   }
 
   @Override
   protected synchronized void doStart() {
-    if (frozenMarkerFile.exists()) {
+    if (databaseFrozenStateManager.get()) {
       log.info("Restoring database frozen state on startup");
-      updateFrozenState(true);
+      updateAndSaveFrozenState(true);
     }
   }
 
@@ -93,7 +86,7 @@ public class DatabaseFreezeServiceImpl
     // this will switch databases to replica mode
     eventManager.post(new DatabaseFreezeChangeEvent(true));
     // freeze the databases locally
-    updateFrozenState(true);
+    updateAndSaveFrozenState(true);
   }
 
   @Override
@@ -107,7 +100,7 @@ public class DatabaseFreezeServiceImpl
     log.info("Releasing all databases.");
 
     // release the databases locally
-    updateFrozenState(false);
+    updateAndSaveFrozenState(false);
     // post event to notify subscribers and update cluster in ha configurations
     // this will switch databases to master mode
     eventManager.post(new DatabaseFreezeChangeEvent(false));
@@ -136,28 +129,13 @@ public class DatabaseFreezeServiceImpl
   /**
    * Updates the frozen state and create or remove marker file.
    */
-  private void updateFrozenState(final boolean newFrozenState) {
+  private void updateAndSaveFrozenState(final boolean newFrozenState) {
     log.debug("Updating frozen state to {}", newFrozenState);
     frozen = newFrozenState;
 
     forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(frozen));
 
-    if (frozen) {
-      try {
-        frozenMarkerFile.createNewFile();
-      }
-      catch (IOException e) {
-        log.error("Unable to create database frozen state marker file {}", frozenMarkerFile, e);
-      }
-    }
-    else {
-      try {
-        Files.deleteIfExists(frozenMarkerFile.toPath());
-      }
-      catch (IOException e) {
-        log.error("Unable to delete database frozen state marker file {}", frozenMarkerFile, e);
-      }
-    }
+    databaseFrozenStateManager.set(frozen);
   }
 
   private void forEachFreezableDatabase(final Consumer<DatabaseInstance> databaseInstanceConsumer) {

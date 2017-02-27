@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -20,9 +19,9 @@ import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
+import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -33,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -48,7 +46,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class DatabaseFreezeServiceImplTest
     extends TestSupport
@@ -61,7 +58,7 @@ public class DatabaseFreezeServiceImplTest
   EventManager eventManager;
 
   @Mock
-  ApplicationDirectories applicationDirectories;
+  DatabaseFrozenStateManager databaseFrozenStateManager;
 
   DatabaseFreezeServiceImpl underTest;
 
@@ -71,19 +68,12 @@ public class DatabaseFreezeServiceImplTest
   @Rule
   public DatabaseInstanceRule database2 = DatabaseInstanceRule.inFilesystem("test-2");
 
-  @Rule
-  public TemporaryFolder workDirectory = new TemporaryFolder();
-
   private Set<Provider<DatabaseInstance>> providerSet;
-
-  private File dbFolder;
 
   @Before
   public void setup() throws Exception {
-    dbFolder = workDirectory.newFolder();
     providerSet = of(database.getInstanceProvider(), database2.getInstanceProvider()).collect(toSet());
-    when(applicationDirectories.getWorkDirectory("db")).thenReturn(dbFolder);
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, applicationDirectories);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, databaseFrozenStateManager);
 
     for (Provider<DatabaseInstance> provider : providerSet) {
       try (ODatabaseDocumentTx db = provider.get().connect()) {
@@ -103,11 +93,11 @@ public class DatabaseFreezeServiceImplTest
 
     underTest.freezeAllDatabases();
     verifyWrite(true);
-    assertThat(new File(dbFolder, DatabaseFreezeServiceImpl.FROZEN_MARKER).exists(), is(true));
+    verify(databaseFrozenStateManager).set(true);
 
     underTest.releaseAllDatabases();
     verifyWrite(false);
-    assertThat(new File(dbFolder, DatabaseFreezeServiceImpl.FROZEN_MARKER).exists(), is(false));
+    verify(databaseFrozenStateManager).set(false);
 
     verify(eventManager, times(2)).post(freezeChangeEventArgumentCaptor.capture());
 
