@@ -34,6 +34,7 @@ import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.internal.MetadataParser;
 import com.bolyuba.nexus.plugin.npm.service.internal.PackageRootIterator;
 import com.bolyuba.nexus.plugin.npm.service.internal.ProxyMetadataTransport;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.MetricsRegistry;
@@ -150,6 +151,17 @@ public class HttpProxyMetadataTransport
     }
   }
 
+  @VisibleForTesting
+  String encodePackageName(String packageName) {
+    //A scoped package contains a slash. NPM expects that slash to be URL-encoded (but not the '@' symbol)
+    if (packageName.startsWith("@")) {
+      return packageName.replaceFirst("/", "%2F");
+    }
+    else {
+      return packageName;
+    }
+  }
+  
   /**
    * Performs a conditional GET to fetch the package root and returns the fetched package root. If fetch succeeded
    * (HTTP 200 Ok is returned), the package root is also pushed into {@code MetadataStore}. In short, the returned
@@ -162,7 +174,7 @@ public class HttpProxyMetadataTransport
     final HttpClient httpClient = httpClientManager.create(npmProxyRepository,
         npmProxyRepository.getRemoteStorageContext());
     try {
-      final HttpGet get = new HttpGet(buildUri(npmProxyRepository, packageName));
+      final HttpGet get = new HttpGet(buildUri(npmProxyRepository, encodePackageName(packageName)));
       get.addHeader("accept", NpmRepository.JSON_MIME_TYPE);
       if (expired != null && expired.getProperties().containsKey(PROP_ETAG)) {
         get.addHeader("if-none-match", expired.getProperties().get(PROP_ETAG));

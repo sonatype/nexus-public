@@ -13,6 +13,7 @@
 package com.bolyuba.nexus.plugin.npm.service.internal;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -44,6 +45,8 @@ public abstract class GeneratorSupport<R extends NpmRepository>
 
   protected final MetadataParser metadataParser;
 
+  private static final Pattern SCOPE_ONLY_REQUEST_PATH = Pattern.compile("/@[[a-z][A-Z][0-9]-_.]+/?$");
+
   protected GeneratorSupport(final R npmRepository,
                              final MetadataParser metadataParser)
   {
@@ -60,7 +63,8 @@ public abstract class GeneratorSupport<R extends NpmRepository>
     if (RepositoryItemUid.PATH_ROOT.equals(request.getRequestPath()) // root
         || request.getRequestPath().startsWith("/.nexus") // hidden
         || (request.isExternal() && request.getRequestUrl().contains("/service/local/") && request.getRequestUrl().contains("/content/")) // UI Browse Storage
-        || request.getRequestContext().containsKey(NpmRepository.NPM_METADATA_NO_SERVICE, false)) {
+        || request.getRequestContext().containsKey(NpmRepository.NPM_METADATA_NO_SERVICE, false)
+        || SCOPE_ONLY_REQUEST_PATH.matcher(request.getRequestPath()).matches()) {
       // shut down NPM MD+tarball service completely
       return false;
     }

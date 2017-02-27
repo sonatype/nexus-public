@@ -122,11 +122,11 @@ public class ScopedPackagesIT
     // registry1 should been asked for metadata 2 times
     final List<String> registry1Paths = mockNpmRegistry1.getPathRecorder().getPathsForVerb("GET");
     assertThat(registry1Paths, hasSize(2));
-    assertThat(registry1Paths, containsInAnyOrder("/testproject", "/@registry2/testproject"));
+    assertThat(registry1Paths, containsInAnyOrder("/testproject", "/@registry2%2Ftestproject"));
 
     // registry2 should been asked for metadata 2 times  as well
     final List<String> registry2Paths = mockNpmRegistry2.getPathRecorder().getPathsForVerb("GET");
     assertThat(registry2Paths, hasSize(2));
-    assertThat(registry2Paths, containsInAnyOrder("/testproject", "/@registry2/testproject"));
+    assertThat(registry2Paths, containsInAnyOrder("/testproject", "/@registry2%2Ftestproject"));
   }
 }

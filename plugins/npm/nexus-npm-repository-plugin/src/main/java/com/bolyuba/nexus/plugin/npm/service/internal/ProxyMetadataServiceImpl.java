@@ -28,6 +28,7 @@ import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.bolyuba.nexus.plugin.npm.service.PackageVersion;
 import com.bolyuba.nexus.plugin.npm.service.ProxyMetadataService;
 import com.bolyuba.nexus.plugin.npm.service.tarball.TarballRequest;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -117,8 +118,9 @@ public class ProxyMetadataServiceImpl
    * pkgVersion might be suffixed by some suffix (ie. "beta", "alpha", etc). Groups in regexp: 1. the "packageName",
    * 2. the complete filename after "/-/"
    */
-  private final static Pattern TARBALL_PATH_PATTERN = Pattern
-      .compile("/([[a-z][A-Z][0-9]-_\\.]+)/-/([[a-z][A-Z][0-9]-_\\.]+\\.tgz)");
+  @VisibleForTesting
+  final static Pattern TARBALL_PATH_PATTERN = Pattern
+      .compile("/((?:@[[a-z][A-Z][0-9]-_.]+/)?[[a-z][A-Z][0-9]-_.]+)/-/([[a-z][A-Z][0-9]-_.]+\\.tgz)");
 
   @Nullable
   @Override
