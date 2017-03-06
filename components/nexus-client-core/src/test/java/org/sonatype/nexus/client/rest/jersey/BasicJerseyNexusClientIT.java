@@ -19,6 +19,7 @@ import org.sonatype.nexus.client.core.condition.EditionConditions;
 import org.sonatype.nexus.client.core.condition.LogicalConditions;
 import org.sonatype.nexus.client.core.condition.NexusStatusConditions;
 import org.sonatype.nexus.client.core.condition.VersionConditions;
+import org.sonatype.nexus.client.core.exception.NexusClientNotFoundException;
 import org.sonatype.nexus.client.rest.BaseUrl;
 import org.sonatype.nexus.client.rest.NexusClientFactory;
 import org.sonatype.sisu.litmus.testsupport.group.External;
@@ -83,7 +84,12 @@ public class BasicJerseyNexusClientIT
     factory.createFor(BaseUrl.baseUrlFrom("https://foobar123.sonatype.org/"));
   }
 
-  @Test(expected = NexusClientHandlerException.class)
+  /**
+   * Test formerly (erroneously) expected a different exception that was actually caused by requesting https from a
+   * non-secured server. It started failing when that site was secured. Leaving in place for legacy NX2 but
+   * should serve as a lesson - do not depend on publicly hosted websites for internal testing ;)
+   */
+  @Test(expected = NexusClientNotFoundException.class)
   public void createWithWrongBaseUrlNotANexus()
       throws MalformedURLException
   {

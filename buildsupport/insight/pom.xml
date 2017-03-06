@@ -29,8 +29,8 @@
 
   <properties>
     <sonatype-licensing.version>1.4</sonatype-licensing.version>
-    <insight-brain.version>1.20.0-02</insight-brain.version>
-    <insight-scanner.version>2.3.2</insight-scanner.version>
+    <insight-brain.version>1.26.0-SNAPSHOT</insight-brain.version>
+    <insight-scanner.version>2.4.5-SNAPSHOT</insight-scanner.version>
   </properties>
 
   <dependencyManagement>
@@ -57,6 +57,12 @@
       </dependency>
 
       <!-- insight -->
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-test-reverse-proxy</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>com.sonatype.insight.scan</groupId>
@@ -120,6 +126,13 @@
             <artifactId>license-bundle</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.brain</groupId>
+        <artifactId>insight-brain-data</artifactId>
+        <version>${insight-brain.version}</version>
+        <type>test-jar</type>
       </dependency>
 
     </dependencies>
