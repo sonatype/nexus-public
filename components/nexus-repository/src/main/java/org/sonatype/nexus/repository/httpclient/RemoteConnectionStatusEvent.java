@@ -12,52 +12,35 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
-import javax.annotation.Nullable;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.RepositoryEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Remote connection status.
+ * Represents a change in repository status.
  *
- * @since 3.0
+ * @since 3.3
  */
-public class RemoteConnectionStatus
+public class RemoteConnectionStatusEvent
+    extends RepositoryEvent
 {
-  private final RemoteConnectionStatusType type;
+  private final RemoteConnectionStatus status;
 
-  private final String reason;
-
-  public RemoteConnectionStatus(final RemoteConnectionStatusType type) {
-    this(type, null);
+  public RemoteConnectionStatusEvent(final RemoteConnectionStatus status, final Repository repository) {
+    super(repository);
+    this.status = checkNotNull(status);
   }
 
-  public RemoteConnectionStatus(final RemoteConnectionStatusType type, @Nullable final String reason) {
-    this.type = checkNotNull(type);
-    this.reason = reason;
-  }
-
-  public String getDescription() {
-    return type.getDescription();
-  }
-
-  /**
-   * @since 3.3
-   */
-  public RemoteConnectionStatusType getType() {
-    return type;
-  }
-
-  @Nullable
-  public String getReason() {
-    return reason;
+  public RemoteConnectionStatus getStatus() {
+    return status;
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder(type.getDescription());
-    if (reason != null) {
-      sb.append(" - ").append(reason);
-    }
-    return sb.toString();
+    return "RemoteConnectionStatusEvent{" +
+        "status=" + getStatus() +
+        ", repository=" + getRepository() +
+        '}';
   }
 }

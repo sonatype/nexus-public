@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -25,14 +26,21 @@ import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -43,9 +51,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DatabaseFreezeServiceImplTest
     extends TestSupport
@@ -60,6 +73,21 @@ public class DatabaseFreezeServiceImplTest
   @Mock
   DatabaseFrozenStateManager databaseFrozenStateManager;
 
+  @Mock
+  OServer server;
+
+  @Mock
+  ODistributedServerManager distributedServerManager;
+
+  @Mock
+  ODistributedMessageService distributedMessageService;
+
+  @Mock
+  OModifiableDistributedConfiguration distributedConfiguration;
+
+  @Mock
+  DatabaseInstance databaseInstance;
+
   DatabaseFreezeServiceImpl underTest;
 
   @Rule
@@ -72,8 +100,14 @@ public class DatabaseFreezeServiceImplTest
 
   @Before
   public void setup() throws Exception {
+    when(distributedServerManager.getMessageService()).thenReturn(distributedMessageService);
+    when(distributedMessageService.getDatabases()).thenReturn(Collections.singleton("test"));
+    when(distributedServerManager.executeInDistributedDatabaseLock(eq("test"), anyLong(),
+        any(OModifiableDistributedConfiguration.class),
+        (OCallable<Object, OModifiableDistributedConfiguration>) notNull()))
+            .then(invoc -> ((OCallable) invoc.getArguments()[3]).call(distributedConfiguration));
     providerSet = of(database.getInstanceProvider(), database2.getInstanceProvider()).collect(toSet());
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, databaseFrozenStateManager);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, databaseFrozenStateManager, () -> server);
 
     for (Provider<DatabaseInstance> provider : providerSet) {
       try (ODatabaseDocumentTx db = provider.get().connect()) {
@@ -187,5 +221,28 @@ public class DatabaseFreezeServiceImplTest
         }
       }
     }
+  }
+
+  @Test
+  public void testSwitchToReplicaModeAfterFreeze() {
+    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
+        databaseFrozenStateManager, () -> server);
+    when(server.getDistributedManager()).thenReturn(distributedServerManager);
+    underTest.freezeAllDatabases();
+    InOrder order = inOrder(databaseInstance, distributedConfiguration);
+    order.verify(databaseInstance).setFrozen(true);
+    order.verify(distributedConfiguration).setServerRole("*", ROLES.REPLICA);
+  }
+
+  @Test
+  public void testSwitchToMasterModeBeforeRelease() {
+    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
+        databaseFrozenStateManager, () -> server);
+    when(server.getDistributedManager()).thenReturn(distributedServerManager);
+    underTest.freezeAllDatabases();
+    underTest.releaseAllDatabases();
+    InOrder order = inOrder(databaseInstance, distributedConfiguration);
+    order.verify(distributedConfiguration).setServerRole("*", ROLES.MASTER);
+    order.verify(databaseInstance).setFrozen(false);
   }
 }

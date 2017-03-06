@@ -665,15 +665,23 @@ public class FileBlobStore
     return configurationPath;
   }
 
-  private void maybeRebuildDeletedBlobIndex() throws IOException {
+  @VisibleForTesting
+  void maybeRebuildDeletedBlobIndex() throws IOException {
     PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
     metadata.load();
     String deletedBlobIndexRebuildRequired = metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false");
     if (Boolean.parseBoolean(deletedBlobIndexRebuildRequired)) {
       Path deletedIndex = getAbsoluteBlobDir().resolve(getDeletionsFilename());
-      log.warn("Rebuilding deletions index file {}", deletedIndex);
 
+      log.warn("Clearing deletions index file {} for rebuild", deletedIndex);
       deletedBlobIndex.clear();
+
+      if (!nodeAccess.isOldestNode()) {
+        log.info("Skipping deletion index rebuild because this is not the oldest node.");
+        return;
+      }
+
+      log.warn("Rebuilding deletions index file {}", deletedIndex);
       int softDeletedBlobsFound = Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS)
           .filter(this::isNonTemporaryAttributeFile)
           .map(BlobAttributes::new)

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -233,7 +234,12 @@ public class StorageTxImpl
   @Override
   @Guarded(by = {ACTIVE})
   public Iterable<ODocument> browse(final String selectSql, @Nullable final Map<String, Object> params) {
-    return OrientAsyncHelper.asyncIterable(db, selectSql, params);
+    if (Strings2.isBlank(selectSql)) {
+      return Collections.emptyList();
+    }
+    else {
+      return OrientAsyncHelper.asyncIterable(db, selectSql, params);
+    }
   }
 
   @Nullable

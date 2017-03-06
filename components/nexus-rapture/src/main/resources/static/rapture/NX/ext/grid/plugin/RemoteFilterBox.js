@@ -21,7 +21,8 @@ Ext.define('NX.ext.grid.plugin.RemoteFilterBox', {
   extend: 'Ext.AbstractPlugin',
   alias: 'plugin.remotegridfilterbox',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Filter'
   ],
 
   /**
@@ -105,7 +106,7 @@ Ext.define('NX.ext.grid.plugin.RemoteFilterBox', {
     if (!grid.emptyText) {
       grid.emptyText = grid.getView().emptyText;
     }
-    grid.getView().emptyText = '<div class="x-grid-empty">' + emptyText.replace(/\$filter/, value) + '</div>';
+    grid.getView().emptyText = NX.util.Filter.buildEmptyResult(value, emptyText);
     grid.getSelectionModel().deselectAll();
     store.addFilter([
       {

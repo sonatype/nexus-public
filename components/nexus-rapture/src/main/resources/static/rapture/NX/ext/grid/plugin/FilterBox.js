@@ -21,7 +21,8 @@ Ext.define('NX.ext.grid.plugin.FilterBox', {
   extend: 'NX.ext.grid.plugin.Filtering',
   alias: 'plugin.gridfilterbox',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Filter'
   ],
 
   /**
@@ -77,8 +78,7 @@ Ext.define('NX.ext.grid.plugin.FilterBox', {
     var me = this;
 
     if (me.emptyText) {
-      var encoded = Ext.util.Format.htmlEncode(value);
-      me.grid.getView().emptyText = '<div class="x-grid-empty">' + me.emptyText.replace(/\$filter/, encoded) + '</div>';
+      me.grid.getView().emptyText = NX.util.Filter.buildEmptyResult(value, me.emptyText);
     }
     me.filter(value);
   },

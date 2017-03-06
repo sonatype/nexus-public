@@ -12,14 +12,21 @@
  */
 package org.apache.shiro.nexus;
 
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
 import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.cache.CacheManager;
+import org.apache.shiro.session.mgt.eis.CachingSessionDAO;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -51,15 +58,18 @@ public class ShiroJCacheManagerAdapter
     return new ShiroJCacheAdapter<>(this.<K,V>maybeCreateCache(name));
   }
 
-  private <K, V> javax.cache.Cache<K, V> maybeCreateCache(final String name) {
+  @VisibleForTesting
+  <K, V> javax.cache.Cache<K, V> maybeCreateCache(final String name) {
     javax.cache.Cache<K, V> cache = manager().getCache(name);
     if (cache == null) {
       log.debug("Creating cache: {}", name);
-      MutableConfiguration<K, V> cacheConfig = new MutableConfiguration<K, V>()
-          .setStoreByValue(false)
-          .setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf())
-          .setManagementEnabled(true)
-          .setStatisticsEnabled(true);
+      MutableConfiguration<K, V> cacheConfig;
+      if (Objects.equals(CachingSessionDAO.ACTIVE_SESSION_CACHE_NAME, name)) {
+        cacheConfig = createShiroSessionCacheConfig();
+      }
+      else {
+        cacheConfig = createDefaultCacheConfig();
+      }
 
       cache = manager().createCache(name, cacheConfig);
       log.debug("Created cache: {}", cache);
@@ -68,5 +78,26 @@ public class ShiroJCacheManagerAdapter
       log.debug("Re-using existing cache: {}", cache);
     }
     return cache;
+  }
+
+  private static <K, V> MutableConfiguration<K, V> createShiroSessionCacheConfig() {
+    // shiro's session cache needs to never expire:
+    // http://shiro.apache.org/session-management.html#ehcache-session-cache-configuration
+    return new MutableConfiguration<K, V>()
+        .setStoreByValue(false)
+        .setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf())
+        .setManagementEnabled(true)
+        .setStatisticsEnabled(true);
+  }
+
+  private static <K, V> MutableConfiguration<K, V> createDefaultCacheConfig() {
+    // note: expiry policy needs set because hazelcast does not have a config inheritance mechanism like ehcache
+    return new MutableConfiguration<K, V>()
+        .setStoreByValue(false)
+        .setExpiryPolicyFactory(
+            AccessedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2l))
+        )
+        .setManagementEnabled(true)
+        .setStatisticsEnabled(true);
   }
 }

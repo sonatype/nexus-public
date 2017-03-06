@@ -1,32 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd"
-         updateCheck="false"
-         monitoring="on"
-         dynamicConfig="true">
+<config
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+    xmlns='http://www.ehcache.org/v3'
+    xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+    xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.2.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.2.xsd">
 
-  <diskStore path="java.io.tmpdir/nexus-ehcache"/>
+  <service>
+    <jsr107:defaults default-template="nexus-default" enable-management="true" enable-statistics="true">
+    </jsr107:defaults>
+  </service>
 
-  <defaultCache
-      maxElementsInMemory="10000"
-      eternal="false"
-      timeToIdleSeconds="120"
-      timeToLiveSeconds="120"
-      maxElementsOnDisk="10000000"
-      diskExpiryThreadIntervalSeconds="120"
-      memoryStoreEvictionPolicy="LRU">
-    <persistence strategy="localTempSwap"/>
-  </defaultCache>
+  <persistence directory="${java.io.tmpdir}/nexus-ehcache"/>
 
-  <!--
-  FIXME: We can not use pre-configured cache with eternal=true until this is fixed:
-  https://github.com/ehcache/ehcache-jcache/issues/40
-  -->
-  <!--<cache name="shiro-activeSessionCache"-->
-         <!--maxElementsInMemory="10000"-->
-         <!--eternal="true"-->
-         <!--diskExpiryThreadIntervalSeconds="600">-->
-    <!--<persistence strategy="localTempSwap"/>-->
-  <!--</cache>-->
+  <cache-template name="nexus-default">
+    <heap unit="entries">1000</heap>
+  </cache-template>
 
-</ehcache>
+</config>

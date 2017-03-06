@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -27,7 +29,21 @@ import static org.hamcrest.Matchers.nullValue;
 public class RepositoryPathTest
     extends TestSupport
 {
-  private void assertNullPath(final String input) {
+
+  static final String RELATIVE_TOKEN_MESSAGE = "Repository path must not contain a relative token";
+
+  static final String NULL_OR_EMPTY_MESSAGE = "Repository path must not be null or empty";
+
+  static final String MULTIPLE_SLASH_MESSAGE = "Repository path must have another '/' after initial '/'";
+
+  static final String START_WITH_SLASH_MESSAGE = "Repository path must start with '/'";
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  private void assertExceptionOnInvalidPath(final String input, final String message) {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage(message);
     RepositoryPath path = RepositoryPath.parse(input);
     assertThat(path, nullValue());
   }
@@ -39,37 +55,54 @@ public class RepositoryPathTest
     assertThat(parsedPath.getRemainingPath(), is(expectedRemainingPath));
   }
 
-
   @Test
   public void nullPath() {
-    assertNullPath(null);
+    assertExceptionOnInvalidPath(null, NULL_OR_EMPTY_MESSAGE);
   }
 
   @Test
   public void emptyPath() {
-    assertNullPath("");
+    assertExceptionOnInvalidPath("", NULL_OR_EMPTY_MESSAGE);
   }
 
   @Test
   public void bareSlash() {
-    assertNullPath("/");
+    assertExceptionOnInvalidPath("/", MULTIPLE_SLASH_MESSAGE);
   }
 
   @Test
   public void missingRepoPathSeperator() {
-    assertNullPath("/repo");
+    assertExceptionOnInvalidPath("/repo", MULTIPLE_SLASH_MESSAGE);
   }
 
   @Test
   public void missingLeadingSlash() {
-    assertNullPath("repo");
+    assertExceptionOnInvalidPath("repo", START_WITH_SLASH_MESSAGE);
+  }
+
+  @Test
+  public void repoDot() {
+    assertExceptionOnInvalidPath("/./", RELATIVE_TOKEN_MESSAGE);
   }
 
   @Test
   public void repoDots() {
-    // repository name can not be a . or ..
-    assertNullPath("/./");
-    assertNullPath("/../");
+    assertExceptionOnInvalidPath("/../", RELATIVE_TOKEN_MESSAGE);
+  }
+
+  @Test
+  public void invalidRelative1() {
+    assertExceptionOnInvalidPath("/repo/..", RELATIVE_TOKEN_MESSAGE);
+  }
+
+  @Test
+  public void invalidRelative2() {
+    assertExceptionOnInvalidPath("/repo/../bar", RELATIVE_TOKEN_MESSAGE);
+  }
+
+  @Test
+  public void invalidRelative3() {
+    assertExceptionOnInvalidPath("/repo/foo/../../bar", RELATIVE_TOKEN_MESSAGE);
   }
 
   @Test
@@ -96,21 +129,6 @@ public class RepositoryPathTest
   @Test
   public void relativePath() {
     assertPath("/repo/foo/../bar/../baz", "repo", "/baz");
-  }
-
-  @Test
-  public void invalidRelative1() {
-    assertNullPath("/repo/..");
-  }
-
-  @Test
-  public void invalidRelative2() {
-    assertNullPath("/repo/../bar");
-  }
-
-  @Test
-  public void invalidRelative3() {
-    assertNullPath("/repo/foo/../../bar");
   }
 
   @Test

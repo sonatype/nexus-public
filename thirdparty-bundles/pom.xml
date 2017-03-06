@@ -29,7 +29,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>ehcache</module>
     <module>elasticsearch</module>
   </modules>
 
@@ -47,12 +46,6 @@
       </dependency>
 
       <!-- INTERNAL -->
-
-      <dependency>
-        <groupId>org.sonatype.nexus.bundles</groupId>
-        <artifactId>org.sonatype.nexus.bundles.ehcache</artifactId>
-        <version>3.3.0-SNAPSHOT</version>
-      </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.bundles</groupId>

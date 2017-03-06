@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -22,14 +26,19 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.property.PropertiesFile;
 
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
+import com.squareup.tape.QueueFile;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
+import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
@@ -72,15 +81,31 @@ public class FileBlobStoreTest
 
   private FileBlobStore underTest;
 
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+
   @Before
   public void initBlobStore() {
+    when(nodeAccess.getId()).thenReturn("test");
     when(appDirs.getWorkDirectory(any())).thenReturn(util.createTempDir());
 
+    BlobStoreConfiguration configuration = new BlobStoreConfiguration();
+
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> fileMap = new HashMap<>();
+    fileMap.put("path", temporaryFolder.getRoot().toPath());
+    attributes.put("file", fileMap);
+
+    configuration.setAttributes(attributes);
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
-        permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, new BlobStoreConfiguration(),
+        permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, configuration,
         appDirs, nodeAccess);
+
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
+
+    underTest.init(configuration);
     underTest.setLiveBlobs(loadingCache);
   }
 
@@ -106,5 +131,62 @@ public class FileBlobStoreTest
 
     assertThat(blob.getMetrics().getContentSize(), is(size));
     assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
+  }
+
+  byte[] deletedBlobStoreProperties = ("deleted = true\n" +
+      "@BlobStore.created-by = admin\n" +
+      "size = 40\n" +
+      "@Bucket.repo-name = maven-releases\n" +
+      "creationTime = 1486679665325\n" +
+      "@BlobStore.blob-name = com/sonatype/training/nxs301/03-implicit-staging/maven-metadata.xml.sha1\n" +
+      "@BlobStore.content-type = text/plain\n" +
+      "sha1 = cbd5bce1c926e6b55b6b4037ce691b8f9e5dea0f").getBytes(StandardCharsets.ISO_8859_1);
+
+  @Test
+  public void testMaybeRebuildDeletedBlobIndex() throws Exception {
+    when(nodeAccess.isOldestNode()).thenReturn(true);
+    underTest.doStart();
+
+    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+        deletedBlobStoreProperties);
+
+    checkDeletionsIndex(true);
+
+    setRebuildMetadataToTrue();
+
+    underTest.maybeRebuildDeletedBlobIndex();
+
+    checkDeletionsIndex(false);
+  }
+
+
+  @Test
+  public void testMaybeRebuildDeletedBlobIndex_NotOldest() throws Exception {
+    when(nodeAccess.isOldestNode()).thenReturn(false);
+    underTest.doStart();
+
+    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+        deletedBlobStoreProperties);
+
+    checkDeletionsIndex(true);
+
+    setRebuildMetadataToTrue();
+
+    underTest.maybeRebuildDeletedBlobIndex();
+
+    checkDeletionsIndex(true);
+  }
+
+  private void setRebuildMetadataToTrue() throws IOException {
+    PropertiesFile metadataPropertiesFile = new PropertiesFile(
+        underTest.getAbsoluteBlobDir().resolve(FileBlobStore.METADATA_FILENAME).toFile());
+    metadataPropertiesFile.setProperty(FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY, "true");
+    metadataPropertiesFile.store();
+  }
+
+  private void checkDeletionsIndex(boolean expectEmpty) throws IOException {
+    QueueFile queueFile = new QueueFile(underTest.getAbsoluteBlobDir().resolve("test-deletions.index").toFile());
+    assertThat(queueFile.isEmpty(), is(expectEmpty));
+    queueFile.close();
   }
 }

@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for local {@link NodeAccess}.
@@ -62,5 +63,10 @@ public class LocalNodeAccessTest
   public void idEqualToIdentityCertificate() throws Exception {
     Certificate cert = keyStoreManager.getCertificate();
     assertThat(nodeAccess.getId(), equalTo(NodeIdEncoding.nodeIdForCertificate(cert)));
+  }
+
+  @Test
+  public void localIsOldestNode() {
+    assertThat(nodeAccess.isOldestNode(), is(true));
   }
 }

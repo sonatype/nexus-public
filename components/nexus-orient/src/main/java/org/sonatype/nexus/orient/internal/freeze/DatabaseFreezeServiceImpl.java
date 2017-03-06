@@ -31,6 +31,9 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
@@ -54,15 +57,21 @@ public class DatabaseFreezeServiceImpl
 
   private final DatabaseFrozenStateManager databaseFrozenStateManager;
 
+  private final Provider<ODistributedServerManager> distributedServerManagerProvider;
+
   private boolean frozen;
 
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers,
                                    final EventManager eventManager,
-                                   final DatabaseFrozenStateManager databaseFrozenStateManager) {
+                                   final DatabaseFrozenStateManager databaseFrozenStateManager,
+                                   final Provider<OServer> server)
+  {
     this.providers = checkNotNull(providers);
     this.eventManager = checkNotNull(eventManager);
     this.databaseFrozenStateManager = checkNotNull(databaseFrozenStateManager);
+    checkNotNull(server);
+    distributedServerManagerProvider = () -> server.get().getDistributedManager();
   }
 
   @Override
@@ -133,7 +142,17 @@ public class DatabaseFreezeServiceImpl
     log.debug("Updating frozen state to {}", newFrozenState);
     frozen = newFrozenState;
 
+    if (!frozen) {
+      // restore MASTER mode now to ensure unfrozen databases are actually writable
+      setServerRole(ROLES.MASTER);
+    }
+
     forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(frozen));
+
+    if (frozen) {
+      // enable REPLICA mode afterwards to ensure frozen databases reject writes for the right reason
+      setServerRole(ROLES.REPLICA);
+    }
 
     databaseFrozenStateManager.set(frozen);
   }
@@ -148,5 +167,20 @@ public class DatabaseFreezeServiceImpl
         log.error("Unable to process Database instance: {}", databaseInstance, e);
       }
     });
+  }
+
+  private void setServerRole(final ROLES serverRole) {
+    ODistributedServerManager distributedServerManager = distributedServerManagerProvider.get();
+    if (distributedServerManager == null) {
+      log.debug("Skipping update of server role, databases not clustered");
+      return;
+    }
+    for (String database : distributedServerManager.getMessageService().getDatabases()) {
+      log.debug("Updating server role of {} database to {}", database, serverRole);
+      distributedServerManager.executeInDistributedDatabaseLock(database, 0l, null, distributedConfiguration -> {
+        distributedConfiguration.setServerRole("*", serverRole);
+        return null;
+      });
+    }
   }
 }

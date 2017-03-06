@@ -19,20 +19,29 @@ import java.util.LinkedHashSet;
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl.Config;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.ImmutableSet.of;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.group.GroupFacetImpl.CONFIG_KEY;
 
 public class GroupFacetImplTest
     extends TestSupport
@@ -43,12 +52,17 @@ public class GroupFacetImplTest
 
   private RepositoryManager repositoryManager;
 
+  private ConfigurationFacet configurationFacet;
+
+  private Format format = mock(Format.class);
+
   private GroupFacetImpl groupFacetImpl;
 
   @Before
   public void setup() throws Exception {
     repositoryManager = mock(RepositoryManager.class);
     constraintViolationFactory = mock(ConstraintViolationFactory.class);
+    configurationFacet = mock(ConfigurationFacet.class);
     groupFacetImpl = new GroupFacetImpl(repositoryManager, constraintViolationFactory, groupType);
 
     when(constraintViolationFactory.createViolation(anyString(), anyString())).thenReturn(mock(ConstraintViolation.class));
@@ -64,6 +78,7 @@ public class GroupFacetImplTest
     when(groupFacet2.members()).thenReturn(Arrays.asList(repository3));
     when(groupFacet3.members()).thenReturn(Arrays.asList(repository1, repositoryUnderTest));
     when(repositoryUnderTest.facet(GroupFacet.class)).thenReturn(groupFacetImpl);
+    when(repositoryUnderTest.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
     when(repository1.facet(GroupFacet.class)).thenReturn(groupFacet1);
     when(repository2.facet(GroupFacet.class)).thenReturn(groupFacet2);
     when(repository3.facet(GroupFacet.class)).thenReturn(groupFacet3);
@@ -75,6 +90,7 @@ public class GroupFacetImplTest
     when(repository1.getName()).thenReturn("repository1");
     when(repository2.getName()).thenReturn("repository2");
     when(repository3.getName()).thenReturn("repository3");
+    when(repositoryUnderTest.getFormat()).thenReturn(format);
 
     when(repositoryManager.get("repositoryUnderTest")).thenReturn(repositoryUnderTest);
     when(repositoryManager.get("repository1")).thenReturn(repository1);
@@ -109,5 +125,40 @@ public class GroupFacetImplTest
     config.memberNames = new LinkedHashSet<>();
     config.memberNames.add("repository2");
     assertNotNull(groupFacetImpl.validateGroupDoesNotContainItself("repositoryUnderTest", config));
+  }
+
+  @Test
+  public void testLeafMembers() throws Exception {
+    Repository hosted1 = hostedRepository("hosted1");
+    Repository hosted2 = hostedRepository("hosted2");
+    Repository group1 = groupRepository("group1", hosted1);
+    Config config = new Config();
+    config.memberNames = of(hosted1.getName(), hosted2.getName(), group1.getName());
+    Configuration configuration = new Configuration();
+    configuration.attributes(CONFIG_KEY).set("memberNames", config.memberNames);
+    when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
+    groupFacetImpl.doConfigure(configuration);
+    assertThat(groupFacetImpl.leafMembers(), contains(hosted1, hosted2));
+  }
+
+  private Repository hostedRepository(final String name) {
+    Repository hostedRepository = mock(Repository.class);
+    when(hostedRepository.getType()).thenReturn(new HostedType());
+    when(hostedRepository.getName()).thenReturn(name);
+    when(hostedRepository.getFormat()).thenReturn(format);
+    when(repositoryManager.get(name)).thenReturn(hostedRepository);
+    return hostedRepository;
+  }
+
+  private Repository groupRepository(final String name, final Repository... repositories) {
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(groupType);
+    when(groupRepository.getName()).thenReturn(name);
+    when(groupRepository.getFormat()).thenReturn(format);
+    when(repositoryManager.get(name)).thenReturn(groupRepository);
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(groupFacet.leafMembers()).thenReturn(copyOf(repositories));
+    return groupRepository;
   }
 }

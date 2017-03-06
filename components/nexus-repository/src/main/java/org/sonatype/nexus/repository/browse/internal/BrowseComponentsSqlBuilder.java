@@ -58,6 +58,10 @@ public class BrowseComponentsSqlBuilder
    * Returns the SQL for performing the count query.
    */
   public String buildCountSql() {
+    if (buckets.isEmpty()) {
+      return "SELECT COUNT(0)";
+    }
+
     String whereClause = buildWhereClause();
     return String.format("SELECT COUNT(DISTINCT(%s)) FROM asset WHERE %s", AssetEntityAdapter.P_COMPONENT, whereClause);
   }
@@ -66,6 +70,10 @@ public class BrowseComponentsSqlBuilder
    * Returns the SQL for performing the build query.
    */
   public String buildBrowseSql() {
+    if (buckets.isEmpty()) {
+      return "";
+    }
+
     String querySuffix = buildQuerySuffix();
     String whereClause = buildWhereClause();
     return String.format("SELECT DISTINCT(%s) AS %s FROM asset WHERE %s %s", AssetEntityAdapter.P_COMPONENT,
@@ -91,13 +99,6 @@ public class BrowseComponentsSqlBuilder
   }
 
   private String buildWhereClause() {
-    if (buckets.isEmpty()) {
-      return "false";
-    }
-    return buildWhereClauseWithBuckets();
-  }
-
-  private String buildWhereClauseWithBuckets() {
     List<String> whereClauses = new ArrayList<>();
     whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     whereClauses.add(buckets.stream()

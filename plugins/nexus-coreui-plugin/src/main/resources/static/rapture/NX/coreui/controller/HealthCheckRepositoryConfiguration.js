@@ -107,7 +107,12 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryConfiguration', {
     );
     button.mon(
         NX.Conditions.formHasRecord('nx-coreui-repository-settings-form', function (model) {
-          return model.get('type') === 'proxy';
+          if (model.get('format') === 'maven2' && model.get('attributes').maven.versionPolicy !== 'RELEASE') {
+            return false;
+          }
+          else {
+            return model.get('type') === 'proxy';
+          }
         }),
         {
           satisfied: button.show,

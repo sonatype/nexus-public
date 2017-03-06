@@ -14,8 +14,6 @@ package org.sonatype.nexus.cache.internal.ehcache;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
@@ -31,7 +29,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.ehcache.jcache.JCacheCachingProvider;
+import org.ehcache.jsr107.EhcacheCachingProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -50,8 +48,6 @@ public class EhCacheManagerProvider
     implements Provider<CacheManager>
 {
   private static final String CONFIG_FILE = "ehcache.xml";
-
-  private static final String DEFAULT_RESOURCE = "ehcache-default.xml";
 
   private volatile CacheManager cacheManager;
 
@@ -75,29 +71,14 @@ public class EhCacheManagerProvider
     this.cacheManager = create(uri);
   }
 
-  private CacheManager create(@Nullable final URI uri) {
-    URI config = uri;
-    if (config == null) {
-      // load the configuration from defaults, this is mainly used for test environments
-      log.warn("Using default configuration");
-      URL url = getClass().getResource(DEFAULT_RESOURCE);
-      checkState(url != null, "Missing default configuration resource: %s", DEFAULT_RESOURCE);
-      try {
-        config = url.toURI();
-      }
-      catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
+  private CacheManager create(@Nullable final URI config) {
     CachingProvider provider = Caching.getCachingProvider(
-        JCacheCachingProvider.class.getName(),
-        JCacheCachingProvider.class.getClassLoader()
+        EhcacheCachingProvider.class.getName(),
+        EhcacheCachingProvider.class.getClassLoader()
     );
 
     log.info("Creating cache-manager with configuration: {}", config);
-    // create manager using the EHCache bundle loader; it has a dynamic import to help unmarshal user classes
-    CacheManager manager = provider.getCacheManager(config, net.sf.ehcache.CacheManager.class.getClassLoader());
+    CacheManager manager = provider.getCacheManager(config, getClass().getClassLoader());
     log.debug("Created cache-manager: {}", manager);
     return manager;
   }

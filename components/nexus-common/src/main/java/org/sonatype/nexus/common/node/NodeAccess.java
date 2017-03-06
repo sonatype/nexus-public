@@ -70,4 +70,11 @@ public interface NodeAccess
    * @since 3.3
    */
   boolean isFreshCluster();
+
+  /**
+   * Is this the oldest node in the cluster?
+   *
+   * @since 3.3
+   */
+  boolean isOldestNode();
 }

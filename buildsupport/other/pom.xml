@@ -177,32 +177,9 @@
       </dependency>
 
       <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache</artifactId>
-        <version>2.10.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache</artifactId>
-        <classifier>javadoc</classifier>
-        <version>2.10.0</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.ehcache</groupId>
-        <artifactId>jcache</artifactId>
-        <version>1.0.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-          </exclusion>
-        </exclusions>
+        <artifactId>ehcache</artifactId>
+        <version>3.2.1</version>
       </dependency>
 
       <dependency>

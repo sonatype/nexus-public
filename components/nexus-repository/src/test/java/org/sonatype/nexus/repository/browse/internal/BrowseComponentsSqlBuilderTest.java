@@ -15,23 +15,31 @@ package org.sonatype.nexus.repository.browse.internal;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 
 public class BrowseComponentsSqlBuilderTest
     extends TestSupport
 {
+  private BrowseComponentsSqlBuilder underTest;
+
+  @Before
+  public void setUp() {
+    underTest = new BrowseComponentsSqlBuilder("repo", true, emptyList(), mock(QueryOptions.class));
+  }
 
   @Test
   public void buildQueryToReturnNothingWhenBucketsIsEmpty() throws Exception {
-    String sql = new BrowseComponentsSqlBuilder("repo", true, emptyList(), mock(QueryOptions.class))
-        .buildBrowseSql();
-    String expectedWhere = "WHERE false  SKIP 0 LIMIT 0";
-    assertThat(sql.substring(sql.indexOf("WHERE")), is(equalTo(expectedWhere)));
+    assertThat(underTest.buildBrowseSql(), is(""));
+  }
+
+  @Test
+  public void buildQueryToReturnZeroCountWhenBucketsIsEmpty() throws Exception {
+    assertThat(underTest.buildCountSql(), is("SELECT COUNT(0)"));
   }
 }

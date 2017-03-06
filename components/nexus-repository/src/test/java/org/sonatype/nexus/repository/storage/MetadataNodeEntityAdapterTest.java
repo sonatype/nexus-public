@@ -16,40 +16,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyIterable.emptyIterable;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MetadataNodeEntityAdapterTest
     extends TestSupport
 {
+  @Rule
+  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
+
   List<Bucket> buckets;
 
   @Mock
   BucketEntityAdapter bucketEntityAdapter;
 
-  @Mock
-  Bucket bucket;
-
-  @Mock
-  ORID orid;
-
-  MetadataNodeEntityAdapter underTest;
+  MetadataNodeEntityAdapter<?> underTest;
 
   @Before
   public void setup() throws Exception {
     buckets = new ArrayList<>();
-    buckets.add(bucket);
+    buckets.add(makeBucket("orid"));
     underTest = new TestableMetadataNodeEntityAdapter("type", bucketEntityAdapter);
-    when(bucketEntityAdapter.recordIdentity(bucket)).thenReturn(orid);
-    when(orid.toString()).thenReturn("orid");
   }
 
   @Test
@@ -67,19 +67,35 @@ public class MetadataNodeEntityAdapterTest
   }
 
   @Test
-  public void addBucketConstraintFalseWhenBucketsIsEmpty() throws Exception {
-    buckets.clear();
+  public void addBucketConstraintsWithWhereForMultipleBuckets() throws Exception {
+    buckets.add(makeBucket("orid2"));
     StringBuilder query = new StringBuilder();
     underTest.addBucketConstraints(null, buckets, query);
-    assertThat(query.toString(), is(equalTo(" where (false)")));
+    assertThat(query.toString(), is(equalTo(" where (bucket=orid or bucket=orid2)")));
   }
 
   @Test
-  public void addBucketConstraintFalseWhenBucketsIsEmptyAndWhereClausePassed() throws Exception {
+  public void emptyBucketsBrowseByQuery() throws Exception {
     buckets.clear();
-    StringBuilder query = new StringBuilder();
-    underTest.addBucketConstraints("where clause", buckets, query);
-    assertThat(query.toString(), is(equalTo(" and (false)")));
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      assertThat(underTest.browseByQuery(db, null, null, buckets, null), is(emptyIterable()));
+    }
+  }
+
+  @Test
+  public void emptyBucketsCountByQuery() throws Exception {
+    buckets.clear();
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      assertThat(underTest.countByQuery(db, null, null, buckets, null), is(0L));
+    }
+  }
+
+  private Bucket makeBucket(final String id) {
+    Bucket bucket = mock(Bucket.class);
+    ORID orid = mock(ORID.class);
+    when(bucketEntityAdapter.recordIdentity(bucket)).thenReturn(orid);
+    when(orid.toString()).thenReturn(id);
+    return bucket;
   }
 
   private static class TestableMetadataNodeEntityAdapter

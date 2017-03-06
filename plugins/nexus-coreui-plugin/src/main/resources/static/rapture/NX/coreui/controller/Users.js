@@ -27,7 +27,8 @@ Ext.define('NX.coreui.controller.Users', {
     'NX.Icons',
     'NX.Messages',
     'NX.Dialogs',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Filter'
   ],
   masters: [
     'nx-coreui-user-list'
@@ -387,12 +388,11 @@ Ext.define('NX.coreui.controller.Users', {
         list = me.getList(),
         userSourceButton = list.down('button[action=filter]'),
         userId = me.getUserSearchBox().getValue(),
-        emptyText;
+        emptyText = '';
 
-    emptyText = '<div class="x-grid-empty">';
     if (userSourceButton.sourceId === 'default') {
       if (userId) {
-        emptyText += 'No user matched query criteria "' + userId + '"';
+        emptyText += 'No user matched query criteria "$filter"';
       }
       else {
         emptyText += 'No users defined';
@@ -401,12 +401,11 @@ Ext.define('NX.coreui.controller.Users', {
     else {
       emptyText += 'No ' + userSourceButton.getText() + ' user matched query criteria';
       if (userId) {
-        emptyText += ' "' + userId + '"';
+        emptyText += ' "$filter"';
       }
     }
-    emptyText += '</div>';
 
-    list.getView().emptyText = emptyText;
+    list.getView().emptyText = NX.util.Filter.buildEmptyResult(userId, emptyText);
   },
 
   /**

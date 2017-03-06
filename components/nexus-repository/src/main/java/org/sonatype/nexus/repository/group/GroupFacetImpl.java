@@ -196,7 +196,7 @@ public class GroupFacetImpl
 
   @Override
   public List<Repository> leafMembers() {
-    List<Repository> leafMembers = new ArrayList<>();
+    Set<Repository> leafMembers = new LinkedHashSet<>();
 
     for (Repository repository : members()) {
       if (groupType.equals(repository.getType())) {
@@ -207,7 +207,7 @@ public class GroupFacetImpl
       }
     }
 
-    return leafMembers;
+    return new ArrayList(leafMembers);
   }
 
   @Override

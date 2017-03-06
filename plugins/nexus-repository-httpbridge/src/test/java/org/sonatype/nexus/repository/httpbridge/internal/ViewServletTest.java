@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import java.util.Collections;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -34,6 +35,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -46,7 +48,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for describe functionality of {@link ViewServlet}.
  */
-public class ViewServletDescribeTest
+public class ViewServletTest
     extends TestSupport
 {
   @Mock
@@ -66,6 +68,9 @@ public class ViewServletDescribeTest
 
   @Mock(name = "facet-exception", answer = RETURNS_DEEP_STUBS)
   private RuntimeException facetException;
+
+  @Mock
+  private HttpServletRequest httpServletRequest;
 
   private Parameters parameters;
 
@@ -162,6 +167,13 @@ public class ViewServletDescribeTest
     // The exception got described
     verify(underTest).describe(request, null, facetException, "HTML");
     verify(underTest).send(eq(request), any(Response.class), eq(servletResponse));
+  }
+
+  @Test
+  public void return400BadRequestOnIllegalArgumentException() throws Exception {
+    when(httpServletRequest.getPathInfo()).thenReturn("/test/^^^/");
+    underTest.service(httpServletRequest, servletResponse);
+    verify(servletResponse).sendError(SC_BAD_REQUEST, "Invalid repository path");
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

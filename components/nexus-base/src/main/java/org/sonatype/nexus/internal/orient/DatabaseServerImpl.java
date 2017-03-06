@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -76,7 +77,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class DatabaseServerImpl
     extends StateGuardLifecycleSupport
-    implements DatabaseServer, EventAware, EventAware.Asynchronous
+    implements DatabaseServer, EventAware, EventAware.Asynchronous, Provider<OServer>
 {
   private static final String JUL_ROOT_LOGGER = "";
 
@@ -286,6 +287,12 @@ public class DatabaseServerImpl
   @Guarded(by = STARTED)
   public List<String> databases() {
     return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public OServer get() {
+    return orientServer;
   }
 
   @Subscribe

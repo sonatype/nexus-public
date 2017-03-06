@@ -132,8 +132,12 @@ public class ViewServlet
       throws Exception
   {
     // resolve repository for request
-    RepositoryPath path = path(httpRequest);
-    if (path == null) {
+    RepositoryPath path;
+    try {
+      path = RepositoryPath.parse(httpRequest.getPathInfo());
+    }
+    catch (IllegalArgumentException e) { // NOSONAR
+      log.warn("Unable to parse repository path. Reason: {}", e.getMessage());
       send(null, HttpResponses.badRequest("Invalid repository path"), httpResponse);
       return;
     }
@@ -254,19 +258,6 @@ public class ViewServlet
       throws ServletException, IOException
   {
     httpResponseSenderSelector.defaultSender().send(request, response, httpResponse);
-  }
-
-  /**
-   * @return a parsed repository path, or {@code null} if parsing was impossible.
-   */
-  @Nullable
-  private RepositoryPath path(final HttpServletRequest httpRequest) {
-    String pathInfo = httpRequest.getPathInfo();
-    RepositoryPath path = RepositoryPath.parse(pathInfo);
-    if (path == null) {
-      log.debug("Unable to parse repository path from: {}", pathInfo);
-    }
-    return path;
   }
 
   /**

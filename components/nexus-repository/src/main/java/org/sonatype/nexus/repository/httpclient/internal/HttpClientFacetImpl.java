@@ -31,12 +31,15 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import org.apache.http.client.HttpClient;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 
 /**
@@ -47,7 +50,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 @Named
 public class HttpClientFacetImpl
     extends FacetSupport
-    implements HttpClientFacet
+    implements HttpClientFacet, RemoteConnectionStatusObserver
 {
   private final HttpClientManager httpClientManager;
 
@@ -122,6 +125,19 @@ public class HttpClientFacetImpl
     createHttpClient();
   }
 
+  @Override
+  public void onStatusChanged(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
+    if (isBlank(newStatus.getReason())) {
+      log.info("Remote connection status of repository {} changed from {} to {}", getRepository().getName(),
+          oldStatus.getType(), newStatus.getType());
+    }
+    else {
+      log.info("Remote connection status of repository {} changed from {} to {}. Reason: {}", getRepository().getName(),
+          oldStatus.getType(), newStatus.getType(), newStatus.getReason());
+    }
+    getEventManager().post(new RemoteConnectionStatusEvent(newStatus, getRepository()));
+  }
+
   private void createHttpClient() {
     // construct http client delegate
     HttpClientConfiguration delegateConfig = new HttpClientConfiguration();
@@ -130,7 +146,7 @@ public class HttpClientFacetImpl
     HttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
     // wrap delegate with auto-block aware client
-    httpClient = new BlockingHttpClient(delegate, config);
+    httpClient = new BlockingHttpClient(delegate, config, this);
     log.debug("Created HTTP client: {}", httpClient);
   }
 

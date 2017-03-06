@@ -133,6 +133,11 @@ public class LocalNodeAccess
   }
 
   @Override
+  public boolean isOldestNode() {
+    return true;
+  }
+
+  @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "id='" + id + '\'' +

@@ -18,6 +18,7 @@ import java.net.URI;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -143,7 +144,8 @@ public abstract class FilteredHttpClientSupport
     return target;
   }
 
-  protected interface Filterable<T>
+  @VisibleForTesting
+  public interface Filterable<T>
   {
     T call() throws IOException;
   }

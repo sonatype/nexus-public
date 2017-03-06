@@ -22,6 +22,7 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.internal.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
@@ -182,8 +184,14 @@ public abstract class ProxyFacetSupport
         }
         throw e;
       }
+      catch (RemoteBlockedIOException e) {
+        Repository repository = context.getRepository();
+        log.warn("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e.getMessage());
+        throw e;
+      }
       catch (IOException e) {
-        log.warn("Failed to fetch: {}", getUrl(context), e);
+        Repository repository = context.getRepository();
+        log.warn("Failed to fetch: {}, from repository: {}", getUrl(context), repository.getName(), e);
         throw e;
       }
       finally {
