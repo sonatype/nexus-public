@@ -31,7 +31,7 @@
     <sonatype-licensing.version>1.4.3</sonatype-licensing.version>
     <clm.dto.model.version>1.5.8-01</clm.dto.model.version>
     <insight-brain.version>1.24.0-02</insight-brain.version>
-    <insight-scanner.version>2.4.3-01</insight-scanner.version>
+    <insight-scanner.version>2.4.5-SNAPSHOT</insight-scanner.version>
   </properties>
 
   <dependencyManagement>
@@ -98,6 +98,12 @@
       <dependency>
         <groupId>com.sonatype.insight.scan</groupId>
         <artifactId>insight-scanner-model-io</artifactId>
+        <version>${insight-scanner.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.insight.scan</groupId>
+        <artifactId>insight-scanner-model</artifactId>
         <version>${insight-scanner.version}</version>
       </dependency>
 

@@ -29,7 +29,6 @@ import static org.hamcrest.Matchers.nullValue;
 public class RepositoryPathTest
     extends TestSupport
 {
-
   static final String RELATIVE_TOKEN_MESSAGE = "Repository path must not contain a relative token";
 
   static final String NULL_OR_EMPTY_MESSAGE = "Repository path must not be null or empty";
@@ -144,5 +143,10 @@ public class RepositoryPathTest
   @Test
   public void fileWithDot() {
     assertPath("/repo/foo/baz.bar", "repo", "/foo/baz.bar");
+  }
+
+  @Test
+  public void fileWithSpaces() throws Exception {
+    assertPath("/repo/foo/abc bar.txt", "repo", "/foo/abc bar.txt");
   }
 }

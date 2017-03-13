@@ -24,7 +24,8 @@ Ext.define('NX.coreui.view.system.HttpSettings', {
     'NX.Conditions',
     'NX.coreui.view.system.AuthenticationSettings',
     'NX.coreui.view.system.HttpRequestSettings',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.ext.form.field.Hostname'
   ],
 
   /**
@@ -55,7 +56,7 @@ Ext.define('NX.coreui.view.system.HttpSettings', {
             checkboxName: 'httpEnabled',
             items: [
               {
-                xtype: 'textfield',
+                xtype: 'nx-hostname',
                 name: 'httpHost',
                 fieldLabel: NX.I18n.get('System_HttpSettings_ProxyHost_FieldLabel'),
                 helpText: NX.I18n.get('System_HttpSettings_ProxyHost_HelpText'),
@@ -94,7 +95,7 @@ Ext.define('NX.coreui.view.system.HttpSettings', {
             collapsed: true,
             items: [
               {
-                xtype: 'textfield',
+                xtype: 'nx-hostname',
                 name: 'httpsHost',
                 fieldLabel: NX.I18n.get('System_HttpSettings_HttpsProxyHost_FieldLabel'),
                 helpText: NX.I18n.get('System_HttpSettings_HttpsProxyHost_HelpText'),

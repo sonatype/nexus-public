@@ -43,6 +43,7 @@ import com.google.common.base.Throwables;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.InterruptableJob;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -145,7 +146,7 @@ public class QuartzTaskJob
             }
             finally {
               // put back any state task modified to have it persisted
-              context.getJobDetail().getJobDataMap().putAll(task.taskConfiguration().asMap());
+              updateJobData(context.getJobDetail(), task.taskConfiguration());
             }
           }
         }
@@ -286,5 +287,17 @@ public class QuartzTaskJob
       }
     }
     return config;
+  }
+
+  /**
+   * Saves {@link TaskConfiguration} back to the given {@link JobDetail}.
+   */
+  private static void updateJobData(final JobDetail jobDetail, final TaskConfiguration taskConfiguration) {
+    JobDataMap jobDataMap = jobDetail.getJobDataMap();
+    taskConfiguration.asMap().forEach((key, value) -> {
+      if (!value.equals(jobDataMap.get(key))) {
+        jobDataMap.put(key, value); // only touch jobDataMap if value actually changed
+      }
+    });
   }
 }

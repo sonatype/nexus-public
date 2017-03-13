@@ -115,6 +115,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchNuget_Group: 'NuGet Repositories',
     SearchPyPi_Group: 'PyPI Repositories',
     SearchRubygems_Group: 'RubyGems Repositories',
+    SearchGitLfs_Group: 'Git LFS Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
     SearchCriteria_SHA256_FieldLabel: 'SHA-256',
@@ -175,6 +176,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Raw
     SearchRaw_Text: 'Raw',
     SearchRaw_Description: 'Search for components in Raw repositories',
+
+    // Browse -> Search -> Git LFS
+    SearchGitLfs_Text: 'Git LFS',
+    SearchGitLfs_Description: 'Search for components in Git LFS repositories',
 
     // Browse -> Search -> npm
     SearchNpm_Text: 'npm',

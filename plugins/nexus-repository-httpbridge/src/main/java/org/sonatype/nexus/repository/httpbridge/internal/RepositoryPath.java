@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import java.net.URI;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * A utility class for parsing the repository name and remaining path out of a request URI.
@@ -83,9 +83,8 @@ class RepositoryPath
 
   private static String validateAndExtractPath(final String input) {
     String path = input.substring(input.indexOf('/', 1), input.length());
-    path = URI.create(path).normalize().toString();
-
-    if (path.contains("/..")) {
+    path = FilenameUtils.normalize(path, true);
+    if (path == null) {
       throw new IllegalArgumentException("Repository path must not contain a relative token");
     }
     return path;

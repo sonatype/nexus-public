@@ -78,6 +78,7 @@ import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUS
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.PAUSED_BLOCKED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.WAITING;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
+import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.MULTINODE_KEY;
 
 /**
  * Orient {@link JobStore}.
@@ -1110,8 +1111,10 @@ public class JobStoreImpl
 
     // block other triggers for job if concurrent execution is disallowed
     if (jobDetail.isConcurrentExectionDisallowed()) {
-      blockOtherTriggers(db, triggerKey, jobDetail.getKey());
+      blockOtherTriggers(db, triggerKey, jobDetail);
     }
+
+    jobDetail.getJobDataMap().clearDirtyFlag(); // clear before handing to quartz
 
     return new TriggerFiredBundle(
         jobDetail,
@@ -1133,8 +1136,10 @@ public class JobStoreImpl
    */
   private void blockOtherTriggers(final ODatabaseDocumentTx db,
                                   final TriggerKey firedTriggerKey,
-                                  final JobKey jobKey)
+                                  final JobDetail jobDetail)
   {
+    JobKey jobKey = jobDetail.getKey();
+
     log.trace("Blocking other triggers: firedTriggerKey={}, jobKey={}", firedTriggerKey, jobKey);
 
     Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
@@ -1146,6 +1151,10 @@ public class JobStoreImpl
           }
           return false;
         });
+
+    if (isMultiNodeTask(jobDetail)) {
+      matches = local(matches); // multinode task; each node only needs to block local triggers
+    }
 
     for (TriggerEntity entity : matches) {
       // skip the trigger which was fired
@@ -1171,22 +1180,24 @@ public class JobStoreImpl
     log.debug("Triggered job complete: trigger={}, jobDetail={}, instruction={}", trigger, jobDetail, instruction);
 
     executeAndPropagate(db -> {
-      TriggerEntity triggerEntity = triggerEntityAdapter.readByKey(db, trigger.getKey());
-      JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobDetail.getKey());
 
-      if (jobDetailEntity != null) {
-        // save job-data-map if needed
-        if (jobDetail.isPersistJobDataAfterExecution() && jobDetail.getJobDataMap() != null) {
+      // back from quartz; save job-data-map if needed
+      if (jobDetail.getJobDataMap().isDirty() && jobDetail.isPersistJobDataAfterExecution()) {
+        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobDetail.getKey());
+
+        if (jobDetailEntity != null) {
           jobDetailEntity.setValue(jobDetail);
           jobDetailEntityAdapter.editEntity(db, jobDetailEntity);
         }
-
-        // unblock triggers if concurrent execution is disallowed
-        if (jobDetail.isConcurrentExectionDisallowed()) {
-          unblockTriggers(db, jobDetail.getKey());
-          signaler.signalSchedulingChange(0L);
-        }
       }
+
+      // unblock triggers if concurrent execution is disallowed
+      if (jobDetail.isConcurrentExectionDisallowed()) {
+        unblockTriggers(db, jobDetail);
+        signaler.signalSchedulingChange(0L);
+      }
+
+      TriggerEntity triggerEntity = triggerEntityAdapter.readByKey(db, trigger.getKey());
 
       if (triggerEntity != null) {
         switch (instruction) {
@@ -1236,7 +1247,9 @@ public class JobStoreImpl
    *
    * @see #triggeredJobComplete
    */
-  private void unblockTriggers(final ODatabaseDocumentTx db, final JobKey jobKey) {
+  private void unblockTriggers(final ODatabaseDocumentTx db, final JobDetail jobDetail) {
+    JobKey jobKey = jobDetail.getKey();
+
     log.trace("Unblock triggers: jobKey={}", jobKey);
 
     Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
@@ -1248,6 +1261,10 @@ public class JobStoreImpl
           }
           return false;
         });
+
+    if (isMultiNodeTask(jobDetail)) {
+      matches = local(matches); // multinode task; each node only needs to unblock local triggers
+    }
 
     for (TriggerEntity entity : matches) {
       if (entity.getState() == PAUSED_BLOCKED) {
@@ -1452,5 +1469,12 @@ public class JobStoreImpl
       }
     }
     return false;
+  }
+
+  /**
+   * Identifies multinode tasks (tasks that explicitly run triggers on all nodes at once).
+   */
+  private boolean isMultiNodeTask(final JobDetail jobDetail) {
+    return jobDetail.getJobDataMap().getBoolean(MULTINODE_KEY);
   }
 }

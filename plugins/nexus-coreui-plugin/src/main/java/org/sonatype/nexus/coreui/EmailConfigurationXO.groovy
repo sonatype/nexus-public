@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui
 
+import org.sonatype.nexus.validation.constraint.Hostname
 import org.sonatype.nexus.validation.constraint.PortNumber
 
 import groovy.transform.ToString
@@ -28,6 +29,7 @@ class EmailConfigurationXO
 {
   boolean enabled
 
+  @Hostname
   @NotBlank
   String host
 

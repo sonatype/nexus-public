@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
@@ -238,7 +239,14 @@ public abstract class ProxyFacetSupport
     checkState(config.remoteUrl.isAbsolute(),
         "Invalid remote URL '%s' for proxy repository %s, please fix your configuration", config.remoteUrl,
         getRepository().getName());
-    URI uri = config.remoteUrl.resolve(url);
+    URI uri;
+    try {
+      uri = config.remoteUrl.resolve(url);
+    }
+    catch (IllegalArgumentException e) { // NOSONAR
+      log.warn("Unable to resolve url. Reason: {}", e.getMessage());
+      throw new BadRequestException("Invalid repository path");
+    }
     HttpRequestBase request = buildFetchHttpRequest(uri, context);
     if (stale != null) {
       final DateTime lastModified = stale.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);

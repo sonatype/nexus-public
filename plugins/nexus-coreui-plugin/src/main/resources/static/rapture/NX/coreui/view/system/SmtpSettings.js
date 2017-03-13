@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
   alias: 'widget.nx-coreui-system-smtp-settings',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.ext.form.field.Hostname'
   ],
 
   /**
@@ -49,7 +50,7 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             fieldLabel: NX.I18n.get('System_SmtpSettings_Enabled_FieldLabel')
           },
           {
-            xtype: 'textfield',
+            xtype: 'nx-hostname',
             name: 'host',
             itemId: 'host',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Host_FieldLabel')

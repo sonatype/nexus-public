@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
   extend: 'Ext.panel.Panel',
   alias: 'widget.nx-coreui-ldapserver-connection-fieldset',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.ext.form.field.Hostname'
   ],
 
   /**
@@ -92,6 +93,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
         text: '://'
       },
       {
+        xtype: 'nx-hostname',
         name: 'host',
         itemId: 'host',
         cls: 'nx-float-left',

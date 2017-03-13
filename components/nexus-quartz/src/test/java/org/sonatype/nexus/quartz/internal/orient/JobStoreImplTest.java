@@ -28,6 +28,7 @@ package org.sonatype.nexus.quartz.internal.orient;
  * under the License.
  */
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,8 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -50,9 +53,11 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.ObjectAlreadyExistsException;
+import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
+import org.quartz.Trigger.CompletedExecutionInstruction;
 import org.quartz.Trigger.TriggerState;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
@@ -64,6 +69,9 @@ import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.OperableTrigger;
 import org.quartz.spi.SchedulerSignaler;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -570,6 +578,37 @@ public class JobStoreImplTest
     }
   }
 
+  @Test
+  public void jobDataOnlySavedWhenDirty() throws Exception {
+    JobDetail job = JobBuilder.newJob(MyJob.class).withIdentity("testJob").build();
+    OperableTrigger trigger = (OperableTrigger) TriggerBuilder.newTrigger().withIdentity("testJob").forJob(job).build();
+    jobStore.storeJobAndTrigger(job, trigger);
+
+    int baseRecordVersion = queryJobDetail("testJob").getVersion();
+
+    // same job data after trigger fired...
+    jobStore.triggersFired(Arrays.asList(trigger));
+    jobStore.triggeredJobComplete(trigger, job, CompletedExecutionInstruction.NOOP);
+
+    // ...should not save the job
+    assertThat(queryJobDetail("testJob").getVersion(), is(baseRecordVersion));
+
+    // different job data after trigger fired...
+    jobStore.triggersFired(Arrays.asList(trigger));
+    job.getJobDataMap().put("testKey", "testValue");
+    jobStore.triggeredJobComplete(trigger, job, CompletedExecutionInstruction.NOOP);
+
+    // ...should save the job
+    assertThat(queryJobDetail("testJob").getVersion(), greaterThan(baseRecordVersion));
+  }
+
+  private ODocument queryJobDetail(final String name) {
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      String selectJob = "select from quartz_job_detail where name=?";
+      return (ODocument) db.query(new OSQLSynchQuery<>(selectJob), name).get(0);
+    }
+  }
+
   public static class SampleSignaler
       implements SchedulerSignaler
   {
@@ -596,6 +635,7 @@ public class JobStoreImplTest
   /**
    * An empty job for testing purpose.
    */
+  @PersistJobDataAfterExecution
   public static class MyJob
       implements Job
   {

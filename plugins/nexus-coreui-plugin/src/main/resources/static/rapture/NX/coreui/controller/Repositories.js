@@ -67,7 +67,8 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.DockerProxy',
     'repository.recipe.PyPiHosted',
     'repository.recipe.PyPiProxy',
-    'repository.recipe.PyPiGroup'
+    'repository.recipe.PyPiGroup',
+    'repository.recipe.GitLfsHosted'
   ],
   refs: [
     {ref: 'feature', selector: 'nx-coreui-repository-feature'},

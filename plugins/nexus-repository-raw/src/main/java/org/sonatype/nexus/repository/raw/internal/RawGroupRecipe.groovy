@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
@@ -59,6 +60,9 @@ class RawGroupRecipe
   Provider<ConfigurableViewFacet> viewFacet
 
   @Inject
+  Provider<AttributesFacet> attributesFacet
+
+  @Inject
   Provider<GroupFacet> groupFacet
 
   @Inject
@@ -87,6 +91,7 @@ class RawGroupRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(storageFacet.get())
     repository.attach(securityFacet.get())
+    repository.attach(attributesFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(groupFacet.get())
   }

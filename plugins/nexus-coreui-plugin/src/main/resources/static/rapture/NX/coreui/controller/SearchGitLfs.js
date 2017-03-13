@@ -10,25 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+/*global Ext, NX*/
 
 /**
- * FilterUtils
+ * Git LFS repository search contribution.
  *
  * @since 3.3
  */
-Ext.define('NX.util.Filter', {
-  singleton: true,
+Ext.define('NX.coreui.controller.SearchGitLfs', {
+  extend: 'NX.app.Controller',
+  requires: [
+    'NX.I18n'
+  ],
 
   /**
-   * Util to build a div for empty search results.
-   *
-   * @param searchString
-   * @param emptyTemplate
-   * @returns {string}
+   * @override
    */
-  buildEmptyResult: function(searchString, emptyTemplate) {
-    var encoded = Ext.util.Format.htmlEncode(searchString);
-    return '<div class="x-grid-empty">' + emptyTemplate.replace(/\$filter/, encoded) + '</div>';
+  init: function() {
+    var me = this,
+        search = me.getController('NX.coreui.controller.Search');
+
+    search.registerFilter({
+      id: 'gitlfs',
+      name: 'Git LFS',
+      text: NX.I18n.get('SearchGitLfs_Text'),
+      description: NX.I18n.get('SearchGitLfs_Description'),
+      readOnly: true,
+      criterias: [
+        { id: 'format', value: 'gitlfs', hidden: true },
+        { id: 'name.raw' }
+      ]
+    }, me);
   }
 });

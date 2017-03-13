@@ -47,6 +47,19 @@ Ext.define('NX.util.Validator', {
   nxEmailRegex : /^(")?(?:[^\."])(?:(?:[\.])?(?:[\w\-!#$%&'*+/=?^_`{|}~]))*\1@(\w[\-\w]*\.){1,5}([A-Za-z]){2,60}$/,
 
   /**
+   * A regular expression to detect a valid hostname according to RFC 1123.
+   * See also http-headers-patterns.properties and HostnameValidator.java for other uses of this regex.
+   * @private
+   */
+  nxRfc1123HostRegex: new RegExp(
+    "^(((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|" +
+     "(\\[(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\])|" +
+     "(\\[((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\])|" +
+     "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|" +
+     "[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))(:([0-9]+))?$"
+  ),
+
+  /**
    * @public
    * @param vtype {object}
    */
@@ -66,7 +79,11 @@ Ext.define('NX.util.Validator', {
         'nx-email': function(val) {
           return NX.util.Validator.nxEmailRegex.test(val);
         },
-        'nx-emailText': Ext.form.field.VTypes.emailText
+        'nx-emailText': Ext.form.field.VTypes.emailText,
+        'nx-hostname': function(val) {
+          return NX.util.Validator.nxRfc1123HostRegex.test(val);
+        },
+        'nx-hostnameText': NX.I18n.get('Util_Validator_Hostname')
       }
     ];
 

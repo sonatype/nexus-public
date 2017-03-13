@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
@@ -115,6 +116,10 @@ public class ViewServlet
     try {
       doService(httpRequest, httpResponse);
       log.debug("Service completed");
+    }
+    catch (BadRequestException e) { // NOSONAR
+      log.warn("Bad request. Reason: {}", e.getMessage());
+      send(null, HttpResponses.badRequest(e.getMessage()), httpResponse);
     }
     catch (Exception e) {
       if (!(e instanceof AuthorizationException)) {
