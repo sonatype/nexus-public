@@ -59,6 +59,7 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
           width: 36,
           iconVariant: 'x16',
           iconNamePrefix: 'asset-type-',
+          sortable: false,
           iconName: function(value) {
             var assetType;
 

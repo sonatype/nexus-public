@@ -171,13 +171,6 @@ public class ViewServletTest
   }
 
   @Test
-  public void return400BadRequestOnIllegalArgumentException() throws Exception {
-    when(httpServletRequest.getPathInfo()).thenReturn("/test/../");
-    underTest.service(httpServletRequest, servletResponse);
-    verify(servletResponse).sendError(SC_BAD_REQUEST, "Invalid repository path");
-  }
-
-  @Test
   public void return400BadRequestOnBadRequestException() throws Exception {
     String message = "message";
     when(httpServletRequest.getPathInfo()).thenThrow(new BadRequestException(message));

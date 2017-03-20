@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.QueryOptions
+import org.sonatype.nexus.repository.maintenance.MaintenanceService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.ContentPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector
@@ -113,6 +114,9 @@ class ComponentComponent
 
   @Inject
   BrowseService browseService
+  
+  @Inject
+  MaintenanceService maintenanceService;
 
   @DirectMethod
   @Timed
@@ -239,19 +243,17 @@ class ComponentComponent
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
     String format = repository.format.toString()
 
+    Asset asset;
     try {
       storageTx.begin()
-      Asset asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
-      if (!contentPermissionChecker.isPermitted(repository.name, format, BreadActions.DELETE,
-          variableResolverAdapterManager.get(format).fromAsset(asset))) {
-        throw new AuthorizationException()
-      }
+      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
     }
     finally {
       storageTx.close()
     }
-
-    getComponentMaintenanceFacet(repository).deleteAsset(new DetachedEntityId(assetId))
+    if (asset != null) {
+      maintenanceService.deleteAsset(repository, asset)
+    }
   }
 
   private ComponentMaintenance getComponentMaintenanceFacet(Repository repository) {

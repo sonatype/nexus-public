@@ -389,6 +389,15 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public Iterable<Component> findComponentsByNameCaseInsensitive(final String name,
+                                                                 @Nullable final Iterable<Repository> repositories,
+                                                                 @Nullable final String querySuffix)
+  {
+    return componentEntityAdapter.browseByNameCaseInsensitive(db, name, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public long countComponents(@Nullable String whereClause,
                               @Nullable Map<String, Object> parameters,
                               @Nullable Iterable<Repository> repositories,

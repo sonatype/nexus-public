@@ -22,6 +22,7 @@ import org.sonatype.nexus.email.EmailConfiguration
 import org.sonatype.nexus.email.EmailManager
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -65,7 +66,7 @@ class EmailComponent
         host: value.host,
         port: value.port,
         username: value.username,
-        password: value.password,
+        password: value.password?.trim() ? PasswordPlaceholder.get() : null,
         fromAddress: value.fromAddress,
         subjectPrefix: value.subjectPrefix,
         startTlsEnabled: value.startTlsEnabled,
@@ -87,6 +88,10 @@ class EmailComponent
   @Validate
   EmailConfigurationXO update(@NotNull @Valid final EmailConfigurationXO configuration)
   {
+    if(PasswordPlaceholder.is(configuration.password)) {
+      // the transfer object contains the mask, preserve existing password value
+      configuration.password = emailManager.configuration.password
+    }
     emailManager.configuration = convert(configuration)
     return read()
   }

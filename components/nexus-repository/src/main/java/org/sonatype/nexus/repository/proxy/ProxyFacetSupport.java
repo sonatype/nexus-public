@@ -177,23 +177,18 @@ public abstract class ProxyFacetSupport
         int sc = e.getHttpResponse().getStatusLine().getStatusCode();
         String repoName = this.getRepository().getName();
         String contextUrl = getUrl(context);
-        if (log.isDebugEnabled()) {
-          log.warn("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
-        }
-        else {
-          log.warn("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl);
-        }
-        throw e;
+        log.trace("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
+        logContentOrThrow(content, contextUrl, e);
       }
       catch (RemoteBlockedIOException e) {
         Repository repository = context.getRepository();
-        log.warn("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e.getMessage());
-        throw e;
+        log.trace("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e);
+        logContentOrThrow(content, getUrl(context), e);
       }
       catch (IOException e) {
         Repository repository = context.getRepository();
-        log.warn("Failed to fetch: {}, from repository: {}", getUrl(context), repository.getName(), e);
-        throw e;
+        log.trace("Failed to fetch: {}, from repository: {}", getUrl(context), repository.getName(), e);
+        logContentOrThrow(content, getUrl(context), e);
       }
       finally {
         if (remote != null && !remote.equals(content)) {
@@ -203,6 +198,20 @@ public abstract class ProxyFacetSupport
     }
 
     return content;
+  }
+
+  private <X extends Throwable> void logContentOrThrow(@Nullable final Content content,
+                                                       final String contextUrl,
+                                                       final X exception) throws X
+  {
+    log.debug("Unable to check remote for updates.");
+    if (content != null) {
+      log.debug("Returning content {} from cache.", contextUrl);
+    }
+    else {
+      log.warn("Content not present for {}, throwing exception.", contextUrl);
+      throw exception;
+    }
   }
 
   @Override

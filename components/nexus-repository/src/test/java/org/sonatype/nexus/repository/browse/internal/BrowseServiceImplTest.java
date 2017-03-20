@@ -13,24 +13,40 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.BrowseResult;
+import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 
+import com.google.common.base.Supplier;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,12 +63,54 @@ public class BrowseServiceImplTest
   @Mock
   ContentPermissionChecker contentPermissionChecker;
 
+  @Mock
+  Repository mavenReleases;
+
+  @Mock
+  StorageFacet storageFacet;
+
+  @Mock
+  Supplier<StorageTx> txSupplier;
+
+  @Mock
+  StorageTx storageTx;
+
+  @Mock
+  QueryOptions queryOptions;
+
+  @Mock
+  Asset assetOne;
+
+  @Mock
+  ORID assetOneORID;
+
+  @Mock
+  ODocument assetOneDoc;
+
+  @Mock
+  Asset assetTwo;
+
+  @Mock
+  AssetEntityAdapter assetEntityAdapter;
+
+  List<Asset> results;
+
   private BrowseServiceImpl underTest;
 
   @Before
   public void setup() {
+    results = asList(assetOne, assetTwo);
+
+    when(assetOneORID.toString()).thenReturn("assetOne");
+
+    when(mavenReleases.facet(StorageFacet.class)).thenReturn(storageFacet);
+    when(mavenReleases.getName()).thenReturn("releases");
+
+    when(storageFacet.txSupplier()).thenReturn(txSupplier);
+    when(txSupplier.get()).thenReturn(storageTx);
+
     underTest = new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker);
+        contentPermissionChecker, assetEntityAdapter);
   }
 
   @Test
@@ -71,7 +129,7 @@ public class BrowseServiceImplTest
 
     List<Repository> repositories = Arrays.asList(repo1, repo2, group);
 
-    Map<String,List<String>> repoToContainedGroups = underTest.getRepoToContainedGroupMap(repositories);
+    Map<String, List<String>> repoToContainedGroups = underTest.getRepoToContainedGroupMap(repositories);
     assertThat(repoToContainedGroups.size(), is(3));
     assertThat(repoToContainedGroups.get("repo1").size(), is(2));
     assertThat(repoToContainedGroups.get("repo1").get(0), is("repo1"));
@@ -80,5 +138,63 @@ public class BrowseServiceImplTest
     assertThat(repoToContainedGroups.get("repo2").get(0), is("repo2"));
     assertThat(repoToContainedGroups.get("group").size(), is(1));
     assertThat(repoToContainedGroups.get("group").get(0), is("group"));
+  }
+
+  @Captor
+  ArgumentCaptor<Map<String, Object>> sqlParamsCaptor;
+
+  @Test
+  public void testBrowseAssets() {
+
+    List<Repository> expectedRepositories = asList(mavenReleases);
+    String expectedWhere = "contentAuth(@this, :browsedRepository) == true";
+    String expectedSuffix = " SKIP 0 LIMIT 0";
+
+    when(storageTx
+        .findAssets(eq(expectedWhere), sqlParamsCaptor.capture(), eq(expectedRepositories),
+            eq(expectedSuffix))).thenReturn(results);
+
+    BrowseResult<Asset> browseResult = underTest.browseAssets(mavenReleases, queryOptions);
+    assertThat(browseResult.getTotal(), is(2L));
+    assertThat(browseResult.getResults(), is(results));
+
+    sqlParamsCaptor.getAllValues().stream().forEach(params -> {
+      String repoNames = params.get("browsedRepository").toString();
+      List<String> splitNames = Arrays.asList(repoNames.split(","));
+      assertThat(splitNames, contains("releases"));
+    });
+  }
+
+  @Captor
+  ArgumentCaptor<Map<String, Object>> paramsCaptor;
+
+  @Test
+  public void testGetAssetById() {
+    String expectedSql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+
+    when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.singletonList(assetOneDoc));
+
+    when(assetEntityAdapter.readEntity(assetOneDoc)).thenReturn(assetOne);
+
+    assertThat(underTest.getAssetById(assetOneORID, mavenReleases), is(assetOne));
+
+    Map<String, Object> params = paramsCaptor.getValue();
+
+    assertThat(params.get("browsedRepository"), is("releases"));
+    assertThat(params.get("rid"), is("assetOne"));
+  }
+
+  @Test
+  public void testGetAssetById_NoResultsIsNull() {
+    String expectedSql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+
+    when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
+
+    assertThat(underTest.getAssetById(assetOneORID, mavenReleases), nullValue());
+
+    Map<String, Object> params = paramsCaptor.getValue();
+
+    assertThat(params.get("browsedRepository"), is("releases"));
+    assertThat(params.get("rid"), is("assetOne"));
   }
 }

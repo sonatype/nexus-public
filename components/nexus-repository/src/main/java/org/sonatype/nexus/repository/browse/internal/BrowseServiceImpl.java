@@ -49,11 +49,14 @@ import org.sonatype.nexus.security.BreadActions;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * Implementation of {@link BrowseService}.
@@ -70,6 +73,8 @@ public class BrowseServiceImpl
 
   private final ComponentEntityAdapter componentEntityAdapter;
 
+  private final AssetEntityAdapter assetEntityAdapter;
+
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
   private final ContentPermissionChecker contentPermissionChecker;
@@ -78,11 +83,14 @@ public class BrowseServiceImpl
   public BrowseServiceImpl(@Named(GroupType.NAME) final Type groupType,
                            final ComponentEntityAdapter componentEntityAdapter,
                            final VariableResolverAdapterManager variableResolverAdapterManager,
-                           final ContentPermissionChecker contentPermissionChecker) {
+                           final ContentPermissionChecker contentPermissionChecker,
+                           final AssetEntityAdapter assetEntityAdapter)
+  {
     this.groupType = checkNotNull(groupType);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
+    this.assetEntityAdapter = assetEntityAdapter;
   }
 
   @Override
@@ -95,11 +103,22 @@ public class BrowseServiceImpl
       storageTx.begin();
       List<Bucket> buckets = getBuckets(storageTx, repositories);
       BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
-          groupType.equals(repository.getType()), buckets, queryOptions);
-      return new BrowseResult<>(
-          getCount(storageTx.browse(builder.buildCountSql(), builder.buildSqlParams())),
-          getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams())));
+          buckets, queryOptions);
+      List<Component> components = getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams()));
+      return new BrowseResult<>(estimateCount(queryOptions, components), components);
     }
+  }
+
+  private long estimateCount(final QueryOptions queryOptions, final List<?> items) {
+    long count = items.size();
+    if (queryOptions.getStart() != null && queryOptions.getLimit() != null) {
+      count += queryOptions.getStart();
+      // estimate an additional page if the number of items returned was limited
+      if (items.size() == queryOptions.getLimit()) {
+        count += queryOptions.getLimit();
+      }
+    }
+    return count;
   }
 
   @Override
@@ -135,10 +154,9 @@ public class BrowseServiceImpl
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), queryOptions);
-      return new BrowseResult<>(
-          storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories, null),
-          Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(), repositories,
-              builder.buildQuerySuffix())));
+      List<Asset> assets = Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
+          repositories, builder.buildQuerySuffix()));
+      return new BrowseResult<>(estimateCount(queryOptions,assets), assets);
     }
   }
 
@@ -171,6 +189,22 @@ public class BrowseServiceImpl
           Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
               previewRepositories, builder.buildQuerySuffix()))
       );
+    }
+  }
+
+  @Override
+  public Asset getAssetById(final ORID assetId, final Repository repository) {
+    checkNotNull(repository);
+    checkNotNull(assetId);
+
+    String sql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+
+    Map<String, Object> params = ImmutableMap.of("browsedRepository", repository.getName(), "rid", assetId.toString());
+
+    try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      storageTx.begin();
+      return stream(storageTx.browse(sql, params).spliterator(), false)
+          .map(assetEntityAdapter::readEntity).findFirst().orElse(null);
     }
   }
 
@@ -208,14 +242,9 @@ public class BrowseServiceImpl
     return Lists.newArrayList(buckets);
   }
 
-  private long getCount(final Iterable<ODocument> results) {
-    checkNotNull(results);
-    return Iterables.getOnlyElement(results).field("COUNT");
-  }
-
   private List<Component> getComponents(final Iterable<ODocument> results) {
     checkNotNull(results);
     return Lists.newArrayList(Iterables.transform(results,
-        (ODocument doc) -> componentEntityAdapter.readEntity(doc.field(AssetEntityAdapter.P_COMPONENT))));
+        (ODocument doc) -> componentEntityAdapter.readEntity(doc)));
   }
 }

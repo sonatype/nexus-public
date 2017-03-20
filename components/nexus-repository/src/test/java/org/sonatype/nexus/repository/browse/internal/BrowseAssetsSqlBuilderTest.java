@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.QueryOptions;
@@ -31,6 +33,8 @@ public class BrowseAssetsSqlBuilderTest
   static final String CONTENT_AUTH_WHERE = "contentAuth(@this, :browsedRepository) == true";
 
   static final String FILTER_WHERE = "name LIKE :nameFilter";
+
+  static final String LAST_ID_WHERE = "@RID > :rid";
 
   @Mock
   QueryOptions queryOptions;
@@ -56,5 +60,15 @@ public class BrowseAssetsSqlBuilderTest
     when(queryOptions.getFilter()).thenReturn("filter");
     String whereClause = underTest.buildWhereClause();
     assertThat(whereClause, is(equalTo(CONTENT_AUTH_WHERE + " AND " + FILTER_WHERE)));
+  }
+
+  @Test
+  public void whereWithLastId() {
+    when(queryOptions.getLastId()).thenReturn("#45:1");
+    String whereClause = underTest.buildWhereClause();
+    assertThat(whereClause, is(equalTo(CONTENT_AUTH_WHERE + " AND " + LAST_ID_WHERE)));
+    Map<String, Object> params = underTest.buildSqlParams();
+    assertThat(params.get("browsedRepository"), is("repository"));
+    assertThat(params.get("rid"), is("#45:1"));
   }
 }

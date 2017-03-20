@@ -331,7 +331,7 @@ public class FileBlobStore
 
       return blob;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       // Something went wrong, clean up the files we created
       deleteQuietly(temporaryAttributePath);
       deleteQuietly(temporaryBlobPath);
@@ -399,7 +399,7 @@ public class FileBlobStore
           blob.refresh(blobAttributes.getHeaders(), blobAttributes.getMetrics());
         }
       }
-      catch (IOException e) {
+      catch (Exception e) {
         throw new BlobStoreException(e, blobId);
       }
       finally {
@@ -447,7 +447,7 @@ public class FileBlobStore
 
       return true;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new BlobStoreException(e, blobId);
     }
     finally {
@@ -478,7 +478,7 @@ public class FileBlobStore
 
       return blobDeleted;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new BlobStoreException(e, blobId);
     }
     finally {
@@ -529,7 +529,10 @@ public class FileBlobStore
         }
       }
     }
-    catch (IOException e) {
+    catch (BlobStoreException e) {
+      throw e;
+    }
+    catch (Exception e) {
       throw new BlobStoreException(e, null);
     }
   }
@@ -629,7 +632,7 @@ public class FileBlobStore
         log.warn("Unable to delete non-empty blob store content directory {}", contentDir);
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new BlobStoreException(e, null);
     }
   }
@@ -782,7 +785,10 @@ public class FileBlobStore
         checkExists(contentPath, blobId);
         return new BufferedInputStream(fileOperations.openInputStream(contentPath));
       }
-      catch (IOException e) {
+      catch (BlobStoreException e) {
+        throw e;
+      }
+      catch (Exception e) {
         throw new BlobStoreException(e, blobId);
       }
     }

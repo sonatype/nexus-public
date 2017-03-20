@@ -384,6 +384,15 @@ class RepositoryApiImpl
     createRepository(createGroup(name, 'rubygems-group', blobStoreName, members as String[]))
   }
 
+  @Nonnull
+  Repository createGitLfsHosted(final String name,
+                                final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                                final boolean strictContentTypeValidation = true,
+                                final WritePolicy writePolicy = WritePolicy.ALLOW)
+  {
+    createRepository(createHosted(name, 'gitlfs-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
+  }
+
   private static Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
                                     final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
   {

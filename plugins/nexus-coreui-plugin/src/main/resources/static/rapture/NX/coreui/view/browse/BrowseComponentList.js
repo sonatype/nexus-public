@@ -58,15 +58,10 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
           dataIndex: 'id',
           width: 36,
           iconVariant: 'x16',
+          sortable: false,
           iconName: function() {
             return 'browse-component';
           }
-        },
-        {
-          text: NX.I18n.get('Browse_BrowseComponentList_Name_Column'),
-          dataIndex: 'name',
-          stateId: 'name',
-          flex: 3
         },
         {
           text: NX.I18n.get('Browse_BrowseComponentList_Group_Column'),
@@ -76,10 +71,18 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
           renderer: NX.ext.grid.column.Renderers.optionalData
         },
         {
+          text: NX.I18n.get('Browse_BrowseComponentList_Name_Column'),
+          dataIndex: 'name',
+          stateId: 'name',
+          flex: 3,
+          sortable: false
+        },
+        {
           text: NX.I18n.get('Browse_BrowseComponentList_Version_Column'),
           dataIndex: 'version',
           stateId: 'version',
           flex: 1,
+          sortable: false,
           renderer: NX.ext.grid.column.Renderers.optionalData
         }
       ],

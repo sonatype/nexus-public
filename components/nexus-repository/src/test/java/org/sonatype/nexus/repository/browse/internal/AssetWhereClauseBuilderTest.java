@@ -33,4 +33,9 @@ public class AssetWhereClauseBuilderTest
   public void contentAndFilter() throws Exception {
     assertThat(whereClause("content", true), is(equalTo("content AND name LIKE :nameFilter")));
   }
+
+  @Test
+  public void contentAndLastId() {
+    assertThat(whereClause("content", true, true), is(equalTo("content AND name LIKE :nameFilter AND @RID > :rid")));
+  }
 }

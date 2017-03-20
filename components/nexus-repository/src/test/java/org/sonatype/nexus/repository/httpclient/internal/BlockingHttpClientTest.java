@@ -31,13 +31,16 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.joda.time.DateTime.now;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.reflect.Whitebox.setInternalState;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
+import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.OFFLINE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.READY;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNAVAILABLE;
 
@@ -60,14 +63,18 @@ public class BlockingHttpClientTest
   @Before
   public void setup() throws Exception {
     httpHost = HttpHost.create("localhost");
-    underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver);
+    underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, true);
   }
 
   @Test
   public void updateStatusWhenBlocked() throws Exception {
-    setInternalState(underTest, "blocked", true);
-    filterAndHandleException();
-    verifyUpdateStatus(BLOCKED);
+    Config config = new Config();
+    config.blocked = true;
+    reset(statusObserver);
+    new BlockingHttpClient(httpClient, config, statusObserver, true);
+    ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
+    verify(statusObserver).onStatusChanged(any(), newStatusCaptor.capture());
+    assertThat(newStatusCaptor.getValue().getType(), is(equalTo(BLOCKED)));
   }
 
   @Test
@@ -98,17 +105,32 @@ public class BlockingHttpClientTest
     verifyUpdateStatus(AVAILABLE);
   }
 
+  @Test
+  public void updateStatusWhenAutoBlockedTimeHasChanged() throws Exception {
+    setInternalState(underTest, "autoBlock", true);
+    when(filterable.call()).thenThrow(new IOException());
+    filterAndHandleException();
+    setInternalState(underTest, "blockedUntil", (Object) null);
+    reset(statusObserver);
+    Thread.sleep(10L); // guarantee a time increase.
+    filterAndHandleException();
+    verify(statusObserver).onStatusChanged(any(), any());
+  }
+
+  @Test
+  public void setStatusToOfflineWhenPassed() throws Exception {
+    underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, false);
+    ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
+    verify(statusObserver, times(2)).onStatusChanged(any(), newStatusCaptor.capture());
+    assertThat(newStatusCaptor.getAllValues().get(1).getType(), is(equalTo(OFFLINE)));
+  }
+
   private void verifyUpdateStatus(final RemoteConnectionStatusType newType) {
     ArgumentCaptor<RemoteConnectionStatus> oldStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
-    verify(statusObserver).onStatusChanged(oldStatusCaptor.capture(), newStatusCaptor.capture());
-    assertThat(oldStatusCaptor.getValue().getType(), is(equalTo(READY)));
-    assertThat(newStatusCaptor.getValue().getType(), is(equalTo(newType)));
-  }
-
-  private void autoBlockedAfterNow() {
-    setInternalState(underTest, "autoBlock", true);
-    setInternalState(underTest, "blockedUntil", now().plusDays(1));
+    verify(statusObserver, times(2)).onStatusChanged(oldStatusCaptor.capture(), newStatusCaptor.capture());
+    assertThat(oldStatusCaptor.getAllValues().get(1).getType(), is(equalTo(READY)));
+    assertThat(newStatusCaptor.getAllValues().get(1).getType(), is(equalTo(newType)));
   }
 
   private void filterAndHandleException() throws IOException {

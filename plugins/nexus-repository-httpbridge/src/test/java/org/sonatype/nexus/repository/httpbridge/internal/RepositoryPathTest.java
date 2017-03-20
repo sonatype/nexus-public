@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.httpbridge.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.BadRequestException;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class RepositoryPathTest
   public ExpectedException expectedException = ExpectedException.none();
 
   private void assertExceptionOnInvalidPath(final String input, final String message) {
-    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expect(BadRequestException.class);
     expectedException.expectMessage(message);
     RepositoryPath path = RepositoryPath.parse(input);
     assertThat(path, nullValue());

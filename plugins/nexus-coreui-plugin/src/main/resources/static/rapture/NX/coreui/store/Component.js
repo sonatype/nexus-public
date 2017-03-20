@@ -41,6 +41,6 @@ Ext.define('NX.coreui.store.Component', {
   remoteFilter: true,
   remoteSort: true,
 
-  sorters: { property: 'name', direction: 'ASC' }
+  sorters: { property: 'group', direction: 'ASC' }
 
 });

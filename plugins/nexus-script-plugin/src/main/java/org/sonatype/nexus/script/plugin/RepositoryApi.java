@@ -371,6 +371,21 @@ public interface RepositoryApi
   Repository createPyPiGroup(final String name,
                             final List<String> members,
                             final String blobStoreName);
+
+  /**
+   * Create a GitLFS hosted repository.
+   *
+   * @param name                        The name of the new Repository
+   * @param blobStoreName               The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @param writePolicy                 The {@link WritePolicy} for the Repository
+   * @return                            The newly created Repository
+   */
+  Repository createGitLfsHosted(final String name,
+                                final String blobStoreName,
+                                final boolean strictContentTypeValidation,
+                                final WritePolicy writePolicy);
+
   /**
    * Create a hosted configuration for the given recipeName.
    */

@@ -37,6 +37,8 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class ComponentEntityAdapterTest
     extends TestSupport
 {
+  private final static String GROUP = "group";
+
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
@@ -76,12 +78,7 @@ public class ComponentEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
 
-      Component component = new Component();
-      component.bucketId(EntityHelper.id(bucket));
-      component.format("format-id");
-      component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-      component.group(group).name(name).version(version);
-
+      Component component = createComponent(group, name, version);
       entityAdapter.addEntity(db, component);
 
       Query query = Query.builder().where("group").eq(group).and("name").eq(name).and("version").eq(version).build();
@@ -93,5 +90,69 @@ public class ComponentEntityAdapterTest
       assertThat(components.get(0).name(), is(name));
       assertThat(components.get(0).version(), is(version));
     }
+  }
+
+  @Test
+  public void testBrowseByNameCaseInsensitive() {
+    String name = "CamelCase";
+    String version = "version";
+
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      entityAdapter.register(db);
+
+      Component component = createComponent(GROUP, name, version);
+      entityAdapter.addEntity(db, component);
+
+      List<Component> components1 =
+          Lists.newArrayList(entityAdapter.browseByNameCaseInsensitive(db, "camelcase",
+              Collections.singleton(bucket), null));
+
+      assertThat(components1, hasSize(1));
+      assertThat(components1.get(0).name(), is(name));
+      assertThat(components1.get(0).version(), is(version));
+
+      List<Component> components2 =
+          Lists.newArrayList(entityAdapter.browseByNameCaseInsensitive(db, "CAMELCASE",
+              Collections.singleton(bucket), null));
+
+      assertThat(components2, hasSize(1));
+      assertThat(components2.get(0).name(), is(name));
+      assertThat(components2.get(0).version(), is(version));
+
+    }
+  }
+
+  @Test
+  public void testBrowseByNameCaseInsensitiveWithLimit() {
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      entityAdapter.register(db);
+
+      Component component1 = createComponent(GROUP, "name", "version1");
+      entityAdapter.addEntity(db, component1);
+
+      Component component2 = createComponent(GROUP, "name", "version2");
+      entityAdapter.addEntity(db, component2);
+
+      List<Component> allComponents =
+          Lists.newArrayList(entityAdapter.browseByNameCaseInsensitive(db, "name",
+              Collections.singleton(bucket), "limit 2"));
+
+      assertThat(allComponents, hasSize(2));
+
+      List<Component> firstComponent =
+          Lists.newArrayList(entityAdapter.browseByNameCaseInsensitive(db, "name",
+              Collections.singleton(bucket), "limit 1"));
+
+      assertThat(firstComponent, hasSize(1));
+    }
+  }
+
+  private Component createComponent(final String group, final String name, final String version) {
+    Component component = new Component();
+    component.bucketId(EntityHelper.id(bucket));
+    component.format("format-id");
+    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+    component.group(group).name(name).version(version);
+    return component;
   }
 }

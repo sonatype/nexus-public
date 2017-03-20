@@ -137,15 +137,7 @@ public class ViewServlet
       throws Exception
   {
     // resolve repository for request
-    RepositoryPath path;
-    try {
-      path = RepositoryPath.parse(httpRequest.getPathInfo());
-    }
-    catch (IllegalArgumentException e) { // NOSONAR
-      log.warn("Unable to parse repository path. Reason: {}", e.getMessage());
-      send(null, HttpResponses.badRequest("Invalid repository path"), httpResponse);
-      return;
-    }
+    RepositoryPath path = RepositoryPath.parse(httpRequest.getPathInfo());
     log.debug("Parsed path: {}", path);
 
     Repository repo = repository(path.getRepositoryName());

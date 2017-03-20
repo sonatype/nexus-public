@@ -19,6 +19,8 @@ import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
+import com.orientechnologies.orient.core.id.ORID;
+
 /**
  * Consolidates code for user browsing of repositories, specifically for the user interface.
  *
@@ -51,5 +53,10 @@ public interface BrowseService
                                     final List<Repository> repositories,
                                     final String jexlExpression,
                                     final QueryOptions queryOptions);
+
+  /**
+   * Returns an asset based on the supplied id and repository.
+   */
+  Asset getAssetById(ORID assetId, final Repository repository);
 
 }

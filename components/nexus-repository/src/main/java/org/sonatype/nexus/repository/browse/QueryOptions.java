@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class QueryOptions
 {
-  private static final List<String> SORT_PROPERTIES = Arrays.asList("name", "group", "version");
+  private static final List<String> SORT_PROPERTIES = Arrays.asList("name", "group", "version", "id");
 
   private static final List<String> SORT_DIRECTIONS = Arrays.asList("asc", "desc");
 
@@ -43,6 +43,8 @@ public class QueryOptions
   private final Integer start;
 
   private final Integer limit;
+  
+  private final String lastId;
 
   public QueryOptions(@Nullable String filter,
                       @Nullable String sortProperty,
@@ -50,6 +52,24 @@ public class QueryOptions
                       @Nullable Integer start,
                       @Nullable Integer limit)
   {
+    this.lastId = null;
+    checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
+    checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
+    this.filter = filter;
+    this.sortProperty = sortProperty;
+    this.sortDirection = sortDirection;
+    this.start = start;
+    this.limit = limit;
+  }
+
+  public QueryOptions(@Nullable String filter,
+                      @Nullable String sortProperty,
+                      @Nullable String sortDirection,
+                      @Nullable Integer start,
+                      @Nullable Integer limit, 
+                      @Nullable final String lastId)
+  {
+    this.lastId = lastId;
     checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
     checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
     this.filter = filter;
@@ -82,5 +102,10 @@ public class QueryOptions
   @Nullable
   public Integer getLimit() {
     return limit;
+  }
+
+  @Nullable
+  public String getLastId() {
+    return lastId;
   }
 }

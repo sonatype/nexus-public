@@ -120,11 +120,6 @@ Ext.define('NX.coreui.controller.Privileges', {
           refresh: me.loadStores
         }
       },
-      store: {
-        '#Privilege': {
-          load: me.reselect
-        }
-      },
       component: {
         'nx-coreui-privilege-list': {
           beforerender: me.loadStores

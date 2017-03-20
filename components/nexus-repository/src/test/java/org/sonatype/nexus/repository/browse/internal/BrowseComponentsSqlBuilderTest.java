@@ -30,16 +30,11 @@ public class BrowseComponentsSqlBuilderTest
 
   @Before
   public void setUp() {
-    underTest = new BrowseComponentsSqlBuilder("repo", true, emptyList(), mock(QueryOptions.class));
+    underTest = new BrowseComponentsSqlBuilder("repo", emptyList(), mock(QueryOptions.class));
   }
 
   @Test
   public void buildQueryToReturnNothingWhenBucketsIsEmpty() throws Exception {
     assertThat(underTest.buildBrowseSql(), is(""));
-  }
-
-  @Test
-  public void buildQueryToReturnZeroCountWhenBucketsIsEmpty() throws Exception {
-    assertThat(underTest.buildCountSql(), is("SELECT COUNT(0)"));
   }
 }

@@ -37,7 +37,8 @@ public class BrowseAssetsSqlBuilder
   }
 
   public String buildWhereClause() {
-    return whereClause("contentAuth(@this, :browsedRepository) == true", queryOptions.getFilter() != null);
+    return whereClause("contentAuth(@this, :browsedRepository) == true", queryOptions.getFilter() != null,
+        queryOptions.getLastId() != null);
   }
 
   public String buildQuerySuffix() {
@@ -50,6 +51,11 @@ public class BrowseAssetsSqlBuilder
     String filter = queryOptions.getFilter();
     if (filter != null) {
       params.put("nameFilter", "%" + filter + "%");
+    }
+
+    String lastId = queryOptions.getLastId();
+    if (lastId != null) {
+      params.put("rid", lastId);
     }
     return params;
   }

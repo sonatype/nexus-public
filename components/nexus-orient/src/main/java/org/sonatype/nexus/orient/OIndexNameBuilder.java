@@ -32,11 +32,15 @@ public class OIndexNameBuilder
 
   public static final String PROPERTY_SEPARATOR = "_";
 
+  public static final String CASE_INSENSITIVE = "_ci";
+
   public static final String SUFFIX = "_idx";
 
   private String type;
 
   private List<String> properties = Lists.newArrayList();
+
+  private boolean caseInsensitive;
 
   public OIndexNameBuilder type(final String type) {
     this.type = type;
@@ -45,6 +49,11 @@ public class OIndexNameBuilder
 
   public OIndexNameBuilder property(final String property) {
     properties.add(property);
+    return this;
+  }
+
+  public OIndexNameBuilder caseInsensitive() {
+    caseInsensitive = true;
     return this;
   }
 
@@ -58,6 +67,9 @@ public class OIndexNameBuilder
       buff.append(TYPE_SEPARATOR);
     }
     Joiner.on(PROPERTY_SEPARATOR).appendTo(buff, properties);
+    if (caseInsensitive) {
+      buff.append(CASE_INSENSITIVE);
+    }
     buff.append(SUFFIX);
 
     // OIndex names are always lower-case

@@ -19,15 +19,15 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
   extend: 'Ext.form.FieldContainer',
   alias: 'widget.nx-coreui-repository-docker-connector-facet',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.State'
   ],
 
   /**
    * @override
    */
   initComponent: function() {
-    var me = this,
-        helpUrl = NX.getApplication().getController('Help').createUrl('docker connector');
+    var me = this;
 
     me.items = [
       {
@@ -50,7 +50,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
                 xtype: 'panel',
                 bodypadding: '10px',
                 width: '85%',
-                html: NX.I18n.format('Repository_Facet_DockerConnectorFacet_Help', helpUrl)
+                html: NX.I18n.get('Repository_Facet_DockerConnectorFacet_Help')
               }
             ]
           },

@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.atlas.SystemInformationGenerator
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.common.text.Strings2
 
+import groovy.transform.PackageScope
 import org.apache.karaf.bundle.core.BundleService
 import org.eclipse.sisu.Parameters
 import org.osgi.framework.BundleContext
@@ -57,6 +58,8 @@ class SystemInformationGeneratorImpl
   private final BundleService bundleService
 
   private final NodeAccess nodeAccess
+
+  static final Map UNAVAILABLE = ['unavailable': true].asImmutable()
 
   @Inject
   SystemInformationGeneratorImpl(final ApplicationDirectories applicationDirectories,
@@ -118,39 +121,15 @@ class SystemInformationGeneratorImpl
     }
 
     def reportFileStores = {
-      def data = [:]
-      def fs = FileSystems.default
-      fs.fileStores.each {store ->
-        data[store.name()] = [
-            'description'     : store.toString(), // seems to be the only place where mount-point is exposed
-            'type'            : store.type(),
-            'totalSpace'      : store.totalSpace,
-            'usableSpace'     : store.usableSpace,
-            'unallocatedSpace': store.unallocatedSpace,
-            'readOnly'        : store.readOnly
-        ]
+      return FileSystems.default.fileStores.collectEntries {
+        [ (it.name()): reportFileStore(it) ]
       }
-
-      return data
     }
 
     def reportNetwork = {
-      def data = [:]
-      NetworkInterface.networkInterfaces.each {intf ->
-        data[intf.name] = [
-            'displayName': intf.displayName,
-            'up'         : intf.up,
-            'virtual'    : intf.virtual,
-            'multicast'  : intf.supportsMulticast(),
-            'loopback'   : intf.loopback,
-            'ptp'        : intf.pointToPoint,
-            'mtu'        : intf.MTU,
-            'addresses'  : intf.inetAddresses.collect {addr ->
-              addr.toString()
-            }.join(',')
-        ]
+      return NetworkInterface.networkInterfaces.toList().collectEntries {
+        [ (it.name): reportNetworkInterface(it) ]
       }
-      return data
     }
 
     def reportNexusStatus = {
@@ -246,4 +225,43 @@ class SystemInformationGeneratorImpl
 
     return sections
   }
+
+  @PackageScope
+  reportFileStore(store) {
+    try {
+      return [
+          'description'     : store.toString(), // seems to be the only place where mount-point is exposed
+          'type'            : store.type(),
+          'totalSpace'      : store.totalSpace,
+          'usableSpace'     : store.usableSpace,
+          'unallocatedSpace': store.unallocatedSpace,
+          'readOnly'        : store.readOnly
+      ]
+    } catch (IOException e) {
+      log.error("Could not add report to support zip for file store {}", store.name(), e);
+      return UNAVAILABLE
+    }
+  }
+
+  @PackageScope
+  reportNetworkInterface(intf) {
+    try {
+      return [
+          'displayName': intf.displayName,
+          'up'         : intf.up,
+          'virtual'    : intf.virtual,
+          'multicast'  : intf.supportsMulticast(),
+          'loopback'   : intf.loopback,
+          'ptp'        : intf.pointToPoint,
+          'mtu'        : intf.MTU,
+          'addresses'  : intf.inetAddresses.collect {addr ->
+            addr.toString()
+          }.join(',')
+      ]
+    } catch (SocketException e) {
+      log.error("Could not add report to support zip for network interface {}", intf.displayName, e);
+      return UNAVAILABLE
+    }
+  }
+
 }

@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.OIndexBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
@@ -117,6 +118,17 @@ public class AssetEntityAdapter
       .property(P_NAME)
       .build();
 
+  private static final String I_COMPONENT = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_COMPONENT)
+      .build();
+
+  private static final String I_NAME_CASEINSENSITIVE = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_NAME)
+      .caseInsensitive()
+      .build();
+
   private final ComponentEntityAdapter componentEntityAdapter;
 
   @Inject
@@ -148,6 +160,12 @@ public class AssetEntityAdapter
         new String[]{P_BUCKET, P_COMPONENT, P_NAME}
     );
     type.createIndex(I_BUCKET_NAME, INDEX_TYPE.NOTUNIQUE, P_BUCKET, P_NAME);
+    type.createIndex(I_COMPONENT, INDEX_TYPE.NOTUNIQUE, P_COMPONENT);
+
+    new OIndexBuilder(type, I_NAME_CASEINSENSITIVE, INDEX_TYPE.NOTUNIQUE)
+        .property(P_NAME, OType.STRING)
+        .caseInsensitive()
+        .build(db);
   }
 
   @Override
@@ -234,7 +252,7 @@ public class AssetEntityAdapter
     checkNotNull(component);
     checkState(EntityHelper.hasMetadata(component));
 
-    Map<String, Object> parameters = ImmutableMap.<String, Object>of(
+    Map<String, Object> parameters = ImmutableMap.of(
         "bucket", bucketEntityAdapter.recordIdentity(component.bucketId()),
         "component", componentEntityAdapter.recordIdentity(component)
     );

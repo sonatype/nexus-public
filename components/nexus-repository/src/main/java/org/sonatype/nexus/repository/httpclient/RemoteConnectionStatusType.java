@@ -19,11 +19,13 @@ package org.sonatype.nexus.repository.httpclient;
  */
 public enum RemoteConnectionStatusType
 {
+  UNINITIALISED("Uninitialised"),
   READY("Ready to Connect"),
   AVAILABLE("Remote Available"),
   BLOCKED("Remote Manually Blocked"),
   AUTO_BLOCKED_UNAVAILABLE("Remote Auto Blocked and Unavailable"),
-  UNAVAILABLE("Remote Unavailable");
+  UNAVAILABLE("Remote Unavailable"),
+  OFFLINE("Repository Offline");
 
   private final String description;
 

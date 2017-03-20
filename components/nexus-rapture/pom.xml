@@ -81,6 +81,11 @@
       </plugin>
 
       <plugin>
+        <groupId>com.github.klieber</groupId>
+        <artifactId>phantomjs-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>yuicompressor-maven-plugin</artifactId>
         <executions>
@@ -98,6 +103,35 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.searls</groupId>
+        <artifactId>jasmine-maven-plugin</artifactId>
+        <configuration>
+          <preloadSources>
+            <source>baseapp-debug.js</source>
+            <source>NX-test.js</source>
+          </preloadSources>
+          <sourceIncludes>
+            <include>**/*.js</include>
+          </sourceIncludes>
+          <sourceExcludes>
+            <exclude>**/baseapp-*.js</exclude>
+          </sourceExcludes>
+          <specIncludes>
+            <include>**/*-spec.js</include>
+          </specIncludes>
+          <jsSrcDir>${project.basedir}/src/main/resources/static/rapture</jsSrcDir>
+          <jsTestSrcDir>${project.basedir}/src/test/resources/jasmine</jsTestSrcDir>
+          <keepServerAlive>true</keepServerAlive>
+          <webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
+          <webDriverCapabilities>
+            <capability>
+              <name>phantomjs.binary.path</name>
+              <value>${phantomjs.binary}</value>
+            </capability>
+          </webDriverCapabilities>
+        </configuration>
       </plugin>
     </plugins>
   </build>

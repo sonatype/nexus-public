@@ -231,6 +231,20 @@ public interface StorageTx
   Iterable<Component> findComponents(Query query, @Nullable Iterable<Repository> repositories);
 
   /**
+   * Gets all components with a given name, compared case-insensitively.
+   *
+   * @param name         the component name.
+   * @param repositories the repositories to limit the results to. If null or empty, results won't be limited
+   *                     by repository.
+   * @param querySuffix  the part of the query after the where clause
+   *
+   * @since 3.3
+   */
+  Iterable<Component> findComponentsByNameCaseInsensitive(String name,
+                                                          @Nullable Iterable<Repository> repositories,
+                                                          @Nullable String querySuffix);
+
+  /**
    * Gets the number of components matching the given where clause.
    */
   long countComponents(@Nullable String whereClause,

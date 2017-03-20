@@ -39,8 +39,9 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.http.client.HttpClient;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
+import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNINITIALISED;
 
 /**
  * Default {@link HttpClientFacet} implementation.
@@ -127,15 +128,60 @@ public class HttpClientFacetImpl
 
   @Override
   public void onStatusChanged(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
-    if (isBlank(newStatus.getReason())) {
-      log.info("Remote connection status of repository {} changed from {} to {}", getRepository().getName(),
-          oldStatus.getType(), newStatus.getType());
-    }
-    else {
-      log.info("Remote connection status of repository {} changed from {} to {}. Reason: {}", getRepository().getName(),
-          oldStatus.getType(), newStatus.getType(), newStatus.getReason());
-    }
+    logStatusChange(oldStatus, newStatus);
     getEventManager().post(new RemoteConnectionStatusEvent(newStatus, getRepository()));
+  }
+
+  private void logStatusChange(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
+    if (log.isInfoEnabled()) {
+      if (oldStatus.getType() == AUTO_BLOCKED_UNAVAILABLE && newStatus.getType() == AUTO_BLOCKED_UNAVAILABLE) {
+        logAutoBlockTimeIncreased(oldStatus, newStatus);
+      }
+      else if (oldStatus.getType() == UNINITIALISED) {
+        log.info("Remote connection status of repository {} set to {}.", getRepository().getName(),
+            newStatus.getDescription());
+      }
+      else {
+        logStatusUpdated(oldStatus, newStatus);
+      }
+    }
+  }
+
+  private void logAutoBlockTimeIncreased(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus)
+  {
+    String message = "Repository status for {} continued as {} until {} - reason {} (previous reason was {})";
+    log.info(message,
+        getRepository().getName(),
+        newStatus.getType(),
+        newStatus.getBlockedUntil(),
+        statusReason(newStatus),
+        statusReason(oldStatus)
+    );
+  }
+
+  private void logStatusUpdated(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
+    String message = "Repository status for {} changed from {} to {}{} - reason {}";
+    log.info(message,
+        getRepository().getName(),
+        oldStatus.getType(),
+        newStatus.getType(),
+        statusBlockedUntil(newStatus),
+        statusReason(newStatus)
+    );
+  }
+
+  private static String statusBlockedUntil(final RemoteConnectionStatus status) {
+    if (status.getBlockedUntil() != null) {
+      return String.format(" until %s", status.getBlockedUntil());
+    }
+    return "";
+  }
+
+  private static String statusReason(final RemoteConnectionStatus status) {
+    return String.format("%s for %s",
+        status.getReason() != null ? status.getReason() : "n/a",
+        status.getRequestUrl() != null ? status.getRequestUrl() : "n/a"
+    );
   }
 
   private void createHttpClient() {
@@ -145,8 +191,9 @@ public class HttpClientFacetImpl
     delegateConfig.setAuthentication(config.authentication);
     HttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
+    boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client
-    httpClient = new BlockingHttpClient(delegate, config, this);
+    httpClient = new BlockingHttpClient(delegate, config, this, online);
     log.debug("Created HTTP client: {}", httpClient);
   }
 

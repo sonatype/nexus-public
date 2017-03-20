@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.httpclient;
 
 import javax.annotation.Nullable;
 
+import org.joda.time.DateTime;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -26,6 +28,10 @@ public class RemoteConnectionStatus
   private final RemoteConnectionStatusType type;
 
   private final String reason;
+
+  private DateTime blockedUntil;
+
+  private String requestUrl;
 
   public RemoteConnectionStatus(final RemoteConnectionStatusType type) {
     this(type, null);
@@ -59,5 +65,37 @@ public class RemoteConnectionStatus
       sb.append(" - ").append(reason);
     }
     return sb.toString();
+  }
+
+  /**
+   * @since 3.3
+   */
+  @Nullable
+  public DateTime getBlockedUntil() {
+    return blockedUntil;
+  }
+
+  /**
+   * @since 3.3
+   */
+  public RemoteConnectionStatus setBlockedUntil(@Nullable final DateTime blockedUntil) {
+    this.blockedUntil = blockedUntil;
+    return this;
+  }
+
+  /**
+   * @since 3.3
+   */
+  @Nullable
+  public String getRequestUrl() {
+    return requestUrl;
+  }
+
+  /**
+   * @since 3.3
+   */
+  public RemoteConnectionStatus setRequestUrl(@Nullable final String requestUrl) {
+    this.requestUrl = requestUrl;
+    return this;
   }
 }

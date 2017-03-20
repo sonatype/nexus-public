@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Map;
+
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -19,15 +22,19 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.orient.OIndexBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 
 /**
@@ -69,6 +76,20 @@ public class ComponentEntityAdapter
       .property(P_VERSION)
       .build();
 
+  private static final String I_NAME_CASE_INSENSITIVE = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_NAME)
+      .caseInsensitive()
+      .build();
+
+  private static final String I_GROUP_NAME_VERSION_INSENSITIVE = new OIndexNameBuilder()
+      .type(DB_CLASS)
+      .property(P_GROUP)
+      .property(P_NAME)
+      .property(P_VERSION)
+      .caseInsensitive()
+      .build();
+
   @Inject
   public ComponentEntityAdapter(final BucketEntityAdapter bucketEntityAdapter) {
     super(DB_CLASS, bucketEntityAdapter);
@@ -90,6 +111,38 @@ public class ComponentEntityAdapter
         new String[]{P_BUCKET, P_GROUP, P_NAME, P_VERSION});
     type.createIndex(I_BUCKET_NAME_VERSION, INDEX_TYPE.NOTUNIQUE.name(), null, metadata,
         new String[]{P_BUCKET, P_NAME, P_VERSION});
+
+    new OIndexBuilder(type, I_NAME_CASE_INSENSITIVE, INDEX_TYPE.NOTUNIQUE)
+        .property(P_NAME, OType.STRING)
+        .caseInsensitive()
+        .build(db);
+
+    new OIndexBuilder(type, I_GROUP_NAME_VERSION_INSENSITIVE, INDEX_TYPE.NOTUNIQUE)
+        .property(P_GROUP, OType.STRING)
+        .property(P_NAME, OType.STRING)
+        .property(P_VERSION, OType.STRING)
+        .caseInsensitive()
+        .build(db);
+  }
+
+  public Iterable<Component> browseByNameCaseInsensitive(final ODatabaseDocumentTx db,
+                                                         final String name,
+                                                         @Nullable final Iterable<Bucket> buckets,
+                                                         @Nullable final String querySuffix)
+  {
+    checkNotNull(name);
+
+    StringBuilder query = new StringBuilder("select from (select expand(rid) from index:" + I_NAME_CASE_INSENSITIVE +
+        " where key = :name)");
+    addBucketConstraints(null, buckets, query);
+
+    if (querySuffix != null) {
+      query.append(' ').append(querySuffix);
+    }
+
+    Map<String, Object> parameters = ImmutableMap.of("name", name);
+    log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
+    return transform(db.command(new OCommandSQL(query.toString())).execute(parameters));
   }
 
   @Override

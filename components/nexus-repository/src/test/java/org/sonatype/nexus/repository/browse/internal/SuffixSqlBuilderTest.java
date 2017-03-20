@@ -42,4 +42,10 @@ public class SuffixSqlBuilderTest
   public void suffix() throws Exception {
     assertThat(buildSuffix(queryOptions), is(equalTo(" ORDER BY name asc SKIP 99 LIMIT 10")));
   }
+
+  @Test
+  public void testId() {
+    assertThat(buildSuffix(new QueryOptions("filter", "id", "asc", 99, 10))
+        , is(equalTo(" ORDER BY @RID asc SKIP 99 LIMIT 10")));
+  }
 }

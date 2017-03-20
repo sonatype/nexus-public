@@ -24,11 +24,18 @@ public class AssetWhereClauseBuilder
   private AssetWhereClauseBuilder() {
   }
 
-  public static String whereClause(final String content, final boolean includeFilter) {
+  public static String whereClause(final String content, final boolean includeFilter, final boolean includeLastId) {
     String whereClause = content;
     if (includeFilter) {
       whereClause += " AND " + P_NAME + " LIKE :nameFilter";
     }
+    if (includeLastId) {
+      whereClause += " AND @RID > :rid";
+    }
     return whereClause;
+  }
+
+  public static String whereClause(final String content, final boolean includeFilter) {
+    return whereClause(content, includeFilter, false);
   }
 }

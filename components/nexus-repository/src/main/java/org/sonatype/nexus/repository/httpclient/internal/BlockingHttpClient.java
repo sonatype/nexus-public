@@ -16,6 +16,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
 import org.sonatype.goodies.common.Time;
@@ -37,8 +38,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
+import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.OFFLINE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.READY;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNAVAILABLE;
+import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNINITIALISED;
 
 /**
  * Wraps an {@link HttpClient} with manual and automatic blocking functionality.
@@ -63,18 +66,24 @@ public class BlockingHttpClient
 
   private final RemoteConnectionStatusObserver statusObserver;
 
-  private RemoteConnectionStatus status = new RemoteConnectionStatus(READY);
+  private RemoteConnectionStatus status = new RemoteConnectionStatus(UNINITIALISED);
 
   public BlockingHttpClient(final HttpClient delegate,
                             final HttpClientFacetImpl.Config config,
-                            final RemoteConnectionStatusObserver statusObserver)
+                            final RemoteConnectionStatusObserver statusObserver,
+                            final boolean repositoryOnline)
   {
     super(delegate);
     checkNotNull(config);
     this.statusObserver = checkNotNull(statusObserver);
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
-    updateStatus(blocked ? BLOCKED : READY);
+    if (repositoryOnline) {
+      updateStatus(blocked ? BLOCKED : READY);
+    }
+    else {
+      updateStatus(OFFLINE);
+    }
     // TODO shall we use config.getConnectionConfig().getTimeout() * 2 as in NX2?
     autoBlockSequence = new FibonacciNumberSequence(Time.seconds(40).toMillis());
   }
@@ -89,14 +98,11 @@ public class BlockingHttpClient
       return filterable.call();
     }
     if (blocked) {
-      updateStatus(BLOCKED);
       throw new RemoteBlockedIOException("Remote Manually Blocked");
     }
     DateTime blockedUntilCopy = this.blockedUntil;
     if (autoBlock && blockedUntilCopy != null && blockedUntilCopy.isAfterNow()) {
-      throw new RemoteBlockedIOException(
-          "Remote Auto Blocked until " + blockedUntilCopy +
-              " with reason: " + status.getReason());
+      throw new RemoteBlockedIOException("Remote Auto Blocked until " + blockedUntilCopy);
     }
 
     Optional<IOException> exception = Optional.empty();
@@ -134,21 +140,15 @@ public class BlockingHttpClient
               checkThread.setDaemon(true);
               checkThread.start();
             }
-            updateStatus(AUTO_BLOCKED_UNAVAILABLE, getReason(e));
+            updateStatus(AUTO_BLOCKED_UNAVAILABLE, getReason(e), target.toURI(),
+                blockedUntil.isAfter(status.getBlockedUntil()));
           }
           else {
-            updateStatus(UNAVAILABLE, getReason(e));
+            updateStatus(UNAVAILABLE, getReason(e), target.toURI(), false);
           }
         }
       }
     }
-
-    blockedUntilCopy = blockedUntil;
-    log.debug(
-        "Remote status: {} {}",
-        status,
-        blockedUntilCopy != null ? "(blocked until " + blockedUntilCopy + ")" : ""
-    );
 
     if (exception.isPresent()) {
       throw exception.get();
@@ -158,16 +158,22 @@ public class BlockingHttpClient
     }
   }
 
-  private void updateStatus(final RemoteConnectionStatusType type, final String reason) {
-    if (type != status.getType()) {
+  private void updateStatus(final RemoteConnectionStatusType type,
+                            final String reason,
+                            @Nullable final String url,
+                            final boolean autoBlockTimeIncrease)
+  {
+    if (type != status.getType() || autoBlockTimeIncrease) {
       RemoteConnectionStatus oldStatus = status;
-      status = new RemoteConnectionStatus(type, reason);
+      status = new RemoteConnectionStatus(type, reason)
+          .setBlockedUntil(blockedUntil)
+          .setRequestUrl(url);
       statusObserver.onStatusChanged(oldStatus, status);
     }
   }
 
   private void updateStatus(final RemoteConnectionStatusType type) {
-    updateStatus(type, null);
+    updateStatus(type, null, null, false);
   }
 
   public RemoteConnectionStatus getStatus() {
@@ -185,7 +191,7 @@ public class BlockingHttpClient
     if (e instanceof SSLPeerUnverifiedException) {
       return "Untrusted Remote";
     }
-    return e.getMessage();
+    return e.getClass().getName() + ": " + e.getMessage();
   }
 
   @Override

@@ -44,4 +44,9 @@ public class BlobStoreException
   public BlobId getBlobId() {
     return blobId;
   }
+
+  @Override
+  public String getMessage() {
+    return "BlobId: " + blobId + ", " + super.getMessage();
+  }
 }

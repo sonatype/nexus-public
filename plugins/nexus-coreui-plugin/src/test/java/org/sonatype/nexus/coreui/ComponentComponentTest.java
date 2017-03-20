@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -41,6 +42,7 @@ import org.mockito.Mock;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -72,6 +74,9 @@ public class ComponentComponentTest
 
   @Mock
   StorageTx storageTx;
+  
+  @Mock
+  MaintenanceService maintenanceService;
 
   private ComponentComponent underTest;
 
@@ -81,6 +86,7 @@ public class ComponentComponentTest
     underTest.setRepositoryManager(repositoryManager);
     underTest.setContentPermissionChecker(contentPermissionChecker);
     underTest.setVariableResolverAdapterManager(variableResolverAdapterManager);
+    underTest.setMaintenanceService(maintenanceService);
 
     when(repositoryManager.get("testRepositoryName")).thenReturn(repository);
     when(repository.getName()).thenReturn("testRepositoryName");
@@ -154,28 +160,14 @@ public class ComponentComponentTest
   }
 
   @Test
-  public void testDeleteAsset_success() {
+  public void testDeleteAsset() {
     Asset asset = mock(Asset.class);
     VariableSource variableSource = mock(VariableSource.class);
     Bucket bucket = mock(Bucket.class);
     when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(storageTx.findAsset(new DetachedEntityId("testAssetId"), bucket)).thenReturn(asset);
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
-        .thenReturn(true);
     underTest.deleteAsset("testAssetId", "testRepositoryName");
-  }
-
-  @Test(expected = AuthorizationException.class)
-  public void testDeleteAsset_failure() {
-    Asset asset = mock(Asset.class);
-    VariableSource variableSource = mock(VariableSource.class);
-    Bucket bucket = mock(Bucket.class);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
-    when(storageTx.findBucket(repository)).thenReturn(bucket);
-    when(storageTx.findAsset(new DetachedEntityId("testAssetId"), bucket)).thenReturn(asset);
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
-        .thenReturn(false);
-    underTest.deleteAsset("testAssetId", "testRepositoryName");
+    verify(maintenanceService).deleteAsset(repository, asset);
   }
 }

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
+import org.sonatype.nexus.repository.BadRequestException;
+
 import org.apache.commons.io.FilenameUtils;
 
 /**
@@ -49,7 +51,7 @@ class RepositoryPath
   /**
    * Validate and parse the path.
    *
-   * @throws IllegalArgumentException if validation fails
+   * @throws BadRequestException if validation fails
    *
    * @return The parsed path
    */
@@ -61,21 +63,21 @@ class RepositoryPath
 
   private static String validateAndExtractRepo(final String input) {
     if (input == null || input.isEmpty()) {
-      throw new IllegalArgumentException("Repository path must not be null or empty");
+      throw new BadRequestException("Repository path must not be null or empty");
     }
 
     if (!(input.charAt(0) == '/')) {
-      throw new IllegalArgumentException("Repository path must start with '/'");
+      throw new BadRequestException("Repository path must start with '/'");
     }
 
     int i = input.indexOf('/', 1);
     if (i == -1) {
-      throw new IllegalArgumentException("Repository path must have another '/' after initial '/'");
+      throw new BadRequestException("Repository path must have another '/' after initial '/'");
     }
 
     String repo = input.substring(1, i);
     if (".".equals(repo) || "..".equals(repo)) {
-      throw new IllegalArgumentException("Repository path must not contain a relative token");
+      throw new BadRequestException("Repository path must not contain a relative token");
     }
 
     return repo;
@@ -83,9 +85,9 @@ class RepositoryPath
 
   private static String validateAndExtractPath(final String input) {
     String path = input.substring(input.indexOf('/', 1), input.length());
-    path = FilenameUtils.normalize(path, true);
+    path = FilenameUtils.normalize(path, true); //unixSeparator:true is necessary to make this work on Windows.
     if (path == null) {
-      throw new IllegalArgumentException("Repository path must not contain a relative token");
+      throw new BadRequestException("Repository path must not contain a relative token");
     }
     return path;
   }

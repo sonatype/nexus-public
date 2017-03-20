@@ -36,34 +36,18 @@ public class BrowseComponentsSqlBuilder
 {
   private final String repositoryName;
 
-  private final boolean group;
-
   private final List<Bucket> buckets;
 
   private final QueryOptions queryOptions;
 
   public BrowseComponentsSqlBuilder(
       final String repositoryName,
-      final boolean group,
       final List<Bucket> buckets,
       final QueryOptions queryOptions)
   {
     this.repositoryName = checkNotNull(repositoryName);
-    this.group = group;
     this.buckets = checkNotNull(buckets);
     this.queryOptions = checkNotNull(queryOptions);
-  }
-
-  /**
-   * Returns the SQL for performing the count query.
-   */
-  public String buildCountSql() {
-    if (buckets.isEmpty()) {
-      return "SELECT COUNT(0)";
-    }
-
-    String whereClause = buildWhereClause();
-    return String.format("SELECT COUNT(DISTINCT(%s)) FROM asset WHERE %s", AssetEntityAdapter.P_COMPONENT, whereClause);
   }
 
   /**
@@ -76,8 +60,7 @@ public class BrowseComponentsSqlBuilder
 
     String querySuffix = buildQuerySuffix();
     String whereClause = buildWhereClause();
-    return String.format("SELECT DISTINCT(%s) AS %s FROM asset WHERE %s %s", AssetEntityAdapter.P_COMPONENT,
-        AssetEntityAdapter.P_COMPONENT, whereClause, querySuffix);
+    return String.format("SELECT FROM %s WHERE %s %s", AssetEntityAdapter.P_COMPONENT, whereClause, querySuffix);
   }
 
   /**
@@ -100,55 +83,26 @@ public class BrowseComponentsSqlBuilder
 
   private String buildWhereClause() {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     whereClauses.add(buckets.stream()
         .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + AttachedEntityHelper.id(bucket))
         .collect(Collectors.joining(" OR ")));
-    whereClauses.add(AssetEntityAdapter.P_COMPONENT + " IS NOT NULL");
+    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
     if (queryOptions.getFilter() != null) {
       whereClauses.add(
-          AssetEntityAdapter.P_COMPONENT + "." + MetadataNodeEntityAdapter.P_NAME + " LIKE :nameFilter OR " +
-              AssetEntityAdapter.P_COMPONENT + "." + ComponentEntityAdapter.P_GROUP + " LIKE :groupFilter OR " +
-              AssetEntityAdapter.P_COMPONENT + "." + ComponentEntityAdapter.P_VERSION + " LIKE :versionFilter");
+          MetadataNodeEntityAdapter.P_NAME + " LIKE :nameFilter OR " +
+          ComponentEntityAdapter.P_GROUP + " LIKE :groupFilter OR " +
+          ComponentEntityAdapter.P_VERSION + " LIKE :versionFilter");
     }
     return whereClauses.stream().map(clause -> "(" + clause + ")").collect(Collectors.joining(" AND "));
   }
 
   private String buildQuerySuffix() {
-    String sortProperty = queryOptions.getSortProperty();
     String sortDirection = queryOptions.getSortDirection();
     Integer start = queryOptions.getStart();
     Integer limit = queryOptions.getLimit();
     StringBuilder sb = new StringBuilder();
-    if (sortProperty != null && sortDirection != null) {
-      if (group) {
-        sb.append(String.format(" GROUP BY %s.%s, %s.%s, %s.%s",
-            AssetEntityAdapter.P_COMPONENT,
-            ComponentEntityAdapter.P_GROUP,
-            AssetEntityAdapter.P_COMPONENT,
-            MetadataNodeEntityAdapter.P_NAME,
-            AssetEntityAdapter.P_COMPONENT,
-            ComponentEntityAdapter.P_VERSION));
-      }
-      sb.append(" ORDER BY ");
-      if (group) {
-        sb.append(String.format(" %s %s,", MetadataNodeEntityAdapter.P_BUCKET, sortDirection));
-      }
-      sb.append(String.format("%s.%s %s", AssetEntityAdapter.P_COMPONENT, sortProperty, sortDirection));
-      if (ComponentEntityAdapter.P_GROUP.equals(sortProperty)) {
-        sb.append(String.format(", %s.%s ASC, %s.%s ASC",
-            AssetEntityAdapter.P_COMPONENT,
-            MetadataNodeEntityAdapter.P_NAME,
-            AssetEntityAdapter.P_COMPONENT,
-            ComponentEntityAdapter.P_VERSION));
-      }
-      else if (MetadataNodeEntityAdapter.P_NAME.equals(sortProperty)) {
-        sb.append(String.format(", %s.%s ASC, %s.%s ASC",
-            AssetEntityAdapter.P_COMPONENT,
-            ComponentEntityAdapter.P_VERSION,
-            AssetEntityAdapter.P_COMPONENT,
-            ComponentEntityAdapter.P_GROUP));
-      }
+    if (sortDirection != null) {
+      sb.append(String.format(" ORDER BY group %1$s, name %1$s, version %1$s", sortDirection));
     }
     if (start != null) {
       sb.append(" SKIP ");
