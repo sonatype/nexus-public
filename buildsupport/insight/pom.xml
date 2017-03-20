@@ -29,8 +29,8 @@
 
   <properties>
     <sonatype-licensing.version>1.4</sonatype-licensing.version>
-    <insight-brain.version>1.26.0-SNAPSHOT</insight-brain.version>
-    <insight-scanner.version>2.4.5-SNAPSHOT</insight-scanner.version>
+    <insight-brain.version>1.26.0-01</insight-brain.version>
+    <insight-scanner.version>2.4.5-01</insight-scanner.version>
   </properties>
 
   <dependencyManagement>
