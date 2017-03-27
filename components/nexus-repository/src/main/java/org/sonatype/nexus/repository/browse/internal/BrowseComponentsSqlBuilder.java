@@ -86,7 +86,9 @@ public class BrowseComponentsSqlBuilder
     whereClauses.add(buckets.stream()
         .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + AttachedEntityHelper.id(bucket))
         .collect(Collectors.joining(" OR ")));
-    whereClauses.add("contentAuth(@this, :browsedRepository) == true");
+    if (queryOptions.getContentAuth()) {
+      whereClauses.add("contentAuth(@this, :browsedRepository) == true");
+    }
     if (queryOptions.getFilter() != null) {
       whereClauses.add(
           MetadataNodeEntityAdapter.P_NAME + " LIKE :nameFilter OR " +

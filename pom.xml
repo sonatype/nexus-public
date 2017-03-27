@@ -896,6 +896,7 @@
               -->
               <exclude>**/nexus-rapture/src/main/baseapp/**</exclude>
               <exclude>**/nexus-rapture/src/main/resources/static/rapture/baseapp-*.js</exclude>
+              <exclude>**/nexus-rapture/src/main/resources/static/rapture/d3.v4.min.js</exclude>
               <exclude>**/nexus-rapture/src/main/resources/static/rapture/resources/baseapp-*.css</exclude>
               <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/ux/**</exclude>
               <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/patch/**</exclude>

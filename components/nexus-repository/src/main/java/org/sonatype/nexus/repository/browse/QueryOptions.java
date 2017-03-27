@@ -18,8 +18,6 @@ import java.util.Locale;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.browse.BrowseService;
-
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -46,28 +44,34 @@ public class QueryOptions
   
   private final String lastId;
 
-  public QueryOptions(@Nullable String filter,
-                      @Nullable String sortProperty,
-                      @Nullable String sortDirection,
-                      @Nullable Integer start,
-                      @Nullable Integer limit)
+  private final boolean contentAuth;
+
+  public QueryOptions(@Nullable final String filter,
+                      @Nullable final String sortProperty,
+                      @Nullable final String sortDirection,
+                      @Nullable final Integer start,
+                      @Nullable final Integer limit)
   {
-    this.lastId = null;
-    checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
-    checkArgument(sortDirection == null || SORT_DIRECTIONS.contains(sortDirection.toLowerCase(Locale.ENGLISH)));
-    this.filter = filter;
-    this.sortProperty = sortProperty;
-    this.sortDirection = sortDirection;
-    this.start = start;
-    this.limit = limit;
+    this(filter, sortProperty, sortDirection, start, limit, null, true);
   }
 
-  public QueryOptions(@Nullable String filter,
-                      @Nullable String sortProperty,
-                      @Nullable String sortDirection,
-                      @Nullable Integer start,
-                      @Nullable Integer limit, 
+  public QueryOptions(@Nullable final String filter,
+                      @Nullable final String sortProperty,
+                      @Nullable final String sortDirection,
+                      @Nullable final Integer start,
+                      @Nullable final Integer limit,
                       @Nullable final String lastId)
+  {
+    this(filter, sortProperty, sortDirection, start, limit, lastId, true);
+  }
+
+  public QueryOptions(@Nullable final String filter,
+                      @Nullable final String sortProperty,
+                      @Nullable final String sortDirection,
+                      @Nullable final Integer start,
+                      @Nullable final Integer limit,
+                      @Nullable final String lastId,
+                      final boolean contentAuth)
   {
     this.lastId = lastId;
     checkArgument(sortProperty == null || SORT_PROPERTIES.contains(sortProperty.toLowerCase(Locale.ENGLISH)));
@@ -77,6 +81,7 @@ public class QueryOptions
     this.sortDirection = sortDirection;
     this.start = start;
     this.limit = limit;
+    this.contentAuth = contentAuth;
   }
 
   @Nullable
@@ -107,5 +112,9 @@ public class QueryOptions
   @Nullable
   public String getLastId() {
     return lastId;
+  }
+
+  public boolean getContentAuth() {
+    return contentAuth;
   }
 }

@@ -59,7 +59,7 @@ public class BlobStoreManagerImpl
 {
   private final EventManager eventManager;
 
-  private final Map<String, BlobStore> stores = Maps.newHashMap();
+  private final Map<String, BlobStore> stores = Maps.newConcurrentMap();
 
   private final BlobStoreConfigurationStore store;
 

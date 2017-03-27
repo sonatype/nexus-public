@@ -102,11 +102,25 @@ public class BrowseServiceImpl
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       List<Bucket> buckets = getBuckets(storageTx, repositories);
-      BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
-          buckets, queryOptions);
-      List<Component> components = getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams()));
+      List<Component> components = Collections.emptyList();
+      // ensure there are components before incurring contentAuth overhead
+      if (hasComponents(storageTx, repository, buckets, queryOptions)) {
+        BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
+            buckets, queryOptions);
+        components = getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams()));
+      }
       return new BrowseResult<>(estimateCount(queryOptions, components), components);
     }
+  }
+
+  private boolean hasComponents(final StorageTx storageTx, final Repository repository, final List<Bucket> buckets,
+                                final QueryOptions queryOptions)
+  {
+    QueryOptions adjustedOptions = new QueryOptions(queryOptions.getFilter(), null, null, 0, 1, null, false);
+    BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
+        buckets, adjustedOptions);
+    Iterable<ODocument> docs = storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams());
+    return docs.iterator().hasNext();
   }
 
   private long estimateCount(final QueryOptions queryOptions, final List<?> items) {
@@ -154,10 +168,24 @@ public class BrowseServiceImpl
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), queryOptions);
-      List<Asset> assets = Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
-          repositories, builder.buildQuerySuffix()));
+      List<Asset> assets = Collections.emptyList();
+      // ensure there are assets before incurring contentAuth overhead
+      if (hasAssets(storageTx, repository, repositories, queryOptions)) {
+        assets = Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
+            repositories, builder.buildQuerySuffix()));
+      }
       return new BrowseResult<>(estimateCount(queryOptions,assets), assets);
     }
+  }
+
+  private boolean hasAssets(final StorageTx storageTx, final Repository repository, final List<Repository> repositories,
+                            final QueryOptions queryOptions)
+  {
+    QueryOptions adjustedOptions = new QueryOptions(queryOptions.getFilter(), null, null, 0, 1, null, false);
+    BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), adjustedOptions);
+    Iterable<Asset> docs = storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
+        repositories, builder.buildQuerySuffix());
+    return docs.iterator().hasNext();
   }
 
   @Override

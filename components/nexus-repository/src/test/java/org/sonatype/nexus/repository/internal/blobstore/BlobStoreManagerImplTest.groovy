@@ -64,7 +64,7 @@ class BlobStoreManagerImplTest
   DatabaseFreezeService databaseFreezeService
 
   @Mock
-  NodeAccess nodeAccess;
+  NodeAccess nodeAccess
 
   BlobStoreManagerImpl underTest
 
@@ -194,6 +194,27 @@ class BlobStoreManagerImplTest
     }
 
     assert underTest.browse().toList() == []
+  }
+
+  @Test
+  void 'Can successfullly create new blob stores concurrently'() {
+    // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
+    underTest = new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
+        databaseFreezeService, nodeAccess, true)
+
+    BlobStore blobStore = mock(BlobStore)
+    when(provider.get()).thenReturn(blobStore)
+
+    underTest.create(createConfig(name: 'concurrency-test-1'))
+    underTest.create(createConfig(name: 'concurrency-test-2'))
+
+    // simulate concurrent access by opening an iterator on the internal stores
+    def storesIterator = underTest.stores.entrySet().iterator()
+    storesIterator.next()
+
+    underTest.create(createConfig(name: 'concurrency-test-3'))
+    // this method will throw ConcurrentModificationException if the internal store isn't thread-safe
+    storesIterator.next()
   }
 
   private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {

@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -454,4 +455,24 @@ public class DefaultCapabilityRegistryTest
     );
   }
 
+  /**
+   * Confirm thread safety for concurrent calls to {@link DefaultCapabilityRegistry#getAll()} and
+   * {@link DefaultCapabilityRegistry#add(CapabilityType, boolean, String, Map)}.
+   *
+   * This test would fail with a {@link java.util.ConcurrentModificationException} unless
+   * {@link DefaultCapabilityRegistry#getAll()} returns a copy of the internal references values.
+   */
+  @Test
+  public void getAllReturnNotAffectedByConcurrentAdd() {
+    // guarantee we have at least 2 instances in the DefaultCapabilityRegistry under test
+    underTest.add(CAPABILITY_TYPE, true, "note1", null);
+    underTest.add(CAPABILITY_TYPE, true, "note2", null);
+
+    Collection<DefaultCapabilityReference> references = underTest.getAll();
+    Iterator<DefaultCapabilityReference> iterator = references.iterator();
+
+    iterator.next();
+    underTest.add(CAPABILITY_TYPE, true, "note3", null);
+    iterator.next();
+  }
 }

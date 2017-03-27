@@ -37,8 +37,8 @@ public class BrowseAssetsSqlBuilder
   }
 
   public String buildWhereClause() {
-    return whereClause("contentAuth(@this, :browsedRepository) == true", queryOptions.getFilter() != null,
-        queryOptions.getLastId() != null);
+    return whereClause(queryOptions.getContentAuth() ? "contentAuth(@this, :browsedRepository) == true" : null,
+        queryOptions.getFilter() != null, queryOptions.getLastId() != null);
   }
 
   public String buildQuerySuffix() {
@@ -47,7 +47,9 @@ public class BrowseAssetsSqlBuilder
 
   public Map<String, Object> buildSqlParams() {
     Map<String, Object> params = new HashMap<>();
-    params.put("browsedRepository", repositoryName);
+    if (queryOptions.getContentAuth()) {
+      params.put("browsedRepository", repositoryName);
+    }
     String filter = queryOptions.getFilter();
     if (filter != null) {
       params.put("nameFilter", "%" + filter + "%");

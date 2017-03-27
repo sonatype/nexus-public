@@ -30,6 +30,8 @@ Ext.define('NX.coreui.model.HealthCheckRepositoryStatus', {
     {name:'securityIssueCount', type: 'int'},
     {name:'licenseIssueCount', type: 'int'},
     {name:'summaryUrl', type: 'string', sortType: 'asUCText'},
-    {name:'detailUrl', type: 'string', sortType: 'asUCText'}
+    {name:'detailUrl', type: 'string', sortType: 'asUCText'},
+    {name:'totalCounts', type: 'long'},
+    {name:'vulnerableCounts', type: 'long'}
   ]
 });

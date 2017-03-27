@@ -51,6 +51,7 @@ Ext.define('NX.coreui.controller.Privileges', {
     {ref: 'feature', selector: 'nx-coreui-privilege-feature'},
     {ref: 'content', selector: 'nx-feature-content' },
     {ref: 'list', selector: 'nx-coreui-privilege-list'},
+    {ref: 'searchBox', selector: 'nx-coreui-privilege-list nx-searchbox'},
     {ref: 'settings', selector: 'nx-coreui-privilege-feature nx-coreui-privilege-settings'}
   ],
   icons: {
@@ -118,6 +119,14 @@ Ext.define('NX.coreui.controller.Privileges', {
       controller: {
         '#Refresh': {
           refresh: me.loadStores
+        }
+      },
+      store: {
+        '#Privilege': {
+          load: function() {
+            me.reselect(arguments);
+            me.getSearchBox().focus();
+          }
         }
       },
       component: {

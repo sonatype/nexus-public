@@ -37,7 +37,9 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
    * @override
    */
   initComponent: function() {
-    Ext.apply(this, {
+    var me = this;
+
+    Ext.apply(me, {
       store: 'Privilege',
 
       columns: [
@@ -76,6 +78,10 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
         deferEmptyText: false
       },
 
+      selModel: {
+        pruneRemoved: false
+      },
+
       dockedItems: [{
         xtype: 'nx-actions',
         items: [
@@ -94,6 +100,6 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
       ]
     });
 
-    this.callParent();
+    me.callParent();
   }
 });

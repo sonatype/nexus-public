@@ -34,7 +34,9 @@ Ext.define('NX.coreui.view.privilege.PrivilegeFeature', {
    * @override
    */
   initComponent: function() {
-    Ext.apply(this, {
+    var me = this;
+
+    Ext.apply(me, {
       tabs: {
         xtype: 'nx-coreui-privilege-settings',
         title: NX.I18n.get('Privilege_PrivilegeFeature_Settings_Title'),
@@ -46,6 +48,6 @@ Ext.define('NX.coreui.view.privilege.PrivilegeFeature', {
       ]
     });
 
-    this.callParent();
+    me.callParent();
   }
 });

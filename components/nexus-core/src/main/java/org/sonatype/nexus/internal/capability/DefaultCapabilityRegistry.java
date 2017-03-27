@@ -54,6 +54,7 @@ import org.sonatype.nexus.security.PasswordHelper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 
@@ -356,7 +357,7 @@ public class DefaultCapabilityRegistry
     try {
       lock.readLock().lock();
 
-      return references.values();
+      return ImmutableSet.copyOf(references.values());
     }
     finally {
       lock.readLock().unlock();

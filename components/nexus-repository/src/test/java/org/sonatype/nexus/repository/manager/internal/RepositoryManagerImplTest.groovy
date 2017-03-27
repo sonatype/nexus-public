@@ -303,4 +303,18 @@ class RepositoryManagerImplTest
     verify(configurationStore).update(groupConfiguration)
   }
 
+  @Test
+  void 'creating repositories concurrently should not fail'() {
+    RepositoryManagerImpl repositoryManager = initializeAndStartRepositoryManager(true)
+    repositoryManager.create(new Configuration(repositoryName: 'r1', recipeName: 'mockRecipe'))
+    repositoryManager.create(new Configuration(repositoryName: 'r2', recipeName: 'mockRecipe'))
+
+    // open an iterator to simulate concurrent access to the private repositories map in RepositoryManagerImpl
+    def iterator = repositoryManager.repositories.iterator()
+    iterator.next()
+    repositoryManager.create(new Configuration(repositoryName: 'r3', recipeName: 'mockRecipe'))
+    // this call will fail with ConcurrentModificationException if the private repositories map is not thread safe
+    iterator.next()
+  }
+
 }

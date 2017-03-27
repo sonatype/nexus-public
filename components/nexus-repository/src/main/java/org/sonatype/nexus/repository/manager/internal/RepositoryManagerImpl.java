@@ -99,7 +99,7 @@ public class RepositoryManagerImpl
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
 
-  private final Map<String, Repository> repositories = Maps.newHashMap();
+  private final Map<String, Repository> repositories = Maps.newConcurrentMap();
 
   private final boolean skipDefaultRepositories;
 

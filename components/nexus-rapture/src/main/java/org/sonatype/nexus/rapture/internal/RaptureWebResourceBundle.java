@@ -332,6 +332,7 @@ public class RaptureWebResourceBundle
     scripts.add(uri(mode("baseapp-{mode}.js")));
     scripts.add(uri(mode("extdirect-{mode}.js")));
     scripts.add(uri("bootstrap.js"));
+    scripts.add(uri("d3.v4.min.js"));
 
     // add all "prod" plugin scripts if debug is not enabled
     if (!isDebug()) {

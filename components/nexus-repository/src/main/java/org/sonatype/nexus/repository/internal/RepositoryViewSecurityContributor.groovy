@@ -39,7 +39,7 @@ class RepositoryViewSecurityContributor
 
             new CPrivilege(
                 id: 'nx-repository-view-*-*-*',
-                description: 'All permissions for all repository view',
+                description: 'All permissions for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',
@@ -49,7 +49,7 @@ class RepositoryViewSecurityContributor
             ),
             new CPrivilege(
                 id: 'nx-repository-view-*-*-browse',
-                description: 'Browse permission for all repository view',
+                description: 'Browse permission for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',
@@ -59,7 +59,7 @@ class RepositoryViewSecurityContributor
             ),
             new CPrivilege(
                 id: 'nx-repository-view-*-*-read',
-                description: 'Read permission for all repository view',
+                description: 'Read permission for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',
@@ -69,7 +69,7 @@ class RepositoryViewSecurityContributor
             ),
             new CPrivilege(
                 id: 'nx-repository-view-*-*-edit',
-                description: 'Edit permission for all repository view',
+                description: 'Edit permission for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',
@@ -79,7 +79,7 @@ class RepositoryViewSecurityContributor
             ),
             new CPrivilege(
                 id: 'nx-repository-view-*-*-add',
-                description: 'Add permission for all repository view',
+                description: 'Add permission for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',
@@ -89,7 +89,7 @@ class RepositoryViewSecurityContributor
             ),
             new CPrivilege(
                 id: 'nx-repository-view-*-*-delete',
-                description: 'Delete permission for all repository view',
+                description: 'Delete permission for all repository views',
                 type: 'repository-view',
                 properties: [
                     format: '*',

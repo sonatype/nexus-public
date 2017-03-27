@@ -30,7 +30,9 @@ Ext.define('NX.coreui.view.privilege.PrivilegeAdd', {
    * @override
    */
   initComponent: function () {
-    Ext.apply(this, {
+    var me = this;
+
+    Ext.apply(me, {
       settingsForm: {
         xtype: 'nx-coreui-privilege-settings-form',
         editableCondition: NX.Conditions.isPermitted('nexus:privileges:create'),
@@ -43,9 +45,9 @@ Ext.define('NX.coreui.view.privilege.PrivilegeAdd', {
       }
     });
 
-    this.callParent();
+    me.callParent();
 
-    this.down('#name').setReadOnly(false);
+    me.down('#name').setReadOnly(false);
   }
 
 });

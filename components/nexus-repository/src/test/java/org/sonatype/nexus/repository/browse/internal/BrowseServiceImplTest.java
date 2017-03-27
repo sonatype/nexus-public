@@ -46,6 +46,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -101,6 +102,8 @@ public class BrowseServiceImplTest
   public void setup() {
     results = asList(assetOne, assetTwo);
 
+    when(queryOptions.getContentAuth()).thenReturn(true);
+
     when(assetOneORID.toString()).thenReturn("assetOne");
 
     when(mavenReleases.facet(StorageFacet.class)).thenReturn(storageFacet);
@@ -150,6 +153,9 @@ public class BrowseServiceImplTest
     String expectedWhere = "contentAuth(@this, :browsedRepository) == true";
     String expectedSuffix = " SKIP 0 LIMIT 0";
 
+    when(storageTx
+        .findAssets(eq(null), any(), eq(expectedRepositories),
+            eq(" SKIP 0 LIMIT 1"))).thenReturn(results);
     when(storageTx
         .findAssets(eq(expectedWhere), sqlParamsCaptor.capture(), eq(expectedRepositories),
             eq(expectedSuffix))).thenReturn(results);

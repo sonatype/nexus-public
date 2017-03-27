@@ -29,7 +29,10 @@
 
   <properties>
     <sonar.sources>src/main/java,src/main/resources/static/rapture</sonar.sources>
-    <sonar.exclusions>src/main/resources/static/rapture/baseapp-*.js</sonar.exclusions>
+    <sonar.exclusions>
+      src/main/resources/static/rapture/baseapp-*.js,
+      src/main/resources/static/rapture/d3.v4.min.js
+    </sonar.exclusions>
   </properties>
 
   <dependencies>
@@ -76,6 +79,7 @@
           <namespace>NX</namespace>
           <excludes>
             <exclude>baseapp-*.js</exclude>
+            <exclude>d3.v4.min.js</exclude>
           </excludes>
         </configuration>
       </plugin>
