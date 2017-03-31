@@ -121,7 +121,13 @@ NX.define('Nexus.wonderland.view.FileCreated', {
           buttonAlign: 'right',
           buttons: [
             { text: 'Close', xtype: 'link-button', handler: me.close, scope: me },
-            { text: 'Download', xtype: 'nx-wonderland-button-authenticate', formBind: true, id: me.downloadButtonId }
+            {
+              text: 'Download',
+              xtype: 'nx-wonderland-button-authenticate',
+              formBind: true,
+              id: me.downloadButtonId,
+              noPopUps: Sonatype.utils.settings.noDownloadPopUps
+            }
           ]
         }
       ],

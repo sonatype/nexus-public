@@ -850,6 +850,7 @@ define('Sonatype/utils',['../extjs', 'Nexus/config', 'Nexus/util/Format', 'Sonat
             });
           }
           ns.settings.keepAlive = ns.settings.keepAlive === 'true';
+          ns.settings.noDownloadPopUps = ns.settings.noDownloadPopUps === 'true';
           Sonatype.Events.fireEvent('nexusSettings');
         }
       });

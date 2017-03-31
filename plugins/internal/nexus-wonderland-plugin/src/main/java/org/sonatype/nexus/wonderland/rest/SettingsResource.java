@@ -23,8 +23,6 @@ import javax.ws.rs.Produces;
 import org.sonatype.nexus.util.SystemPropertiesHelper;
 import org.sonatype.nexus.wonderland.WonderlandPlugin;
 import org.sonatype.nexus.wonderland.model.PropertyXO;
-import org.sonatype.sisu.goodies.common.ComponentSupport;
-import org.sonatype.sisu.siesta.common.Resource;
 
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.NonNls;
@@ -41,8 +39,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 @Singleton
 @Path(SettingsResource.RESOURCE_URI)
 public class SettingsResource
-    extends ComponentSupport
-    implements Resource
+    extends WonderlandResourceSupport
 {
   @NonNls
   public static final String RESOURCE_URI = WonderlandPlugin.REST_PREFIX + "/settings";
@@ -56,6 +53,7 @@ public class SettingsResource
         new PropertyXO().withKey("keepAlive")
             .withValue(Boolean.toString(SystemPropertiesHelper.getBoolean("nexus.ui.keepAlive", true)))
     );
+    properties.add(new PropertyXO().withKey("noDownloadPopUps").withValue(Boolean.toString(isNoPopUps())));
 
     return properties;
   }

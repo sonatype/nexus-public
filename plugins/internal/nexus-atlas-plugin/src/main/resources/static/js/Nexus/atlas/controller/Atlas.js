@@ -198,17 +198,18 @@ NX.define('Nexus.atlas.controller.Atlas', {
    * @private
    */
   downloadSupportZip: function(button, authTicket) {
-    var me = this,
-        win = button.up('nx-atlas-view-supportzip-created'),
-        fileName = win.getValues().name;
+    var win = button.up('nx-atlas-view-supportzip-created'),
+        fileName = win.getValues().name,
+        url = Nexus.siesta.basePath + '/wonderland/download/' + fileName;
 
-    // encode ticket for query-parameter
-    authTicket = Sonatype.utils.base64.encode(authTicket);
+    if (authTicket != null) {
+      // encode ticket for query-parameter
+      url += '?t=' + Sonatype.utils.base64.encode(authTicket);
+    }
 
-    if (Nexus.util.DownloadHelper.downloadUrl(
-        Nexus.siesta.basePath + '/wonderland/download/' + fileName + '?t=' + authTicket))
+    if (Nexus.util.DownloadHelper.downloadUrl(url))
     {
-      // if download was initated close the window
+      // if download was initiated close the window
       win.close();
     }
   },

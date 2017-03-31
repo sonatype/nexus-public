@@ -12,13 +12,6 @@
  */
 package org.sonatype.nexus.wonderland.rest
 
-import org.apache.shiro.authz.annotation.RequiresPermissions
-import org.sonatype.nexus.util.Tokens
-import org.sonatype.nexus.wonderland.DownloadService
-import org.sonatype.sisu.goodies.common.ComponentSupport
-import org.sonatype.sisu.siesta.common.Resource
-import org.sonatype.sisu.siesta.common.error.WebApplicationMessageException
-
 import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
@@ -30,6 +23,13 @@ import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.Response
+
+import org.sonatype.nexus.util.Tokens
+import org.sonatype.nexus.wonderland.AuthTicketService
+import org.sonatype.nexus.wonderland.DownloadService
+import org.sonatype.sisu.siesta.common.error.WebApplicationMessageException
+
+import org.apache.shiro.authz.annotation.RequiresPermissions
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST
 import static javax.ws.rs.core.Response.Status.FORBIDDEN
@@ -45,17 +45,19 @@ import static org.sonatype.nexus.wonderland.AuthTicketService.AUTH_TICKET_HEADER
 @Singleton
 @Path(DownloadResource.RESOURCE_URI)
 class DownloadResource
-    extends ComponentSupport
-    implements Resource
+    extends WonderlandResourceSupport
 {
   static final String RESOURCE_URI = '/wonderland/download'
 
   private final DownloadService downloadService
 
+  private final AuthTicketService authTickets
+
   @Inject
-  DownloadResource(final DownloadService downloadService) {
+  DownloadResource(final DownloadService downloadService, final AuthTicketService authTickets) {
     assert downloadService
     this.downloadService = downloadService
+    this.authTickets = authTickets
   }
 
   /**
@@ -80,6 +82,10 @@ class DownloadResource
     }
     else {
       authTicket = authTicketHeader
+    }
+
+    if (!authTicket && isNoPopUps()) {
+      authTicket = authTickets.createTicket()
     }
 
     // handle one-time auth
