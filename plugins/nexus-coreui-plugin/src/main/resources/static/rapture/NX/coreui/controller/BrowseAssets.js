@@ -75,9 +75,6 @@ Ext.define('NX.coreui.controller.BrowseAssets', {
         file: 'page_white_stack.png',
         variants: ['x16', 'x32']
       },
-      visible: function() {
-        return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
-      },
       authenticationRequired: false
     };
 

@@ -15,7 +15,7 @@
   <persistence directory="${java.io.tmpdir}/nexus-ehcache"/>
 
   <cache-template name="nexus-default">
-    <heap unit="entries">1000</heap>
+    <heap unit="entries">10000</heap>
   </cache-template>
 
 </config>

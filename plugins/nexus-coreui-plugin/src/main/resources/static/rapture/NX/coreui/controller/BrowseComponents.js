@@ -76,9 +76,6 @@ Ext.define('NX.coreui.controller.BrowseComponents', {
         file: 'box_front.png',
         variants: ['x16', 'x32']
       },
-      visible: function() {
-        return NX.Permissions.checkExistsWithPrefix('nexus:repository-view');
-      },
       authenticationRequired: false
     };
 

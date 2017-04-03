@@ -165,6 +165,12 @@
         <artifactId>system-rules</artifactId>
         <version>1.16.1</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.unboundid</groupId>
+        <artifactId>unboundid-ldapsdk</artifactId>
+        <version>3.2.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

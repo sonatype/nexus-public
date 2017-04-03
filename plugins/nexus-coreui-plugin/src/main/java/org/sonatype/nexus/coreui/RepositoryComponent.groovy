@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.search.RebuildIndexTask
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
+import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission
 import org.sonatype.nexus.repository.security.RepositorySelector
 import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
@@ -50,6 +51,8 @@ import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
+import org.sonatype.nexus.selector.SelectorConfiguration
+import org.sonatype.nexus.selector.SelectorManager
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -96,6 +99,9 @@ class RepositoryComponent
 
   @Inject
   List<Format> formats
+
+  @Inject
+  SelectorManager selectorManager
 
   @DirectMethod
   @Timed
@@ -345,17 +351,33 @@ class RepositoryComponent
       repositories = filterIn(repositories, versionPolicies, { Repository repository ->
         (String) repository?.configuration?.attributes?.maven?.versionPolicy
       })
-      // TODO: Add application of permissions back once the browse permissions are rationalized
-      /*
-      String applyPermissions = parameters.getFilter('applyPermissions')
-      if (applyPermissions as boolean) {
-        repositories = repositories.findResults { Repository repository ->
-          securityHelper.allPermitted(new RepositoryViewPermission(repository, BreadActions.BROWSE)) ? repository : null
-        }
-      }
-      */
+
+      repositories = applyPermissions(parameters, repositories)
     }
     return repositories
+  }
+
+  Collection<Repository> applyPermissions(StoreLoadParameters parameters, Iterable<Repository> repositories) {
+    if (Boolean.valueOf(parameters.getFilter('applyPermissions'))) {
+      List<SelectorConfiguration> selectorConfigurations = selectorManager.browse()
+
+      repositories = repositories.findResults { Repository repository ->
+        if (securityHelper.anyPermitted(new RepositoryViewPermission(repository, BreadActions.BROWSE))) {
+          return repository
+        }
+
+        /*
+          Check if a content selector exists for the given repository. Note: this does not check/care whether the
+          selector successfully matches anything only that it has been applied to the repo.
+         */
+        SelectorConfiguration match = selectorConfigurations.find { selectorConfiguration ->
+          securityHelper.anyPermitted(new RepositoryContentSelectorPermission(
+              selectorConfiguration.name, repository.format.value, repository.name, [BreadActions.BROWSE]))
+        }
+        return match != null ? repository : null
+      }
+    }
+    repositories
   }
 
   Iterable<Repository> browse() {

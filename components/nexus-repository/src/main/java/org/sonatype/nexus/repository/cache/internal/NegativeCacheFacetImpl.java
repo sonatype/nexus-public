@@ -145,12 +145,12 @@ public class NegativeCacheFacetImpl
       cacheConfig.setTypes(NegativeCacheKey.class, Status.class);
       cacheConfig.setStoreByValue(false);
       cacheConfig.setExpiryPolicyFactory(
-          CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, config.timeToLive))
+          CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, config.timeToLive))
       );
       cacheConfig.setManagementEnabled(true);
       cacheConfig.setStatisticsEnabled(true);
 
-      cache = cacheManager.createCache(getRepository().getName() + "#negative-cache", cacheConfig);
+      cache = cacheManager.createCache(getCacheName(), cacheConfig);
       log.debug("Created negative-cache: {}", cache);
     }
   }
@@ -218,5 +218,9 @@ public class NegativeCacheFacetImpl
   @Override
   public NegativeCacheKey getCacheKey(final Context context) {
     return new PathNegativeCacheKey(context.getRequest().getPath());
+  }
+
+  public String getCacheName() {
+    return getRepository().getName() + "#negative-cache";
   }
 }

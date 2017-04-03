@@ -37,5 +37,16 @@ Ext.define('NX.coreui.store.Role', {
     }
   },
 
-  sorters: { property: 'name', direction: 'ASC' }
+  sorters: { property: 'name', direction: 'ASC' },
+
+  listeners: {
+    load: function(store, records) {
+      // loop all roles, and sort the inner privileges array
+      for (var i = 0; i < records.length; i++) {
+        var role = records[i].data;
+        role.privileges = Ext.Array.sort(role.privileges);
+      }
+    }
+  }
+
 });

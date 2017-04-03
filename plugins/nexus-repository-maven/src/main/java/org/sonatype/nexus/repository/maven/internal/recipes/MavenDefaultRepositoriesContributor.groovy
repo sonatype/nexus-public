@@ -81,9 +81,10 @@ class MavenDefaultRepositoriesContributor
                     versionPolicy: VersionPolicy.RELEASE.toString(),
                     layoutPolicy : LayoutPolicy.PERMISSIVE.toString()
                 ],
-                proxy        : [
-                    remoteUrl                  : 'https://repo1.maven.org/maven2/',
-                    contentMaxAge              : -1
+                proxy: [
+                    remoteUrl     : 'https://repo1.maven.org/maven2/',
+                    contentMaxAge : -1,
+                    metadataMaxAge: 1440
                 ],
                 negativeCache: [
                     enabled   : true,

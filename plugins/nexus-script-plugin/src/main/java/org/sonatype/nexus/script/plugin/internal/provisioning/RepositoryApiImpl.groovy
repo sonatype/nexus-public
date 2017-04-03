@@ -100,9 +100,10 @@ class RepositoryApiImpl
                     autoBlock: true
                 ] as Map
             ] as Map,
-            proxy        : [
-                remoteUrl    : remoteUrl,
-                contentMaxAge: 1440
+            proxy: [
+                remoteUrl     : remoteUrl,
+                contentMaxAge : 1440,
+                metadataMaxAge: 1440
             ] as Map,
             negativeCache: [
                 enabled   : true,

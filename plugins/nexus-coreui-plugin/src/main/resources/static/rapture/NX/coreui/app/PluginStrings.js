@@ -342,15 +342,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing…',
     HealthCheckRepositoryColumn_Analyzing_Tooltip: '<span><h2>The Analysis is Under Way</h2>' +
     'The contents of your repository are being analyzed. This process should only take a few minutes.<br><br>' +
-    'When the analysis is complete and this page has been refreshed, a set of icons will be displayed that indicate ' +
-    'how many security and licensing issues were discovered.<br><br>' +
-    'Hover your mouse over these icons to see additional information about the issues that were found.</span>',
+    'When the analysis is complete and this page has been refreshed, we will show you the top 5 most vulnerable ' +
+    'components in the repository, the number of downloads over the last month, and a year-over-year overview.</span>',
     HealthCheckRepositoryColumn_View_Permission_Error: '<span><h2>Insufficient Permissions to View Summary Report</h2>' +
     'To view healthcheck summary report for a repository your user account must have the necessary permissions.</span>',
     HealthCheckRepositoryColumn_Analyze: 'Analyze',
     HealthCheckRepositoryColumn_Analyze_Tooltip: '<span><h2>Repository Health Check Analysis</h2>Click this button to request a Repository Health Check (RHC) ' +
     'by IQ Server.  The process is non-invasive and non-disruptive. IQ Server ' +
-    'will return actionable quality, security, and licensing information about the open source components in the repository.' +
+    'will return actionable quality and security information about the open source components in the repository.' +
     '<br><br><a href="http://links.sonatype.com/products/clm/rhc/home" ' +
     'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
     HealthCheckRepositoryColumn_Analyze_Dialog_Title: 'Analyze Repository',

@@ -63,7 +63,7 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.propagateSystemProperty;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
-import static org.ops4j.pax.exam.CoreOptions.vmOptions;
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
@@ -381,13 +381,13 @@ public abstract class NexusPaxExamSupport
     return composite(
 
         // mimic nexus script
-        vmOptions("-Xms1200M"),
-        vmOptions("-Xmx1200M"),
-        vmOptions("-XX:MaxDirectMemorySize=2G"),
-        vmOptions("-XX:+UnlockDiagnosticVMOptions"),
-        vmOptions("-XX:+UnsyncloadClass"),
+        vmOption("-Xms1200M"),
+        vmOption("-Xmx1200M"),
+        vmOption("-XX:MaxDirectMemorySize=2G"),
+        vmOption("-XX:+UnlockDiagnosticVMOptions"),
+        vmOption("-XX:+UnsyncloadClass"),
 
-        vmOptions("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
+        vmOption("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
 
         systemTimeout(examTimeout()),
 
