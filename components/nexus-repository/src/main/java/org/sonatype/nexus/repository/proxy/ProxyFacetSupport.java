@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.httpclient.internal.RemoteBlockedIOException;
+import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
@@ -187,7 +187,7 @@ public abstract class ProxyFacetSupport
       }
       catch (IOException e) {
         Repository repository = context.getRepository();
-        log.trace("Failed to fetch: {}, from repository: {}", getUrl(context), repository.getName(), e);
+        log.trace("Failed to fetch: {} from repository: {}", getUrl(context), repository.getName(), e);
         logContentOrThrow(content, getUrl(context), e);
       }
       finally {

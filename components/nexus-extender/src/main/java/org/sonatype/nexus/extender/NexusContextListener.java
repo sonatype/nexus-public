@@ -27,6 +27,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.sonatype.nexus.common.app.ManagedLifecycleManager;
+
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -114,7 +116,7 @@ public class NexusContextListener
 
   private Injector injector;
 
-  private NexusLifecycleManager lifecycleManager;
+  private ManagedLifecycleManager lifecycleManager;
 
   private ServiceRegistration<Filter> registration;
 
@@ -145,7 +147,7 @@ public class NexusContextListener
     extender.doStart(); // start tracking nexus bundles
 
     try {
-      lifecycleManager = injector.getInstance(NexusLifecycleManager.class);
+      lifecycleManager = injector.getInstance(ManagedLifecycleManager.class);
 
       lifecycleManager.to(LOGGING);
 

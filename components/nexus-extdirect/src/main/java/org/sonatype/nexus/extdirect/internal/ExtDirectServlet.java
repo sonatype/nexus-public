@@ -248,9 +248,11 @@ public class ExtDirectServlet
       }
 
       private Response handleException(final RegisteredMethod method, final Throwable e) {
-        // debug logging for sanity
-        log.debug("Failed to invoke action method: {}, java-method: {}",
-            method.getFullName(), method.getFullJavaMethodName(), e);
+        // debug logging for sanity (without stacktrace for suppressed exception)
+        log.debug("Failed to invoke action method: {}, java-method: {}, exception message: {}",
+            method.getFullName(), method.getFullJavaMethodName(), e.getMessage(),
+            isSuppressedException(e) ? null : e);
+
 
         // handle validation message responses which have contents
         if (e instanceof ConstraintViolationException) {
@@ -261,14 +263,17 @@ public class ExtDirectServlet
           }
         }
 
-        log.error("FAILED to invoke action method: {}, java-method: {}",
-            method.getFullName(), method.getFullJavaMethodName(), suppressException(e));
+        // exception logging for all non-suppressed exceptions
+        if (!isSuppressedException(e)) {
+          log.error("Failed to invoke action method: {}, java-method: {}",
+              method.getFullName(), method.getFullJavaMethodName(), e);
+        }
 
         return asResponse(error(e));
       }
 
-      private Throwable suppressException(final Throwable e) {
-        return SUPPRESSED_EXCEPTIONS.stream().anyMatch(ex -> ex.isInstance(e)) ? null : e;
+      private boolean isSuppressedException(final Throwable e) {
+        return SUPPRESSED_EXCEPTIONS.stream().anyMatch(ex -> ex.isInstance(e));
       }
 
       private Response asResponse(final Object result) {

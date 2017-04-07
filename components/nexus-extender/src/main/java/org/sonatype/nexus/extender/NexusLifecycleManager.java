@@ -22,6 +22,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
+import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
@@ -46,6 +47,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.BOOT;
 @Singleton
 public class NexusLifecycleManager
     extends ComponentSupport
+    implements ManagedLifecycleManager
 {
   private static final Phase[] PHASES = Phase.values();
 
@@ -64,15 +66,12 @@ public class NexusLifecycleManager
     locator.watch(Key.get(BundleContext.class), new BundleContextMediator(), this);
   }
 
+  @Override
   public Phase getCurrentPhase() {
     return currentPhase;
   }
 
-  /**
-   * Attempts to move to the target phase by starting (or stopping) components phase-by-phase. If any components have
-   * appeared since the last request which belong to the current phase or earlier then they are automatically started
-   * before the current phase is changed. Similarly components that have disappeared are stopped.
-   */
+  @Override
   public synchronized void to(Phase targetPhase) throws Exception {
 
     final int target = targetPhase.ordinal();

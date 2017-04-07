@@ -27,40 +27,6 @@ import org.sonatype.nexus.ssl.KeystoreException;
  */
 public interface KeystoreInstance
 {
-
-  /**
-   * Returns the name of the keystore as known to the keystore manager.
-   */
-  public String getKeystoreName();
-
-  /**
-   * Returns the type of the keystore.
-   */
-  public String getKeystoreType();
-
-  /**
-   * Saves a password to access the keystore as a whole.  This means that any
-   * other server component can use this keystore to create a socket factory.
-   * However, the relevant private key in the keystore must also be unlocked.
-   */
-  public void unlockKeystore(char[] password)
-      throws KeystoreException;
-
-  /**
-   * Clears any saved password, meaning this keystore cannot be used by other
-   * server components.  You can still query and update it by passing the
-   * password to other functions,
-   */
-  public void lockKeystore(char[] password)
-      throws KeystoreException;
-
-  /**
-   * Checks whether this keystore is unlocked, which is to say, available for
-   * other components to use to generate socket factories.
-   * Does not check whether the unlock password is actually correct.
-   */
-  public boolean isKeystoreLocked();
-
   /**
    * Gets the aliases of all private key entries in the keystore
    *
@@ -69,50 +35,8 @@ public interface KeystoreInstance
    * @throws KeystoreIsLocked if a null password was provided and the keystore
    *                          is locked, or if a bad password was provided
    */
-  public String[] listPrivateKeys(char[] storePassword)
+  String[] listPrivateKeys(char[] storePassword)
       throws KeystoreException;
-
-  /**
-   * Saves a password to access a private key.  This means that if the
-   * keystore is also unlocked, any server component can create an SSL
-   * socket factory using this private key.  Note that the keystore
-   * must be unlocked before this can be called.
-   */
-  public void unlockPrivateKey(String alias, char[] storePassword, char[] keyPassword)
-      throws KeystoreException;
-
-  /**
-   * Gets the aliases for all the private keys that are currently unlocked.
-   * This only works if the keystore is unlocked.
-   */
-  public String[] getUnlockedKeys(char[] storePassword)
-      throws KeystoreException;
-
-  /**
-   * Checks whether this keystore can be used as a truststore (e.g. has at
-   * least one trust certificate).  This only works if the keystore is
-   * unlocked.
-   */
-  public boolean isTrustStore(char[] storePassword)
-      throws KeystoreException;
-
-  /**
-   * Clears any saved password for the specified private key, meaning this
-   * key cannot be used for a socket factory by other server components.
-   * You can still query and update it by passing the password to other
-   * functions,
-   *
-   * @param storePassword The password used to access the keystore. Must be non-null.
-   */
-  public void lockPrivateKey(String alias, char[] storePassword)
-      throws KeystoreException;
-
-  /**
-   * Checks whether the specified private key is locked, which is to say,
-   * available for other components to use to generate socket factories.
-   * Does not check whether the unlock password is actually correct.
-   */
-  public boolean isKeyLocked(String alias);
 
   /**
    * Gets the aliases of all trusted certificate entries in the keystore.
@@ -120,7 +44,7 @@ public interface KeystoreInstance
    * @param storePassword Used to open the keystore or null to use the internal password.
    * @throws KeystoreIsLocked if the keystore coul not be unlocked
    */
-  public String[] listTrustCertificates(char[] storePassword)
+  String[] listTrustCertificates(char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -131,27 +55,7 @@ public interface KeystoreInstance
    * @param alias         The certificate to look at
    * @param storePassword Used to open the keystore or null to use the internal password.
    */
-  public Certificate getCertificate(String alias, char[] storePassword)
-      throws KeystoreException;
-
-  /**
-   * Gets a particular certificate chain from the keystore.
-   *
-   * @param alias         The certificate chain to look at
-   * @param storePassword Used to open the keystore or null to use the internal password.
-   * @throws KeystoreIsLocked if the keystore coul not be unlocked
-   */
-  public Certificate[] getCertificateChain(String alias, char[] storePassword)
-      throws KeystoreException;
-
-  /**
-   * Gets the alias corresponding to the given certificate.
-   *
-   * @param cert          The certificate used to retrieve the alias
-   * @param storePassword Used to open the keystore or null to use the internal password.
-   * @throws KeystoreIsLocked if the keystore coul not be unlocked
-   */
-  public String getCertificateAlias(Certificate cert, char[] storePassword)
+  Certificate getCertificate(String alias, char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -161,7 +65,7 @@ public interface KeystoreInstance
    * @param alias         The alias to list the certificate under
    * @param storePassword Used to open the keystore. Must be non null
    */
-  public void importTrustCertificate(Certificate cert, String alias, char[] storePassword)
+  void importTrustCertificate(Certificate cert, String alias, char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -181,7 +85,7 @@ public interface KeystoreInstance
    * @param state              The ST portion of the identity on the certificate
    * @param country            The C portion of the identity on the certificate
    */
-  public void generateKeyPair(String alias, char[] storePassword, char[] keyPassword, String keyAlgorithm,
+  void generateKeyPair(String alias, char[] storePassword, char[] keyPassword, String keyAlgorithm,
                               int keySize,
                               String signatureAlgorithm, int validity, String commonName, String orgUnit,
                               String organization, String locality, String state, String country)
@@ -196,7 +100,7 @@ public interface KeystoreInstance
    * @param alias         The alias of the key to use in the keystore
    * @param storePassword The password used to access the keystore
    */
-  public KeyManager[] getKeyManager(String algorithm, String alias, char[] storePassword)
+  KeyManager[] getKeyManager(String algorithm, String alias, char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -206,13 +110,7 @@ public interface KeystoreInstance
    * @param algorithm     The SSL algorithm to use for this trust manager
    * @param storePassword The password used to access the keystore
    */
-  public TrustManager[] getTrustManager(String algorithm, char[] storePassword)
-      throws KeystoreException;
-
-  public String generateCSR(String alias, char[] storePassword)
-      throws KeystoreException;
-
-  public void importPKCS7Certificate(String alias, String certbuf, char[] storePassword)
+  TrustManager[] getTrustManager(String algorithm, char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -221,7 +119,7 @@ public interface KeystoreInstance
    * @param alias         the alias to delete
    * @param storePassword The password used to access the keystore
    */
-  public void deleteEntry(String alias, char[] storePassword)
+  void deleteEntry(String alias, char[] storePassword)
       throws KeystoreException;
 
   /**
@@ -232,7 +130,7 @@ public interface KeystoreInstance
    * @param keyPassword   The password to use to protect the new key
    * @return PrivateKey with the alias specified
    */
-  public PrivateKey getPrivateKey(String alias, char[] storePassword, char[] keyPassword)
+  PrivateKey getPrivateKey(String alias, char[] storePassword, char[] keyPassword)
       throws KeystoreException;
 
   /**
@@ -243,24 +141,5 @@ public interface KeystoreInstance
    *
    * @param alias Alias of the certificate
    */
-  public Certificate getCertificate(String alias);
-
-  /**
-   * Changes the keystore password.
-   *
-   * @param storePassword Current password for the keystore
-   * @param newPassword   New password for the keystore
-   */
-  public void changeKeystorePassword(char[] storePassword, char[] newPassword)
-      throws KeystoreException;
-
-  /**
-   * Changes the password for a private key entry in the keystore.
-   *
-   * @param storePassword  Password for the keystore
-   * @param keyPassword    Current password for the private key
-   * @param newKeyPassword New password for the private key
-   */
-  public void changeKeyPassword(String alias, char[] storePassword, char[] keyPassword, char[] newKeyPassword)
-      throws KeystoreException;
+  Certificate getCertificate(String alias);
 }

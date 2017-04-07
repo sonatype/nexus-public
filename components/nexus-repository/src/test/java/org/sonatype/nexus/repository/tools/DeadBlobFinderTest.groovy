@@ -36,11 +36,11 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Subject
 
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.ASSET_DELETED
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.DELETED
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.MISSING_BLOB_REF
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.SHA1_DISAGREEMENT
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.UNAVAILABLE_BLOB
+import static org.sonatype.nexus.repository.tools.ResultState.ASSET_DELETED
+import static org.sonatype.nexus.repository.tools.ResultState.DELETED
+import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF
+import static org.sonatype.nexus.repository.tools.ResultState.SHA1_DISAGREEMENT
+import static org.sonatype.nexus.repository.tools.ResultState.UNAVAILABLE_BLOB
 
 class DeadBlobFinderTest
     extends Specification

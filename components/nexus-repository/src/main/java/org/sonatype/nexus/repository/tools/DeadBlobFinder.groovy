@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.tools
 
 import java.util.concurrent.TimeUnit
 
-import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.validation.constraints.NotNull
@@ -34,13 +33,13 @@ import com.google.common.base.Stopwatch
 import groovy.transform.ToString
 
 import static com.google.common.base.Preconditions.checkNotNull
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.ASSET_DELETED
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.DELETED
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.MISSING_BLOB_REF
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.SHA1_DISAGREEMENT
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.UNAVAILABLE_BLOB
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.UNKNOWN
-import static org.sonatype.nexus.repository.tools.DeadBlobFinder.ResultState.UNREADABLE_BLOB
+import static org.sonatype.nexus.repository.tools.ResultState.ASSET_DELETED
+import static org.sonatype.nexus.repository.tools.ResultState.DELETED
+import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF
+import static org.sonatype.nexus.repository.tools.ResultState.SHA1_DISAGREEMENT
+import static org.sonatype.nexus.repository.tools.ResultState.UNAVAILABLE_BLOB
+import static org.sonatype.nexus.repository.tools.ResultState.UNKNOWN
+import static org.sonatype.nexus.repository.tools.ResultState.UNREADABLE_BLOB
 
 /**
  * Examines Asset metadata and confirms the sha1 of all referenced blobs. Reports on any instances where
@@ -221,36 +220,5 @@ class DeadBlobFinder
 
   private static lastUpdated(DeadBlobResult deadBlobResult) {
     deadBlobResult.asset?.lastUpdated()
-  }
-
-  @ToString(includePackage = false)
-  class DeadBlobResult
-  {
-    final String repositoryName
-    
-    final Asset asset
-
-    final String errorMessage
-
-    final ResultState resultState
-
-    DeadBlobResult(final String repositoryName, @Nullable final Asset asset, final ResultState resultState,
-                   final String errorMessage)
-    {
-      this.repositoryName = checkNotNull(repositoryName)
-      this.asset = asset
-      this.resultState = checkNotNull(resultState)
-      this.errorMessage = checkNotNull(errorMessage)
-    }
-  }
-
-  enum ResultState {
-    ASSET_DELETED, // DB record was deleted during inspection
-    DELETED, // DB record references blobRef which has since been deleted
-    MISSING_BLOB_REF, // DB record has no blobRef
-    SHA1_DISAGREEMENT, // DB record and blob have different SHA1
-    UNAVAILABLE_BLOB, // blob has an inputstream that reports 0 when calling isAvailable()
-    UNKNOWN,
-    UNREADABLE_BLOB, // Unable to read blob from disk
   }
 }

@@ -18,6 +18,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
@@ -62,9 +63,16 @@ public class KeyStoreManagerImpl
 
   private final KeyStoreManagerConfiguration config;
 
+  // do not access this field outside of privateKeyStoreLock
   private final KeystoreInstance privateKeyStore;
 
+  // do not access this field outside of trustedKeyStoreLock
   private final KeystoreInstance trustedKeyStore;
+
+  private final ReentrantReadWriteLock privateKeyStoreLock = new ReentrantReadWriteLock();
+
+  private final ReentrantReadWriteLock trustedKeyStoreLock = new ReentrantReadWriteLock();
+
 
   private ReloadableX509TrustManager reloadableX509TrustManager;
 
@@ -79,6 +87,17 @@ public class KeyStoreManagerImpl
 
     this.privateKeyStore = initializePrivateKeyStore(storageManager.createStorage(PRIVATE_KEY_STORE_NAME));
     this.trustedKeyStore = initializeTrustedKeyStore(storageManager.createStorage(TRUSTED_KEY_STORE_NAME));
+  }
+
+  @VisibleForTesting
+  KeyStoreManagerImpl(final CryptoHelper crypto,
+                      final KeyStoreManagerConfiguration config,
+                      final KeystoreInstance privateKeyStore,
+                      final KeystoreInstance trustedKeyStore) {
+    this.crypto = checkNotNull(crypto);
+    this.config = checkNotNull(config);
+    this.privateKeyStore = privateKeyStore;
+    this.trustedKeyStore = trustedKeyStore;
   }
 
   /**
@@ -203,53 +222,68 @@ public class KeyStoreManagerImpl
 
   @Override
   public TrustManager[] getTrustManagers() throws KeystoreException {
-    TrustManager[] trustManagers = trustedKeyStore.getTrustManager(config.getTrustManagerAlgorithm(),
-        config.getTrustedKeyStorePassword());
-
-    // important! any time we get the array of trust managers we need to replace the X509TrustManager with the
-    // ReloadableX509TrustManager so that changes to the keystore are updated in the TrustManager
+    trustedKeyStoreLock.readLock().lock();
     try {
-      reloadableX509TrustManager =
-          ReloadableX509TrustManager.replaceX509TrustManager(reloadableX509TrustManager, trustManagers);
+      TrustManager[] trustManagers = trustedKeyStore.getTrustManager(config.getTrustManagerAlgorithm(),
+          config.getTrustedKeyStorePassword());
+
+      // important! any time we get the array of trust managers we need to replace the X509TrustManager with the
+      // ReloadableX509TrustManager so that changes to the keystore are updated in the TrustManager
+      try {
+        reloadableX509TrustManager =
+            ReloadableX509TrustManager.replaceX509TrustManager(reloadableX509TrustManager, trustManagers);
+      }
+      catch (NoSuchAlgorithmException e) {
+        throw new KeystoreException("A ReloadableX509TrustManager could not be created.", e);
+      }
+      return trustManagers;
+    } finally {
+      trustedKeyStoreLock.readLock().unlock();
     }
-    catch (NoSuchAlgorithmException e) {
-      throw new KeystoreException("A ReloadableX509TrustManager could not be created.", e);
-    }
-    return trustManagers;
   }
 
   @Override
   public KeyManager[] getKeyManagers() throws KeystoreException {
-    KeyManager[] keyManagers = privateKeyStore.getKeyManager(config.getKeyManagerAlgorithm(), PRIVATE_KEY_ALIAS,
-        config.getPrivateKeyStorePassword());
-
-    // important! any time we get the array of key managers we need to replace the X509KeyManager with the
-    // ReloadableX509KeyManager so that changes to the keystore are updated in the KeyManager
+    privateKeyStoreLock.readLock().lock();
     try {
-      reloadableX509KeyManager =
-          ReloadableX509KeyManager.replaceX509KeyManager(reloadableX509KeyManager, keyManagers);
+      KeyManager[] keyManagers = privateKeyStore.getKeyManager(config.getKeyManagerAlgorithm(), PRIVATE_KEY_ALIAS,
+          config.getPrivateKeyStorePassword());
+
+      // important! any time we get the array of key managers we need to replace the X509KeyManager with the
+      // ReloadableX509KeyManager so that changes to the keystore are updated in the KeyManager
+      try {
+        reloadableX509KeyManager =
+            ReloadableX509KeyManager.replaceX509KeyManager(reloadableX509KeyManager, keyManagers);
+      }
+      catch (NoSuchAlgorithmException e) {
+        throw new KeystoreException("A ReloadableX509KeyManager could not be created.", e);
+      }
+      return keyManagers;
+    } finally {
+      privateKeyStoreLock.readLock().unlock();
     }
-    catch (NoSuchAlgorithmException e) {
-      throw new KeystoreException("A ReloadableX509KeyManager could not be created.", e);
-    }
-    return keyManagers;
   }
 
   @Override
   public void importTrustCertificate(Certificate certificate, String alias) throws KeystoreException {
-    log.debug("Importing trust certificate w/alias: {}", alias);
+    trustedKeyStoreLock.writeLock().lock();
+    try {
+      log.debug("Importing trust certificate w/alias: {}", alias);
 
-    if (trustedKeyStore.getCertificate(alias) != null) {
-      log.warn("Certificate already exists in trust-store w/alias: {}; replacing certificate", alias);
-      trustedKeyStore.deleteEntry(alias, config.getTrustedKeyStorePassword());
+      if (trustedKeyStore.getCertificate(alias) != null) {
+        log.warn("Certificate already exists in trust-store w/alias: {}; replacing certificate", alias);
+        trustedKeyStore.deleteEntry(alias, config.getTrustedKeyStorePassword());
+      }
+
+      trustedKeyStore.importTrustCertificate(certificate, alias, config.getTrustedKeyStorePassword());
+
+      logTrustedCertificateAliases(trustedKeyStore);
+
+      // update re-loadable bits
+      getTrustManagers();
+    } finally {
+      trustedKeyStoreLock.writeLock().unlock();
     }
-
-    trustedKeyStore.importTrustCertificate(certificate, alias, config.getTrustedKeyStorePassword());
-
-    logTrustedCertificateAliases(trustedKeyStore);
-
-    // update re-loadable bits
-    getTrustManagers();
   }
 
   @Override
@@ -264,38 +298,53 @@ public class KeyStoreManagerImpl
 
   @Override
   public Certificate getTrustedCertificate(String alias) throws KeystoreException {
-    return trustedKeyStore.getCertificate(
-        checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), //NON-NLS
-        config.getTrustedKeyStorePassword());
+    trustedKeyStoreLock.readLock().lock();
+    try {
+      return trustedKeyStore.getCertificate(
+          checkNotNull(alias, "'alias' cannot be null when looking up a trusted Certificate."), //NON-NLS
+          config.getTrustedKeyStorePassword());
+    } finally {
+      trustedKeyStoreLock.readLock().unlock();
+    }
   }
 
   @Override
   public Collection<Certificate> getTrustedCertificates() throws KeystoreException {
-    String[] aliases = trustedKeyStore.listTrustCertificates(config.getTrustedKeyStorePassword());
-    List<Certificate> certificates = Lists.newArrayListWithCapacity(aliases.length);
-    for (String alias : aliases) {
-      Certificate cert = trustedKeyStore.getCertificate(alias);
-      // FIXME: Work around some strange case not clear why, but alias is reported for non-existent/removed certs
-      if (cert == null) {
-        log.warn("Trust-store reports it contains certificate for alias '{}' but certificate is null", alias);
-        continue;
+    trustedKeyStoreLock.readLock().lock();
+    try {
+      String[] aliases = trustedKeyStore.listTrustCertificates(config.getTrustedKeyStorePassword());
+      List<Certificate> certificates = Lists.newArrayListWithCapacity(aliases.length);
+      for (String alias : aliases) {
+        Certificate cert = trustedKeyStore.getCertificate(alias);
+        // FIXME: Work around some strange case not clear why, but alias is reported for non-existent/removed certs
+        if (cert == null) {
+          log.warn("Trust-store reports it contains certificate for alias '{}' but certificate is null", alias);
+          continue;
+        }
+        certificates.add(cert);
       }
-      certificates.add(cert);
-    }
 
-    return certificates;
+      return certificates;
+    } finally {
+      trustedKeyStoreLock.readLock().unlock();
+    }
   }
 
   @Override
   public void removeTrustCertificate(String alias) throws KeystoreException {
-    log.debug("Removing trust certificate w/alias: {}", alias);
+    trustedKeyStoreLock.writeLock().lock();
+    try {
+      log.debug("Removing trust certificate w/alias: {}", alias);
 
-    trustedKeyStore.deleteEntry(alias, config.getTrustedKeyStorePassword());
+      trustedKeyStore.deleteEntry(alias, config.getTrustedKeyStorePassword());
 
-    logTrustedCertificateAliases(trustedKeyStore);
+      logTrustedCertificateAliases(trustedKeyStore);
 
-    // update re-loadable bits
-    getTrustManagers();
+      // update re-loadable bits
+      getTrustManagers();
+    } finally {
+      trustedKeyStoreLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -307,22 +356,27 @@ public class KeyStoreManagerImpl
                                       final String country)
       throws KeystoreException
   {
-    privateKeyStore.generateKeyPair(PRIVATE_KEY_ALIAS,
-        config.getPrivateKeyStorePassword(),
-        config.getPrivateKeyPassword(),
-        config.getKeyAlgorithm(),
-        config.getKeyAlgorithmSize(),
-        config.getSignatureAlgorithm(),
-        config.getCertificateValidity().toDaysI(),
-        commonName,
-        organizationalUnit,
-        organization,
-        locality,
-        state,
-        country);
+    privateKeyStoreLock.writeLock().lock();
+    try {
+      privateKeyStore.generateKeyPair(PRIVATE_KEY_ALIAS,
+          config.getPrivateKeyStorePassword(),
+          config.getPrivateKeyPassword(),
+          config.getKeyAlgorithm(),
+          config.getKeyAlgorithmSize(),
+          config.getSignatureAlgorithm(),
+          config.getCertificateValidity().toDaysI(),
+          commonName,
+          organizationalUnit,
+          organization,
+          locality,
+          state,
+          country);
 
-    // update re-loadable bits
-    getKeyManagers();
+      // update re-loadable bits
+      getKeyManagers();
+    } finally {
+      privateKeyStoreLock.writeLock().unlock();
+    }
   }
 
   private boolean isKeyPairInstalled(final KeystoreInstance ks, final String alias) {
@@ -338,22 +392,42 @@ public class KeyStoreManagerImpl
 
   @Override
   public boolean isKeyPairInitialized() {
-    return isKeyPairInstalled(privateKeyStore, PRIVATE_KEY_ALIAS);
+    privateKeyStoreLock.readLock().lock();
+    try {
+      return isKeyPairInstalled(privateKeyStore, PRIVATE_KEY_ALIAS);
+    } finally {
+      privateKeyStoreLock.readLock().unlock();
+    }
   }
 
   @Override
   public Certificate getCertificate() throws KeystoreException {
-    return privateKeyStore.getCertificate(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
+    privateKeyStoreLock.readLock().lock();
+    try {
+      return privateKeyStore.getCertificate(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
+    } finally {
+      privateKeyStoreLock.readLock().unlock();
+    }
   }
 
   @Override
   public PrivateKey getPrivateKey() throws KeystoreException {
-    return privateKeyStore.getPrivateKey(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword(),
-        config.getPrivateKeyPassword());
+    privateKeyStoreLock.readLock().lock();
+    try {
+      return privateKeyStore.getPrivateKey(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword(),
+          config.getPrivateKeyPassword());
+    } finally {
+      privateKeyStoreLock.readLock().unlock();
+    }
   }
 
   @Override
   public void removePrivateKey() throws KeystoreException {
-    privateKeyStore.deleteEntry(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
+    privateKeyStoreLock.writeLock().lock();
+    try {
+      privateKeyStore.deleteEntry(PRIVATE_KEY_ALIAS, config.getPrivateKeyStorePassword());
+    } finally {
+      privateKeyStoreLock.writeLock().unlock();
+    }
   }
 }

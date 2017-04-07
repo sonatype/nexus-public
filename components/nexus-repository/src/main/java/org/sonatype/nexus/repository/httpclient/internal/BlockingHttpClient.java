@@ -23,6 +23,7 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.sequence.FibonacciNumberSequence;
 import org.sonatype.nexus.common.sequence.NumberSequence;
 import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport;
+import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;

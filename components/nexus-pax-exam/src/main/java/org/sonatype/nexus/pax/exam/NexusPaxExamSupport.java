@@ -381,8 +381,8 @@ public abstract class NexusPaxExamSupport
     return composite(
 
         // mimic nexus script
-        vmOption("-Xms1200M"),
-        vmOption("-Xmx1200M"),
+        vmOption("-Xms600M"),
+        vmOption("-Xmx600M"),
         vmOption("-XX:MaxDirectMemorySize=2G"),
         vmOption("-XX:+UnlockDiagnosticVMOptions"),
         vmOption("-XX:+UnsyncloadClass"),

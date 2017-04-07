@@ -35,6 +35,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -52,11 +56,18 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.ssl.internal.geronimo.KeystoreInstance;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorageManager;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -71,8 +82,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.sonatype.nexus.ssl.KeyStoreManagerImpl.PRIVATE_KEY_ALIAS;
 
 /**
@@ -97,7 +113,7 @@ public class KeyStoreManagerImplTest
     keyStoreManager = createKeyStoreManager(storageManager);
   }
 
-  private KeyStoreManager createKeyStoreManager(final KeyStoreStorageManager storageManager) {
+  private KeyStoreManagerConfiguration createMockConfiguration() {
     KeyStoreManagerConfiguration config = mock(KeyStoreManagerConfiguration.class);
     // use lower strength for faster test execution
     when(config.getKeyStoreType()).thenReturn("JKS");
@@ -110,7 +126,11 @@ public class KeyStoreManagerImplTest
     when(config.getPrivateKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getTrustedKeyStorePassword()).thenReturn("pwd".toCharArray());
     when(config.getPrivateKeyPassword()).thenReturn("pwd".toCharArray());
-    return new KeyStoreManagerImpl(crypto, storageManager, config);
+    return config;
+  }
+
+  private KeyStoreManager createKeyStoreManager(final KeyStoreStorageManager storageManager) {
+    return new KeyStoreManagerImpl(crypto, storageManager, createMockConfiguration());
   }
 
   /**
@@ -461,6 +481,127 @@ public class KeyStoreManagerImplTest
 
     // verify the client trusts the server
     clientTrustManager.checkServerTrusted(new X509Certificate[]{(X509Certificate) serverCertificate}, "TLS");
+  }
+
+  /**
+   * Confirm concurrent {@link KeyStoreManagerImpl#importTrustCertificate(Certificate, String)} invocations
+   * occur safely.
+   */
+  @Test
+  public void testConcurrentImportTrustCertificate() throws Exception {
+    X509Certificate certificate1 = generateCertificate(10,
+        "concurrency-1", "ou", "o", "l", "st", "country");
+    X509Certificate certificate2 = generateCertificate(10,
+        "concurrency-2", "ou", "o", "l", "st", "country");
+
+    KeyStoreManagerConfiguration configuration = createMockConfiguration();
+    KeystoreInstance trustStore = mock(KeystoreInstance.class);
+    CountDownLatch block = new CountDownLatch(1);
+
+    // any calls to trustStore#importTrustCertificate should block on the latch
+    doAnswer(blockingAnswer(block))
+        .when(trustStore)
+        .importTrustCertificate(
+            any(Certificate.class), any(String.class),
+            any(char[].class)
+        );
+
+    KeyStoreManagerImpl manager = new KeyStoreManagerImpl(crypto, configuration, null, trustStore);
+    ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+    List<ListenableFuture<String>> futures = new ArrayList<>();
+    try {
+      futures.add(service.submit(() -> {
+        manager.importTrustCertificate(certificate1, "concurrency-1");
+        return "concurrency-1";
+      }));
+
+      futures.add(service.submit(() -> {
+        manager.importTrustCertificate(certificate2, "concurrency-2");
+        return "concurrency-2";
+      }));
+
+      // no matter how long we wait, this list should be empty if we've guarded correctly
+      List<String> results = Futures.successfulAsList(futures).get(100, TimeUnit.MILLISECONDS);
+      assertEquals(0, results.size());
+
+    } catch (TimeoutException e) {
+      // expected; from Futures.successfulAsList().get()
+    } finally {
+      // release the latch so those threads are unblocked
+      block.countDown();
+      service.shutdownNow();
+    }
+
+    // a passing test will show that we only called KeyStoreInstance#importTrustCertificate once and only once
+    // if we see more than one invocation, we passed the concurrency guard, which is unsafe
+    // since KeystoreInstance is not thread-safe
+    verify(trustStore, times(1))
+        .importTrustCertificate(
+            any(Certificate.class), any(String.class),
+            any(char[].class));
+  }
+
+  /**
+   * Confirm concurrent {@link KeyStoreManager#generateAndStoreKeyPair(String, String, String, String, String, String)}
+   * invocations occur safely.
+   */
+  @Test
+  public void testConcurrentGenerateAndStoreKeyPair() throws Exception {
+    KeyStoreManagerConfiguration configuration = createMockConfiguration();
+    KeystoreInstance privateStore = mock(KeystoreInstance.class);
+    CountDownLatch block = new CountDownLatch(1);
+    KeyStoreManagerImpl manager = new KeyStoreManagerImpl(crypto, configuration, privateStore, null);
+
+    // any calls to privateStore#generateKeyPair should block
+    doAnswer(blockingAnswer(block))
+        .when(privateStore)
+        .generateKeyPair(any(String.class), any(char[].class), any(char[].class), any(String.class),
+            anyInt(), any(String.class), anyInt(), any(String.class), any(String.class), any(String.class),
+            any(String.class), any(String.class), any(String.class));
+
+    ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+    List<ListenableFuture<String>> futures = new ArrayList<>();
+    try {
+      futures.add(service.submit(() -> {
+        manager.generateAndStoreKeyPair("concurrency-1",
+            "ou", "o", "l", "st", "c");
+        return "concurrency-1";
+      }));
+
+      futures.add(service.submit(() -> {
+        manager.generateAndStoreKeyPair("concurrency-2",
+            "ou", "o", "l", "st", "c");
+        return "concurrency-2";
+      }));
+
+      List<String> results = Futures.successfulAsList(futures).get(100, TimeUnit.MILLISECONDS);
+      assertEquals(0, results.size());
+
+    } catch (TimeoutException e) {
+      // expected; from Futures.successfulAsList().get()
+    } finally {
+      // release the latch so those threads are unblocked
+      block.countDown();
+      service.shutdownNow();
+    }
+
+    // a passing test will show that we only called KeyStoreInstance#generateKeyPair once and only once
+    // if we see more than one invocation, we passed the concurrency guard, which is unsafe
+    // since KeystoreInstance is not thread-safe
+    verify(privateStore, times(1))
+        .generateKeyPair(any(String.class), any(char[].class), any(char[].class), any(String.class),
+            anyInt(), any(String.class), anyInt(), any(String.class), any(String.class), any(String.class),
+            any(String.class), any(String.class), any(String.class));
+  }
+
+  private Answer<?> blockingAnswer(CountDownLatch latch) {
+    return new Answer<Object>() {
+      @Override
+      public Object answer(final InvocationOnMock invocation) throws Throwable {
+        latch.await();
+        return null;
+      }
+    };
   }
 
   private X509Certificate generateCertificate(int validity,

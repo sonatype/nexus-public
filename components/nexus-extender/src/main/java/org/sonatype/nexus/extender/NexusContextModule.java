@@ -16,6 +16,7 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.security.WebSecurityModule;
 import org.sonatype.nexus.transaction.TransactionModule;
@@ -66,7 +67,7 @@ public class NexusContextModule
     requireBinding(GuiceFilter.class);
     requireBinding(BeanManager.class);
 
-    bind(NexusLifecycleManager.class);
+    bind(ManagedLifecycleManager.class).to(NexusLifecycleManager.class);
 
     bind(ServletContext.class).toInstance(servletContext);
     bind(ParameterKeys.PROPERTIES).toInstance(nexusProperties);
