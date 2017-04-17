@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
+import org.sonatype.nexus.blobstore.StreamMetrics;
+
 /**
  * A wrapper around file operations to make mocking easier.
  *
@@ -23,34 +25,6 @@ import java.nio.file.Path;
  */
 public interface FileOperations
 {
-  class StreamMetrics
-  {
-    private final long size;
-
-    private final String sha1;
-
-    public StreamMetrics(final long size, final String sha1) {
-      this.size = size;
-      this.sha1 = sha1;
-    }
-
-    public long getSize() {
-      return size;
-    }
-
-    public String getSha1() {
-      return sha1;
-    }
-
-    @Override
-    public String toString() {
-      return "StreamMetrics{" +
-          "size=" + size +
-          ", sha1='" + sha1 + '\'' +
-          '}';
-    }
-  }
-
   /**
    * Creates a file (and its containing directories, if necessary) and populates it from the
    * InputStream, which gets closed.

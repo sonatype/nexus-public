@@ -194,7 +194,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.DatabaseFreezeWarnings',
+      id: 'NX.coreui.controller.DatabaseWarnings',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }

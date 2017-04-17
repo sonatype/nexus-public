@@ -10,26 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.blobstore.api.BlobId;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.regex.Pattern;
 
 /**
- * Stores temporary blobs in a single directory separate from the blobs holding actual saved content.
+ * Superclass containing common code for {@link LocationStrategy} implementations.
  *
  * @since 3.1
  */
-@Named("temporary")
-public class TemporaryLocationStrategy
-    extends LocationStrategySupport
+public abstract class LocationStrategySupport
+    implements LocationStrategy
 {
-  @Override
-  public String location(final BlobId blobId) {
-    checkNotNull(blobId);
-    return String.format("tmp/%s", escapeFilename(blobId.asUniqueString()));
+  private static final Pattern UNSAFE_TOKENS = Pattern.compile("[.\\\\:/]");
+
+  protected String escapeFilename(final String value) {
+    return UNSAFE_TOKENS.matcher(value).replaceAll("-");
   }
 }

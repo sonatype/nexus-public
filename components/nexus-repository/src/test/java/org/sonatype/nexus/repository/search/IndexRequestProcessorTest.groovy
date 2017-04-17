@@ -45,7 +45,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.FAILED
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED
 import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED
 
-class ComponentSubscriberTest
+class IndexRequestProcessorTest
     extends TestSupport
 {
 
@@ -74,11 +74,11 @@ class ComponentSubscriberTest
   @Mock
   StorageTx storageTx
 
-  ComponentSubscriber componentSubscriber
+  IndexRequestProcessor indexRequestProcessor
 
   @Before
   public void setup() {
-    componentSubscriber = new ComponentSubscriber(repositoryManager)
+    indexRequestProcessor = new IndexRequestProcessor(repositoryManager)
     when(repositoryManager.get('testRepo')).thenReturn(repository)
     when(repository.facet(SearchFacet)).thenReturn(searchFacet)
     when(repository.facet(StorageFacet)).thenReturn(storageFacet)
@@ -104,7 +104,7 @@ class ComponentSubscriberTest
     AssetDeletedEvent e6 = mockEntityEvent(AssetDeletedEvent, betaComponentId)
     ComponentDeletedEvent e7 = mockEntityEvent(ComponentDeletedEvent, alphaComponentId)
 
-    componentSubscriber.on(new EntityBatchEvent([e1, e2, e3, e4, e5, e6, e7]))
+    indexRequestProcessor.on(new EntityBatchEvent([e1, e2, e3, e4, e5, e6, e7]))
 
     // only alpha component should be deleted, beta events should be coalesced into a single put
     verify(searchFacet).delete(alphaComponentId)
@@ -114,7 +114,7 @@ class ComponentSubscriberTest
 
   @Test
   public void noEntityEventsTriggerNoSearchUpdates() throws Exception {
-    componentSubscriber.on(emptyBatchEvent)
+    indexRequestProcessor.on(emptyBatchEvent)
 
     verifyNoMoreInteractions(searchFacet)
   }
@@ -123,27 +123,27 @@ class ComponentSubscriberTest
   public void entityEventsOnStoppedRepositoryDoesNotThrowException() throws Exception {
     doThrow(new InvalidStateException(STOPPED, STARTED)).when(searchFacet).put(any())
 
-    componentSubscriber.on(simpleBatchEvent)
+    indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test
   public void entityEventsOnDeletedRepositoryDoesNotThrowException() throws Exception {
     doThrow(new InvalidStateException(DELETED, STARTED)).when(searchFacet).put(any())
 
-    componentSubscriber.on(simpleBatchEvent)
+    indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test
   public void entityEventsOnDestroyedRepositoryDoesNotThrowException() throws Exception {
     doThrow(new InvalidStateException(DESTROYED, STARTED)).when(searchFacet).put(any())
 
-    componentSubscriber.on(simpleBatchEvent)
+    indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test(expected = InvalidStateException)
   public void entityEventsOnFailedRepositoryThrowsException() throws Exception {
     doThrow(new InvalidStateException(FAILED, STARTED)).when(searchFacet).put(any())
 
-    componentSubscriber.on(simpleBatchEvent)
+    indexRequestProcessor.on(simpleBatchEvent)
   }
 }

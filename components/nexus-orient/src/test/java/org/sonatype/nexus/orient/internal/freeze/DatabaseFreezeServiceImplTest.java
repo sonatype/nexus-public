@@ -20,6 +20,7 @@ import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeMergedEvent;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
@@ -32,10 +33,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,6 +59,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class DatabaseFreezeServiceImplTest
@@ -191,6 +193,45 @@ public class DatabaseFreezeServiceImplTest
 
     underTest.freezeAllDatabases();
     underTest.releaseAllDatabases();
+  }
+
+
+  @Test
+  public void testOnNodeAddedShouldFreeze() {
+    verifyWrite(false);
+    when(databaseFrozenStateManager.get()).thenReturn(true);
+    underTest.onNodeMerged(new NodeMergedEvent());
+    verifyWrite(true);
+    verify(eventManager).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+  }
+
+  @Test
+  public void testOnNodeAddedShouldRelease() {
+    underTest.freezeAllDatabases();
+    verifyWrite(true);
+    when(databaseFrozenStateManager.get()).thenReturn(false);
+    underTest.onNodeMerged(new NodeMergedEvent());
+    verifyWrite(false);
+    verify(eventManager, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+  }
+
+  @Test
+  public void testOnNodeAddedNoChangeReleased() {
+    verifyWrite(false);
+    when(databaseFrozenStateManager.get()).thenReturn(false);
+    underTest.onNodeMerged(new NodeMergedEvent());
+    verifyWrite(false);
+    verifyNoMoreInteractions(eventManager);
+  }
+
+  @Test
+  public void testOnNodeAddedNoChangeFrozen() {
+    underTest.freezeAllDatabases();
+    verifyWrite(true);
+    when(databaseFrozenStateManager.get()).thenReturn(true);
+    underTest.onNodeMerged(new NodeMergedEvent());
+    verifyWrite(true);
+    verify(eventManager).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
   }
 
   /**

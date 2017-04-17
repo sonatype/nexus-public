@@ -10,21 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
-
-import org.sonatype.nexus.blobstore.api.BlobId;
+package org.sonatype.nexus.common.node;
 
 /**
- * Strategy determines the location of a blob file in a store.
+ * Emitted when a node has been merged in the cluster.
  *
- * Implementations might use algorithms to divide files up into multiple directories for easier management.
- *
- * @since 3.0
+ * @since 3.4
  */
-public interface LocationStrategy
+public class NodeMergedEvent
 {
-  /**
-   * Returns the location where blob file should exist.
-   */
-  String location(BlobId blobId);
 }

@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeMergedEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 
+import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
@@ -132,6 +134,17 @@ public class DatabaseFreezeServiceImpl
   public void checkUnfrozen(final String message) {
     if (isFrozen()) {
       throw new OModificationOperationProhibitedException(message);
+    }
+  }
+
+  @Subscribe
+  public void onNodeMerged(final NodeMergedEvent event) {
+    log.debug("Node merged with existing cluster: shared frozen state is {}", databaseFrozenStateManager.get());
+    if (databaseFrozenStateManager.get()) {
+      freezeAllDatabases();
+    }
+    else {
+      releaseAllDatabases();
     }
   }
 

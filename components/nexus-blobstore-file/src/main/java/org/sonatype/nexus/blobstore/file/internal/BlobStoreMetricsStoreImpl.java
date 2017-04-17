@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -147,7 +148,7 @@ public class BlobStoreMetricsStoreImpl
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
 
-    File[] blobStoreMetricsFiles = listBackingFiles(storageDirectory);
+    File[] blobStoreMetricsFiles = listBackingFiles();
     return getCombinedMetrics(blobStoreMetricsFiles);
 
   }
@@ -212,7 +213,7 @@ public class BlobStoreMetricsStoreImpl
   }
 
   @Override
-  public File[] listBackingFiles(final Path blobStoreRoot) {
+  public File[] listBackingFiles() {
     return storageDirectory.toFile().listFiles((dir, name) -> name.endsWith(METRICS_FILENAME));
   }
 

@@ -25,6 +25,8 @@ import java.nio.file.StandardOpenOption;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.MetricsInputStream;
+import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
 import com.google.common.io.ByteStreams;

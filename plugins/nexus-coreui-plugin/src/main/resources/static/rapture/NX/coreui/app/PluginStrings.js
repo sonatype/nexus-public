@@ -991,6 +991,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Nodes_Enable_read_only_mode: 'Enable read-only mode',
     Nodes_Enable_read_only_mode_dialog: 'Enable read-only mode?',
     Nodes_Read_only_mode_warning: 'Nexus Repository is in read-only mode',
+    Nodes_Quorum_lost_warning: 'Not enough Nexus Repository Manager nodes in the cluster are reachable so quorum cannot be achieved; database is read only. <a href="#admin/system/nodes">View Node status</a>',
     Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
     Nodes_enable_read_only_mode_dialog_description: 'Are you sure you want to reject additions of new' +
     ' components and changes to configuration?',

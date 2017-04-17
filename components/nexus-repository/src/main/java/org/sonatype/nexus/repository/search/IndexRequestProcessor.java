@@ -12,30 +12,20 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
-import org.sonatype.nexus.common.entity.EntityEvent;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.AssetEvent;
-import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
-import org.sonatype.nexus.repository.storage.ComponentEvent;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
@@ -45,60 +35,38 @@ import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED;
 
 /**
- * Subscriber of batched component/asset events, which are used to trigger search updates.
+ * Async processor of {@link IndexBatchRequest}s, which are used to trigger search updates.
  *
  * @since 3.0
  */
 @Named
 @Singleton
-public class ComponentSubscriber
+public class IndexRequestProcessor
     extends ComponentSupport
     implements EventAware, Asynchronous
 {
   private final RepositoryManager repositoryManager;
 
   @Inject
-  public ComponentSubscriber(final RepositoryManager repositoryManager) {
+  public IndexRequestProcessor(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final EntityBatchEvent batchEvent) {
-    final Multimap<String, EntityId> updatedComponents = HashMultimap.create();
-    final Set<EntityId> deletedComponents = new HashSet<>();
-
-    // slice events into their respective repositories
-    for (final EntityEvent event : batchEvent.getEvents()) {
-      if (event instanceof ComponentEvent) {
-        final ComponentEvent componentEvent = (ComponentEvent) event;
-        updatedComponents.put(componentEvent.getRepositoryName(), componentEvent.getComponentId());
-        if (event instanceof ComponentDeletedEvent) {
-          deletedComponents.add(componentEvent.getComponentId());
-        }
-      }
-      else if (event instanceof AssetEvent) {
-        final AssetEvent assetEvent = (AssetEvent) event;
-        if (assetEvent.getComponentId() != null) {
-          updatedComponents.put(assetEvent.getRepositoryName(), assetEvent.getComponentId());
-        }
-      }
-    }
-
-    // distribute updates across repositories as necessary
-    for (final String repositoryName : updatedComponents.keySet()) {
-      maybeUpdateSearchIndex(repositoryName, updatedComponents.get(repositoryName), deletedComponents);
-    }
+    process(new IndexBatchRequest(batchEvent));
   }
 
-  private void maybeUpdateSearchIndex(final String repositoryName,
-                                      final Iterable<EntityId> updatedComponents,
-                                      final Set<EntityId> deletedComponents)
-  {
+  public void process(final IndexBatchRequest request) {
+    request.forEach(this::maybeUpdateSearchIndex);
+  }
+
+  private void maybeUpdateSearchIndex(final String repositoryName, final IndexRequest indexRequest) {
     final Repository repository = repositoryManager.get(repositoryName);
     if (repository != null) {
       try {
-        doUpdateSearchIndex(repository, updatedComponents, deletedComponents);
+        doUpdateSearchIndex(repository, indexRequest);
       }
       catch (InvalidStateException e) {
         switch (e.getInvalidState()) {
@@ -117,21 +85,11 @@ public class ComponentSubscriber
     }
   }
 
-  private static void doUpdateSearchIndex(final Repository repository,
-                                          final Iterable<EntityId> updatedComponents,
-                                          final Set<EntityId> deletedComponents)
-  {
+  private static void doUpdateSearchIndex(final Repository repository, final IndexRequest indexRequest) {
     final SearchFacet searchFacet = repository.facet(SearchFacet.class);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
-      for (final EntityId componentId : updatedComponents) {
-        if (deletedComponents.contains(componentId)) {
-          searchFacet.delete(componentId);
-        }
-        else {
-          searchFacet.put(componentId);
-        }
-      }
+      indexRequest.apply(searchFacet);
     }
     finally {
       UnitOfWork.end();

@@ -48,5 +48,5 @@ public interface BlobStoreMetricsStore
    *
    * @since 3.2.1
    */
-  File[] listBackingFiles(Path blobStoreRoot);
+  File[] listBackingFiles();
 }

@@ -83,6 +83,9 @@ Ext.define('NX.controller.dev.Developer', {
         'nx-dev-tests button[action=showLicenseWarning]': {
           click: me.showLicenseWarning
         },
+        'nx-dev-tests button[action=showQuorumWarning]': {
+          click: me.showQuorumWarning
+         },
         'nx-dev-tests button[action=clearLocalState]': {
           click: me.clearLocalState
         }
@@ -211,6 +214,15 @@ Ext.define('NX.controller.dev.Developer', {
 
     licenseWarnings.daysToWarn = 10000;
     licenseWarnings.updateLicenseExpiryWarning();
+  },
+
+  /**
+   * Modify state so that the database quorum warning is shown in the UI.
+   *
+   * @private
+   */
+  showQuorumWarning: function () {
+    NX.State.setValue('quorum', { 'quorumPresent': false});
   },
 
   /**

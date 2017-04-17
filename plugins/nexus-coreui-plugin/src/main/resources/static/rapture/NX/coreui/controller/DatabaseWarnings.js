@@ -17,7 +17,7 @@
  *
  * @since 3.2
  */
-Ext.define('NX.coreui.controller.DatabaseFreezeWarnings', {
+Ext.define('NX.coreui.controller.DatabaseWarnings', {
   extend: 'NX.app.Controller',
 
   requires: [
@@ -41,20 +41,34 @@ Ext.define('NX.coreui.controller.DatabaseFreezeWarnings', {
     me.listen({
       controller: {
         '#State': {
-          dbchanged: me.dbFreezeStateChanged
+          changed: me.stateChanged
         }
       }
     });
   },
 
-  dbFreezeStateChanged: function() {
+  stateChanged: function() {
     var me = this,
-        databaseFreezeWarning = me.getDatabaseFreezeWarning(),
-        databaseFreezeState = NX.State.getValue('db', {})['dbFrozen'];
+        warningPanel = me.getDatabaseFreezeWarning(),
+        databaseFreezeState = NX.State.getValue('db', {})['dbFrozen'],
+        quorumState = NX.State.getValue('quorum', {})['quorumPresent'];
 
-    if (databaseFreezeWarning) {
-      databaseFreezeState ? databaseFreezeWarning.show() : databaseFreezeWarning.hide();
+    if (warningPanel) {
+      if (!quorumState) {
+        warningPanel.setTitle(NX.I18n.get('Nodes_Quorum_lost_warning'));
+      }
+
+      // Read-only mode will take precedence and be the only message shown.
+      if (databaseFreezeState) {
+        warningPanel.setTitle(NX.I18n.get('Nodes_Read_only_mode_warning'));
+      }
+
+      if (!quorumState || databaseFreezeState) {
+        warningPanel.show();
+      }
+      else {
+        warningPanel.hide();
+      }
     }
-
   }
 });

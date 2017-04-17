@@ -10,21 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore;
 
-import java.util.regex.Pattern;
+public class StreamMetrics {
+  private final long size;
 
-/**
- * Superclass containing common code for {@link LocationStrategy} implementations.
- *
- * @since 3.1
- */
-public abstract class LocationStrategySupport
-    implements LocationStrategy
-{
-  private static final Pattern UNSAFE_TOKENS = Pattern.compile("[.\\\\:/]");
+  private final String sha1;
 
-  protected String escapeFilename(final String value) {
-    return UNSAFE_TOKENS.matcher(value).replaceAll("-");
+  public StreamMetrics(final long size, final String sha1) {
+    this.size = size;
+    this.sha1 = sha1;
+  }
+
+  public long getSize() {
+    return size;
+  }
+
+  public String getSha1() {
+    return sha1;
+  }
+
+  @Override
+  public String toString() {
+    return "StreamMetrics{" +
+        "size=" + size +
+        ", sha1='" + sha1 + '\'' +
+        '}';
   }
 }

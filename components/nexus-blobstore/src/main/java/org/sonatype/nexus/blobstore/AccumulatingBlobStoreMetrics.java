@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
@@ -26,7 +26,7 @@ public class AccumulatingBlobStoreMetrics
 
   private long totalSize;
 
-  private long availableSpace;
+  private final long availableSpace;
 
   public AccumulatingBlobStoreMetrics(final long blobCount, final long totalSize, final long availableSpace) {
     this.blobCount = blobCount;

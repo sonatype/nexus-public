@@ -26,14 +26,15 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.goodies.common.Locks;
+import org.sonatype.nexus.blobstore.BlobSupport;
+import org.sonatype.nexus.blobstore.LocationStrategy;
+import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -41,7 +42,6 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.FileOperations.StreamMetrics;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -620,7 +620,7 @@ public class FileBlobStore
     try {
       Path blobDir = getAbsoluteBlobDir();
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        Stream.of(storeMetrics.listBackingFiles(blobDir)).forEach(metricsFile -> deleteQuietly(metricsFile.toPath()));
+        Stream.of(storeMetrics.listBackingFiles()).forEach(metricsFile -> deleteQuietly(metricsFile.toPath()));
         deleteQuietly(blobDir.resolve("metadata.properties"));
         Stream.of(blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME)))
             .forEach(deletionIndex -> deleteQuietly(deletionIndex.toPath()));
@@ -736,70 +736,25 @@ public class FileBlobStore
   }
 
   class FileBlob
-      implements Blob
+      extends BlobSupport
   {
-    private final BlobId blobId;
-
-    private final Lock lock;
-
-    private Map<String, String> headers;
-
-    private BlobMetrics metrics;
-
-    private volatile boolean stale;
-
     FileBlob(final BlobId blobId) {
-      this.blobId = checkNotNull(blobId);
-      lock = new ReentrantLock();
-      stale = true;
-    }
-
-    void refresh(final Map<String, String> headers, final BlobMetrics metrics) {
-      this.headers = checkNotNull(headers);
-      this.metrics = checkNotNull(metrics);
-      stale = false;
-    }
-
-    void markStale() {
-      stale = true;
-    }
-
-    boolean isStale() {
-      return stale;
-    }
-
-    @Override
-    public BlobId getId() {
-      return blobId;
-    }
-
-    @Override
-    public Map<String, String> getHeaders() {
-      return headers;
+      super(blobId);
     }
 
     @Override
     public InputStream getInputStream() {
-      Path contentPath = contentPath(blobId);
+      Path contentPath = contentPath(getId());
       try {
-        checkExists(contentPath, blobId);
+        checkExists(contentPath, getId());
         return new BufferedInputStream(fileOperations.openInputStream(contentPath));
       }
       catch (BlobStoreException e) {
         throw e;
       }
       catch (Exception e) {
-        throw new BlobStoreException(e, blobId);
+        throw new BlobStoreException(e, getId());
       }
-    }
-
-    @Override
-    public BlobMetrics getMetrics() {
-      return metrics;
-    }
-
-    Lock lock() {
-      return Locks.lock(lock);
     }
   }
 

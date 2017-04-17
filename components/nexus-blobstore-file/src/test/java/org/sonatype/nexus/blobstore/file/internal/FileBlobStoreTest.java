@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.LocationStrategy;
+import org.sonatype.nexus.blobstore.TemporaryLocationStrategy;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -70,7 +72,7 @@ public class FileBlobStoreTest
 
   @Mock
   private LoadingCache loadingCache;
-  
+
   @Mock
   NodeAccess nodeAccess;
 
