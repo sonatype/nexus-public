@@ -23,15 +23,20 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.google.common.base.Supplier;
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,13 +69,31 @@ public class MaintenanceServiceImplTest
   VariableSource variableSource;
 
   @Mock
-  EntityMetadata entityMetadata;
+  EntityMetadata assetEntityMetadata;
 
   @Mock
-  EntityId entityId;
+  EntityId assetEntityId;
 
   @Mock
   ComponentMaintenance componentMaintenance;
+
+  @Mock
+  Component component;
+
+  @Mock
+  EntityMetadata componentEntityMetadata;
+
+  @Mock
+  EntityId componentEntityId;
+
+  @Mock
+  StorageFacet storageFacet;
+
+  @Mock
+  Supplier<StorageTx> txSupplier;
+
+  @Mock
+  StorageTx storageTx;
 
   MaintenanceServiceImpl underTest;
 
@@ -78,25 +101,47 @@ public class MaintenanceServiceImplTest
   public void setUp() throws Exception {
     when(format.toString()).thenReturn("maven2");
 
-    when(mavenReleases.getName()).thenReturn("maven-releases");
-    when(mavenReleases.getFormat()).thenReturn(format);
-    when(mavenReleases.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);
-
-    when(mavenGroup.getName()).thenReturn("maven-group");
-    when(mavenGroup.getFormat()).thenReturn(format);
-    doThrow(new MissingFacetException(mavenGroup, ComponentMaintenance.class)).when(mavenGroup)
-        .facet(ComponentMaintenance.class);
-
-    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
-
-    when(variableResolverAdapter.fromAsset(assetOne)).thenReturn(variableSource);
-
-    when(assetOne.getEntityMetadata()).thenReturn(entityMetadata);
-
-    when(entityMetadata.getId()).thenReturn(entityId);
+    setupRepository();
+    setupStorage();
+    setupRepositoryGroup();
+    setupVariableResolvers();
+    setupAssetComponents();
 
     underTest = new MaintenanceServiceImpl(contentPermissionChecker,
         variableResolverAdapterManager);
+  }
+
+  private void setupAssetComponents() {
+    when(assetOne.getEntityMetadata()).thenReturn(assetEntityMetadata);
+    when(assetEntityMetadata.getId()).thenReturn(assetEntityId);
+
+    when(component.getEntityMetadata()).thenReturn(componentEntityMetadata);
+    when(componentEntityMetadata.getId()).thenReturn(componentEntityId);
+  }
+
+  private void setupVariableResolvers() {
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromAsset(assetOne)).thenReturn(variableSource);
+  }
+
+  private void setupRepositoryGroup() {
+    when(mavenGroup.getName()).thenReturn("maven-group");
+    when(mavenGroup.getFormat()).thenReturn(format);
+    
+    doThrow(new MissingFacetException(mavenGroup, ComponentMaintenance.class)).when(mavenGroup)
+        .facet(ComponentMaintenance.class);
+  }
+
+  private void setupStorage() {
+    when(storageFacet.txSupplier()).thenReturn(txSupplier);
+    when(txSupplier.get()).thenReturn(storageTx);
+  }
+
+  private void setupRepository() {
+    when(mavenReleases.getName()).thenReturn("maven-releases");
+    when(mavenReleases.getFormat()).thenReturn(format);
+    when(mavenReleases.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);
+    when(mavenReleases.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 
   @Test
@@ -106,7 +151,7 @@ public class MaintenanceServiceImplTest
 
     underTest.deleteAsset(mavenReleases, assetOne);
 
-    verify(componentMaintenance).deleteAsset(entityId);
+    verify(componentMaintenance).deleteAsset(assetEntityId);
   }
 
   @Test(expected = IllegalOperationException.class)
@@ -123,5 +168,27 @@ public class MaintenanceServiceImplTest
         .thenReturn(false);
 
     underTest.deleteAsset(mavenReleases, assetOne);
+  }
+
+  @Test
+  public void testDeleteComponent() {
+    when(storageTx.browseAssets(component)).thenReturn(singletonList(assetOne));
+    when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BreadActions.DELETE, variableSource))
+        .thenReturn(true);
+
+    underTest.deleteComponent(mavenReleases, component);
+
+    verify(storageTx).begin();
+    verify(storageTx).close();
+    verify(componentMaintenance).deleteComponent(componentEntityId);
+  }
+
+  @Test(expected = AuthorizationException.class)
+  public void testDeleteComponent_NotAuthorized() {
+    when(storageTx.browseAssets(component)).thenReturn(singletonList(assetOne));
+    when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BreadActions.DELETE, variableSource))
+        .thenReturn(false);
+
+    underTest.deleteComponent(mavenReleases, component);
   }
 }

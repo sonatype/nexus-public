@@ -12,14 +12,18 @@
  */
 package org.sonatype.nexus.repository.browse.internal.api;
 
+import javax.ws.rs.WebApplicationException;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
-public class AssetXOIDTest
+public class RepositoryItemIDXOTest
     extends TestSupport
 {
 
@@ -28,15 +32,27 @@ public class AssetXOIDTest
     String id = "testId";
     String repositoryName = "maven-releases";
 
-    AssetXOID assetXOID = new AssetXOID(repositoryName, id);
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO(repositoryName, id);
 
-    assertThat(assetXOID.getValue().contains(id), is(false));
-    assertThat(assetXOID.getValue().contains(repositoryName), is(false));
+    assertThat(repositoryItemIDXO.getValue().contains(id), is(false));
+    assertThat(repositoryItemIDXO.getValue().contains(repositoryName), is(false));
 
-    AssetXOID decoded = AssetXOID.fromString(assetXOID.getValue());
+    RepositoryItemIDXO decoded = RepositoryItemIDXO.fromString(repositoryItemIDXO.getValue());
 
     assertThat(decoded.getId(), is(id));
     assertThat(decoded.getRepositoryId(), is(repositoryName));
-    assertThat(decoded.getValue(), is(assetXOID.getValue()));
+    assertThat(decoded.getValue(), is(repositoryItemIDXO.getValue()));
+  }
+
+  @Test
+  public void unprocessableId() {
+    try {
+      RepositoryItemIDXO.fromString("test");
+      fail("Expected a WebApplicationException.");
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(UNPROCESSABLE_ENTITY));
+    }
+
   }
 }

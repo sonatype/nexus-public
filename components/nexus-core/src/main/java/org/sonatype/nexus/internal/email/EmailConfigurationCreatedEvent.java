@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.email;
 
 import org.sonatype.nexus.common.entity.EntityCreatedEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.email.EmailConfiguration;
 
 /**
  * Emitted when an {@link EmailConfiguration} entity has been created.
@@ -26,5 +27,10 @@ public class EmailConfigurationCreatedEvent
 {
   public EmailConfigurationCreatedEvent(final EntityMetadata metadata) {
     super(metadata);
+  }
+
+  @Override
+  public EmailConfiguration getEmailConfiguration() {
+    return getEntity();
   }
 }

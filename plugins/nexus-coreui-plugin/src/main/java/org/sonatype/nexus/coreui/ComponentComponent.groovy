@@ -23,8 +23,6 @@ import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
-import org.sonatype.nexus.repository.IllegalOperationException
-import org.sonatype.nexus.repository.MissingFacetException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.QueryOptions
@@ -36,7 +34,6 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.ComponentMaintenance
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.security.BreadActions
@@ -114,7 +111,7 @@ class ComponentComponent
 
   @Inject
   BrowseService browseService
-  
+
   @Inject
   MaintenanceService maintenanceService;
 
@@ -213,24 +210,19 @@ class ComponentComponent
   @Validate
   void deleteComponent(@NotEmpty final String componentId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
-    String format = repository.format.toString()
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
 
+    Component component;
     try {
       storageTx.begin()
-      VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format)
-      for (Asset asset : storageTx.browseAssets(storageTx.findComponent(new DetachedEntityId(componentId)))) {
-        if (!contentPermissionChecker.
-            isPermitted(repository.name, format, BreadActions.DELETE, variableResolverAdapter.fromAsset(asset))) {
-          throw new AuthorizationException()
-        }
-      }
+      component = storageTx.findComponent(new DetachedEntityId(componentId))
     }
     finally {
       storageTx.close()
     }
-
-    getComponentMaintenanceFacet(repository).deleteComponent(new DetachedEntityId(componentId))
+    if (component != null) {
+      maintenanceService.deleteComponent(repository, component)
+    }
   }
 
   @DirectMethod
@@ -255,18 +247,7 @@ class ComponentComponent
       maintenanceService.deleteAsset(repository, asset)
     }
   }
-
-  private ComponentMaintenance getComponentMaintenanceFacet(Repository repository) {
-    try {
-      return repository.facet(ComponentMaintenance.class)
-    }
-    catch (MissingFacetException e) {
-      throw new IllegalOperationException(
-          "Deleting from repository '$repository.name' of type '$repository.type' is not supported"
-      )
-    }
-  }
-
+  
   /**
    * Retrieve a component by its entity id.
    *

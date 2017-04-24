@@ -15,29 +15,20 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 import java.util.Arrays;
 
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
-import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
-import org.sonatype.nexus.repository.browse.internal.api.AssetXOID;
+import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.base.Supplier;
 import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,33 +46,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AssetsResourceTest
-    extends TestSupport
+    extends RepositoryResourceTestSupport
 {
   AssetsResource underTest;
-
-  @Mock
-  BrowseService browseService;
-
-  @Mock
-  RepositoryManager repositoryManager;
-
-  @Mock
-  Repository mavenReleases;
-
-  @Mock
-  Asset assetOne;
-
-  @Mock
-  ORID assetOneORID;
-
-  @Mock
-  EntityMetadata assetOneEntityMetadata;
-
-  @Mock
-  EntityId assetOneEntityId;
-
-  @Mock
-  Asset assetTwo;
 
   @Mock
   EntityMetadata assetTwoEntityMetadata;
@@ -96,57 +63,41 @@ public class AssetsResourceTest
   AssetEntityAdapter assetEntityAdapter;
 
   @Mock
-  StorageFacet storageFacet;
-
-  @Mock
-  StorageTx storageTx;
-
-  @Mock
   VariableSource variableSource;
-
-  @Mock
-  Format format;
 
   @Mock
   MaintenanceService maintenanceService;
 
-  Supplier<StorageTx> storageTxSupplier;
+  @Mock
+  ORID assetOneORID;
+
+  Asset assetOne;
+
+  Asset assetTwo;
+
+  AssetXO assetOneXO;
+
+  AssetXO assetTwoXO;
 
   @Before
   public void setUp() throws Exception {
-    configureMockedRepository(mavenReleases, "maven-releases", "http://localhost:8081/repository/maven-releases");
+    assetOne = getMockedAsset("nameOne", "asset");
+    when(assetOneORID.toString()).thenReturn("assetORID");
 
-    when(format.toString()).thenReturn("maven2");
+    assetTwo = getMockedAsset("assetTwo", "asset-two-continuation");
 
-    storageTxSupplier = () -> storageTx;
-    when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
+    assetOneXO = buildAssetXO("asset", "nameOne", "http://localhost:8081/repository/maven-releases/nameOne");
+    assetTwoXO = buildAssetXO("assetTwo", "nameTwo", "http://localhost:8081/repository/maven-releases/nameTwo");
 
-    when(assetOne.name()).thenReturn("nameOne");
-    when(assetOne.getEntityMetadata()).thenReturn(assetOneEntityMetadata);
-
-    when(assetOneORID.toString()).thenReturn("assetOneORID");
-
-    when(assetOneEntityMetadata.getId()).thenReturn(assetOneEntityId);
-    when(assetOneEntityId.getValue()).thenReturn("assetOne");
-
-    when(assetTwo.name()).thenReturn("nameTwo");
-    when(assetTwo.getEntityMetadata()).thenReturn(assetTwoEntityMetadata);
-
-    when(assetTwoEntityMetadata.getId()).thenReturn(assetTwoEntityId);
-    when(assetTwoEntityId.getValue()).thenReturn("asset-two-continuation");
-
-    underTest = new AssetsResource(browseService, repositoryManager, assetEntityAdapter, maintenanceService);
+    underTest = new AssetsResource(browseService, repositoryManagerRESTAdapter, assetEntityAdapter, maintenanceService);
   }
 
-  private void configureMockedRepository(Repository repository,
-                                         String name,
-                                         String url)
-  {
-    when(repositoryManager.get(name)).thenReturn(repository);
-    when(repository.getUrl()).thenReturn(url);
-    when(repository.getName()).thenReturn(name);
-    when(repository.getFormat()).thenReturn(format);
-    when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
+  AssetXO buildAssetXO(String id, String coordinates, String downloadUrl) {
+    AssetXO assetXo = new AssetXO();
+    assetXo.setId(id);
+    assetXo.setCoordinates(coordinates);
+    assetXo.setDownloadUrl(downloadUrl);
+    return assetXo;
   }
 
   @Captor
@@ -176,23 +127,6 @@ public class AssetsResourceTest
     assertThat(assetXOPage.getItems(), hasSize(2));
   }
 
-  @Test(expected = WebApplicationException.class)
-  public void testGetAssetsRepositoryRequired() {
-    underTest.getAssets("continue", null);
-  }
-
-  @Test(expected = NotFoundException.class)
-  public void testGetAssetsRepositoryNotFound() {
-    underTest.getAssets("continue", "not-found");
-  }
-
-  @Test
-  public void testFromAsset() {
-    AssetXO assetXO = underTest.fromAsset(assetOne, mavenReleases);
-
-    validateAssetOne(assetXO);
-  }
-
   private void validateAssetOne(final AssetXO assetXO) {
     assertThat(assetXO.getId(), notNullValue());
     assertThat(assetXO.getCoordinates(), is("nameOne"));
@@ -201,43 +135,39 @@ public class AssetsResourceTest
 
   @Test
   public void testGetAssetById() {
-    AssetXOID assetXOID = new AssetXOID("maven-releases", "c0ac2ab6c5e93a4a3909f0830fdadfcd");
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
+        "c0ac2ab6c5e93a4a3909f0830fdadfcd");
 
-    when(assetEntityAdapter.recordIdentity(new DetachedEntityId(assetXOID.getId()))).thenReturn(assetOneORID);
+    when(assetEntityAdapter.recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId()))).thenReturn(assetOneORID);
     when(browseService.getAssetById(assetOneORID, mavenReleases)).thenReturn(assetOne);
 
-    AssetXO assetXO = underTest.getAssetById(assetXOID.getValue());
+    AssetXO assetXO = underTest.getAssetById(repositoryItemIDXO.getValue());
 
     validateAssetOne(assetXO);
   }
 
   @Test
   public void testDeleteAsset() {
-    AssetXOID assetXOID = new AssetXOID("maven-releases", "c0ac2ab6c5e93a4a3909f0830fdadfcd");
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
+        "c0ac2ab6c5e93a4a3909f0830fdadfcd");
 
-    DetachedEntityId entityId = new DetachedEntityId(assetXOID.getId());
+    DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     when(assetEntityAdapter.recordIdentity(entityId)).thenReturn(assetOneORID);
     when(browseService.getAssetById(assetOneORID, mavenReleases)).thenReturn(assetOne);
 
-    underTest.deleteAsset(assetXOID.getValue());
+    underTest.deleteAsset(repositoryItemIDXO.getValue());
     verify(maintenanceService).deleteAsset(mavenReleases, assetOne);
 
   }
 
   @Test(expected = NotFoundException.class)
   public void testGetAssetById_notFound() {
-    AssetXOID assetXOID = new AssetXOID("maven-releases", "f10bd0593de3b5e4b377049bcaa80d3e");
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
+        "f10bd0593de3b5e4b377049bcaa80d3e");
 
-    when(assetEntityAdapter.recordIdentity(new DetachedEntityId(assetXOID.getId()))).thenReturn(assetOneORID);
+    when(assetEntityAdapter.recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId()))).thenReturn(assetOneORID);
     when(browseService.getAssetById(assetOneORID, mavenReleases)).thenReturn(null);
 
-    underTest.getAssetById(assetXOID.getValue());
-  }
-
-  @Test(expected = NotFoundException.class)
-  public void testGetAssetById_notId_notFound() {
-    String id = "not_an_id";
-
-    underTest.getAssetById(id);
+    underTest.getAssetById(repositoryItemIDXO.getValue());
   }
 }

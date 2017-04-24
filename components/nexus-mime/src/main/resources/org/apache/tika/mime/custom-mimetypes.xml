@@ -15,4 +15,15 @@
 -->
 <mime-info>
 
+  <mime-type type="application/font-woff">
+    <!-- Source is http://www.w3.org/TR/2011/CR-WOFF-20110804/#WOFFHeader
+         Note that this could be more detailed, covering different versions etc. -->
+    <!-- OSX UTI org.w3c.woff -->
+    <_comment>WOFF File Format</_comment>
+    <magic priority="50">
+      <match value="0x774F4646" type="string" offset="0"/>
+    </magic>
+    <glob pattern="*.woff"/>
+  </mime-type>
+
 </mime-info>

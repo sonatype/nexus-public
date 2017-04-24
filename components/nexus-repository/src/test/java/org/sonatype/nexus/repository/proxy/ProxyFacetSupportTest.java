@@ -24,6 +24,8 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
+import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 
@@ -205,5 +207,26 @@ public class ProxyFacetSupportTest
     doThrow(new IOException()).when(underTest).fetch(missingContext, null);
 
     underTest.get(missingContext);
+  }
+
+  @Test
+  public void testGet_MissingBlobException() throws IOException {
+    RetryDeniedException e = new RetryDeniedException("Denied", new MissingBlobException(null));
+    doThrow(e).when(underTest).getCachedContent(cachedContext);
+
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, null);
+    doReturn(reFetchedContent).when(underTest).store(cachedContext, reFetchedContent);
+
+    Content foundContent = underTest.get(cachedContext);
+
+    assertThat(foundContent, is(reFetchedContent));
+  }
+
+  @Test(expected = RetryDeniedException.class)
+  public void testGet_differentRetryReason() throws IOException {
+    RetryDeniedException e = new RetryDeniedException("Denied", new IOException());
+    doThrow(e).when(underTest).getCachedContent(cachedContext);
+
+    underTest.get(cachedContext);
   }
 }

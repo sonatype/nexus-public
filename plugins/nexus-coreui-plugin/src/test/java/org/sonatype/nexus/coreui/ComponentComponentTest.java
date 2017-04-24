@@ -126,39 +126,10 @@ public class ComponentComponentTest
     when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource2))
         .thenReturn(true);
     underTest.deleteComponent("testComponentId", "testRepositoryName");
+    
+    verify(maintenanceService).deleteComponent(repository, component);
   }
-
-  @Test(expected = AuthorizationException.class)
-  public void testDeleteComponent_failure() {
-    Component component = mock(Component.class);
-    Asset asset = mock(Asset.class);
-    VariableSource variableSource = mock(VariableSource.class);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
-    when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
-    when(storageTx.browseAssets(component)).thenReturn(Collections.singletonList(asset));
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
-        .thenReturn(false);
-    underTest.deleteComponent("testComponentId", "testRepositoryName");
-  }
-
-  @Test(expected = AuthorizationException.class)
-  public void testDeleteComponent_failure_multipleAssets() {
-    Component component = mock(Component.class);
-    Asset asset = mock(Asset.class);
-    VariableSource variableSource = mock(VariableSource.class);
-    Asset asset2 = mock(Asset.class);
-    VariableSource variableSource2 = mock(VariableSource.class);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
-    when(variableResolverAdapter.fromAsset(asset2)).thenReturn(variableSource2);
-    when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
-    when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset, asset2));
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
-        .thenReturn(true);
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource2))
-        .thenReturn(false);
-    underTest.deleteComponent("testComponentId", "testRepositoryName");
-  }
-
+  
   @Test
   public void testDeleteAsset() {
     Asset asset = mock(Asset.class);

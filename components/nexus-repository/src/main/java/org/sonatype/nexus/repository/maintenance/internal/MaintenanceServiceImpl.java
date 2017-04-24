@@ -20,9 +20,13 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
 
 import org.apache.shiro.authz.AuthorizationException;
@@ -53,14 +57,47 @@ public class MaintenanceServiceImpl
   public void deleteAsset(final Repository repository, final Asset asset) {
     checkNotNull(repository);
     checkNotNull(asset);
-    
+
     String repositoryFormat = repository.getFormat().toString();
-    if (!contentPermissionChecker.isPermitted(repository.getName(), repositoryFormat, BreadActions.DELETE,
-        variableResolverAdapterManager.get(repositoryFormat).fromAsset(asset))) {
+    if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapterManager.get(repositoryFormat),
+        asset)) {
       throw new AuthorizationException();
     }
 
     getComponentMaintenanceFacet(repository).deleteAsset(asset.getEntityMetadata().getId());
+  }
+
+  @Override
+  public void deleteComponent(final Repository repository, final Component component) {
+    checkNotNull(repository);
+    checkNotNull(component);
+
+    String repositoryFormat = repository.getFormat().toString();
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
+
+    StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get();
+
+    try {
+      storageTx.begin();
+      for (Asset asset : storageTx.browseAssets(component)) {
+        if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapter, asset)) {
+          throw new AuthorizationException();
+        }
+      }
+    }
+    finally {
+      storageTx.close();
+    }
+
+    getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
+  }
+
+  private boolean canDeleteAssetInRepository(final Repository repository,
+                                             final String repositoryFormat,
+                                             final VariableResolverAdapter variableResolverAdapter, final Asset asset)
+  {
+    return contentPermissionChecker.isPermitted(repository.getName(), repositoryFormat, BreadActions.DELETE,
+        variableResolverAdapter.fromAsset(asset));
   }
 
   private ComponentMaintenance getComponentMaintenanceFacet(final Repository repository) {

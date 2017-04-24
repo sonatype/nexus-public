@@ -177,7 +177,7 @@ public class BucketDeleter
     }
 
     try {
-      blobStore.delete(blobRef.getBlobId());
+      blobStore.delete(blobRef.getBlobId(), "Deleting Bucket");
     }
     catch (InvalidStateException e) {
       if (deletedBlobStores.add(blobStoreName)) {

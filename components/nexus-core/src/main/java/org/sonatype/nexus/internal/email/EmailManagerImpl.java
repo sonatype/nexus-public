@@ -24,6 +24,8 @@ import javax.net.ssl.SSLContext;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventConsumer;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailConfigurationChangedEvent;
@@ -125,11 +127,14 @@ public class EmailManagerImpl
     checkNotNull(configuration);
 
     EmailConfiguration model = configuration.copy();
-    // TODO: Validate configuration before saving?  Or leave to ext.direct?
 
     log.info("Saving configuration: {}", model);
+
+
     synchronized (lock) {
-      store.save(model);
+      if (!EventHelper.isReplicating()) {
+        store.save(model);
+      }
       this.configuration = model;
     }
 
@@ -211,14 +216,19 @@ public class EmailManagerImpl
 
   @Subscribe
   public void onStoreChanged(final EmailConfigurationEvent event) {
-    if (!event.isLocal()) {
-      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
-      EmailConfiguration model;
-      synchronized (lock) {
-        configuration = model = loadConfiguration();
-      }
-      eventManager.post(new EmailConfigurationChangedEvent(model));
-    }
+    handleReplication(event, e -> setConfiguration(e.getEmailConfiguration()));
   }
 
+  private void handleReplication(final EmailConfigurationEvent event,
+                                 final EventConsumer<EmailConfigurationEvent> consumer)
+  {
+    if (!event.isLocal()) {
+      try {
+        consumer.accept(event);
+      }
+      catch (Exception e) {
+        log.error("Failed to replicate: {}", event, e);
+      }
+    }
+  }
 }

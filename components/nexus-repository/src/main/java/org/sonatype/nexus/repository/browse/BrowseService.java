@@ -59,4 +59,9 @@ public interface BrowseService
    */
   Asset getAssetById(ORID assetId, final Repository repository);
 
+  /**
+   * Returns a component based on the supplied id and repository.
+   */
+  Component getComponentById(final ORID componentId, final Repository repository);
+
 }

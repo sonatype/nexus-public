@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maintenance;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Component;
 
 /**
  * A service for executing maintenance operations (such as a 'delete') on assets in a repository.
@@ -26,4 +27,9 @@ public interface MaintenanceService
    * Delete an asset in the specified repository.
    */
   void deleteAsset(Repository repository, Asset asset);
+
+  /**
+   * Delete a component in the specified repository.
+   */
+  void deleteComponent(Repository repository, Component component);
 }

@@ -110,7 +110,10 @@ class EmailManagerImplTest
 
     when: 'a remote event is received'
       def remoteEvent = Mock(EmailConfigurationEvent)
+      def emailConfig = Mock(EmailConfiguration)
       remoteEvent.isLocal() >> false
+      remoteEvent.getEmailConfiguration() >> emailConfig
+      emailConfig.copy() >> emailConfig
       impl.onStoreChanged(remoteEvent)
 
     then: 'the event is posted'

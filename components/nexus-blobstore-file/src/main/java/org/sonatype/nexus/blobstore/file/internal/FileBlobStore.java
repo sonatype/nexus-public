@@ -392,7 +392,7 @@ public class FileBlobStore
           }
 
           if (blobAttributes.isDeleted()) {
-            log.warn("Attempt to access soft-deleted blob {} ({})", blobId, blobAttributes.getPath());
+            log.warn("Attempt to access soft-deleted blob {} ({}), reason: {}", blobId, blobAttributes.getPath(), blobAttributes.getDeletedReason());
             return null;
           }
 
@@ -414,7 +414,7 @@ public class FileBlobStore
 
   @Override
   @Guarded(by = STARTED)
-  public boolean delete(final BlobId blobId) {
+  public boolean delete(final BlobId blobId, final String reason) {
     checkNotNull(blobId);
 
     final FileBlob blob = liveBlobs.getUnchecked(blobId);
@@ -439,6 +439,7 @@ public class FileBlobStore
       }
 
       blobAttributes.setDeleted(true);
+      blobAttributes.setDeletedReason(reason);
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
@@ -595,7 +596,7 @@ public class FileBlobStore
       }
       catch (AtomicMoveNotSupportedException e) { // NOSONAR
         supportsAtomicMove = false;
-        log.warn("Disabling atomic moves for blob store {}, could not move {} to {}, reason: {}",
+        log.warn("Disabling atomic moves for blob store {}, could not move {} to {}, reason deleted: {}",
             blobStoreConfiguration.getName(), source, target, e.getReason());
       }
     }

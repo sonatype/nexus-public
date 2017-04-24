@@ -283,5 +283,10 @@ class RepositoryWebhookCapability
     Set<Tag> getTags() {
       return [Tag.categoryTag(messages.category())]
     }
+
+    @Override
+    protected Set<String> uniqueProperties() {
+      return [P_REPOSITORY, P_URL] as Set
+    }
   }
 }

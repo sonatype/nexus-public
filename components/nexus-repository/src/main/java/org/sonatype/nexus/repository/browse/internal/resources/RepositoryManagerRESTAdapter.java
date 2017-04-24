@@ -10,27 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.email;
+package org.sonatype.nexus.repository.browse.internal.resources;
 
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.email.EmailConfiguration;
+import org.sonatype.nexus.repository.Repository;
 
 /**
- * Emitted when an {@link EmailConfiguration} entity has been deleted.
+ * A component to share common functionality for interacting with {@link
+ * org.sonatype.nexus.repository.manager.RepositoryManager}.
+ * between API resources
  *
- * @since 3.2
+ * @since 3.4
  */
-public class EmailConfigurationDeletedEvent
-    extends EntityDeletedEvent
-    implements EmailConfigurationEvent
+public interface RepositoryManagerRESTAdapter
 {
-  public EmailConfigurationDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
-
-  @Override
-  public EmailConfiguration getEmailConfiguration() {
-    return getEntity();
-  }
+  /**
+   * Retrieve a repository. Will throw a {@link javax.ws.rs.WebApplicationException} with status code 422 if the
+   * supplied  repository id is null, and throws a {@link javax.ws.rs.NotFoundException} if no repository with the
+   * supplied id exists.
+   */
+  Repository getRepository(String repositoryId);
 }

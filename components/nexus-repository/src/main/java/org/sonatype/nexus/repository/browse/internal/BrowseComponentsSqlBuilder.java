@@ -78,6 +78,11 @@ public class BrowseComponentsSqlBuilder
       params.put("versionFilter", filterValue);
     }
 
+    String lastId = queryOptions.getLastId();
+    if (lastId != null) {
+      params.put("rid", lastId);
+    }
+
     return params;
   }
 
@@ -95,6 +100,9 @@ public class BrowseComponentsSqlBuilder
           ComponentEntityAdapter.P_GROUP + " LIKE :groupFilter OR " +
           ComponentEntityAdapter.P_VERSION + " LIKE :versionFilter");
     }
+    if (queryOptions.getLastId() != null) {
+      whereClauses.add("@RID > :rid");
+    }
     return whereClauses.stream().map(clause -> "(" + clause + ")").collect(Collectors.joining(" AND "));
   }
 
@@ -102,9 +110,18 @@ public class BrowseComponentsSqlBuilder
     String sortDirection = queryOptions.getSortDirection();
     Integer start = queryOptions.getStart();
     Integer limit = queryOptions.getLimit();
+    String sortProperty = queryOptions.getSortProperty();
+
     StringBuilder sb = new StringBuilder();
     if (sortDirection != null) {
-      sb.append(String.format(" ORDER BY group %1$s, name %1$s, version %1$s", sortDirection));
+      // For performance purposes components can only be sorted by "id" or the group/name/version index. 
+      // Providing a sort property other than id will just default to the index.
+      if ("id".equals(sortProperty)) {
+        sb.append(String.format(" ORDER BY @RID %1$s", sortDirection));
+      }
+      else {
+        sb.append(String.format(" ORDER BY group %1$s, name %1$s, version %1$s", sortDirection));
+      }
     }
     if (start != null) {
       sb.append(" SKIP ");

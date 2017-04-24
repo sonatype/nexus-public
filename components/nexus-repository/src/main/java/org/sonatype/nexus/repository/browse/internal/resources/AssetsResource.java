@@ -25,7 +25,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -34,15 +33,13 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
-import org.sonatype.nexus.repository.browse.internal.api.AssetXOID;
+import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -55,7 +52,8 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
-import static org.sonatype.nexus.repository.browse.internal.api.AssetXOID.fromString;
+import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
+import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
 
 /**
  * @since 3.3
@@ -74,7 +72,7 @@ public class AssetsResource
 
   private final BrowseService browseService;
 
-  private final RepositoryManager repositoryManager;
+  private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   private final AssetEntityAdapter assetEntityAdapter;
 
@@ -82,12 +80,12 @@ public class AssetsResource
 
   @Inject
   public AssetsResource(final BrowseService browseService,
-                        final RepositoryManager repositoryManager,
+                        final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                         final AssetEntityAdapter assetEntityAdapter,
                         final MaintenanceService maintenanceService)
   {
     this.browseService = checkNotNull(browseService);
-    this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
   }
@@ -104,7 +102,7 @@ public class AssetsResource
       @QueryParam("repositoryId")
       final String repositoryId)
   {
-    Repository repository = getRepository(repositoryId);
+    Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
     final String lastId;
     if (continuationToken != null) {
@@ -118,32 +116,12 @@ public class AssetsResource
         repository,
         new QueryOptions(null, "id", "asc", 0, 10, lastId));
 
-    List<AssetXO> assetXOs = assetBrowseResult.getResults().stream().map(asset -> fromAsset(asset, repository))
+    List<AssetXO> assetXOs = assetBrowseResult.getResults().stream()
+        .map(asset -> fromAsset(asset, repository))
         .collect(toList());
 
     return new Page<>(assetXOs, assetBrowseResult.getTotal() > assetBrowseResult.getResults().size() ?
         id(getLast(assetBrowseResult.getResults())).getValue() : null);
-  }
-
-  @VisibleForTesting
-  AssetXO fromAsset(Asset asset, Repository repository) {
-
-    String internalId = id(asset).getValue();
-
-    AssetXO assetXO = new AssetXO();
-    assetXO.setCoordinates(asset.name());
-    assetXO.setDownloadUrl(repository.getUrl() + "/" + asset.name());
-    assetXO.setId(new AssetXOID(repository.getName(), internalId).getValue());
-
-    return assetXO;
-  }
-
-  private Repository getRepository(String repositoryId) {
-    if (repositoryId == null) {
-      throw new WebApplicationException("repositoryId is required.", 422);
-    }
-    return ofNullable(repositoryManager.get(repositoryId))
-        .orElseThrow(() -> new NotFoundException("Unable to locate repository with id " + repositoryId));
   }
 
   @GET
@@ -156,14 +134,14 @@ public class AssetsResource
                               @PathParam("id")
                               final String id)
   {
-    AssetXOID assetXOID = getAssetXOID(id);
-    Repository repository = getRepository(assetXOID.getRepositoryId());
+    RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);
+    Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
 
-    Asset asset = getAsset(id, repository, new DetachedEntityId(assetXOID.getId()));
+    Asset asset = getAsset(id, repository, new DetachedEntityId(repositoryItemIDXO.getId()));
     return fromAsset(asset, repository);
   }
 
-  private AssetXOID getAssetXOID(String id) {
+  private RepositoryItemIDXO getAssetXOID(final String id) {
     try {
       return fromString(id);
     }
@@ -183,10 +161,10 @@ public class AssetsResource
                           @PathParam("id")
                           final String id)
   {
-    AssetXOID assetXOID = getAssetXOID(id);
-    Repository repository = getRepository(assetXOID.getRepositoryId());
+    RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);
+    Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
 
-    DetachedEntityId entityId = new DetachedEntityId(assetXOID.getId());
+    DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     Asset asset = getAsset(id, repository, entityId);
 
     maintenanceService.deleteAsset(repository, asset);

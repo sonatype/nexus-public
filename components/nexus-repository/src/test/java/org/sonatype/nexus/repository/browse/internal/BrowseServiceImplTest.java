@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -57,6 +58,15 @@ public class BrowseServiceImplTest
 {
   @Mock
   ComponentEntityAdapter componentEntityAdapter;
+
+  @Mock
+  Component componentOne;
+
+  @Mock
+  ODocument componentOneDoc;
+
+  @Mock
+  ORID componentOneORID;
 
   @Mock
   VariableResolverAdapterManager variableResolverAdapterManager;
@@ -105,6 +115,7 @@ public class BrowseServiceImplTest
     when(queryOptions.getContentAuth()).thenReturn(true);
 
     when(assetOneORID.toString()).thenReturn("assetOne");
+    when(componentOneORID.toString()).thenReturn("componentOne");
 
     when(mavenReleases.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(mavenReleases.getName()).thenReturn("releases");
@@ -202,5 +213,36 @@ public class BrowseServiceImplTest
 
     assertThat(params.get("browsedRepository"), is("releases"));
     assertThat(params.get("rid"), is("assetOne"));
+  }
+
+  @Test
+  public void testGetComponentById() {
+    String expectedSql = "SELECT * FROM component WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+
+    when(storageTx.browse(eq(expectedSql), paramsCaptor.capture()))
+        .thenReturn(Collections.singletonList(componentOneDoc));
+
+    when(componentEntityAdapter.readEntity(componentOneDoc)).thenReturn(componentOne);
+
+    assertThat(underTest.getComponentById(componentOneORID, mavenReleases), is(componentOne));
+
+    Map<String, Object> params = paramsCaptor.getValue();
+
+    assertThat(params.get("browsedRepository"), is("releases"));
+    assertThat(params.get("rid"), is("componentOne"));
+  }
+
+  @Test
+  public void testGetComponentById_NoResultsIsNull() {
+    String expectedSql = "SELECT * FROM component WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+
+    when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
+
+    assertThat(underTest.getComponentById(componentOneORID, mavenReleases), nullValue());
+
+    Map<String, Object> params = paramsCaptor.getValue();
+
+    assertThat(params.get("browsedRepository"), is("releases"));
+    assertThat(params.get("rid"), is("componentOne"));
   }
 }

@@ -42,6 +42,8 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.MetadataNode;
+import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -56,6 +58,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -225,14 +228,32 @@ public class BrowseServiceImpl
     checkNotNull(repository);
     checkNotNull(assetId);
 
-    String sql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+    return getById(assetId, repository, "asset", assetEntityAdapter);
+  }
 
-    Map<String, Object> params = ImmutableMap.of("browsedRepository", repository.getName(), "rid", assetId.toString());
+  @Override
+  public Component getComponentById(final ORID componentId, final Repository repository) {
+    checkNotNull(repository);
+    checkNotNull(componentId);
+
+    return getById(componentId, repository, "component", componentEntityAdapter);
+  }
+
+  private <T extends MetadataNode<?>> T getById(final ORID orid,
+                                                final Repository repository,
+                                                final String tableName,
+                                                final MetadataNodeEntityAdapter<T> adapter)
+  {
+    String sql = format("SELECT * FROM %s WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid",
+        tableName);
+
+    Map<String, Object> params = ImmutableMap
+        .of("browsedRepository", repository.getName(), "rid", orid.toString());
 
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       return stream(storageTx.browse(sql, params).spliterator(), false)
-          .map(assetEntityAdapter::readEntity).findFirst().orElse(null);
+          .map(adapter::readEntity).findFirst().orElse(null);
     }
   }
 

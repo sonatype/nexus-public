@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.Asset.HASHES_NOT_VERIFIED;
@@ -208,7 +209,7 @@ public class StorageTxImpl
       return true;
     }
 
-    String message = String.format("Reached max retries: %d/%d", retries, MAX_RETRIES);
+    String message = format("Reached max retries: %d/%d", retries, MAX_RETRIES);
     log.warn(message);
 
     throw new RetryDeniedException(message, cause);
@@ -504,7 +505,7 @@ public class StorageTxImpl
 
     BlobRef blobRef = asset.blobRef();
     if (blobRef != null) {
-      deleteBlob(blobRef, effectiveWritePolicy);
+      deleteBlob(blobRef, effectiveWritePolicy, format("Deleting asset %s", EntityHelper.id(asset)));
     }
     assetEntityAdapter.deleteEntity(db, asset);
   }
@@ -669,7 +670,8 @@ public class StorageTxImpl
         throw new IllegalOperationException("Repository does not allow updating assets: " + bucket.getRepositoryName());
       }
       maybeUpdateBlobUpdated(asset, assetBlob, DateTime.now());
-      deleteBlob(asset.blobRef(), effectiveWritePolicy);
+      deleteBlob(asset.blobRef(), effectiveWritePolicy,
+          format("Updating asset %s", EntityHelper.id(asset)));
       return true;
     }
     return false;
@@ -825,13 +827,13 @@ public class StorageTxImpl
   /**
    * Deletes a blob w/ enforcing {@link WritePolicy} if not {@code null}. otherwise write policy will NOT be checked.
    */
-  private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy) {
+  private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy, final String reason) {
     checkNotNull(blobRef);
     if (effectiveWritePolicy != null && !effectiveWritePolicy.checkDeleteAllowed()) {
       throw new IllegalOperationException(
           "Repository does not allow deleting assets: " + bucket.getRepositoryName());
     }
-    blobTx.delete(blobRef);
+    blobTx.delete(blobRef, reason);
   }
 
   /**

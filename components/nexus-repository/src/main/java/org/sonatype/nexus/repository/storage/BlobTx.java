@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.storage;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -28,6 +29,7 @@ import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
@@ -53,7 +55,7 @@ class BlobTx
 
   private final Set<AssetBlob> newlyCreatedBlobs = Sets.newHashSet();
 
-  private final Set<BlobRef> deletionRequests = Sets.newHashSet();
+  private final Map<BlobRef, String> deletionRequests = Maps.newHashMap();
 
   public BlobTx(final NodeAccess nodeAccess, final BlobStore blobStore) {
     this.nodeAccess = checkNotNull(nodeAccess);
@@ -129,23 +131,23 @@ class BlobTx
     return blobStore.get(blobRef.getBlobId());
   }
 
-  public void delete(BlobRef blobRef) {
-    deletionRequests.add(blobRef);
+  public void delete(BlobRef blobRef, final String reason) {
+    deletionRequests.put(blobRef, reason);
   }
 
   public void commit() {
-    for (BlobRef blobRef : deletionRequests) {
+    for (Entry<BlobRef, String> deletionRequestEntry : deletionRequests.entrySet()) {
       try {
-        blobStore.delete(blobRef.getBlobId());
+        blobStore.delete(deletionRequestEntry.getKey().getBlobId(), deletionRequestEntry.getValue());
       }
       catch (Throwable t) {
-        log.warn("Unable to delete old blob {} while committing transaction", blobRef, t);
+        log.warn("Unable to delete old blob {} while committing transaction", deletionRequestEntry.getKey(), t);
       }
     }
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
         if (!assetBlob.isAttached()) {
-          blobStore.delete(assetBlob.getBlobRef().getBlobId());
+          blobStore.delete(assetBlob.getBlobRef().getBlobId(), "Removing unattached asset");
         }
       }
       catch (Throwable t) {
@@ -158,7 +160,7 @@ class BlobTx
   public void rollback() {
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
-        blobStore.delete(assetBlob.getBlobRef().getBlobId());
+        blobStore.delete(assetBlob.getBlobRef().getBlobId(), "Rolling back new asset");
       }
       catch (Throwable t) {
         log.warn("Unable to delete new blob {} while rolling back transaction", assetBlob.getBlobRef(), t);

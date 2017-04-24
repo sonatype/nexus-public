@@ -169,7 +169,7 @@ public class FileBlobStoreConcurrencyIT
           // There's a race condition here, we need to note that we're attempting to delete this before the deletion
           // goes through, otherwise we may fail the check, above.
           deletedIds.add(blobId);
-          underTest.delete(blobId);
+          underTest.delete(blobId, "Testing concurrency");
         }
     );
 

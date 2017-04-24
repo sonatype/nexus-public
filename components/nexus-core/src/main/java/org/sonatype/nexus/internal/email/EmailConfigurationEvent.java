@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.email;
 
+import org.sonatype.nexus.email.EmailConfiguration;
+
 /**
  * Event for {@link EmailConfiguration} entity.
  *
@@ -22,4 +24,6 @@ public interface EmailConfigurationEvent
   boolean isLocal();
 
   String getRemoteNodeId();
+
+  EmailConfiguration getEmailConfiguration();
 }
