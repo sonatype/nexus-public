@@ -33,18 +33,13 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
-import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
+import org.sonatype.nexus.repository.browse.internal.resources.doc.ComponentsResourceDoc;
+import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
@@ -55,6 +50,7 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.browse.internal.resources.ComponentsResource.RESOURCE_URI;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.4
@@ -62,15 +58,14 @@ import static org.sonatype.nexus.repository.browse.internal.resources.Components
 @Named
 @Singleton
 @Path(RESOURCE_URI)
-@Api(value = "components", description = "Operations to get and delete components")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class ComponentsResource
     extends ComponentSupport
-    implements Resource
+    implements Resource, ComponentsResourceDoc
 {
 
-  public static final String RESOURCE_URI = "/rest/v1/components";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/components";
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
@@ -93,15 +88,8 @@ public class ComponentsResource
   }
 
   @GET
-  @ApiOperation("List components")
-  public Page<ComponentXO> getComponents(
-      @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
-      @QueryParam("continuationToken")
-      final String continuationToken,
-
-      @ApiParam(value = "ID of the repository from which you would like to retrieve components", required = true)
-      @QueryParam("repositoryId")
-      final String repositoryId)
+  public Page<ComponentXO> getComponents(@QueryParam("continuationToken") final String continuationToken,
+      @QueryParam("repositoryId") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
@@ -159,13 +147,7 @@ public class ComponentsResource
 
   @GET
   @Path("/{id}")
-  @ApiOperation("Get a single component")
-  @ApiResponses(value = {
-      @ApiResponse(code = 404, message = "Component not found")
-  })
-  public ComponentXO getComponentById(@ApiParam(value = "ID of the component to retrieve")
-                                      @PathParam("id")
-                                      final String id)
+  public ComponentXO getComponentById(@PathParam("id") final String id)
   {
     RepositoryItemIDXO repositoryItemXOID = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemXOID.getRepositoryId());
@@ -185,13 +167,7 @@ public class ComponentsResource
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation(value = "Delete a single component")
-  @ApiResponses(value = {
-      @ApiResponse(code = 404, message = "Component not found")
-  })
-  public void deleteComponent(@ApiParam(value = "ID of the component to delete")
-                              @PathParam("id")
-                              final String id)
+  public void deleteComponent(@PathParam("id") final String id)
   {
     RepositoryItemIDXO repositoryItemIdXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIdXO.getRepositoryId());

@@ -23,4 +23,5 @@ import groovy.transform.ToString
 class NodeInfoXO
 {
   String name
+  Boolean local
 }

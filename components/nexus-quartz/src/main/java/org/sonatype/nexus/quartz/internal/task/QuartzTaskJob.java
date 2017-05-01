@@ -33,6 +33,7 @@ import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskFactory;
 import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.TaskInfo.RunState;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.scheduling.events.TaskBlockedEvent;
@@ -54,6 +55,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.scheduling.TaskInfo.RunState.BLOCKED;
 import static org.sonatype.nexus.scheduling.TaskInfo.RunState.RUNNING;
+import static org.sonatype.nexus.scheduling.TaskInfo.RunState.STARTING;
 
 /**
  * Quartz {@link Job} wrapping a Nexus {@link Task}.
@@ -139,8 +141,6 @@ public class QuartzTaskJob
           mayBlock();
 
           if (!taskFuture.isCancelled()) {
-            taskFuture.setRunState(RUNNING);
-            eventManager.post(new TaskStartedRunningEvent(taskInfo));
             try {
               context.setResult(task.call());
             }
@@ -190,7 +190,7 @@ public class QuartzTaskJob
   /**
    * Waits for other tasks blocked by current task to finish.
    */
-  private void mayBlock() {
+  private void mayBlock() throws Exception {
     while (true) {
       final List<TaskInfo> blockedBy;
 
@@ -202,6 +202,7 @@ public class QuartzTaskJob
         if (blockedBy.isEmpty()) {
           // no tasks are blocked
           log.trace("No blockers for task: {}", task);
+          markTaskAsRunning();
           return;
         }
         TaskInfo.RunState previousRunState = taskFuture.getRunState();
@@ -243,6 +244,15 @@ public class QuartzTaskJob
     }
   }
 
+  private void markTaskAsRunning() throws Exception {
+    log.trace("Task {} will be marked as running if it is not canceled", task);
+    if (!taskFuture.isCancelled()) {
+      log.trace("Task {} is not canceled, marking as running.", task);
+      taskFuture.setRunState(RUNNING);
+      eventManager.post(new TaskStartedRunningEvent(taskInfo));
+    }
+  }
+
   /**
    * Returns a list of tasks that are considered as "blocking" the execution of this task.
    */
@@ -255,9 +265,13 @@ public class QuartzTaskJob
         .filter(t -> !task.getId().equals(t.getId())
             && task.taskConfiguration().getTypeId().equals(t.getConfiguration().getTypeId())
             && State.RUNNING == t.getCurrentState().getState()
-            && BLOCKED != t.getCurrentState().getRunState()
+            && notStartingOrBlocked(t.getCurrentState().getRunState())
         )
         .collect(Collectors.toList());
+  }
+
+  private boolean notStartingOrBlocked(final RunState runState) {
+    return !(STARTING == runState || BLOCKED == runState);
   }
 
   @Override

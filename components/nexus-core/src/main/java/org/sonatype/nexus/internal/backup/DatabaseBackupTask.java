@@ -29,6 +29,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
@@ -57,9 +58,12 @@ public class DatabaseBackupTask
 
   private final DatabaseBackup databaseBackup;
 
+  private final DatabaseFreezeService freezeService;
+
   @Inject
-  public DatabaseBackupTask(final DatabaseBackup databaseBackup) {
+  public DatabaseBackupTask(final DatabaseBackup databaseBackup, final DatabaseFreezeService freezeService) {
     this.databaseBackup = checkNotNull(databaseBackup);
+    this.freezeService = checkNotNull(freezeService);
   }
 
   private interface Messages
@@ -88,22 +92,27 @@ public class DatabaseBackupTask
     log.info("task named '{}' database backup to location {}", getName(), location);
     MultipleFailures failures = new MultipleFailures();
 
-    for (String dbName : databaseBackup.dbNames()) {
-      try {
-        log.info("database backup of {} starting", dbName);
-        Callable<Void> job = databaseBackup.fullBackup(location, dbName);
-        jobs.add(job);
+    freezeService.freezeAllDatabases();
+    try {
+      for (String dbName : databaseBackup.dbNames()) {
+        try {
+          log.info("database backup of {} starting", dbName);
+          Callable<Void> job = databaseBackup.fullBackup(location, dbName);
+          jobs.add(job);
+        }
+        catch (Exception e) {
+          failures.add(new RuntimeException(String.format(
+              "database backup of %s to location: %s please check filesystem permissions and that the location exists",
+              dbName, location), e));
+        }
       }
-      catch (Exception e) {
-        failures.add(new RuntimeException(String.format(
-            "database backup of %s to location: %s please check filesystem permissions and that the location exists",
-            dbName, location), e));
-      }
-    }
 
-    monitorBackupResults(jobs, failures);
-    failures.maybePropagate();
-    return null;
+      monitorBackupResults(jobs, failures);
+      failures.maybePropagate();
+      return null;
+    } finally {
+      freezeService.releaseAllDatabases();
+    }
   }
 
   private void monitorBackupResults(final List<Callable<Void>> jobs, final MultipleFailures failures)

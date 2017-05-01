@@ -43,6 +43,6 @@ class NodeAccessComponent
   @Timed
   @ExceptionMetered
   List<NodeInfoXO> nodes() {
-    nodeAccess.memberIds.collect { new NodeInfoXO(name: it) }
+    nodeAccess.memberIds.collect { new NodeInfoXO(name: it, local: it == nodeAccess.id) }
   }
 }

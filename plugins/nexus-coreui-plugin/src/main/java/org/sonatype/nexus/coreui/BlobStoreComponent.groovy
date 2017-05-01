@@ -52,9 +52,6 @@ class BlobStoreComponent
   BlobStoreManager blobStoreManager
 
   @Inject
-  AttributeConverter attributeConverter
-
-  @Inject
   Map<String, Provider<BlobStore>> blobstorePrototypes
 
   @Inject
@@ -91,7 +88,7 @@ class BlobStoreComponent
         new BlobStoreConfiguration(
             name: blobStore.name,
             type: blobStore.type,
-            attributes: attributeConverter.asAttributes(blobStore.attributes)
+            attributes: blobStore.attributes
         )
     ))
   }
@@ -123,7 +120,7 @@ class BlobStoreComponent
     return new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,
-        attributes: attributeConverter.asAttributes(blobStore.blobStoreConfiguration.attributes),
+        attributes: blobStore.blobStoreConfiguration.attributes,
         blobCount: blobStore.metrics.blobCount,
         totalSize: blobStore.metrics.totalSize,
         availableSpace: blobStore.metrics.availableSpace,

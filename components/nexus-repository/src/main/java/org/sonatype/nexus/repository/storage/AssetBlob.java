@@ -13,12 +13,15 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.hash.HashCode;
 
@@ -34,34 +37,78 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class AssetBlob
 {
-  private final BlobRef blobRef;
+  private final NodeAccess nodeAccess;
 
-  private final Blob blob;
+  private final BlobStore blobStore;
 
-  private final long size;
+  private final Function<BlobStore, Blob> blobFunction;
 
   private final String contentType;
 
   private final Map<HashAlgorithm, HashCode> hashes;
 
+  private final boolean hashesVerified;
+
   private boolean attached;
 
-  private boolean hashesVerified;
+  private Blob canonicalBlob;
 
-  public AssetBlob(final BlobRef blobRef,
-                   final Blob blob,
-                   final long size,
+  private Blob ingestedBlob;
+
+  public AssetBlob(final NodeAccess nodeAccess,
+                   final BlobStore blobStore,
+                   final Function<BlobStore, Blob> blobFunction,
                    final String contentType,
                    final Map<HashAlgorithm, HashCode> hashes,
                    final boolean hashesVerified)
   {
-    this.blobRef = checkNotNull(blobRef);
-    this.blob = checkNotNull(blob);
-    this.size = size;
+    this.nodeAccess = checkNotNull(nodeAccess);
+    this.blobStore = checkNotNull(blobStore);
+    this.blobFunction = checkNotNull(blobFunction);
     this.contentType = checkNotNull(contentType);
     this.hashes = checkNotNull(hashes);
-    this.attached = false;
     this.hashesVerified = hashesVerified;
+  }
+
+  /**
+   * Returns {@code true} if this {@link AssetBlob} duplicates the old asset's blob.
+   *
+   * @since 3.4
+   */
+  public boolean isDuplicate() {
+    return canonicalBlob != null;
+  }
+
+  /**
+   * Redirects this temporary {@link AssetBlob} to a canonical (de-duplicated) blob.
+   *
+   * @since 3.4
+   */
+  void setDuplicate(final Blob canonicalBlob) {
+    this.canonicalBlob = checkNotNull(canonicalBlob);
+  }
+
+  /**
+   * Deletes this temporary {@link AssetBlob} by clearing any locally ingested blobs.
+   *
+   * Note this shouldn't stop the current response from serving back temporary content,
+   * it just makes sure non-persisted content is eventually cleaned up from the store.
+   *
+   * @since 3.4
+   */
+  void delete(final String reason) {
+    if (ingestedBlob != null) {
+      if (canonicalBlob != null) {
+        // canonical redirect is in place, so it's safe to hard-delete the temp blob
+        blobStore.deleteHard(ingestedBlob.getId());
+      }
+      else {
+        // no redirect, so the temp blob is all we have - use soft-delete so the bytes
+        // will still be available on disk for streaming back in the current response,
+        // while making sure it gets cleaned up on the next compact
+        blobStore.delete(ingestedBlob.getId(), reason);
+      }
+    }
   }
 
   /**
@@ -86,19 +133,28 @@ public class AssetBlob
    */
   @Nonnull
   public BlobRef getBlobRef() {
-    return blobRef;
+    return new BlobRef(
+        nodeAccess.getId(),
+        blobStore.getBlobStoreConfiguration().getName(),
+        getBlob().getId().asUniqueString());
   }
 
   @Nonnull
   public Blob getBlob() {
-    return blob;
+    if (canonicalBlob != null) {
+      return canonicalBlob;
+    }
+    if (ingestedBlob == null) {
+      ingestedBlob = checkNotNull(blobFunction.apply(blobStore));
+    }
+    return ingestedBlob;
   }
 
   /**
    * The blob size in bytes.
    */
   public long getSize() {
-    return size;
+    return getBlob().getMetrics().getContentSize();
   }
 
   /**

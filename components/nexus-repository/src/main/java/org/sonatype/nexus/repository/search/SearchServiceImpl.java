@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistration;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.base.Function;
@@ -44,8 +45,12 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -104,13 +109,27 @@ public class SearchServiceImpl
 
   private final boolean profile;
 
+  private BulkProcessor bulkProcessor;
+  /**
+   *
+   * @param client source for a {@link Client}
+   * @param repositoryManager the repositoryManager
+   * @param securityHelper the securityHelper
+   * @param searchSubjectHelper the searchSubjectHelper
+   * @param indexSettingsContributors the indexSetttingsContributors
+   * @param profile whether or not to profile elasticsearch queries (default: false)
+   * @param bulkActions how many requests to batch in {@link #bulkPut(Repository, Iterable, Function, Function)} (default:1000)
+   * @param bulkConcurrentRequests how many requests to execute concurrently (default: 1; 0 means execute synchronously)
+   */
   @Inject
-  public SearchServiceImpl(final Provider<Client> client,
+  public SearchServiceImpl(final Provider<Client> client, //NOSONAR
                            final RepositoryManager repositoryManager,
                            final SecurityHelper securityHelper,
                            final SearchSubjectHelper searchSubjectHelper,
                            final List<IndexSettingsContributor> indexSettingsContributors,
-                           @Named("${nexus.elasticsearch.profile:-false}") final boolean profile)
+                           @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
+                           @Named("${nexus.elasticsearch.bulk.actions:-1000}") final int bulkActions,
+                           @Named("${nexus.elasticsearch.bulk.concurrentRequests:-1}") final int bulkConcurrentRequests)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -119,6 +138,12 @@ public class SearchServiceImpl
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.repositoryNameMapping = Maps.newConcurrentMap();
     this.profile = checkNotNull(profile);
+
+    this.bulkProcessor = BulkProcessor
+        .builder(client.get(), new BulkIndexUpdateListener())
+        .setBulkActions(bulkActions)
+        .setConcurrentRequests(bulkConcurrentRequests)
+        .build();
   }
 
   @Override
@@ -204,7 +229,43 @@ public class SearchServiceImpl
       return;
     }
     log.debug("Adding to index document {} from {}: {}", identifier, repository, json);
-    client.get().prepareIndex(indexName, TYPE, identifier).setSource(json).execute();
+    client.get().prepareIndex(indexName, TYPE, identifier).setSource(json).execute(
+        new ActionListener<IndexResponse>() {
+          @Override
+          public void onResponse(final IndexResponse indexResponse) {
+            log.debug("successfully added {} {} to index {}", TYPE, identifier, indexName, indexResponse);
+          }
+          @Override
+          public void onFailure(final Throwable e) {
+            log.error(
+              "failed to add {} {} to index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
+              TYPE, identifier, indexName, e);
+          }
+        });
+  }
+
+  @Override
+  public void bulkPut(final Repository repository, final Iterable<Component> components,
+                      final Function<Component, String> identifierProducer,
+                      final Function<Component, String> jsonDocumentProducer) {
+    checkNotNull(repository);
+    checkNotNull(components);
+    String indexName = repositoryNameMapping.get(repository.getName());
+    if (indexName == null) {
+      return;
+    }
+
+    components.forEach(component -> {
+      String identifier = identifierProducer.apply(component);
+      String json = jsonDocumentProducer.apply(component);
+      bulkProcessor.add(
+          client.get()
+              .prepareIndex(indexName, TYPE, identifier)
+              .setSource(json).request()
+      );
+    });
+
+    bulkProcessor.flush();
   }
 
   @Override
@@ -216,7 +277,18 @@ public class SearchServiceImpl
       return;
     }
     log.debug("Removing from index document {} from {}", identifier, repository);
-    client.get().prepareDelete(indexName, TYPE, identifier).execute();
+    client.get().prepareDelete(indexName, TYPE, identifier).execute(new ActionListener<DeleteResponse>() {
+      @Override
+      public void onResponse(final DeleteResponse deleteResponse) {
+        log.debug("successfully removed {} {} from index {}", TYPE, identifier, indexName, deleteResponse);
+      }
+      @Override
+      public void onFailure(final Throwable e) {
+        log.error(
+          "failed to remove {} {} from index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
+          TYPE, identifier, indexName, e);
+      }
+    });
   }
 
   @Override

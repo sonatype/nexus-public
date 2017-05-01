@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,15 +78,14 @@ public class SearchFacetImpl
   @Transactional
   protected void rebuildComponentIndex() {
     final StorageTx tx = UnitOfWork.currentTx();
-    for (Component component : tx.browseComponents(tx.findBucket(getRepository()))) {
-      try {
-        put(component, tx.browseAssets(component));
-      }
-      catch (RuntimeException e) {
-        // one "bad" should not stop processing whole repository
-        log.warn("Could not reindex component: {}", component, e);
-      }
-    }
+
+    Map<String, Object> nameAttribute = Collections.singletonMap(REPOSITORY_NAME, getRepository().getName());
+    searchService.bulkPut(
+      getRepository(),
+      tx.browseComponents(tx.findBucket(getRepository())),
+      component -> EntityHelper.id(component).getValue(),
+      component -> producer(component).getMetadata(component, tx.browseAssets(component), nameAttribute)
+    );
   }
 
   @Guarded(by = STARTED)

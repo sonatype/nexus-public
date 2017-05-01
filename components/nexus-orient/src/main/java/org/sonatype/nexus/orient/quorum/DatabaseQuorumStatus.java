@@ -26,26 +26,32 @@ import com.google.common.collect.ImmutableSet;
  *
  * @since 3.4
  */
-public class  DatabaseQuorumStatus
+public class DatabaseQuorumStatus
 {
   private static final DatabaseQuorumStatus SINGLE =
-      new DatabaseQuorumStatus(ImmutableSet.of("local"), 1, null);
+      new DatabaseQuorumStatus(ImmutableSet.of("local"), 1, null, ImmutableSet.of("local"));
 
   private final Set<String> members;
+
+  private final Set<String> allConfiguredServers;
 
   private final int minimumForQuorum;
 
   private final String databaseName;
 
   /**
-   * @param members          the ids of the orient cluster members
-   * @param minimumForQuorum the number of members required to achieve quorum
-   * @param databaseName     the name of the database that produced the observation (can be null)
+   * @param members              the ids of the orient cluster members
+   * @param minimumForQuorum     the number of members required to achieve quorum
+   * @param databaseName         the name of the database that produced the observation (can be null)
+   * @param allConfiguredServers the ids of all configured servers, even if they are unreachable
    */
-  public DatabaseQuorumStatus(final Collection<String> members, final int minimumForQuorum, final String databaseName) {
+  public DatabaseQuorumStatus(final Collection<String> members, final int minimumForQuorum,
+                              final String databaseName, final Collection<String> allConfiguredServers)
+  {
     this.members = Collections.unmodifiableSet(new HashSet<>(members));
     this.minimumForQuorum = minimumForQuorum;
     this.databaseName = databaseName;
+    this.allConfiguredServers = Collections.unmodifiableSet(new HashSet<>(allConfiguredServers));
   }
 
   /**
@@ -53,9 +59,7 @@ public class  DatabaseQuorumStatus
    *
    * @return a {@link DatabaseQuorumStatus} reflective of a single node cluster.
    */
-  public static DatabaseQuorumStatus singleNode() {
-    return SINGLE;
-  }
+  public static DatabaseQuorumStatus singleNode() { return SINGLE; }
 
   public Set<String> getMembers() {
     return members;
@@ -63,6 +67,10 @@ public class  DatabaseQuorumStatus
 
   public int getMinimumForQuorum() {
     return minimumForQuorum;
+  }
+
+  public Set<String> getAllConfiguredServers() {
+    return allConfiguredServers;
   }
 
   @Nullable

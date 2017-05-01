@@ -10,28 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.quorum;
+package org.sonatype.nexus.orient;
 
 /**
- * Service for interacting with Orient database quorum.
+ * Service for a high-level interface to cluster management.
  *
  * @since 3.4
  */
-public interface DatabaseQuorumService
+public interface DatabaseClusterManager
 {
-  /**
-   * @return a {@link DatabaseQuorumStatus} reflecting current state (never null)
-   */
-  DatabaseQuorumStatus getQuorumStatus();
 
   /**
-   * @return a {@link DatabaseQuorumStatus} reflecting the current state of the specified database
+   * Removes the specified server from the orientdb cluster
+   * {@link com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin#removeServer}
+   *
+   * @param nodeId
    */
-  DatabaseQuorumStatus getQuorumStatus(String databaseName);
+  void removeServer(String nodeId);
 
   /**
-   * attempt to force the cluster to accept writes on this node
+   * Removes the specified server from the orientdb cluster configuration
+   * {@link com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin#removeServerFromConfiguration}
+   *
+   * @param nodeId
    */
-  void resetWriteQuorum();
+  void removeNodeFromConfiguration(String nodeId);
 
 }

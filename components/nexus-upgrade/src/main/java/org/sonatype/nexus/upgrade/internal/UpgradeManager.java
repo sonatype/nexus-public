@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.upgrade.Checkpoint;
@@ -49,10 +50,16 @@ public class UpgradeManager
 
   private final List<Upgrade> managedUpgrades;
 
+  private final boolean warnOnMissingDependencies;
+
   @Inject
-  public UpgradeManager(final List<Checkpoint> managedCheckpoints, final List<Upgrade> managedUpgrades) {
+  public UpgradeManager(final List<Checkpoint> managedCheckpoints, final List<Upgrade> managedUpgrades,
+                        @Named("${nexus.upgrade.warnOnMissingDependencies:-false}")
+                        final boolean warnOnMissingDependencies)
+  {
     this.managedCheckpoints = checkNotNull(managedCheckpoints);
     this.managedUpgrades = checkNotNull(managedUpgrades);
+    this.warnOnMissingDependencies = warnOnMissingDependencies;
   }
 
   public Set<String> getLocalModels() {
@@ -104,8 +111,9 @@ public class UpgradeManager
   /**
    * Orders the given upgrades so any dependent upgrades appear earlier on in the sequence.
    */
-  private static List<Upgrade> order(final Map<String, String> modelVersions, final Stream<Upgrade> upgrades) {
+  private List<Upgrade> order(final Map<String, String> modelVersions, final Stream<Upgrade> upgrades) {
     DependencyResolver<DependencySource<UpgradePoint>> resolver = new DependencyResolver<>();
+    resolver.setWarnOnMissingDependencies(warnOnMissingDependencies);
 
     resolver.add(ImmutableList.of(new InitialStep(modelVersions)));
     resolver.add(upgrades.map(UpgradeStep::new).sorted(UpgradeManager::byVersion).collect(toList()));

@@ -74,7 +74,7 @@ class BlobTxTest
     assertThat(assetBlob.size, is(equalTo(blobSize)))
     assertThat(assetBlob.hashesVerified, is(true))
     assertThat(assetBlob.hashes, hasEntry(SHA1, HashCode.fromString('6adfb183a4a2c94a2f92dab5ade762a47889a5a1')))
-    assertThat(assetBlob.blob, is(blob))
+    assertThat(assetBlob.ingestedBlob, is(blob))
   }
 
   @Test
@@ -112,7 +112,7 @@ class BlobTxTest
     assertThat(assetBlob.size, is(equalTo(blobSize)))
     assertThat(assetBlob.hashesVerified, is(false))
     assertThat(assetBlob.hashes, hasEntry(SHA1, HashCode.fromString('356a192b7913b04c54574d18c28d46e6395428ab')))
-    assertThat(assetBlob.blob, is(blob))
+    assertThat(assetBlob.ingestedBlob, is(blob))
   }
 
   @Test
@@ -151,6 +151,6 @@ class BlobTxTest
     assertThat(assetBlob.size, is(equalTo(blobSize)))
     assertThat(assetBlob.hashesVerified, is(true))
     assertThat(assetBlob.hashes, hasEntry(SHA1, HashCode.fromString('356a192b7913b04c54574d18c28d46e6395428ab')))
-    assertThat(assetBlob.blob, is(blob))
+    assertThat(assetBlob.ingestedBlob, is(blob))
   }
 }

@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.backup
 import java.util.concurrent.Callable
 
 import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 
 import spock.lang.Specification
 
@@ -30,20 +31,24 @@ class DatabaseBackupTaskTest
 
   def 'task should execute properly'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
+    def freezeService = Mock(DatabaseFreezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
       dbBackupTask.execute()
 
-    then: 'the databaseBackup service should be called appropriately'
+    then: 'the databaseBackup and freeze services should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test']
       1 * databaseBackup.fullBackup('target', 'test') >> dumbBackupJob
+      1 * freezeService.freezeAllDatabases()
+      1 * freezeService.releaseAllDatabases()
   }
 
   def 'task should fail somewhat gracefully if the file cannot be created'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
+    def freezeService = Mock(DatabaseFreezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -54,12 +59,15 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.fullBackup('target', 'test') >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
       }
+      1 * freezeService.freezeAllDatabases()
+      1 * freezeService.releaseAllDatabases()
       thrown(MultipleFailuresException)
   }
 
   def 'task should try to backup all files when told to do so'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
+    def freezeService = Mock(DatabaseFreezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -69,12 +77,15 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
       1 * databaseBackup.fullBackup('target', 'test1') >> dumbBackupJob
       1 * databaseBackup.fullBackup('target', 'test2') >> dumbBackupJob
+      1 * freezeService.freezeAllDatabases()
+      1 * freezeService.releaseAllDatabases()
       notThrown(MultipleFailuresException)
   }
 
   def 'task should be okay if one file fails, but others can work'() {
     def databaseBackup = Mock(DatabaseBackup)
-    def dbBackupTask = new DatabaseBackupTask(databaseBackup)
+    def freezeService = Mock(DatabaseFreezeService)
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -86,6 +97,8 @@ class DatabaseBackupTaskTest
         throw new IOException("mocked exception")
       }
       1 * databaseBackup.fullBackup('target','test2') >> dumbBackupJob
+      1 * freezeService.freezeAllDatabases()
+      1 * freezeService.releaseAllDatabases()
       thrown(MultipleFailuresException)
   }
 

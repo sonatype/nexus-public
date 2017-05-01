@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.quorum;
+package org.sonatype.nexus.rest;
 
 /**
- * Service for interacting with Orient database quorum.
+ * Constants relating to REST APIs.
  *
  * @since 3.4
  */
-public interface DatabaseQuorumService
+public class APIConstants
 {
-  /**
-   * @return a {@link DatabaseQuorumStatus} reflecting current state (never null)
-   */
-  DatabaseQuorumStatus getQuorumStatus();
+  private APIConstants() {
+  }
 
-  /**
-   * @return a {@link DatabaseQuorumStatus} reflecting the current state of the specified database
-   */
-  DatabaseQuorumStatus getQuorumStatus(String databaseName);
-
-  /**
-   * attempt to force the cluster to accept writes on this node
-   */
-  void resetWriteQuorum();
-
+  public static final String BETA_API_PREFIX = "/rest/beta";
 }

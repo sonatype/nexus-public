@@ -54,8 +54,14 @@
     </dependency>
 
     <dependency>
-      <groupId>com.softwarementors.extjs</groupId>
+      <groupId>org.sonatype.directjngine</groupId>
       <artifactId>directjngine</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

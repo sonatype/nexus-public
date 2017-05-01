@@ -139,6 +139,11 @@ public class ComponentsResourceTest
   }
 
   @Test
+  public void checkPath() {
+    assertThat(ComponentsResource.RESOURCE_URI, is("/rest/beta/components"));
+  }
+
+  @Test
   public void getComponents_firstPage() throws Exception {
     when(componentBrowseResult.getTotal()).thenReturn(10L);
     when(componentBrowseResult.getResults()).thenReturn(Arrays.asList(componentOne, componentTwo));

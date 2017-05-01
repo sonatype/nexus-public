@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.orient.DatabaseClusterManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 
 import com.google.common.collect.ImmutableList;
@@ -30,9 +31,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -59,6 +64,9 @@ public class DatabaseQuorumServiceImplTest
   @Mock
   NodeAccess nodeAccess;
 
+  @Mock
+  DatabaseClusterManager databaseClusterManager;
+
   DatabaseQuorumServiceImpl underTest;
 
   @Before
@@ -66,10 +74,11 @@ public class DatabaseQuorumServiceImplTest
     when(oServer.getDistributedManager()).thenReturn(serverManager);
     when(serverManager.getDatabaseConfiguration(any(String.class))).thenReturn(configuration);
     when(databaseServer.databases()).thenReturn(NAMES);
-    underTest = new DatabaseQuorumServiceImpl(Providers.of(oServer), databaseServer, nodeAccess);
+    underTest = new DatabaseQuorumServiceImpl(Providers.of(oServer), databaseServer, nodeAccess,
+        databaseClusterManager);
 
     when(configuration.getAllConfiguredServers()).thenReturn(ImmutableSet.of("one", "two", "three"));
-    when(configuration.getWriteQuorum(null, 3, null)).thenReturn(2);
+    when(configuration.getWriteQuorum(any(String.class), eq(3), any(String.class))).thenReturn(2);
   }
 
   @Test
@@ -114,5 +123,26 @@ public class DatabaseQuorumServiceImplTest
     }
 
     assertFalse(underTest.getQuorumStatus().isQuorumPresent());
+  }
+
+  @Test
+  public void getSingleDatabaseQuorumStatus() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(serverManager.getOnlineNodes(any(String.class))).thenReturn(ImmutableList.of("one", "two", "three"));
+
+    assertThat(underTest.getQuorumStatus(NAMES.get(0)).isQuorumPresent(), is(Boolean.TRUE));
+    assertThat(underTest.getQuorumStatus(NAMES.get(0)).getDatabaseName(), is(NAMES.get(0)));
+  }
+
+  @Test
+  public void resetQuorum() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.getId()).thenReturn("one");
+
+    underTest.resetWriteQuorum();
+    verify(databaseClusterManager).removeServer("two");
+    verify(databaseClusterManager).removeNodeFromConfiguration("two");
+    verify(databaseClusterManager).removeServer("three");
+    verify(databaseClusterManager).removeNodeFromConfiguration("three");
   }
 }

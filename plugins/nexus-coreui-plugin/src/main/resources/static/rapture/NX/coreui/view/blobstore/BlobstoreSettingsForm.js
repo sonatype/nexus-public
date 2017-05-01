@@ -76,12 +76,12 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     Ext.override(me.getForm(), {
       getValues: function() {
         var values = this.callParent(arguments);
-        values['attributes'] = Ext.JSON.encode({file:{path:values['path']}});
+        values['attributes'] = {file:{path:values['path']}};
         return values;
       },
 
       setValues: function(values) {
-        var attrs = Ext.JSON.decode(values['attributes']);
+        var attrs = values['attributes'];
         values['path'] = attrs['file']['path'];
         this.callParent(arguments);
       }

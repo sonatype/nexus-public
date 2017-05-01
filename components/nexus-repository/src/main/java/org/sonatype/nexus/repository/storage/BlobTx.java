@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
@@ -68,8 +69,12 @@ class BlobTx
                           final String contentType)
   {
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
-    Blob blob = blobStore.create(hashingStream, headers);
-    return createAssetBlob(blob, hashingStream.hashes(), true, contentType);
+    Blob streamedBlob = blobStore.create(hashingStream, headers); // pre-fetch to populate hashes
+    return createAssetBlob(
+        store -> streamedBlob,
+        hashingStream.hashes(),
+        true,
+        contentType);
   }
 
   /**
@@ -88,8 +93,11 @@ class BlobTx
                                        final String contentType,
                                        final long size)
   {
-    Blob blob = blobStore.create(sourceFile, headers, size, hashes.get(SHA1));
-    return createAssetBlob(blob, hashes, false, contentType);
+    return createAssetBlob(
+        store -> store.create(sourceFile, headers, size, hashes.get(SHA1)),
+        hashes,
+        false,
+        contentType);
   }
 
   /**
@@ -109,19 +117,26 @@ class BlobTx
     checkArgument(!Strings2.isBlank(headers.get(BlobStore.CONTENT_TYPE_HEADER)), "Blob content type is required");
     // This might be a place where we might consider passing in a BlobRef instead of a BlobId, for a post-fabric world
     // where repositories could be writing/reading from multiple blob stores.
-    Blob blob = blobStore.copy(blobId, headers);
-    return createAssetBlob(blob, hashes, hashesVerified, headers.get(BlobStore.CONTENT_TYPE_HEADER));
+    return createAssetBlob(
+        store -> store.copy(blobId, headers),
+        hashes,
+        hashesVerified,
+        headers.get(BlobStore.CONTENT_TYPE_HEADER));
   }
 
-  private AssetBlob createAssetBlob(final Blob blob,
+  private AssetBlob createAssetBlob(final Function<BlobStore, Blob> blobFunction,
                                     final Map<HashAlgorithm, HashCode> hashes,
                                     final boolean hashesVerified,
                                     final String contentType)
   {
-    BlobRef blobRef = new BlobRef(nodeAccess.getId(), blobStore.getBlobStoreConfiguration().getName(),
-        blob.getId().asUniqueString());
-    long bytes = blob.getMetrics().getContentSize();
-    AssetBlob assetBlob = new AssetBlob(blobRef, blob, bytes, contentType, hashes, hashesVerified);
+    AssetBlob assetBlob = new AssetBlob(
+        nodeAccess,
+        blobStore,
+        blobFunction,
+        contentType,
+        hashes,
+        hashesVerified);
+
     newlyCreatedBlobs.add(assetBlob);
     return assetBlob;
   }
@@ -147,7 +162,7 @@ class BlobTx
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
         if (!assetBlob.isAttached()) {
-          blobStore.delete(assetBlob.getBlobRef().getBlobId(), "Removing unattached asset");
+          assetBlob.delete("Removing unattached asset");
         }
       }
       catch (Throwable t) {
@@ -160,7 +175,7 @@ class BlobTx
   public void rollback() {
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
-        blobStore.delete(assetBlob.getBlobRef().getBlobId(), "Rolling back new asset");
+        assetBlob.delete("Rolling back new asset");
       }
       catch (Throwable t) {
         log.warn("Unable to delete new blob {} while rolling back transaction", assetBlob.getBlobRef(), t);

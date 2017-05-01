@@ -57,7 +57,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades, false);
 
     Map<String, String> modelVersions = ImmutableMap.of();
 
@@ -95,7 +95,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades, false);
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.1");
 
@@ -132,7 +132,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades, false);
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.1", "bar", "1.1");
 
@@ -167,7 +167,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, upgrades, false);
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.3", "bar", "1.2", "wibble", "2.1", "qux", "1.7");
 
@@ -187,7 +187,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.bad.UpgradeFoo_1_0()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
 
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("upgrade version '1.0' is not after '1.0'");
@@ -203,7 +203,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.cycle.UpgradeWibble_1_1()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
 
     thrown.expect(CyclicDependencyException.class);
     upgradeManager.plan(ImmutableMap.of());
@@ -217,10 +217,28 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_3()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades);
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
 
     thrown.expect(UnresolvedDependencyException.class);
     upgradeManager.plan(ImmutableMap.of());
+  }
+
+  @Test
+  public void testUpgradeGapIsDetectedAndLogged() {
+
+    List<Upgrade> upgrades = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_1(),
+        new org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_3()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, true);
+
+    List<Upgrade> plan = upgradeManager.plan(ImmutableMap.of());
+
+    assertThat(plan, contains(
+        instanceOf(org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_1.class),
+        instanceOf(org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_3.class)
+    ));
   }
 
   @Test
@@ -231,7 +249,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.CheckpointWibble()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of());
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of(), false);
 
     assertThat(upgradeManager.getLocalModels(), containsInAnyOrder("foo"));
   }
@@ -244,7 +262,7 @@ public class UpgradeManagerTest
         new org.sonatype.nexus.upgrade.example.CheckpointWibble()
     );
 
-    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of());
+    UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of(), false);
 
     assertThat(upgradeManager.getClusteredModels(), containsInAnyOrder("bar", "wibble"));
   }

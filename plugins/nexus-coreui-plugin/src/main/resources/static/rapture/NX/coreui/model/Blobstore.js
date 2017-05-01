@@ -23,7 +23,7 @@ Ext.define('NX.coreui.model.Blobstore', {
   fields: [
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
-    {name: 'attributes', type: 'string'},
+    {name: 'attributes', type: 'auto' /*object*/, defaultValue: null },
     {name: 'blobCount', type: 'int'},
     {name: 'totalSize', type: 'int'},
     {name: 'availableSpace', type: 'int'},

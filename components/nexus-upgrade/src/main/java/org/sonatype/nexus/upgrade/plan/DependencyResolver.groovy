@@ -35,6 +35,8 @@ import static com.google.common.base.Preconditions.checkState
 class DependencyResolver<T extends DependencySource>
   extends ComponentSupport
 {
+  boolean warnOnMissingDependencies
+
   /**
    * Mapping of label to source.
    */
@@ -146,7 +148,13 @@ class DependencyResolver<T extends DependencySource>
           source.unresolvedDependencies = unresolved.get(source)
         }
       }
-      throw new UnresolvedDependencyException(unresolved)
+      def dependencyException = new UnresolvedDependencyException(unresolved)
+      if (warnOnMissingDependencies) {
+        log.warn(dependencyException.getMessage())
+      }
+      else {
+        throw dependencyException
+      }
     }
 
     return new Resolution<T>(TopologicalSorter.sort(graph).collect { sources[it] }, dependsOn)

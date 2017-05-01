@@ -34,17 +34,12 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
+import org.sonatype.nexus.repository.browse.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
@@ -54,6 +49,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.3
@@ -61,14 +57,13 @@ import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemID
 @Named
 @Singleton
 @Path(AssetsResource.RESOURCE_URI)
-@Api(value = "assets", description = "Operations to get and delete assets")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class AssetsResource
     extends ComponentSupport
-    implements Resource
+    implements Resource, AssetsResourceDoc
 {
-  public static final String RESOURCE_URI = "/rest/v1/assets";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/assets";
 
   private final BrowseService browseService;
 
@@ -92,15 +87,8 @@ public class AssetsResource
 
 
   @GET
-  @ApiOperation("List all assets")
-  public Page<AssetXO> getAssets(
-      @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
-      @QueryParam("continuationToken")
-      final String continuationToken,
-
-      @ApiParam(value = "ID of the repository from which you would like to retrieve assets.", required = true)
-      @QueryParam("repositoryId")
-      final String repositoryId)
+  public Page<AssetXO> getAssets(@QueryParam("continuationToken") final String continuationToken,
+      @QueryParam("repositoryId") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
@@ -126,13 +114,7 @@ public class AssetsResource
 
   @GET
   @Path("/{id}")
-  @ApiOperation("Get a single asset")
-  @ApiResponses(value = {
-      @ApiResponse(code = 404, message = "Asset not found")
-  })
-  public AssetXO getAssetById(@ApiParam(value = "Id of the asset to get")
-                              @PathParam("id")
-                              final String id)
+  public AssetXO getAssetById(@PathParam("id") final String id)
   {
     RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
@@ -153,12 +135,7 @@ public class AssetsResource
 
   @DELETE
   @Path("/{id}")
-  @ApiOperation(value = "Delete a single asset")
-  @ApiResponses(value = {
-      @ApiResponse(code = 404, message = "Asset not found")
-  })
-  public void deleteAsset(@ApiParam(value = "Id of the asset to delete")
-                          @PathParam("id")
+  public void deleteAsset(@PathParam("id")
                           final String id)
   {
     RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);

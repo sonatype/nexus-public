@@ -46,6 +46,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
@@ -107,6 +108,12 @@ public class FileBlobStore
 
   @VisibleForTesting
   public static final String TEMPORARY_BLOB_ID_PREFIX = "tmp$";
+
+  private static final boolean RETRY_ON_COLLISION =
+      SystemPropertiesHelper.getBoolean("nexus.blobstore.retryOnCollision", true);
+
+  @VisibleForTesting
+  static final int MAX_COLLISION_RETRIES = 8;
 
   private Path contentDir;
 
@@ -293,6 +300,21 @@ public class FileBlobStore
     checkArgument(headers.containsKey(BLOB_NAME_HEADER), "Missing header: %s", BLOB_NAME_HEADER);
     checkArgument(headers.containsKey(CREATED_BY_HEADER), "Missing header: %s", CREATED_BY_HEADER);
 
+    for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
+      try {
+        return tryCreate(headers, ingester);
+      }
+      catch (BlobCollisionException e) { // NOSONAR
+        log.warn("BlobId collision: {} already exists{}", e.getBlobId(),
+            retries < MAX_COLLISION_RETRIES ? ", retrying with new BlobId" : "!");
+      }
+    }
+
+    throw new BlobStoreException("Cannot find free BlobId", null);
+  }
+
+  private Blob tryCreate(final Map<String, String> headers, final BlobIngester ingester) {
+
     // Generate a new blobId
     BlobId blobId;
     if (headers.containsKey(TEMPORARY_BLOB_HEADER)) {
@@ -313,31 +335,36 @@ public class FileBlobStore
 
     Lock lock = blob.lock();
     try {
-      log.debug("Writing blob {} to {}", blobId, blobPath);
+      if (RETRY_ON_COLLISION && fileOperations.exists(blobPath)) {
+        throw new BlobCollisionException(blobId);
+      }
+      try {
+        log.debug("Writing blob {} to {}", blobId, blobPath);
 
-      final StreamMetrics streamMetrics = ingester.ingestTo(temporaryBlobPath);
-      final BlobMetrics metrics = new BlobMetrics(new DateTime(), streamMetrics.getSha1(), streamMetrics.getSize());
-      blob.refresh(headers, metrics);
+        final StreamMetrics streamMetrics = ingester.ingestTo(temporaryBlobPath);
+        final BlobMetrics metrics = new BlobMetrics(new DateTime(), streamMetrics.getSha1(), streamMetrics.getSize());
+        blob.refresh(headers, metrics);
 
-      // Write the blob attribute file
-      BlobAttributes blobAttributes = new BlobAttributes(temporaryAttributePath, headers, metrics);
-      blobAttributes.store();
+        // Write the blob attribute file
+        BlobAttributes blobAttributes = new BlobAttributes(temporaryAttributePath, headers, metrics);
+        blobAttributes.store();
 
-      // Move the temporary files into their final location
-      move(temporaryBlobPath, blobPath);
-      move(temporaryAttributePath, attributePath);
+        // Move the temporary files into their final location
+        move(temporaryBlobPath, blobPath);
+        move(temporaryAttributePath, attributePath);
 
-      storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
+        storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
 
-      return blob;
-    }
-    catch (Exception e) {
-      // Something went wrong, clean up the files we created
-      deleteQuietly(temporaryAttributePath);
-      deleteQuietly(temporaryBlobPath);
-      deleteQuietly(attributePath);
-      deleteQuietly(blobPath);
-      throw new BlobStoreException(e, blobId);
+        return blob;
+      }
+      catch (Exception e) {
+        // Something went wrong, clean up the files we created
+        deleteQuietly(temporaryAttributePath);
+        deleteQuietly(temporaryBlobPath);
+        deleteQuietly(attributePath);
+        deleteQuietly(blobPath);
+        throw new BlobStoreException(e, blobId);
+      }
     }
     finally {
       lock.unlock();

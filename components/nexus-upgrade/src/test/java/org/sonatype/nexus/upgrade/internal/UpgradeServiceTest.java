@@ -104,7 +104,7 @@ public class UpgradeServiceTest
     upgradeWibble_2_0 = upgrades[3].mock;
 
     upgradeService = new UpgradeServiceImpl(
-        new UpgradeManager(asList(checkpoints), asList(upgrades)), modelVersionStore, nodeAccess);
+        new UpgradeManager(asList(checkpoints), asList(upgrades), false), modelVersionStore, nodeAccess);
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -117,7 +117,7 @@ public class UpgradeServiceTest
   @Test
   public void testManagesLifecycleOfVersionStore() throws Exception {
     upgradeService = new UpgradeServiceImpl(
-        new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
+        new UpgradeManager(asList(), asList(), false), modelVersionStore, nodeAccess);
 
     upgradeService.start();
     verify(modelVersionStore).start();
@@ -129,7 +129,7 @@ public class UpgradeServiceTest
   @Test
   public void testNoUpgradesDoesNothing() throws Exception {
     upgradeService = new UpgradeServiceImpl(
-        new UpgradeManager(asList(), asList()), modelVersionStore, nodeAccess);
+        new UpgradeManager(asList(), asList(), false), modelVersionStore, nodeAccess);
 
     upgradeService.start();
 

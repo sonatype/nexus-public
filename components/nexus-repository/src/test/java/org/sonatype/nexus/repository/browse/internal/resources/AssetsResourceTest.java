@@ -104,6 +104,11 @@ public class AssetsResourceTest
   ArgumentCaptor<QueryOptions> queryOptionsCaptor;
 
   @Test
+  public void checkPath() {
+    assertThat(AssetsResource.RESOURCE_URI, is("/rest/beta/assets"));
+  }
+
+  @Test
   public void testGetAssetsFirstPage() throws Exception {
     when(browseResult.getTotal()).thenReturn(10L);
     when(browseResult.getResults()).thenReturn(Arrays.asList(assetOne, assetTwo));

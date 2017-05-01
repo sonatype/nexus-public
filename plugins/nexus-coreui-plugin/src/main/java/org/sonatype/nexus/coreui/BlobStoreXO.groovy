@@ -30,7 +30,7 @@ class BlobStoreXO
   String type
 
   @NotEmpty
-  String attributes
+  Map<String, Map<String, Object>> attributes
 
   @Range
   long blobCount

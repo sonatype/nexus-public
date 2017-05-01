@@ -17,7 +17,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.Component;
 
+import com.google.common.base.Function;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -50,6 +52,18 @@ public interface SearchService
    * Puts data with given identifier into index of given repository.
    */
   void put(Repository repository, String identifier, String json);
+
+  /**
+   * Operation used for bulk updating of component index.
+   *
+   * @param repository the source repository
+   * @param components an {@link Iterable} of components to index
+   * @param identifierProducer a function producing an identifier for a component (never returning null)
+   * @param jsonDocumentProducer a function producing a json document for the component (never returning null)
+   */
+  void bulkPut(Repository repository, Iterable<Component> components,
+               Function<Component, String> identifierProducer,
+               Function<Component, String> jsonDocumentProducer);
 
   /**
    * Removes data with given identifier from index of given repository.

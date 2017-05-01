@@ -41,13 +41,13 @@ class AssetXO
 
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
 
-    String internalId = id(asset).getValue();
+    String internalId = id(asset).getValue()
 
-    AssetXO assetXO = new AssetXO();
-    assetXO.setCoordinates(asset.name());
-    assetXO.setDownloadUrl(repository.getUrl() + "/" + asset.name());
-    assetXO.setId(new RepositoryItemIDXO(repository.getName(), internalId).getValue());
+    AssetXO assetXO = new AssetXO()
+    assetXO.setCoordinates(asset.name())
+    assetXO.setDownloadUrl(repository.getUrl() + "/" + asset.name())
+    assetXO.setId(new RepositoryItemIDXO(repository.getName(), internalId).getValue())
 
-    return assetXO;
+    return assetXO
   }
 }
