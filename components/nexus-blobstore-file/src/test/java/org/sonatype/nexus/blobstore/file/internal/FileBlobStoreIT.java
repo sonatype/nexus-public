@@ -167,7 +167,7 @@ public class FileBlobStoreIT
 
     assertThat(storeMetrics.getAvailableSpace(), is(greaterThan(0L)));
 
-    final boolean deleted = underTest.delete(blob.getId());
+    final boolean deleted = underTest.delete(blob.getId(), "basicSmokeTest");
     assertThat(deleted, is(equalTo(true)));
     underTest.compact();
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
@@ -216,7 +216,7 @@ public class FileBlobStoreIT
         .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
 
     //Standard delete will not update metrics
-    underTest.delete(blob.getId());
+    underTest.delete(blob.getId(), "testSoftDeleteMetricsOnlyUpdateOnCompact");
     assertThat(underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
 
     //Compact triggers hard delete, so metrics will be updated
@@ -299,7 +299,7 @@ public class FileBlobStoreIT
 
     BlobId copyId = underTest.copy(temp.getId(), TEST_HEADERS).getId();
 
-    underTest.delete(temp.getId());
+    underTest.delete(temp.getId(), "blobCopyingPreservesBytesUsingHardLink");
 
     Blob copy = underTest.get(copyId);
 
@@ -337,7 +337,7 @@ public class FileBlobStoreIT
 
     BlobId copyId = underTest.copy(temp.getId(), TEST_HEADERS).getId();
 
-    underTest.delete(temp.getId());
+    underTest.delete(temp.getId(), "blobCopyingPreservesBytesUsingInputStream");
 
     Blob copy = underTest.get(copyId);
 

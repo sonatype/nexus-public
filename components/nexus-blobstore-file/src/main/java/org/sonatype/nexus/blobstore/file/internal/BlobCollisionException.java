@@ -10,26 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.blobstore.file.internal;
 
-import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobId;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Thrown when attempting to access blob content which is now missing from the blobstore.
+ * Thrown when a blob already exists for the generated {@link BlobId}.
  *
- * @since 3.2
+ * @since 3.4
  */
-public class MissingBlobException
-    extends IllegalStateException
+public class BlobCollisionException
+    extends RuntimeException
 {
-  private final BlobRef blobRef;
+  private final BlobId blobId;
 
-  public MissingBlobException(final BlobRef blobRef) {
-    super(String.format("Blob %s exists in metadata, but is missing from the blobstore", blobRef));
-    this.blobRef = blobRef;
+  public BlobCollisionException(final BlobId blobId) {
+    this.blobId = checkNotNull(blobId);
   }
 
-  public BlobRef getBlobRef() {
-    return blobRef;
+  /**
+   * The BlobId of the blob related to this exception.
+   */
+  public BlobId getBlobId() {
+    return blobId;
   }
 }

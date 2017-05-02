@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.Asset.HASHES_NOT_VERIFIED;
@@ -208,7 +210,7 @@ public class StorageTxImpl
       return true;
     }
 
-    String message = String.format("Reached max retries: %d/%d", retries, MAX_RETRIES);
+    String message = format("Reached max retries: %d/%d", retries, MAX_RETRIES);
     log.warn(message);
 
     throw new RetryDeniedException(message, cause);
@@ -504,7 +506,7 @@ public class StorageTxImpl
 
     BlobRef blobRef = asset.blobRef();
     if (blobRef != null) {
-      deleteBlob(blobRef, effectiveWritePolicy);
+      deleteBlob(blobRef, effectiveWritePolicy, format("Deleting asset %s", EntityHelper.id(asset)));
     }
     assetEntityAdapter.deleteEntity(db, asset);
   }
@@ -631,71 +633,111 @@ public class StorageTxImpl
       throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
     }
 
-    if (!maybeDeleteBlob(asset, assetBlob, effectiveWritePolicy)) {
-      DateTime now = DateTime.now();
-      asset.blobCreated(now);
-      asset.blobUpdated(now);
-    }
-
-    asset.blobRef(assetBlob.getBlobRef());
-    asset.size(assetBlob.getSize());
-    asset.contentType(assetBlob.getContentType());
-
-    // Set attributes map to contain computed checksum metadata
     NestedAttributesMap checksums = asset.attributes().child(CHECKSUM);
-    for (HashAlgorithm algorithm : assetBlob.getHashes().keySet()) {
-      checksums.set(algorithm.name(), assetBlob.getHashes().get(algorithm).toString());
+
+    if (!isDuplicateBlob(asset, assetBlob, effectiveWritePolicy, checksums)) {
+      maybeDeleteBlob(asset, effectiveWritePolicy);
+
+      asset.blobRef(assetBlob.getBlobRef());
+      asset.size(assetBlob.getSize());
+      asset.contentType(assetBlob.getContentType());
+
+      // Set attributes map to contain computed checksum metadata
+      for (Entry<HashAlgorithm, HashCode> entry : assetBlob.getHashes().entrySet()) {
+        HashAlgorithm algorithm = entry.getKey();
+        HashCode checksum = entry.getValue();
+        checksums.set(algorithm.name(), checksum.toString());
+      }
+
+      // Mark assets whose checksums were not verified locally, for possible later verification
+      asset.attributes().child(PROVENANCE).set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
+
+      assetBlob.setAttached(true);
     }
+  }
 
-    // Mark assets whose checksums were not verified locally, for possible later verification
-    asset.attributes().child(PROVENANCE).set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
+  /**
+   * Returns {@code true} when at least one incoming hash has the same algorithm as an existing checksum.
+   */
+  private boolean checksumExists(final NestedAttributesMap checksums, final AssetBlob assetBlob) {
+    if (!checksums.isEmpty()) {
+      for (HashAlgorithm algorithm : assetBlob.getHashes().keySet()) {
+        if (checksums.contains(algorithm.name())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
-    assetBlob.setAttached(true);
+  /**
+   * Returns {@code true} when incoming hashes all match existing checksums.
+   */
+  private boolean compareChecksums(final NestedAttributesMap checksums, final AssetBlob assetBlob) {
+    for (Entry<HashAlgorithm, HashCode> entry : assetBlob.getHashes().entrySet()) {
+      HashAlgorithm algorithm = entry.getKey();
+      HashCode checksum = entry.getValue();
+      if (!checksum.toString().equals(checksums.get(algorithm.name()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks whether incoming blob is a duplicate of existing asset blob; if so it re-uses the old blob.
+   */
+  private boolean isDuplicateBlob(final Asset asset,
+                                  final AssetBlob assetBlob,
+                                  final WritePolicy effectiveWritePolicy,
+                                  final NestedAttributesMap checksums)
+  {
+    if (asset.blobRef() != null) {
+      Blob oldBlob = blobTx.get(asset.blobRef());
+      if (oldBlob != null) {
+        boolean checksumsMatch;
+        if (assetBlob.getHashesVerified() && checksumExists(checksums, assetBlob)) {
+          // we have verified hashes, use those to avoid touching blob metrics
+          checksumsMatch = compareChecksums(checksums, assetBlob);
+        }
+        else {
+          // fall back to blob metrics, which involves fetching the new blob
+          String oldBlobSha1 = oldBlob.getMetrics().getSha1Hash();
+          String newBlobSha1 = assetBlob.getBlob().getMetrics().getSha1Hash();
+          checksumsMatch = oldBlobSha1.equalsIgnoreCase(newBlobSha1);
+        }
+        if (checksumsMatch) {
+          // still respect write policy even when de-duplicating
+          if (!effectiveWritePolicy.checkUpdateAllowed()) {
+            throw new IllegalOperationException(
+                "Repository does not allow updating assets: " + bucket.getRepositoryName());
+          }
+          assetBlob.setDuplicate(oldBlob);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
    * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
    * write policy will be enforced for this operation and will throw an exception if updates are not supported.
    */
-  private boolean maybeDeleteBlob(final Asset asset,
-                                  final AssetBlob assetBlob,
-                                  final WritePolicy effectiveWritePolicy)
+  private void maybeDeleteBlob(final Asset asset, final WritePolicy effectiveWritePolicy)
   {
-    checkNotNull(asset);
-    checkNotNull(assetBlob);
-    checkNotNull(effectiveWritePolicy);
+    DateTime now = DateTime.now();
     if (asset.blobRef() != null) {
+      // updating old blob
       if (!effectiveWritePolicy.checkUpdateAllowed()) {
         throw new IllegalOperationException("Repository does not allow updating assets: " + bucket.getRepositoryName());
       }
-      maybeUpdateBlobUpdated(asset, assetBlob, DateTime.now());
-      deleteBlob(asset.blobRef(), effectiveWritePolicy);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Updates the blob updated timestamp if the old blob and new blob do not share the same SHA1 hash. Assumes the blobs
-   * are different if the old blob has been lost for some reason. Note that this method only supports assets with a
-   * previously attached blob.
-   */
-  private void maybeUpdateBlobUpdated(final Asset asset, final AssetBlob assetBlob, final DateTime now) {
-    checkNotNull(asset);
-    checkNotNull(assetBlob);
-    checkNotNull(now);
-    BlobRef oldBlobRef = checkNotNull(asset.blobRef());
-    Blob oldBlob = blobTx.get(oldBlobRef);
-    if (oldBlob != null) {
-      String oldBlobSha1 = oldBlob.getMetrics().getSha1Hash();
-      String newBlobSha1 = assetBlob.getBlob().getMetrics().getSha1Hash();
-      if (!oldBlobSha1.equalsIgnoreCase(newBlobSha1)) {
-        asset.blobUpdated(now);
-      }
+      asset.blobUpdated(now);
+      deleteBlob(asset.blobRef(), effectiveWritePolicy, format("Updating asset %s", EntityHelper.id(asset)));
     }
     else {
-      log.warn("Could not access attached blob for asset {} and blob ref {} in repository {}, assuming updated", asset,
-          oldBlobRef, bucket.getRepositoryName());
+      // creating new blob
+      asset.blobCreated(now);
       asset.blobUpdated(now);
     }
   }
@@ -825,13 +867,13 @@ public class StorageTxImpl
   /**
    * Deletes a blob w/ enforcing {@link WritePolicy} if not {@code null}. otherwise write policy will NOT be checked.
    */
-  private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy) {
+  private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy, final String reason) {
     checkNotNull(blobRef);
     if (effectiveWritePolicy != null && !effectiveWritePolicy.checkDeleteAllowed()) {
       throw new IllegalOperationException(
           "Repository does not allow deleting assets: " + bucket.getRepositoryName());
     }
-    blobTx.delete(blobRef);
+    blobTx.delete(blobRef, reason);
   }
 
   /**

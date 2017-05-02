@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.of;
 
 /**
  * A data holder for the content of each blob's .attribs file.
@@ -42,6 +43,8 @@ public class BlobAttributes
 
   private static final String DELETED_ATTRIBUTE = "deleted";
 
+  private static final String DELETED_REASON_ATTRIBUTE = "deletedReason";
+
   public static final String HEADER_PREFIX = "@";
 
   private Map<String, String> headers;
@@ -49,6 +52,8 @@ public class BlobAttributes
   private BlobMetrics metrics;
 
   private boolean deleted = false;
+  
+  private String deletedReason;
 
   private final PropertiesFile propertiesFile;
 
@@ -78,6 +83,14 @@ public class BlobAttributes
 
   public void setDeleted(final boolean deleted) {
     this.deleted = deleted;
+  }
+
+  public void setDeletedReason(final String deletedReason) {
+    this.deletedReason = deletedReason;
+  }
+
+  public String getDeletedReason() {
+    return deletedReason;
   }
 
   /**
@@ -132,6 +145,7 @@ public class BlobAttributes
 
     if (deleted) {
       properties.put(DELETED_ATTRIBUTE, Boolean.toString(deleted));
+      properties.put(DELETED_REASON_ATTRIBUTE, of(deletedReason).orElse("No reason supplied"));
     }
     return properties;
   }

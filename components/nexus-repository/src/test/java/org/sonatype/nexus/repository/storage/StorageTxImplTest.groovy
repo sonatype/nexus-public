@@ -18,6 +18,8 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobRef
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.common.collect.NestedAttributesMap
+import org.sonatype.nexus.common.entity.EntityId
+import org.sonatype.nexus.common.entity.EntityMetadata
 import org.sonatype.nexus.common.hash.HashAlgorithm
 import org.sonatype.nexus.mime.MimeRulesSource
 import org.sonatype.nexus.repository.IllegalOperationException
@@ -69,6 +71,10 @@ extends TestSupport
   private AssetEntityAdapter assetEntityAdapter
   @Mock
   private Asset asset
+  @Mock
+  private EntityMetadata entityMetadata;
+  @Mock
+  private EntityId entityId;
 
   private Supplier<InputStream> supplier = new Supplier<InputStream>(){
     @Override
@@ -84,6 +90,9 @@ extends TestSupport
 
   @Before
   void prepare() {
+    when(asset.getEntityMetadata()).thenReturn(entityMetadata);
+    when(entityMetadata.getId()).thenReturn(entityId);
+    
     when(defaultContentValidator.determineContentType(anyBoolean(), any(Supplier), eq(MimeRulesSource.NOOP), anyString(), anyString())).thenReturn("text/plain")
     when(db.getTransaction()).thenReturn(tx)
   }
@@ -108,7 +117,7 @@ extends TestSupport
       assertThat 'Expected IllegalOperationException', false
     }
     catch (IllegalOperationException e) {}
-    verify(blobTx, never()).delete(any(BlobRef))
+    verify(blobTx, never()).delete(any(BlobRef), any(String))
     verify(assetEntityAdapter, never()).deleteEntity(db, asset)
   }
 
@@ -161,7 +170,7 @@ extends TestSupport
     def blobRef = mock(BlobRef)
     when(asset.blobRef()).thenReturn(blobRef)
     new StorageTxImpl('test', blobTx, db, bucket, writePolicy, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP).deleteAsset(asset)
-    verify(blobTx, times(1)).delete(blobRef)
+    verify(blobTx, times(1)).delete(eq(blobRef), any(String))
     verify(assetEntityAdapter, times(1)).deleteEntity(db, asset)
   }
 
@@ -189,7 +198,7 @@ extends TestSupport
       assertThat 'Expected IllegalOperationException', false
     }
     catch (IllegalOperationException e) {}
-    verify(blobTx, never()).delete(any(BlobRef))
+    verify(blobTx, never()).delete(any(BlobRef), any(String))
     verify(blobTx, never()).create(any(InputStream), any(Map), any(Iterable), anyString())
     verify(asset, never()).blobRef(any(BlobRef))
   }
@@ -213,7 +222,7 @@ extends TestSupport
       assertThat 'Expected IllegalOperationException', false
     }
     catch (IllegalOperationException e) {}
-    verify(blobTx, never()).delete(any(BlobRef))
+    verify(blobTx, never()).delete(any(BlobRef), any(String))
     verify(blobTx, never()).create(any(InputStream), any(Map), any(Iterable), anyString())
     verify(asset, never()).blobRef(any(BlobRef))
   }
@@ -244,7 +253,7 @@ extends TestSupport
       assertThat 'Expected IllegalOperationException', false
     }
     catch (IllegalOperationException e) {}
-    verify(blobTx, never()).delete(any(BlobRef))
+    verify(blobTx, never()).delete(any(BlobRef), any(String))
     verify(blobTx, never()).create(any(InputStream), any(Map), any(Iterable), anyString())
     verify(asset, never()).blobRef(any(BlobRef))
   }
@@ -298,7 +307,7 @@ extends TestSupport
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), eq(ContentTypes.TEXT_PLAIN))).thenReturn(newAssetBlob)
     def underTest = new StorageTxImpl('test', blobTx, db, bucket, WritePolicy.ALLOW, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
     underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
-    verify(blobTx, times(1)).delete(blobRef)
+    verify(blobTx, times(1)).delete(eq(blobRef), any(String))
     verify(blobTx, times(1)).create(any(InputStream), eq(expectedHeaders), any(Iterable), eq(ContentTypes.TEXT_PLAIN))
     verify(asset, times(1)).blobRef(newBlobRef)
   }

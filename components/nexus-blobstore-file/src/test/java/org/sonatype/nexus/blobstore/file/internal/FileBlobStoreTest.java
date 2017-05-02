@@ -41,8 +41,11 @@ import org.mockito.Mock;
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -131,6 +134,40 @@ public class FileBlobStoreTest
 
     assertThat(blob.getMetrics().getContentSize(), is(size));
     assertThat(blob.getMetrics().getSha1Hash(), is("356a192b7913b04c54574d18c28d46e6395428ab"));
+  }
+
+  @Test
+  public void blobIdCollisionCausesRetry() throws Exception {
+
+    long size = 100L;
+    HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
+
+    Path path = util.createTempFile().toPath();
+
+    when(fileOperations.exists(any())).thenReturn(true, true, true, false);
+
+    underTest.create(path, TEST_HEADERS, size, sha1);
+
+    verify(fileOperations, times(4)).exists(any());
+  }
+
+  @Test
+  public void blobIdCollisionThrowsExceptionOnRetryLimit() throws Exception {
+
+    long size = 100L;
+    HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
+
+    Path path = util.createTempFile().toPath();
+
+    when(fileOperations.exists(any())).thenReturn(true);
+
+    try {
+      underTest.create(path, TEST_HEADERS, size, sha1);
+      fail("Expected BlobStoreException");
+    }
+    catch (BlobStoreException e) {
+      verify(fileOperations, times(FileBlobStore.MAX_COLLISION_RETRIES + 1)).exists(any());
+    }
   }
 
   byte[] deletedBlobStoreProperties = ("deleted = true\n" +

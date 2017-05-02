@@ -116,7 +116,7 @@ class BucketDeleterTest
 
     componentsWithAssets.each { component -> verify(componentEntityAdapter).deleteEntity(db, component) }
     allAssets.each { asset -> verify(assetEntityAdapter).deleteEntity(db, asset) }
-    allBlobIds.each { blobId -> verify(blobStore).delete(blobId) }
+    allBlobIds.each { blobId -> verify(blobStore).delete(blobId, 'Deleting Bucket') }
     verify(bucketEntityAdapter).deleteEntity(db, bucket)
     verify(db, times(8)).commit()
   }
@@ -134,7 +134,7 @@ class BucketDeleterTest
     underTest.deleteBucket(bucket)
 
     assets.each { asset -> verify(assetEntityAdapter).deleteEntity(db, asset) }
-    verify(blobStore, never()).delete(any(BlobId))
+    verify(blobStore, never()).delete(any(BlobId), any(String))
     verify(bucketEntityAdapter).deleteEntity(db, bucket)
     verify(db, times(4)).commit()
   }
@@ -146,14 +146,14 @@ class BucketDeleterTest
     List<Asset> assets = blobRefs.collect { blobRef -> mockAsset(blobRef) }
 
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore)
-    doThrow(new InvalidStateException(STOPPED, STARTED)).when(blobStore).delete(any(BlobId))
+    doThrow(new InvalidStateException(STOPPED, STARTED)).when(blobStore).delete(any(BlobId), any(String))
     when(componentEntityAdapter.browseByBucket(db, bucket)).thenReturn([])
     when(assetEntityAdapter.browseByBucket(db, bucket)).thenReturn(assets)
 
     underTest.deleteBucket(bucket)
 
     assets.each { asset -> verify(assetEntityAdapter).deleteEntity(db, asset) }
-    verify(blobStore, times(1)).delete(any(BlobId))
+    verify(blobStore, times(1)).delete(any(BlobId), any(String))
     verify(bucketEntityAdapter).deleteEntity(db, bucket)
     verify(db, times(4)).commit()
   }
@@ -165,13 +165,13 @@ class BucketDeleterTest
     List<Asset> assets = blobRefs.collect { blobRef -> mockAsset(blobRef) }
 
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore)
-    doThrow(new RuntimeException()).when(blobStore).delete(any(BlobId))
+    doThrow(new RuntimeException()).when(blobStore).delete(any(BlobId), any(String))
     when(componentEntityAdapter.browseByBucket(db, bucket)).thenReturn([])
     when(assetEntityAdapter.browseByBucket(db, bucket)).thenReturn(assets)
 
     underTest.deleteBucket(bucket)
 
-    blobIds.each { blobId -> verify(blobStore).delete(blobId) }
+    blobIds.each { blobId -> verify(blobStore).delete(blobId, 'Deleting Bucket') }
     assets.each { asset -> verify(assetEntityAdapter).deleteEntity(db, asset) }
     verify(bucketEntityAdapter).deleteEntity(db, bucket)
     verify(db, times(4)).commit()

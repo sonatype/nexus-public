@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.getRootCause;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 /**
@@ -152,8 +153,19 @@ public class ErrorPageServlet
    * @since 3.0
    */
   static void attachCause(final HttpServletRequest request, final Throwable cause) {
-    log.debug("Attaching cause", cause);
+    if (isJavaLangError(cause)) {
+      // Log java.lang.Error exceptions at error level
+      log.error("Unexpected exception", getRootCause(cause));
+    }
+    else {
+      log.debug("Attaching cause", cause);
+    }
     request.setAttribute(ERROR_EXCEPTION_TYPE, cause.getClass());
     request.setAttribute(ERROR_EXCEPTION, cause);
   }
+
+  private static boolean isJavaLangError(final Throwable e) {
+    return getRootCause(e) instanceof Error;
+  }
+
 }

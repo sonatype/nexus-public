@@ -99,7 +99,7 @@ public interface BlobStore
    *
    * @return {@code true} if the blob has been deleted, {@code false} if no blob was found by that ID.
    */
-  boolean delete(BlobId blobId);
+  boolean delete(BlobId blobId, String reason);
 
   /**
    * Removes a blob from the blob store immediately, disregarding any locking or concurrent access by other threads.

@@ -308,6 +308,7 @@ public class MavenFacetImpl
     final Coordinates coordinates = checkNotNull(path.getCoordinates());
     final Bucket bucket = tx.findBucket(getRepository());
     Component component = findComponent(tx, getRepository(), path);
+    boolean updatePomModel = false;
     if (component == null) {
       // Create and set top-level properties
       component = tx.createComponent(bucket, getRepository().getFormat())
@@ -327,8 +328,9 @@ public class MavenFacetImpl
       tx.saveComponent(component);
     }
     else if (path.isPom()) {
-      fillInFromModel(path, assetBlob, component.formatAttributes());
-      tx.saveComponent(component);
+      // reduce copying by deferring update of pom.xml attributes (which involves reading the blob)
+      // until after putAssetPayload, in case the blob is a duplicate and the model has not changed
+      updatePomModel = true;
     }
 
     Asset asset = findAsset(tx, bucket, path);
@@ -353,6 +355,12 @@ public class MavenFacetImpl
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
     asset.markAsDownloaded();
     tx.saveAsset(asset);
+
+    // avoid re-reading pom.xml if it's a duplicate of the old asset
+    if (updatePomModel && !assetBlob.isDuplicate()) {
+      fillInFromModel(path, assetBlob, component.formatAttributes());
+      tx.saveComponent(component);
+    }
 
     return asset;
   }

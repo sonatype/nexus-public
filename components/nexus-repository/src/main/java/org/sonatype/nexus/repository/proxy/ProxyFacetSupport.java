@@ -32,6 +32,8 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
+import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
@@ -163,7 +165,7 @@ public abstract class ProxyFacetSupport
   public Content get(final Context context) throws IOException {
     checkNotNull(context);
 
-    Content content = getCachedContent(context);
+    Content content = maybeGetCachedContent(context);
 
     if (isStale(context, content)) {
       Content remote = null;
@@ -218,6 +220,22 @@ public abstract class ProxyFacetSupport
   public void invalidateProxyCaches() {
     log.info("Invalidating proxy caches of {}", getRepository().getName());
     cacheControllerHolder.invalidateCaches();
+  }
+
+  private Content maybeGetCachedContent(Context context) throws IOException {
+    try {
+      return getCachedContent(context);
+    }
+    catch (RetryDeniedException e) {
+      if (e.getCause() instanceof MissingBlobException) {
+        log.warn("Unable to find blob {} for {}, will check remote", ((MissingBlobException) e.getCause()).getBlobRef(),
+            getUrl(context));
+        return null;
+      }
+      else {
+        throw e;
+      }
+    }
   }
 
   /**
