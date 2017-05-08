@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.AssetsResourceDoc;
+import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -43,12 +45,14 @@ import org.sonatype.nexus.rest.Resource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
@@ -116,21 +120,11 @@ public class AssetsResource
   @Path("/{id}")
   public AssetXO getAssetById(@PathParam("id") final String id)
   {
-    RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);
+    RepositoryItemIDXO repositoryItemIDXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
 
     Asset asset = getAsset(id, repository, new DetachedEntityId(repositoryItemIDXO.getId()));
     return fromAsset(asset, repository);
-  }
-
-  private RepositoryItemIDXO getAssetXOID(final String id) {
-    try {
-      return fromString(id);
-    }
-    catch (IllegalArgumentException e) {
-      log.debug("Unable to parse id: {}, returning 404.", id, e);
-      throw new NotFoundException("Unable to locate asset with id " + id);
-    }
   }
 
   @DELETE
@@ -138,7 +132,7 @@ public class AssetsResource
   public void deleteAsset(@PathParam("id")
                           final String id)
   {
-    RepositoryItemIDXO repositoryItemIDXO = getAssetXOID(id);
+    RepositoryItemIDXO repositoryItemIDXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
 
     DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
@@ -149,8 +143,15 @@ public class AssetsResource
 
   private Asset getAsset(final String id, final Repository repository, final DetachedEntityId entityId)
   {
-    return ofNullable(browseService
-        .getAssetById(assetEntityAdapter.recordIdentity(entityId), repository))
-        .orElseThrow(() -> new NotFoundException("Unable to locate asset with id " + id));
+    try {
+      return ofNullable(browseService
+          .getAssetById(assetEntityAdapter.recordIdentity(entityId), repository))
+          .orElseThrow(() -> new NotFoundException("Unable to locate asset with id " + id));
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("IllegalArgumentException caught retrieving asset with id {}, converting to NotFoundException",
+          entityId, e);
+      throw new WebApplicationException(format("Unable to locate component with id %s", entityId), NOT_ACCEPTABLE);
+    }
   }
 }

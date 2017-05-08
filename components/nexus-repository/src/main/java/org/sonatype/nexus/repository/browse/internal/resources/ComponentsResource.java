@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.ComponentsResourceDoc;
+import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
@@ -43,6 +45,7 @@ import org.sonatype.nexus.rest.Resource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -50,6 +53,7 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.browse.internal.resources.ComponentsResource.RESOURCE_URI;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
@@ -126,23 +130,14 @@ public class ComponentsResource
             .map(asset -> fromAsset(asset, repository))
             .collect(toList()));
 
-    componentXO.setCoordinates(getCoordinates(component));
+    componentXO.setGroup(component.group());
+    componentXO.setName(component.name());
+    componentXO.setVersion(component.version());
     componentXO.setId(new RepositoryItemIDXO(repository.getName(), internalId).getValue());
+    componentXO.setRepository(repository.getName());
+    componentXO.setFormat(repository.getFormat().getValue());
 
     return componentXO;
-  }
-
-  private String getCoordinates(final Component component) {
-    StringBuilder coordinatesBuilder = new StringBuilder();
-
-    if (component.group() != null) {
-      coordinatesBuilder.append(component.group()).append("/");
-    }
-    coordinatesBuilder.append(component.name());
-    if (component.version() != null) {
-      coordinatesBuilder.append("/").append(component.version());
-    }
-    return coordinatesBuilder.toString();
   }
 
   @GET
@@ -159,10 +154,18 @@ public class ComponentsResource
 
   private Component getComponent(final RepositoryItemIDXO repositoryItemIDXO, final Repository repository)
   {
-    return ofNullable(browseService
-        .getComponentById(componentEntityAdapter.recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId())),
-            repository)).orElseThrow(
-        () -> new NotFoundException("Unable to locate component with id " + repositoryItemIDXO.getValue()));
+    try {
+      return ofNullable(browseService
+          .getComponentById(componentEntityAdapter.recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId())),
+              repository)).orElseThrow(
+          () -> new NotFoundException("Unable to locate component with id " + repositoryItemIDXO.getValue()));
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("IllegalArgumentException caught retrieving component with id {}, converting to NotFoundException",
+          repositoryItemIDXO.getId(), e);
+      throw new WebApplicationException(format("Unable to locate component with id %s", repositoryItemIDXO.getId()),
+          NOT_ACCEPTABLE);
+    }
   }
 
   @DELETE

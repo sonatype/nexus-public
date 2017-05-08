@@ -14,16 +14,31 @@ package org.sonatype.nexus.repository.browse.api
 
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import groovy.transform.builder.Builder
 
+/**
+ * Component transfer object for REST APIs.
+ * 
+ * @since 3.4
+ */
 @CompileStatic
 @Builder
-@EqualsAndHashCode
+@ToString(includePackage = false, includeNames = true)
+@EqualsAndHashCode(includes = ['id'])
 class ComponentXO
 {
-  String coordinates
-
   String id
 
-  List<AssetXO> assets;
+  String group
+
+  String name
+
+  String version
+
+  String repository
+
+  String format
+
+  List<AssetXO> assets
 }

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
+import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -32,26 +33,34 @@ import org.sonatype.nexus.rest.Page;
 
 import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 
 public class ComponentsResourceTest
     extends RepositoryResourceTestSupport
 {
 
   ComponentsResource underTest;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Mock
   ComponentEntityAdapter componentEntityAdapter;
@@ -187,7 +196,9 @@ public class ComponentsResourceTest
     ComponentXO componentXO = underTest.getComponentById(repositoryItemXOID.getValue());
 
     assertThat(componentXO, notNullValue());
-    assertThat(componentXO.getCoordinates(), is("component-one-group/component-one-name/1.0.0"));
+    assertThat(componentXO.getGroup(), is("component-one-group"));
+    assertThat(componentXO.getName(), is("component-one-name"));
+    assertThat(componentXO.getVersion(), is("1.0.0"));
     assertThat(componentXO.getAssets(), hasSize(1));
 
   }
@@ -196,6 +207,19 @@ public class ComponentsResourceTest
   public void getComponentById_notFound() throws Exception {
     RepositoryItemIDXO repositoryItemXOID = getRepositoryItemIdXO(null);
 
+    underTest.getComponentById(repositoryItemXOID.getValue());
+  }
+
+  @Test
+  public void getComponentById_illegalArgumentException() throws Exception {
+    RepositoryItemIDXO repositoryItemXOID = new RepositoryItemIDXO("maven-releases",
+        "f10bd0593de3b5e4b377049bcaa80d3e");
+
+    //IllegalArgumentException is thrown when an id for a different entity type is supplied
+    doThrow(new IllegalArgumentException()).when(componentEntityAdapter)
+        .recordIdentity(new DetachedEntityId(repositoryItemXOID.getId()));
+
+    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
     underTest.getComponentById(repositoryItemXOID.getValue());
   }
 

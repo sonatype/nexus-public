@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.browse.api;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 
@@ -58,6 +59,7 @@ public class AssetXOTest
 
     when(repository.getName()).thenReturn("maven-releases");
     when(repository.getUrl()).thenReturn("http://localhost:8081/repository/maven-releases");
+    when(repository.getFormat()).thenReturn(new Format("maven2") {});
   }
 
   @Test
@@ -65,7 +67,7 @@ public class AssetXOTest
     AssetXO assetXO = AssetXO.fromAsset(assetOne, repository);
 
     assertThat(assetXO.getId(), notNullValue());
-    assertThat(assetXO.getCoordinates(), is("nameOne"));
+    assertThat(assetXO.getPath(), is("nameOne"));
     assertThat(assetXO.getDownloadUrl(), is("http://localhost:8081/repository/maven-releases/nameOne"));
   }
 }

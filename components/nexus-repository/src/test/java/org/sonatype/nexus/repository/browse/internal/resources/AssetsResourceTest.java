@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
+import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -30,25 +31,34 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.id.ORID;
+import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 
 public class AssetsResourceTest
     extends RepositoryResourceTestSupport
 {
   AssetsResource underTest;
+  
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Mock
   EntityMetadata assetTwoEntityMetadata;
@@ -92,10 +102,10 @@ public class AssetsResourceTest
     underTest = new AssetsResource(browseService, repositoryManagerRESTAdapter, assetEntityAdapter, maintenanceService);
   }
 
-  AssetXO buildAssetXO(String id, String coordinates, String downloadUrl) {
+  AssetXO buildAssetXO(String id, String path, String downloadUrl) {
     AssetXO assetXo = new AssetXO();
     assetXo.setId(id);
-    assetXo.setCoordinates(coordinates);
+    assetXo.setPath(path);
     assetXo.setDownloadUrl(downloadUrl);
     return assetXo;
   }
@@ -134,7 +144,7 @@ public class AssetsResourceTest
 
   private void validateAssetOne(final AssetXO assetXO) {
     assertThat(assetXO.getId(), notNullValue());
-    assertThat(assetXO.getCoordinates(), is("nameOne"));
+    assertThat(assetXO.getPath(), is("nameOne"));
     assertThat(assetXO.getDownloadUrl(), is("http://localhost:8081/repository/maven-releases/nameOne"));
   }
 
@@ -149,6 +159,19 @@ public class AssetsResourceTest
     AssetXO assetXO = underTest.getAssetById(repositoryItemIDXO.getValue());
 
     validateAssetOne(assetXO);
+  }
+
+  @Test
+  public void testGetAssetById_illegalArgumentException() {
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
+        "c0ac2ab6c5e93a4a3909f0830fdadfcd");
+
+    //IllegalArgumentException is thrown when an id for a different entity type is supplied
+    doThrow(new IllegalArgumentException()).when(assetEntityAdapter)
+        .recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId()));
+
+    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
+    underTest.getAssetById(repositoryItemIDXO.getValue());
   }
 
   @Test

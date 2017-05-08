@@ -421,7 +421,7 @@ class RepositoryApiImpl
 
   @CompileDynamic
   void validateGroupMembers(final Configuration configuration) {
-    def members = configuration.attributes.group?.memberNames
+    Collection members = configuration.attributes.group?.memberNames
     if (members) {
       def existingRepos = repositoryManager.browse().collect { Repository repository -> repository.name }
       boolean valid = members.every { String memberName ->

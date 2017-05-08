@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.browse.internal.api;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -21,6 +22,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 public class RepositoryItemIDXOTest
@@ -54,5 +56,16 @@ public class RepositoryItemIDXOTest
       assertThat(e.getResponse().getStatus(), is(UNPROCESSABLE_ENTITY));
     }
 
+  }
+
+  @Test
+  public void testIllegalArgumentIsNotFound() {
+    try {
+      RepositoryItemIDXO.fromString("@");
+      fail("Expected a NotFoundException.");
+    }
+    catch (NotFoundException e) {
+      assertThat(e.getResponse().getStatus(), is(NOT_FOUND));
+    }
   }
 }

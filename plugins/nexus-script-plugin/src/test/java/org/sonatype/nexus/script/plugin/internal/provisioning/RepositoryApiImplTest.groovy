@@ -57,12 +57,20 @@ class RepositoryApiImplTest
       1 * blobStoreManager.browse() >> [blobStore]
       1 * blobStore.blobStoreConfiguration >> configuration
   }
-  
-  void 'Cannot validate a group that contains non-existent members'() {
-    when:
+
+  void 'Group memberNames must be a Collection'() {
+    when: 'Accidentally using a String instead of a Collection'
       api.validateGroupMembers(new Configuration(attributes: [group:[memberNames: 'foo']]))
 
-    then:
+    then: 'An exception is thrown during validation'
+      thrown ClassCastException
+  }
+  
+  void 'Cannot validate a group that contains non-existent members'() {
+    when: 'Including a member that does not exist'
+      api.validateGroupMembers(new Configuration(attributes: [group:[memberNames: ['foo']]]))
+
+    then: 'An exception is thrown during validation'
       1 * repositoryManager.browse() >> []
       thrown IllegalStateException
   }

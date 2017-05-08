@@ -14,40 +14,46 @@ package org.sonatype.nexus.repository.browse.api
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO
-import org.sonatype.nexus.repository.browse.internal.resources.AssetsResource
 import org.sonatype.nexus.repository.storage.Asset
 
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import groovy.transform.builder.Builder
 
 import static org.sonatype.nexus.common.entity.EntityHelper.id
 
 /**
- * Transfer object for use in the {@link AssetsResource}
+ * Asset transfer object for REST APIs.
  *
  * @since 3.3
  */
 @CompileStatic
 @Builder
-@EqualsAndHashCode
+@ToString(includePackage = false, includeNames = true)
+@EqualsAndHashCode(includes = ['id'])
 class AssetXO
 {
   String downloadUrl
 
-  String coordinates
+  String path
 
   String id
+
+  String repository
+
+  String format
 
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
 
     String internalId = id(asset).getValue()
 
-    AssetXO assetXO = new AssetXO()
-    assetXO.setCoordinates(asset.name())
-    assetXO.setDownloadUrl(repository.getUrl() + "/" + asset.name())
-    assetXO.setId(new RepositoryItemIDXO(repository.getName(), internalId).getValue())
-
-    return assetXO
+    return new AssetXO(
+        path: asset.name(),
+        downloadUrl: repository.url + '/' + asset.name(),
+        id: new RepositoryItemIDXO(repository.name, internalId).value,
+        repository: repository.name,
+        format: repository.format.value
+    )
   }
 }
