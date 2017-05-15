@@ -42,6 +42,7 @@ import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
@@ -70,6 +71,7 @@ import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
@@ -289,6 +291,42 @@ public class SearchServiceImpl
           TYPE, identifier, indexName, e);
       }
     });
+  }
+
+  @Override
+  public void bulkDelete(@Nullable final Repository repository, final Iterable<String> identifiers) {
+    checkNotNull(identifiers);
+
+    if (repository != null) {
+      String indexName = repositoryNameMapping.get(repository.getName());
+      if (indexName == null) {
+        return; // index has gone, nothing to delete
+      }
+
+      identifiers.forEach(id ->
+          bulkProcessor.add(client.get().prepareDelete(indexName, TYPE, id).request()));
+    }
+    else {
+
+      // When bulk-deleting documents based on the write-ahead-log we won't have the owning index.
+      // Since delete is a single-index operation we need to discover the index for each identifier
+      // before we can delete its document. Chunking is used to keep queries to a reasonable size.
+
+      Iterables.partition(identifiers, 100).forEach(chunk -> {
+        SearchResponse toDelete = client.get()
+            .prepareSearch("_all")
+            .setFetchSource(false)
+            .setQuery(idsQuery(TYPE).ids(chunk))
+            .setSize(chunk.size())
+            .execute()
+            .actionGet();
+
+        toDelete.getHits().forEach(hit ->
+            bulkProcessor.add(client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request()));
+      });
+    }
+
+    bulkProcessor.flush();
   }
 
   @Override

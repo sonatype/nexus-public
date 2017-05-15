@@ -58,6 +58,13 @@ public class CacheControllerHolder
     public int hashCode() {
       return value().hashCode();
     }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "{" +
+          "typeName='" + typeName + '\'' +
+          '}';
+    }
   }
 
   public static final CacheType CONTENT = new CacheType("CONTENT");
@@ -87,6 +94,10 @@ public class CacheControllerHolder
   @Nullable
   public CacheController get(final CacheType cacheType) {
     return controllers.get(checkNotNull(cacheType));
+  }
+
+  public CacheController require(final CacheType cacheType) {
+    return checkNotNull(get(cacheType), "Unexpected cache type: " + cacheType);
   }
 
   @Nullable

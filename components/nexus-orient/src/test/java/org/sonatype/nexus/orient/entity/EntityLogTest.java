@@ -45,7 +45,7 @@ public class EntityLogTest
 
   TestEntityAdapter entityAdapter = new TestEntityAdapter();
 
-  EntityLog entityLog;
+  EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
 
   static class TestEntity
       extends Entity
@@ -109,8 +109,6 @@ public class EntityLogTest
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       entityAdapter.register(db);
-
-      EntityLog log = new EntityLog(db, entityAdapter);
 
       OLogSequenceNumber mark1 = log.mark();
 
@@ -201,8 +199,6 @@ public class EntityLogTest
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       entityAdapter.register(db);
 
-      EntityLog log = new EntityLog(db, entityAdapter);
-
       OLogSequenceNumber mark1 = log.mark();
 
       // verify no changes since the first mark
@@ -283,8 +279,6 @@ public class EntityLogTest
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       entityAdapter.register(db);
-
-      EntityLog log = new EntityLog(db, entityAdapter);
 
       try {
         log.since(null);

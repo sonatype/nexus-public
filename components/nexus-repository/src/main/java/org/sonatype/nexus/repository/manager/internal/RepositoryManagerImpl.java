@@ -206,6 +206,7 @@ public class RepositoryManagerImpl
   @Override
   protected void doStart() throws Exception {
     blobStoreManager.start();
+
     List<Configuration> configurations = store.list();
 
     // attempt to provision default repositories if allowed
@@ -264,10 +265,6 @@ public class RepositoryManagerImpl
 
   @Override
   protected void doStop() throws Exception {
-    if (repositories.isEmpty()) {
-      log.debug("No repositories defined");
-      return;
-    }
 
     log.debug("Stopping {} repositories", repositories.size());
     for (Repository repository : repositories.values()) {
@@ -282,6 +279,7 @@ public class RepositoryManagerImpl
     }
 
     repositories.clear();
+
     blobStoreManager.stop();
   }
 

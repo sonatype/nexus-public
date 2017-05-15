@@ -12,14 +12,17 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -30,6 +33,7 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.transform;
 import static org.sonatype.nexus.repository.FacetSupport.State.DELETED;
 import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED;
@@ -42,14 +46,33 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED;
 @Named
 @Singleton
 public class IndexRequestProcessor
-    extends ComponentSupport
-    implements EventAware, Asynchronous
+    extends LifecycleSupport
+    implements Asynchronous
 {
   private final RepositoryManager repositoryManager;
 
+  private final EventManager eventManager;
+
+  private final SearchService searchService;
+
   @Inject
-  public IndexRequestProcessor(final RepositoryManager repositoryManager) {
+  public IndexRequestProcessor(final RepositoryManager repositoryManager,
+                               final EventManager eventManager,
+                               final SearchService searchService)
+  {
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.eventManager = checkNotNull(eventManager);
+    this.searchService = checkNotNull(searchService);
+  }
+
+  @Override
+  protected void doStart() {
+    eventManager.register(this);
+  }
+
+  @Override
+  protected void doStop() {
+    eventManager.unregister(this);
   }
 
   @Subscribe
@@ -59,7 +82,10 @@ public class IndexRequestProcessor
   }
 
   public void process(final IndexBatchRequest request) {
-    request.forEach(this::maybeUpdateSearchIndex);
+    Set<EntityId> pendingDeletes = request.apply(this::maybeUpdateSearchIndex);
+    if (!pendingDeletes.isEmpty()) {
+      searchService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
+    }
   }
 
   private void maybeUpdateSearchIndex(final String repositoryName, final IndexRequest indexRequest) {
@@ -86,13 +112,14 @@ public class IndexRequestProcessor
   }
 
   private static void doUpdateSearchIndex(final Repository repository, final IndexRequest indexRequest) {
-    final SearchFacet searchFacet = repository.facet(SearchFacet.class);
-    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-    try {
-      indexRequest.apply(searchFacet);
-    }
-    finally {
-      UnitOfWork.end();
-    }
+    repository.optionalFacet(SearchFacet.class).ifPresent(searchFacet -> {
+      UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+      try {
+        indexRequest.apply(searchFacet);
+      }
+      finally {
+        UnitOfWork.end();
+      }
+    });
   }
 }

@@ -26,4 +26,6 @@ public interface Recipe
   Format getFormat();
 
   void apply(@Nonnull Repository repository) throws Exception;
+
+  boolean isFeatureEnabled();
 }

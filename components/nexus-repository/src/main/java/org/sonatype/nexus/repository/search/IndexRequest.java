@@ -12,60 +12,84 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.sonatype.nexus.common.entity.EntityId;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Requests indexing of one or more components in a particular repository.
  *
  * @since 3.4
  */
-class IndexRequest
+final class IndexRequest
 {
-  private static final Logger log = LoggerFactory.getLogger(IndexRequest.class);
-
-  private enum RequestKind
-  {
-    UPDATE, DELETE
-  }
-
-  private final Map<EntityId, RequestKind> componentRequests = new HashMap<>();
+  /**
+   * All pending deletes as tracked by {@link IndexBatchRequest}.
+   */
+  private final Set<EntityId> pendingDeletes;
 
   /**
-   * Requests an update of the given component's index.
+   * Components that need their index either updated or possibly removed.
+   */
+  private final Set<EntityId> updatedIds = new HashSet<>();
+
+  IndexRequest(final Set<EntityId> pendingDeletes) {
+    this.pendingDeletes = checkNotNull(pendingDeletes);
+  }
+
+  /**
+   * Marks the given component as needing their index updated or possibly removed.
    */
   void update(final EntityId componentId) {
-    componentRequests.putIfAbsent(componentId, RequestKind.UPDATE);
+    updatedIds.add(componentId);
   }
 
   /**
-   * Requests deletion of the given component's index.
-   */
-  void delete(final EntityId componentId) {
-    componentRequests.put(componentId, RequestKind.DELETE); // delete wins over update
-  }
-
-  /**
-   * Applies the index request to the repository's {@link SearchFacet}.
+   * Applies the index request to the repository's {@link SearchFacet} one-by-one.
+   *
+   * Has side-effect of removing local deletions from {@link #pendingDeletes}.
    */
   void apply(final SearchFacet searchFacet) {
-    componentRequests.forEach((id, kind) -> {
-      switch (kind) {
-        case UPDATE:
-          searchFacet.put(id);
-          break;
-        case DELETE:
-          searchFacet.delete(id);
-          break;
-        default:
-          log.warn("Unexpected index request {} {}", kind, id);
-          break;
+    updatedIds.forEach(id -> {
+      if (pendingDeletes.remove(id)) {
+        searchFacet.delete(id);
+      }
+      else {
+        searchFacet.put(id);
       }
     });
+  }
+
+  /**
+   * Applies the index request to the repository's {@link SearchFacet} in bulk.
+   *
+   * Has side-effect of removing local deletions from {@link #pendingDeletes}.
+   */
+  void bulkApply(final SearchFacet searchFacet) {
+
+    if (!pendingDeletes.isEmpty()) {
+      Set<EntityId> deletedIds = new HashSet<>();
+
+      // move ids over from bulk-update to bulk-delete as appropriate
+      for (Iterator<EntityId> itr = updatedIds.iterator(); itr.hasNext();) {
+        EntityId id = itr.next();
+        if (pendingDeletes.remove(id)) {
+          deletedIds.add(id);
+          itr.remove();
+        }
+      }
+
+      if (!deletedIds.isEmpty()) {
+        searchFacet.bulkDelete(deletedIds);
+      }
+    }
+
+    if (!updatedIds.isEmpty()) {
+      searchFacet.bulkPut(updatedIds);
+    }
   }
 }

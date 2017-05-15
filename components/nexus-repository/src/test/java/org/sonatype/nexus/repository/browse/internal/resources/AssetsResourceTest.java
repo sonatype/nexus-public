@@ -31,7 +31,6 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.id.ORID;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +45,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -56,7 +56,7 @@ public class AssetsResourceTest
     extends RepositoryResourceTestSupport
 {
   AssetsResource underTest;
-  
+
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
@@ -197,5 +197,14 @@ public class AssetsResourceTest
     when(browseService.getAssetById(assetOneORID, mavenReleases)).thenReturn(null);
 
     underTest.getAssetById(repositoryItemIDXO.getValue());
+  }
+
+  @Test
+  public void testBadContinuationTokenThrowsNotAccepted() throws Exception {
+    doThrow(new IllegalArgumentException()).when(assetEntityAdapter)
+        .recordIdentity(any(EntityId.class));
+
+    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
+    underTest.getAssets("whatever", "maven-releases");
   }
 }

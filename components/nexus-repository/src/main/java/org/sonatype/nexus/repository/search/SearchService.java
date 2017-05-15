@@ -60,6 +60,8 @@ public interface SearchService
    * @param components an {@link Iterable} of components to index
    * @param identifierProducer a function producing an identifier for a component (never returning null)
    * @param jsonDocumentProducer a function producing a json document for the component (never returning null)
+   *
+   * @since 3.4
    */
   void bulkPut(Repository repository, Iterable<Component> components,
                Function<Component, String> identifierProducer,
@@ -69,6 +71,16 @@ public interface SearchService
    * Removes data with given identifier from index of given repository.
    */
   void delete(Repository repository, String identifier);
+
+  /**
+   * Operation used for bulk removal of data from index of given repository.
+   *
+   * @param repository the source repository (if known)
+   * @param identifiers the ids of documents to remove
+   *
+   * @since 3.4
+   */
+  void bulkDelete(@Nullable Repository repository, Iterable<String> identifiers);
 
   /**
    * Search component metadata and browse results, without the effect of content selectors.

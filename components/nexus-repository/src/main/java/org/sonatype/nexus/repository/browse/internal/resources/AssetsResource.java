@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.AssetsResourceDoc;
-import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -96,13 +96,7 @@ public class AssetsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    final String lastId;
-    if (continuationToken != null) {
-      lastId = assetEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString();
-    }
-    else {
-      lastId = null;
-    }
+    final String lastId = lastIdFromContinuationToken(continuationToken);
 
     BrowseResult<Asset> assetBrowseResult = browseService.browseAssets(
         repository,
@@ -114,6 +108,18 @@ public class AssetsResource
 
     return new Page<>(assetXOs, assetBrowseResult.getTotal() > assetBrowseResult.getResults().size() ?
         id(getLast(assetBrowseResult.getResults())).getValue() : null);
+  }
+
+  @Nullable
+  private String lastIdFromContinuationToken(final String continuationToken) {
+    try {
+      return continuationToken != null ?
+          assetEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString() : null;
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("Caught exception parsing id from continuation token {}", continuationToken, e);
+      throw new WebApplicationException(NOT_ACCEPTABLE);
+    }
   }
 
   @GET

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.ComponentsResourceDoc;
-import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
@@ -97,13 +97,7 @@ public class ComponentsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    final String lastId;
-    if (continuationToken != null) {
-      lastId = componentEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString();
-    }
-    else {
-      lastId = null;
-    }
+    final String lastId = lastIdFromContinuationToken(continuationToken);
 
     //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
     BrowseResult<Component> componentBrowseResult = browseService
@@ -115,6 +109,18 @@ public class ComponentsResource
 
     return new Page<>(componentXOs, componentBrowseResult.getTotal() > componentBrowseResult.getResults().size() ?
         id(getLast(componentBrowseResult.getResults())).getValue() : null);
+  }
+
+  @Nullable
+  private String lastIdFromContinuationToken(final String continuationToken) {
+    try {
+      return continuationToken != null ?
+          componentEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString() : null;
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("Caught exception parsing id from continuation token {}", continuationToken, e);
+      throw new WebApplicationException(NOT_ACCEPTABLE);
+    }
   }
 
   private ComponentXO fromComponent(Component component, Repository repository) {

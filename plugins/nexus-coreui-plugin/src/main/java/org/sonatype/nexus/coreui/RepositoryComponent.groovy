@@ -114,7 +114,8 @@ class RepositoryComponent
   @Timed
   @ExceptionMetered
   List<ReferenceXO> readRecipes() {
-    recipes.collect { key, value ->
+    recipes.findAll { key, value -> value.isFeatureEnabled() }
+        .collect { key, value ->
       new ReferenceXO(
           id: key,
           name: "${value.format} (${value.type})"

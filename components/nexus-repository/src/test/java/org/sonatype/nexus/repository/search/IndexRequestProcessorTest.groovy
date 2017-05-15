@@ -16,6 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityBatchEvent
 import org.sonatype.nexus.common.entity.EntityId
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.stateguard.InvalidStateException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -63,6 +64,12 @@ class IndexRequestProcessorTest
   RepositoryManager repositoryManager
 
   @Mock
+  EventManager eventManager
+
+  @Mock
+  SearchService searchService
+
+  @Mock
   Repository repository
 
   @Mock
@@ -78,9 +85,9 @@ class IndexRequestProcessorTest
 
   @Before
   public void setup() {
-    indexRequestProcessor = new IndexRequestProcessor(repositoryManager)
+    indexRequestProcessor = new IndexRequestProcessor(repositoryManager, eventManager, searchService)
     when(repositoryManager.get('testRepo')).thenReturn(repository)
-    when(repository.facet(SearchFacet)).thenReturn(searchFacet)
+    when(repository.optionalFacet(SearchFacet)).thenReturn(Optional.of(searchFacet))
     when(repository.facet(StorageFacet)).thenReturn(storageFacet)
     when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx))
   }

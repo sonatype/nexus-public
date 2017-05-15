@@ -71,4 +71,8 @@ public abstract class RecipeSupport
     builder.route(browseUnsupportedHandler.getRoute());
   }
 
+  @Override
+  public boolean isFeatureEnabled() {
+    return true;
+  }
 }

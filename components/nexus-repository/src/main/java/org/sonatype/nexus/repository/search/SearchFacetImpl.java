@@ -34,10 +34,11 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
@@ -112,10 +113,7 @@ public class SearchFacetImpl
     checkNotNull(componentIds);
     final StorageTx tx = UnitOfWork.currentTx();
     final Bucket bucket = tx.findBucket(getRepository());
-    bulkPut(tx,
-        Iterables.filter(
-            Iterables.transform(componentIds, componentId -> tx.findComponentInBucket(componentId, bucket)),
-            Objects::nonNull));
+    bulkPut(tx, filter(transform(componentIds, id -> tx.findComponentInBucket(id, bucket)), Objects::nonNull));
   }
 
   @Override
@@ -123,6 +121,13 @@ public class SearchFacetImpl
   public void delete(final EntityId componentId) {
     checkNotNull(componentId);
     searchService.delete(getRepository(), componentId.getValue());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void bulkDelete(final Iterable<EntityId> componentIds) {
+    checkNotNull(componentIds);
+    searchService.bulkDelete(getRepository(), transform(componentIds, EntityId::getValue));
   }
 
   @Override

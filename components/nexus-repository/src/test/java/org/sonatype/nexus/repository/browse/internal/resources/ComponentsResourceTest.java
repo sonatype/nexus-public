@@ -239,6 +239,15 @@ public class ComponentsResourceTest
     underTest.deleteComponent(repositoryItemXOID.getValue());
   }
 
+  @Test
+  public void invalidContinuationTokenReturnsNotAcceptable() {
+    doThrow(new IllegalArgumentException()).when(componentEntityAdapter)
+        .recordIdentity(detachedEntityIdCaptor.capture());
+
+    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
+    underTest.getComponents("whatever", mavenReleasesId);
+  }
+
   private RepositoryItemIDXO getRepositoryItemIdXO(Component resultComponent) {
     RepositoryItemIDXO repositoryItemXOID = new RepositoryItemIDXO("maven-releases",
         "f10bd0593de3b5e4b377049bcaa80d3e");

@@ -13,11 +13,16 @@
 package org.sonatype.nexus.repository.search;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.storage.ComponentEvent;
@@ -27,9 +32,17 @@ import org.sonatype.nexus.repository.storage.ComponentEvent;
  *
  * @since 3.4
  */
-public class IndexBatchRequest
+public final class IndexBatchRequest
 {
+  /**
+   * Repository-scoped index requests.
+   */
   private final Map<String, IndexRequest> requests = new HashMap<>();
+
+  /**
+   * Tracks components that were deleted; this may include components also tracked under {@link IndexRequest}s.
+   */
+  private final Set<EntityId> pendingDeletes = new HashSet<>();
 
   /**
    * Populates index requests based on the given event.
@@ -46,22 +59,50 @@ public class IndexBatchRequest
   }
 
   /**
-   * Applies the index requests to the given consumer.
+   * Creates a blank index request for manual building.
    */
-  void forEach(final BiConsumer<String, IndexRequest> consumer) {
+  public IndexBatchRequest() {
+    // no-op
+  }
+
+  /**
+   * Requests an update of the given component's index under the given repository.
+   */
+  public void update(final String repositoryName, final EntityId componentId) {
+    request(repositoryName).update(componentId);
+  }
+
+  /**
+   * Requests a delete of the given component's index under the given repository (if known).
+   *
+   * If the repository is unknown then we'll query Elasticsearch later on to find the index.
+   */
+  public void delete(@Nullable final String repositoryName, final EntityId componentId) {
+    if (repositoryName != null) {
+      request(repositoryName).update(componentId); // scope delete under specific repository
+    }
+    pendingDeletes.add(componentId);
+  }
+
+  /**
+   * Applies the index requests to the given consumer and returns any remaining pending deletes.
+   *
+   * These deletes aren't directly associated with a repository and require a delete-by-query step.
+   */
+  Set<EntityId> apply(final BiConsumer<String, IndexRequest> consumer) {
     requests.forEach(consumer);
+    return pendingDeletes;
   }
 
   /**
    * Marks the component's index as needing an update or deletion.
    */
   private void consume(final ComponentEvent event) {
-    IndexRequest request = request(event.getRepositoryName());
     if (event instanceof ComponentDeletedEvent) {
-      request.delete(event.getComponentId());
+      delete(event.getRepositoryName(), event.getComponentId());
     }
     else {
-      request.update(event.getComponentId());
+      update(event.getRepositoryName(), event.getComponentId());
     }
   }
 
@@ -70,7 +111,7 @@ public class IndexBatchRequest
    */
   private void consume(final AssetEvent event) {
     if (event.getComponentId() != null) {
-      request(event.getRepositoryName()).update(event.getComponentId());
+      update(event.getRepositoryName(), event.getComponentId());
     }
   }
 
@@ -80,7 +121,7 @@ public class IndexBatchRequest
   private IndexRequest request(final String repositoryName) {
     IndexRequest request = requests.get(repositoryName);
     if (request == null) {
-      request = new IndexRequest();
+      request = new IndexRequest(pendingDeletes);
       requests.put(repositoryName, request);
     }
     return request;

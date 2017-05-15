@@ -44,6 +44,13 @@ public interface SearchFacet
   void delete(EntityId componentId);
 
   /**
+   * De-indexes the metadata of the given components.
+   *
+   * @since 3.4
+   */
+  void bulkDelete(Iterable<EntityId> componentIds);
+
+  /**
    * Forcefully rebuilds index of the {@link Repository} this facet is attached to. Rebuild happens by dropping current
    * index and recreating it from scratch.
    */

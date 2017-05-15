@@ -19,9 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Provider;
+
+import org.sonatype.nexus.orient.DatabaseInstance;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
@@ -44,15 +49,17 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.ORe
  */
 public final class EntityLog
 {
-  private final OLocalPaginatedStorage storage;
+  private final Provider<DatabaseInstance> databaseProvider;
 
   private final List<EntityAdapter> adapters;
+
+  private OLocalPaginatedStorage storage;
 
   /**
    * Creates a new log, tracking entities owned by the given entity adapters.
    */
-  public EntityLog(final ODatabaseDocumentInternal db, final EntityAdapter... adapters) {
-    this.storage = (OLocalPaginatedStorage) db.getStorage().getUnderlying();
+  public EntityLog(final Provider<DatabaseInstance> databaseProvider, final EntityAdapter... adapters) {
+    this.databaseProvider = checkNotNull(databaseProvider);
     this.adapters = Arrays.asList(adapters);
   }
 
@@ -60,7 +67,7 @@ public final class EntityLog
    * Returns a marker representing the current end of the database's write-ahead-log.
    */
   public OLogSequenceNumber mark() {
-    return storage.getWALInstance().end();
+    return storage().getWALInstance().end();
   }
 
   /**
@@ -70,7 +77,7 @@ public final class EntityLog
    */
   public Map<ORID, EntityAdapter> since(final OLogSequenceNumber marker) {
     checkNotNull(marker);
-    return storage.callInLock(() -> {
+    return storage().callInLock(() -> {
       try {
         return doSince(marker);
       }
@@ -89,6 +96,20 @@ public final class EntityLog
     public UnknownDeltaException(final OLogSequenceNumber since, final Throwable cause) {
       super(String.format("Changes exist since %s but details are not available", since), cause);
     }
+  }
+
+  private OLocalPaginatedStorage storage() {
+    if (storage == null) {
+      // use temp TX to get local storage; note we don't need a TX when reading write-ahead-log
+      ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      try (ODatabaseDocumentInternal db = databaseProvider.get().acquire()) {
+        storage = (OLocalPaginatedStorage) db.getStorage().getUnderlying();
+      }
+      finally {
+        ODatabaseRecordThreadLocal.INSTANCE.set(currentDb);
+      }
+    }
+    return storage;
   }
 
   private Map<ORID, EntityAdapter> doSince(final OLogSequenceNumber marker) throws IOException {
