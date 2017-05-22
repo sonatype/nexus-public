@@ -103,7 +103,7 @@ public class ExhaustRequestFilter
         if (HttpMethods.PUT.equals(method) || HttpMethods.POST.equals(method)) {
           /// ...from an affected user-agent
           String agent = httpRequest.getHeader(HttpHeaders.USER_AGENT);
-          return exhaustForAgentsPattern.matcher(agent).matches();
+          return agent != null && exhaustForAgentsPattern.matcher(agent).matches();
         }
       }
     }

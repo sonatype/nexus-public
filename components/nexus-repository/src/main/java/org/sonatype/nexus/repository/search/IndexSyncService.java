@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -119,8 +120,8 @@ public class IndexSyncService
         rebuildIndex();
       }
     }
-    catch (IOException e) {
-      log.warn("Problem loading {}, skipping index sync", checkpointFile, e);
+    catch (Exception e) {
+      log.warn("Unexpected error, skipping index sync", e);
     }
   }
 
@@ -151,7 +152,10 @@ public class IndexSyncService
       changes.forEach((rid, adapter) -> {
         ODocument document = db.load(rid);
         if (document != null) {
-          batch.update(findRepositoryName(document), findComponentId(document));
+          EntityId componentId = findComponentId(document);
+          if (componentId != null) {
+            batch.update(findRepositoryName(document), componentId);
+          }
         }
         else if (adapter instanceof ComponentEntityAdapter) {
           batch.delete(null, componentId(rid));
@@ -165,9 +169,10 @@ public class IndexSyncService
     return ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
   }
 
+  @Nullable
   private EntityId findComponentId(final ODocument document) {
     if (document.containsField(P_COMPONENT)) {
-      // get the owning component from the asset
+      // get the owning component from the asset, might be null if asset is standalone
       return componentId(document.field(P_COMPONENT, ORID.class));
     }
     else {
@@ -176,8 +181,9 @@ public class IndexSyncService
     }
   }
 
-  private AttachedEntityId componentId(final ORID rid) {
-    return new AttachedEntityId(componentEntityAdapter, rid);
+  @Nullable
+  private EntityId componentId(@Nullable final ORID rid) {
+    return rid != null ? new AttachedEntityId(componentEntityAdapter, rid) : null;
   }
 
   /**

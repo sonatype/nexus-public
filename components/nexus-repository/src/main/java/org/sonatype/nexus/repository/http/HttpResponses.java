@@ -130,6 +130,31 @@ public class HttpResponses
     return unauthorized(null);
   }
 
+  /**
+   * Builds the challenge for authorization by setting a HTTP <code>401</code> (Unauthorized) status as well as the
+   * response's <code>WWW-Authenticate</code> header.
+   * <p/>
+   * The header value constructed is equal to:
+   * <p/>
+   * <code>String.format("%s realm=\"%s\"", authenticationScheme, realmName)</code>
+   *
+   * @param message to be shown next to the status code
+   * @param authenticationScheme authentication scheme used in the authentication challenge header
+   * @param realmName realm name used in the authentication challenge header
+   * @return a 401 authentication challenge response
+   */
+  public static Response unauthorized(final String message, final String authenticationScheme,
+                                      final String realmName)
+  {
+    checkNotNull(message);
+    checkNotNull(authenticationScheme);
+    checkNotNull(realmName);
+    return new Response.Builder()
+        .status(Status.failure(UNAUTHORIZED, message))
+        .header(HttpHeaders.WWW_AUTHENTICATE, String.format("%s realm=\"%s\"", authenticationScheme, realmName))
+        .build();
+  }
+
   // Forbidden: 403
 
   public static Response forbidden(@Nullable final String message) {

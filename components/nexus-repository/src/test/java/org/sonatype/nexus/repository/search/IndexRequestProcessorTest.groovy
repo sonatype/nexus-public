@@ -32,9 +32,14 @@ import org.sonatype.nexus.repository.storage.StorageTx
 import com.google.common.base.Suppliers
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameter
+import org.junit.runners.Parameterized.Parameters
 import org.mockito.Mock
 
 import static org.mockito.Mockito.any
+import static org.mockito.Mockito.anySet
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.verify
@@ -46,9 +51,18 @@ import static org.sonatype.nexus.repository.FacetSupport.State.FAILED
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED
 import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED
 
+@RunWith(Parameterized.class)
 class IndexRequestProcessorTest
     extends TestSupport
 {
+
+  @Parameters
+  public static Collection<Boolean> data() {
+    return [false, true]
+  }
+
+  @Parameter
+  public boolean bulkProcessing
 
   EntityId alphaComponentId = new DetachedEntityId('#3:1')
 
@@ -85,7 +99,7 @@ class IndexRequestProcessorTest
 
   @Before
   public void setup() {
-    indexRequestProcessor = new IndexRequestProcessor(repositoryManager, eventManager, searchService)
+    indexRequestProcessor = new IndexRequestProcessor(repositoryManager, eventManager, searchService, bulkProcessing)
     when(repositoryManager.get('testRepo')).thenReturn(repository)
     when(repository.optionalFacet(SearchFacet)).thenReturn(Optional.of(searchFacet))
     when(repository.facet(StorageFacet)).thenReturn(storageFacet)
@@ -114,8 +128,16 @@ class IndexRequestProcessorTest
     indexRequestProcessor.on(new EntityBatchEvent([e1, e2, e3, e4, e5, e6, e7]))
 
     // only alpha component should be deleted, beta events should be coalesced into a single put
-    verify(searchFacet).delete(alphaComponentId)
-    verify(searchFacet).put(betaComponentId)
+
+    if (bulkProcessing) {
+      verify(searchFacet).bulkDelete([alphaComponentId] as Set)
+      verify(searchFacet).bulkPut([betaComponentId] as Set)
+    }
+    else {
+      verify(searchFacet).delete(alphaComponentId)
+      verify(searchFacet).put(betaComponentId)
+    }
+
     verifyNoMoreInteractions(searchFacet)
   }
 
@@ -128,29 +150,38 @@ class IndexRequestProcessorTest
 
   @Test
   public void entityEventsOnStoppedRepositoryDoesNotThrowException() throws Exception {
-    doThrow(new InvalidStateException(STOPPED, STARTED)).when(searchFacet).put(any())
+    throwOnPut(new InvalidStateException(STOPPED, STARTED))
 
     indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test
   public void entityEventsOnDeletedRepositoryDoesNotThrowException() throws Exception {
-    doThrow(new InvalidStateException(DELETED, STARTED)).when(searchFacet).put(any())
+    throwOnPut(new InvalidStateException(DELETED, STARTED))
 
     indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test
   public void entityEventsOnDestroyedRepositoryDoesNotThrowException() throws Exception {
-    doThrow(new InvalidStateException(DESTROYED, STARTED)).when(searchFacet).put(any())
+    throwOnPut(new InvalidStateException(DESTROYED, STARTED))
 
     indexRequestProcessor.on(simpleBatchEvent)
   }
 
   @Test(expected = InvalidStateException)
   public void entityEventsOnFailedRepositoryThrowsException() throws Exception {
-    doThrow(new InvalidStateException(FAILED, STARTED)).when(searchFacet).put(any())
+    throwOnPut(new InvalidStateException(FAILED, STARTED))
 
     indexRequestProcessor.on(simpleBatchEvent)
+  }
+
+  void throwOnPut(final Throwable throwable) {
+    if (bulkProcessing) {
+      doThrow(throwable).when(searchFacet).bulkPut(anySet())
+    }
+    else {
+      doThrow(throwable).when(searchFacet).put(any())
+    }
   }
 }

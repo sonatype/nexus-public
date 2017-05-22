@@ -55,14 +55,18 @@ public class IndexRequestProcessor
 
   private final SearchService searchService;
 
+  private final boolean bulkProcessing;
+
   @Inject
   public IndexRequestProcessor(final RepositoryManager repositoryManager,
                                final EventManager eventManager,
-                               final SearchService searchService)
+                               final SearchService searchService,
+                               @Named("${nexus.elasticsearch.bulkProcessing:-true}") final boolean bulkProcessing)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.eventManager = checkNotNull(eventManager);
     this.searchService = checkNotNull(searchService);
+    this.bulkProcessing = bulkProcessing;
   }
 
   @Override
@@ -111,11 +115,16 @@ public class IndexRequestProcessor
     }
   }
 
-  private static void doUpdateSearchIndex(final Repository repository, final IndexRequest indexRequest) {
+  private void doUpdateSearchIndex(final Repository repository, final IndexRequest indexRequest) {
     repository.optionalFacet(SearchFacet.class).ifPresent(searchFacet -> {
       UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
       try {
-        indexRequest.apply(searchFacet);
+        if (bulkProcessing) {
+          indexRequest.bulkApply(searchFacet);
+        }
+        else {
+          indexRequest.apply(searchFacet);
+        }
       }
       finally {
         UnitOfWork.end();

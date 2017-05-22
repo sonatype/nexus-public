@@ -70,12 +70,18 @@ public class RepositoryMetadataMerger
     ArrayList<Envelope> metadatas = new ArrayList<>(contents.size());
     for (Map.Entry<Repository, Content> entry : contents.entrySet()) {
       final String origin = entry.getKey().getName() + " @ " + mavenPath.getPath();
-      final Metadata metadata = MavenModels.readMetadata(entry.getValue().openInputStream());
-      if (metadata == null) {
-        log.debug("Corrupted repository metadata: {}", origin);
-        continue;
+      try {
+        final Metadata metadata = MavenModels.readMetadata(entry.getValue().openInputStream());
+        if (metadata == null) {
+          log.debug("Corrupted repository metadata: {}, source: {}", origin, entry.getValue());
+          continue;
+        }
+        metadatas.add(new Envelope(origin, metadata));
       }
-      metadatas.add(new Envelope(origin, metadata));
+      catch (IOException e) {
+        log.debug("Error downloading repository metadata: {}, source: {}", origin, entry.getValue());
+        throw new IOException("Error downloading repository metadata for " + origin + ": " + e.getMessage(), e);
+      }
     }
 
     final Metadata mergedMetadata = merge(metadatas);
