@@ -173,6 +173,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.xmlunit</groupId>
+        <artifactId>xmlunit-core</artifactId>
+        <version>2.3.0</version>
+      </dependency>
+
+      <dependency>
         <groupId>io.gatling.highcharts</groupId>
         <artifactId>gatling-charts-highcharts</artifactId>
         <version>2.2.5</version>

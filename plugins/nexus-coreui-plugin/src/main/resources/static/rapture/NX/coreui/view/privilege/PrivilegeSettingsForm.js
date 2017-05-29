@@ -92,12 +92,9 @@ Ext.define('NX.coreui.view.privilege.PrivilegeSettingsForm', {
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset');
 
     if (privilegeTypeModel) {
-      settingsFieldSet.importProperties(model.get('properties'), privilegeTypeModel.get('formFields'));
+      settingsFieldSet.importProperties(model.get('properties'), privilegeTypeModel.get('formFields'), me.editableCondition);
     }
     me.callParent(arguments);
-    // HACK: force condition in opposite state and back again to force setting editable on the imported properties above
-    me.editableCondition.setSatisfied(!me.editableCondition.isSatisfied());
-    me.editableCondition.setSatisfied(!me.editableCondition.isSatisfied());
   },
 
   /**

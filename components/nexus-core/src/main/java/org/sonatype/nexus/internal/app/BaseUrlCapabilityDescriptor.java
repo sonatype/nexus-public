@@ -57,7 +57,7 @@ public class BaseUrlCapabilityDescriptor
     @DefaultMessage("URL")
     String urlLabel();
 
-    @DefaultMessage("Base URL of the application server")
+    @DefaultMessage("Reverse proxy base URL")
     String urlHelp();
   }
 

@@ -250,10 +250,16 @@ public class RepositoryMetadataMerger
         Objects
             .equals(nullOrEmptyStringFilter(target.getArtifactId()), nullOrEmptyStringFilter(source.getArtifactId())),
         "ArtifactId mismatch: %s vs %s", target.getArtifactId(), source.getArtifactId());
-    checkArgument(
-        Objects.equals(nullOrEmptyStringFilter(target.getVersion()), nullOrEmptyStringFilter(source.getVersion())),
-        "Version mismatch: %s vs %s", target.getVersion(), source.getVersion());
 
+    String targetVersion = nullOrEmptyStringFilter(target.getVersion());
+    String sourceVersion = nullOrEmptyStringFilter(source.getVersion());
+
+    // As per NEXUS-13085 allow this and log for support in case the resulting merge leads to downstream problems
+    if (!Objects.equals(targetVersion, sourceVersion)) {
+      log.warn("Merging with version mismatch for GA={}:{}, {} vs {}", target.getGroupId(), target.getArtifactId(),
+          targetVersion, sourceVersion);
+    }
+    
     mergePlugins(target, source);
     mergeVersioning(target, source);
     return target;

@@ -232,6 +232,7 @@ Ext.define('NX.view.SettingsForm', {
       if (editable) {
         if (bottomBar.editableMarker) {
           bottomBar.remove(bottomBar.editableMarker);
+          bottomBar.editableMarker = undefined;
         }
       }
       else {

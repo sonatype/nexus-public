@@ -40,7 +40,7 @@ public class SuffixSqlBuilderTest
 
   @Test
   public void suffix() throws Exception {
-    assertThat(buildSuffix(queryOptions), is(equalTo(" ORDER BY name asc SKIP 99 LIMIT 10")));
+    assertThat(buildSuffix(queryOptions), is(equalTo(" SKIP 99 LIMIT 10")));
   }
 
   @Test

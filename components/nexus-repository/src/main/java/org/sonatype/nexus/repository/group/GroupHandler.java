@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -49,7 +50,8 @@ public class GroupHandler
   /**
    * Request-context state container for set of repositories already dispatched to.
    */
-  protected static class DispatchedRepositories
+  @VisibleForTesting
+  public static class DispatchedRepositories
   {
     private final Set<String> dispatched = Sets.newHashSet();
 

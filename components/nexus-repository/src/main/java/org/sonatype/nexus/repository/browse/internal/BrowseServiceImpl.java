@@ -27,6 +27,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.browse.BrowseResult;
@@ -52,13 +55,14 @@ import org.sonatype.nexus.security.BreadActions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.transform;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -82,18 +86,26 @@ public class BrowseServiceImpl
 
   private final ContentPermissionChecker contentPermissionChecker;
 
+  private final BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
+
+  private final BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
+
   @Inject
   public BrowseServiceImpl(@Named(GroupType.NAME) final Type groupType,
                            final ComponentEntityAdapter componentEntityAdapter,
                            final VariableResolverAdapterManager variableResolverAdapterManager,
                            final ContentPermissionChecker contentPermissionChecker,
-                           final AssetEntityAdapter assetEntityAdapter)
+                           final AssetEntityAdapter assetEntityAdapter,
+                           final BrowseAssetsSqlBuilder browseAssetsSqlBuilder,
+                           final BrowseComponentsSqlBuilder browseComponentsSqlBuilder)
   {
     this.groupType = checkNotNull(groupType);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.assetEntityAdapter = assetEntityAdapter;
+    this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
+    this.browseAssetsSqlBuilder = checkNotNull(browseAssetsSqlBuilder);
+    this.browseComponentsSqlBuilder = checkNotNull(browseComponentsSqlBuilder);
   }
 
   @Override
@@ -104,25 +116,24 @@ public class BrowseServiceImpl
     final List<Repository> repositories = getRepositories(repository);
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
-      List<Bucket> buckets = getBuckets(storageTx, repositories);
+      List<String> bucketIds = getBucketIds(storageTx, repositories);
       List<Component> components = Collections.emptyList();
       // ensure there are components before incurring contentAuth overhead
-      if (hasComponents(storageTx, repository, buckets, queryOptions)) {
-        BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
-            buckets, queryOptions);
-        components = getComponents(storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams()));
+      if (hasComponents(storageTx, repository, bucketIds, queryOptions)) {
+        components = getComponents(storageTx.browse(
+            browseComponentsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
+            browseComponentsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
       }
       return new BrowseResult<>(estimateCount(queryOptions, components), components);
     }
   }
 
-  private boolean hasComponents(final StorageTx storageTx, final Repository repository, final List<Bucket> buckets,
+  private boolean hasComponents(final StorageTx storageTx, final Repository repository, final List<String> bucketIds,
                                 final QueryOptions queryOptions)
   {
     QueryOptions adjustedOptions = new QueryOptions(queryOptions.getFilter(), null, null, 0, 1, null, false);
-    BrowseComponentsSqlBuilder builder = new BrowseComponentsSqlBuilder(repository.getName(),
-        buckets, adjustedOptions);
-    Iterable<ODocument> docs = storageTx.browse(builder.buildBrowseSql(), builder.buildSqlParams());
+    Iterable<ODocument> docs = storageTx.browse(browseComponentsSqlBuilder.buildBrowseSql(bucketIds, adjustedOptions),
+        browseComponentsSqlBuilder.buildSqlParams(repository.getName(), adjustedOptions));
     return docs.iterator().hasNext();
   }
 
@@ -170,24 +181,24 @@ public class BrowseServiceImpl
     final List<Repository> repositories = getRepositories(repository);
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
-      BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), queryOptions);
+      List<String> bucketIds = getBucketIds(storageTx, repositories);
       List<Asset> assets = Collections.emptyList();
       // ensure there are assets before incurring contentAuth overhead
-      if (hasAssets(storageTx, repository, repositories, queryOptions)) {
-        assets = Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
-            repositories, builder.buildQuerySuffix()));
+      if (hasAssets(storageTx, repository, bucketIds, queryOptions)) {
+        assets = getAssets(storageTx.browse(
+            browseAssetsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
+            browseAssetsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
       }
-      return new BrowseResult<>(estimateCount(queryOptions,assets), assets);
+      return new BrowseResult<>(estimateCount(queryOptions, assets), assets);
     }
   }
 
-  private boolean hasAssets(final StorageTx storageTx, final Repository repository, final List<Repository> repositories,
+  private boolean hasAssets(final StorageTx storageTx, final Repository repository, final List<String> bucketIds,
                             final QueryOptions queryOptions)
   {
     QueryOptions adjustedOptions = new QueryOptions(queryOptions.getFilter(), null, null, 0, 1, null, false);
-    BrowseAssetsSqlBuilder builder = new BrowseAssetsSqlBuilder(repository.getName(), adjustedOptions);
-    Iterable<Asset> docs = storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
-        repositories, builder.buildQuerySuffix());
+    Iterable<ODocument> docs = storageTx.browse(browseAssetsSqlBuilder.buildBrowseSql(bucketIds, adjustedOptions),
+        browseAssetsSqlBuilder.buildSqlParams(repository.getName(), adjustedOptions));
     return docs.iterator().hasNext();
   }
 
@@ -237,6 +248,16 @@ public class BrowseServiceImpl
     checkNotNull(componentId);
 
     return getById(componentId, repository, "component", componentEntityAdapter);
+  }
+
+  @Override
+  public Map<EntityId, String> getRepositoryBucketNames(final Repository repository) {
+    checkNotNull(repository);
+    try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      storageTx.begin();
+      List<Bucket> buckets = getBuckets(storageTx, getRepositories(repository));
+      return buckets.stream().collect(toMap(EntityHelper::id, Bucket::getRepositoryName));
+    }
   }
 
   private <T extends MetadataNode<?>> T getById(final ORID orid,
@@ -291,9 +312,20 @@ public class BrowseServiceImpl
     return Lists.newArrayList(buckets);
   }
 
+  @VisibleForTesting
+  List<String> getBucketIds(final StorageTx storageTx, final Iterable<Repository> repositories) {
+    return  Lists.newArrayList(transform(getBuckets(storageTx, repositories),
+        bucket -> AttachedEntityHelper.id(bucket).toString()));
+  }
+
   private List<Component> getComponents(final Iterable<ODocument> results) {
     checkNotNull(results);
-    return Lists.newArrayList(Iterables.transform(results,
-        (ODocument doc) -> componentEntityAdapter.readEntity(doc)));
+    return Lists.newArrayList(transform(results, componentEntityAdapter::readEntity));
+  }
+
+  @VisibleForTesting
+  List<Asset> getAssets(final Iterable<ODocument> results) {
+    checkNotNull(results);
+    return Lists.newArrayList(transform(results, assetEntityAdapter::readEntity));
   }
 }

@@ -40,8 +40,8 @@ public class SuffixSqlBuilder
   private String sort() {
     String sortProperty = queryOptions.getSortProperty();
     String sortDirection = queryOptions.getSortDirection();
-    if (sortProperty != null && sortDirection != null) {
-      return " ORDER BY " + ("id".equals(sortProperty) ? "@RID" : sortProperty) + " " + sortDirection;
+    if (sortProperty != null && sortDirection != null && "id".equals(sortProperty)) {
+      return " ORDER BY @RID " + sortDirection;
     }
     return "";
   }

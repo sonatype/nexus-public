@@ -56,6 +56,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Assets_Info_BlobRef: 'Blob reference',
     Assets_Info_Blob_Created: 'Blob created',
     Assets_Info_Blob_Updated: 'Blob updated',
+    Assets_Info_ContainingRepositoryName: 'Containing repo',
     AssetInfo_Delete_Button: 'Delete asset',
     AssetInfo_Delete_Title: 'Confirm deletion?',
     AssetInfo_Delete_Success: 'Asset deleted: {0}',

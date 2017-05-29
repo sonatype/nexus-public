@@ -77,7 +77,8 @@ class ComponentComponent
     )
   }
 
-  private static final Closure ASSET_CONVERTER = { Asset asset, String componentName, String repositoryName ->
+  private static final Closure ASSET_CONVERTER = { Asset asset, String componentName, String repositoryName,
+                                                   Map<String, String> repoNamesForBuckets ->
     new AssetXO(
         id: EntityHelper.id(asset).value,
         name: asset.name() ?: componentName,
@@ -85,6 +86,7 @@ class ComponentComponent
         contentType: asset.contentType() ?: 'unknown',
         size: asset.size() ?: 0,
         repositoryName: repositoryName,
+        containingRepositoryName: repoNamesForBuckets[asset.bucketId()],
         blobCreated: asset.blobCreated()?.toDate(),
         blobUpdated: asset.blobUpdated()?.toDate(),
         lastDownloaded: asset.lastDownloaded()?.toDate(),
@@ -141,7 +143,8 @@ class ComponentComponent
       return null
     }
     def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'));
-    return result.results.collect(ASSET_CONVERTER.rcurry(parameters.getFilter('componentName'), repository.name))
+    def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
+    return result.results.collect(ASSET_CONVERTER.rcurry(parameters.getFilter('componentName'), repository.name, repoNamesForBuckets))
   }
 
   private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
@@ -183,7 +186,7 @@ class ComponentComponent
         toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
-        result.results.collect(ASSET_CONVERTER.rcurry(null, null))
+        result.results.collect(ASSET_CONVERTER.rcurry(null, null, [:])) // buckets not needed for asset preview screen
     )
   }
 
@@ -197,9 +200,10 @@ class ComponentComponent
       return null
     }
     def result = browseService.browseAssets(repository, toQueryOptions(parameters))
+    def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
     return new PagedResponse<AssetXO>(
         result.total,
-        result.results.collect(ASSET_CONVERTER.rcurry(null, repositoryName))
+        result.results.collect(ASSET_CONVERTER.rcurry(null, repositoryName, repoNamesForBuckets))
     )
   }
 
@@ -297,7 +301,13 @@ class ComponentComponent
       storageTx.close()
     }
     ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
-    return asset ? ASSET_CONVERTER.call(asset, null, repository.name) as AssetXO : null
+    if (asset) {
+      def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
+      return ASSET_CONVERTER.call(asset, null, repository.name, repoNamesForBuckets)
+    }
+    else {
+      return null
+    }
   }
 
   private QueryOptions toQueryOptions(StoreLoadParameters storeLoadParameters) {

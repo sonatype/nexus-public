@@ -119,7 +119,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
    * @param {Object} properties to import
    * @param {Array} formFields to import
    */
-  importProperties: function (properties, formFields) {
+  importProperties: function (properties, formFields, editableCondition) {
     var me = this,
         form = me.up('form').getForm(),
         data = {};
@@ -127,6 +127,10 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
     // recreate settings only when we have different form fields  (compare json encoded objects)
     if (Ext.encode(me.formFields) !== Ext.encode(formFields)) {
       me.setFormFields(formFields);
+
+      if (Ext.isDefined(editableCondition) && !editableCondition.isSatisfied()) {
+        me.up('form').setEditable(false);
+      }
     }
 
     // avoid resetting initial values of fields when creating a new record (properties will be null)

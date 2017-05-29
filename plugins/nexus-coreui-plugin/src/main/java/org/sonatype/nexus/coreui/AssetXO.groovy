@@ -43,6 +43,9 @@ class AssetXO
   @NotEmpty
   String repositoryName
 
+  @NotEmpty
+  String containingRepositoryName
+
   Date blobCreated
 
   Date blobUpdated

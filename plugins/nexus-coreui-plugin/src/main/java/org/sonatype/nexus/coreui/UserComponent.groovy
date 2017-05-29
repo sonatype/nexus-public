@@ -87,7 +87,8 @@ class UserComponent
       source = DEFAULT_SOURCE
     }
     def userId = parameters?.getFilter('userId')
-    securitySystem.searchUsers(new UserSearchCriteria(source: source, userId: userId)).collect { user ->
+    def limit = parameters?.getLimit()
+    securitySystem.searchUsers(new UserSearchCriteria(source: source, userId: userId, limit: limit)).collect { user ->
       convert(user)
     }
   }

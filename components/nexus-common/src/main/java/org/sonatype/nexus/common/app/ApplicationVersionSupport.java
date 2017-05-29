@@ -40,6 +40,9 @@ public abstract class ApplicationVersionSupport
   @VisibleForTesting
   static final String BUILD_TIMESTAMP = "build.timestamp";
 
+  @VisibleForTesting
+  static final String NEXUS2_VERSION = "nexus2.version";
+
   /**
    * Resource name of properties-file which contains version information.
    */
@@ -101,5 +104,10 @@ public abstract class ApplicationVersionSupport
   @Override
   public String getBuildTimestamp() {
     return property(BUILD_TIMESTAMP);
+  }
+
+  @Override
+  public String getNexus2CompatibleVersion() {
+    return property(NEXUS2_VERSION);
   }
 }

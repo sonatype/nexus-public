@@ -123,7 +123,7 @@ public class AssetEntityAdapter
       .property(P_COMPONENT)
       .build();
 
-  private static final String I_NAME_CASEINSENSITIVE = new OIndexNameBuilder()
+  public static final String I_NAME_CASEINSENSITIVE = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_NAME)
       .caseInsensitive()

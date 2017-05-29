@@ -10,8 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  *###
-Specify the base URL used by the application server.
+Specify the reverse proxy base URL for your instance to be used in email notifications.
 
 <p>
-  This value is used in cases where it otherwise can not be detected.
+  Use this feature only if you have a reverse proxy in front of Nexus Repository Manager that presents a different base URL.
 </p>

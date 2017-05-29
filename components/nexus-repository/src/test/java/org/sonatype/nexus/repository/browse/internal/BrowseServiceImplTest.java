@@ -49,7 +49,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 
@@ -104,6 +106,10 @@ public class BrowseServiceImplTest
   @Mock
   AssetEntityAdapter assetEntityAdapter;
 
+  BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
+
+  BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
+
   List<Asset> results;
 
   private BrowseServiceImpl underTest;
@@ -123,8 +129,11 @@ public class BrowseServiceImplTest
     when(storageFacet.txSupplier()).thenReturn(txSupplier);
     when(txSupplier.get()).thenReturn(storageTx);
 
-    underTest = new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker, assetEntityAdapter);
+    browseAssetsSqlBuilder = new BrowseAssetsSqlBuilder(assetEntityAdapter);
+    browseComponentsSqlBuilder = new BrowseComponentsSqlBuilder(componentEntityAdapter);
+
+    underTest = spy(new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
+        contentPermissionChecker, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder));
   }
 
   @Test
@@ -159,17 +168,16 @@ public class BrowseServiceImplTest
 
   @Test
   public void testBrowseAssets() {
-
     List<Repository> expectedRepositories = asList(mavenReleases);
-    String expectedWhere = "contentAuth(@this, :browsedRepository) == true";
-    String expectedSuffix = " SKIP 0 LIMIT 0";
+    String expectedQuery1 = "SELECT FROM INDEXVALUES:asset_name_ci_idx WHERE (bucket = b4)  SKIP 0 LIMIT 1";
+    String expectedQuery2 = "SELECT FROM INDEXVALUES:asset_name_ci_idx WHERE (bucket = b4) AND contentAuth(@this, :browsedRepository) == true  SKIP 0 LIMIT 0";
+    List<String> bucketIds = Collections.singletonList("b4");
+    Iterable<ODocument> resultDocs = asList(mock(ODocument.class), mock(ODocument.class));
 
-    when(storageTx
-        .findAssets(eq(null), any(), eq(expectedRepositories),
-            eq(" SKIP 0 LIMIT 1"))).thenReturn(results);
-    when(storageTx
-        .findAssets(eq(expectedWhere), sqlParamsCaptor.capture(), eq(expectedRepositories),
-            eq(expectedSuffix))).thenReturn(results);
+    doReturn(bucketIds).when(underTest).getBucketIds(any(), eq(expectedRepositories));
+    doReturn(results).when(underTest).getAssets(resultDocs);
+    when(storageTx.browse(eq(expectedQuery1), any())).thenReturn(resultDocs);
+    when(storageTx.browse(eq(expectedQuery2), sqlParamsCaptor.capture())).thenReturn(resultDocs);
 
     BrowseResult<Asset> browseResult = underTest.browseAssets(mavenReleases, queryOptions);
     assertThat(browseResult.getTotal(), is(2L));

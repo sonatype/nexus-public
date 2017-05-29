@@ -13,7 +13,9 @@
 package org.sonatype.nexus.repository.browse;
 
 import java.util.List;
+import java.util.Map;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -63,5 +65,10 @@ public interface BrowseService
    * Returns a component based on the supplied id and repository.
    */
   Component getComponentById(final ORID componentId, final Repository repository);
+
+  /**
+   * Returns a map of bucket IDs to repository names for any buckets that could be referenced by the repository.
+   */
+  Map<EntityId, String> getRepositoryBucketNames(final Repository repository);
 
 }

@@ -30,6 +30,8 @@ public class UserSearchCriteria
 
   private String email;
 
+  private Integer limit;
+
   public UserSearchCriteria() {
   }
 
@@ -73,5 +75,13 @@ public class UserSearchCriteria
 
   public void setEmail(final String email) {
     this.email = email;
+  }
+
+  public Integer getLimit() {
+    return limit;
+  }
+
+  public void setLimit(final Integer limit) {
+    this.limit = limit;
   }
 }

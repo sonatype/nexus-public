@@ -77,6 +77,8 @@ public class IndexRequestProcessor
   @Override
   protected void doStop() {
     eventManager.unregister(this);
+
+    searchService.flush();
   }
 
   @Subscribe
@@ -88,6 +90,8 @@ public class IndexRequestProcessor
   public void process(final IndexBatchRequest request) {
     Set<EntityId> pendingDeletes = request.apply(this::maybeUpdateSearchIndex);
     if (!pendingDeletes.isEmpty()) {
+      // IndexSyncService can request deletes that have no associated repository,
+      // in which case we need to attempt a special bulk delete as the last step
       searchService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
     }
   }

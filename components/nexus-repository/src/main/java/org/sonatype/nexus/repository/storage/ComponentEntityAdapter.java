@@ -82,7 +82,7 @@ public class ComponentEntityAdapter
       .caseInsensitive()
       .build();
 
-  private static final String I_GROUP_NAME_VERSION_INSENSITIVE = new OIndexNameBuilder()
+  public static final String I_GROUP_NAME_VERSION_INSENSITIVE = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_GROUP)
       .property(P_NAME)

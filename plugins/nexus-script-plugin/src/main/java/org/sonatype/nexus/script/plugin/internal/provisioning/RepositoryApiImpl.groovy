@@ -379,10 +379,20 @@ class RepositoryApiImpl
   }
 
   @Nonnull
-  Repository createRubygemsGroup(final String name, final List<String> members,
+  Repository createRubygemsGroup(final String name,
+                                 final List<String> members,
                                  final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
   {
     createRepository(createGroup(name, 'rubygems-group', blobStoreName, members as String[]))
+  }
+
+  @Nonnull
+  Repository createYumProxy(final String name,
+                            final String remoteUrl,
+                            final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                            final boolean strictContentTypeValidation = true)
+  {
+    createRepository(createProxy(name, 'yum-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
   }
 
   @Nonnull

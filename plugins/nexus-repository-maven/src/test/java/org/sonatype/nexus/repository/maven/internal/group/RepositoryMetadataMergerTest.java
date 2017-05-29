@@ -263,4 +263,26 @@ public class RepositoryMetadataMergerTest
 
     merger.merge(path, mavenPath, ImmutableMap.of(repository, content));
   }
+
+  /**
+   * NEXUS-13085
+   * Some maven-metadata.xml files are contrary to the present spec 
+   * (http://maven.apache.org/ref/3.3.9/maven-repository-metadata/repository-metadata.html) and contain a 'version' 
+   * element for non-SNAPSHOT artifacts, allowing for lax validation.
+   */
+  @Test
+  public void allowVersionInArtifactLevelMetadata() {
+    Metadata m1 = a("org.foo", "some-project", "20150324121500", "1.0.0","1.0.0", "1.0.0");
+    m1.setVersion("1.0.0");
+    Metadata m2 = a("org.foo", "some-project", "20150324121501", "1.0.1","1.0.1", "1.0.1");
+    m2.setVersion("1.0.1");
+
+    final Metadata m = merger.merge(
+        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2))
+    );
+    assertThat(m.getVersion(), is(m1.getVersion())); // target version is left intact, no attempt to merge
+    assertThat(m.getVersioning().getRelease(), is(m2.getVersion()));
+    assertThat(m.getVersioning().getLastUpdated(), is(m2.getVersioning().getLastUpdated()));
+    assertThat(m.getVersioning().getVersions(), contains("1.0.0", "1.0.1"));
+  }
 }

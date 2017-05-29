@@ -12,40 +12,71 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
+
+import com.google.common.base.Joiner;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.browse.internal.AssetWhereClauseBuilder.whereClause;
-import static org.sonatype.nexus.repository.browse.internal.SuffixSqlBuilder.buildSuffix;
 
 /**
  * Class that encapsulates building the SQL queries for browsing assets in the {@link BrowseServiceImpl}.
  *
  * @since 3.1
  */
+@Named
+@Singleton
 public class BrowseAssetsSqlBuilder
+    extends BrowseSqlBuilderSupport
 {
-  private final QueryOptions queryOptions;
-  private final String repositoryName;
+  private final AssetEntityAdapter assetEntityAdapter;
 
-  public BrowseAssetsSqlBuilder(final String repositoryName, final QueryOptions queryOptions) {
-    this.repositoryName = checkNotNull(repositoryName);
-    this.queryOptions = checkNotNull(queryOptions);
+  @Inject
+  BrowseAssetsSqlBuilder(final AssetEntityAdapter assetEntityAdapter)
+  {
+    this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
   }
 
-  public String buildWhereClause() {
-    return whereClause(queryOptions.getContentAuth() ? "contentAuth(@this, :browsedRepository) == true" : null,
-        queryOptions.getFilter() != null, queryOptions.getLastId() != null);
+  @Override
+  protected MetadataNodeEntityAdapter<?> getEntityAdapter() {
+    return assetEntityAdapter;
   }
 
-  public String buildQuerySuffix() {
-    return buildSuffix(queryOptions);
+  @Override
+  protected String getBrowseIndex() {
+    return AssetEntityAdapter.I_NAME_CASEINSENSITIVE;
   }
 
-  public Map<String, Object> buildSqlParams() {
+  @Override
+  protected String buildWhereClause(final List<String> bucketIds, final QueryOptions queryOptions) {
+    List<String> whereClauses = new ArrayList<>();
+    if (!bucketIds.isEmpty()) {
+      whereClauses.add("(" + bucketIds.stream()
+          .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + bucket)
+          .collect(Collectors.joining(" OR ")) + ")");
+    }
+    if (queryOptions.getContentAuth()) {
+      whereClauses.add("contentAuth(@this, :browsedRepository) == true");
+    }
+
+    return whereClause(Joiner.on(" AND ").join(whereClauses), queryOptions.getFilter() != null,
+        queryOptions.getLastId() != null);
+  }
+
+  @Override
+  Map<String, Object> buildSqlParams(final String repositoryName, final QueryOptions queryOptions) {
     Map<String, Object> params = new HashMap<>();
     if (queryOptions.getContentAuth()) {
       params.put("browsedRepository", repositoryName);

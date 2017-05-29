@@ -51,6 +51,8 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     info[NX.I18n.get('Assets_Info_Last_Downloaded')] = assetModel.get('lastDownloaded');
     info[NX.I18n.get('Assets_Info_Locally_Cached')] = contentType !== 'unknown' && size > 0;
     info[NX.I18n.get('Assets_Info_BlobRef')] = assetModel.get('blobRef');
+    info[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = assetModel.get('containingRepositoryName');
+
     me.showInfo(info);
   }
 

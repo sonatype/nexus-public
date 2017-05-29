@@ -104,7 +104,7 @@ class SearchServiceImplTest
     when(client.settings()).thenReturn(settings)
 
     searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        indexSettingsContributors, false, 1000, 0)
+        indexSettingsContributors, false, 1000, 0, 0)
     searchService.bulkProcessor = bulkProcessor
   }
 

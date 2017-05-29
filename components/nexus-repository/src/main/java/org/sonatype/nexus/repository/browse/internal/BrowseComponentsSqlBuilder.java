@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import org.sonatype.nexus.repository.browse.QueryOptions;
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 
@@ -32,41 +34,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.1
  */
+@Named
+@Singleton
 public class BrowseComponentsSqlBuilder
+    extends BrowseSqlBuilderSupport
 {
-  private final String repositoryName;
+  private final MetadataNodeEntityAdapter<Component> componentEntityAdapter;
 
-  private final List<Bucket> buckets;
-
-  private final QueryOptions queryOptions;
-
-  public BrowseComponentsSqlBuilder(
-      final String repositoryName,
-      final List<Bucket> buckets,
-      final QueryOptions queryOptions)
+  @Inject
+  BrowseComponentsSqlBuilder(final ComponentEntityAdapter componentEntityAdapter)
   {
-    this.repositoryName = checkNotNull(repositoryName);
-    this.buckets = checkNotNull(buckets);
-    this.queryOptions = checkNotNull(queryOptions);
+    this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
   }
 
-  /**
-   * Returns the SQL for performing the build query.
-   */
-  public String buildBrowseSql() {
-    if (buckets.isEmpty()) {
-      return "";
-    }
-
-    String querySuffix = buildQuerySuffix();
-    String whereClause = buildWhereClause();
-    return String.format("SELECT FROM %s WHERE %s %s", AssetEntityAdapter.P_COMPONENT, whereClause, querySuffix);
+  @Override
+  protected MetadataNodeEntityAdapter<?> getEntityAdapter() {
+    return componentEntityAdapter;
   }
 
-  /**
-   * Returns the SQL parameters for performing the browse query.
-   */
-  public Map<String, Object> buildSqlParams() {
+  @Override
+  protected String getBrowseIndex() {
+    return ComponentEntityAdapter.I_GROUP_NAME_VERSION_INSENSITIVE;
+  }
+
+  @Override
+  Map<String, Object> buildSqlParams(final String repositoryName, final QueryOptions queryOptions) {
     Map<String, Object> params = new HashMap<>();
     params.put("browsedRepository", repositoryName);
 
@@ -86,10 +78,11 @@ public class BrowseComponentsSqlBuilder
     return params;
   }
 
-  private String buildWhereClause() {
+  @Override
+  protected String buildWhereClause(final List<String> bucketIds, final QueryOptions queryOptions) {
     List<String> whereClauses = new ArrayList<>();
-    whereClauses.add(buckets.stream()
-        .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + AttachedEntityHelper.id(bucket))
+    whereClauses.add(bucketIds.stream()
+        .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + bucket)
         .collect(Collectors.joining(" OR ")));
     if (queryOptions.getContentAuth()) {
       whereClauses.add("contentAuth(@this, :browsedRepository) == true");
@@ -104,33 +97,5 @@ public class BrowseComponentsSqlBuilder
       whereClauses.add("@RID > :rid");
     }
     return whereClauses.stream().map(clause -> "(" + clause + ")").collect(Collectors.joining(" AND "));
-  }
-
-  private String buildQuerySuffix() {
-    String sortDirection = queryOptions.getSortDirection();
-    Integer start = queryOptions.getStart();
-    Integer limit = queryOptions.getLimit();
-    String sortProperty = queryOptions.getSortProperty();
-
-    StringBuilder sb = new StringBuilder();
-    if (sortDirection != null) {
-      // For performance purposes components can only be sorted by "id" or the group/name/version index. 
-      // Providing a sort property other than id will just default to the index.
-      if ("id".equals(sortProperty)) {
-        sb.append(String.format(" ORDER BY @RID %1$s", sortDirection));
-      }
-      else {
-        sb.append(String.format(" ORDER BY group %1$s, name %1$s, version %1$s", sortDirection));
-      }
-    }
-    if (start != null) {
-      sb.append(" SKIP ");
-      sb.append(start);
-    }
-    if (limit != null) {
-      sb.append(" LIMIT ");
-      sb.append(limit);
-    }
-    return sb.toString();
   }
 }

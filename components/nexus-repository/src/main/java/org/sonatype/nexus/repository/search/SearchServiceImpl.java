@@ -57,6 +57,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -65,6 +66,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
@@ -111,17 +113,20 @@ public class SearchServiceImpl
 
   private final boolean profile;
 
+  private final boolean periodicFlush;
+
   private BulkProcessor bulkProcessor;
+
   /**
-   *
    * @param client source for a {@link Client}
    * @param repositoryManager the repositoryManager
    * @param securityHelper the securityHelper
    * @param searchSubjectHelper the searchSubjectHelper
    * @param indexSettingsContributors the indexSetttingsContributors
    * @param profile whether or not to profile elasticsearch queries (default: false)
-   * @param bulkActions how many requests to batch in {@link #bulkPut(Repository, Iterable, Function, Function)} (default:1000)
-   * @param bulkConcurrentRequests how many requests to execute concurrently (default: 1; 0 means execute synchronously)
+   * @param bulkCapacity how many bulk requests to batch before they're automatically flushed (default: 1000)
+   * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
+   * @param flushInterval how long to wait in milliseconds between flushing bulk requests (default: 0, instantaneous)
    */
   @Inject
   public SearchServiceImpl(final Provider<Client> client, //NOSONAR
@@ -130,8 +135,9 @@ public class SearchServiceImpl
                            final SearchSubjectHelper searchSubjectHelper,
                            final List<IndexSettingsContributor> indexSettingsContributors,
                            @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
-                           @Named("${nexus.elasticsearch.bulk.actions:-1000}") final int bulkActions,
-                           @Named("${nexus.elasticsearch.bulk.concurrentRequests:-1}") final int bulkConcurrentRequests)
+                           @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
+                           @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
+                           @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -139,13 +145,22 @@ public class SearchServiceImpl
     this.searchSubjectHelper = checkNotNull(searchSubjectHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.repositoryNameMapping = Maps.newConcurrentMap();
-    this.profile = checkNotNull(profile);
+    this.profile = profile;
+    this.periodicFlush = flushInterval > 0;
 
     this.bulkProcessor = BulkProcessor
         .builder(client.get(), new BulkIndexUpdateListener())
-        .setBulkActions(bulkActions)
-        .setConcurrentRequests(bulkConcurrentRequests)
+        .setBulkActions(bulkCapacity)
+        .setBulkSize(new ByteSizeValue(-1)) // turn off automatic flush based on size in bytes
+        .setConcurrentRequests(concurrentRequests)
+        .setFlushInterval(periodicFlush ? TimeValue.timeValueMillis(flushInterval) : null)
         .build();
+  }
+
+  @Override
+  public void flush() {
+    log.debug("Flushing index requests");
+    bulkProcessor.flush();
   }
 
   @Override
@@ -187,6 +202,9 @@ public class SearchServiceImpl
             .execute()
             .actionGet();
       }
+      catch (IndexAlreadyExistsException e) {
+        log.debug("Using existing index for {}", repository, e);
+      }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -205,6 +223,7 @@ public class SearchServiceImpl
   }
 
   private void deleteIndex(final String indexName) {
+    bulkProcessor.flush(); // make sure dangling requests don't resurrect this index
     IndicesAdminClient indices = indicesAdminClient();
     if (indices.prepareExists(indexName).execute().actionGet().isExists()) {
       indices.prepareDelete(indexName).execute().actionGet();
@@ -267,7 +286,9 @@ public class SearchServiceImpl
       );
     });
 
-    bulkProcessor.flush();
+    if (!periodicFlush) {
+      bulkProcessor.flush();
+    }
   }
 
   @Override
@@ -326,7 +347,9 @@ public class SearchServiceImpl
       });
     }
 
-    bulkProcessor.flush();
+    if (!periodicFlush) {
+      bulkProcessor.flush();
+    }
   }
 
   @Override

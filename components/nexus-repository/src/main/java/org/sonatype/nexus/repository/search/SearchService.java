@@ -117,4 +117,11 @@ public interface SearchService
    */
   long countUnrestricted(QueryBuilder query);
 
+  /**
+   * Flush any pending bulk index requests.
+   *
+   * @since 3.4
+   */
+  void flush();
+
 }
