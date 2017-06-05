@@ -47,12 +47,13 @@ public class ApplicationDirectoriesImpl
 
   @Inject
   public ApplicationDirectoriesImpl(@Named("${karaf.base}") final File installDir,
-                                    @Named("${karaf.data}") final File workDir)
+                                    @Named("${karaf.data}") final File workDir,
+                                    @Named("${karaf.etc}") final File configDir)
   {
     this.installDir = resolve(installDir, false);
     log.debug("Install dir: {}", this.installDir);
 
-    this.configDir = resolve(new File(installDir, "etc"), false);
+    this.configDir = resolve(configDir, false);
     log.debug("Config dir: {}", this.configDir);
 
     this.workDir = resolve(workDir, true);
