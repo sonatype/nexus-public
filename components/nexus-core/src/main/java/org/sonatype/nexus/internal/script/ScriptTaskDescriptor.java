@@ -49,13 +49,13 @@ public class ScriptTaskDescriptor
     @DefaultMessage("Language")
     String languageLabel();
 
-    @DefaultMessage("Script language.")
+    @DefaultMessage("Script language")
     String languageHelpText();
 
     @DefaultMessage("Source")
     String sourceLabel();
 
-    @DefaultMessage("Script source.")
+    @DefaultMessage("Script source")
     String sourceHelpText();
   }
 

@@ -188,9 +188,8 @@ public class NegativeCacheFacetImpl
   @Guarded(by = STARTED)
   public void invalidate(final NegativeCacheKey key) {
     checkNotNull(key);
-    if (cache != null) {
+    if (cache != null && cache.remove(key)) {
       log.debug("Removing {} from negative-cache of {}", key, getRepository());
-      cache.remove(key);
     }
   }
 

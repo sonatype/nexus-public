@@ -35,6 +35,11 @@ Ext.define('NX.coreui.migration.PhaseFinishScreen', {
       description: NX.I18n.render(me, 'Description'),
       buttons: [
         {
+          text: NX.I18n.render(me, 'Abort_Button'),
+          action: 'abort',
+          ui: 'default'
+        },
+        {
           text: NX.I18n.render(me, 'Done_Button'),
           action: 'done',
           ui: 'nx-primary',

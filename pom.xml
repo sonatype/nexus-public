@@ -725,7 +725,6 @@
               <id>log4j-over-slf4j</id>
               <id>logback-core</id>
               <id>logback-classic</id>
-              <id>pax-logging-api</id>
               <id>bcprov-jdk15on</id>
               <id>bcpkix-jdk15on</id>
               <id>bcpg-jdk15on</id>

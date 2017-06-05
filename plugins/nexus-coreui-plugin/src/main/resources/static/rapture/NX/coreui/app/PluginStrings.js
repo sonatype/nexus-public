@@ -1243,6 +1243,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.PhaseFinishScreen': {
       Title: 'Finishing',
       Description: '<p>Upgrade is finishing.</p>',
+      Abort_Button: 'Abort',
       Done_Button: 'Done'
     },
 
@@ -1373,6 +1374,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.PhaseFinishStep': {
       $extend: 'NX.coreui.migration.ProgressStepSupport',
+
+      Abort_Confirm_Title: 'Abort Upgrade',
+      Abort_Confirm_Text: 'Do you want to abort upgrade?',
+      Abort_Mask: 'Upgrade aborting',
+      Abort_Message: 'Upgrade aborted',
 
       Done_Mask: 'Confirming',
       Done_Message: 'Upgrade done'

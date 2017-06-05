@@ -227,9 +227,21 @@
                 <delete dir="${project.build.directory}/assembly/lib/ext"/>
                 <delete dir="${project.build.directory}/assembly/lib/endorsed"/>
 
-                <!-- disable log4j backend so we can use logback -->
-                <replaceregexp file="${project.build.directory}/assembly/etc/startup.properties"
-                               match="(.*pax-logging-service.*)" replace="# \1"/>
+                <!-- identify the specific pax-logging API bundle used by nexus-pax-logging backend -->
+                <loadresource property="pax-logging-api">
+                  <string>${org.ops4j.pax.logging:pax-logging-api:jar}</string>
+                  <filterchain>
+                    <replaceregex pattern=".*(pax-logging-api/[^/]*)/.*" replace="\1"/>
+                  </filterchain>
+                </loadresource>
+
+                <!-- remove the other bundles, leaving only the selected API bundle for our backend -->
+                <replaceregexp file="${project.build.directory}/assembly/etc/startup.properties" flags="g"
+                               match=".*org/ops4j/pax/logging/(?!${pax-logging-api}).*\s*" replace=""/>
+                <delete includeemptydirs="true">
+                  <fileset dir="${project.build.directory}/assembly/system/org/ops4j/pax/logging"
+                           excludes="${pax-logging-api}/**"/>
+                </delete>
 
                 <!-- tweak generated karaf feature configuration -->
                 <concat destfile="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" append="true">

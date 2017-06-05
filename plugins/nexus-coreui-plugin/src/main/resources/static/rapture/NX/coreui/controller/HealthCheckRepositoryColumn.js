@@ -220,7 +220,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
         }
         return NX.I18n.get('HealthCheckRepositoryColumn_DownloadsDisabled');
       }
-      else if (NX.Permissions.check('nexus:healthcheck', 'update')) {
+      else if (NX.Permissions.check('nexus:healthcheck:update')) {
         classes = "x-btn x-unselectable x-btn-nx-primary-small x-btn-nx-primary-toolbar-small-disabled";
         text = '<span class="x-btn-inner x-btn-inner-center" unselectable="on">' + NX.I18n.get('HealthCheckRepositoryColumn_Analyze') + '</span>';
         button = '<a class="' + classes + '" hidefocus="on" unselectable="on">' + text + '</a>';
@@ -300,7 +300,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
               html = NX.I18n.get('HealthCheckRepositoryColumn_Analyzing_Tooltip');
             }
             else {
-              if (NX.Permissions.check('nexus:healthchecksummary', 'read')) {
+              if (NX.Permissions.check('nexus:healthchecksummary:read')) {
                 cell = view.getCell(repository, me.getList().healthCheckColumn);
                 Ext.defer(me.showSummary, 0, me, [status, cell.getX(), cell.getY()]);
                 return false;
@@ -308,7 +308,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
               html = NX.I18n.get('HealthCheckRepositoryColumn_View_Permission_Error');
             }
           }
-          else if (NX.Permissions.check('nexus:healthcheck', 'update')) {
+          else if (NX.Permissions.check('nexus:healthcheck:update')) {
             html = NX.I18n.get('HealthCheckRepositoryColumn_Analyze_Tooltip');
           }
           else {
