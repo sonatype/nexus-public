@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 @SuppressWarnings("unchecked")
@@ -265,5 +266,20 @@ public class UpgradeManagerTest
     UpgradeManager upgradeManager = new UpgradeManager(checkpoints, ImmutableList.of(), false);
 
     assertThat(upgradeManager.getClusteredModels(), containsInAnyOrder("bar", "wibble"));
+  }
+
+  @Test
+  public void testLatestKnownModelVersions() {
+    List<Upgrade> upgrades = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.example.UpgradeBar_1_1(),
+        new org.sonatype.nexus.upgrade.example.UpgradeWibble_2_0(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_2(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
+
+    assertThat(upgradeManager.latestKnownModelVersions(),
+        equalTo(ImmutableMap.of("bar", "1.1", "wibble", "2.0", "foo", "1.2")));
   }
 }

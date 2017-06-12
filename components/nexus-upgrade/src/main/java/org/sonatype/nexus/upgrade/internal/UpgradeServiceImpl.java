@@ -77,7 +77,7 @@ public class UpgradeServiceImpl
   protected void doStart() throws Exception {
     modelVersionStore.start();
 
-    modelVersions = modelVersionStore.load();
+    modelVersions = validate(modelVersionStore.load());
 
     List<Upgrade> upgrades = upgradeManager.plan(modelVersions);
     if (upgrades.isEmpty()) {
@@ -147,6 +147,27 @@ public class UpgradeServiceImpl
     }
     checkpoints.forEach(end());
     log.info(BANNER, "Upgrade complete");
+  }
+
+  /**
+   * Ensures the stored model versions are valid for this version of nexus.
+   */
+  private Map<String, String> validate(final Map<String, String> modelVersions) {
+    boolean failed = false;
+    for (Map.Entry<String, String> entry : upgradeManager.latestKnownModelVersions().entrySet()) {
+      String current = modelVersions.getOrDefault(entry.getKey(), "1.0");
+      String latest = entry.getValue();
+      if (VersionComparator.INSTANCE.compare(latest, current) < 0) {
+        log.error("The database model for {} is {}, but the latest supported by this version of nexus is {}",
+            entry.getKey(), current, latest);
+        failed = true;
+      }
+    }
+    if (failed) {
+      throw new IllegalStateException("Incompatible sonatype-work database model detected. Will result in failure " +
+          "to launch. Shutting down.");
+    }
+    return modelVersions;
   }
 
   private Consumer<Checkpoint> begin() {

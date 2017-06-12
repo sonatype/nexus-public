@@ -312,6 +312,7 @@ class NexusSecurityContributor
                 description: 'Anonymous Role',
                 privileges: [
                     'nx-search-read',
+                    'nx-healthcheck-read',
                     'nx-repository-view-*-*-browse',
                     'nx-repository-view-*-*-read'
                 ]

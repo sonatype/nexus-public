@@ -32,10 +32,7 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
    */
   initComponent: function() {
 
-    this.store = Ext.create('NX.coreui.store.RepositoryReference', { remoteFilter: true });
-    this.store.addFilter([
-      { property: 'applyPermissions', value: true }
-    ], false);
+    this.store = 'RepositoryReference';
 
     // filter will install into toolbar, ensure its properly styled for drilldown
     this.tbar = {
@@ -43,6 +40,11 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
     };
 
     this.callParent();
+
+    this.store.remoteFilter = true;
+    this.store.addFilter([
+      { property: 'applyPermissions', value: true }
+    ], false);
   }
 
 });

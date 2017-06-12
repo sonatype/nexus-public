@@ -268,6 +268,7 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     if "%1" == "status" goto :EXECUTE_STATUS
     if "%1" == "run" goto :EXECUTE_CONSOLE
     if "%1" == "console" goto :EXECUTE_CONSOLE
+    if "%1" == "start" goto :EXECUTE_SERVER
     if "%1" == "server" goto :EXECUTE_SERVER
     if "%1" == "client" goto :EXECUTE_CLIENT
     if "%1" == "clean" goto :EXECUTE_CLEAN

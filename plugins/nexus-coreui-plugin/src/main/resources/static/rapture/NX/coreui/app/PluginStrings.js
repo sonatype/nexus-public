@@ -117,6 +117,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchPyPi_Group: 'PyPI Repositories',
     SearchRubygems_Group: 'RubyGems Repositories',
     SearchGitLfs_Group: 'Git LFS Repositories',
+    SearchYum_Group: 'Yum Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
     SearchCriteria_SHA256_FieldLabel: 'SHA-256',
@@ -149,6 +150,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchRubygems_Description_FieldLabel: 'Description',
     SearchRubygems_Licenses_FieldLabel: 'Licenses',
     SearchRubygems_Homepage_FieldLabel: 'Homepage',
+    SearchYum_Architecture_FieldLabel: 'Architecture',
+    SearchYum_Name_FieldLabel: 'Name',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -205,6 +208,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Maven
     SearchMaven_Text: 'Maven',
     SearchMaven_Description: 'Search for components by Maven coordinates',
+
+    // Browse -> Search -> Yum
+    SearchYum_Text: 'Yum',
+    SearchYum_Description: 'Search for components in Yum repositories',
 
     // Browse -> Browse
     FeatureGroups_Browse_Text: 'Browse',

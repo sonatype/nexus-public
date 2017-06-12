@@ -373,6 +373,11 @@ run() {
             'run' | 'console')
                 shift
                 ;;
+            'start')
+                NOHUP="true"
+                OPTS="-Dkaraf.startLocalConsole=false -Dkaraf.startRemoteShell=true"
+                shift
+                ;;
             'server')
                 OPTS="-Dkaraf.startLocalConsole=false -Dkaraf.startRemoteShell=true"
                 shift
@@ -411,7 +416,11 @@ run() {
     # SONATYPE: removed -Djavax.management.builder.initial
     # SONATYPE: removed -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}"
     # SONATYPE: removed -Djava.ext.dirs="${JAVA_EXT_DIRS}"
-    exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
+    if [ "$NOHUP" = "true" ]; then
+        exec nohup "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@" > /dev/null 2>&1 &
+    else
+        exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
+    fi
 }
 
 main() {

@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <goodies.version>2.2.3</goodies.version>
+    <goodies.version>2.2.4</goodies.version>
   </properties>
 
   <dependencyManagement>

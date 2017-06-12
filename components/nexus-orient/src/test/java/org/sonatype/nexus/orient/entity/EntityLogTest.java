@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,8 +46,6 @@ public class EntityLogTest
   public DatabaseInstanceRule database = DatabaseInstanceRule.inFilesystem("test");
 
   TestEntityAdapter entityAdapter = new TestEntityAdapter();
-
-  EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
 
   static class TestEntity
       extends Entity
@@ -94,10 +94,12 @@ public class EntityLogTest
   }
 
   @Test
-  public void testWithRecordTrackingEnabled() {
+  public void testWithRecordTrackingEnabled() throws Exception {
 
     // this is true when in distributed mode; we set it here for testing purposes
     STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
 
     TestEntity entityA = new TestEntity();
     TestEntity entityB = new TestEntity();
@@ -186,11 +188,20 @@ public class EntityLogTest
 
       // verify no changes since the fourth mark
       assertThat(log.since(mark4), is(ImmutableMap.of()));
+
+      // insert an entry into the log that isn't associated with an entity change
+      ((OLocalPaginatedStorage) db.getStorage().getUnderlying())
+          .getWALInstance().log(new ONonTxOperationPerformedWALRecord());
+
+      // verify still no changes since the fourth mark
+      assertThat(log.since(mark4), is(ImmutableMap.of()));
     }
   }
 
   @Test
-  public void testWithRecordTrackingDisabled() {
+  public void testWithRecordTrackingDisabled() throws Exception {
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
 
     TestEntity entityA = new TestEntity();
     TestEntity entityB = new TestEntity();
@@ -271,11 +282,20 @@ public class EntityLogTest
 
       // verify no changes since the fourth mark
       assertThat(log.since(mark4), is(ImmutableMap.of()));
+
+      // insert an entry into the log that isn't associated with an entity change
+      ((OLocalPaginatedStorage) db.getStorage().getUnderlying())
+          .getWALInstance().log(new ONonTxOperationPerformedWALRecord());
+
+      // verify still no changes since the fourth mark
+      assertThat(log.since(mark4), is(ImmutableMap.of()));
     }
   }
 
   @Test
   public void testLogMarkerBoundaries() {
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       entityAdapter.register(db);

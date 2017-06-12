@@ -35,6 +35,9 @@ import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.maxBy;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
@@ -165,5 +168,28 @@ public class UpgradeManager
    */
   static int byVersion(final UpgradeStep lhs, final UpgradeStep rhs) {
     return VersionComparator.INSTANCE.compare(lhs.getVersion(), rhs.getVersion());
+  }
+
+  /**
+   * Partial ordering for independent/unrelated {@link Upgrades} (earliest first).
+   */
+  static int byVersion(final Upgrades lhs, final Upgrades rhs) {
+    return VersionComparator.INSTANCE.compare(lhs.to(), rhs.to());
+  }
+
+  /**
+   * Returns a map of model names to the most recent known version of
+   * that model.
+   *
+   * @since 3.4
+   */
+  public Map<String, String> latestKnownModelVersions() {
+    return managedUpgrades.stream().map(upgrade -> upgrade.getClass().getAnnotation(Upgrades.class))
+        .collect(
+            groupingBy(
+                Upgrades::model,
+                collectingAndThen(
+                    maxBy(UpgradeManager::byVersion),
+                    step -> step.get().to())));
   }
 }

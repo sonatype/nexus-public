@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.scheduling.Cancelable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,6 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 public class PurgeMavenUnusedSnapshotsTask
     extends RepositoryTaskSupport
+    implements Cancelable
 {
   public static final String LAST_USED_FIELD_ID = "lastUsed";
 

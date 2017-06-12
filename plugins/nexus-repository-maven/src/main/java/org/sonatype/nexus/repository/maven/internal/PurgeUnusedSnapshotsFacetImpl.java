@@ -13,19 +13,22 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
@@ -35,29 +38,36 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtil
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.scheduling.CancelableHelper;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.sonatype.nexus.orient.entity.AttachedEntityHelper.id;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
-import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
-import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_DOWNLOADED;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
 /**
  * Implementation of {@link PurgeUnusedSnapshotsFacet}. The implementation assumes that this facet will only be used
@@ -70,12 +80,20 @@ public class PurgeUnusedSnapshotsFacetImpl
     extends FacetSupport
     implements PurgeUnusedSnapshotsFacet
 {
+  private static final String UNUSED_QUERY =
+      // first part of Orient command query - looping components
+      "LET $a = (SELECT FROM component WHERE @RID > %s ORDER BY @RID LIMIT %d); " +
+      // second part - asset join with GROUP BY for lastdownloaded date
+      "LET $b = (SELECT component, max(last_downloaded) as lastdownloaded " +
+      "FROM asset WHERE (%s) GROUP BY component ORDER BY component); " +
+      // third part - further filter out non-snapshots and non-date matches
+      "SELECT FROM $b WHERE (" +
+      "component.attributes.maven2.baseVersion LIKE '%%SNAPSHOT' AND lastdownloaded < '%s') " +
+      // though always include the last record for looping USING 'WHERE @RID >'
+      "OR component = $a[%d];";
 
-  private static final String FIND_SNAPSHOTS_SQL = String.format(
-      "SELECT FROM (SELECT %s, MAX(%s) AS lastDownloaded FROM asset WHERE %s=:bucket AND %s IS NOT NULL GROUP BY %s) WHERE lastDownloaded < :olderThan AND %s.%s['%s']['%s'] LIKE '%%%s'",
-      P_COMPONENT, P_LAST_DOWNLOADED, P_BUCKET, P_COMPONENT, P_COMPONENT, P_COMPONENT,
-      P_ATTRIBUTES, NAME, P_BASE_VERSION, SNAPSHOT_VERSION_SUFFIX
-  );
+
+  private static final String UNUSED_WHERE_QUERY = "(bucket = %s AND component = $a[%d])";
 
   private final ComponentEntityAdapter componentEntityAdapter;
 
@@ -85,16 +103,25 @@ public class PurgeUnusedSnapshotsFacetImpl
 
   private final Type hostedType;
 
+  private final int findUnusedLimit;
+
+  private ORID lastComponent;
+
   @Inject
   public PurgeUnusedSnapshotsFacetImpl(final ComponentEntityAdapter componentEntityAdapter,
                                        final MetadataRebuilder metadataRebuilder,
                                        @Named(GroupType.NAME) final Type groupType,
-                                       @Named(HostedType.NAME) final Type hostedType)
+                                       @Named(HostedType.NAME) final Type hostedType,
+                                       @Named("${nexus.tasks.purgeUnusedSnapshots.findUnusedLimit:-50}")
+                                           int findUnusedLimit)
   {
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.groupType = checkNotNull(groupType);
     this.hostedType = checkNotNull(hostedType);
+    this.findUnusedLimit = findUnusedLimit;
+    checkArgument(findUnusedLimit >= 10 && findUnusedLimit <= 1000,
+        "nexus.tasks.purgeUnusedSnapshots.findUnusedLimit must be between 10 and 1000");
   }
 
   @Override
@@ -129,9 +156,7 @@ public class PurgeUnusedSnapshotsFacetImpl
   private void processAsGroup(final MavenGroupFacet groupFacet, final int numberOfDays) {
     groupFacet.members().stream()
         .filter(member -> hostedType.equals(member.getType()) || groupType.equals(member.getType()))
-        .forEach(member -> {
-          member.facet(PurgeUnusedSnapshotsFacet.class).purgeUnusedSnapshots(numberOfDays);
-        });
+        .forEach(member -> member.facet(PurgeUnusedSnapshotsFacet.class).purgeUnusedSnapshots(numberOfDays));
   }
 
   /**
@@ -139,15 +164,13 @@ public class PurgeUnusedSnapshotsFacetImpl
    */
   private Set<String> purgeSnapshotsFromRepository(final int numberOfDays) {
     Date olderThan = DateTime.now().minusDays(numberOfDays).withTimeAtStartOfDay().toDate();
-    Set<String> groups = Collections.emptySet();
     UnitOfWork.beginBatch(facet(StorageFacet.class).txSupplier());
     try {
-      groups = deleteUnusedSnapshotComponents(olderThan);
+      return deleteUnusedSnapshotComponents(olderThan);
     }
     finally {
       UnitOfWork.end();
     }
-    return groups;
   }
 
   /**
@@ -157,46 +180,127 @@ public class PurgeUnusedSnapshotsFacetImpl
    */
   @TransactionalDeleteBlob
   protected Set<String> deleteUnusedSnapshotComponents(Date olderThan) {
-    MavenFacet facet = facet(MavenFacet.class);
     StorageTx tx = UnitOfWork.currentTx();
 
+    // entire component count is used just for reporting progress
+    Repository repo = getRepository();
+    long totalComponents = tx.countComponents(Query.builder().build(), singletonList(repo));
+    log.info("Found {} total components in repository {} to evaluate for unused snapshots", totalComponents,
+        repo.getName());
+
     Set<String> groups = new HashSet<>();
-    for (Component component : findUnusedSnapshots(tx, olderThan)) {
-      log.debug("Deleting unused snapshot component {}", component);
-      tx.deleteComponent(component);
+    long skipCount = 0;
+    lastComponent = new ORecordId(-1, -1);
+    while (skipCount < totalComponents && !isCanceled()) {
+      log.info(format("Processing components [%.2f%%] complete", ((double) skipCount / totalComponents) * 100));
 
-      NestedAttributesMap attributes = component.formatAttributes();
-      String groupId = attributes.get(P_GROUP_ID, String.class);
-      String artifactId = attributes.get(P_ARTIFACT_ID, String.class);
-      String baseVersion = attributes.get(P_BASE_VERSION, String.class);
+      for (Component component : findNextPageOfUnusedSnapshots(tx, olderThan)) {
+        if (isCanceled()) {
+          return groups;
+        }
 
-      try {
-        // We have to delete all metadata through GAV levels and rebuild in the next step, as the MetadataRebuilder
-        // isn't meant to remove metadata that has been orphaned by the deletion of a component
-        MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, baseVersion));
-        MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, null));
-        MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+        String groupId = deleteComponent(component);
+        groups.add(groupId);
       }
 
-      groups.add(groupId);
+      // commit each loop as well
+      tx.commit();
+      tx.begin();
+
+      skipCount += findUnusedLimit;
     }
+
     return groups;
   }
 
   /**
-   * Finds all snapshot components that were last accessed before the specified date. The date when a component was
-   * last accessed is the last time an asset of that snapshot was last accessed.
+   * Finds the next page of snapshot components that were last accessed before the specified date. The date when a
+   * component was last downloaded is the last time an asset of that snapshot was downloaded.
+   *
+   * Uses an iterative approach in order to handle large repositories with many hundreds of thousands or millions of
+   * assets. Note the current implementation is a bit hacky due to an Orient bug which prevents us from using a GROUP
+   * BY with LIMIT. Furthermore, because of the required use of the Orient 'script sql' approach, we must loop through
+   * the entire component set. Forward looking to Orient 3, it fixes the GROUP BY approach and this can be much
+   * simplified. See NEXUS-13130 for further details.
    */
-  private Iterable<Component> findUnusedSnapshots(final StorageTx tx, final Date olderThan) {
-    final Bucket bucket = tx.findBucket(getRepository());
-    Map<String, Object> sqlParams = ImmutableMap.of(
-        "bucket", AttachedEntityHelper.id(bucket),
-        "olderThan", olderThan
-    );
-    return Iterables.transform(tx.browse(FIND_SNAPSHOTS_SQL, sqlParams),
-        (doc) -> componentEntityAdapter.readEntity(doc.field(P_COMPONENT)));
+  private List<Component> findNextPageOfUnusedSnapshots(final StorageTx tx, final Date olderThan) {
+    String unusedWhereTemplate = getUnusedWhere(tx.findBucket(getRepository()));
+
+    LocalDateTime localDateTime = LocalDateTime.ofInstant(olderThan.toInstant(), ZoneId.systemDefault());
+    String query = format(UNUSED_QUERY, lastComponent, findUnusedLimit, unusedWhereTemplate, localDateTime,
+        findUnusedLimit - 1);
+
+    List<ODocument> result = tx.getDb().command(new OCommandScript("sql", query)).execute();
+
+    if (isEmpty(result)) {
+      return emptyList();
+    }
+
+    // get the last component to use in the WHERE for the next page
+    ODocument lastDoc = Iterables.getLast(result).field(P_COMPONENT);
+    lastComponent = lastDoc.getIdentity();
+
+    // filters in this stream are to check the last record as all others are filtered out in the 3rd part of the command query
+    return result.stream()
+        // remove entries that don't match on last download date
+        .filter(entries -> {
+          Date lastDownloaded = entries.field("lastdownloaded");
+          return lastDownloaded.compareTo(olderThan) < 0;
+        })
+        .map(doc -> componentEntityAdapter.readEntity(doc.field(P_COMPONENT)))
+        // remove entries that are not snapshots
+        .filter(
+            component -> {
+              String baseVersion = (String) component.attributes().child(Maven2Format.NAME).get(P_BASE_VERSION);
+              return baseVersion != null && baseVersion.endsWith("SNAPSHOT");
+            })
+        .collect(Collectors.toList());
+  }
+
+  private String deleteComponent(final Component component) {
+    log.debug("Deleting unused snapshot component {}", component);
+    MavenFacet facet = facet(MavenFacet.class);
+    final StorageTx tx = UnitOfWork.currentTx();
+    tx.deleteComponent(component);
+
+    NestedAttributesMap attributes = component.formatAttributes();
+    String groupId = attributes.get(P_GROUP_ID, String.class);
+    String artifactId = attributes.get(P_ARTIFACT_ID, String.class);
+    String baseVersion = attributes.get(P_BASE_VERSION, String.class);
+
+    try {
+      // We have to delete all metadata through GAV levels and rebuild in the next step, as the MetadataRebuilder
+      // isn't meant to remove metadata that has been orphaned by the deletion of a component
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, baseVersion));
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, null));
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return groupId;
+  }
+
+  /**
+   * The Orient workaround (see https://www.prjhub.com/#/issues/8724) requires us to explicitly reference each record in
+   * the count. This method produces that part of the WHERE clause for the unused snapshots query.
+   */
+  @VisibleForTesting
+  String getUnusedWhere(final Bucket bucket) {
+    ORID bucketId = id(bucket);
+    return IntStream.range(0, findUnusedLimit)
+        .mapToObj(i -> format(UNUSED_WHERE_QUERY, bucketId, i))
+        .collect(Collectors.joining(" OR "));
+  }
+
+  private boolean isCanceled() {
+    try {
+      CancelableHelper.checkCancellation();
+      return false;
+    }
+    catch (TaskInterruptedException e) { // NOSONAR
+      log.warn("Purge unused Maven snapshots job is canceled");
+      return true;
+    }
   }
 }

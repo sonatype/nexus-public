@@ -73,7 +73,14 @@ Ext.define('NX.coreui.migration.RepositoriesScreen', {
           {
             header: NX.I18n.render(me, 'Status_Column'),
             dataIndex: 'status',
-            flex: 1
+            flex: 1,
+            renderer: function (value, meta) {
+              var truncated = Ext.String.ellipsis(value, 40, false);
+              if (truncated !== value) {
+                meta.tdAttr = Ext.String.format('data-qtip="{0}"', Ext.String.htmlEncode(value));
+              }
+              return truncated;
+            }
           },
           {
             header: NX.I18n.render(me, 'Destination_Column'),

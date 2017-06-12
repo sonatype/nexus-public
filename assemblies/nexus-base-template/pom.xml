@@ -231,6 +231,7 @@
                 <loadresource property="pax-logging-api">
                   <string>${org.ops4j.pax.logging:pax-logging-api:jar}</string>
                   <filterchain>
+                    <replacestring from="${file.separator}" to="/"/>
                     <replaceregex pattern=".*(pax-logging-api/[^/]*)/.*" replace="\1"/>
                   </filterchain>
                 </loadresource>

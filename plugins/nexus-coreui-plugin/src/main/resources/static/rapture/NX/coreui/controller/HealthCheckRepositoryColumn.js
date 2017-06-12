@@ -41,7 +41,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
     'healthcheck.HealthCheckEula'
   ],
   refs: [
-    { ref: 'list', selector: 'nx-coreui-repository-list' },
+    { ref: 'list', selector: 'nx-coreui-repository-list-template' },
     { ref: 'summary', selector: 'nx-coreui-healthcheck-summary' }
   ],
 
@@ -69,7 +69,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
         }
       },
       store: {
-        '#Repository': {
+        '#RepositoryReference': {
           load: me.loadHealthCheckStatus
         },
         '#HealthCheckRepositoryStatus': {
@@ -77,7 +77,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
         }
       },
       component: {
-        'nx-coreui-repository-list': {
+        'nx-coreui-repository-list-template': {
           afterrender: me.bindHealthCheckColumn
         }
       }
@@ -93,7 +93,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
     var me = this,
         list = me.getList();
 
-    if (list) {
+    if (list && NX.Permissions.check("nexus:healthcheck:read")) {
       me.getHealthCheckRepositoryStatusStore().load();
     }
   },
@@ -227,10 +227,10 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
         return button;
       }
     }
-    else if (me.getHealthCheckRepositoryStatusStore().loaded) {
-      return NX.ext.grid.column.Renderers.optionalData(null);
+    else if (!me.getHealthCheckRepositoryStatusStore().loaded && NX.Permissions.check('nexus:healthcheck:read')) {
+      return NX.I18n.get('HealthCheckRepositoryColumn_Loading');
     }
-    return NX.I18n.get('HealthCheckRepositoryColumn_Loading');
+    return NX.ext.grid.column.Renderers.optionalData(null);
   },
 
   setupDownloadChart: function(id, totalDownloadCounts, vulnerableDownloadCounts) {

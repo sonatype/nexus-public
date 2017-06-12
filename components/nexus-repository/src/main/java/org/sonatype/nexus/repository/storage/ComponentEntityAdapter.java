@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -61,6 +63,11 @@ public class ComponentEntityAdapter
    */
   public static final String P_VERSION = "version";
 
+  /**
+   * Key of {@link Component} ci_name (case-insensitive name) field.
+   */
+  public static final String P_CI_NAME = "ci_name";
+
   private static final String I_BUCKET_GROUP_NAME_VERSION = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_BUCKET)
@@ -76,9 +83,9 @@ public class ComponentEntityAdapter
       .property(P_VERSION)
       .build();
 
-  private static final String I_NAME_CASE_INSENSITIVE = new OIndexNameBuilder()
+  private static final String I_CI_NAME_CASE_INSENSITIVE = new OIndexNameBuilder()
       .type(DB_CLASS)
-      .property(P_NAME)
+      .property(P_CI_NAME)
       .caseInsensitive()
       .build();
 
@@ -103,6 +110,10 @@ public class ComponentEntityAdapter
         .setMandatory(true)
         .setNotNull(true);
     type.createProperty(P_VERSION, OType.STRING);
+    type.createProperty(P_CI_NAME, OType.STRING)
+        .setCollate(new OCaseInsensitiveCollate())
+        .setMandatory(true)
+        .setNotNull(true);
 
     ODocument metadata = db.newInstance()
         .field("ignoreNullValues", false)
@@ -112,15 +123,15 @@ public class ComponentEntityAdapter
     type.createIndex(I_BUCKET_NAME_VERSION, INDEX_TYPE.NOTUNIQUE.name(), null, metadata,
         new String[]{P_BUCKET, P_NAME, P_VERSION});
 
-    new OIndexBuilder(type, I_NAME_CASE_INSENSITIVE, INDEX_TYPE.NOTUNIQUE)
-        .property(P_NAME, OType.STRING)
-        .caseInsensitive()
-        .build(db);
-
     new OIndexBuilder(type, I_GROUP_NAME_VERSION_INSENSITIVE, INDEX_TYPE.NOTUNIQUE)
         .property(P_GROUP, OType.STRING)
         .property(P_NAME, OType.STRING)
         .property(P_VERSION, OType.STRING)
+        .caseInsensitive()
+        .build(db);
+
+    new OIndexBuilder(type, I_CI_NAME_CASE_INSENSITIVE, INDEX_TYPE.NOTUNIQUE)
+        .property(P_CI_NAME, OType.STRING)
         .caseInsensitive()
         .build(db);
   }
@@ -132,9 +143,9 @@ public class ComponentEntityAdapter
   {
     checkNotNull(name);
 
-    StringBuilder query = new StringBuilder("select from (select expand(rid) from index:" + I_NAME_CASE_INSENSITIVE +
-        " where key = :name)");
-    addBucketConstraints(null, buckets, query);
+    String whereClause = " where ci_name = :name";
+    StringBuilder query = new StringBuilder("select from indexvalues:" + I_CI_NAME_CASE_INSENSITIVE + whereClause);
+    addBucketConstraints(whereClause, buckets, query);
 
     if (querySuffix != null) {
       query.append(' ').append(querySuffix);
@@ -170,6 +181,11 @@ public class ComponentEntityAdapter
     document.field(P_GROUP, entity.group());
     document.field(P_NAME, entity.name());
     document.field(P_VERSION, entity.version());
+
+    // need to lowercase ID value as workaround for https://www.prjhub.com/#/issues/8750 (case-insensitive querying)
+    // indirect queries against CI fields when another table is involved lose their case-insensitiveness, so we store
+    // as lowercase to permit those kinds of queries to query on lowercase as a workaround for now.
+    document.field(P_CI_NAME, entity.name().toLowerCase(Locale.ENGLISH));
   }
 
   @Override

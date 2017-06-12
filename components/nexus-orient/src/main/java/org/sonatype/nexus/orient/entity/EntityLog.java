@@ -49,6 +49,8 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.ORe
  */
 public final class EntityLog
 {
+  private final boolean hasRecordIds = STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean();
+
   private final Provider<DatabaseInstance> databaseProvider;
 
   private final List<EntityAdapter> adapters;
@@ -124,8 +126,6 @@ public final class EntityLog
     checkArgument(marker.compareTo(end) <= 0, "Sequence number cannot be after end");
     OLogSequenceNumber start = checkNotNull(wal.next(marker), "Dangling sequence number");
 
-    checkState(STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean(), "Record ids not available");
-
     AdapterIndex adapterIndex = new AdapterIndex(adapters);
 
     wal.preventCutTill(start);
@@ -149,6 +149,8 @@ public final class EntityLog
     if (ops instanceof ORecordOperationMetadata) {
       return ((ORecordOperationMetadata) ops).getValue();
     }
+    // are the ids missing because we weren't recording?
+    checkState(hasRecordIds, "Record ids not available");
     return ImmutableSet.of();
   }
 

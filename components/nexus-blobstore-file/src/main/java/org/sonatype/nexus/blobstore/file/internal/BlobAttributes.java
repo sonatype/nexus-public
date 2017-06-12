@@ -26,7 +26,6 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.of;
 
 /**
  * A data holder for the content of each blob's .attribs file.
@@ -90,7 +89,7 @@ public class BlobAttributes
   }
 
   public String getDeletedReason() {
-    return deletedReason;
+    return deletedReason != null ? deletedReason : "No reason supplied";
   }
 
   /**
@@ -132,6 +131,7 @@ public class BlobAttributes
         Long.parseLong(properties.getProperty(CONTENT_SIZE_ATTRIBUTE)));
 
     deleted = properties.containsKey(DELETED_ATTRIBUTE);
+    deletedReason = properties.getProperty(DELETED_REASON_ATTRIBUTE);
   }
 
   private Properties writeTo(final Properties properties) {
@@ -145,7 +145,7 @@ public class BlobAttributes
 
     if (deleted) {
       properties.put(DELETED_ATTRIBUTE, Boolean.toString(deleted));
-      properties.put(DELETED_REASON_ATTRIBUTE, of(deletedReason).orElse("No reason supplied"));
+      properties.put(DELETED_REASON_ATTRIBUTE, getDeletedReason());
     }
     return properties;
   }
