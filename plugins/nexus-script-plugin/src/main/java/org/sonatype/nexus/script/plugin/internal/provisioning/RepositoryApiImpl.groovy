@@ -135,7 +135,7 @@ class RepositoryApiImpl
         online: true,
         attributes: [
             group  : [
-                memberNames: members
+                memberNames: new LinkedHashSet(members.toList())
             ] as Map,
             storage: [
                 blobStoreName: blobStoreName

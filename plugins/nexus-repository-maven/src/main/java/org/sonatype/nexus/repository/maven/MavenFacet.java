@@ -22,6 +22,8 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -75,4 +77,10 @@ public interface MavenFacet
   Content put(MavenPath path, TempBlob blob, String contentType, AttributesMap contentAttributes) throws IOException;
 
   boolean delete(MavenPath... paths) throws IOException;
+
+  /**
+   * @since 3.4
+   */
+  Asset put(MavenPath path, AssetBlob assetBlob, AttributesMap contentAttributes) throws IOException;
+
 }

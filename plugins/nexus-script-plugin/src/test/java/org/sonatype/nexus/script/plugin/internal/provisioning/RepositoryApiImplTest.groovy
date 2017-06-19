@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
+import spock.lang.Issue
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -92,6 +93,16 @@ class RepositoryApiImplTest
       api.validateGroupMembers(new Configuration(attributes: [:]))
     then:
       true
+  }
+
+  @Issue('NEXUS-13064')
+  void 'Ensure memberNames is the appropriate type (ordered Set)'() {
+    when: 'Using the api to create a Group repo'
+      Configuration group = api.createGroup('test', 'raw-group', 'default', 'a', 'b', 'c')
+
+    then: 'The collection type used should match the expectations of the the GroupFacetImpl.Config class'
+      group.attributes.group.memberNames == (['a', 'b', 'c'] as Set)
+      group.attributes.group.memberNames instanceof LinkedHashSet
   }
 
 }

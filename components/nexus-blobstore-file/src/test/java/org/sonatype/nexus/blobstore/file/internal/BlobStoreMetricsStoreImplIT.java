@@ -14,9 +14,9 @@ package org.sonatype.nexus.blobstore.file.internal;
 
 import java.nio.file.Path;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 

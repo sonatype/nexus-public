@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -36,12 +37,16 @@ import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.LocationStrategy;
 import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
+import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -115,6 +120,9 @@ public class FileBlobStore
   @VisibleForTesting
   static final int MAX_COLLISION_RETRIES = 8;
 
+  private Pattern propertiesFileRegex =
+      Pattern.compile("(.+?)([0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12})(\\.properties)$");
+
   private Path contentDir;
 
   private final LocationStrategy permanentLocationStrategy;
@@ -158,14 +166,14 @@ public class FileBlobStore
   }
 
   @VisibleForTesting
-  public FileBlobStore(final Path contentDir,
+  public FileBlobStore(final Path contentDir, //NOSONAR
                        @Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
                        @Named("temporary") final LocationStrategy temporaryLocationStrategy,
                        final FileOperations fileOperations,
                        final BlobStoreMetricsStore storeMetrics,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
-                       final NodeAccess nodeAccess) //NOSONAR
+                       final NodeAccess nodeAccess)
   {
     this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics, nodeAccess);
     this.contentDir = checkNotNull(contentDir);
@@ -346,7 +354,7 @@ public class FileBlobStore
         blob.refresh(headers, metrics);
 
         // Write the blob attribute file
-        BlobAttributes blobAttributes = new BlobAttributes(temporaryAttributePath, headers, metrics);
+        FileBlobAttributes blobAttributes = new FileBlobAttributes(temporaryAttributePath, headers, metrics);
         blobAttributes.store();
 
         // Move the temporary files into their final location
@@ -411,7 +419,7 @@ public class FileBlobStore
       Lock lock = blob.lock();
       try {
         if (blob.isStale()) {
-          BlobAttributes blobAttributes = new BlobAttributes(attributePath(blobId));
+          FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
           boolean loaded = blobAttributes.load();
           if (!loaded) {
             log.warn("Attempt to access non-existent blob {} ({})", blobId, blobAttributes.getPath());
@@ -451,7 +459,7 @@ public class FileBlobStore
       log.debug("Soft deleting blob {}", blobId);
 
       Path attribPath = attributePath(blobId);
-      BlobAttributes blobAttributes = new BlobAttributes(attribPath);
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(attribPath);
 
       boolean loaded = blobAttributes.load();
       if (!loaded) {
@@ -492,7 +500,7 @@ public class FileBlobStore
       log.debug("Hard deleting blob {}", blobId);
 
       Path attributePath = attributePath(blobId);
-      BlobAttributes blobAttributes = new BlobAttributes(attributePath);
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath);
       Long contentSize = getContentSizeForDeletion(blobAttributes);
 
       Path blobPath = contentPath(blobId);
@@ -515,7 +523,7 @@ public class FileBlobStore
   }
 
   @Nullable
-  private Long getContentSizeForDeletion(final BlobAttributes blobAttributes) {
+  private Long getContentSizeForDeletion(final FileBlobAttributes blobAttributes) {
     try {
       blobAttributes.load();
       return blobAttributes.getMetrics() != null ? blobAttributes.getMetrics().getContentSize() : null;
@@ -715,7 +723,7 @@ public class FileBlobStore
       log.warn("Rebuilding deletions index file {}", deletedIndex);
       int softDeletedBlobsFound = Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS)
           .filter(this::isNonTemporaryAttributeFile)
-          .map(BlobAttributes::new)
+          .map(FileBlobAttributes::new)
           .mapToInt(attributes -> {
             try {
               attributes.load();
@@ -794,5 +802,31 @@ public class FileBlobStore
   @VisibleForTesting
   void setLiveBlobs(final LoadingCache<BlobId, FileBlob> liveBlobs) {
     this.liveBlobs = liveBlobs;
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdStream() {
+    try {
+      return Files.walk(contentDir)
+          .filter(path -> propertiesFileRegex.matcher(path.toString()).matches())
+          .map(path -> path.getFileName().toString())
+          .map(fileName -> fileName.substring(0, fileName.lastIndexOf('.')))
+          .map(BlobId::new);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public BlobAttributes getBlobAttributes(final BlobId blobId) {
+    try {
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
+      return blobAttributes.load() ? blobAttributes : null;
+    }
+    catch (IOException e) {
+      log.error("Unable to load FileBlobAttributes for blob id: {}", blobId, e);
+      return null;
+    }
   }
 }

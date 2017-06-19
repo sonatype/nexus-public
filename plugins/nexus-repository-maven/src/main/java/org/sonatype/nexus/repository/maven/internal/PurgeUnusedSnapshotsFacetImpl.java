@@ -13,8 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +34,6 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
-import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.Query;
@@ -54,7 +52,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -82,7 +79,7 @@ public class PurgeUnusedSnapshotsFacetImpl
 {
   private static final String UNUSED_QUERY =
       // first part of Orient command query - looping components
-      "LET $a = (SELECT FROM component WHERE @RID > %s ORDER BY @RID LIMIT %d); " +
+      "LET $a = (SELECT FROM component WHERE bucket = %s AND @RID > %s ORDER BY @RID LIMIT %d); " +
       // second part - asset join with GROUP BY for lastdownloaded date
       "LET $b = (SELECT component, max(last_downloaded) as lastdownloaded " +
       "FROM asset WHERE (%s) GROUP BY component ORDER BY component); " +
@@ -163,7 +160,7 @@ public class PurgeUnusedSnapshotsFacetImpl
    * Purges snapshots from the given repository, returning a set of the affected groups for metadata rebuilding.
    */
   private Set<String> purgeSnapshotsFromRepository(final int numberOfDays) {
-    Date olderThan = DateTime.now().minusDays(numberOfDays).withTimeAtStartOfDay().toDate();
+    LocalDate olderThan = LocalDate.now().minusDays(numberOfDays);
     UnitOfWork.beginBatch(facet(StorageFacet.class).txSupplier());
     try {
       return deleteUnusedSnapshotComponents(olderThan);
@@ -179,7 +176,7 @@ public class PurgeUnusedSnapshotsFacetImpl
    * @return the affected groups
    */
   @TransactionalDeleteBlob
-  protected Set<String> deleteUnusedSnapshotComponents(Date olderThan) {
+  protected Set<String> deleteUnusedSnapshotComponents(LocalDate olderThan) {
     StorageTx tx = UnitOfWork.currentTx();
 
     // entire component count is used just for reporting progress
@@ -188,13 +185,16 @@ public class PurgeUnusedSnapshotsFacetImpl
     log.info("Found {} total components in repository {} to evaluate for unused snapshots", totalComponents,
         repo.getName());
 
+    ORID bucketId = id(tx.findBucket(getRepository()));
+    String unusedWhereTemplate = getUnusedWhere(bucketId);
+
     Set<String> groups = new HashSet<>();
     long skipCount = 0;
     lastComponent = new ORecordId(-1, -1);
     while (skipCount < totalComponents && !isCanceled()) {
       log.info(format("Processing components [%.2f%%] complete", ((double) skipCount / totalComponents) * 100));
 
-      for (Component component : findNextPageOfUnusedSnapshots(tx, olderThan)) {
+      for (Component component : findNextPageOfUnusedSnapshots(tx, olderThan, bucketId, unusedWhereTemplate)) {
         if (isCanceled()) {
           return groups;
         }
@@ -223,11 +223,12 @@ public class PurgeUnusedSnapshotsFacetImpl
    * the entire component set. Forward looking to Orient 3, it fixes the GROUP BY approach and this can be much
    * simplified. See NEXUS-13130 for further details.
    */
-  private List<Component> findNextPageOfUnusedSnapshots(final StorageTx tx, final Date olderThan) {
-    String unusedWhereTemplate = getUnusedWhere(tx.findBucket(getRepository()));
-
-    LocalDateTime localDateTime = LocalDateTime.ofInstant(olderThan.toInstant(), ZoneId.systemDefault());
-    String query = format(UNUSED_QUERY, lastComponent, findUnusedLimit, unusedWhereTemplate, localDateTime,
+  private List<Component> findNextPageOfUnusedSnapshots(final StorageTx tx,
+                                                        final LocalDate olderThan,
+                                                        final ORID bucketId,
+                                                        final String unusedWhereTemplate)
+  {
+    String query = format(UNUSED_QUERY, bucketId, lastComponent, findUnusedLimit, unusedWhereTemplate, olderThan,
         findUnusedLimit - 1);
 
     List<ODocument> result = tx.getDb().command(new OCommandScript("sql", query)).execute();
@@ -240,12 +241,13 @@ public class PurgeUnusedSnapshotsFacetImpl
     ODocument lastDoc = Iterables.getLast(result).field(P_COMPONENT);
     lastComponent = lastDoc.getIdentity();
 
+    Date olderThanDate = java.sql.Date.valueOf(olderThan);
+
     // filters in this stream are to check the last record as all others are filtered out in the 3rd part of the command query
-    return result.stream()
-        // remove entries that don't match on last download date
+    return result.stream() // remove entries that don't match on last download date
         .filter(entries -> {
           Date lastDownloaded = entries.field("lastdownloaded");
-          return lastDownloaded.compareTo(olderThan) < 0;
+          return lastDownloaded.compareTo(olderThanDate) < 0;
         })
         .map(doc -> componentEntityAdapter.readEntity(doc.field(P_COMPONENT)))
         // remove entries that are not snapshots
@@ -286,8 +288,7 @@ public class PurgeUnusedSnapshotsFacetImpl
    * the count. This method produces that part of the WHERE clause for the unused snapshots query.
    */
   @VisibleForTesting
-  String getUnusedWhere(final Bucket bucket) {
-    ORID bucketId = id(bucket);
+  String getUnusedWhere(final ORID bucketId) {
     return IntStream.range(0, findUnusedLimit)
         .mapToObj(i -> format(UNUSED_WHERE_QUERY, bucketId, i))
         .collect(Collectors.joining(" OR "));

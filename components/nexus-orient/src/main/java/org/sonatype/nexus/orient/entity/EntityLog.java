@@ -25,6 +25,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -94,6 +95,7 @@ public final class EntityLog
    */
   public static class UnknownDeltaException
       extends RuntimeException
+      implements OHighLevelException
   {
     public UnknownDeltaException(final OLogSequenceNumber since, final Throwable cause) {
       super(String.format("Changes exist since %s but details are not available", since), cause);

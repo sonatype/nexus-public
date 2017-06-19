@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -134,4 +135,14 @@ public interface BlobStore
    * Signifies that the {@link BlobStoreManager} has permanently deleted this blob store.
    */
   void remove();
+
+  /**
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store.
+   */
+  Stream<BlobId> getBlobIdStream();
+
+  /**
+   * Get {@link BlobAttributes} for the {@link BlobId} provided.
+   */
+  BlobAttributes getBlobAttributes(BlobId blobId);
 }

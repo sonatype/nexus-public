@@ -30,6 +30,7 @@
 
   <modules>
     <module>nexus-audit-plugin</module>
+    <module>nexus-blobstore-restore</module>
     <module>nexus-coreui-plugin</module>
     <module>nexus-repository-httpbridge</module>
     <module>nexus-repository-maven</module>
@@ -64,6 +65,22 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-audit-plugin</artifactId>
+        <version>3.4.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- blobstore restore -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-blobstore-restore</artifactId>
+        <version>3.4.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-blobstore-restore</artifactId>
         <version>3.4.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

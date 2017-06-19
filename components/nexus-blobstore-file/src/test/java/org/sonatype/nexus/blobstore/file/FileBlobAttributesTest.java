@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore.file;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
-public class BlobAttributesTest
+public class FileBlobAttributesTest
     extends TestSupport
 {
   @Rule
@@ -45,7 +45,7 @@ public class BlobAttributesTest
 
     Map<String, String> headers = ImmutableMap.of("hello", "world");
     BlobMetrics metrics = new BlobMetrics(new DateTime(987654321), "0123456789ABCDEF", 42);
-    BlobAttributes original = new BlobAttributes(path, headers, metrics);
+    FileBlobAttributes original = new FileBlobAttributes(path, headers, metrics);
 
     original.store();
 
@@ -93,7 +93,7 @@ public class BlobAttributesTest
 
     Map<String, String> headers = ImmutableMap.of("hello", "world");
     BlobMetrics metrics = new BlobMetrics(DateTime.now(), "0123456789ABCDEF", 42);
-    BlobAttributes original = new BlobAttributes(path, headers, metrics);
+    FileBlobAttributes original = new FileBlobAttributes(path, headers, metrics);
 
     verifyRoundtrip(original);
 
@@ -106,11 +106,11 @@ public class BlobAttributesTest
     verifyRoundtrip(original);
   }
 
-  private static void verifyRoundtrip(final BlobAttributes original) throws IOException {
+  private static void verifyRoundtrip(final FileBlobAttributes original) throws IOException {
 
     original.store();
 
-    BlobAttributes restored = new BlobAttributes(original.getPath());
+    FileBlobAttributes restored = new FileBlobAttributes(original.getPath());
 
     restored.load();
 

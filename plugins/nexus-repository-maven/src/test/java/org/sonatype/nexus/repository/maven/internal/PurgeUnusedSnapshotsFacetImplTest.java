@@ -12,16 +12,11 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -54,6 +49,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static java.lang.String.format;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -82,9 +78,6 @@ public class PurgeUnusedSnapshotsFacetImplTest
   static final Long NUMBER_OF_COMPONENTS = 35L;
 
   static final LocalDate taskOlderThan = LocalDate.now().minusDays(10);
-
-  static final Date taskOlderThanDate = java.util.Date
-      .from(taskOlderThan.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
   final BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
 
@@ -116,6 +109,8 @@ public class PurgeUnusedSnapshotsFacetImplTest
   @Mock
   ODatabaseDocumentTx oDatabaseDocumentTx;
 
+  ORID bucketId = new ORecordId(1, 1);
+
   int clusterPosition;
 
   @Before
@@ -145,7 +140,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
   public void deleteUnusedSnapshotComponents() throws Exception {
     mockPagesOfComponents();
 
-    Set<String> set = purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThanDate);
+    Set<String> set = purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThan);
     assertThat(set.size(), equalTo(3));
     assertThat(set, not(hasItem("that.company")));
     assertThat(set, containsInAnyOrder("my.company", "your.company", "this.company"));
@@ -201,7 +196,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
     assertThat(args.size(), equalTo(4));
 
     // finally, assert the actual queries
-    String query = "sql.LET $a = (SELECT FROM component WHERE @RID > %s ORDER BY @RID LIMIT %d); " +
+    String query = "sql.LET $a = (SELECT FROM component WHERE bucket = %s AND @RID > %s ORDER BY @RID LIMIT %d); " +
         "LET $b = (SELECT component, max(last_downloaded) as lastdownloaded " +
         "FROM asset WHERE ((bucket = #1:1 AND component = $a[0]) OR " +
         "(bucket = #1:1 AND component = $a[1]) OR " +
@@ -216,21 +211,20 @@ public class PurgeUnusedSnapshotsFacetImplTest
         "GROUP BY component ORDER BY component); " +
         "SELECT FROM $b WHERE (component.attributes.maven2.baseVersion LIKE '%%SNAPSHOT' " +
         "AND lastdownloaded < '%s') OR component = $a[9];";
-    String date = makeIso8601(taskOlderThanDate);
-    assertThat(args.get(0).toString(), equalTo(format(query, "#-1:-1", 10, date)));
-    assertThat(args.get(1).toString(), equalTo(format(query, "#1:10", 10, date)));
-    assertThat(args.get(2).toString(), equalTo(format(query, "#1:20", 10, date)));
-    assertThat(args.get(3).toString(), equalTo(format(query, "#1:30", 10, date)));
+    String date = makeIso8601(taskOlderThan);
+    assertThat(args.get(0).toString(), equalTo(format(query, bucketId, "#-1:-1", 10, date)));
+    assertThat(args.get(1).toString(), equalTo(format(query, bucketId, "#1:10", 10, date)));
+    assertThat(args.get(2).toString(), equalTo(format(query, bucketId, "#1:20", 10, date)));
+    assertThat(args.get(3).toString(), equalTo(format(query, bucketId, "#1:30", 10, date)));
   }
 
-  private String makeIso8601(Date date) {
-    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-    return df.format(date);
+  private String makeIso8601(LocalDate date) {
+    return date.format(ISO_LOCAL_DATE);
   }
 
   @Test
   public void getUnusedWhere() throws Exception {
-    String query = purgeUnusedSnapshotsFacet.getUnusedWhere(bucket);
+    String query = purgeUnusedSnapshotsFacet.getUnusedWhere(bucketId);
     assertThat(query, equalTo(
         "(bucket = #1:1 AND component = $a[0]) OR (bucket = #1:1 AND component = $a[1]) OR (bucket = #1:1 AND component = $a[2]) OR (bucket = #1:1 AND component = $a[3]) OR (bucket = #1:1 AND component = $a[4]) OR (bucket = #1:1 AND component = $a[5]) OR (bucket = #1:1 AND component = $a[6]) OR (bucket = #1:1 AND component = $a[7]) OR (bucket = #1:1 AND component = $a[8]) OR (bucket = #1:1 AND component = $a[9])"));
   }

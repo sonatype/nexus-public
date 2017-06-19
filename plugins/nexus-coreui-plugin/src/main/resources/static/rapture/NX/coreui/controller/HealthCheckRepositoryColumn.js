@@ -192,45 +192,60 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
         statusModel = me.getHealthCheckRepositoryStatusStore().getById(repositoryModel.getId()),
         classes, text, button;
 
-    if (statusModel) {
-      if (statusModel.get('enabled')) {
-        if (statusModel.get('analyzing')) {
-          return NX.I18n.get('HealthCheckRepositoryColumn_Analyzing');
-        }
-        if (statusModel.get('totalCounts')) {
-          var id = Ext.id(),
-              totalCounts = statusModel.get('totalCounts'),
-              vulnerableCounts = statusModel.get('vulnerableCounts'),
-              totalDisplay = totalCounts[0],
-              vulnerableDisplay = vulnerableCounts[0],
-              util = NX.coreui.util.HealthCheckUtil;
+    if (!statusModel) {
+      if (!me.getHealthCheckRepositoryStatusStore().loaded && NX.Permissions.check('nexus:healthcheck:read')) {
+        return NX.I18n.get('HealthCheckRepositoryColumn_Loading');
+      }
+      else {
+        // RHC not supported for this repository
+        return NX.ext.grid.column.Renderers.optionalData(null);
+      }
+    }
+    else if (statusModel.get('enabled')) {
+      if (statusModel.get('analyzing')) {
+        return NX.I18n.get('HealthCheckRepositoryColumn_Analyzing');
+      }
+      else if (statusModel.get('totalCounts')) {
+        var id = Ext.id(),
+          totalCounts = statusModel.get('totalCounts'),
+          noTrendData = Ext.Array.every(totalCounts, function(e) { return e === 0; }, this),
+          vulnerableCounts = statusModel.get('vulnerableCounts'),
+          totalDisplay = totalCounts[0],
+          vulnerableDisplay = vulnerableCounts[0],
+          util = NX.coreui.util.HealthCheckUtil;
 
-          Ext.defer(function(){
+        if (noTrendData) {
+          return NX.I18n.get('HealthCheckRepositoryColumn_CollectingTrendData');
+        }
+        else {
+          Ext.defer(function () {
             me.setupDownloadChart(id, totalCounts, vulnerableCounts);
           }, 100, me);
 
           return Ext.String.format(
-              '<div>' +
-              '  <div id="{0}" class="healthcheck-downloads"></div>' +
-              '  <div class="healthcheck-downloads">' +
-              '    <div class="healthcheck-total-downloads">{1} total</div>' +
-              '    <div class="healthcheck-bad-downloads">{2} bad</div>' +
-              '  </div>' +
-              '</div>', id, util.simplifyNumber(totalDisplay), util.simplifyNumber(vulnerableDisplay));
+            '<div>' +
+            '  <div id="{0}" class="healthcheck-downloads"></div>' +
+            '  <div class="healthcheck-downloads">' +
+            '    <div class="healthcheck-total-downloads">{1}</div>' +
+            '    <div class="healthcheck-bad-downloads">{2}</div>' +
+            '  </div>' +
+            '</div>', id, util.simplifyNumber(totalDisplay), util.simplifyNumber(vulnerableDisplay));
         }
+      }
+      else {
         return NX.I18n.get('HealthCheckRepositoryColumn_DownloadsDisabled');
       }
-      else if (NX.Permissions.check('nexus:healthcheck:update')) {
-        classes = "x-btn x-unselectable x-btn-nx-primary-small x-btn-nx-primary-toolbar-small-disabled";
-        text = '<span class="x-btn-inner x-btn-inner-center" unselectable="on">' + NX.I18n.get('HealthCheckRepositoryColumn_Analyze') + '</span>';
-        button = '<a class="' + classes + '" hidefocus="on" unselectable="on">' + text + '</a>';
-        return button;
-      }
     }
-    else if (!me.getHealthCheckRepositoryStatusStore().loaded && NX.Permissions.check('nexus:healthcheck:read')) {
-      return NX.I18n.get('HealthCheckRepositoryColumn_Loading');
+    else if (NX.Permissions.check('nexus:healthcheck:update')) {
+      classes = "x-btn x-unselectable x-btn-nx-primary-small x-btn-nx-primary-toolbar-small-disabled";
+      text = '<span class="x-btn-inner x-btn-inner-center" unselectable="on">' + NX.I18n.get('HealthCheckRepositoryColumn_Analyze') + '</span>';
+      button = '<a class="' + classes + '" hidefocus="on" unselectable="on">' + text + '</a>';
+      return button;
     }
-    return NX.ext.grid.column.Renderers.optionalData(null);
+    else {
+      // User doesn’t have the permissions to enable RHC
+      return NX.ext.grid.column.Renderers.optionalData(null);
+    }
   },
 
   setupDownloadChart: function(id, totalDownloadCounts, vulnerableDownloadCounts) {

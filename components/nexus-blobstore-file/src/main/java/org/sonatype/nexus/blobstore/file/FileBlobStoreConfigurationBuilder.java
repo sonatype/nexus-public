@@ -13,7 +13,6 @@
 package org.sonatype.nexus.blobstore.file;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

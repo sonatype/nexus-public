@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore.file;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,32 +20,28 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CONTENT_SIZE_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CREATION_TIME_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_REASON_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.SHA1_HASH_ATTRIBUTE;
 
 /**
  * A data holder for the content of each blob's .attribs file.
  *
  * @since 3.0
  */
-public class BlobAttributes
+public class FileBlobAttributes
+    implements BlobAttributes
 {
-  private static final String SHA1_HASH_ATTRIBUTE = "sha1";
-
-  private static final String CONTENT_SIZE_ATTRIBUTE = "size";
-
-  private static final String CREATION_TIME_ATTRIBUTE = "creationTime";
-
-  private static final String DELETED_ATTRIBUTE = "deleted";
-
-  private static final String DELETED_REASON_ATTRIBUTE = "deletedReason";
-
-  public static final String HEADER_PREFIX = "@";
-
   private Map<String, String> headers;
 
   private BlobMetrics metrics;
@@ -56,38 +52,44 @@ public class BlobAttributes
 
   private final PropertiesFile propertiesFile;
 
-  public BlobAttributes(final Path path)
+  public FileBlobAttributes(final Path path)
   {
     checkNotNull(path);
     this.propertiesFile = new PropertiesFile(path.toFile());
   }
 
-  public BlobAttributes(final Path path, final Map<String, String> headers, final BlobMetrics metrics) {
+  public FileBlobAttributes(final Path path, final Map<String, String> headers, final BlobMetrics metrics) {
     this(path);
     this.headers = checkNotNull(headers);
     this.metrics = checkNotNull(metrics);
   }
 
+  @Override
   public Map<String, String> getHeaders() {
     return headers;
   }
 
+  @Override
   public BlobMetrics getMetrics() {
     return metrics;
   }
 
+  @Override
   public boolean isDeleted() {
     return deleted;
   }
 
+  @Override
   public void setDeleted(final boolean deleted) {
     this.deleted = deleted;
   }
 
+  @Override
   public void setDeletedReason(final String deletedReason) {
     this.deletedReason = deletedReason;
   }
 
+  @Override
   public String getDeletedReason() {
     return deletedReason != null ? deletedReason : "No reason supplied";
   }
@@ -114,6 +116,11 @@ public class BlobAttributes
   public void store() throws IOException {
     writeTo(propertiesFile);
     propertiesFile.store();
+  }
+
+  @Override
+  public Properties getProperties() {
+    return new Properties(propertiesFile);
   }
 
   private void readFrom(Properties properties) {

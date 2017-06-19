@@ -30,12 +30,12 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -46,6 +46,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -381,6 +382,20 @@ public class MavenFacetImpl
     componentAttributes.set(P_PACKAGING, packaging == null ? "jar" : packaging);
     componentAttributes.set(P_POM_NAME, model.getName());
     componentAttributes.set(P_POM_DESCRIPTION, model.getDescription());
+  }
+
+  @TransactionalStoreMetadata
+  public Asset put(final MavenPath path, final AssetBlob assetBlob, final AttributesMap contentAttributes)
+      throws IOException
+  {
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    if (path.getCoordinates() != null) {
+      return putArtifact(tx, path, assetBlob, contentAttributes);
+    }
+    else {
+      return putFile(tx, path, assetBlob, contentAttributes);
+    }
   }
 
   private Asset putFile(final StorageTx tx,

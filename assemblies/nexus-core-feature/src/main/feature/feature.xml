@@ -16,6 +16,7 @@
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}">
     <feature>nexus-audit-plugin</feature>
+    <feature>nexus-blobstore-restore</feature>
     <feature>nexus-ssl-plugin</feature>
     <feature>nexus-coreui-plugin</feature>
     <feature>nexus-repository-httpbridge</feature>
