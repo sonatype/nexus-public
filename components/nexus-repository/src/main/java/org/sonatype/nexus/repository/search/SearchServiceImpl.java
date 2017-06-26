@@ -22,8 +22,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -40,6 +43,7 @@ import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFa
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.security.SecurityHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
@@ -354,6 +358,12 @@ public class SearchServiceImpl
 
   @Override
   public Iterable<SearchHit> browseUnrestricted(final QueryBuilder query) {
+    return browseUnrestrictedInRepos(query, null);
+  }
+
+  @Override
+  public Iterable<SearchHit> browseUnrestrictedInRepos(final QueryBuilder query,
+                                                       @Nullable final Collection<String> repoNames) {
     checkNotNull(query);
     try {
       if (!indicesAdminClient().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
@@ -364,7 +374,7 @@ public class SearchServiceImpl
       // no repositories were created yet, so there is no point in searching
       return null;
     }
-    final String[] searchableIndexes = getSearchableIndexes(false);
+    final String[] searchableIndexes = getSearchableIndexes(false, repoNames);
     if (searchableIndexes.length == 0) {
       return Collections.emptyList();
     }
@@ -542,19 +552,28 @@ public class SearchServiceImpl
   }
 
   private String[] getSearchableIndexes(final boolean skipPermissionCheck) {
-    List<String> indexes = Lists.newArrayList();
-    for (Repository repository : repositoryManager.browse()) {
-      // check if search facet is available so avoid searching repositories without an index
-      repository.optionalFacet(SearchFacet.class).ifPresent((searchFacet) -> {
-        String indexName = repositoryNameMapping.get(repository.getName());
-        if (indexName != null
-            && repository.getConfiguration().isOnline()
-            && (skipPermissionCheck || securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE)))) {
-          indexes.add(indexName);
-        }
-      });
-    }
-    return indexes.toArray(new String[indexes.size()]);
+    return getSearchableIndexes(skipPermissionCheck, null);
+  }
+
+  @VisibleForTesting
+  String[] getSearchableIndexes(final boolean skipPermissionCheck, final Collection<String> repoChoices) {
+    Predicate<String> repoChoicesFilter = repoChoices == null ? s -> true : repoChoices::contains;
+    return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+        .map(repo -> {
+          if (repoOnlineAndHasSearchFacet(repo) && (repositoryNameMapping.containsKey(repo.getName()))
+              && (skipPermissionCheck || securityHelper.allPermitted(new RepositoryViewPermission(repo, BROWSE)))) {
+            return repo.getName();
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .filter(repoChoicesFilter)
+        .map(repositoryNameMapping::get)
+        .toArray(String[]::new);
+  }
+
+  private static boolean repoOnlineAndHasSearchFacet(Repository repo) {
+    return repo.optionalFacet(SearchFacet.class).isPresent() && repo.getConfiguration().isOnline();
   }
 
   /**

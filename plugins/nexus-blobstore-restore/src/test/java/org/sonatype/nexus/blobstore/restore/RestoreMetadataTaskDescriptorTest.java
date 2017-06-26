@@ -15,12 +15,10 @@ package org.sonatype.nexus.blobstore.restore;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.FormField;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -28,14 +26,11 @@ import static org.junit.Assert.assertThat;
 public class RestoreMetadataTaskDescriptorTest
     extends TestSupport
 {
-  @Mock
-  NodeAccess nodeAccess;
-
   RestoreMetadataTaskDescriptor underTest;
 
   @Before
   public void setup() {
-    underTest = new RestoreMetadataTaskDescriptor(nodeAccess);
+    underTest = new RestoreMetadataTaskDescriptor();
   }
 
   @Test

@@ -151,7 +151,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchRubygems_Licenses_FieldLabel: 'Licenses',
     SearchRubygems_Homepage_FieldLabel: 'Homepage',
     SearchYum_Architecture_FieldLabel: 'Architecture',
-    SearchYum_Name_FieldLabel: 'Name',
+    SearchYum_Name_FieldLabel: 'Package Name',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',

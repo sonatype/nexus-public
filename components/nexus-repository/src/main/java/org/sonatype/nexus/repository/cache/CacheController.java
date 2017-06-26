@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
 /**
@@ -72,5 +73,10 @@ public class CacheController
       return true;
     }
     return false;
+  }
+
+  @VisibleForTesting
+  public int getContentMaxAgeSeconds() {
+    return contentMaxAgeSeconds;
   }
 }

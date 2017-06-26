@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal
 
 import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig
+import org.sonatype.nexus.repository.search.SearchService
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.storage.StorageTx
@@ -32,9 +33,11 @@ class RemoveSnapshotsFacetImplTest
 
   StorageTx tx = Mock()
 
+  SearchService searchService = Mock()
+
   @Subject
   RemoveSnapshotsFacetImpl removeSnapshotsFacet =
-      Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 500])
+      Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 500, searchService])
 
   /**
    * Test which GAVs are marked for future processing based on the deletion of Components.
@@ -69,7 +72,7 @@ class RemoveSnapshotsFacetImplTest
   def 'Number of commits are based on batch size and number of GAVs'() {
     given: 'A facet configured with a specific batch size'
       RemoveSnapshotsFacetImpl facet =
-          Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 2])
+          Spy(RemoveSnapshotsFacetImpl, constructorArgs: [componentEntityAdapter, new GroupType(), 2, searchService])
       def candidates = [gav(3), gav(4), gav(5)]
       def components = [components(3), components(4), components(5)]
       def expectedDeleteCount = candidates.sum { it.count - 1 }

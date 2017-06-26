@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -38,6 +40,7 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet;
 import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
+import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
@@ -55,10 +58,15 @@ import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.StreamSupport.stream;
+import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+import static org.elasticsearch.index.query.QueryBuilders.wildcardQuery;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.version;
@@ -89,20 +97,22 @@ public class RemoveSnapshotsFacetImpl
       "AND name=:name AND attributes.maven2.baseVersion=:baseVersion " +
       "ORDER BY last_updated ASC LIMIT :limit";
 
-  /**
-   * Find where we have a release (in any repository) related to a snapshot in a specific repository (bucket),
-   * older than X.
-   */
-  private static final String WITH_RELEASES = "SELECT FROM component " +
-      "LET $temp = (SELECT FROM component WHERE format='maven2' AND group = $parent.current.group " +
-      " AND name = $parent.current.name " +
-      " AND version = $parent.current.attributes.maven2.baseVersion.replace('-SNAPSHOT', '')" +
-      ") " +
-      "WHERE bucket=:bucket AND format='maven2' AND last_updated < :lastUpdated " +
-      "AND attributes.maven2.baseVersion LIKE '%-SNAPSHOT'AND $temp.size() > 0 ";
+  private static final String SNAPSHOTS_OF_A_RELEASE = "SELECT FROM component WHERE format='maven2' " +
+      "AND bucket = :bucket " +
+      "AND group = :group " +
+      "AND name = :name " +
+      "AND version = :version " +
+      "AND last_updated < :lastUpdated";
 
   private static final Function<Component, GAV> GROUPING_FUNCTION = t -> new GAV(t.group(), t.name(),
       (String) t.attributes().child(Maven2Format.NAME).get(P_BASE_VERSION), -1);
+
+  private static final QueryBuilder ALL_RELEASES = boolQuery()
+      .mustNot(
+          wildcardQuery("attributes.maven2.baseVersion", "*-SNAPSHOT")
+      ).must(
+          termQuery("format", "maven2")
+      );
 
   private final long batchSize;
 
@@ -110,14 +120,18 @@ public class RemoveSnapshotsFacetImpl
 
   private final Type groupType;
 
+  private final SearchService searchService;
+
   @Inject
   public RemoveSnapshotsFacetImpl(final ComponentEntityAdapter componentEntityAdapter,
                                   @Named(GroupType.NAME) final Type groupType,
-                                  @Named("${nexus.removeSnapshots.batchSize:-500}") long batchSize)
+                                  @Named("${nexus.removeSnapshots.batchSize:-500}") long batchSize,
+                                  final SearchService searchService)
   {
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.groupType = checkNotNull(groupType);
     this.batchSize = batchSize;
+    this.searchService = checkNotNull(searchService);
   }
 
   @Override
@@ -287,10 +301,62 @@ public class RemoveSnapshotsFacetImpl
   private Iterable<Component> findReleasedSnapshots(final StorageTx tx, final Repository repository,
                                                     final Date gracePeriod)
   {
-    final Bucket bucket = tx.findBucket(repository);
-    final OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(WITH_RELEASES))
-        .execute(AttachedEntityHelper.id(bucket), gracePeriod);
-    return Iterables.transform(result, componentEntityAdapter::readEntity);
+    Bucket bucket = tx.findBucket(repository);
+    Iterable<SearchHit> releases = searchService.browseUnrestricted(ALL_RELEASES);
+    Set<Component> components = StreamSupport.stream(releases.spliterator(), false)
+        .map( hit -> {
+          GAV gav = gavFromSearchHit(hit);
+          log.debug("looking in {} for snapshots older than {} for component {}",
+              repository.getName(), gracePeriod, gav);
+          QueryBuilder query = makeQueryForSnapshots(gav);
+          Iterable<SearchHit> hits =
+              searchService.browseUnrestrictedInRepos(query, Collections.singleton(repository.getName()));
+          return hits;
+        })
+        .flatMap(hits ->
+          StreamSupport.stream(hits.spliterator(), false).map(hit -> {
+            GAV gav = gavFromSearchHit(hit);
+            log.debug("found snapshot {} to mark for deletion", gav);
+            return gav;
+          })
+        )
+        .collect(Collectors.toSet()).stream()
+        .flatMap( gav -> {
+          GAV casted = (GAV) gav;
+          OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_OF_A_RELEASE))
+              .execute(
+                  AttachedEntityHelper.id(bucket),
+                  casted.group,
+                  casted.name,
+                  casted.baseVersion,
+                  gracePeriod
+              );
+          return result.stream().map(componentEntityAdapter::readEntity);
+        })
+        .collect(Collectors.toSet());
+
+    return components;
+  }
+
+  private GAV gavFromSearchHit(SearchHit hit) {
+    Map<String,Object> hitSource = hit.getSource();
+    GAV gav = new GAV(
+        hitSource.get("group").toString(),
+        hitSource.get("name").toString(),
+        hitSource.get("version").toString(),
+        0
+    );
+    return gav;
+  }
+
+  private QueryBuilder makeQueryForSnapshots(GAV gav) {
+    return boolQuery().must(
+        termQuery("attributes.maven2.baseVersion", gav.baseVersion + "-SNAPSHOT")
+    ).must(
+        termQuery("attributes.maven2.groupId", gav.group)
+    ).must(
+        termQuery("attributes.maven2.artifactId", gav.name)
+    );
   }
 
   /**

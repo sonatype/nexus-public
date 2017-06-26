@@ -17,6 +17,8 @@ import java.net.URI;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
@@ -71,7 +73,7 @@ public abstract class ProxyFacetSupport
   static final String CONFIG_KEY = "proxy";
 
   @VisibleForTesting
-  static class Config
+  public static class Config
   {
     @Url
     @NotNull
@@ -105,6 +107,26 @@ public abstract class ProxyFacetSupport
   private boolean remoteUrlChanged;
 
   protected CacheControllerHolder cacheControllerHolder;
+
+  private Cooperation<Content> contentCooperation;
+
+  /**
+   * Configures content {@link Cooperation} for this proxy; a {@code passiveTimeout} of 0 disables cooperation.
+   *
+   * @param passiveTimeout used when passively cooperating on an initial download
+   * @param activeTimeout used when actively cooperating on a download dependency
+   *
+   * @since 3.4
+   */
+  @Inject
+  protected void configureCooperation(
+      @Named("${nexus.proxy.passiveCooperationTimeout:-600s}") final Time passiveTimeout,
+      @Named("${nexus.proxy.activeCooperationTimeout:-10s}") final Time activeTimeout)
+  {
+    if (passiveTimeout.value() > 0) {
+      this.contentCooperation = new Cooperation<>(passiveTimeout, activeTimeout);
+    }
+  }
 
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
@@ -166,40 +188,76 @@ public abstract class ProxyFacetSupport
     checkNotNull(context);
 
     Content content = maybeGetCachedContent(context);
+    if (!isStale(context, content)) {
+      return content;
+    }
+    if (contentCooperation == null) {
+      return doGet(context, content);
+    }
+    return contentCooperation.cooperate(getRequestKey(context), (checkCache) -> {
+      Content latestContent = content;
+      if (checkCache) {
+        latestContent = maybeGetCachedContent(context);
+        if (!isStale(context, latestContent)) {
+          return latestContent;
+        }
+      }
+      return doGet(context, latestContent);
+    });
+  }
 
-    if (isStale(context, content)) {
-      Content remote = null;
-      try {
-        remote = fetch(context, content);
-        if (remote != null) {
-          content = store(context, remote);
+  /**
+   * @since 3.4
+   */
+  protected Content doGet(final Context context, @Nullable final Content staleContent) throws IOException {
+    Content remote = null, content = staleContent;
+
+    try {
+      remote = fetch(context, content);
+      if (remote != null) {
+        content = store(context, remote);
+        if (contentCooperation != null && remote.equals(content)) {
+          // remote wasn't stored; make reusable copy for cooperation
+          content = new TempContent(remote);
         }
       }
-      catch (ProxyServiceException e) {
-        int sc = e.getHttpResponse().getStatusLine().getStatusCode();
-        String repoName = this.getRepository().getName();
-        String contextUrl = getUrl(context);
-        log.trace("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
-        logContentOrThrow(content, contextUrl, e);
-      }
-      catch (RemoteBlockedIOException e) {
-        Repository repository = context.getRepository();
-        log.trace("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e);
-        logContentOrThrow(content, getUrl(context), e);
-      }
-      catch (IOException e) {
-        Repository repository = context.getRepository();
-        log.trace("Failed to fetch: {} from repository: {}", getUrl(context), repository.getName(), e);
-        logContentOrThrow(content, getUrl(context), e);
-      }
-      finally {
-        if (remote != null && !remote.equals(content)) {
-          Closeables.close(remote, true);
-        }
+    }
+    catch (ProxyServiceException e) {
+      int sc = e.getHttpResponse().getStatusLine().getStatusCode();
+      String repoName = this.getRepository().getName();
+      String contextUrl = getUrl(context);
+      log.trace("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
+      logContentOrThrow(content, contextUrl, e);
+    }
+    catch (RemoteBlockedIOException e) {
+      Repository repository = context.getRepository();
+      log.trace("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e);
+      logContentOrThrow(content, getUrl(context), e);
+    }
+    catch (IOException e) {
+      Repository repository = context.getRepository();
+      log.trace("Failed to fetch: {} from repository: {}", getUrl(context), repository.getName(), e);
+      logContentOrThrow(content, getUrl(context), e);
+    }
+    finally {
+      if (remote != null && !remote.equals(content)) {
+        Closeables.close(remote, true);
       }
     }
 
     return content;
+  }
+
+  /**
+   * Path + query parameters provide a unique enough request key for known formats.
+   * If a format needs to add more context then they should customize this method.
+   *
+   * @return key that uniquely identifies this upstream request from other contexts
+   *
+   * @since 3.4
+   */
+  protected String getRequestKey(final Context context) {
+    return context.getRequest().getPath() + '?' + context.getRequest().getParameters();
   }
 
   private <X extends Throwable> void logContentOrThrow(@Nullable final Content content,

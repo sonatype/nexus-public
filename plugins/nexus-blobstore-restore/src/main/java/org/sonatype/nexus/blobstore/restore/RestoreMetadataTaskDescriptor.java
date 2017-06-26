@@ -12,11 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -34,8 +32,7 @@ public class RestoreMetadataTaskDescriptor
 
   static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
-  @Inject
-  public RestoreMetadataTaskDescriptor(final NodeAccess nodeAccess) {
+  RestoreMetadataTaskDescriptor() {
     super(TYPE_ID,
         RestoreMetadataTask.class,
         "Restore Asset/Component metadata from Blob Store",
@@ -46,7 +43,6 @@ public class RestoreMetadataTaskDescriptor
             "Blob store",
             "Select the blob store to restore",
             MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
-        nodeAccess.isClustered() ? newMultinodeFormField() : null);
+        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"));
   }
 }

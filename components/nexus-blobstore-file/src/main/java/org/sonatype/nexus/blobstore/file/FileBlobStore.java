@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -119,9 +118,6 @@ public class FileBlobStore
 
   @VisibleForTesting
   static final int MAX_COLLISION_RETRIES = 8;
-
-  private Pattern propertiesFileRegex =
-      Pattern.compile("(.+?)([0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12})(\\.properties)$");
 
   private Path contentDir;
 
@@ -721,15 +717,13 @@ public class FileBlobStore
       }
 
       log.warn("Rebuilding deletions index file {}", deletedIndex);
-      int softDeletedBlobsFound = Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS)
-          .filter(this::isNonTemporaryAttributeFile)
+      int softDeletedBlobsFound = getAttributeFilePaths()
           .map(FileBlobAttributes::new)
           .mapToInt(attributes -> {
             try {
               attributes.load();
               if (attributes.isDeleted()) {
-                String filename = attributes.getPath().toFile().getName();
-                String blobId = filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
+                String blobId = getBlobIdFromAttributeFilePath(attributes.getPath());
                 deletedBlobIndex.add(blobId.getBytes(StandardCharsets.UTF_8));
                 return 1;
               }
@@ -745,6 +739,15 @@ public class FileBlobStore
       metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
       metadata.store();
     }
+  }
+
+  private String getBlobIdFromAttributeFilePath(final Path attributeFilePath) {
+    String filename = attributeFilePath.toFile().getName();
+    return filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
+  }
+
+  private Stream<Path> getAttributeFilePaths() throws IOException {
+    return Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS).filter(this::isNonTemporaryAttributeFile);
   }
 
   private boolean isNonTemporaryAttributeFile(final Path path) {
@@ -807,10 +810,8 @@ public class FileBlobStore
   @Override
   public Stream<BlobId> getBlobIdStream() {
     try {
-      return Files.walk(contentDir)
-          .filter(path -> propertiesFileRegex.matcher(path.toString()).matches())
-          .map(path -> path.getFileName().toString())
-          .map(fileName -> fileName.substring(0, fileName.lastIndexOf('.')))
+      return getAttributeFilePaths()
+          .map(this::getBlobIdFromAttributeFilePath)
           .map(BlobId::new);
     }
     catch (IOException e) {

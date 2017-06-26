@@ -118,7 +118,7 @@ public class AssetEntityAdapter
       .property(P_NAME)
       .build();
 
-  private static final String I_COMPONENT = new OIndexNameBuilder()
+  public static final String I_COMPONENT = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_COMPONENT)
       .build();

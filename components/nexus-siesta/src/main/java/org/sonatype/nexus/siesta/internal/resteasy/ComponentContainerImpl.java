@@ -65,6 +65,8 @@ public class ComponentContainerImpl
   }
 
   private void doInit(final ServletConfig servletConfig) throws ServletException {
+    deployment.start();
+
     servletConfig.getServletContext().setAttribute(ResteasyDeployment.class.getName(), deployment);
 
     super.init(servletConfig);
@@ -85,6 +87,13 @@ public class ComponentContainerImpl
       log.debug("Instances: {}", providerFactory.getInstances());
       log.debug("Exception mappers: {}", providerFactory.getExceptionMappers());
     }
+  }
+
+  @Override
+  public void destroy() {
+    super.destroy();
+
+    deployment.stop();
   }
 
   /**

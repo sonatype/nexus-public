@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -88,6 +89,13 @@ public interface SearchService
    * @since 3.1
    */
   Iterable<SearchHit> browseUnrestricted(QueryBuilder query);
+
+  /**
+   * Search component metadata in a specified repository and browse results, without the effect of content selectors
+   *
+   * @since 3.4
+   */
+  Iterable<SearchHit> browseUnrestrictedInRepos(QueryBuilder query, Collection<String> repoNames);
 
   /**
    * Search component metadata and browse results (paged), without the effect of content selectors.

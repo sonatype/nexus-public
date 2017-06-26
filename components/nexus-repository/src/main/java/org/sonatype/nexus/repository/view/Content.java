@@ -81,6 +81,14 @@ public class Content
     this.attributes = new AttributesMap();
   }
 
+  /**
+   * @since 3.4
+   */
+  protected Content(final Payload payload, final AttributesMap attributes) {
+    this.payload = checkNotNull(payload);
+    this.attributes = checkNotNull(attributes);
+  }
+
   @Override
   public InputStream openInputStream() throws IOException {
     return payload.openInputStream();
