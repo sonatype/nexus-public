@@ -367,7 +367,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Analyze_Permission_Error: '<span><h2>Insufficient Permissions to Analyze a Repository</h2>' +
     'To analyze a repository your user account must have permissions to start analysis.</span>',
     HealthCheckRepositoryColumn_Loading: 'Loading…',
-    HealthCheckRepositoryColumn_CollectingTrendData: 'Collecting trend data…',
+    HealthCheckRepositoryColumn_CollectingTrendData: 'Insufficient trend data',
     HealthCheckRepositoryColumn_DownloadsDisabled: 'Download trends disabled',
     HealthCheckRepositoryColumn_Unavailable_Tooltip: '<span><h2>Repository Health Check Unavailable</h2>A Repository Health Check (RHC) ' +
     'cannot be performed on this repository, because it is an unsupported type or out of service.<br><br>' +

@@ -90,6 +90,8 @@ public class ComponentDatabaseUpgrade_1_5
   @Override
   public void apply() throws Exception {
     withDatabaseAndClass(componentDatabaseInstance, COMPONENT_CLASS, (db, type) -> {
+      // note that the ci_name field is created as not-mandatory and nullable because we still have to populate its
+      // contents as part of the upgrade, once populated we go back and change the field to mandatory and non-null
       createCaseInsensitiveNameField(type);
       createCaseInsensitiveNameCaseInsensitiveIndex(db, type);
       populateCaseInsensitiveNameField(db);
