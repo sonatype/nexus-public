@@ -31,7 +31,6 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -103,8 +102,6 @@ public class RepositoryManagerImpl
 
   private final boolean skipDefaultRepositories;
 
-  private final NodeAccess nodeAccess;
-
   private final BlobStoreManager blobStoreManager;
 
   @Inject
@@ -117,7 +114,6 @@ public class RepositoryManagerImpl
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
                                final DatabaseFreezeService databaseFreezeService,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
-                               final NodeAccess nodeAccess,
                                final BlobStoreManager blobStoreManager)
   {
     this.eventManager = checkNotNull(eventManager);
@@ -129,7 +125,6 @@ public class RepositoryManagerImpl
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
-    this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
@@ -211,7 +206,7 @@ public class RepositoryManagerImpl
 
     // attempt to provision default repositories if allowed
     if (configurations.isEmpty()) {
-      if (!blobStoreManager.exists(DEFAULT_BLOBSTORE_NAME) && (nodeAccess.isClustered() || skipDefaultRepositories)) {
+      if (skipDefaultRepositories || !blobStoreManager.exists(DEFAULT_BLOBSTORE_NAME)) {
         log.debug("Skipping provisioning of default repositories");
         return;
       }

@@ -168,7 +168,8 @@ public class MavenGroupFacet
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetEvent event) {
-    if (member(event.getRepositoryName()) && event.getComponentId() == null) {
+    // only make DB changes on the originating node, as orient will also replicate those for us
+    if (event.isLocal() && member(event.getRepositoryName()) && event.getComponentId() == null) {
       final String path = event.getAsset().name();
       final MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
       // group deletes path + path.hashes, but it should do only on content change in member
