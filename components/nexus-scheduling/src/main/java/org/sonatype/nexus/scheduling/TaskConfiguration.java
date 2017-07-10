@@ -19,6 +19,8 @@ import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.logging.task.TaskLogInfo;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
@@ -52,6 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public final class TaskConfiguration
+    implements TaskLogInfo
 {
   // TODO: keys which start with "." are considered "private" for some strange reason
 

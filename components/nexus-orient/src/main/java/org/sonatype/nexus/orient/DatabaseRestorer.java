@@ -25,6 +25,13 @@ public interface DatabaseRestorer
 {
 
   /**
+   * @param databaseName the name of the database
+   * @return true if a file exists for the database that will trigger a restore
+   * @throws IOException if there was a problem accessing the filesystem
+   */
+  boolean hasPendingRestore(String databaseName) throws IOException;
+
+  /**
    * Restore the database if a backup is available.
    * @return true if the database was restored
    */

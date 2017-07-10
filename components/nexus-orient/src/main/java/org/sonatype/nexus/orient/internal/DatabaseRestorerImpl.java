@@ -55,8 +55,33 @@ public class DatabaseRestorerImpl
   }
 
   @Override
+  public boolean hasPendingRestore(final String databaseName) throws IOException {
+    return getRestorePath(databaseName) != null;
+  }
+
+  @Override
   public boolean maybeRestoreDatabase(final ODatabaseDocumentTx db, final String databaseName) throws IOException {
     checkNotNull(db);
+    checkNotNull(databaseName);
+
+    Path path = getRestorePath(databaseName);
+
+    if (path != null) {
+      log.info("restoration of database {} from file {} starting", databaseName, path);
+      doRestore(path.toFile(), db, databaseName);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * @param databaseName the name of the database
+   * @return the {@link Path} to the 1 backup file if it exists, null otherwise
+   * @throws IOException if there was a problem listing files from {@link #RESTORE_FROM_LOCATION}
+   * @throws IllegalStateException if more than 1 backup file exists for the database
+   */
+  protected Path getRestorePath(final String databaseName) throws IOException {
     checkNotNull(databaseName);
 
     File restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
@@ -70,14 +95,7 @@ public class DatabaseRestorerImpl
           backupFiles);
     }
 
-    if (!backupFiles.isEmpty()) {
-      Path path = backupFiles.get(0);
-      log.info("restoration of database {} from file {} starting", databaseName, path);
-      doRestore(path.toFile(), db, databaseName);
-      return true;
-    }
-
-    return false;
+    return backupFiles.isEmpty() ? null : backupFiles.get(0);
   }
 
   private void doRestore(final File file, final ODatabaseDocumentTx db, final String databaseName) {

@@ -26,4 +26,14 @@
     <glob pattern="*.woff"/>
   </mime-type>
 
+  <!-- Override tika's default behavior for GNU tar detection because nobody calls a GNU tar a .gtar -->
+  <mime-type type="application/x-tar">
+    <_comment>GNU tar Compressed File Archive (GNU Tape Archive)</_comment>
+    <magic priority="60">
+      <!-- GNU tar archive -->
+      <match value="ustar  \0" type="string" offset="257"/>
+    </magic>
+    <glob pattern="*.tar"/>
+  </mime-type>
+
 </mime-info>

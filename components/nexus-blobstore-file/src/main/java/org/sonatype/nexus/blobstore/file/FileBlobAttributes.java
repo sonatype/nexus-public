@@ -141,9 +141,9 @@ public class FileBlobAttributes
     deletedReason = properties.getProperty(DELETED_REASON_ATTRIBUTE);
   }
 
-  private Properties writeTo(final Properties properties) {
+  private void writeTo(final Properties properties) {
     for (Entry<String, String> header : getHeaders().entrySet()) {
-      properties.put(HEADER_PREFIX + header.getKey(), header.getValue());
+      properties.setProperty(HEADER_PREFIX + header.getKey(), header.getValue());
     }
     BlobMetrics blobMetrics = getMetrics();
     properties.setProperty(SHA1_HASH_ATTRIBUTE, blobMetrics.getSha1Hash());
@@ -151,9 +151,12 @@ public class FileBlobAttributes
     properties.setProperty(CREATION_TIME_ATTRIBUTE, Long.toString(blobMetrics.getCreationTime().getMillis()));
 
     if (deleted) {
-      properties.put(DELETED_ATTRIBUTE, Boolean.toString(deleted));
-      properties.put(DELETED_REASON_ATTRIBUTE, getDeletedReason());
+      properties.setProperty(DELETED_ATTRIBUTE, Boolean.TRUE.toString());
+      properties.setProperty(DELETED_REASON_ATTRIBUTE, getDeletedReason());
     }
-    return properties;
+    else {
+      properties.remove(DELETED_ATTRIBUTE);
+      properties.remove(DELETED_REASON_ATTRIBUTE);
+    }
   }
 }

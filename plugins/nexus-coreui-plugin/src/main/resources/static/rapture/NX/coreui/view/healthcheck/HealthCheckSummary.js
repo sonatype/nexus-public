@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckSummary', {
   extend: 'Ext.window.Window',
   alias: 'widget.nx-coreui-healthcheck-summary',
   requires: [
-    'Ext.util.DelayedTask'
+    'Ext.util.DelayedTask',
+    'NX.I18n'
   ],
 
   /**
@@ -54,6 +55,15 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckSummary', {
     };
 
     me.callParent();
+
+    me.addDocked({
+      xtype: 'toolbar',
+      dock: 'bottom',
+      items: {
+        xtype: 'label',
+        html: NX.I18n.get('HealthCheckSummary_Help')
+      }
+    });
   },
 
   listeners: {

@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.orient;
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+
 /**
  * Holds the names of commonly used databases.
  * 
@@ -33,6 +37,24 @@ public class DatabaseInstanceNames
    * Name of the database storing security configuration.
    */
   public static final String SECURITY = "security";
+
+  /**
+   * Name of the database storing records from the audit feature.
+   */
+  public static final String AUDIT = "audit";
+
+  /**
+   * Name of the database storing analytics.
+   */
+  public static final String ANALYTICS = "analytics";
+
+  /**
+   * Name of the database storing access log data for licensing.
+   */
+  public static final String ACCESSLOG = "accesslog";
+
+  public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
+      ACCESSLOG, ANALYTICS, AUDIT, CONFIG, COMPONENT, SECURITY);
 
   private DatabaseInstanceNames() {
     // no construction

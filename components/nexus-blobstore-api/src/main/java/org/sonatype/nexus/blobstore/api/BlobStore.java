@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
 import com.google.common.hash.HashCode;
+import org.slf4j.Logger;
 
 /**
  * A generic storage bin for binary objects of all sizes.
@@ -120,6 +121,14 @@ public interface BlobStore
    * tasks need doing.
    */
   void compact();
+
+  /**
+   * Perform garbage collection, purging blobs marked for deletion or whatever other periodic, implementation-specific
+   * tasks need doing. Takes an optional {@link BlobStoreUsageChecker} and an optional {@link Logger} from the caller.
+   *
+   * @since 3.4.1
+   */
+  void compact(@Nullable BlobStoreUsageChecker inUseChecker, @Nullable Logger logger);
 
   /**
    * Returns the configuration entity for the BlobStore.

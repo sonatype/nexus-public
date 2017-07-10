@@ -43,6 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
@@ -82,7 +83,8 @@ public class MavenRestoreBlobStrategy
     MavenPath mavenPath = mavenPathParser.parsePath(name);
 
     if (mavenPath.getCoordinates() == null && !mavenPathParser.isRepositoryMetadata(mavenPath)) {
-      log.warn("Skipping as no maven coordinates found and is not maven metadata, blob store: {}, repository: {}, blob name: {}, blob id: {}",
+      log.warn(TASK_LOG_ONLY,
+          "Skipping as no maven coordinates found and is not maven metadata, blob store: {}, repository: {}, blob name: {}, blob id: {}",
           blobStoreName, repoName, name, blob.getId());
       return;
     }
@@ -99,7 +101,8 @@ public class MavenRestoreBlobStrategy
             .call(() -> mavenFacet.get().get(mavenPath));
 
         if (content != null) {
-          log.info("Skipping as asset already exists, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
+          log.debug(TASK_LOG_ONLY,
+              "Skipping as asset already exists, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
               blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
           return;
         }
@@ -113,16 +116,19 @@ public class MavenRestoreBlobStrategy
                 ),
                 null));
 
-        log.info("Restored asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
+        log.info(TASK_LOG_ONLY,
+            "Restored asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
             blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
       }
       else {
-        log.debug("Skipping asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
+        log.debug(TASK_LOG_ONLY,
+            "Skipping asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
             blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
       }
     }
     catch (IOException e) {
-      log.error("Error while restoring asset: blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
+      log.error(TASK_LOG_ONLY,
+          "Error while restoring asset: blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
           blobStoreName, repoName, mavenPath.getPath(), name, blob.getId(), e);
     }
   }
@@ -132,7 +138,7 @@ public class MavenRestoreBlobStrategy
         .map(repositoryManager::get)
         .map(r -> r.optionalFacet(facetClass).orElse(null));
     if (!facet.isPresent()) {
-      log.debug("Facet not found, repository: {}, facet type: {}", repositoryName, facetClass);
+      log.debug(TASK_LOG_ONLY, "Facet not found, repository: {}, facet type: {}", repositoryName, facetClass);
     }
     return facet;
   }

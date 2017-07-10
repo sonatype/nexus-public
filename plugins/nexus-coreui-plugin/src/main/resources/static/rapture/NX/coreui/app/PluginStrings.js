@@ -374,6 +374,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     '<a href="http://links.sonatype.com/products/clm/rhc/home" ' +
     'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
 
+    HealthCheckSummary_Help: '<a href="http://links.sonatype.com/products/nexus/rhc/manual-remediation-with-rhc" target="_blank">What should I do with this report?</a>',
+
     // Admin -> Repository -> Blob Stores
     Blobstores_Text: 'Blob Stores',
     Blobstores_Description: 'Manage blob stores',

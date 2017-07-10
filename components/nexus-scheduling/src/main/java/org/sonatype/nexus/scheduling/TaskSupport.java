@@ -15,6 +15,8 @@ package org.sonatype.nexus.scheduling;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.logging.task.TaskLoggerHelper;
+import org.sonatype.nexus.logging.task.DefaultTaskLogger;
 
 import com.google.common.base.Strings;
 
@@ -84,12 +86,14 @@ public abstract class TaskSupport
    */
   @Override
   public final Object call() throws Exception {
+    TaskLoggerHelper.start(new DefaultTaskLogger(log, configuration));
     CancelableHelper.set(canceledFlag);
     try {
       return execute();
     }
     finally {
       CancelableHelper.remove();
+      TaskLoggerHelper.finish();
     }
   }
 

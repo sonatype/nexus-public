@@ -59,6 +59,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.orient.entity.AttachedEntityHelper.id;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
@@ -192,7 +193,8 @@ public class PurgeUnusedSnapshotsFacetImpl
     long skipCount = 0;
     lastComponent = new ORecordId(-1, -1);
     while (skipCount < totalComponents && !isCanceled()) {
-      log.info(format("Processing components [%.2f%%] complete", ((double) skipCount / totalComponents) * 100));
+      log.info(PROGRESS,
+          format("Processing components [%.2f%%] complete", ((double) skipCount / totalComponents) * 100));
 
       for (Component component : findNextPageOfUnusedSnapshots(tx, olderThan, bucketId, unusedWhereTemplate)) {
         if (isCanceled()) {

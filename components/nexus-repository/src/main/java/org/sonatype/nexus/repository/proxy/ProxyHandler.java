@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -55,7 +56,7 @@ public class ProxyHandler
     catch (ProxyServiceException e) {
       return HttpResponses.serviceUnavailable();
     }
-    catch (IOException e) {
+    catch (IOException | UncheckedIOException e) {
       return HttpResponses.badGateway();
     }
   }

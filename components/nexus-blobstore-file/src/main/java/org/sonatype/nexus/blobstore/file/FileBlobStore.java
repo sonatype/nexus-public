@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
@@ -60,12 +62,14 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.Files.exists;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -540,6 +544,13 @@ public class FileBlobStore
   @Override
   @Guarded(by = STARTED)
   public synchronized void compact() {
+    compact(null, null);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker, @Nullable final Logger logger) {
+    final Logger localLogger = Optional.ofNullable(logger).orElse(log);
     try {
       maybeRebuildDeletedBlobIndex();
       // only process each blob once (in-use blobs may be re-added to the index)
@@ -552,8 +563,7 @@ public class FileBlobStore
         BlobId blobId = new BlobId(new String(bytes, StandardCharsets.UTF_8));
         FileBlob blob = liveBlobs.getIfPresent(blobId);
         if (blob == null || blob.isStale()) {
-          // not in use, so it's safe to delete the file
-          deleteHard(blobId);
+          maybeCompactBlob(inUseChecker, blobId, localLogger);
         }
         else {
           // still in use, so move it to end of the queue
@@ -566,6 +576,30 @@ public class FileBlobStore
     }
     catch (Exception e) {
       throw new BlobStoreException(e, null);
+    }
+  }
+
+  private void maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker,
+                                final BlobId blobId,
+                                final Logger logger)
+      throws IOException
+  {
+    FileBlobAttributes attributes = (FileBlobAttributes) getBlobAttributes(blobId);
+    String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
+    if (inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
+      String deletedReason = attributes.getDeletedReason();
+      attributes.setDeleted(false);
+      attributes.setDeletedReason(null);
+      attributes.store();
+      logger.warn(
+          "Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+          blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
+    }
+    else {
+      // not in use, so it's safe to delete the file
+      logger.debug("Hard deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+          blobId, attributes.getDeletedReason(), blobStoreConfiguration.getName(), blobName);
+      deleteHard(blobId);
     }
   }
 

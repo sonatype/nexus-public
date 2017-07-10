@@ -6,9 +6,12 @@
 
   <jmxConfigurator/>
 
-  <appender name="osgi" class="org.ops4j.pax.logging.logback.appender.PaxAppenderDelegate"/>
+  <appender name="osgi" class="org.ops4j.pax.logging.logback.appender.PaxAppenderDelegate">
+    <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
+  </appender>
 
   <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
     <encoder>
       <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
     </encoder>
@@ -24,6 +27,23 @@
       <fileNamePattern>${karaf.data}/log/nexus-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
       <maxHistory>90</maxHistory>
     </rollingPolicy>
+    <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
+  </appender>
+
+  <appender name="tasklogfile" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <filter class="org.sonatype.nexus.pax.logging.TaskLogsFilter" />
+    <discriminator>
+      <key>taskIdAndDate</key>
+      <defaultValue>unknown</defaultValue>
+    </discriminator>
+    <sift>
+      <appender name="taskAppender" class="ch.qos.logback.core.FileAppender">
+        <file>${karaf.data}/log/tasks/${taskIdAndDate}.log</file>
+        <encoder>
+          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+        </encoder>
+      </appender>
+    </sift>
   </appender>
 
   <appender name="metrics" class="org.sonatype.nexus.pax.logging.InstrumentedAppender"/>
@@ -41,6 +61,7 @@
     <appender-ref ref="osgi"/>
     <appender-ref ref="console"/>
     <appender-ref ref="logfile"/>
+    <appender-ref ref="tasklogfile"/>
     <appender-ref ref="metrics"/>
   </root>
 </configuration>
