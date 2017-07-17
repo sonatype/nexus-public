@@ -22,7 +22,6 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
-import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
@@ -92,13 +91,10 @@ public class SelectorConfigurationEntityAdapter
     String description = document.field(P_DESCRIPTION, OType.STRING);
     Map<String, Object> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
 
-    // deeply copy attributes to divorce from document
-    attributes = FieldCopier.copyIf(attributes);
-
     entity.setName(name);
     entity.setType(type);
     entity.setDescription(description);
-    entity.setAttributes(attributes);
+    entity.setAttributes(detachable(attributes));
   }
 
   @Override

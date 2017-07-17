@@ -17,6 +17,8 @@ import org.slf4j.MarkerFactory;
 
 /**
  * Container for Marker constants
+ *
+ * @since 3.4.1
  */
 public class TaskLoggingMarkers
 {

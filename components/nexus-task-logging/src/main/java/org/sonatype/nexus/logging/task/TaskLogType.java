@@ -13,19 +13,9 @@
 package org.sonatype.nexus.logging.task;
 
 /**
- * Expose task information for the per task logs. See the TaskConfiguration class.
- *
  * @since 3.4.1
  */
-public interface TaskLogInfo
+public enum TaskLogType
 {
-  String getId();
-
-  String getTypeId();
-
-  String getName();
-
-  String getMessage();
-
-  String toString();
+  BOTH, TASK_LOG_ONLY, NEXUS_LOG_ONLY
 }

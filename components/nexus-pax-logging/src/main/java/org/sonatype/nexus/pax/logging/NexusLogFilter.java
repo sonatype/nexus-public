@@ -20,19 +20,21 @@ import org.slf4j.Marker;
 
 import static ch.qos.logback.core.spi.FilterReply.DENY;
 import static ch.qos.logback.core.spi.FilterReply.NEUTRAL;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
  * Logback {@link Filter} for the main nexus.log to exclude task related events
  * - Must NOT have the PROGRESS_LOG marker. These are progress events for the task log.
- * - Must NOT have the TASK_LOG marker. These are task log only events.
+ * - Must NOT have the TASK_LOG_ONLY marker. These are task log only events.
+ * - Must NOT have TASK_LOG_ONLY_MDC in MDC. These are task log only events.
  *
  * Note: Pax-logging doesn't support markers :( However, they do store the marker in MDC for us to grab and do the work
  * ourselves
  *
  * @see org.ops4j.pax.logging.slf4j.Slf4jLogger#info(Marker, String)
- * @since 3.4
+ * @since 3.4.1
  */
 public class NexusLogFilter
     extends Filter<ILoggingEvent>
@@ -42,9 +44,11 @@ public class NexusLogFilter
   @Override
   public FilterReply decide(final ILoggingEvent event) {
     String marker = MDC.get(MDC_MARKER_ID);
-    if (PROGRESS.getName().equals(marker) || TASK_LOG_ONLY.getName().equals(marker)) {
+    if (PROGRESS.getName().equals(marker) || TASK_LOG_ONLY.getName().equals(marker) ||
+        MDC.get(TASK_LOG_ONLY_MDC) != null) {
       return DENY;
     }
+
     return NEUTRAL;
   }
 }

@@ -27,6 +27,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.orient.DatabaseRestorer;
+import org.sonatype.nexus.orient.restore.RestoreFile;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -55,8 +56,21 @@ public class DatabaseRestorerImpl
   }
 
   @Override
-  public boolean hasPendingRestore(final String databaseName) throws IOException {
-    return getRestorePath(databaseName) != null;
+  public RestoreFile getPendingRestore(final String databaseName) throws IOException {
+    checkNotNull(databaseName);
+
+    File restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
+
+    List<Path> backupFiles = Files.list(restoreFromLocation.toPath())
+        .filter(path -> isBackupFileForDatabase(path, databaseName))
+        .collect(toList());
+
+    if (backupFiles.size() > 1) {
+      throw new IllegalStateException("more than 1 backup file found for database " + databaseName + ": " +
+          backupFiles);
+    }
+
+    return backupFiles.isEmpty() ? null : RestoreFile.newInstance(backupFiles.get(0));
   }
 
   @Override

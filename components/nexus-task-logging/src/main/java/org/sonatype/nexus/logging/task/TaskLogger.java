@@ -13,21 +13,31 @@
 package org.sonatype.nexus.logging.task;
 
 /**
- * @since 3.4
+ * @since 3.4.1
  */
 public interface TaskLogger
 {
   // id used in discriminator. See logback.xml
   String LOGBACK_TASK_DISCRIMINATOR_ID = "taskIdAndDate";
 
+  // constant for MDC use
+  String TASK_LOG_ONLY_MDC = "TASK_LOG_ONLY_MDC";
+
   /**
-   * Required to close out the task logging. This involves cleaning up MDC and ThreadLocal variables.
+   * Required to start the task logging. See {@link TaskLoggerHelper#start(TaskLogger)}
+   */
+  void start();
+
+  /**
+   * Required to close out the task logging. This involves cleaning up MDC and ThreadLocal variables. See {@link
+   * TaskLoggerHelper#finish()}
    */
   void finish();
 
   /**
    * Log a progress event, which are always logged to the task log, but only periodically to the nexus.log
-   * @param event
+   *
+   * @param event log event containing progress
    */
   void progress(TaskLoggingEvent event);
 }

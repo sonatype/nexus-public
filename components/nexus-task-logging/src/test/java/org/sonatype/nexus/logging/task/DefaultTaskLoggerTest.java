@@ -24,11 +24,14 @@ import org.slf4j.Marker;
 
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.DefaultTaskLogger.MARK_LINE;
 import static org.sonatype.nexus.logging.task.DefaultTaskLogger.PROGRESS_LINE;
 import static org.sonatype.nexus.logging.task.TaskLogger.LOGBACK_TASK_DISCRIMINATOR_ID;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
@@ -45,6 +48,7 @@ public class DefaultTaskLoggerTest
     TaskLogInfo taskLogInfo = createTaskLogInfo();
 
     underTest = new DefaultTaskLogger(mockLogger, taskLogInfo);
+    underTest.start();
 
     verifyLog(TASK_LOG_ONLY, "Task information:");
     verifyLog(TASK_LOG_ONLY, " ID: {}", taskLogInfo.getId());
@@ -82,6 +86,16 @@ public class DefaultTaskLoggerTest
 
     // verify progress logged properly
     verifyLog(null, format(PROGRESS_LINE, MARK_LINE), (Object[]) null);
+  }
+
+  @Test
+  public void testFinishClearsMDCValues() {
+    MDC.put(TASK_LOG_ONLY_MDC, "something");
+    assertThat(MDC.get(TASK_LOG_ONLY_MDC), notNullValue());
+    assertThat(MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID), notNullValue());
+    underTest.finish();
+    assertThat(MDC.get(TASK_LOG_ONLY_MDC), nullValue());
+    assertThat(MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID), nullValue());
   }
 
   private TaskLogInfo createTaskLogInfo() {

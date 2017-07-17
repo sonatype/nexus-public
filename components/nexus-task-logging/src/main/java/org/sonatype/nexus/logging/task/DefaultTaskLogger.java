@@ -33,7 +33,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * Additionally this class has starts a thread which will log regular (1 minute) progress update back to the main
  * nexus.log.
  *
- * @since 3.4
+ * @since 3.4.1
  */
 public class DefaultTaskLogger
     implements TaskLogger
@@ -56,15 +56,12 @@ public class DefaultTaskLogger
 
   private TaskLoggingEvent lastProgressEvent = MARK_LOG_MESSAGE;
 
-  public DefaultTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
+  DefaultTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
     this.log = checkNotNull(log);
     this.taskLogInfo = checkNotNull(taskLogInfo);
 
     // Set per-thread logback property via MDC (see logback.xml)
     MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, getTaskLogIdentifier());
-
-    startLogThread();
-    logTaskInfo();
   }
 
   private String getTaskLogIdentifier() {
@@ -100,14 +97,21 @@ public class DefaultTaskLogger
   }
 
   @Override
-  public void finish() {
+  public final void start() {
+    startLogThread();
+    logTaskInfo();
+  }
+
+  @Override
+  public final void finish() {
     log.info(TASK_LOG_ONLY, "Task complete");
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
+    MDC.remove(TASK_LOG_ONLY_MDC);
     loggingThread.cancel(true);
   }
 
   @Override
-  public void progress(final TaskLoggingEvent event) {
+  public final void progress(final TaskLoggingEvent event) {
     lastProgressEvent = event;
   }
 }

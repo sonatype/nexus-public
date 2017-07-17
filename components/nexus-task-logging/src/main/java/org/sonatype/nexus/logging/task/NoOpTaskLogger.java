@@ -13,19 +13,27 @@
 package org.sonatype.nexus.logging.task;
 
 /**
- * Expose task information for the per task logs. See the TaskConfiguration class.
+ * A no-operation implementation of {@link TaskLogger} which is used by {@link TaskLogging} for {@link
+ * TaskLogType#NEXUS_LOG_ONLY}
  *
+ * @see TaskLoggerFactory
  * @since 3.4.1
  */
-public interface TaskLogInfo
+public class NoOpTaskLogger
+    implements TaskLogger
 {
-  String getId();
+  @Override
+  public void start() {
+    // no-op
+  }
 
-  String getTypeId();
+  @Override
+  public void finish() {
+    // no-op
+  }
 
-  String getName();
-
-  String getMessage();
-
-  String toString();
+  @Override
+  public void progress(final TaskLoggingEvent event) {
+    // no-op
+  }
 }

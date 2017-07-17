@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
-import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -91,12 +90,9 @@ public class BlobStoreConfigurationEntityAdapter
     String type = document.field(P_TYPE, OType.STRING);
     Map<String, Map<String, Object>> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
 
-    // deeply copy attributes to divorce from document
-    attributes = FieldCopier.copyIf(attributes);
-
     entity.setName(name);
     entity.setType(type);
-    entity.setAttributes(attributes);
+    entity.setAttributes(detachable(attributes));
   }
 
   @Override

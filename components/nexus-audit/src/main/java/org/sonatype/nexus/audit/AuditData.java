@@ -133,6 +133,13 @@ public class AuditData
   }
 
   /**
+   * @since 3.4.1
+   */
+  public void setAttributes(final Map<String, String> attributes) {
+    this.attributes = attributes;
+  }
+
+  /**
    * Returns a deeply cloned copy.
    */
   public AuditData copy() {

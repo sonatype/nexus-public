@@ -14,11 +14,17 @@ package org.sonatype.nexus.orient.entity;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.collect.DetachingList;
+import org.sonatype.nexus.common.collect.DetachingMap;
+import org.sonatype.nexus.common.collect.DetachingSet;
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityCreatedEvent;
 import org.sonatype.nexus.common.entity.EntityDeletedEvent;
@@ -31,7 +37,12 @@ import org.sonatype.nexus.orient.internal.PbeCompression;
 
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -329,6 +340,47 @@ public abstract class EntityAdapter<T extends Entity>
       return ((AttachedEntityId) id).getIdentity();
     }
     return getRecordIdObfuscator().decode(getSchemaType(), id.getValue());
+  }
+
+  /**
+   * Makes the given (tracked) entity attributes detachable by using a lazy copy technique.
+   *
+   * Without this the tracked Orient collections will attempt to call back into the current
+   * transaction when their content is changed, which can lead to exceptions if there is no
+   * surrounding transaction. Note: this is only an issue if you want to modify attributes
+   * from an attached entity outside of a transaction.
+   *
+   * @since 3.4.1
+   */
+  protected <K, V> Map<K, V> detachable(final Map<K, V> attributes) {
+    return new DetachingMap<>(attributes, this::allowDetach, this::detach);
+  }
+
+  /**
+   * Only allow detaching when we have no DB context or it is from a different DB.
+   * If we have a valid context from the same DB then we don't need to detach yet.
+   */
+  private boolean allowDetach() {
+    ODatabase<?> db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return db == null || !getDbName().equals(db.getName());
+  }
+
+  /**
+   * Lazily detaches the value; tracked collections are detached as their content is touched.
+   */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private <V> V detach(final V value) {
+    Object untracked = value;
+    if (value instanceof OTrackedMap) {
+      untracked = new DetachingMap((Map) value, this::allowDetach, this::detach);
+    }
+    else if (value instanceof OTrackedList) {
+      untracked = new DetachingList((List) value, this::allowDetach, this::detach);
+    }
+    else if (value instanceof OTrackedSet) {
+      untracked = new DetachingSet((Set) value, this::allowDetach, this::detach);
+    }
+    return (V) untracked;
   }
 
   //

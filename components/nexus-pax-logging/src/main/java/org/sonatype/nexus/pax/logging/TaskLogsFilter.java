@@ -34,7 +34,7 @@ import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
  * - Must NOT have the NEXUS_LOG marker. This prevents double entry for the progress update to the nexus.log
  * - Also sets progress entries into the TaskLoggerHelper
  *
- * @since 3.4
+ * @since 3.4.1
  */
 public class TaskLogsFilter
     extends Filter<ILoggingEvent>

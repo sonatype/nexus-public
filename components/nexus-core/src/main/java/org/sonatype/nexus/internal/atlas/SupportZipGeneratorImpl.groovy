@@ -133,6 +133,26 @@ class SupportZipGeneratorImpl
 
     log.info 'Generating support ZIP: {}', request
 
+    def prefix = downloadService.uniqueName('support-')
+
+    // Write zip to temporary file first
+    def file = File.createTempFile("${prefix}-", '.zip').canonicalFile
+    log.debug 'Writing ZIP file: {}', file
+
+    def truncated = generate(request, prefix, file.newOutputStream())
+
+    // move the file into place
+    def target = downloadService.move(file, "${prefix}.zip")
+    log.info 'Created support ZIP file: {}', target
+
+    return new Result(
+        file: target,
+        truncated: truncated
+    )
+  }
+
+  @Override
+  boolean generate(final Request request, final String prefix, final OutputStream outputStream) {
     def bundle = new SupportBundle()
 
     // customize the bundle
@@ -153,7 +173,7 @@ class SupportZipGeneratorImpl
         it.prepare()
       }
 
-      return createZip(request, sources)
+      return createZip(outputStream, sources, prefix, request.limitFileSizes, request.limitZipSize)
     }
     catch (Exception e) {
       log.error 'Failed to create support ZIP', e
@@ -173,17 +193,15 @@ class SupportZipGeneratorImpl
   }
 
   /**
-   * Create a ZIP file with content from given sources.
+   * Creates the zip file.
+   * @return true if the zipfile was truncated
    */
-  private Result createZip(final Request request, final List<ContentSource> sources) {
-    def prefix = downloadService.uniqueName('support-')
-
-    // Write zip to temporary file first
-    def file = File.createTempFile("${prefix}-", '.zip').canonicalFile
-    log.debug 'Writing ZIP file: {}', file
-
-    // track total compressed and uncompressed size
-    def stream = new CountingOutputStream(file.newOutputStream())
+  private boolean createZip(final OutputStream outputStream,
+                            final List<ContentSource> sources,
+                            final String prefix,
+                            final boolean limitFileSizes,
+                            final boolean limitZipSize) {
+    def stream = new CountingOutputStream(outputStream)
     long totalUncompressed = 0
 
     // setup zip too sync-flush so we can detect compressed size for partially written files
@@ -273,7 +291,7 @@ class SupportZipGeneratorImpl
 
         source.content.withStream { InputStream input ->
           // truncate content which is larger than maximum file size
-          if (request.limitFileSizes && source.size > maxContentSize) {
+          if (limitFileSizes && source.size > maxContentSize) {
             log.warn 'Truncating source contents; exceeds maximum included file size: {}', source.path
             zip << TRUNCATED_TOKEN
             truncated = true
@@ -285,7 +303,7 @@ class SupportZipGeneratorImpl
           int len
           while ((len = input.read(buff)) != -1) {
             // truncate content if max ZIP size reached
-            if (request.limitZipSize && stream.count + len > maxZipSize) {
+            if (limitZipSize && stream.count + len > maxZipSize) {
               log.warn 'Truncating source contents; max ZIP size reached: {}', source.path
               zip << TRUNCATED_TOKEN
               truncated = true
@@ -318,13 +336,6 @@ class SupportZipGeneratorImpl
           percentCompressed(stream.count, totalUncompressed)
     }
 
-    // move the file into place
-    def target = downloadService.move(file, "${prefix}.zip")
-    log.info 'Created support ZIP file: {}', target
-
-    return new Result(
-        file: target,
-        truncated: truncated
-    )
+    return truncated
   }
 }

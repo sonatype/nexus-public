@@ -15,6 +15,7 @@ package org.sonatype.nexus.upgrade.internal;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.upgrade.plan.Dependency;
 import org.sonatype.nexus.upgrade.plan.DependencySource;
 

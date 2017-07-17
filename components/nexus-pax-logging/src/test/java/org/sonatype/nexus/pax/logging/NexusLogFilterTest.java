@@ -23,6 +23,7 @@ import static ch.qos.logback.core.spi.FilterReply.DENY;
 import static ch.qos.logback.core.spi.FilterReply.NEUTRAL;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
@@ -42,32 +43,35 @@ public class NexusLogFilterTest
   @After
   public void tearDown() {
     MDC.remove(MDC_MARKER_ID);
+    MDC.remove(TASK_LOG_ONLY_MDC);
   }
 
   @Test
   public void testNothingInMDC() {
-    // nothing in MDC
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(NEUTRAL));
   }
 
   @Test
-  public void testOtherMarker() {
-    // some other marker in MDC
+  public void testOtherMarkerInMDC() {
     MDC.put(MDC_MARKER_ID, "foo");
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(NEUTRAL));
   }
 
   @Test
-  public void testProgressMarker() {
-    // progress marker in MDC
+  public void testProgressMarkerInMDC() {
     MDC.put(MDC_MARKER_ID, PROGRESS.getName());
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(DENY));
   }
 
   @Test
-  public void testTaskMarker() {
-    // task marker in MDC
+  public void testTaskMarkerInMDC() {
     MDC.put(MDC_MARKER_ID, TASK_LOG_ONLY.getName());
+    assertThat(excludeProgressLogsFilter.decide(event), equalTo(DENY));
+  }
+
+  @Test
+  public void testTaskOnlyMDCConstant_InMDC() {
+    MDC.put(TASK_LOG_ONLY_MDC, "anything");
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(DENY));
   }
 }

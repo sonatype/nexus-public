@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.backup;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -34,9 +35,10 @@ public interface DatabaseBackup
    *
    * @param backupFolder Name of folder where backup file will be created
    * @param dbName The name of the database being backed up
+   * @param timestamp a timestamp indicating when the backup was taken
    * @return java.util.concurrent.Callable For storing backup data
    * @throws IOException
    */
-  Callable<Void> fullBackup(String backupFolder, String dbName) throws IOException;
+  Callable<Void> fullBackup(String backupFolder, String dbName, LocalDateTime timestamp) throws IOException;
 
 }

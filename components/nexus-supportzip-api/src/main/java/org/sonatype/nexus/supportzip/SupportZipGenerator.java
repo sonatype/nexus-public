@@ -13,6 +13,7 @@
 package org.sonatype.nexus.supportzip;
 
 import java.io.File;
+import java.io.OutputStream;
 
 /**
  * Generates a support ZIP file.
@@ -203,4 +204,13 @@ public interface SupportZipGenerator
    * Generate a support ZIP for the given request.
    */
   Result generate(Request request);
+
+  /**
+   * Generate a support ZIP.
+   * @param outputStream the output stream to write the ZIP to.
+   * @param prefix directory prefix applied to files in the ZIP.
+   * @return true if the zip was truncated.
+   * @since 3.4.1
+   */
+  boolean generate(Request request, String prefix, OutputStream outputStream);
 }

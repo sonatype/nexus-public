@@ -40,7 +40,7 @@ class DatabaseBackupTaskTest
 
     then: 'the databaseBackup and freeze services should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test']
-      1 * databaseBackup.fullBackup('target', 'test') >> dumbBackupJob
+      1 * databaseBackup.fullBackup('target', 'test', _) >> dumbBackupJob
       1 * freezeService.freezeAllDatabases()
       1 * freezeService.releaseAllDatabases()
   }
@@ -56,7 +56,7 @@ class DatabaseBackupTaskTest
 
     then: 'the databaseBackup service should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test']
-      1 * databaseBackup.fullBackup('target', 'test') >> { String backupFolder, String dbName ->
+      1 * databaseBackup.fullBackup('target', 'test', _) >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
       }
       1 * freezeService.freezeAllDatabases()
@@ -75,8 +75,8 @@ class DatabaseBackupTaskTest
 
     then: 'the databaseBackup service should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
-      1 * databaseBackup.fullBackup('target', 'test1') >> dumbBackupJob
-      1 * databaseBackup.fullBackup('target', 'test2') >> dumbBackupJob
+      1 * databaseBackup.fullBackup('target', 'test1', _) >> dumbBackupJob
+      1 * databaseBackup.fullBackup('target', 'test2', _) >> dumbBackupJob
       1 * freezeService.freezeAllDatabases()
       1 * freezeService.releaseAllDatabases()
       notThrown(MultipleFailuresException)
@@ -93,10 +93,10 @@ class DatabaseBackupTaskTest
 
     then: 'the databaseBackup service should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
-      1 * databaseBackup.fullBackup('target', 'test1') >> { String backupFolder, String dbName ->
+      1 * databaseBackup.fullBackup('target', 'test1', _) >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
       }
-      1 * databaseBackup.fullBackup('target','test2') >> dumbBackupJob
+      1 * databaseBackup.fullBackup('target','test2', _) >> dumbBackupJob
       1 * freezeService.freezeAllDatabases()
       1 * freezeService.releaseAllDatabases()
       thrown(MultipleFailuresException)

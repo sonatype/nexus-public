@@ -12,20 +12,19 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import org.slf4j.Logger;
+import org.slf4j.MDC;
+
 /**
- * Expose task information for the per task logs. See the TaskConfiguration class.
+ * {@link TaskLogger} for logging just to the task log. Stores a value in {@link MDC} for NexusLogFilter to find.
  *
  * @since 3.4.1
  */
-public interface TaskLogInfo
+public class TaskLogOnlyTaskLogger
+    extends DefaultTaskLogger
 {
-  String getId();
-
-  String getTypeId();
-
-  String getName();
-
-  String getMessage();
-
-  String toString();
+  TaskLogOnlyTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
+    super(log, taskLogInfo);
+    MDC.put(TASK_LOG_ONLY_MDC, "true");
+  }
 }

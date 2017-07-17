@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.backup;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -89,6 +90,7 @@ public class DatabaseBackupTask
   @Override
   protected Object execute() throws Exception {
     List<Callable<Void>> jobs = Lists.newArrayList();
+    final LocalDateTime timestamp = LocalDateTime.now();
     log.info("task named '{}' database backup to location {}", getName(), location);
     MultipleFailures failures = new MultipleFailures();
 
@@ -97,7 +99,7 @@ public class DatabaseBackupTask
       for (String dbName : databaseBackup.dbNames()) {
         try {
           log.info("database backup of {} starting", dbName);
-          Callable<Void> job = databaseBackup.fullBackup(location, dbName);
+          Callable<Void> job = databaseBackup.fullBackup(location, dbName, timestamp);
           jobs.add(job);
         }
         catch (Exception e) {

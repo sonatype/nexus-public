@@ -102,7 +102,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     entity.bucketId(new AttachedEntityId(bucketEntityAdapter, bucketId));
     entity.format(format);
     entity.lastUpdated(new DateTime(lastUpdated));
-    entity.attributes(new NestedAttributesMap(P_ATTRIBUTES, attributes));
+    entity.attributes(new NestedAttributesMap(P_ATTRIBUTES, detachable(attributes)));
     entity.newEntity(document.getIdentity().isNew());
   }
 

@@ -12,40 +12,39 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import org.slf4j.Logger;
+
+import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
+
 /**
- * Each task is executed in its own thread and its {@link TaskLogger} is stored in it here.
+ * Factory to create {@link TaskLogger} instances
  *
  * @since 3.4.1
  */
-public class TaskLoggerHelper
+public class TaskLoggerFactory
 {
-  private static final ThreadLocal<TaskLogger> context = new ThreadLocal<>();
-
-  private TaskLoggerHelper() {
+  private TaskLoggerFactory() {
     throw new IllegalAccessError("Utility class");
   }
 
-  public static void start(final TaskLogger taskLogger) {
-    taskLogger.start();
-    context.set(taskLogger);
-  }
+  public static TaskLogger create(final Object taskObject, final Logger log, final TaskLogInfo taskLogInfo) {
+    TaskLogging taskLogging = taskObject.getClass().getAnnotation(TaskLogging.class);
 
-  public static TaskLogger get() {
-    return context.get();
-  }
-
-  public static void finish() {
-    TaskLogger taskLogger = get();
-    if (taskLogger != null) {
-      taskLogger.finish();
+    if (taskLogging == null) {
+      taskLogging = TaskLoggingDefault.class.getAnnotation(TaskLogging.class);
     }
-    context.remove();
-  }
 
-  public static void progress(final TaskLoggingEvent event) {
-    TaskLogger taskLogger = get();
-    if (taskLogger != null) {
-      taskLogger.progress(event);
+    switch (taskLogging.value()) {
+      case NEXUS_LOG_ONLY:
+        return new NoOpTaskLogger();
+      case TASK_LOG_ONLY:
+        return new TaskLogOnlyTaskLogger(log, taskLogInfo);
+      case BOTH:
+      default:
+        return new DefaultTaskLogger(log, taskLogInfo);
     }
   }
+
+  @TaskLogging(BOTH)
+  private static final class TaskLoggingDefault { }
 }

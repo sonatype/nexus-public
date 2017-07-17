@@ -12,20 +12,21 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
+
 /**
- * Expose task information for the per task logs. See the TaskConfiguration class.
+ * Annotation to be applied to a TaskSupport class to indicate what type of task logging should happen.
  *
  * @since 3.4.1
  */
-public interface TaskLogInfo
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface TaskLogging
 {
-  String getId();
-
-  String getTypeId();
-
-  String getName();
-
-  String getMessage();
-
-  String toString();
+  TaskLogType value() default BOTH;
 }

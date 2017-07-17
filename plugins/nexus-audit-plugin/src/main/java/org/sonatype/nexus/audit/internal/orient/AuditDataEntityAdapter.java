@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.orient.entity.FieldCopier;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -106,11 +105,9 @@ public class AuditDataEntityAdapter
     entity.setNodeId(document.field(P_NODE_ID, OType.STRING));
     entity.setInitiator(document.field(P_INITIATOR, OType.STRING));
 
-    // deeply copy attributes to divorce from document
     Map<String, String> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
-    attributes = FieldCopier.copyIf(attributes);
     if (attributes != null) {
-      entity.getAttributes().putAll(attributes);
+      entity.setAttributes(detachable(attributes));
     }
   }
 

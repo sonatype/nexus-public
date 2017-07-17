@@ -12,20 +12,24 @@
  */
 package org.sonatype.nexus.logging.task;
 
-/**
- * Expose task information for the per task logs. See the TaskConfiguration class.
- *
- * @since 3.4.1
- */
-public interface TaskLogInfo
+import org.sonatype.goodies.testsupport.TestSupport;
+
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.MDC;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
+
+public class TaskLogOnlyTaskLoggerTest
+    extends TestSupport
 {
-  String getId();
+  @Test
+  public void testInitSetsMdcValue() {
+    new TaskLogOnlyTaskLogger(mock(Logger.class), mock(TaskLogInfo.class));
 
-  String getTypeId();
-
-  String getName();
-
-  String getMessage();
-
-  String toString();
+    assertThat(MDC.get(TASK_LOG_ONLY_MDC), equalTo("true"));
+  }
 }

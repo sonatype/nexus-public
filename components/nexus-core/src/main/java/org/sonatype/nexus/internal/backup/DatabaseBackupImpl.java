@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.backup;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -24,8 +24,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
+import org.sonatype.nexus.orient.restore.RestoreFile;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -54,27 +56,31 @@ public class DatabaseBackupImpl
 
   private final ApplicationDirectories applicationDirectories;
 
+  private final ApplicationVersion applicationVersion;
+
   @Inject
   public DatabaseBackupImpl(final DatabaseServer databaseServer, final DatabaseManager databaseManager,
                             @Named("${nexus.backup.compressionLevel:-9}") final int compressionLevel,
                             @Named("${nexus.backup.bufferSize:-1024}") final int bufferSize,
-                            final ApplicationDirectories applicationDirectories) {
+                            final ApplicationDirectories applicationDirectories,
+                            final ApplicationVersion applicationVersion) {
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
     this.compressionLevel = compressionLevel;
     this.bufferSize = bufferSize;
     this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.applicationVersion = checkNotNull(applicationVersion);
   }
 
   @Override
-  public Callable<Void> fullBackup(final String backupFolder, final String dbName) throws IOException {
-    File backupFile = checkTarget(backupFolder, dbName);
+  public Callable<Void> fullBackup(final String backupFolder, final String dbName, final LocalDateTime timestamp) throws IOException {
+    File backupFile = checkTarget(backupFolder, dbName, timestamp);
     return new DatabaseBackupRunner(databaseManager.instance(dbName), backupFile, compressionLevel, bufferSize);
   }
 
   @VisibleForTesting
-  File checkTarget(final String backupFolder, final String dbName) throws IOException {
-    String filename = dbName + String.format("-%1$tY-%1$tm-%1$td-%1$tH-%1$tM-%1$tS.bak", Calendar.getInstance());
+  File checkTarget(final String backupFolder, final String dbName, final LocalDateTime timestamp) throws IOException {
+    String filename = RestoreFile.formatFilename(dbName, timestamp, applicationVersion.getVersion());
     File parentDir = applicationDirectories.getWorkDirectory(backupFolder);
     File output = new File(parentDir, filename);
     if (output.createNewFile()) {

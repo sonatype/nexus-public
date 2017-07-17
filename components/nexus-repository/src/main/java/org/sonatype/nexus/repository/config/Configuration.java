@@ -12,13 +12,17 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.DetachingList;
+import org.sonatype.nexus.common.collect.DetachingMap;
+import org.sonatype.nexus.common.collect.DetachingSet;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Entity;
-import org.sonatype.nexus.orient.entity.FieldCopier;
 
 import com.google.common.collect.Maps;
 
@@ -111,12 +115,30 @@ public class Configuration
   public Configuration copy() {
     try {
       Configuration c = (Configuration) clone();
-      c.attributes = FieldCopier.copyIf(attributes);
+      c.attributes = copy(attributes);
       return c;
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Returns a lazy copy; for collections the copy is only taken as the content is touched.
+   */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private <V> V copy(final V value) {
+    Object copy = value;
+    if (value instanceof Map) {
+      copy = new DetachingMap((Map) value, this::copy);
+    }
+    else if (value instanceof List) {
+      copy = new DetachingList((List) value, this::copy);
+    }
+    else if (value instanceof Set) {
+      copy = new DetachingSet((Set) value, this::copy);
+    }
+    return (V) copy;
   }
 
 }

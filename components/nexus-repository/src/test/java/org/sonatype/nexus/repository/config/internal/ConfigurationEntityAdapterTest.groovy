@@ -25,6 +25,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 
+import static org.mockito.Mockito.when
+
 /**
  * Tests for {@link ConfigurationEntityAdapter}.
  */
@@ -41,6 +43,9 @@ class ConfigurationEntityAdapterTest
 
   @Before
   void setUp() {
+    when(passwordHelper.encrypt('s1mpl3')).thenReturn('******')
+    when(passwordHelper.decrypt('******')).thenReturn('s1mpl3')
+
     underTest = new ConfigurationEntityAdapter(passwordHelper)
     underTest.enableObfuscation(new HexRecordIdObfuscator())
   }
@@ -79,6 +84,24 @@ class ConfigurationEntityAdapterTest
       def conflictingConfig = new Configuration(repositoryName: config.repositoryName.capitalize(),
           recipeName: config.recipeName, attributes: config.attributes)
       underTest.addEntity(db, conflictingConfig)
+    }
+  }
+
+  @Test
+  void 'sensitive entity'() {
+    database.instance.connect().withCloseable { db ->
+      underTest.register(db)
+
+      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
+      config.attributes('baz').set('password', 's1mpl3')
+
+      def document = underTest.addEntity(db, config)
+
+      assert document.field('attributes.baz.password') == '******'
+
+      def entity = underTest.readEntity(document)
+
+      assert entity.attributes['baz']['password'] == 's1mpl3'
     }
   }
 

@@ -15,15 +15,18 @@ package org.sonatype.nexus.blobstore.restore;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.*;
+import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 
 /**
  * @since 3.4
  */
 @Named
+@TaskLogging(TASK_LOG_ONLY)
 public class RestoreMetadataTask
     extends TaskSupport
 {
