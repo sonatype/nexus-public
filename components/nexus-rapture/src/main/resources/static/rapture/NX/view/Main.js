@@ -57,6 +57,13 @@ Ext.define('NX.view.Main', {
             hidden: true
           },
           {
+            xtype: 'panel',
+            ui: 'nx-file-descriptor-warning',
+            id: 'nx-file-descriptor-warning',
+            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+            hidden: true
+          },
+          {
             xtype: 'nx-header-panel'
           }
         ],

@@ -15,7 +15,7 @@ package org.sonatype.nexus.logging.task;
 /**
  * Each task is executed in its own thread and its {@link TaskLogger} is stored in it here.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class TaskLoggerHelper
 {

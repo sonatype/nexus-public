@@ -147,6 +147,30 @@ class RestoreServiceImplTest
       thrown IOException
   }
 
+  def 'start succeeds when running SNAPSHOT version and all backup files are present with same base version'() {
+    given: 'all backup files are present'
+      applicationVersion.getVersion() >> '3.4.1-SNAPSHOT'
+      restorer.getPendingRestore(_) >> mockRestoreFile(_, '2017-07-06-11-16-49', '3.4.1')
+
+    when: 'start is executed'
+      restoreService.start()
+
+    then: 'start triggers restore successfully'
+      DATABASE_NAMES.size() * manager.instance(_)
+  }
+
+  def 'start succeeds when running SNAPSHOT version and all backup files are present with previous base version'() {
+    given: 'all backup files are present'
+      applicationVersion.getVersion() >> '3.5.0-SNAPSHOT'
+      restorer.getPendingRestore(_) >> mockRestoreFile(_, '2017-07-06-11-16-49', '3.4.1')
+
+    when: 'start is executed'
+      restoreService.start()
+
+    then: 'start triggers restore successfully'
+      DATABASE_NAMES.size() * manager.instance(_)
+  }
+
   def mockRestoreFile(Wildcard database, String timestamp, String version) {
     RestoreFile file = Mock(RestoreFile)
     file.getDatabaseName() >> database.toString()

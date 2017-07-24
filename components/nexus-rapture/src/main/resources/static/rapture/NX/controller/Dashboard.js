@@ -38,7 +38,7 @@ Ext.define('NX.controller.Dashboard', {
       text: NX.I18n.get('Dashboard_Title'),
       description: NX.I18n.get('Dashboard_Description'),
       iconConfig: {
-        file: 'house.png',
+        file: 'sonatype.png',
         variants: ['x16', 'x32']
       },
       weight: 10,

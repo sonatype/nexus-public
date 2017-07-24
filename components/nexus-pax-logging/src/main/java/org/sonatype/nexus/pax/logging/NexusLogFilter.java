@@ -34,7 +34,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * ourselves
  *
  * @see org.ops4j.pax.logging.slf4j.Slf4jLogger#info(Marker, String)
- * @since 3.4.1
+ * @since 3.5
  */
 public class NexusLogFilter
     extends Filter<ILoggingEvent>

@@ -1414,6 +1414,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Initiator: 'Initiator',
       Attribute: 'Attribute: {0}',
       Clear_Button: 'Clear'
+    },
+
+    'NX.coreui.controller.FileDescriptorWarnings': {
+      File_Descriptor_Warning: 'Health check failed: The file descriptor limit is too low. Please check for messages in the nexus.log file.'
     }
   }
 }, function(self) {

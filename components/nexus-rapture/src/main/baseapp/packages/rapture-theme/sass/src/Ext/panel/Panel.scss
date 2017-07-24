@@ -63,6 +63,19 @@
 }
 
 /**
+ * Style for the global "file descriptor warning" header
+ */
+.x-panel-nx-file-descriptor-warning {
+  @extend .x-panel-nx-license-warning;
+  background-color: $color-alert-purple;
+}
+
+.x-panel-header-text-container-nx-file-descriptor-warning {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+/**
 * Style for the "transparent" inter-page panels
 *
 * ui: 'subsection'

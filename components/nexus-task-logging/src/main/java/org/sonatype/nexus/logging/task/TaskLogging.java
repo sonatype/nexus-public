@@ -22,7 +22,7 @@ import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
 /**
  * Annotation to be applied to a TaskSupport class to indicate what type of task logging should happen.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

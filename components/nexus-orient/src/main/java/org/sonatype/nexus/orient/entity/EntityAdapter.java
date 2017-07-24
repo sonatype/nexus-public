@@ -350,7 +350,7 @@ public abstract class EntityAdapter<T extends Entity>
    * surrounding transaction. Note: this is only an issue if you want to modify attributes
    * from an attached entity outside of a transaction.
    *
-   * @since 3.4.1
+   * @since 3.5
    */
   protected <K, V> Map<K, V> detachable(final Map<K, V> attributes) {
     return new DetachingMap<>(attributes, this::allowDetach, this::detach);

@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketDeleter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
+import org.sonatype.nexus.repository.storage.StorageFacetManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.Schedule;

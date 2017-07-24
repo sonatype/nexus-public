@@ -13,15 +13,16 @@
 package org.apache.shiro.nexus;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 
 import javax.cache.configuration.MutableConfiguration;
-import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.Time;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.cache.Cache;
@@ -42,8 +43,13 @@ public class ShiroJCacheManagerAdapter
 {
   private final Provider<javax.cache.CacheManager> cacheManagerProvider;
 
-  public ShiroJCacheManagerAdapter(final Provider<javax.cache.CacheManager> cacheManagerProvider) {
+  private final Provider<Time> defaultTimeToLive;
+
+  public ShiroJCacheManagerAdapter(final Provider<javax.cache.CacheManager> cacheManagerProvider,
+                                   final Provider<Time> defaultTimeToLive)
+  {
     this.cacheManagerProvider = checkNotNull(cacheManagerProvider);
+    this.defaultTimeToLive = checkNotNull(defaultTimeToLive);
   }
 
   private javax.cache.CacheManager manager() {
@@ -68,7 +74,7 @@ public class ShiroJCacheManagerAdapter
         cacheConfig = createShiroSessionCacheConfig();
       }
       else {
-        cacheConfig = createDefaultCacheConfig();
+        cacheConfig = createDefaultCacheConfig(name);
       }
 
       cache = manager().createCache(name, cacheConfig);
@@ -90,12 +96,15 @@ public class ShiroJCacheManagerAdapter
         .setStatisticsEnabled(true);
   }
 
-  private static <K, V> MutableConfiguration<K, V> createDefaultCacheConfig() {
+  private <K, V> MutableConfiguration<K, V> createDefaultCacheConfig(final String name) {
+    Time timeToLive = Optional.ofNullable(System.getProperty(name + ".timeToLive"))
+        .map(Time::parse)
+        .orElse(defaultTimeToLive.get());
     // note: expiry policy needs set because hazelcast does not have a config inheritance mechanism like ehcache
     return new MutableConfiguration<K, V>()
         .setStoreByValue(false)
         .setExpiryPolicyFactory(
-            AccessedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2l))
+            CreatedExpiryPolicy.factoryOf(new Duration(timeToLive.getUnit(), timeToLive.getValue()))
         )
         .setManagementEnabled(true)
         .setStatisticsEnabled(true);

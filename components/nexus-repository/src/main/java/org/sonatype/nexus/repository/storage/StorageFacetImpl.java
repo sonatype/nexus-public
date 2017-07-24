@@ -37,7 +37,6 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;

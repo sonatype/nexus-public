@@ -25,6 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
@@ -33,7 +34,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * Additionally this class has starts a thread which will log regular (1 minute) progress update back to the main
  * nexus.log.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class DefaultTaskLogger
     implements TaskLogger
@@ -52,6 +53,8 @@ public class DefaultTaskLogger
 
   private final TaskLogInfo taskLogInfo;
 
+  private final String taskLogIdentifier;
+
   private Future<?> loggingThread;
 
   private TaskLoggingEvent lastProgressEvent = MARK_LOG_MESSAGE;
@@ -61,13 +64,11 @@ public class DefaultTaskLogger
     this.taskLogInfo = checkNotNull(taskLogInfo);
 
     // Set per-thread logback property via MDC (see logback.xml)
-    MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, getTaskLogIdentifier());
+    taskLogIdentifier = format("%s-%s", taskLogInfo.getTypeId(),
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+    MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, taskLogIdentifier);
   }
 
-  private String getTaskLogIdentifier() {
-    return String.format("%s-%s", taskLogInfo.getTypeId(),
-        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-  }
 
   private void logTaskInfo() {
     // dump task details to task log
@@ -77,6 +78,12 @@ public class DefaultTaskLogger
     log.info(TASK_LOG_ONLY, " Name: {}", taskLogInfo.getName());
     log.info(TASK_LOG_ONLY, " Description: {}", taskLogInfo.getMessage());
     log.debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo.toString());
+
+    String taskLogsHome = TaskLogHome.getTaskLogHome();
+    if (taskLogsHome != null) {
+      String filename = format("%s/%s.log", taskLogsHome, taskLogIdentifier);
+      log.info(NEXUS_LOG_ONLY, "Task log: " + filename);
+    }
   }
 
   private void startLogThread() {

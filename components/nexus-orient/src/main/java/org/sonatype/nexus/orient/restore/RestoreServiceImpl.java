@@ -107,7 +107,7 @@ public class RestoreServiceImpl
    * @param pending the available restore files, keyed by database name
    */
   private void checkVersions(final Map<String, RestoreFile> pending) {
-    final String current = applicationVersion.getVersion();
+    final String current = applicationVersion.getVersion().replace("-SNAPSHOT", "");
     Set<String> restoreFileVersions = pending.values().stream()
         .filter(r -> r.getVersion() != null)
         .map(r -> r.getVersion())

@@ -17,7 +17,7 @@ package org.sonatype.nexus.logging.task;
  * TaskLogType#NEXUS_LOG_ONLY}
  *
  * @see TaskLoggerFactory
- * @since 3.4.1
+ * @since 3.5
  */
 public class NoOpTaskLogger
     implements TaskLogger

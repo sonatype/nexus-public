@@ -14,14 +14,14 @@ package org.apache.shiro.nexus;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Configuration;
-import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.shiro.session.mgt.eis.CachingSessionDAO;
@@ -49,7 +49,7 @@ public class ShiroJCacheManagerAdapterTest
 
   @Before
   public void setUp() {
-    underTest = new ShiroJCacheManagerAdapter(() -> cacheManager);
+    underTest = new ShiroJCacheManagerAdapter(() -> cacheManager, () -> Time.minutes(2L));
     when(cacheManager.getCache(anyString())).thenReturn(null);
   }
 
@@ -62,7 +62,7 @@ public class ShiroJCacheManagerAdapterTest
     assertThat(configuration.isManagementEnabled(), is(true));
     assertThat(configuration.isStatisticsEnabled(), is(true));
     assertThat(configuration.getExpiryPolicyFactory(),
-        is(AccessedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2l)))
+        is(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2L)))
     );
   }
 

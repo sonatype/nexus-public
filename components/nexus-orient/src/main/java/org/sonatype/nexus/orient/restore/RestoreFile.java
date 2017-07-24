@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * The nxrm_version will not be present for files generated pre-3.4.1.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class RestoreFile
 {

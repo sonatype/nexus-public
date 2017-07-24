@@ -135,7 +135,11 @@ public class BootstrapListener
     if (null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
       return Boolean.valueOf(System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME));
     }
-    return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
+    if (Boolean.getBoolean("nexus.clustered")) {
+      return false; // avoid switching the edition when clustered
+    }
+    return System.getProperty("nexus.licenseFile") == null
+        && userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
   }
 
   private static void installNexusEdition(final BundleContext ctx, @Nullable final String editionName)

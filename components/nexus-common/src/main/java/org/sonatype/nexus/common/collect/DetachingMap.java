@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * This provides a good balance between an eager copy and a completely lazy (but complex) wrapper.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class DetachingMap<K, V>
     extends ForwardingMap<K, V>

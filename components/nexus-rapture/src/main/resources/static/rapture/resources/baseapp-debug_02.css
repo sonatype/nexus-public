@@ -5031,7 +5031,7 @@
 /**
  * Style for the global "license warning" header
  */
-.x-panel-nx-license-warning, .x-panel-nx-database-freeze-warning {
+.x-panel-nx-license-warning, .x-panel-nx-database-freeze-warning, .x-panel-nx-file-descriptor-warning {
   border-color: #444444;
   padding: 0;
 }
@@ -5302,23 +5302,25 @@
   border-width: 1px !important;
 }
 
-.x-panel-nx-license-warning .x-panel-header, .x-panel-nx-database-freeze-warning .x-panel-header {
+.x-panel-nx-license-warning .x-panel-header, .x-panel-nx-database-freeze-warning .x-panel-header, .x-panel-nx-file-descriptor-warning .x-panel-header {
   padding: 5px 16px;
 }
 
-.x-panel-nx-license-warning, .x-panel-nx-database-freeze-warning {
+.x-panel-nx-license-warning, .x-panel-nx-database-freeze-warning, .x-panel-nx-file-descriptor-warning {
   color: white;
 }
 
-.x-panel-nx-license-warning a, .x-panel-nx-database-freeze-warning a,
+.x-panel-nx-license-warning a, .x-panel-nx-database-freeze-warning a, .x-panel-nx-file-descriptor-warning a,
 .x-panel-nx-license-warning a:visited,
 .x-panel-nx-database-freeze-warning a:visited,
+.x-panel-nx-file-descriptor-warning a:visited,
 .x-panel-nx-license-warning a:active,
-.x-panel-nx-database-freeze-warning a:active {
+.x-panel-nx-database-freeze-warning a:active,
+.x-panel-nx-file-descriptor-warning a:active {
   color: #dddddd;
 }
 
-.x-panel-nx-license-warning a:hover, .x-panel-nx-database-freeze-warning a:hover {
+.x-panel-nx-license-warning a:hover, .x-panel-nx-database-freeze-warning a:hover, .x-panel-nx-file-descriptor-warning a:hover {
   color: white;
   text-decoration: underline;
 }
@@ -5331,6 +5333,18 @@
 }
 
 .x-panel-header-text-container-nx-database-freeze-warning {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+/**
+ * Style for the global "file descriptor warning" header
+ */
+.x-panel-nx-file-descriptor-warning {
+  background-color: #953ea9;
+}
+
+.x-panel-header-text-container-nx-file-descriptor-warning {
   margin-left: 6px;
   font-weight: bold;
 }

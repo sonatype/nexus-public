@@ -13,7 +13,7 @@
 package org.sonatype.nexus.logging.task;
 
 /**
- * @since 3.4.1
+ * @since 3.5
  */
 public interface TaskLogger
 {

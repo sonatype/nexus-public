@@ -18,7 +18,7 @@ import static java.util.Arrays.copyOf;
 /**
  * Simple object to hold a log message and args, so it can be logged as progress later
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class TaskLoggingEvent
 {

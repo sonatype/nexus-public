@@ -18,7 +18,7 @@ import org.slf4j.MDC;
 /**
  * {@link TaskLogger} for logging just to the task log. Stores a value in {@link MDC} for NexusLogFilter to find.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class TaskLogOnlyTaskLogger
     extends DefaultTaskLogger

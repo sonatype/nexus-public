@@ -19,7 +19,7 @@ import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
 /**
  * Factory to create {@link TaskLogger} instances
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public class TaskLoggerFactory
 {

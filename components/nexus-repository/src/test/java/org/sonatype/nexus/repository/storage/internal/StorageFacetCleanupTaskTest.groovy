@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.storage.internal
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.repository.storage.StorageFacetManager
 
 import org.junit.Before
 import org.junit.Test

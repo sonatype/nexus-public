@@ -14,8 +14,10 @@ package org.apache.shiro.nexus;
 
 import javax.cache.CacheManager;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Provider;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.sonatype.nexus.security.authc.AuthenticationEvent;
@@ -40,10 +42,11 @@ public class NexusWebSecurityManager
 
   @Inject
   public NexusWebSecurityManager(final Provider<EventManager> eventManager,
-                                 final Provider<CacheManager> cacheManager)
+                                 final Provider<CacheManager> cacheManager,
+                                 @Named("${nexus.shiro.cache.defaultTimeToLive:-2m}") final Provider<Time> defaultTimeToLive)
   {
     this.eventManager = checkNotNull(eventManager);
-    setCacheManager(new ShiroJCacheManagerAdapter(cacheManager));
+    setCacheManager(new ShiroJCacheManagerAdapter(cacheManager, defaultTimeToLive));
     //explicitly disable rememberMe
     this.setRememberMeManager(null); 
   }

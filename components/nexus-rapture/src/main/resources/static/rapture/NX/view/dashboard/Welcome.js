@@ -26,28 +26,5 @@ Ext.define('NX.view.dashboard.Welcome', {
 
   cls: 'nx-dashboard-welcome',
   width: '100%',
-  layout: {
-    type: 'vbox',
-    align: 'center',
-    pack: 'start'
-  },
-
-  /**
-   * @override
-   */
-  initComponent: function () {
-    var me = this;
-
-    me.items = [
-      {
-        xtype: 'image',
-        cls: 'logo',
-        src: NX.Icons.url('nexus-clear', 'x200'),
-        height: 150,
-        width: 150
-      }
-    ];
-
-    me.callParent();
-  }
+  layout: 'fit'
 });

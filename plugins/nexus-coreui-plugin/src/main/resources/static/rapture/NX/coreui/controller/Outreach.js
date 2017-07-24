@@ -79,12 +79,8 @@ Ext.define('NX.coreui.controller.Outreach', {
               '&edition=' + NX.State.getEdition() +
               '&usertype=' + usertype);
 
-          var outreachContent = welcomePage.down('#outreach');
-          if (outreachContent) {
-            welcomePage.remove(outreachContent, true);
-          }
-
           // add the outreach iframe to the welcome view
+          welcomePage.removeAll();
           welcomePage.add({
             xtype: 'uxiframe',
             itemId: 'outreach',

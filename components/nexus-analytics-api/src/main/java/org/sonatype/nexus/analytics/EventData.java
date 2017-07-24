@@ -117,7 +117,7 @@ public class EventData
   }
 
   /**
-   * @since 3.4.1
+   * @since 3.5
    */
   public void setAttributes(final Map<String, String> attributes) {
     this.attributes = attributes;

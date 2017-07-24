@@ -474,6 +474,20 @@ public abstract class NexusPaxExamSupport
   }
 
   /**
+   * @return Pax-Exam option to change the Nexus edition based on groupId and artifactId
+   */
+  public static Option nexusEdition(final String groupId, final String artifactId) {
+    return nexusEdition(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"), artifactId);
+  }
+
+  /**
+   * @return Pax-Exam option to change the Nexus edition using the given feature XML and name
+   */
+  public static Option nexusEdition(final MavenUrlReference featureXml, final String name) {
+    return composite(features(featureXml), editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus-edition", name));
+  }
+
+  /**
    * @return Pax-Exam option to install a Nexus plugin based on groupId and artifactId
    */
   public static Option nexusFeature(final String groupId, final String artifactId) {

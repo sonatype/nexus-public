@@ -15,7 +15,7 @@ package org.sonatype.nexus.logging.task;
 /**
  * Expose task information for the per task logs. See the TaskConfiguration class.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 public interface TaskLogInfo
 {

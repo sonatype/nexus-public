@@ -36,7 +36,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
-import org.sonatype.nexus.repository.storage.internal.StorageFacetManager;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
 import com.google.common.collect.ImmutableMap;

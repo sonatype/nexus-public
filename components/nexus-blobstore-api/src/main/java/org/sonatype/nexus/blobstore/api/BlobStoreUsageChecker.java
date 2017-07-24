@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * Determines if a given {@link BlobId}, with a given {@code name}, is in use by a {@link BlobStore}.
  *
- * @since 3.4.1
+ * @since 3.5
  */
 @FunctionalInterface
 public interface BlobStoreUsageChecker

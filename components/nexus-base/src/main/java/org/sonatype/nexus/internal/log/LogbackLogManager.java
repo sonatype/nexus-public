@@ -59,14 +59,14 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.LOGGING;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Logback {@link LogManager}.
  */
 @Named
-@ManagedLifecycle(phase = LOGGING)
+@ManagedLifecycle(phase = KERNEL)
 @Singleton
 public class LogbackLogManager
     extends StateGuardLifecycleSupport

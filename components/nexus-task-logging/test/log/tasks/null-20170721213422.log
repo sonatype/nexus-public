@@ -1,0 +1,6 @@
+2017-07-21 21:34:23,026-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLogOnlyTaskLoggerTest - TEST testInitSetsMdcValue SUCCEEDED
+2017-07-21 21:34:23,028-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLogOnlyTaskLoggerTest - TEST testInitSetsMdcValue FINISHED
+2017-07-21 21:34:23,031-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerHelperTest - TEST testHelper STARTING
+2017-07-21 21:34:23,046-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerHelperTest - TEST testHelper SUCCEEDED
+2017-07-21 21:34:23,047-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerHelperTest - TEST testHelper FINISHED
+2017-07-21 21:34:23,049-0400 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgress STARTING

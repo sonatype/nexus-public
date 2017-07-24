@@ -210,7 +210,7 @@ public interface SupportZipGenerator
    * @param outputStream the output stream to write the ZIP to.
    * @param prefix directory prefix applied to files in the ZIP.
    * @return true if the zip was truncated.
-   * @since 3.4.1
+   * @since 3.5
    */
   boolean generate(Request request, String prefix, OutputStream outputStream);
 }

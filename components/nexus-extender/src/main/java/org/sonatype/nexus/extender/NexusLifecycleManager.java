@@ -35,7 +35,7 @@ import org.eclipse.sisu.inject.BeanLocator;
 import org.osgi.framework.BundleContext;
 
 import static com.google.common.collect.Lists.reverse;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.BOOT;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 
 /**
  * Manages any {@link Lifecycle} components annotated with {@link ManagedLifecycle}.
@@ -57,7 +57,7 @@ public class NexusLifecycleManager
 
   private ListMultimap<Phase, BeanEntry<Named, Lifecycle>> cachedIndex = ArrayListMultimap.create();
 
-  private volatile Phase currentPhase = BOOT;
+  private volatile Phase currentPhase = OFF;
 
   @Inject
   public NexusLifecycleManager(BeanLocator locator) {

@@ -64,8 +64,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonMap;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.BOOT;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.LOGGING;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
@@ -149,7 +149,7 @@ public class NexusContextListener
     try {
       lifecycleManager = injector.getInstance(ManagedLifecycleManager.class);
 
-      lifecycleManager.to(LOGGING);
+      lifecycleManager.to(KERNEL);
 
       // assign higher start level to any bundles installed after this point to hold back activation
       bundleContext.addBundleListener((SynchronousBundleListener) (e) -> {
@@ -225,12 +225,12 @@ public class NexusContextListener
     log.info("Uptime: {}", PeriodFormat.getDefault().print(new Period(uptime)));
 
     try {
-      lifecycleManager.to(LOGGING);
+      lifecycleManager.to(KERNEL);
 
       // dispose of JSR-250 components before logging goes
       injector.getInstance(BeanManager.class).unmanage();
 
-      lifecycleManager.to(BOOT);
+      lifecycleManager.to(OFF);
     }
     catch (final Exception e) {
       log.error("Failed to stop nexus", e);

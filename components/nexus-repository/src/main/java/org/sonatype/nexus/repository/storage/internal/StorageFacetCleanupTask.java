@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.storage.internal;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.storage.StorageFacetManager;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
