@@ -19,8 +19,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,18 +41,11 @@ public class FileDescriptorServiceImplTest
 
   @Test
   public void getFileDescriptorCount() {
-    assertTrue(new TestFileDescriptorService(fileDescriptorProvider.with(NOT_SUPPORTED)).isFileDescriptorLimitOk());
-
-    assertFalse(new TestFileDescriptorService(fileDescriptorProvider.with(1)).isFileDescriptorLimitOk());
-
-    assertFalse(new TestFileDescriptorService(fileDescriptorProvider.with(MINIMUM_FILE_DESCRIPTOR_COUNT - 1))
-        .isFileDescriptorLimitOk());
-
-    assertTrue(new TestFileDescriptorService(fileDescriptorProvider.with(MINIMUM_FILE_DESCRIPTOR_COUNT))
-        .isFileDescriptorLimitOk());
-
-    assertTrue(new TestFileDescriptorService(fileDescriptorProvider.with(MINIMUM_FILE_DESCRIPTOR_COUNT + 1))
-        .isFileDescriptorLimitOk());
+    assertFileDescriptorService(NOT_SUPPORTED, true);
+    assertFileDescriptorService(1, false);
+    assertFileDescriptorService(MINIMUM_FILE_DESCRIPTOR_COUNT - 1, false);
+    assertFileDescriptorService(MINIMUM_FILE_DESCRIPTOR_COUNT, true);
+    assertFileDescriptorService(MINIMUM_FILE_DESCRIPTOR_COUNT + 1, true);
   }
 
   @Test
@@ -73,6 +66,13 @@ public class FileDescriptorServiceImplTest
     verify(mockLogger, never()).warn(eq(WARNING_HEADER));
     verify(mockLogger, never()).warn(eq(WARNING_URL));
     verify(mockLogger, never()).warn(eq(WARNING_VIOLATION), eq(10L), eq(MINIMUM_FILE_DESCRIPTOR_COUNT));
+  }
+
+  private void assertFileDescriptorService(final long count, final boolean isOk) {
+    FileDescriptorServiceImpl fileDescriptorService = new TestFileDescriptorService(fileDescriptorProvider.with(count));
+    assertThat(fileDescriptorService.getFileDescriptorCount(), equalTo(count));
+    assertThat(fileDescriptorService.getFileDescriptorRecommended(), equalTo(MINIMUM_FILE_DESCRIPTOR_COUNT));
+    assertThat(fileDescriptorService.isFileDescriptorLimitOk(), equalTo(isOk));
   }
 
   private class TestFileDescriptorProvider

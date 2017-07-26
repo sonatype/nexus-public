@@ -23,7 +23,7 @@
     <version>3.5.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>nexus-blobstore-compact</artifactId>
+  <artifactId>nexus-blobstore-tasks</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
 
@@ -42,7 +42,19 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-blobstore-file</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-maven</artifactId>
       <scope>provided</scope>
     </dependency>
 

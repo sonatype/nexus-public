@@ -159,6 +159,16 @@ public final class DirectoryHelper
     mkdir(dir.toPath());
   }
 
+  /**
+   * Given a parent directory, create the child directory using {@link #mkdir(File)}
+   * @since 3.5
+   */
+  public static File mkdir(final File parent, final String child) throws IOException {
+    File dir = new File(parent, child);
+    mkdir(dir);
+    return dir;
+  }
+
   // CLEAN: remove files recursively of a directory but keeping the directory structure intact
 
   /**

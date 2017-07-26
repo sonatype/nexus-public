@@ -128,7 +128,7 @@ public interface BlobStore
    *
    * @since 3.5
    */
-  void compact(@Nullable BlobStoreUsageChecker inUseChecker, @Nullable Logger logger);
+  void compact(@Nullable BlobStoreUsageChecker inUseChecker);
 
   /**
    * Returns the configuration entity for the BlobStore.

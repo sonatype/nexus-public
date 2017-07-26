@@ -85,6 +85,15 @@ public class DirectoryHelperTest
   }
 
   @Test
+  public void mkdirWithParent() throws IOException {
+    final File mkdirA = DirectoryHelper.mkdir(root, "mkdir-parent-a"); // new
+    assertThat(mkdirA, isDirectory());
+
+    File file = DirectoryHelper.mkdir(new File(root, "dir2"), "dir21"); //existing
+    assertThat(file, isDirectory());
+  }
+
+  @Test
   public void symlinkMkdir() throws IOException {
     final Path dir1link = root.toPath().resolve("dir1-link");
     try {

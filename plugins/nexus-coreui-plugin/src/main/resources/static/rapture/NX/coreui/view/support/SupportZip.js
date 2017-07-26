@@ -85,6 +85,12 @@ Ext.define('NX.coreui.view.support.SupportZip', {
             },
             {
               xtype: 'checkbox',
+              name: 'taskLog',
+              boxLabel: NX.I18n.get('Support_SupportZip_TaskLogFiles_BoxLabel'),
+              checked: true
+            },
+            {
+              xtype: 'checkbox',
               name: 'metrics',
               boxLabel: NX.I18n.get('Support_SupportZip_Metrics_BoxLabel'),
               checked: true

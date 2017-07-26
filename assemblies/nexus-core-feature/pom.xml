@@ -75,14 +75,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-blobstore-compact</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-blobstore-restore</artifactId>
+      <artifactId>nexus-blobstore-tasks</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
@@ -121,7 +114,7 @@
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
-    
+
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-script-plugin</artifactId>
@@ -135,7 +128,7 @@
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
-    
+
   </dependencies>
 
   <build>

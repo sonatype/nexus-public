@@ -860,6 +860,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_SupportZip_Configuration_BoxLabel: 'Configuration files',
     Support_SupportZip_Security_BoxLabel: 'Security configuration files',
     Support_SupportZip_LogFiles_BoxLabel: 'Log files',
+    Support_SupportZip_TaskLogFiles_BoxLabel: 'Task log files',
     Support_SupportZip_Metrics_BoxLabel: 'System and component metrics',
     Support_SupportZip_JMX_BoxLabel: 'JMX information',
     Support_SupportZip_Options_FieldLabel: 'Options',
@@ -1417,7 +1418,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     },
 
     'NX.coreui.controller.FileDescriptorWarnings': {
-      File_Descriptor_Warning: 'Health check failed: The file descriptor limit is too low. Please check for messages in the nexus.log file.'
+      File_Descriptor_Warning: '<a href="http://links.sonatype.com/products/nexus/system-reqs#filehandles" target="_blank">System Requirement: max file descriptors [{0}] likely too low, increase to at least [{1}].</a>'
     }
   }
 }, function(self) {

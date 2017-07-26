@@ -43,6 +43,7 @@ public class SupportBundle
       CONFIG,
       SECURITY,
       LOG,
+      TASKLOG,
       JMX
     }
 

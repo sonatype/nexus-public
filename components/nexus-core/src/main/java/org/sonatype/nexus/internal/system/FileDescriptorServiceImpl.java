@@ -66,4 +66,14 @@ public class FileDescriptorServiceImpl
   public boolean isFileDescriptorLimitOk() {
     return fileDescriptorCount >= MINIMUM_FILE_DESCRIPTOR_COUNT || fileDescriptorCount == NOT_SUPPORTED;
   }
+
+  @Override
+  public long getFileDescriptorCount() {
+    return fileDescriptorCount;
+  }
+
+  @Override
+  public long getFileDescriptorRecommended() {
+    return MINIMUM_FILE_DESCRIPTOR_COUNT;
+  }
 }

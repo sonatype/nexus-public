@@ -35,6 +35,10 @@ public class PurgeUnusedTaskDescriptor
 {
   public static final String TYPE_ID = "repository.purge-unused";
 
+  public static final Number LAST_USED_INIT_VALUE = 1;
+
+  public static final Number LAST_USED_MIN_VALUE = 0;
+
   public PurgeUnusedTaskDescriptor() {
     super(TYPE_ID,
         PurgeUnusedTask.class,
@@ -52,7 +56,7 @@ public class PurgeUnusedTaskDescriptor
             "Last used in days",
             "Purge all components and assets that were last used before given number of days",
             FormField.MANDATORY
-        )
+        ).withInitialValue(LAST_USED_INIT_VALUE).withMinimumValue(LAST_USED_MIN_VALUE)
     );
   }
 }

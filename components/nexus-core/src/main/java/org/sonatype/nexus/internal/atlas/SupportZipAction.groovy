@@ -52,6 +52,9 @@ class SupportZipAction
   @Option(name='-l', aliases = '--log', description = 'Include log files')
   boolean log = true
 
+  @Option(name='-a', aliases = '--tasklog', description = 'Include task log files')
+  boolean taskLog = true
+
   @Option(name='-Lf', aliases = '--limit-files', description = 'Limit size of included files')
   boolean limitFileSizes = false
 
@@ -67,6 +70,7 @@ class SupportZipAction
         configuration: configuration,
         security: security,
         log: log,
+        taskLog: taskLog,
         limitFileSizes: limitFileSizes,
         limitZipSize: limitZipSize
     )

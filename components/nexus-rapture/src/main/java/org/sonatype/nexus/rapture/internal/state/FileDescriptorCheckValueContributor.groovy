@@ -20,25 +20,25 @@ import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.common.system.FileDescriptorService
 import org.sonatype.nexus.rapture.StateContributor
 
-import static com.google.common.collect.ImmutableMap.of
-
 @Named
 @Singleton
 class FileDescriptorCheckValueContributor
     extends ComponentSupport
     implements StateContributor
 {
-  private static final String FILE_DESCRIPTOR_LIMIT = 'file_descriptor_limit'
-
-  private final boolean fileDescriptorLimitOk
+  private final FileDescriptorService fileDescriptorService
 
   @Inject
   FileDescriptorCheckValueContributor(final FileDescriptorService fileDescriptorService) {
-    fileDescriptorLimitOk = fileDescriptorService.isFileDescriptorLimitOk()
+    this.fileDescriptorService = fileDescriptorService;
   }
 
   @Override
   Map<String, Object> getState() {
-    return of(FILE_DESCRIPTOR_LIMIT, of(FILE_DESCRIPTOR_LIMIT, fileDescriptorLimitOk))
+    return [file_descriptor_limit: [
+        limitOk    : fileDescriptorService.fileDescriptorLimitOk,
+        count      : fileDescriptorService.fileDescriptorCount,
+        recommended: fileDescriptorService.fileDescriptorRecommended
+    ]]
   }
 }

@@ -24,7 +24,8 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.common.log.MarkedLogger;
+import org.sonatype.nexus.logging.task.TaskLogType;
+import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
 import org.sonatype.nexus.scheduling.TaskSupport;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
  * Task to compact a given blob store.
@@ -46,6 +46,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * @since 3.0
  */
 @Named
+@TaskLogging(TaskLogType.TASK_LOG_ONLY)
 public class CompactBlobStoreTask
     extends TaskSupport
 {
@@ -75,7 +76,7 @@ public class CompactBlobStoreTask
   protected Object execute() throws Exception {
     BlobStore blobStore = blobStoreManager.get(getBlobStoreField());
     if (blobStore != null) {
-      blobStore.compact(inUseChecker(), new MarkedLogger(log, TASK_LOG_ONLY));
+      blobStore.compact(inUseChecker());
     }
     else {
       log.warn("Unable to find blob store: {}", getBlobStoreField());

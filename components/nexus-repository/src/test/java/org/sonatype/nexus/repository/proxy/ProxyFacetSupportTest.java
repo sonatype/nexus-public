@@ -23,12 +23,14 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 
+import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -77,6 +80,9 @@ public class ProxyFacetSupportTest
 
   @Mock
   Content content;
+
+  @Mock
+  StatusLine statusLine;
 
   @Mock
   Content reFetchedContent;
@@ -228,5 +234,41 @@ public class ProxyFacetSupportTest
     doThrow(e).when(underTest).getCachedContent(cachedContext);
 
     underTest.get(cachedContext);
+  }
+
+  @Test
+  public void testBuildLogMessage_ContentFound_WithStatusLine() {
+    String message = underTest.buildLogContentMessage(content, statusLine);
+
+    assertThat(message, containsString("Exception {} checking remote for update"));
+    assertThat(message, containsString("proxy repo {} failed to fetch {} with status line {}"));
+    assertThat(message, containsString("returning content from cache."));
+  }
+
+  @Test
+  public void testBuildLogMessage_ContentFound_WithoutStatusLine() {
+    String message = underTest.buildLogContentMessage(content, null);
+
+    assertThat(message, containsString("Exception {} checking remote for update"));
+    assertThat(message, containsString("proxy repo {} failed to fetch {}"));
+    assertThat(message, containsString("returning content from cache."));
+  }
+
+  @Test
+  public void testBuildLogMessage_ContentNotFound_WithStatusLine() {
+    String message = underTest.buildLogContentMessage(null, statusLine);
+
+    assertThat(message, containsString("Exception {} checking remote for update"));
+    assertThat(message, containsString("proxy repo {} failed to fetch {} with status line {}"));
+    assertThat(message, containsString("content not in cache."));
+  }
+
+  @Test
+  public void testBuildLogMessage_ContentNotFound_WithoutStatusLine() {
+    String message = underTest.buildLogContentMessage(null, null);
+
+    assertThat(message, containsString("Exception {} checking remote for update"));
+    assertThat(message, containsString("proxy repo {} failed to fetch {}"));
+    assertThat(message, containsString("content not in cache."));
   }
 }

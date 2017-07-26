@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 
 import javax.annotation.Nonnull;
@@ -25,7 +26,6 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
@@ -33,7 +33,6 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
@@ -223,21 +222,13 @@ public abstract class ProxyFacetSupport
       }
     }
     catch (ProxyServiceException e) {
-      int sc = e.getHttpResponse().getStatusLine().getStatusCode();
-      String repoName = this.getRepository().getName();
-      String contextUrl = getUrl(context);
-      log.trace("Proxy repo {} received status {} attempting to retrieve resource {}", repoName, sc, contextUrl, e);
-      logContentOrThrow(content, contextUrl, e);
-    }
-    catch (RemoteBlockedIOException e) {
-      Repository repository = context.getRepository();
-      log.trace("Failed to fetch: {} from repository: {} - {}", getUrl(context), repository.getName(), e);
-      logContentOrThrow(content, getUrl(context), e);
+      logContentOrThrow(content, context, e.getHttpResponse().getStatusLine(), e);
     }
     catch (IOException e) {
-      Repository repository = context.getRepository();
-      log.trace("Failed to fetch: {} from repository: {}", getUrl(context), repository.getName(), e);
-      logContentOrThrow(content, getUrl(context), e);
+      logContentOrThrow(content, context, null, e); // note this also takes care of RemoteBlockedIOException
+    }
+    catch (UncheckedIOException e) {
+      logContentOrThrow(content, context, null, e.getCause()); // "special" path (for now) for npm and similar peculiar formats
     }
     finally {
       if (remote != null && !remote.equals(content)) {
@@ -261,17 +252,49 @@ public abstract class ProxyFacetSupport
   }
 
   private <X extends Throwable> void logContentOrThrow(@Nullable final Content content,
-                                                       final String contextUrl,
+                                                       final Context context,
+                                                       @Nullable final StatusLine statusLine,
                                                        final X exception) throws X
   {
-    log.debug("Unable to check remote for updates.");
+    String logMessage = buildLogContentMessage(content, statusLine);
+    String repositoryName = context.getRepository().getName();
+    String contextUrl = getUrl(context);
+
     if (content != null) {
-      log.debug("Returning content {} from cache.", contextUrl);
+      log.debug(logMessage, exception, repositoryName, contextUrl, statusLine);
     }
     else {
-      log.warn("Content not present for {}, throwing exception.", contextUrl);
+      if (log.isDebugEnabled()) {
+        log.warn(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
+      }
+      else {
+        log.warn(logMessage, exception, repositoryName, contextUrl, statusLine);
+      }
       throw exception;
     }
+  }
+
+  @VisibleForTesting
+  <X extends Throwable> String buildLogContentMessage(@Nullable final Content content,
+                                                      @Nullable final StatusLine statusLine)
+  {
+    StringBuilder message = new StringBuilder("Exception {} checking remote for update");
+
+    if (statusLine == null) {
+      message.append(", proxy repo {} failed to fetch {}");
+    }
+    else {
+      message.append(", proxy repo {} failed to fetch {} with status line {}");
+    }
+
+    if (content == null) {
+      message.append(", content not in cache.");
+    }
+    else {
+      message.append(", returning content from cache.");
+    }
+
+    return message.toString();
   }
 
   @Override

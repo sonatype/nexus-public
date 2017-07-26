@@ -186,7 +186,7 @@ public class FileBlobStoreConcurrencyIT
     });
 
 
-    runner.addTask(numberOfCompactors, () -> underTest.compact(null, null));
+    runner.addTask(numberOfCompactors, () -> underTest.compact(null));
 
     runner.go();
   }

@@ -58,6 +58,11 @@ public interface SupportZipGenerator
     private boolean log;
 
     /**
+     * Include task log files.
+     */
+    private boolean taskLog;
+
+    /**
      * Include JMX information.
      */
     private boolean jmx;
@@ -120,6 +125,14 @@ public interface SupportZipGenerator
       this.log = log;
     }
 
+    public boolean isTaskLog() {
+      return taskLog;
+    }
+
+    public void setTaskLog(final boolean taskLog) {
+      this.taskLog = taskLog;
+    }
+
     public boolean isJmx() {
       return jmx;
     }
@@ -153,6 +166,7 @@ public interface SupportZipGenerator
           ", configuration=" + configuration +
           ", security=" + security +
           ", log=" + log +
+          ", tasklog=" + taskLog +
           ", jmx=" + jmx +
           ", limitFileSizes=" + limitFileSizes +
           ", limitZipSize=" + limitZipSize +

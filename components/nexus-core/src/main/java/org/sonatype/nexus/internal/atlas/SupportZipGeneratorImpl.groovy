@@ -37,6 +37,7 @@ import static com.google.common.base.Preconditions.checkState
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.METRICS
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SECURITY
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
@@ -105,6 +106,9 @@ class SupportZipGeneratorImpl
     }
     if (request.log) {
       types << LOG
+    }
+    if (request.taskLog) {
+      types << TASKLOG
     }
     if (request.jmx) {
       types << JMX

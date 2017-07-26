@@ -24,4 +24,14 @@ public interface FileDescriptorService
    * always return true;
    */
   boolean isFileDescriptorLimitOk();
+
+  /**
+   * Return the actual file descriptor count
+   */
+  long getFileDescriptorCount();
+
+  /**
+   * Return the recommended file descriptor count
+   */
+  long getFileDescriptorRecommended();
 }

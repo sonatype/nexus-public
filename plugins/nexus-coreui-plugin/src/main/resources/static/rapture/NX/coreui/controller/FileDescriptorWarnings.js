@@ -50,11 +50,14 @@ Ext.define('NX.coreui.controller.FileDescriptorWarnings', {
   stateChanged: function() {
     var me = this,
         warningPanel = me.getFileDescriptorWarning(),
-        fileDescriptorState = NX.State.getValue('file_descriptor_limit', {})['file_descriptor_limit'];
+        fileDescriptorLimitOk = NX.State.getValue('file_descriptor_limit', {})['limitOk'],
+        fileDescriptorCount = NX.State.getValue('file_descriptor_limit', {})['count'],
+        fileDescriptorRecommended = NX.State.getValue('file_descriptor_limit', {})['recommended'],
+        user = NX.State.getUser();
 
     if (warningPanel) {
-      if (!fileDescriptorState) {
-        warningPanel.setTitle(NX.I18n.render(me, 'File_Descriptor_Warning'));
+      if (user && user.administrator && !fileDescriptorLimitOk) {
+        warningPanel.setTitle(NX.I18n.render(me, 'File_Descriptor_Warning', fileDescriptorCount, fileDescriptorRecommended));
         warningPanel.show();
       }
       else {

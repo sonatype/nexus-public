@@ -36,6 +36,10 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
 {
   public static final String TYPE_ID = "repository.maven.purge-unused-snapshots";
 
+  public static final Number LAST_USED_INIT_VALUE = 1;
+
+  public static final Number LAST_USED_MIN_VALUE = 0;
+
   public PurgeMavenUnusedSnapshotsTaskDescriptor() {
     super(TYPE_ID,
         PurgeMavenUnusedSnapshotsTask.class,
@@ -53,7 +57,7 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
             "Last used in days",
             "Purge all snapshots that were last used before given number of days",
             FormField.MANDATORY
-        )
+        ).withInitialValue(LAST_USED_INIT_VALUE).withMinimumValue(LAST_USED_MIN_VALUE)
     );
   }
 }

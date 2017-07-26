@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.atlas
 
 import java.util.zip.ZipInputStream
-import groovy.transform.InheritConstructors
 
 import org.sonatype.goodies.common.ByteSize
 import org.sonatype.nexus.common.wonderland.DownloadService
@@ -21,11 +20,14 @@ import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 import org.sonatype.nexus.supportzip.SupportZipGenerator
+
+import groovy.transform.InheritConstructors
 import spock.lang.Specification
 
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.OPTIONAL
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
 
 /**
  * Unit tests for {@link SupportZipGeneratorImpl}
@@ -35,20 +37,23 @@ class SupportZipGeneratorImplTest
 {
   def downloadService = Mock(DownloadService)
   def mockLogCustomizer = Mock(SupportBundleCustomizer)
+  def mockTaskLogCustomizer = Mock(SupportBundleCustomizer)
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
+  def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def jmxContentSource = new TestGeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL)
 
   def setup() {
       mockLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << logContentSource }
+      mockTaskLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << taskLogContentSource }
       mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
   }
 
   def "Support zip is generated from requested sources"() {
     given:
-      def req = new SupportZipGenerator.Request(log: true, jmx: false)
+      def req = new SupportZipGenerator.Request(log: true, taskLog: true, jmx: false)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockJmxCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(0), ByteSize.bytes(0))
 
     when:
@@ -61,16 +66,18 @@ class SupportZipGeneratorImplTest
 
     then:
       entries.find { it.name == 'prefix/log/nexus.log' } != null
+      entries.find { it.name == 'prefix/log/tasks/task.log' } != null
       entries.find { it.name == 'prefix/info/jmx.json' } == null
   }
 
   def "Support zip is truncated if content too large"() {
     given:
       logContentSource.contentSize = 2000
+      taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
-      def req = new SupportZipGenerator.Request(log: true, jmx: true, limitFileSizes: true)
+      def req = new SupportZipGenerator.Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockJmxCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(1000), ByteSize.bytes(0))
 
     when:
@@ -83,6 +90,7 @@ class SupportZipGeneratorImplTest
 
     then:
       entries.find { it.name == 'prefix/log/nexus.log' && it.size < 2000 } != null
+      entries.find { it.name == 'prefix/log/tasks/task.log' && it.size == 1000 } != null
       entries.find { it.name == 'prefix/info/jmx.json' && it.size == 1000 } != null
       entries.find { it.name == 'prefix/truncated' } != null
   }
@@ -90,11 +98,12 @@ class SupportZipGeneratorImplTest
   def "Support zip is truncated if zipfile too large"() {
     given:
       logContentSource.contentSize = 1000
+      taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
-      def req = new SupportZipGenerator.Request(log: true, jmx: true, limitZipSize: true)
+      def req = new SupportZipGenerator.Request(log: true, taskLog: true, jmx: true, limitZipSize: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockJmxCustomizer],
-          ByteSize.bytes(0), ByteSize.bytes(1500))
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
+          ByteSize.bytes(0), ByteSize.bytes(2500))
 
     when:
       generator.generate(req, 'prefix', out)
