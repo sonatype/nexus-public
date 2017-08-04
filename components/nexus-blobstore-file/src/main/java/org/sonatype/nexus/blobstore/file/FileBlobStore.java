@@ -581,21 +581,36 @@ public class FileBlobStore
   {
     FileBlobAttributes attributes = (FileBlobAttributes) getBlobAttributes(blobId);
     String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    if (inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
-      String deletedReason = attributes.getDeletedReason();
-      attributes.setDeleted(false);
-      attributes.setDeletedReason(null);
-      attributes.store();
-      log.warn(
-          "Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-          blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
-    }
-    else {
+    if (!maybeUndeleteBlob(inUseChecker, blobId, attributes)) {
       // not in use, so it's safe to delete the file
       log.debug("Hard deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
           blobId, attributes.getDeletedReason(), blobStoreConfiguration.getName(), blobName);
       deleteHard(blobId);
     }
+  }
+
+  public boolean maybeUndeleteBlob(@Nullable final BlobStoreUsageChecker inUseChecker,
+                                   final BlobId blobId,
+                                   final FileBlobAttributes attributes)
+  {
+    String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
+    if (inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
+      String deletedReason = attributes.getDeletedReason();
+      attributes.setDeleted(false);
+      attributes.setDeletedReason(null);
+      try {
+        attributes.store();
+      }
+      catch (IOException e) {
+        log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+            blobId, deletedReason, blobStoreConfiguration.getName(), blobName, e);
+      }
+      log.warn(
+          "Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+          blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -651,7 +666,7 @@ public class FileBlobStore
   private void move(final Path source, final Path target) throws IOException {
     if (supportsAtomicMove) {
       try {
-        fileOperations.moveAtomic(source, target);
+        fileOperations.copyIfLocked(source, target, fileOperations::moveAtomic);
         return;
       }
       catch (AtomicMoveNotSupportedException e) { // NOSONAR
@@ -661,7 +676,7 @@ public class FileBlobStore
       }
     }
     log.trace("Using normal move for blob store {}, moving {} to {}", blobStoreConfiguration.getName(), source, target);
-    fileOperations.move(source, target);
+    fileOperations.copyIfLocked(source, target, fileOperations::move);
   }
 
   private void setConfiguredBlobStorePath(final Path path) {
@@ -818,6 +833,9 @@ public class FileBlobStore
         return new BufferedInputStream(fileOperations.openInputStream(contentPath));
       }
       catch (BlobStoreException e) {
+        // In certain conditions its possible that a blob does not exist on disk at this point. In this case we need to
+        // mark the blob as stale so that subsequent accesses will trigger disk based checks (see NEXUS-13600)
+        markStale();
         throw e;
       }
       catch (Exception e) {

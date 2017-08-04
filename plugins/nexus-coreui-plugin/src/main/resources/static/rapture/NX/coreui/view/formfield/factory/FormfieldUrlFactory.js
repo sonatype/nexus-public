@@ -36,6 +36,8 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldUrlFactory', {
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,
       allowBlank: !formField.required,
+      disabled: formField.disabled,
+      readOnly: formField.readOnly,
       useTrustStore: null,
       regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null
     };

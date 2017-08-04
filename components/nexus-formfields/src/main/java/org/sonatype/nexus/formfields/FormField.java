@@ -60,6 +60,16 @@ public interface FormField<T>
   boolean isRequired();
 
   /**
+   * True if field is disabled.
+   */
+  boolean isDisabled();
+
+  /**
+   * True if field can only read.
+   */
+  boolean isReadOnly();
+
+  /**
    * Help text of field.
    */
   String getHelpText();

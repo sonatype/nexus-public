@@ -60,6 +60,13 @@ public interface FileOperations
   void moveAtomic(Path source, Path target) throws IOException;
 
   /**
+   * Moves a file, falling back on copy/delete if a <code>FileSystemException</code> is thrown.
+   *
+   * @since 3.5
+   */
+  void copyIfLocked(final Path source, final Path target, Mover mover) throws IOException;
+
+  /**
    * Computes basic metrics about the file.
    */
   StreamMetrics computeMetrics(Path file) throws IOException;
@@ -82,4 +89,12 @@ public interface FileOperations
    * Returns true if the directory was empty and could be removed, false otherwise.
    */
   boolean deleteEmptyDirectory(Path directory) throws IOException;
+
+  /**
+   * @since 3.5
+   */
+  @FunctionalInterface
+  interface Mover {
+    void accept(Path source, Path destination) throws IOException;
+  }
 }

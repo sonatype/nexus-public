@@ -32,6 +32,10 @@ public abstract class AbstractFormField<T>
 
   private boolean required;
 
+  private boolean disabled;
+
+  private boolean readOnly;
+
   private String label;
 
   @Nullable
@@ -101,6 +105,14 @@ public abstract class AbstractFormField<T>
     return this.required;
   }
 
+  public boolean isDisabled() {
+    return this.disabled;
+  }
+
+  public boolean isReadOnly() {
+    return this.readOnly;
+  }
+
   @Nullable
   public T getInitialValue() {
     return initialValue;
@@ -120,6 +132,14 @@ public abstract class AbstractFormField<T>
 
   public void setRequired(final boolean required) {
     this.required = required;
+  }
+
+  public void setDisabled(final boolean disabled) {
+    this.disabled = disabled;
+  }
+
+  public void setReadOnly(final boolean readOnly) {
+    this.readOnly = readOnly;
   }
 
   public void setLabel(final String label) {

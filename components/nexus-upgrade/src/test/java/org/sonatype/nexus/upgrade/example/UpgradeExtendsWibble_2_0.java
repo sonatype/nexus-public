@@ -10,12 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.upgrade.example;
 
-/**
- * @since 3.4
- */
-public interface RestoreMetadataService
+public class UpgradeExtendsWibble_2_0
+    extends UpgradeWibble_2_0
 {
-  void restore(String blobStoreName);
 }

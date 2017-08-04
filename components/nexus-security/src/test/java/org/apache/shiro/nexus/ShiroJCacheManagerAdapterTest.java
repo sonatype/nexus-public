@@ -14,15 +14,14 @@ package org.apache.shiro.nexus;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.cache.CacheManager;
-import javax.cache.configuration.CompleteConfiguration;
-import javax.cache.configuration.Configuration;
+import javax.cache.configuration.Factory;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cache.CacheHelper;
 
 import org.apache.shiro.session.mgt.eis.CachingSessionDAO;
 import org.junit.Before;
@@ -43,38 +42,29 @@ public class ShiroJCacheManagerAdapterTest
 {
 
   @Mock
-  private CacheManager cacheManager;
+  private CacheHelper cacheHelper;
 
   private ShiroJCacheManagerAdapter underTest;
 
   @Before
   public void setUp() {
-    underTest = new ShiroJCacheManagerAdapter(() -> cacheManager, () -> Time.minutes(2L));
-    when(cacheManager.getCache(anyString())).thenReturn(null);
+    underTest = new ShiroJCacheManagerAdapter(() -> cacheHelper, () -> Time.minutes(2L));
   }
 
   @Test
   public void defaultCacheConfigurationTest() throws Exception {
-    ArgumentCaptor<Configuration> confCaptor = ArgumentCaptor.forClass(Configuration.class);
-    when(cacheManager.createCache(anyString(), confCaptor.capture())).thenReturn(null);
+    ArgumentCaptor<Factory> confCaptor = ArgumentCaptor.forClass(Factory.class);
+    when(cacheHelper.maybeCreateCache(anyString(), confCaptor.capture())).thenReturn(null);
     underTest.maybeCreateCache("foo");
-    CompleteConfiguration configuration = (CompleteConfiguration)confCaptor.getValue();
-    assertThat(configuration.isManagementEnabled(), is(true));
-    assertThat(configuration.isStatisticsEnabled(), is(true));
-    assertThat(configuration.getExpiryPolicyFactory(),
-        is(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2L)))
-    );
+    assertThat(confCaptor.getValue(), is(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, 2L))));
   }
 
   @Test
   public void defaultShiroActiveSessionCacheConfigurationTest() throws Exception {
-    ArgumentCaptor<Configuration> confCaptor = ArgumentCaptor.forClass(Configuration.class);
-    when(cacheManager.createCache(anyString(), confCaptor.capture())).thenReturn(null);
+    ArgumentCaptor<Factory> confCaptor = ArgumentCaptor.forClass(Factory.class);
+    when(cacheHelper.maybeCreateCache(anyString(), confCaptor.capture())).thenReturn(null);
     underTest.maybeCreateCache(CachingSessionDAO.ACTIVE_SESSION_CACHE_NAME);
-    CompleteConfiguration configuration = (CompleteConfiguration)confCaptor.getValue();
-    assertThat(configuration.isManagementEnabled(), is(true));
-    assertThat(configuration.isStatisticsEnabled(), is(true));
-    assertThat(configuration.getExpiryPolicyFactory(), is(EternalExpiryPolicy.factoryOf()));
+    assertThat(confCaptor.getValue(), is(EternalExpiryPolicy.factoryOf()));
   }
 
 }

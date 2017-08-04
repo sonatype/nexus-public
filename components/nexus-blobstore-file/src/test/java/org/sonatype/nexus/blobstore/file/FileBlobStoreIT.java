@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -446,4 +447,20 @@ public class FileBlobStoreIT
 
     underTest = null; // The store is stopped, no cleanup required
   }
+
+  @Test
+  public void blobMoveRetriesOnFileSystemException() throws Exception {
+    byte[] content = testData();
+    HashCode sha1 = Hashing.sha1().hashBytes(content);
+    Path sourceFile = testFile(content);
+
+    doThrow(new FileSystemException("The process cannot access the file because it is being used by another process."))
+        .when(fileOperations).moveAtomic(any(), any());
+
+    underTest.create(sourceFile, TEST_HEADERS, content.length, sha1);
+
+    verify(fileOperations, times(2)).copy(any(), any());
+    verify(fileOperations, times(2)).delete(any());
+  }
+
 }

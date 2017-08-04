@@ -99,6 +99,10 @@ public class DatabaseServerImpl
 
   private boolean dynamicPlugins;
 
+  private final String binaryPortRange;
+
+  private final String httpPortRange;
+
   private OServer orientServer;
 
   @Inject
@@ -108,6 +112,8 @@ public class DatabaseServerImpl
                             @Named("${nexus.orient.binaryListenerEnabled:-false}") final boolean binaryListenerEnabled,
                             @Named("${nexus.orient.httpListenerEnabled:-false}") final boolean httpListenerEnabled,
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
+                            @Named("${nexus.orient.binaryListener.portRange:-2424-2430}") final String binaryPortRange,
+                            @Named("${nexus.orient.httpListener.portRange:-2480-2490}") final String httpPortRange,
                             final NodeAccess nodeAccess,
                             final EntityHook entityHook)
   {
@@ -116,6 +122,8 @@ public class DatabaseServerImpl
     this.uberClassLoader = checkNotNull(uberClassLoader);
     this.httpListenerEnabled = httpListenerEnabled;
     this.dynamicPlugins = dynamicPlugins;
+    this.binaryPortRange = binaryPortRange;
+    this.httpPortRange = httpPortRange;
     this.entityHook = checkNotNull(entityHook);
 
     if (nodeAccess.isClustered()) {
@@ -213,7 +221,7 @@ public class DatabaseServerImpl
     if (binaryListenerEnabled) {
       OServerNetworkListenerConfiguration listener = new OServerNetworkListenerConfiguration();
       listener.ipAddress = "0.0.0.0";
-      listener.portRange = "2424-2430";
+      listener.portRange = binaryPortRange;
       listener.protocol = "binary";
       listener.socket = "default";
       config.network.listeners.add(listener);
@@ -224,7 +232,7 @@ public class DatabaseServerImpl
     if (httpListenerEnabled) {
       OServerNetworkListenerConfiguration listener = new OServerNetworkListenerConfiguration();
       listener.ipAddress = "0.0.0.0";
-      listener.portRange = "2480-2490";
+      listener.portRange = httpPortRange;
       listener.protocol = "http";
       listener.socket = "default";
       listener.parameters = new OServerParameterConfiguration[] {

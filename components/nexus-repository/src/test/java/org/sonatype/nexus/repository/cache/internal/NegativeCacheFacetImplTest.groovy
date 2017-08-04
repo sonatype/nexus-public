@@ -13,10 +13,10 @@
 package org.sonatype.nexus.repository.cache.internal
 
 import javax.cache.Cache
-import javax.cache.CacheManager
 import javax.cache.configuration.MutableConfiguration
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.cache.CacheHelper
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.cache.NegativeCacheKey
@@ -48,7 +48,7 @@ class NegativeCacheFacetImplTest
 
   private Status status
 
-  private CacheManager cacheManager
+  private CacheHelper cacheHelper
 
   private Cache cache
 
@@ -58,11 +58,10 @@ class NegativeCacheFacetImplTest
 
   @Before
   void setUp() {
-    cacheManager = mock(CacheManager)
-    when(cacheManager.isClosed()).thenReturn(false)
+    cacheHelper = mock(CacheHelper)
     cache = mock(Cache)
-    when(cacheManager.createCache(any(String), any(MutableConfiguration))).thenReturn(cache)
-    underTest = new NegativeCacheFacetImpl(cacheManager)
+    when(cacheHelper.maybeCreateCache(any(String), any(Class), any(Class), any(MutableConfiguration))).thenReturn(cache)
+    underTest = new NegativeCacheFacetImpl(cacheHelper)
     underTest.installDependencies(mock(EventManager))
     key = mock(NegativeCacheKey)
     status = Status.failure(HttpStatus.NOT_FOUND, '404')
@@ -94,14 +93,14 @@ class NegativeCacheFacetImplTest
     underTest.attach(repository)
     underTest.init()
     underTest.start()
-    verify(cacheManager, never()).createCache(any(String), any(MutableConfiguration))
+    verify(cacheHelper, never()).maybeCreateCache(any(String), any(Class), any(Class), any(MutableConfiguration))
     assert underTest.get(key) == null
     underTest.put(key, Status.failure(HttpStatus.NOT_FOUND, '404'))
     underTest.invalidate(key)
     underTest.invalidate()
     underTest.stop()
     underTest.destroy()
-    verify(cacheManager, never()).destroyCache(any(String))
+    verify(cacheHelper, never()).maybeDestroyCache(any(String))
   }
 
   /**
@@ -120,14 +119,14 @@ class NegativeCacheFacetImplTest
     underTest.attach(repository)
     underTest.init()
     underTest.start()
-    verify(cacheManager, never()).createCache(any(String), any(MutableConfiguration))
+    verify(cacheHelper, never()).maybeCreateCache(any(String), any(Class), any(Class), any(MutableConfiguration))
     assert underTest.get(key) == null
     underTest.put(key, Status.failure(HttpStatus.NOT_FOUND, '404'))
     underTest.invalidate(key)
     underTest.invalidate()
     underTest.stop()
     underTest.destroy()
-    verify(cacheManager, never()).destroyCache(any(String))
+    verify(cacheHelper, never()).maybeDestroyCache(any(String))
   }
 
   /**
@@ -146,11 +145,11 @@ class NegativeCacheFacetImplTest
     underTest.start()
     ArgumentCaptor<String> cacheNameCaptor = ArgumentCaptor.forClass(String)
     ArgumentCaptor<MutableConfiguration> configCaptor = ArgumentCaptor.forClass(MutableConfiguration)
-    verify(cacheManager).createCache(cacheNameCaptor.capture(), configCaptor.capture())
+    verify(cacheHelper).maybeCreateCache(cacheNameCaptor.capture(), any(Class), any(Class), configCaptor.capture())
     when(cache.name).thenReturn(cacheNameCaptor.value)
     underTest.stop()
     underTest.destroy()
-    verify(cacheManager, never()).destroyCache(any(String))
+    verify(cacheHelper, never()).maybeDestroyCache(any(String))
   }
 
   /**
@@ -167,10 +166,9 @@ class NegativeCacheFacetImplTest
     underTest.attach(repository)
     underTest.init()
     underTest.start()
-    when(cacheManager.isClosed()).thenReturn(true)
     underTest.stop()
     underTest.destroy()
-    verify(cacheManager, never()).destroyCache(any(String))
+    verify(cacheHelper, never()).maybeDestroyCache(any(String))
   }
 
   /**

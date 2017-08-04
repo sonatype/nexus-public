@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.httpclient;
 
 import org.sonatype.nexus.repository.Facet;
 
+import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 
 /**
@@ -28,4 +29,6 @@ public interface HttpClientFacet
   HttpClient getHttpClient();
 
   RemoteConnectionStatus getStatus();
+
+  Header createBasicAuthHeader();
 }

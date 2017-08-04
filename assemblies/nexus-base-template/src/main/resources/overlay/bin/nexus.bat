@@ -209,7 +209,7 @@ rem SONATYPE: preferred IPv4 by default
 if "%KARAF_OPTS%" == "" set KARAF_OPTS=-Djava.net.preferIPv4Stack=true
 
 rem SONATYPE: removed -Dcom.sun.management.jmxremote and unused derby properties
-set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass
+set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=..\sonatype-work\nexus3\log\jvm.log -XX:-OmitStackTraceInFastThrow 
 
 rem SONATYPE: removed -XX:PermSize and -XX:MaxPermSize
 

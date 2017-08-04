@@ -77,6 +77,7 @@ Ext.define('NX.Dialogs', {
       icon: Ext.MessageBox.QUESTION,
       closable: false,
       animEl: options.animEl,
+      buttonText: options.buttonText,
       fn: function (buttonName) {
         if (buttonName === 'yes' || buttonName === 'ok') {
           if (Ext.isDefined(onYesFn)) {

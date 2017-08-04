@@ -40,6 +40,10 @@ class FormFieldXO
 
   Boolean required
 
+  Boolean disabled
+
+  Boolean readOnly
+
   @Nullable
   String regexValidation
 
@@ -105,6 +109,8 @@ class FormFieldXO
         label: source.label,
         helpText: source.helpText,
         required: source.required,
+        disabled: source.disabled,
+        readOnly: source.readOnly,
         regexValidation: source.regexValidation,
         initialValue: source.initialValue,
         attributes: source.attributes

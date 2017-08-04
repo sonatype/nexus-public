@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.upgrade;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,6 +27,7 @@ import java.lang.annotation.Target;
  * 
  * @since 3.1
  */
+@Inherited
 @Repeatable(Dependencies.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

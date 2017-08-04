@@ -38,7 +38,7 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
 
   public static final Number LAST_USED_INIT_VALUE = 1;
 
-  public static final Number LAST_USED_MIN_VALUE = 0;
+  public static final Number LAST_USED_MIN_VALUE = 1;
 
   public PurgeMavenUnusedSnapshotsTaskDescriptor() {
     super(TYPE_ID,

@@ -26,6 +26,7 @@ import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
+import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -36,9 +37,15 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
+import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
+import org.apache.http.message.BasicHeader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static org.apache.commons.codec.binary.Base64.*;
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNINITIALISED;
@@ -85,6 +92,12 @@ public class HttpClientFacetImpl
     this.httpClientManager = checkNotNull(httpClientManager);
   }
 
+  @VisibleForTesting
+  HttpClientFacetImpl(final HttpClientManager httpClientManager, final Config config) {
+    this(httpClientManager);
+    this.config = checkNotNull(config);
+  }
+
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
     facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
@@ -112,6 +125,27 @@ public class HttpClientFacetImpl
   @Guarded(by = STARTED)
   public HttpClient getHttpClient() {
     return checkNotNull(httpClient);
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  public Header createBasicAuthHeader() {
+    if (config.authentication instanceof UsernameAuthenticationConfiguration) {
+      UsernameAuthenticationConfiguration userAuth = (UsernameAuthenticationConfiguration) config.authentication;
+
+      String auth = format("%1$s:%2$s", userAuth.getUsername(), userAuth.getPassword());
+
+      byte[] encodedAuth = encodeBase64(auth.getBytes(ISO_8859_1));
+
+      String authHeader = "Basic " + new String(encodedAuth, ISO_8859_1);
+
+      return new BasicHeader(AUTHORIZATION, authHeader);
+    }
+    else {
+      log.debug("Basic auth header cannot be created for auth config of {}", config.authentication);
+      return null;
+    }
   }
 
   @Override
@@ -172,13 +206,13 @@ public class HttpClientFacetImpl
 
   private static String statusBlockedUntil(final RemoteConnectionStatus status) {
     if (status.getBlockedUntil() != null) {
-      return String.format(" until %s", status.getBlockedUntil());
+      return format(" until %s", status.getBlockedUntil());
     }
     return "";
   }
 
   private static String statusReason(final RemoteConnectionStatus status) {
-    return String.format("%s for %s",
+    return format("%s for %s",
         status.getReason() != null ? status.getReason() : "n/a",
         status.getRequestUrl() != null ? status.getRequestUrl() : "n/a"
     );

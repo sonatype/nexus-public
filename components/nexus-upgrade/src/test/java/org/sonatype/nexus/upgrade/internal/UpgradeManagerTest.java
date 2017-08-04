@@ -282,4 +282,34 @@ public class UpgradeManagerTest
     assertThat(upgradeManager.latestKnownModelVersions(),
         equalTo(ImmutableMap.of("bar", "1.1", "wibble", "2.0", "foo", "1.2")));
   }
+
+  @Test
+  public void testLatestKnownModelVersionsWithSingleInheritance() {
+    List<Upgrade> upgrades = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.example.UpgradeBar_1_1(),
+        new org.sonatype.nexus.upgrade.example.UpgradeExtendsWibble_2_0(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_2(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
+
+    assertThat(upgradeManager.latestKnownModelVersions(),
+        equalTo(ImmutableMap.of("bar", "1.1", "wibble", "2.0", "foo", "1.2")));
+  }
+
+  @Test
+  public void testLatestKnownModelVersionsWithDoubleInheritance() {
+    List<Upgrade> upgrades = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.example.UpgradeBar_1_1(),
+        new org.sonatype.nexus.upgrade.example.UpgradeExtendsExtendsWibble_2_0(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_2(),
+        new org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1()
+    );
+
+    UpgradeManager upgradeManager = new UpgradeManager(ImmutableList.of(), upgrades, false);
+
+    assertThat(upgradeManager.latestKnownModelVersions(),
+        equalTo(ImmutableMap.of("bar", "1.1", "wibble", "2.0", "foo", "1.2")));
+  }
 }

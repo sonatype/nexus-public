@@ -225,6 +225,7 @@ public abstract class EntityAdapter<T extends Entity>
     checkNotNull(document);
 
     T entity = newEntity();
+    document.deserializeFields();
     try {
       readFields(document, entity);
     }

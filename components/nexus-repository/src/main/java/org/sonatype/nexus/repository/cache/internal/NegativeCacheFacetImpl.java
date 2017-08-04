@@ -16,8 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.cache.Cache;
 import javax.cache.Cache.Entry;
-import javax.cache.CacheManager;
-import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.inject.Inject;
@@ -26,6 +24,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
@@ -50,7 +49,7 @@ public class NegativeCacheFacetImpl
     extends FacetSupport
     implements NegativeCacheFacet
 {
-  private final CacheManager cacheManager;
+  private final CacheHelper cacheHelper;
 
   @VisibleForTesting
   static final String CONFIG_KEY = "negativeCache";
@@ -82,8 +81,8 @@ public class NegativeCacheFacetImpl
   private Cache<NegativeCacheKey, Status> cache;
 
   @Inject
-  public NegativeCacheFacetImpl(final CacheManager cacheManager) {
-    this.cacheManager = checkNotNull(cacheManager);
+  public NegativeCacheFacetImpl(final CacheHelper cacheHelper) {
+    this.cacheHelper = checkNotNull(cacheHelper);
   }
 
   @Override
@@ -140,27 +139,16 @@ public class NegativeCacheFacetImpl
   private void maybeCreateCache() {
     if (cache == null) {
       log.debug("Creating negative-cache for: {}", getRepository());
-
-      MutableConfiguration<NegativeCacheKey, Status> cacheConfig = new MutableConfiguration<>();
-      cacheConfig.setTypes(NegativeCacheKey.class, Status.class);
-      cacheConfig.setStoreByValue(false);
-      cacheConfig.setExpiryPolicyFactory(
-          CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, config.timeToLive))
-      );
-      cacheConfig.setManagementEnabled(true);
-      cacheConfig.setStatisticsEnabled(true);
-
-      cache = cacheManager.createCache(getCacheName(), cacheConfig);
+      cache = cacheHelper.maybeCreateCache(getCacheName(), NegativeCacheKey.class, Status.class,
+          CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MINUTES, config.timeToLive)));
       log.debug("Created negative-cache: {}", cache);
     }
   }
 
   private void maybeDestroyCache() {
-    if (cache != null && !cacheManager.isClosed()) {
-      log.debug("Destroying negative-cache for: {}", getRepository());
-      cacheManager.destroyCache(cache.getName());
-      cache = null;
-    }
+    log.debug("Destroying negative-cache for: {}", getRepository());
+    cacheHelper.maybeDestroyCache(getCacheName());
+    cache = null;
   }
 
   @Override

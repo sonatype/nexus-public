@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
+import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -108,6 +109,31 @@ public class SimpleFileOperations
     }
     catch (UnsupportedOperationException e) { // NOSONAR
       throw new AtomicMoveNotSupportedException(source.toString(), target.toString(), e.getMessage());
+    }
+  }
+
+  @Override
+  public void copyIfLocked(final Path source, final Path target, final Mover mover) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    try {
+      mover.accept(source, target);
+    }
+    catch (AtomicMoveNotSupportedException atomicMoveNotSupported) {
+        throw atomicMoveNotSupported;
+    }
+    catch (FileSystemException e) { // NOSONAR
+      // Windows can throw a FileSystemException on move or moveAtomic
+      // if the file is in use; in this case, copy and attempt to delete
+      // source
+      log.warn("Using copy to move {} to {}", source, target);
+      copy(source, target);
+      try {
+        delete(source);
+      }
+      catch (IOException deleteException) { // NOSONAR
+        log.error("Unable to delete {} after move: {}", source, deleteException.getMessage());
+      }
     }
   }
 

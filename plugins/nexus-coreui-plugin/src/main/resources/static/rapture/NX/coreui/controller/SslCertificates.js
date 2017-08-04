@@ -263,7 +263,13 @@ Ext.define('NX.coreui.controller.SslCertificates', {
 
     // definitely no URL
     if (server.indexOf("/") === -1) {
-      server.split(":");
+      var serverPort = server.split(":");
+
+      if (serverPort.length === 2) {
+        serverPort[1] = Ext.Number.from(serverPort[1], undefined);
+      }
+
+      return serverPort;
     }
 
     rx = /[^:]*:\/\/([^:\/]*)(:([0-9]*))?/;
