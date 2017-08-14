@@ -60,6 +60,13 @@ Ext.define('NX.util.Validator', {
   ),
 
   /**
+   * A regular expression to detect whether we have leading and trailing white space
+   *
+   * @private
+   */
+  nxLeadingAndTrailingWhiteSpaceRegex : /^[ \s]+|[ \s]+$/,
+
+  /**
    * @public
    * @param vtype {object}
    */
@@ -83,7 +90,11 @@ Ext.define('NX.util.Validator', {
         'nx-hostname': function(val) {
           return NX.util.Validator.nxRfc1123HostRegex.test(val);
         },
-        'nx-hostnameText': NX.I18n.get('Util_Validator_Hostname')
+        'nx-hostnameText': NX.I18n.get('Util_Validator_Hostname'),
+        'nx-trim': function(val) {
+          return !NX.util.Validator.nxLeadingAndTrailingWhiteSpaceRegex.test(val);
+        },
+        'nx-trimText': NX.I18n.get('Util_Validator_Trim')
       }
     ];
 

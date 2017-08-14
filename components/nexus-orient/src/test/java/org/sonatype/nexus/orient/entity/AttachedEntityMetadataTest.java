@@ -28,6 +28,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link AttachedEntityMetadata}
  */
+@RunWith(Parameterized.class)
 public class AttachedEntityMetadataTest
     extends TestSupport
 {
@@ -52,6 +56,17 @@ public class AttachedEntityMetadataTest
   @Mock
   private Appender<ILoggingEvent> mockAppender;
 
+  private TestEntityAdapter entityAdapter;
+
+  @Parameters
+  public static Object[] data() {
+    return new Object[] { false /* test full loading */, true /* test partial loading */ };
+  }
+
+  public AttachedEntityMetadataTest(boolean partialLoading) {
+    entityAdapter = new TestEntityAdapter(partialLoading);
+  }
+
   @Before
   public void setUp() {
     when(mockAppender.getName()).thenReturn("MOCK");
@@ -59,12 +74,12 @@ public class AttachedEntityMetadataTest
     ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).addAppender(mockAppender);
   }
 
-  private TestEntityAdapter entityAdapter = new TestEntityAdapter();
-
   static class TestEntity
       extends Entity
   {
-    String text;
+    String primary;
+
+    String secondary;
   }
 
   static class TestEntityAdapter
@@ -72,8 +87,18 @@ public class AttachedEntityMetadataTest
   {
     static final String DB_CLASS = new OClassNameBuilder().type("test").build();
 
-    TestEntityAdapter() {
+    private boolean partialEntity;
+
+    TestEntityAdapter(final boolean partialLoading) {
       super(DB_CLASS);
+      if (partialLoading) {
+        enablePartialLoading();
+        partialEntity = true;
+      }
+    }
+
+    public boolean isPartialEntity() {
+      return partialEntity;
     }
 
     @Override
@@ -83,17 +108,20 @@ public class AttachedEntityMetadataTest
 
     @Override
     protected void defineType(OClass type) {
-      type.createProperty("text", OType.STRING);
+      type.createProperty("primary", OType.STRING);
+      type.createProperty("secondary", OType.STRING);
     }
 
     @Override
     protected void writeFields(ODocument document, TestEntity entity) throws Exception {
-      document.field("text", entity.text);
+      document.field("primary", entity.primary);
+      document.field("secondary", entity.secondary);
     }
 
     @Override
     protected void readFields(ODocument document, TestEntity entity) throws Exception {
-      entity.text = document.field("text");
+      entity.primary = document.field("primary");
+      // deliberately leave secondary field unread to test full vs. partial document loading
     }
   }
 
@@ -107,10 +135,13 @@ public class AttachedEntityMetadataTest
       // CREATE
       db.begin();
       TestEntity entity = new TestEntity();
-      entity.text = "Hello, world";
+      entity.primary = "Hello";
+      entity.secondary = "World";
       entityAdapter.set(db, entity);
       db.commit();
+    }
 
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       metadata = entityAdapter.get(db).getEntityMetadata();
     }
 
@@ -124,6 +155,11 @@ public class AttachedEntityMetadataTest
     events.getAllValues().forEach(
         event -> assertThat(event.getFormattedMessage(), not(containsString("Error deserializing record"))));
 
-    assertThat(toStringOutput, containsString("{text:Hello, world}"));
+    if (entityAdapter.isPartialEntity()) {
+      assertThat(toStringOutput, containsString("{primary:Hello}"));
+    }
+    else {
+      assertThat(toStringOutput, containsString("{primary:Hello,secondary:World}"));
+    }
   }
 }

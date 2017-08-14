@@ -15,7 +15,7 @@
     </discriminator>
     <sift>
       <appender name="taskAppender" class="ch.qos.logback.core.FileAppender">
-        <file>test/log/tasks/${taskIdAndDate}.log</file>
+        <file>${project.build.directory}/test/log/tasks/${taskIdAndDate}.log</file>
         <encoder>
           <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
         </encoder>

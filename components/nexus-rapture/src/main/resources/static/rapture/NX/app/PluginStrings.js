@@ -171,6 +171,7 @@ Ext.define('NX.app.PluginStrings', {
     // Field validation messages
     Util_Validator_Text: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
     Util_Validator_Hostname: 'Hostname must be valid',
+    Util_Validator_Trim: 'A Role ID may not start or end with a space.',
 
     // Wizard
     Wizard_Next: '@Button_Next',

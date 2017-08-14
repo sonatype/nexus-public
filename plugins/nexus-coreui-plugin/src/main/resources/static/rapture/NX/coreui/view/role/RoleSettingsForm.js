@@ -61,7 +61,8 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         store: 'RoleBySource',
         queryMode: 'local',
         displayField: 'name',
-        valueField: 'id'
+        valueField: 'id',
+        vtype: 'nx-trim'
       };
     }
     else {
@@ -69,7 +70,8 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         name: 'id',
         itemId: 'id',
         readOnly: true,
-        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_RoleID_FieldLabel')
+        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_RoleID_FieldLabel'),
+        vtype: 'nx-trim'
       };
     }
 

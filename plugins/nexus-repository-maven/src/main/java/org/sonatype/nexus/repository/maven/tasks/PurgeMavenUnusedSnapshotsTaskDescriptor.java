@@ -34,6 +34,8 @@ import static org.sonatype.nexus.repository.maven.tasks.PurgeMavenUnusedSnapshot
 public class PurgeMavenUnusedSnapshotsTaskDescriptor
     extends TaskDescriptorSupport
 {
+  public static final String TASK_NAME = "Purge unused Maven snapshot versions";
+
   public static final String TYPE_ID = "repository.maven.purge-unused-snapshots";
 
   public static final Number LAST_USED_INIT_VALUE = 1;
@@ -43,7 +45,7 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
   public PurgeMavenUnusedSnapshotsTaskDescriptor() {
     super(TYPE_ID,
         PurgeMavenUnusedSnapshotsTask.class,
-        "Purge unused Maven snapshot versions",
+        TASK_NAME,
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(

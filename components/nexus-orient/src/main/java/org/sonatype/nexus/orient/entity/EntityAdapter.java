@@ -84,6 +84,8 @@ public abstract class EntityAdapter<T extends Entity>
 
   private OClass schemaType;
 
+  private boolean partialLoading;
+
   @SuppressWarnings("unchecked")
   public EntityAdapter(final String typeName) {
     this.typeName = checkNotNull(typeName);
@@ -109,6 +111,15 @@ public abstract class EntityAdapter<T extends Entity>
   @Inject
   public void enableEntityHook(final EntityHook entityHook) {
     this.entityHook = checkNotNull(entityHook);
+  }
+
+  /**
+   * Declares that this adapter may partially load a subset of the declared fields.
+   *
+   * @since 3.next
+   */
+  protected void enablePartialLoading() {
+    this.partialLoading = true;
   }
 
   protected RecordIdObfuscator getRecordIdObfuscator() {
@@ -225,7 +236,9 @@ public abstract class EntityAdapter<T extends Entity>
     checkNotNull(document);
 
     T entity = newEntity();
-    document.deserializeFields();
+    if (!partialLoading) {
+      document.deserializeFields();
+    }
     try {
       readFields(document, entity);
     }

@@ -173,7 +173,7 @@ public class HttpClientManagerImplIT
         .loadTrustMaterial(this.getClass().getClassLoader().getResource("testkeystore"), "password".toCharArray(),
             new TrustSelfSignedStrategy())
         .build();
-    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, new String[]{"TLSv1"}, null,
+    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, new String[]{"TLSv1.2"}, null,
         SSLConnectionSocketFactory.getDefaultHostnameVerifier());
     builder.setSSLSocketFactory(sslsf);
   }

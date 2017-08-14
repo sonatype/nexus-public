@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.entity.EntityVersion;
 
 import com.google.common.base.Throwables;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -91,11 +92,18 @@ public class AttachedEntityMetadata
   }
 
   private String safeDocumentToString() {
+    ORecordElement.STATUS oldStatus = document.getInternalStatus();
     try {
+      // stop orient from loading missing fields as DB might not be set
+      // and we only want to dump what was actually loaded at this point
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
       return document.toString();
     }
     catch (Exception e) { // NOSONAR
       return document.getIdentity().toString();
+    }
+    finally {
+      document.setInternalStatus(oldStatus);
     }
   }
 

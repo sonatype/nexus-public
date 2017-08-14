@@ -18,7 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
@@ -28,7 +28,7 @@ public class TaskLogHomeTest
   @Test
   public void getTaskLogHome() {
     String taskLogHome = TaskLogHome.getTaskLogHome();
-    assertThat(taskLogHome, equalTo("test/log/tasks"));
+    assertThat(taskLogHome, endsWith("test/log/tasks"));
 
     File file = new File(taskLogHome, "temp.log");
     assertFalse(file.exists());
