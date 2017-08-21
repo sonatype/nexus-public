@@ -44,7 +44,7 @@ import static org.sonatype.nexus.scheduling.internal.resources.TasksResource.RES
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.6.0
  */
 @Named
 @Singleton

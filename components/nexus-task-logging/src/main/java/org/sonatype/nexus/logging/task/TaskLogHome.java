@@ -37,7 +37,7 @@ public class TaskLogHome
   private TaskLogHome() { throw new IllegalAccessError("Utility class"); }
 
   /**
-   * Get the home of the task logs on disk
+   * Get the home (absolute path) of the task logs on disk
    *
    * @return the task log home, null if it couldn't be found (usually due to missing appender in logback.xml)
    */
@@ -56,14 +56,15 @@ public class TaskLogHome
     SiftingAppender siftingAppender = (SiftingAppender) appender;
 
     // this will create a new appender which ultimately creates a temp.log within the tasks log folder
-    FileAppender fileAppender = (FileAppender) siftingAppender.getAppenderTracker().getOrCreate("temp", 0L);
+    FileAppender tempFileAppender = (FileAppender) siftingAppender.getAppenderTracker().getOrCreate("temp", 0L);
 
     // Note that at full execution speed the temp.log may not actually exist yet, but we don't actually need it to
-    File file = new File(fileAppender.getFile());
+    File file = new File(tempFileAppender.getFile());
 
     String taskLogsFolder = file.getParent();
 
     // no need to keep the temp.log file around
+    tempFileAppender.stop(); // stop the appender to ensure the file lock is released
     FileUtils.deleteQuietly(file);
 
     return taskLogsFolder;

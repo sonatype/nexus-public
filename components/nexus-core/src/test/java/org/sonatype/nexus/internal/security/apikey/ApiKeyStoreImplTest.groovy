@@ -47,7 +47,7 @@ class ApiKeyStoreImplTest
   void setup() {
     underTest = new ApiKeyStoreImpl(
         database.instanceProvider,
-        new ApiKeyEntityAdapter(),
+        new ApiKeyEntityAdapter(ClassLoader.getSystemClassLoader()),
         mock(UserPrincipalsHelper.class),
         Maps.newHashMap(),
         new DefaultApiKeyFactory(new RandomBytesGeneratorImpl(new CryptoHelperImpl()))

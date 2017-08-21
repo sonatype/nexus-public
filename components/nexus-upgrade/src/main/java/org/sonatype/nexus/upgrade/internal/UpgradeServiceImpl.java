@@ -113,8 +113,8 @@ public class UpgradeServiceImpl
   private void doInventory(List<Upgrade> upgrades) {
     Predicate<Upgrades> inventoryFilter = alwaysTrue();
 
-    if (nodeAccess.isClustered() && !nodeAccess.isFreshCluster()) {
-      // new node joining existing cluster; only take local inventory as cluster inventory is already taken
+    if (!nodeAccess.isOldestNode()) {
+      // joining existing cluster; only take local inventory as cluster inventory is already taken
       Set<String> localModels = upgradeManager.getLocalModels();
       inventoryFilter = (upgrade) -> localModels.contains(upgrade.model());
     }

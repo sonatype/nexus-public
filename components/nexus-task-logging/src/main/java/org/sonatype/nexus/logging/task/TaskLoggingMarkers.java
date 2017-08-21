@@ -38,4 +38,9 @@ public class TaskLoggingMarkers
    */
   public static final Marker PROGRESS = MarkerFactory.getMarker("PROGRESS");
 
+  /**
+   * FOR INTERNAL USE ONLY - DO NOT USE IN A TASK
+   * Slf4j {@link Marker} used internally by the task logging progress mechanism.
+   */
+  public static final Marker INTERNAL_PROGRESS = MarkerFactory.getMarker("INTERNAL_PROGRESS");
 }

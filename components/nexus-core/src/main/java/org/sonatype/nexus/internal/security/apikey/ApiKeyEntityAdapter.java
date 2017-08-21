@@ -19,9 +19,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -80,8 +82,12 @@ public class ApiKeyEntityAdapter
   private final ReadEntityByPropertyAction<ApiKey> findByApiKey =
       new ReadEntityByPropertyAction<>(this, P_DOMAIN, P_APIKEY);
 
-  public ApiKeyEntityAdapter() {
+  private final ClassLoader uberClassLoader;
+
+  @Inject
+  public ApiKeyEntityAdapter(@Named("nexus-uber") final ClassLoader uberClassLoader) {
     super(DB_CLASS);
+    this.uberClassLoader = checkNotNull(uberClassLoader);
   }
 
   @Override
@@ -125,17 +131,13 @@ public class ApiKeyEntityAdapter
   }
 
   private Object deserialize(final ODocument document, final String fieldName) {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
     final byte[] bytes = document.field(fieldName, OType.BINARY);
-    try (ObjectInputStream objects = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+    try (ObjectInputStream objects =
+             new ObjectInputStreamWithClassLoader(new ByteArrayInputStream(bytes), uberClassLoader)) {
       return objects.readObject();
     }
     catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException(e);
-    }
-    finally {
-      Thread.currentThread().setContextClassLoader(tccl);
     }
   }
 
@@ -172,7 +174,7 @@ public class ApiKeyEntityAdapter
 
   /**
    * Browse all entities which have matching primary principal.
-   * 
+   *
    * @since 3.1
    */
   public Iterable<ApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {

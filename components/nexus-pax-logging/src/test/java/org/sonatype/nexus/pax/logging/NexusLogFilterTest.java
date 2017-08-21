@@ -24,6 +24,8 @@ import static ch.qos.logback.core.spi.FilterReply.NEUTRAL;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_WITH_PROGRESS_MDC;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
@@ -44,6 +46,7 @@ public class NexusLogFilterTest
   public void tearDown() {
     MDC.remove(MDC_MARKER_ID);
     MDC.remove(TASK_LOG_ONLY_MDC);
+    MDC.remove(TASK_LOG_WITH_PROGRESS_MDC);
   }
 
   @Test
@@ -54,6 +57,17 @@ public class NexusLogFilterTest
   @Test
   public void testOtherMarkerInMDC() {
     MDC.put(MDC_MARKER_ID, "foo");
+    assertThat(excludeProgressLogsFilter.decide(event), equalTo(NEUTRAL));
+  }
+
+  @Test
+  public void testTaskLogWithProgressMarkerInMDC() {
+    MDC.put(MDC_MARKER_ID, INTERNAL_PROGRESS.getName());
+    MDC.put(TASK_LOG_WITH_PROGRESS_MDC, "true");
+
+    // as the method also returns NEUTRAL by default, we also test that TASK_LOG_ONLY_MDC being set has no affect
+    MDC.put(TASK_LOG_ONLY_MDC, "anything");
+
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(NEUTRAL));
   }
 

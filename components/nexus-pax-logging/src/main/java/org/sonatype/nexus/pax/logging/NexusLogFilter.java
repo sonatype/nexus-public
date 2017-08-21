@@ -21,6 +21,8 @@ import org.slf4j.Marker;
 import static ch.qos.logback.core.spi.FilterReply.DENY;
 import static ch.qos.logback.core.spi.FilterReply.NEUTRAL;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
+import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_WITH_PROGRESS_MDC;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
@@ -44,6 +46,12 @@ public class NexusLogFilter
   @Override
   public FilterReply decide(final ILoggingEvent event) {
     String marker = MDC.get(MDC_MARKER_ID);
+
+    if (MDC.get(TASK_LOG_WITH_PROGRESS_MDC) != null && INTERNAL_PROGRESS.getName().equals(marker)) {
+      // internal progress logs for TaskLogType.TASK_LOG_WITH_PROGRESS are wanted
+      return NEUTRAL;
+    }
+
     if (PROGRESS.getName().equals(marker) || TASK_LOG_ONLY.getName().equals(marker) ||
         MDC.get(TASK_LOG_ONLY_MDC) != null) {
       return DENY;

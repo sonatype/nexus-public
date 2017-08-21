@@ -23,6 +23,9 @@ public interface TaskLogger
   // constant for MDC use
   String TASK_LOG_ONLY_MDC = "TASK_LOG_ONLY_MDC";
 
+  // constant for MDC use
+  String TASK_LOG_WITH_PROGRESS_MDC = "TASK_LOG_WITH_PROGRESS_MDC";
+
   /**
    * Required to start the task logging. See {@link TaskLoggerHelper#start(TaskLogger)}
    */

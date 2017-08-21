@@ -128,11 +128,6 @@ public class LocalNodeAccess
   }
 
   @Override
-  public boolean isFreshCluster() {
-    throw new UnsupportedOperationException("not in clustered mode");
-  }
-
-  @Override
   public boolean isOldestNode() {
     return true;
   }

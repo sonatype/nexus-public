@@ -32,7 +32,7 @@ import static org.sonatype.nexus.logging.task.DefaultTaskLogger.MARK_LINE;
 import static org.sonatype.nexus.logging.task.DefaultTaskLogger.PROGRESS_LINE;
 import static org.sonatype.nexus.logging.task.TaskLogger.LOGBACK_TASK_DISCRIMINATOR_ID;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 public class DefaultTaskLoggerTest
@@ -73,19 +73,19 @@ public class DefaultTaskLoggerTest
     underTest.progress(event);
 
     // invoke method normally invoke via thread
-    underTest.updateMainLogWithProgress();
+    underTest.logProgress();
 
     // verify progress logged properly
-    verifyLog(NEXUS_LOG_ONLY, format(PROGRESS_LINE, message), (Object[]) null);
+    verifyLog(INTERNAL_PROGRESS, format(PROGRESS_LINE, message), (Object[]) null);
   }
 
   @Test
   public void testProgressMark() {
     // invoke method normally invoke via thread
-    underTest.updateMainLogWithProgress();
+    underTest.logProgress();
 
     // verify progress logged properly
-    verifyLog(null, format(PROGRESS_LINE, MARK_LINE), (Object[]) null);
+    verifyLog(INTERNAL_PROGRESS, format(PROGRESS_LINE, MARK_LINE), (Object[]) null);
   }
 
   @Test

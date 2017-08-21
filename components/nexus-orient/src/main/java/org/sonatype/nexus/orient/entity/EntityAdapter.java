@@ -116,7 +116,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Declares that this adapter may partially load a subset of the declared fields.
    *
-   * @since 3.next
+   * @since 3.6.0
    */
   protected void enablePartialLoading() {
     this.partialLoading = true;

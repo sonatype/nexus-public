@@ -134,8 +134,8 @@ class RepositoryApiImpl
         recipeName: recipeName,
         online: true,
         attributes: [
-            group  : [
-                memberNames: new LinkedHashSet(members.toList())
+            group: [
+                memberNames: members.toList().unique()
             ] as Map,
             storage: [
                 blobStoreName: blobStoreName

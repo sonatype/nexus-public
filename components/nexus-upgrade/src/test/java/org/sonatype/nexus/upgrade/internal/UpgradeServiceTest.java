@@ -146,6 +146,7 @@ public class UpgradeServiceTest
   @Test
   public void testInventoryTakenForFreshInstallation() throws Exception {
     when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(true);
     when(nodeAccess.isClustered()).thenReturn(false);
 
     upgradeService.start();
@@ -166,8 +167,8 @@ public class UpgradeServiceTest
   @Test
   public void testInventoryTakenForFreshCluster() throws Exception {
     when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(true);
     when(nodeAccess.isClustered()).thenReturn(true);
-    when(nodeAccess.isFreshCluster()).thenReturn(true);
 
     upgradeService.start();
 
@@ -187,8 +188,8 @@ public class UpgradeServiceTest
   @Test
   public void testLocalInventoryTakenForFreshNodeJoiningExistingCluster() throws Exception {
     when(nodeAccess.isFreshNode()).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(false);
     when(nodeAccess.isClustered()).thenReturn(true);
-    when(nodeAccess.isFreshCluster()).thenReturn(false);
 
     upgradeService.start();
 

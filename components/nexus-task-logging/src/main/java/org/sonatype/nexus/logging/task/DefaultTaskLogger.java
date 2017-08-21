@@ -19,12 +19,12 @@ import java.util.concurrent.Future;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
-import org.slf4j.Marker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
@@ -43,9 +43,9 @@ public class DefaultTaskLogger
 
   static final String MARK_LINE = "Mark";
 
-  private static final long DELAY = 60L;
+  private static final long DELAY_MINUTES = 10L;
 
-  private static final long INTERVAL = 60L;
+  private static final long INTERVAL_MINUTES = 10L;
 
   private static final TaskLoggingEvent MARK_LOG_MESSAGE = new TaskLoggingEvent(MARK_LINE);
 
@@ -88,15 +88,12 @@ public class DefaultTaskLogger
 
   private void startLogThread() {
     loggingThread = newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(this::updateMainLogWithProgress, DELAY, INTERVAL, SECONDS);
+        .scheduleAtFixedRate(this::logProgress, DELAY_MINUTES, INTERVAL_MINUTES, MINUTES);
   }
 
   @VisibleForTesting
-  void updateMainLogWithProgress() {
-    // if the lastProgressEvent is the 'mark' (i.e. there has been no progress), we want to log to both logs
-    Marker marker = lastProgressEvent == MARK_LOG_MESSAGE ? null : TaskLoggingMarkers.NEXUS_LOG_ONLY;
-
-    log.info(marker, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
+  void logProgress() {
+    log.info(INTERNAL_PROGRESS, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
         lastProgressEvent.getArgumentArray());
 
     // reset last progress message to the mark
@@ -114,6 +111,7 @@ public class DefaultTaskLogger
     log.info(TASK_LOG_ONLY, "Task complete");
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
     MDC.remove(TASK_LOG_ONLY_MDC);
+    MDC.remove(TASK_LOG_WITH_PROGRESS_MDC);
     loggingThread.cancel(true);
   }
 

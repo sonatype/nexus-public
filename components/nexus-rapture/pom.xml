@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.5.1-SNAPSHOT</version>
+    <version>3.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-rapture</artifactId>
@@ -28,6 +28,7 @@
   <packaging>bundle</packaging>
 
   <properties>
+    <resource.url.suffix>?_v=${project.version}&amp;_dc=${resource.url.suffix.timestamp}</resource.url.suffix>
     <sonar.sources>src/main/java,src/main/resources/static/rapture</sonar.sources>
     <sonar.exclusions>
       src/main/resources/static/rapture/baseapp-*.js,
@@ -137,6 +138,46 @@
           </webDriverCapabilities>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>resource-timestamp</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>create-timestamp</goal>
+            </goals>
+            <configuration>
+              <timestampPropertyName>resource.url.suffix.timestamp</timestampPropertyName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- remove the _dc query parameter for non-SNAPSHOT versions -->
+            <id>resource-timestamp-clean</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>regex-property</goal>
+            </goals>
+            <configuration>
+              <name>resource.url.suffix</name>
+              <value>${resource.url.suffix}</value>
+              <regex><![CDATA[(_v=[\d\.\-]+)&_dc=\d+]]></regex>
+              <replacement>$1</replacement>
+              <failIfNoMatch>false</failIfNoMatch>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 

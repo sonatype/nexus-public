@@ -19,8 +19,6 @@ import javax.ws.rs.ext.Provider;
 
 import org.sonatype.nexus.rest.ExceptionMapperSupport;
 
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-
 /**
  * Unexpected generic {@link Throwable} exception mapper.
  *
@@ -36,12 +34,6 @@ public class UnexpectedExceptionMapper
 {
   @Override
   protected Response convert(final Throwable exception, final String id) {
-    // always log unexpected exception with stack
-    log.warn("(ID {}) Unexpected exception: {}", id, exception.toString(), exception);
-
-    return Response.serverError()
-        .entity(String.format("ERROR: (ID %s) %s", id, exception))
-        .type(TEXT_PLAIN)
-        .build();
+    return unexpectedResponse(exception, id);
   }
 }

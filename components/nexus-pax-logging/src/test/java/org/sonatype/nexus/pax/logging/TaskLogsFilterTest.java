@@ -33,11 +33,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.TaskLogger.LOGBACK_TASK_DISCRIMINATOR_ID;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
 
-public class TasksLogsFilterTest
+public class TaskLogsFilterTest
     extends TestSupport
 {
   private static final String TEST_MESSAGE = "test message";
@@ -77,6 +78,13 @@ public class TasksLogsFilterTest
   public void testIsANexusLog() {
     startTask();
     MDC.put(MDC_MARKER_ID, NEXUS_LOG_ONLY.getName());
+    assertThat(taskLogsFilter.decide(event), equalTo(DENY));
+  }
+
+  @Test
+  public void testIsInternalProgress() {
+    startTask();
+    MDC.put(MDC_MARKER_ID, INTERNAL_PROGRESS.getName());
     assertThat(taskLogsFilter.decide(event), equalTo(DENY));
   }
 

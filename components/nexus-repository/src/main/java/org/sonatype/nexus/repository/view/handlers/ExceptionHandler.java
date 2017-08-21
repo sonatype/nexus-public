@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
@@ -38,7 +39,7 @@ public class ExceptionHandler
 {
   @Nonnull
   @Override
-  public Response handle(@Nonnull final Context context) throws Exception {
+  public Response handle(@Nonnull final Context context) throws Exception {  //NOSONAR
     try {
       return context.proceed();
     }
@@ -62,11 +63,24 @@ public class ExceptionHandler
       }
     }
     catch (OModificationOperationProhibitedException e) { //NOSONAR
-      log.warn("Read-only system: {} {}: {}",
+      log.warn("Nexus Repository Manager is in read-only mode: {} {}: {}",
           context.getRequest().getAction(),
           context.getRequest().getPath(),
           e.toString());
-      return HttpResponses.serviceUnavailable();
+      return HttpResponses.serviceUnavailable("Nexus Repository Manager is in read-only mode");
+    }
+    catch (ODistributedException e) {
+      // OWriteOperationNotPermittedException is not exported by orientdb
+      if ("OWriteOperationNotPermittedException".equals(e.getClass().getSimpleName())) {
+        log.warn("Nexus Repository Manager is in read-only mode: {} {}: {}",
+            context.getRequest().getAction(),
+            context.getRequest().getPath(),
+            e.toString());
+        return HttpResponses.serviceUnavailable("Nexus Repository Manager is in read-only mode");
+      }
+      else {
+        throw e;
+      }
     }
   }
 }

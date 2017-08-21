@@ -35,6 +35,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.log.ExceptionSummarizer;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -69,6 +70,9 @@ import org.quartz.spi.TriggerFiredResult;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.sameType;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.summarize;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.warn;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.ACQUIRED;
 import static org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State.BLOCKED;
@@ -103,6 +107,8 @@ public class JobStoreImpl
   private final CalendarEntityAdapter calendarEntityAdapter;
 
   private final NodeAccess nodeAccess;
+
+  private final ExceptionSummarizer acquireNextTriggersSummarizer = summarize(sameType(), warn(log));
 
   private SchedulerSignaler signaler;
 
@@ -897,101 +903,123 @@ public class JobStoreImpl
                                                    final long timeWindow)
       throws JobPersistenceException
   {
+    try {
+      synchronized (monitor) {
+        return inTx(databaseInstance)
+            .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+            .call(db -> doAcquireNextTriggers(db, noLaterThan, maxCount, timeWindow));
+      }
+    }
+    catch (RuntimeException e) {
+      acquireNextTriggersSummarizer.log("Problem acquiring next triggers", e);
+      try {
+        Thread.sleep(10); // introduce small delay, otherwise quartz will immediately try again
+      }
+      catch (InterruptedException ignore) { // NOSONAR
+        // ignored
+      }
+      throw new JobPersistenceException(e.toString(), e);
+    }
+  }
+
+  private List<OperableTrigger> doAcquireNextTriggers(final ODatabaseDocumentTx db,
+                                                      final long noLaterThan,
+                                                      final int maxCount,
+                                                      final long timeWindow)
+  {
     log.debug("Acquire next triggers: noLaterThan={}, maxCount={}, timeWindow={}", noLaterThan, maxCount, timeWindow);
 
-    return execute(db -> {
-      // find all local triggers in WAITING state
-      Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState(db, WAITING)).iterator();
+    // find all local triggers in WAITING state
+    Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState(db, WAITING)).iterator();
 
-      // short-circuit if no matches
-      if (!matches.hasNext()) {
-        return Collections.emptyList();
+    // short-circuit if no matches
+    if (!matches.hasNext()) {
+      return Collections.emptyList();
+    }
+
+    long noEarlierThan = getMisfireTime();
+    List<TriggerEntity> resultEntities = new ArrayList<>();
+
+    while (matches.hasNext()) {
+      TriggerEntity entity = matches.next();
+      OperableTrigger trigger = entity.getValue();
+
+      // skip triggers which have no next fire time
+      if (trigger.getNextFireTime() == null) {
+        continue;
       }
 
-      long noEarlierThan = getMisfireTime();
-      List<TriggerEntity> resultEntities = new ArrayList<>();
-
-      while (matches.hasNext()) {
-        TriggerEntity entity = matches.next();
-        OperableTrigger trigger = entity.getValue();
-
-        // skip triggers which have no next fire time
-        if (trigger.getNextFireTime() == null) {
-          continue;
-        }
-
-        // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
-        if (applyMisfire(db, entity) && trigger.getNextFireTime() == null) {
-          continue;
-        }
-
-        // skip triggers which fire outside of requested window
-        if (trigger.getNextFireTime().getTime() > noLaterThan + timeWindow) {
-          continue;
-        }
-
-        // skip triggers which fire outside of requested window
-        if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
-            trigger.getNextFireTime().getTime() < noEarlierThan) {
-          continue;
-        }
-
-        // check after misfire logic to avoid repeated log-spam
-        if (isClustered() && isLimitedToMissingNode(trigger)) {
-          continue;
-        }
-
-        // track result
-        resultEntities.add(entity);
+      // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
+      if (applyMisfire(db, entity) && trigger.getNextFireTime() == null) {
+        continue;
       }
 
-      // sort candidates
-      Collections.sort(resultEntities, TRIGGER_COMPARATOR);
+      // skip triggers which fire outside of requested window
+      if (trigger.getNextFireTime().getTime() > noLaterThan + timeWindow) {
+        continue;
+      }
 
-      // cope with jobs which have disallowed concurrent execution
-      // gather set of job-keys acquired which have concurrent execution disabled and eliminate dupe triggers
-      Set<JobKey> jobsAcquired = new HashSet<>();
-      Iterator<TriggerEntity> triggerEntityIterator = resultEntities.iterator();
-      while (triggerEntityIterator.hasNext()) {
-        TriggerEntity triggerEntity = triggerEntityIterator.next();
-        OperableTrigger trigger = triggerEntity.getValue();
-        JobKey jobKey = trigger.getJobKey();
-        JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobKey);
-        if (jobDetailEntity != null && jobDetailEntity.getValue().isConcurrentExectionDisallowed()) {
-          if (jobsAcquired.contains(jobKey)) {
-            // trigger for job disallowing concurrent execution already acquired
-            triggerEntityIterator.remove();
-          }
-          else {
-            jobsAcquired.add(jobKey);
-          }
+      // skip triggers which fire outside of requested window
+      if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
+          trigger.getNextFireTime().getTime() < noEarlierThan) {
+        continue;
+      }
+
+      // check after misfire logic to avoid repeated log-spam
+      if (isClustered() && isLimitedToMissingNode(trigger)) {
+        continue;
+      }
+
+      // track result
+      resultEntities.add(entity);
+    }
+
+    // sort candidates
+    Collections.sort(resultEntities, TRIGGER_COMPARATOR);
+
+    // cope with jobs which have disallowed concurrent execution
+    // gather set of job-keys acquired which have concurrent execution disabled and eliminate dupe triggers
+    Set<JobKey> jobsAcquired = new HashSet<>();
+    Iterator<TriggerEntity> triggerEntityIterator = resultEntities.iterator();
+    while (triggerEntityIterator.hasNext()) {
+      TriggerEntity triggerEntity = triggerEntityIterator.next();
+      OperableTrigger trigger = triggerEntity.getValue();
+      JobKey jobKey = trigger.getJobKey();
+      JobDetailEntity jobDetailEntity = jobDetailEntityAdapter.readByKey(db, jobKey);
+      if (jobDetailEntity != null && jobDetailEntity.getValue().isConcurrentExectionDisallowed()) {
+        if (jobsAcquired.contains(jobKey)) {
+          // trigger for job disallowing concurrent execution already acquired
+          triggerEntityIterator.remove();
+        }
+        else {
+          jobsAcquired.add(jobKey);
         }
       }
+    }
 
-      // limit result set if needed
-      if (!resultEntities.isEmpty() && maxCount < resultEntities.size()) {
-        resultEntities = resultEntities.subList(0, maxCount);
+    // limit result set if needed
+    if (!resultEntities.isEmpty() && maxCount < resultEntities.size()) {
+      resultEntities = resultEntities.subList(0, maxCount);
+    }
+
+    // set state on selected ones
+    List<OperableTrigger> result = new ArrayList<>();
+    for (TriggerEntity entity : resultEntities) {
+      OperableTrigger trigger = entity.getValue();
+      // TODO: Sort out if this is needed, maybe set to entity-id.value?
+      // TODO: JDBC store impl uses this to do some validation on triggersFired()
+      trigger.setFireInstanceId(UUID.randomUUID().toString());
+      if (isClustered()) {
+        // associate trigger with the node that acquired it
+        trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
       }
+      result.add(trigger);
+      entity.setState(ACQUIRED);
+      triggerEntityAdapter.editEntity(db, entity);
+    }
 
-      // set state on selected ones
-      List<OperableTrigger> result = new ArrayList<>();
-      for (TriggerEntity entity : resultEntities) {
-        OperableTrigger trigger = entity.getValue();
-        // TODO: Sort out if this is needed, maybe set to entity-id.value?
-        // TODO: JDBC store impl uses this to do some validation on triggersFired()
-        trigger.setFireInstanceId(UUID.randomUUID().toString());
-        if (isClustered()) {
-          // associate trigger with the node that acquired it
-          trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
-        }
-        result.add(trigger);
-        entity.setState(ACQUIRED);
-        triggerEntityAdapter.editEntity(db, entity);
-      }
-
-      log.trace("Acquired triggers: {}", result);
-      return result;
-    });
+    log.trace("Acquired triggers: {}", result);
+    return result;
   }
 
   /**

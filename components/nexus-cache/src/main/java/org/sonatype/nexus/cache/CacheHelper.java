@@ -28,7 +28,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.6.0
  */
 @Named
 @Singleton

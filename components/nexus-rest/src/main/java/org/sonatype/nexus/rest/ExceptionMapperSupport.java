@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 
 /**
  * Support for {@link ExceptionMapper} implementations.
@@ -85,4 +86,14 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
    * @param id        The unique identifier generated for this fault.
    */
   protected abstract Response convert(final E exception, final String id);
+
+  protected Response unexpectedResponse(final Throwable exception, final String id) {
+    // always log unexpected exception with stack
+    log.warn("(ID {}) Unexpected exception: {}", id, exception.toString(), exception);
+
+    return Response.serverError()
+        .entity(String.format("ERROR: (ID %s) %s", id, exception))
+        .type(TEXT_PLAIN)
+        .build();
+  }
 }

@@ -52,7 +52,9 @@ public class FileBlobAttributesTest
     assertTrue(Files.isRegularFile(original.getPath()));
 
     Properties properties = new Properties();
-    properties.load(new FileReader(original.getPath().toFile()));
+    try (FileReader reader = new FileReader(original.getPath().toFile())) {
+      properties.load(reader);
+    }
 
     assertThat(properties.remove("@hello"), is("world"));
     assertThat(properties.remove("creationTime"), is("987654321"));
@@ -63,7 +65,9 @@ public class FileBlobAttributesTest
     original.setDeleted(true);
     original.store();
 
-    properties.load(new FileReader(original.getPath().toFile()));
+    try (FileReader reader = new FileReader(original.getPath().toFile())) {
+      properties.load(reader);
+    }
 
     assertThat(properties.remove("@hello"), is("world"));
     assertThat(properties.remove("creationTime"), is("987654321"));
@@ -76,7 +80,9 @@ public class FileBlobAttributesTest
     original.setDeletedReason("Spring cleaning");
     original.store();
 
-    properties.load(new FileReader(original.getPath().toFile()));
+    try (FileReader reader = new FileReader(original.getPath().toFile())) {
+      properties.load(reader);
+    }
 
     assertThat(properties.remove("@hello"), is("world"));
     assertThat(properties.remove("creationTime"), is("987654321"));

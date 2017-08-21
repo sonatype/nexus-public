@@ -12,25 +12,26 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.endsWith;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class TaskLogHomeTest
     extends TestSupport
 {
   @Test
   public void getTaskLogHome() {
-    String taskLogHome = TaskLogHome.getTaskLogHome();
-    assertThat(taskLogHome, endsWith("test/log/tasks"));
+    Path taskLogHome = Paths.get(TaskLogHome.getTaskLogHome());
+    assertTrue(taskLogHome.endsWith(Paths.get("test", "log", "tasks")));
 
-    File file = new File(taskLogHome, "temp.log");
-    assertFalse(file.exists());
+    Path file = taskLogHome.resolve("temp.log");
+    assertFalse("temp file was not deleted", Files.exists(file));
   }
 }

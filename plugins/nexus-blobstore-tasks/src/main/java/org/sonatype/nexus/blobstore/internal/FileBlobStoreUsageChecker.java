@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 /**
  * Check if a blob is reference in the corresponding metadata.
  *
- * @since 3.next
+ * @since 3.6.0
  */
 @Named
 @Singleton
