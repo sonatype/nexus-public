@@ -14,53 +14,31 @@ package org.sonatype.nexus.logging.task;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Future;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
- * Handle logic for logging progress within scheduled tasks. Logback handles most of the work (see logback.xml,
- * TaskLogsFilter, and NexusLogFilter in nexus-pax-logging).
- * Additionally this class has starts a thread which will log regular (1 minute) progress update back to the main
- * nexus.log.
+ * {@link TaskLogger} implementation which handles the logic for creating separate task log files per task execution.
+ * Extends {@link ProgressTaskLogger} to also include progress functionality.
+ * Note logback handles most of the work (see logback.xml, TaskLogsFilter, and NexusLogFilter in nexus-pax-logging).
  *
  * @since 3.5
  */
-public class DefaultTaskLogger
-    implements TaskLogger
+public class SeparateTaskLogTaskLogger
+    extends ProgressTaskLogger
 {
-  static final String PROGRESS_LINE = "---- %s ----";
-
-  static final String MARK_LINE = "Mark";
-
-  private static final long DELAY_MINUTES = 10L;
-
-  private static final long INTERVAL_MINUTES = 10L;
-
-  private static final TaskLoggingEvent MARK_LOG_MESSAGE = new TaskLoggingEvent(MARK_LINE);
-
-  private final Logger log;
-
   private final TaskLogInfo taskLogInfo;
 
   private final String taskLogIdentifier;
 
-  private Future<?> loggingThread;
-
-  private TaskLoggingEvent lastProgressEvent = MARK_LOG_MESSAGE;
-
-  DefaultTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
-    this.log = checkNotNull(log);
+  SeparateTaskLogTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
+    super(log);
     this.taskLogInfo = checkNotNull(taskLogInfo);
 
     // Set per-thread logback property via MDC (see logback.xml)
@@ -68,7 +46,6 @@ public class DefaultTaskLogger
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
     MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, taskLogIdentifier);
   }
-
 
   private void logTaskInfo() {
     // dump task details to task log
@@ -86,37 +63,18 @@ public class DefaultTaskLogger
     }
   }
 
-  private void startLogThread() {
-    loggingThread = newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(this::logProgress, DELAY_MINUTES, INTERVAL_MINUTES, MINUTES);
-  }
-
-  @VisibleForTesting
-  void logProgress() {
-    log.info(INTERNAL_PROGRESS, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
-        lastProgressEvent.getArgumentArray());
-
-    // reset last progress message to the mark
-    lastProgressEvent = MARK_LOG_MESSAGE;
-  }
-
   @Override
   public final void start() {
-    startLogThread();
+    super.start();
     logTaskInfo();
   }
 
   @Override
   public final void finish() {
+    super.finish();
     log.info(TASK_LOG_ONLY, "Task complete");
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
     MDC.remove(TASK_LOG_ONLY_MDC);
     MDC.remove(TASK_LOG_WITH_PROGRESS_MDC);
-    loggingThread.cancel(true);
-  }
-
-  @Override
-  public final void progress(final TaskLoggingEvent event) {
-    lastProgressEvent = event;
   }
 }

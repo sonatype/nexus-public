@@ -31,6 +31,8 @@ import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.orient.freeze.FreezeRequest;
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
@@ -94,7 +96,10 @@ public class DatabaseBackupTask
     log.info("task named '{}' database backup to location {}", getName(), location);
     MultipleFailures failures = new MultipleFailures();
 
-    freezeService.freezeAllDatabases();
+    FreezeRequest request = freezeService.requestFreeze(InitiatorType.SYSTEM, getConfiguration().getName());
+    if (request == null) {
+      throw new RuntimeException("unable to perform backup task, as attempt to freeze databases failed");
+    }
     try {
       for (String dbName : databaseBackup.dbNames()) {
         try {
@@ -113,7 +118,9 @@ public class DatabaseBackupTask
       failures.maybePropagate();
       return null;
     } finally {
-      freezeService.releaseAllDatabases();
+      if (freezeService.releaseRequest(request)) {
+        log.error("failed to release {}", request);
+      }
     }
   }
 

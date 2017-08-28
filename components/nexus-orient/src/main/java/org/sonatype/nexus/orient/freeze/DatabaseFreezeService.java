@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.orient.freeze;
 
+import java.util.List;
+
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 
 /**
@@ -22,29 +26,81 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 public interface DatabaseFreezeService
 {
   /**
-   * Freeze all databases. Will emit an event.
+   * Request that the databases be frozen. {@link InitiatorType#USER_INITIATED} is used for external actors, like
+   * a nexus administrator using the UI feature, or invoking a REST request. {@link InitiatorType#SYSTEM} is
+   * used by internal actors, like system tasks. {@link InitiatorType#SYSTEM} should not be released by external
+   * actors.
+   *
+   * If the request is rejected due to existing requests, this method will return null.
+   *
+   * @param type the type of request, user or system initiated
+   * @param initiatorId an identifier for the initiator of the request
+   * @return the {@link FreezeRequest}, or null if the request was rejected
    */
-  void freezeAllDatabases();
+  FreezeRequest requestFreeze(InitiatorType type, String initiatorId);
 
   /**
-   * Release all databases. Will emit an event.
+   * @return a never null, but potentially empty, {@link List} of open {@link FreezeRequest}s
    */
-  void releaseAllDatabases();
+  List<FreezeRequest> getState();
 
   /**
-   * Returns whether databases are currently frozen.
+   * Release an existing {@link FreezeRequest}, if present.
+   * If this was the last open request, all databases will be "thawed", removing "read-only" status.
+   * If thaw happens this method will emit an event.
+   *
+   * @param request the request to release
+   * @return true if the request was released
+   */
+  boolean releaseRequest(FreezeRequest request);
+
+  /**
+   * Release an existing {@link org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType#USER_INITIATED}
+   * {@link FreezeRequest}, if present.
+   * If this was the last open request, all databases will be "thawed", removing "read-only" status.
+   * If thaw happens this method will emit an event.
+   *
+   * @return true if a user initiated request was present and it was successfully released; false otherwise.
+   */
+  boolean releaseUserInitiatedIfPresent();
+
+  /**
+   * Release all existing {@link FreezeRequest}s.
+   * The intent for this method is a immediate, cluster-wide thaw of all databases.
+   * @return the list of {@link FreezeRequest}s that were released.
+   */
+  List<FreezeRequest> releaseAllRequests();
+
+  /**
+   * Immediately freezes all local OrientDB databases if not already frozen; a frozen database will not accept
+   * writes.
+   *
+   * Callers should prefer {@link #requestFreeze(InitiatorType, String)} as it provides necessary safe guards between
+   * system and user initiated requests as well as distributes the status if HA is enabled.
+   */
+  void freezeLocalDatabases();
+
+  /**
+   * Immediately thaws all local OrientDB if frozen; upon conclusion writes will be accepted.
+   *
+   * Callers should prefer {@link #releaseRequest(FreezeRequest)}.
+   */
+  void releaseLocalDatabases();
+
+  /**
+   * Returns whether local databases are currently frozen. May not reflect cluster state (e.g. {@link #getState()}).
    */
   boolean isFrozen();
 
   /**
-   * Check if the database is frozen and throw a {@link OModificationOperationProhibitedException} if it is.
+   * Check {@link #isFrozen()} and throw a {@link OModificationOperationProhibitedException} if it is.
    *
    * @throws OModificationOperationProhibitedException thrown if database is frozen
    */
   void checkUnfrozen();
 
   /**
-   * Check if the database is frozen and throw a {@link OModificationOperationProhibitedException} if it is.
+   * Check {@link #isFrozen()} and throw a {@link OModificationOperationProhibitedException} if it is.
    *
    * @param message Message used when constructing the  OModificationOperationProhibitedException
    * @throws OModificationOperationProhibitedException thrown if database is frozen

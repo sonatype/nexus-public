@@ -20,6 +20,8 @@ import javax.validation.constraints.NotNull
 
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
+import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -44,6 +46,9 @@ class DatabaseFreezeComponent
   @Inject
   DatabaseFreezeService databaseFreezeService;
 
+  @Inject
+  SecuritySystem securitySystem
+
   @DirectMethod
   @Timed
   @ExceptionMetered
@@ -59,11 +64,22 @@ class DatabaseFreezeComponent
   @Validate
   DatabaseFreezeStatusXO update(final @NotNull @Valid DatabaseFreezeStatusXO freezeDatabaseStatusXO) {
     if (freezeDatabaseStatusXO.frozen) {
-      databaseFreezeService.freezeAllDatabases()
+      databaseFreezeService.requestFreeze(InitiatorType.USER_INITIATED,  securitySystem.currentUser().userId)
     }
     else {
-      databaseFreezeService.releaseAllDatabases()
+      databaseFreezeService.releaseUserInitiatedIfPresent()
     }
+    return buildStatus()
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  @Validate
+  DatabaseFreezeStatusXO forceRelease() {
+    databaseFreezeService.releaseAllRequests()
     return buildStatus()
   }
 

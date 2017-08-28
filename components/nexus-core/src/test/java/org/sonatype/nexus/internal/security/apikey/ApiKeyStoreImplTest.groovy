@@ -136,6 +136,16 @@ class ApiKeyStoreImplTest
     assertThat(underTest.getApiKey('bar', principalB), equalTo(null))
   }
 
+  @Test
+  void 'Get api key if already exists'() {
+    PrincipalCollection principalA = makePrincipals("name-a")
+
+    def key = underTest.createApiKey('foo', principalA)
+    def key2 = underTest.createApiKey('foo', principalA)
+
+    assertThat(key2, equalTo(key));
+  }
+
   private PrincipalCollection makePrincipals(String name) {
     return new SimplePrincipalCollection(name, "foo")
   }

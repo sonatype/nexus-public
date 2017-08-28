@@ -12,8 +12,15 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.Arrays;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.orient.freeze.FreezeRequest;
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
+import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +28,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,10 +43,14 @@ public class DatabaseFreezeComponentTest
   @Mock
   DatabaseFreezeService databaseFreezeService;
 
+  @Mock
+  SecuritySystem securitySystem;
+
   @Before
   public void setup() {
     underTest = new DatabaseFreezeComponent();
     underTest.setDatabaseFreezeService(databaseFreezeService);
+    underTest.setSecuritySystem(securitySystem);
   }
 
   @Test
@@ -53,17 +67,32 @@ public class DatabaseFreezeComponentTest
 
     underTest.update(databaseFreezeStatusXO);
 
-    verify(databaseFreezeService).releaseAllDatabases();
+    verify(databaseFreezeService).releaseUserInitiatedIfPresent();
   }
 
   @Test
-  public void testUpdateFreeze(){
+  public void testUpdateReleaseFailsForSystemInitiated() throws Exception {
+    DatabaseFreezeStatusXO databaseFreezeStatusXO = new DatabaseFreezeStatusXO();
+    databaseFreezeStatusXO.setFrozen(false);
+
+    FreezeRequest request = new FreezeRequest(InitiatorType.SYSTEM, "DatabaseFreezeComponentTest");
+    when(databaseFreezeService.getState()).thenReturn(Arrays.asList(request));
+    underTest.update(databaseFreezeStatusXO);
+
+    verify(databaseFreezeService, never()).releaseRequest(isA(FreezeRequest.class));
+  }
+
+  @Test
+  public void testUpdateFreeze() throws UserNotFoundException {
     DatabaseFreezeStatusXO databaseFreezeStatusXO = new DatabaseFreezeStatusXO();
     databaseFreezeStatusXO.setFrozen(true);
 
+    User user = mock(User.class);
+    when(user.getUserId()).thenReturn("admin");
+    when(securitySystem.currentUser()).thenReturn(user);
     underTest.update(databaseFreezeStatusXO);
 
-    verify(databaseFreezeService).freezeAllDatabases();
+    verify(databaseFreezeService).requestFreeze(isA(InitiatorType.class), isA(String.class));
   }
 
 }

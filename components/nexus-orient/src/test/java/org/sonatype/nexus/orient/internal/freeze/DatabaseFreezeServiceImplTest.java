@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -19,17 +21,21 @@ import java.util.Set;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.node.NodeMergedEvent;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
+import org.sonatype.nexus.orient.freeze.FreezeRequest;
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
+import com.google.common.collect.Sets;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -40,14 +46,15 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.of;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -55,8 +62,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -65,15 +72,18 @@ import static org.mockito.Mockito.when;
 public class DatabaseFreezeServiceImplTest
     extends TestSupport
 {
+
   static final String DB_CLASS = "freeze-test";
 
   private static final String P_NAME = "name";
 
-  @Mock
-  EventManager eventManager;
+  private static final String INITIATOR_ID = "DatabaseFreezeServiceImplTest";
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock
-  DatabaseFrozenStateManager databaseFrozenStateManager;
+  EventManager eventManager;
 
   @Mock
   OServer server;
@@ -90,6 +100,14 @@ public class DatabaseFreezeServiceImplTest
   @Mock
   DatabaseInstance databaseInstance;
 
+  @Mock
+  ApplicationDirectories applicationDirectories;
+
+  @Mock
+  NodeAccess nodeAccess;
+
+  DatabaseFrozenStateManager databaseFrozenStateManager;
+
   DatabaseFreezeServiceImpl underTest;
 
   @Rule
@@ -102,19 +120,37 @@ public class DatabaseFreezeServiceImplTest
 
   @Before
   public void setup() throws Exception {
+    File workDir = temporaryFolder.newFolder();
+    when(applicationDirectories.getWorkDirectory("db")).thenReturn(workDir);
+
+    databaseFrozenStateManager = new LocalDatabaseFrozenStateManager(applicationDirectories);
+
     when(distributedServerManager.getMessageService()).thenReturn(distributedMessageService);
     when(distributedMessageService.getDatabases()).thenReturn(Collections.singleton("test"));
     when(distributedServerManager.executeInDistributedDatabaseLock(eq("test"), anyLong(),
         any(OModifiableDistributedConfiguration.class),
         (OCallable<Object, OModifiableDistributedConfiguration>) notNull()))
-            .then(invoc -> ((OCallable) invoc.getArguments()[3]).call(distributedConfiguration));
+        .then(invoc -> ((OCallable) invoc.getArguments()[3]).call(distributedConfiguration));
+    when(distributedServerManager.getDatabaseConfiguration("test"))
+        .thenReturn(distributedConfiguration);
+
+    when(nodeAccess.isClustered()).thenReturn(false);
+
     providerSet = of(database.getInstanceProvider(), database2.getInstanceProvider()).collect(toSet());
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, databaseFrozenStateManager, () -> server);
+
+    underTest = new DatabaseFreezeServiceImpl(
+        providerSet,
+        eventManager,
+        databaseFrozenStateManager,
+        () -> server,
+        nodeAccess);
+
+    when(server.getDistributedManager()).thenReturn(distributedServerManager);
 
     for (Provider<DatabaseInstance> provider : providerSet) {
       try (ODatabaseDocumentTx db = provider.get().connect()) {
         OSchema schema = db.getMetadata().getSchema();
-        OClass type = schema.createClass(DB_CLASS);
+        schema.createClass(DB_CLASS);
       }
     }
 
@@ -123,17 +159,14 @@ public class DatabaseFreezeServiceImplTest
 
   @Test
   public void testFreeze() {
-
     ArgumentCaptor<DatabaseFreezeChangeEvent> freezeChangeEventArgumentCaptor = forClass(
         DatabaseFreezeChangeEvent.class);
 
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
-    verify(databaseFrozenStateManager).set(true);
+    FreezeRequest request = underTest.requestFreeze(InitiatorType.SYSTEM, INITIATOR_ID);
+    verifyWriteFails(true);
 
-    underTest.releaseAllDatabases();
-    verifyWrite(false);
-    verify(databaseFrozenStateManager).set(false);
+    underTest.releaseRequest(request);
+    verifyWriteFails(false);
 
     verify(eventManager, times(2)).post(freezeChangeEventArgumentCaptor.capture());
 
@@ -142,37 +175,61 @@ public class DatabaseFreezeServiceImplTest
     assertThat(databaseFreezeChangeEvents.get(1).isFrozen(), is(false));
   }
 
+  /**
+   * {@link DatabaseFreezeServiceImpl#requestFreeze(InitiatorType, String)} per contract must reject any additional
+   * user initiated requests if one is open.
+   */
   @Test
-  public void testMultipleFreezes() {
-    //Multiple freezes should only require one release
-    underTest.freezeAllDatabases();
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
+  public void testMultipleUserInitiatedFreezes() {
+    FreezeRequest request = underTest.requestFreeze(InitiatorType.USER_INITIATED, "DatabaseFreezeServiceImplTest");
+    verifyWriteFails(true);
+    // attempt to stack a second user initiated will fail
+    assertThat(underTest.requestFreeze(InitiatorType.USER_INITIATED, "DatabaseFreezeServiceImplTest"), equalTo(null));
 
-    underTest.releaseAllDatabases();
-    verifyWrite(false);
+    // still frozen
+    verifyWriteFails(true);
 
+    assertThat(underTest.releaseRequest(request), is(true));
+    verifyWriteFails(false);
+
+    // one event has frozen=true, one has frozen=false
+    verify(eventManager, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+  }
+
+  /**
+   * {@link DatabaseFreezeServiceImpl#requestFreeze(InitiatorType, String)} per contract allows multiple system
+   * initiated freeze requests to stack.
+   * Freeze is not released until the last is released.
+   */
+  @Test
+  public void testMultipleSystemInitiatedFreezes() {
+    // system requests stack
+    FreezeRequest request1 = underTest.requestFreeze(InitiatorType.SYSTEM,"DatabaseFreezeServiceImplTest");
+    verifyWriteFails(true);
+
+    FreezeRequest request2 =underTest.requestFreeze(InitiatorType.SYSTEM,"DatabaseFreezeServiceImplTest");
+    verifyWriteFails(true);
+
+    FreezeRequest request3 =underTest.requestFreeze(InitiatorType.SYSTEM,"DatabaseFreezeServiceImplTest");
+    verifyWriteFails(true);
+
+    assertThat(underTest.releaseRequest(request1), is(true));
+    verifyWriteFails(true);
+
+    assertThat(underTest.releaseRequest(request2), is(true));
+    verifyWriteFails(true);
+
+    // writes won't succeed until the state is empty
+    assertThat(underTest.releaseRequest(request3), is(true));
+    verifyWriteFails(false);
+
+    // one event on initial freeze, one event on final release
     verify(eventManager, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
   }
 
   @Test
-  public void testMultipleReleases() {
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
-
-    //multiple releases should only require one freeze to lock back up
-    underTest.releaseAllDatabases();
-    underTest.releaseAllDatabases();
-    verifyWrite(false);
-
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
-    verify(eventManager, times(3)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
-  }
-
-  @Test
   public void testVerifyUnfrozen() {
-    underTest.freezeAllDatabases();
+    underTest.freezeLocalDatabases();
     try {
       underTest.checkUnfrozen("test");
       fail("Should have thrown OModificationProhibtedException");
@@ -180,67 +237,129 @@ public class DatabaseFreezeServiceImplTest
     catch (OModificationOperationProhibitedException e) {
       assertThat(e.getMessage(), is("test"));
     }
-    underTest.releaseAllDatabases();
+    underTest.releaseLocalDatabases();
     underTest.checkUnfrozen(); //should be no errors
   }
 
+  /**
+   * Replace the {@link DatabaseFrozenStateManager} with a mock to simulate a local node that may be out of sync
+   * with the cluster.
+   *
+   * Control experiment: expect no changes when local state matches {@link DatabaseFrozenStateManager#getState()}.
+   */
   @Test
-  public void testDatabasesNotFrozenWhenFreezeEventsPosted() {
-    doAnswer(invocation -> {
-      verifyWrite(false);
-      return null;
-    }).when(eventManager).post(any(DatabaseFreezeChangeEvent.class));
+  public void onNodeMergedNoChange() {
+    DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
+    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
+        mockManager, () -> server, nodeAccess);
 
-    underTest.freezeAllDatabases();
-    underTest.releaseAllDatabases();
-  }
+    // verify we are in writable state
+    verifyWriteFails(false);
 
+    // given: frozenStateManager reports empty state
+    when(mockManager.getState()).thenReturn(Collections.emptyList());
 
-  @Test
-  public void testOnNodeAddedShouldFreeze() {
-    verifyWrite(false);
-    when(databaseFrozenStateManager.get()).thenReturn(true);
+    // when: a new node is added
     underTest.onNodeMerged(new NodeMergedEvent());
-    verifyWrite(true);
-    verify(eventManager).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
-  }
 
-  @Test
-  public void testOnNodeAddedShouldRelease() {
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
-    when(databaseFrozenStateManager.get()).thenReturn(false);
-    underTest.onNodeMerged(new NodeMergedEvent());
-    verifyWrite(false);
-    verify(eventManager, times(2)).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
-  }
-
-  @Test
-  public void testOnNodeAddedNoChangeReleased() {
-    verifyWrite(false);
-    when(databaseFrozenStateManager.get()).thenReturn(false);
-    underTest.onNodeMerged(new NodeMergedEvent());
-    verifyWrite(false);
-    verifyNoMoreInteractions(eventManager);
-  }
-
-  @Test
-  public void testOnNodeAddedNoChangeFrozen() {
-    underTest.freezeAllDatabases();
-    verifyWrite(true);
-    when(databaseFrozenStateManager.get()).thenReturn(true);
-    underTest.onNodeMerged(new NodeMergedEvent());
-    verifyWrite(true);
-    verify(eventManager).post(Mockito.isA(DatabaseFreezeChangeEvent.class));
+    // then: expect we can still write and we don't try to change server role or setFrozen
+    verifyWriteFails(false);
+    verifyNoMoreInteractions(distributedServerManager);
   }
 
   /**
-   * Check the status of the databases by attempting writes.
+   * Replace the {@link DatabaseFrozenStateManager} with a mock to simulate a local node that may be out of sync
+   * with the cluster.
+   *
+   * Expect {@link DatabaseFreezeServiceImpl#freezeLocalDatabases()} when {@link DatabaseFrozenStateManager#getState()}
+   * reports an open request and we aren't locally frozen.
+   */
+  @Test
+  public void onNodeMergedStateRequiresFreeze() {
+    DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, mockManager, () -> server, nodeAccess);
+
+    // verify we start in writable state
+    verifyWriteFails(false);
+
+    // given: frozenStateManager reports an active FreezeRequest
+    when(mockManager.getState()).thenReturn(Arrays.asList(new FreezeRequest(InitiatorType.SYSTEM, INITIATOR_ID)));
+
+    // when: a new node is added
+    underTest.onNodeMerged(new NodeMergedEvent());
+
+    // then: expect side effects of freezeLocalDatabases - can't write
+    verifyWriteFails(true);
+  }
+
+  /**
+   * Replace the {@link DatabaseFrozenStateManager} with a mock to simulate a local node that may be out of sync
+   * with the cluster.
+   *
+   * Expect {@link DatabaseFreezeServiceImpl#releaseLocalDatabases()} when {@link DatabaseFrozenStateManager#getState()}
+   * reports empty state and we are locally frozen.
+   */
+  @Test
+  public void onNodeMergedStateRequiresRelease() {
+    DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, mockManager, () -> server, nodeAccess);
+
+    underTest.freezeLocalDatabases();
+    // verify we start in read-only state
+    verifyWriteFails(true);
+
+    // given: frozenStateManager reports empty state
+    when(mockManager.getState()).thenReturn(Collections.emptyList());
+
+    // when: a new node is added
+    underTest.onNodeMerged(new NodeMergedEvent());
+
+    // then: expect side effects of releaseLocalDatabases - we can write again
+    verifyWriteFails(false);
+  }
+
+  @Test
+  public void isFrozenChecksAllDatabases() {
+    DatabaseInstance instance = mock(DatabaseInstance.class);
+    underTest = new DatabaseFreezeServiceImpl(Sets.newHashSet(
+        () -> instance,
+        () -> instance,
+        () -> instance,
+        () -> instance
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess);
+
+    when(instance.isFrozen())
+        .thenReturn(true, true, true, false);
+    assertThat(underTest.isFrozen(), is(false));
+
+    verify(instance, times(4)).isFrozen();
+  }
+
+  @Test
+  public void isFrozenShortcircuit() {
+    DatabaseInstance instance = mock(DatabaseInstance.class);
+    underTest = new DatabaseFreezeServiceImpl(Sets.newHashSet(
+        () -> instance,
+        () -> instance,
+        () -> instance,
+        () -> instance
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess);
+
+    when(instance.isFrozen())
+        .thenReturn(false, true, true, true);
+    assertThat(underTest.isFrozen(), is(false));
+
+    verify(instance, times(1)).isFrozen();
+  }
+
+  /**
+   * Utility method to check the status of the databases by attempting writes.
+   * Note: this method only works in non-HA simulations in this test class.
    *
    * @param errorExpected if true, this method will still pass the test when a write fails, and fail if no error is
    *                      encountered. If false, it will fail a test if the write fails.
    */
-  void verifyWrite(boolean errorExpected) {
+  void verifyWriteFails(boolean errorExpected) {
     for (Provider<DatabaseInstance> provider : providerSet) {
       try (ODatabaseDocumentTx db = provider.get().connect()) {
         db.begin();
@@ -264,26 +383,32 @@ public class DatabaseFreezeServiceImplTest
     }
   }
 
+  /**
+   * When HA enabled, don't use {@link DatabaseInstance#setFrozen(boolean)}, use
+   * {@link OModifiableDistributedConfiguration#setServerRole(String, ROLES)} instead.
+   */
   @Test
-  public void testSwitchToReplicaModeAfterFreeze() {
-    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        databaseFrozenStateManager, () -> server);
-    when(server.getDistributedManager()).thenReturn(distributedServerManager);
-    underTest.freezeAllDatabases();
-    InOrder order = inOrder(databaseInstance, distributedConfiguration);
-    order.verify(databaseInstance).setFrozen(true);
-    order.verify(distributedConfiguration).setServerRole("*", ROLES.REPLICA);
+  public void freezeAndReleaseHAUsesServerRole() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    FreezeRequest request = underTest.requestFreeze(InitiatorType.SYSTEM, INITIATOR_ID);
+    verify(distributedConfiguration).setServerRole(DatabaseFreezeServiceImpl.SERVER_NAME, ROLES.REPLICA);
+    verify(databaseInstance, never()).setFrozen(true);
+
+    assertThat(underTest.releaseRequest(request), is(true));
+    verify(distributedConfiguration).setServerRole(DatabaseFreezeServiceImpl.SERVER_NAME, ROLES.MASTER);
+    verify(databaseInstance, never()).setFrozen(true);
   }
 
   @Test
-  public void testSwitchToMasterModeBeforeRelease() {
-    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        databaseFrozenStateManager, () -> server);
-    when(server.getDistributedManager()).thenReturn(distributedServerManager);
-    underTest.freezeAllDatabases();
-    underTest.releaseAllDatabases();
-    InOrder order = inOrder(databaseInstance, distributedConfiguration);
-    order.verify(distributedConfiguration).setServerRole("*", ROLES.MASTER);
-    order.verify(databaseInstance).setFrozen(false);
+  public void isFrozenHAUsesServerRole() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(distributedConfiguration.getServerRole(any())).thenReturn(ROLES.MASTER);
+
+    assertThat(underTest.isFrozen(), is(false));
+
+    when(distributedConfiguration.getServerRole(any())).thenReturn(ROLES.REPLICA);
+
+    assertThat(underTest.isFrozen(), is(true));
   }
 }

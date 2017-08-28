@@ -117,29 +117,57 @@ Ext.define('NX.coreui.controller.Nodes', {
     me.getToggleFreezeButton().setText(
         me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') : NX.I18n.get('Nodes_Enable_read_only_mode'));
 
-    NX.State.setValue('db', { dbFrozen: me.dbFrozen });
+    if (NX.State.getValue('db', {})['dbFrozen'] !== me.dbFrozen) {
+      NX.State.setValue('db', { dbFrozen: me.dbFrozen });
+    }
   },
 
   toggleFreeze: function() {
-    var me = this;
+    var me = this, dialogTitle, dialogDescription, yesButtonText;
 
-    var dialogTitle = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
-        NX.I18n.get('Nodes_Enable_read_only_mode_dialog');
-    var dialogDescription = me.dbFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
-        NX.I18n.get('Nodes_enable_read_only_mode_dialog_description');
+    var systemInitiated = NX.State.getValue('db', {})['system'];
+
+    if (systemInitiated && me.dbFrozen) {
+      dialogTitle = NX.I18n.get('Nodes_force_release_dialog');
+      dialogDescription = NX.I18n.get('Nodes_force_release_warning')
+          + ' ' + NX.I18n.get('Nodes_force_release_confirmation');
+      yesButtonText = NX.I18n.get('Nodes_force_release');
+    } else {
+      dialogTitle = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
+          NX.I18n.get('Nodes_Enable_read_only_mode_dialog');
+      dialogDescription = me.dbFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
+          NX.I18n.get('Nodes_enable_read_only_mode_dialog_description');
+      yesButtonText = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') :
+          NX.I18n.get('Nodes_Enable_read_only_mode');
+    }
 
     NX.Dialogs.askConfirmation(dialogTitle, dialogDescription, function() {
       var settings = {frozen: !me.dbFrozen};
 
       me.getContent().getEl().mask(NX.I18n.get('Nodes_Toggling_read_only_mode'));
-      NX.direct.coreui_DatabaseFreeze.update(settings, function(response) {
-        me.getContent().getEl().unmask();
-        if (Ext.isObject(response) && response.success) {
-          me.updateFreezeStatus(response.data.frozen);
-        }
-      });
-    }, {scope: me});
+      if (systemInitiated && me.dbFrozen) {
+        NX.direct.coreui_DatabaseFreeze.forceRelease(function(response) {
+          me.getContent().getEl().unmask();
+          if (Ext.isObject(response) && response.success) {
+            me.updateFreezeStatus(response.data.frozen);
+          }
+        });
+      } else {
+        NX.direct.coreui_DatabaseFreeze.update(settings, function(response) {
+          me.getContent().getEl().unmask();
+          if (Ext.isObject(response) && response.success) {
+            me.updateFreezeStatus(response.data.frozen);
+          }
+        });
+      }
 
+    }, {
+      scope: me,
+      buttonText: {
+        yes: yesButtonText,
+        no: 'Cancel'
+      }
+    });
   },
 
   onSelection: function (list, model) {

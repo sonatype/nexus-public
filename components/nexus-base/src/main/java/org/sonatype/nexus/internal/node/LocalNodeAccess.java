@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -42,7 +43,7 @@ public class LocalNodeAccess
     extends StateGuardLifecycleSupport
     implements NodeAccess
 {
-  private final KeyStoreManager keyStoreManager;
+  private final Provider<KeyStoreManager> keyStoreProvider;
 
   private Certificate certificate;
 
@@ -53,12 +54,14 @@ public class LocalNodeAccess
   private boolean freshNode;
 
   @Inject
-  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final KeyStoreManager keyStoreManager) {
-    this.keyStoreManager = checkNotNull(keyStoreManager);
+  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider) {
+    this.keyStoreProvider = checkNotNull(keyStoreProvider);
   }
 
   @Override
   protected void doStart() throws Exception {
+    KeyStoreManager keyStoreManager = keyStoreProvider.get();
+
     // Generate identity key-pair if not already created
     if (!keyStoreManager.isKeyPairInitialized()) {
       log.info("Generating certificate");

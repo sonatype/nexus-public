@@ -28,7 +28,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PR
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
-import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
@@ -49,7 +47,6 @@ import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
  * @since 3.4
  */
 @Named
-@TaskLogging(TASK_LOG_ONLY)
 public class RestoreMetadataTask
     extends TaskSupport
     implements Cancelable
@@ -111,12 +108,13 @@ public class RestoreMetadataTask
 
         Optional<Context> context = buildContext(blobStoreName, fileBlobStore, blobId);
         if (context.isPresent()) {
-          Context c = context.get();
-          if (restore && c.restoreBlobStrategy != null) {
+          Context c =  context.get();
+          if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
             c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName);
           }
-          if (undelete && fileBlobStore.maybeUndeleteBlob(blobStoreUsageChecker, c.blobId,
-              (FileBlobAttributes) fileBlobStore.getBlobAttributes(c.blobId))) {
+          if (undelete &&
+              fileBlobStore.maybeUndeleteBlob(blobStoreUsageChecker, c.blobId, (FileBlobAttributes) c.blobAttributes))
+          {
             undeleted++;
           }
         }
@@ -143,7 +141,7 @@ public class RestoreMetadataTask
                                                                     final BlobId blobId)
   {
     return Optional.of(new Context(blobStoreName, fileBlobStore, blobId))
-        .map(c -> c.blob(c.fileBlobStore.get(c.blobId)))
+        .map(c -> c.blob(c.fileBlobStore.get(c.blobId, true)))
         .map(c -> c.blobAttributes(c.fileBlobStore.getBlobAttributes(c.blobId)))
         .map(c -> c.properties(c.blobAttributes.getProperties()))
         .map(c -> c.repositoryName(c.properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)))
@@ -187,7 +185,7 @@ public class RestoreMetadataTask
     }
 
     Context blobAttributes(final BlobAttributes blobAttributes) {
-      if (blobAttributes == null || blobAttributes.isDeleted()) {
+      if (blobAttributes == null) {
         return null;
       }
       else {

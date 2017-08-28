@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.karaf.shell.api.action.Action;
@@ -55,10 +56,10 @@ public class DatabaseFreezeAction
   public Object execute() throws Exception {
     switch (mode) { //NOSONAR
       case enable:
-        databaseFreezeService.freezeAllDatabases();
+        databaseFreezeService.requestFreeze(InitiatorType.USER_INITIATED, "console");
         break;
       case release:
-        databaseFreezeService.releaseAllDatabases();
+        databaseFreezeService.releaseUserInitiatedIfPresent();
         break;
     }
     return null;

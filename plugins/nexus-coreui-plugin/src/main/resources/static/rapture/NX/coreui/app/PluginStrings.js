@@ -254,7 +254,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_BowerProxyFacet_RewritePackageUrls_HelpText: 'Force Bower to retrieve packages through the proxy repository',
     Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
     Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
-    Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository.',
+    Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
     'to hosted registries, but are not always required. Consult our <a href="http://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
@@ -268,6 +268,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerProxyFacet_IndexTypeHub_BoxLabel: 'Use Docker Hub',
     Repository_Facet_DockerProxyFacet_IndexTypeCustom_BoxLabel: 'Custom index',
     Repository_Facet_DockerProxyFacet_IndexUrl_HelpText: 'Location of Docker index',
+    Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel: 'Legacy Authentication Mode',
+    Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel: 'Force basic authentication',
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',
@@ -1003,12 +1005,16 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Nodes_Enable_read_only_mode: 'Enable read-only mode',
     Nodes_Enable_read_only_mode_dialog: 'Enable read-only mode?',
     Nodes_Read_only_mode_warning: 'Nexus Repository is in read-only mode',
+    Nodes_force_release_dialog: 'Forcibly disable read-only mode?',
+    Nodes_force_release: 'Force disable read-only mode',
     Nodes_Quorum_lost_warning: 'Not enough Nexus Repository Manager nodes in the cluster are reachable so quorum cannot be achieved; database is read only. <a href="#admin/system/nodes/clusterreset">Troubleshoot</a>',
     Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
     Nodes_enable_read_only_mode_dialog_description: 'Are you sure you want to reject additions of new' +
     ' components and changes to configuration?',
     Nodes_disable_read_only_mode_dialog_description: 'Are you sure you want to stop rejecting additions of new' +
     ' components and changes to configuration?',
+    Nodes_force_release_warning: 'Warning: read-only mode has been enabled by system tasks. Releasing read-only mode before those tasks are complete may cause them to fail and/or cause data loss.',
+    Nodes_force_release_confirmation: 'Are you sure you want to forcibly release read-only mode?',
 
     // Admin -> System -> Tasks
     Tasks_Text: 'Tasks',

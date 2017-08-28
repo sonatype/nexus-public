@@ -28,4 +28,11 @@ public class DatabaseFreezeChangeEvent
   public boolean isFrozen() {
     return frozen;
   }
+
+  @Override
+  public String toString() {
+    return "DatabaseFreezeChangeEvent{" +
+        "frozen=" + frozen +
+        '}';
+  }
 }

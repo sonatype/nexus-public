@@ -16,11 +16,11 @@ import java.util.concurrent.Callable
 
 import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
+import org.sonatype.nexus.orient.freeze.FreezeRequest
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
+import org.sonatype.nexus.scheduling.TaskConfiguration
 
 import spock.lang.Specification
-
-import static org.hamcrest.MatcherAssert.assertThat
-import static org.hamcrest.Matchers.is
 
 /**
  * Tests for {@link DatabaseBackupTask}
@@ -29,10 +29,14 @@ class DatabaseBackupTaskTest
     extends Specification
 {
 
+  def databaseBackup = Mock(DatabaseBackup)
+  def freezeService = Mock(DatabaseFreezeService)
+  def mockRequest = new FreezeRequest(InitiatorType.SYSTEM, "DatabaseBackupTaskTest")
+
   def 'task should execute properly'() {
-    def databaseBackup = Mock(DatabaseBackup)
-    def freezeService = Mock(DatabaseFreezeService)
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -41,14 +45,13 @@ class DatabaseBackupTaskTest
     then: 'the databaseBackup and freeze services should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test']
       1 * databaseBackup.fullBackup('target', 'test', _) >> dumbBackupJob
-      1 * freezeService.freezeAllDatabases()
-      1 * freezeService.releaseAllDatabases()
+      1 * freezeService.releaseRequest(!null)
   }
 
   def 'task should fail somewhat gracefully if the file cannot be created'() {
-    def databaseBackup = Mock(DatabaseBackup)
-    def freezeService = Mock(DatabaseFreezeService)
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -59,15 +62,14 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.fullBackup('target', 'test', _) >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
       }
-      1 * freezeService.freezeAllDatabases()
-      1 * freezeService.releaseAllDatabases()
+      1 * freezeService.releaseRequest(!null)
       thrown(MultipleFailuresException)
   }
 
   def 'task should try to backup all files when told to do so'() {
-    def databaseBackup = Mock(DatabaseBackup)
-    def freezeService = Mock(DatabaseFreezeService)
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -77,15 +79,14 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
       1 * databaseBackup.fullBackup('target', 'test1', _) >> dumbBackupJob
       1 * databaseBackup.fullBackup('target', 'test2', _) >> dumbBackupJob
-      1 * freezeService.freezeAllDatabases()
-      1 * freezeService.releaseAllDatabases()
+      1 * freezeService.releaseRequest(!null)
       notThrown(MultipleFailuresException)
   }
 
   def 'task should be okay if one file fails, but others can work'() {
-    def databaseBackup = Mock(DatabaseBackup)
-    def freezeService = Mock(DatabaseFreezeService)
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -97,8 +98,7 @@ class DatabaseBackupTaskTest
         throw new IOException("mocked exception")
       }
       1 * databaseBackup.fullBackup('target','test2', _) >> dumbBackupJob
-      1 * freezeService.freezeAllDatabases()
-      1 * freezeService.releaseAllDatabases()
+      1 * freezeService.releaseRequest(!null)
       thrown(MultipleFailuresException)
   }
 
@@ -109,4 +109,11 @@ class DatabaseBackupTaskTest
     }
   }
 
+  TaskConfiguration taskConfiguration() {
+    def config = new TaskConfiguration()
+    config.setId('DatabaseBackupTaskTest')
+    config.setTypeId(DatabaseBackupTaskDescriptor.TYPE_ID)
+    config.setName('backup')
+    return config
+  }
 }

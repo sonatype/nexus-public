@@ -73,6 +73,13 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
               me.createCheckbox('https'),
               me.createPort('https')
             ]
+          },
+          {
+            xtype: 'checkbox',
+            name: 'attributes.docker.forceBasicAuth',
+            fieldLabel: NX.I18n.get('Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel'),
+            value: true
           }
         ]
       }

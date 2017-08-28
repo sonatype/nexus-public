@@ -42,20 +42,21 @@ public class TaskLogsFilter
 {
   @Override
   public FilterReply decide(final ILoggingEvent event) {
+    String marker = MDC.get(MDC_MARKER_ID);
+
+    if (PROGRESS.getName().equals(marker)) {
+      // store the progress value in the threadlocal
+      TaskLoggerHelper.progress(toTaskLoggerEvent(event));
+    }
+
     if (MDC.get(LOGBACK_TASK_DISCRIMINATOR_ID) == null) {
       // not executing in a task...
       return DENY;
     }
 
-    String marker = MDC.get(MDC_MARKER_ID);
     if (NEXUS_LOG_ONLY.getName().equals(marker) || INTERNAL_PROGRESS.getName().equals(marker)) {
-      // meant for nexus.log only
+      // not meant for task log
       return DENY;
-    }
-
-    if (PROGRESS.getName().equals(marker)) {
-      // store the progress value in the threadlocal
-      TaskLoggerHelper.progress(toTaskLoggerEvent(event));
     }
 
     return NEUTRAL;

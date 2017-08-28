@@ -64,7 +64,7 @@ public class TaskLogHome
     String taskLogsFolder = file.getParent();
 
     // no need to keep the temp.log file around
-    tempFileAppender.stop(); // stop the appender to ensure the file lock is released
+    tempFileAppender.stop(); // stop the appender to release file lock (windows)
     FileUtils.deleteQuietly(file);
 
     return taskLogsFolder;

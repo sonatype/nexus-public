@@ -27,8 +27,8 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
- * Logback {@link Filter} for the main nexus.log to exclude task related events
- * - Must NOT have the PROGRESS_LOG marker. These are progress events for the task log.
+ * Logback {@link Filter} for the main nexus.log
+ * - Must NOT have the PROGRESS_LOG marker. These are full progress events for the task log.
  * - Must NOT have the TASK_LOG_ONLY marker. These are task log only events.
  * - Must NOT have TASK_LOG_ONLY_MDC in MDC. These are task log only events.
  *

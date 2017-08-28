@@ -36,12 +36,14 @@ public class TaskLoggerFactory
 
     switch (taskLogging.value()) {
       case NEXUS_LOG_ONLY:
-        return new NoOpTaskLogger();
+        return new ProgressTaskLogger(log);
       case TASK_LOG_ONLY:
         return new TaskLogOnlyTaskLogger(log, taskLogInfo);
+      case TASK_LOG_ONLY_WITH_PROGRESS:
+        return new TaskLogWithProgressLogger(log, taskLogInfo);
       case BOTH:
       default:
-        return new DefaultTaskLogger(log, taskLogInfo);
+        return new SeparateTaskLogTaskLogger(log, taskLogInfo);
     }
   }
 

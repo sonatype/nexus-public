@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,32 +20,30 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
-import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
-import static org.sonatype.nexus.logging.task.DefaultTaskLogger.MARK_LINE;
-import static org.sonatype.nexus.logging.task.DefaultTaskLogger.PROGRESS_LINE;
 import static org.sonatype.nexus.logging.task.TaskLogger.LOGBACK_TASK_DISCRIMINATOR_ID;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
-public class DefaultTaskLoggerTest
-    extends TestSupport
+public class SeparateTaskLogTaskLoggerTest
+    extends ProgressTaskLoggerTest
 {
+
   @Mock
   private Logger mockLogger;
 
-  private DefaultTaskLogger underTest;
+  private SeparateTaskLogTaskLogger underTest;
 
   @Before
   public void setUp() throws Exception {
+    super.setUp();
     TaskLogInfo taskLogInfo = createTaskLogInfo();
 
-    underTest = new DefaultTaskLogger(mockLogger, taskLogInfo);
+    underTest = new SeparateTaskLogTaskLogger(mockLogger, taskLogInfo);
     underTest.start();
 
     verifyLog(TASK_LOG_ONLY, "Task information:");
@@ -64,28 +60,6 @@ public class DefaultTaskLoggerTest
   @After
   public void tearDown() throws Exception {
     underTest.finish();
-  }
-
-  @Test
-  public void testProgress() {
-    String message = "test message";
-    TaskLoggingEvent event = new TaskLoggingEvent(message);
-    underTest.progress(event);
-
-    // invoke method normally invoke via thread
-    underTest.logProgress();
-
-    // verify progress logged properly
-    verifyLog(INTERNAL_PROGRESS, format(PROGRESS_LINE, message), (Object[]) null);
-  }
-
-  @Test
-  public void testProgressMark() {
-    // invoke method normally invoke via thread
-    underTest.logProgress();
-
-    // verify progress logged properly
-    verifyLog(INTERNAL_PROGRESS, format(PROGRESS_LINE, MARK_LINE), (Object[]) null);
   }
 
   @Test
@@ -135,9 +109,4 @@ public class DefaultTaskLoggerTest
   private void verifyLog(final Marker m, final String s, final Object arg) {
     verify(mockLogger).info(m, s, arg);
   }
-
-  private void verifyLog(final Marker m, final String s, final Object... args) {
-    verify(mockLogger).info(m, s, args);
-  }
-
 }

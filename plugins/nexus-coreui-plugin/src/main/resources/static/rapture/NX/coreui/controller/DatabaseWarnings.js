@@ -51,7 +51,8 @@ Ext.define('NX.coreui.controller.DatabaseWarnings', {
     var me = this,
         warningPanel = me.getDatabaseFreezeWarning(),
         databaseFreezeState = NX.State.getValue('db', {})['dbFrozen'],
-        quorumState = NX.State.getValue('quorum', {})['quorumPresent'];
+        quorumState = NX.State.getValue('quorum', {})['quorumPresent'],
+        reason = NX.State.getValue('db', {})['reason'];
 
     if (warningPanel) {
       if (!quorumState) {
@@ -60,7 +61,11 @@ Ext.define('NX.coreui.controller.DatabaseWarnings', {
 
       // Read-only mode will take precedence and be the only message shown.
       if (databaseFreezeState) {
-        warningPanel.setTitle(NX.I18n.get('Nodes_Read_only_mode_warning'));
+        var message = NX.I18n.get('Nodes_Read_only_mode_warning');
+        if (typeof reason !== 'undefined' && reason !== '') {
+          message += ': ' + reason;
+        }
+        warningPanel.setTitle(message);
       }
 
       if (!quorumState || databaseFreezeState) {

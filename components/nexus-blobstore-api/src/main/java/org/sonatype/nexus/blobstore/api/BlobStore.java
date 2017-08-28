@@ -96,6 +96,13 @@ public interface BlobStore
   Blob get(BlobId blobId);
 
   /**
+   * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist, or has been {@link #delete
+   * deleted} and {@code includeDeleted} is {@code false}).
+   */
+  @Nullable
+  Blob get(BlobId blobId, boolean includeDeleted);
+
+  /**
    * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *

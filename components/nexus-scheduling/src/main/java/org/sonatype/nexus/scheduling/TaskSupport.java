@@ -17,10 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLoggerFactory;
 import org.sonatype.nexus.logging.task.TaskLoggerHelper;
+import org.sonatype.nexus.logging.task.TaskLoggingMarkers;
 
 import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
  * Support for {@link Task} implementations.
@@ -90,6 +92,10 @@ public abstract class TaskSupport
     CancelableHelper.set(canceledFlag);
     try {
       return execute();
+    }
+    catch (Exception e) {
+      log.error(TASK_LOG_ONLY, "Failed to run task '{}'", getMessage(), e);
+      throw e;
     }
     finally {
       CancelableHelper.remove();

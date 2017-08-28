@@ -20,6 +20,7 @@ import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -40,6 +41,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class BearerTokenRealm
     extends AuthenticatingRealm
 {
+  @VisibleForTesting
+  static final String ANONYMOUS_USER = "anonymous";
+
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   private final ApiKeyStore keyStore;
@@ -70,7 +74,7 @@ public abstract class BearerTokenRealm
     final PrincipalCollection principals = keyStore.getPrincipals(format, (char[]) token.getCredentials());
     if (null != principals) {
       try {
-        if (UserStatus.active.equals(principalsHelper.getUserStatus(principals))) {
+        if (anonymousAndSupported(principals) || UserStatus.active.equals(principalsHelper.getUserStatus(principals))) {
           ((NexusApiKeyAuthenticationToken) token).setPrincipal(principals.getPrimaryPrincipal());
           return new SimpleAuthenticationInfo(principals, token.getCredentials());
         }
@@ -93,5 +97,13 @@ public abstract class BearerTokenRealm
       }
     }
     return null;
+  }
+
+  protected boolean isAnonymousSupported() {
+    return false;
+  }
+
+  private boolean anonymousAndSupported(final PrincipalCollection principals) {
+    return ANONYMOUS_USER.equals(principals.getPrimaryPrincipal()) && isAnonymousSupported();
   }
 }

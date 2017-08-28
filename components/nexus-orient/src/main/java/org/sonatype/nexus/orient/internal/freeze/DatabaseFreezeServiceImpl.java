@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,6 +28,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.node.NodeMergedEvent;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -30,10 +36,13 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
+import org.sonatype.nexus.orient.freeze.FreezeRequest;
+import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
 
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -53,6 +62,9 @@ public class DatabaseFreezeServiceImpl
     extends StateGuardLifecycleSupport
     implements DatabaseFreezeService, EventAware
 {
+
+  public static final String SERVER_NAME = "*";
+
   private final Set<Provider<DatabaseInstance>> providers;
 
   private final EventManager eventManager;
@@ -61,66 +73,47 @@ public class DatabaseFreezeServiceImpl
 
   private final Provider<ODistributedServerManager> distributedServerManagerProvider;
 
-  private boolean frozen;
+  private final NodeAccess nodeAccess;
 
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers,
                                    final EventManager eventManager,
                                    final DatabaseFrozenStateManager databaseFrozenStateManager,
-                                   final Provider<OServer> server)
+                                   final Provider<OServer> server,
+                                   final NodeAccess nodeAccess)
   {
     this.providers = checkNotNull(providers);
     this.eventManager = checkNotNull(eventManager);
     this.databaseFrozenStateManager = checkNotNull(databaseFrozenStateManager);
     checkNotNull(server);
     distributedServerManagerProvider = () -> server.get().getDistributedManager();
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
-  protected synchronized void doStart() {
-    if (databaseFrozenStateManager.get()) {
+  protected void doStart() {
+    // catch up to other hosts in the cluster on startup
+    List<FreezeRequest> state = databaseFrozenStateManager.getState();
+    if (!state.isEmpty()) {
       log.info("Restoring database frozen state on startup");
-      updateAndSaveFrozenState(true);
+      freezeLocalDatabases();
     }
   }
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void freezeAllDatabases() {
-    if (frozen) {
-      log.info("Databases already frozen, skipping freeze command.");
-      return;
+  public boolean isFrozen() {
+    if (nodeAccess.isClustered()) {
+      ODistributedServerManager serverManager = distributedServerManagerProvider.get();
+      Map<String, ROLES> roles = new HashMap<>();
+      for (String database : serverManager.getMessageService().getDatabases()) {
+        ODistributedConfiguration configuration = serverManager.getDatabaseConfiguration(database);
+        roles.put(database, configuration.getServerRole(SERVER_NAME));
+      }
+      return roles.values().stream().allMatch(r -> ROLES.REPLICA.equals(r));
+    } else {
+      return providers.stream().allMatch(provider -> provider.get().isFrozen());
     }
-    log.info("Freezing all databases.");
-
-    // post event to notify subscribers and update cluster in ha configurations
-    // this will switch databases to replica mode
-    eventManager.post(new DatabaseFreezeChangeEvent(true));
-    // freeze the databases locally
-    updateAndSaveFrozenState(true);
-  }
-
-  @Override
-  @Guarded(by = STARTED)
-  public synchronized void releaseAllDatabases() {
-    if (!frozen) {
-      log.info("Databases already released, skipping release command.");
-      return;
-    }
-
-    log.info("Releasing all databases.");
-
-    // release the databases locally
-    updateAndSaveFrozenState(false);
-    // post event to notify subscribers and update cluster in ha configurations
-    // this will switch databases to master mode
-    eventManager.post(new DatabaseFreezeChangeEvent(false));
-  }
-
-  @Override
-  @Guarded(by = STARTED)
-  public synchronized boolean isFrozen() {
-    return frozen;
   }
 
   @Override
@@ -137,37 +130,106 @@ public class DatabaseFreezeServiceImpl
     }
   }
 
-  @Subscribe
-  public void onNodeMerged(final NodeMergedEvent event) {
-    log.debug("Node merged with existing cluster: shared frozen state is {}", databaseFrozenStateManager.get());
-    if (databaseFrozenStateManager.get()) {
-      freezeAllDatabases();
+  @Override
+  @Guarded(by = STARTED)
+  public synchronized FreezeRequest requestFreeze(final InitiatorType type, final String initiatorId) {
+    // reject new user initiated requests if any existing requests are present
+    if (InitiatorType.USER_INITIATED.equals(type) && !getState().isEmpty()) {
+      log.warn("rejecting {} request for {} as 1 or more requests are already present in {}", type, initiatorId, getState());
+      return null;
     }
-    else {
-      releaseAllDatabases();
+    boolean frozenStatePrior = isFrozen();
+    FreezeRequest request = new FreezeRequest(type, initiatorId);
+    if (nodeAccess.isClustered()) {
+      request.setNodeId(nodeAccess.getId());
+    }
+    FreezeRequest result = databaseFrozenStateManager.add(request);
+    if (result != null && !frozenStatePrior) {
+      eventManager.post(new DatabaseFreezeChangeEvent(true));
+      freezeLocalDatabases();
+    }
+    return result;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public List<FreezeRequest> getState() {
+    return Collections.unmodifiableList(databaseFrozenStateManager.getState());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public synchronized boolean releaseRequest(final FreezeRequest request) {
+    boolean result = databaseFrozenStateManager.remove(request);
+    if (result && getState().isEmpty()) {
+      releaseLocalDatabases();
+      eventManager.post(new DatabaseFreezeChangeEvent(false));
+    }
+    return result;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public synchronized boolean releaseUserInitiatedIfPresent() {
+    Optional<FreezeRequest> request = getState().stream()
+        .filter(it -> InitiatorType.USER_INITIATED.equals(it.getInitiatorType()))
+        .findAny();
+    if (request.isPresent()) {
+      return releaseRequest(request.get());
+    }
+    return false;
+  }
+
+  @Override
+  public synchronized List<FreezeRequest> releaseAllRequests() {
+    List<FreezeRequest> requests = getState();
+    for (FreezeRequest request: requests) {
+      releaseRequest(request);
+    }
+    return requests;
+  }
+
+  @Override
+  public synchronized void freezeLocalDatabases() {
+    if (nodeAccess.isClustered()) {
+      setServerRole(ROLES.REPLICA);
+    } else {
+      forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(true));
+    }
+  }
+
+  @Override
+  public synchronized void releaseLocalDatabases() {
+    if (nodeAccess.isClustered()) {
+      setServerRole(ROLES.MASTER);
+    } else {
+      forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(false));
     }
   }
 
   /**
-   * Updates the frozen state and create or remove marker file.
+   * Check {@link DatabaseFrozenStateManager#getState()} to see if cluster state is represents a state change
+   * different from our local status.
+   *
+   * @param event event signalling a node has been added to the cluster
    */
-  private void updateAndSaveFrozenState(final boolean newFrozenState) {
-    log.debug("Updating frozen state to {}", newFrozenState);
-    frozen = newFrozenState;
+  @Subscribe
+  public void onNodeMerged(final NodeMergedEvent event) {
+    log.info("Node merged with existing cluster; shared frozen state is {}, local frozen state is={}",
+        databaseFrozenStateManager.getState(),
+        isFrozen());
 
-    if (!frozen) {
-      // restore MASTER mode now to ensure unfrozen databases are actually writable
-      setServerRole(ROLES.MASTER);
+    if (!isFrozen() && !getState().isEmpty()) {
+      // freeze if we aren't frozen and the state suggests we should be
+      freezeLocalDatabases();
     }
-
-    forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(frozen));
-
-    if (frozen) {
-      // enable REPLICA mode afterwards to ensure frozen databases reject writes for the right reason
-      setServerRole(ROLES.REPLICA);
+    else if(isFrozen() && getState().isEmpty()) {
+      // release if we're frozen and the state suggests we shouldn't be
+      releaseLocalDatabases();
     }
-
-    databaseFrozenStateManager.set(frozen);
+    else {
+      log.info("no action taken for {}", event);
+    }
   }
 
   private void forEachFreezableDatabase(final Consumer<DatabaseInstance> databaseInstanceConsumer) {
@@ -184,12 +246,8 @@ public class DatabaseFreezeServiceImpl
 
   private void setServerRole(final ROLES serverRole) {
     ODistributedServerManager distributedServerManager = distributedServerManagerProvider.get();
-    if (distributedServerManager == null) {
-      log.debug("Skipping update of server role, databases not clustered");
-      return;
-    }
     for (String database : distributedServerManager.getMessageService().getDatabases()) {
-      log.debug("Updating server role of {} database to {}", database, serverRole);
+      log.info("Updating server role of {} database to {}", database, serverRole);
       distributedServerManager.executeInDistributedDatabaseLock(database, 0l, null, distributedConfiguration -> {
         distributedConfiguration.setServerRole("*", serverRole);
         return null;

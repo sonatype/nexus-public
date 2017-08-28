@@ -18,8 +18,6 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.logging.task.TaskLogType;
-import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,7 +29,6 @@ import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTask
  * @since 3.0
  */
 @Named
-@TaskLogging(TaskLogType.TASK_LOG_ONLY)
 public class CompactBlobStoreTask
     extends TaskSupport
 {

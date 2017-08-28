@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.freeze;
 
+import java.util.List;
+
 /**
  * Saves the database frozen state.
  *
@@ -20,12 +22,19 @@ package org.sonatype.nexus.orient.freeze;
 public interface DatabaseFrozenStateManager
 {
   /**
-   * Gets the saved state.
+   * @return the current state
    */
-  boolean get();
+  List<FreezeRequest> getState();
 
   /**
-   * Saves the state.
+   * @param request the {@link FreezeRequest} to remove from state
+   * @return true if the request was removed, false otherwise
    */
-  void set(boolean frozen);
+  boolean remove(FreezeRequest request);
+
+  /**
+   * @param request the {@link FreezeRequest} to add to the state.
+   * @return the request if added successfully, null otherwise
+   */
+  FreezeRequest add(FreezeRequest request);
 }

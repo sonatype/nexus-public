@@ -37,6 +37,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 
@@ -94,9 +95,17 @@ public class ApiKeyStoreImpl
   public char[] createApiKey(final String domain, final PrincipalCollection principals) {
     checkNotNull(domain);
     checkNotNull(principals);
-    final char[] apiKeyCharArray = makeApiKey(domain, principals);
-    persistApiKey(domain, principals, apiKeyCharArray);
-    return apiKeyCharArray;
+    try {
+      final char[] apiKeyCharArray = makeApiKey(domain, principals);
+      persistApiKey(domain, principals, apiKeyCharArray);
+      return apiKeyCharArray;
+    }
+    catch (ORecordDuplicatedException e) { // NOSONAR
+      // There is a chance here that if multiple threads enter this method for the same principal that create can be
+      // called multiple times resulting in a ORecordDuplicatedException. In that case we know the record must already
+      // exist and can call getApiKey again. This avoids locking and gives us eventual-consistency.
+      return getApiKey(domain, principals);
+    }
   }
 
   @Override

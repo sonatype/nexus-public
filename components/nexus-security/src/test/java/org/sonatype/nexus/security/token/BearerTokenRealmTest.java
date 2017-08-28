@@ -38,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.token.BearerTokenRealm.ANONYMOUS_USER;
 
 public class BearerTokenRealmTest
     extends TestSupport
@@ -71,7 +72,7 @@ public class BearerTokenRealmTest
     when(principalCollection.getPrimaryPrincipal()).thenReturn(principal);
     when(keyStore.getPrincipals(any(), any())).thenReturn(principalCollection);
     when(principalsHelper.getUserStatus(principalCollection)).thenReturn(UserStatus.active);
-    underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT) { };
+    underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT) {};
   }
 
   @Test
@@ -95,6 +96,29 @@ public class BearerTokenRealmTest
     AuthenticationInfo authenticationInfo = underTest.doGetAuthenticationInfo(token);
     assertThat(authenticationInfo.getPrincipals(), is(notNullValue()));
     verify(token).setPrincipal(principal);
+  }
+
+  @Test
+  public void getAuthInfoWhenAnonymousAndSupported() throws Exception {
+    when(principalCollection.getPrimaryPrincipal()).thenReturn(ANONYMOUS_USER);
+    when(principalsHelper.getUserStatus(principalCollection)).thenReturn(UserStatus.disabled);
+    underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT)
+    {
+      @Override
+      protected boolean isAnonymousSupported() {
+        return true;
+      }
+    };
+    AuthenticationInfo authenticationInfo = underTest.doGetAuthenticationInfo(token);
+    assertThat(authenticationInfo.getPrincipals(), is(notNullValue()));
+    verify(token).setPrincipal("anonymous");
+  }
+
+  @Test
+  public void nullWhenAnonymousButNotSupported() throws Exception {
+    when(principalsHelper.getUserStatus(principalCollection)).thenReturn(UserStatus.disabled);
+    when(principalCollection.getPrimaryPrincipal()).thenReturn(ANONYMOUS_USER);
+    assertThat(underTest.doGetAuthenticationInfo(token), is(nullValue()));
   }
 
   @Test
@@ -130,5 +154,10 @@ public class BearerTokenRealmTest
   public void nullWhenPrincipalsNull() throws Exception {
     when(keyStore.getPrincipals(any(), any())).thenReturn(null);
     assertThat(underTest.getAuthenticationCacheKey(token), is(nullValue()));
+  }
+
+  @Test
+  public void anonymousAccessNotSupportedByDefault() throws Exception {
+    assertThat(underTest.isAnonymousSupported(), is(equalTo(false)));
   }
 }

@@ -96,4 +96,12 @@ public class DatabaseInstanceImpl
       }
     }
   }
+
+  @Override
+  public boolean isFrozen() {
+    ensureStarted();
+    try (ODatabaseDocumentTx db = connect()) {
+      return db.isFrozen();
+    }
+  }
 }

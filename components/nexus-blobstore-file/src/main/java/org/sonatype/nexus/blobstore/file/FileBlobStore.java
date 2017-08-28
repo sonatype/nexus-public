@@ -409,6 +409,13 @@ public class FileBlobStore
   @Override
   @Guarded(by = STARTED)
   public Blob get(final BlobId blobId) {
+    return get(blobId, false);
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  public Blob get(final BlobId blobId, final boolean includeDeleted) {
     checkNotNull(blobId);
 
     final FileBlob blob = liveBlobs.getUnchecked(blobId);
@@ -424,7 +431,7 @@ public class FileBlobStore
             return null;
           }
 
-          if (blobAttributes.isDeleted()) {
+          if (blobAttributes.isDeleted() && !includeDeleted) {
             log.warn("Attempt to access soft-deleted blob {} ({}), reason: {}", blobId, blobAttributes.getPath(), blobAttributes.getDeletedReason());
             return null;
           }
@@ -594,7 +601,7 @@ public class FileBlobStore
                                    final FileBlobAttributes attributes)
   {
     String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    if (inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
+    if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
       String deletedReason = attributes.getDeletedReason();
       attributes.setDeleted(false);
       attributes.setDeletedReason(null);

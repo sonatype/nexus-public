@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.logging.task.TaskLogType.BOTH;
 import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
+import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
 
 public class TaskLoggerFactoryTest
     extends TestSupport
@@ -30,7 +31,7 @@ public class TaskLoggerFactoryTest
   @Test
   public void testBoth() {
     TaskLogger taskLogger = TaskLoggerFactory.create(new Both(), mock(Logger.class), mock(TaskLogInfo.class));
-    assertThat(taskLogger, instanceOf(DefaultTaskLogger.class));
+    assertThat(taskLogger, instanceOf(SeparateTaskLogTaskLogger.class));
   }
 
   @Test
@@ -38,17 +39,22 @@ public class TaskLoggerFactoryTest
     TaskLogger taskLogger = TaskLoggerFactory.create(new TaskLogOnly(), mock(Logger.class), mock(TaskLogInfo.class));
     assertThat(taskLogger, instanceOf(TaskLogOnlyTaskLogger.class));
   }
+  @Test
+  public void testTaskLogWithProgress() {
+    TaskLogger taskLogger = TaskLoggerFactory.create(new TaskLogWithProgress(), mock(Logger.class), mock(TaskLogInfo.class));
+    assertThat(taskLogger, instanceOf(TaskLogWithProgressLogger.class));
+  }
 
   @Test
   public void testNexusLogOnly() {
     TaskLogger taskLogger = TaskLoggerFactory.create(new NexusLogOnly(), mock(Logger.class), mock(TaskLogInfo.class));
-    assertThat(taskLogger, instanceOf(NoOpTaskLogger.class));
+    assertThat(taskLogger, instanceOf(ProgressTaskLogger.class));
   }
 
   @Test
   public void testDefault() {
     TaskLogger taskLogger = TaskLoggerFactory.create(new Object(), mock(Logger.class), mock(TaskLogInfo.class));
-    assertThat(taskLogger, instanceOf(DefaultTaskLogger.class));
+    assertThat(taskLogger, instanceOf(SeparateTaskLogTaskLogger.class));
   }
 
   @TaskLogging(BOTH)
@@ -56,6 +62,9 @@ public class TaskLoggerFactoryTest
 
   @TaskLogging(TASK_LOG_ONLY)
   private static final class TaskLogOnly { }
+
+  @TaskLogging(TASK_LOG_ONLY_WITH_PROGRESS)
+  private static final class TaskLogWithProgress { }
 
   @TaskLogging(NEXUS_LOG_ONLY)
   private static final class NexusLogOnly { }

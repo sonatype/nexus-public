@@ -18,6 +18,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.LocationStrategy;
@@ -26,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
+import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -47,10 +49,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 
@@ -79,6 +85,12 @@ public class FileBlobStoreTest
   private LoadingCache loadingCache;
 
   @Mock
+  private BlobStoreUsageChecker blobStoreUsageChecker;
+
+  @Mock
+  private FileBlobAttributes attributes;
+
+  @Mock
   NodeAccess nodeAccess;
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
@@ -96,6 +108,11 @@ public class FileBlobStoreTest
   public void initBlobStore() {
     when(nodeAccess.getId()).thenReturn("test");
     when(appDirs.getWorkDirectory(any())).thenReturn(util.createTempDir());
+    when(attributes.isDeleted()).thenReturn(true);
+
+    Properties properties = new Properties();
+    properties.put(HEADER_PREFIX + BLOB_NAME_HEADER, "blobName");
+    when(attributes.getProperties()).thenReturn(properties);
 
     BlobStoreConfiguration configuration = new BlobStoreConfiguration();
 
@@ -216,6 +233,32 @@ public class FileBlobStoreTest
     underTest.maybeRebuildDeletedBlobIndex();
 
     checkDeletionsIndex(true);
+  }
+
+  @Test
+  public void testMaybeUndeleteBlob_AttributesNotDeleted() throws IOException {
+    when(attributes.isDeleted()).thenReturn(false);
+
+    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes);
+    assertThat(result, is(false));
+    verify(blobStoreUsageChecker, never()).test(eq(underTest), any(BlobId.class), anyString());
+  }
+
+  @Test
+  public void testMaybeUndeleteBlob_CheckerNull() throws IOException {
+    boolean result = underTest.maybeUndeleteBlob(null, new BlobId("fakeid"), attributes);
+    assertThat(result, is(false));
+  }
+
+  @Test
+  public void testMaybeUndeleteBlob_CheckInUse() throws IOException {
+    when(blobStoreUsageChecker.test(eq(underTest), any(BlobId.class), anyString())).thenReturn(true);
+
+    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes);
+    assertThat(result, is(true));
+    verify(attributes).setDeleted(false);
+    verify(attributes).setDeletedReason(null);
+    verify(attributes).store();
   }
 
   private void setRebuildMetadataToTrue() throws IOException {

@@ -47,4 +47,10 @@ public interface DatabaseInstance
    * @since 3.2.1
    */
   void setFrozen(boolean frozen);
+
+  /**
+   * @return true if the underlying database is read-only
+   * @since 3.5.1
+   */
+  boolean isFrozen();
 }

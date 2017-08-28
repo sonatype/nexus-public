@@ -21,7 +21,7 @@ import org.slf4j.MDC;
  * @since 3.5
  */
 public class TaskLogOnlyTaskLogger
-    extends DefaultTaskLogger
+    extends SeparateTaskLogTaskLogger
 {
   TaskLogOnlyTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
     super(log, taskLogInfo);

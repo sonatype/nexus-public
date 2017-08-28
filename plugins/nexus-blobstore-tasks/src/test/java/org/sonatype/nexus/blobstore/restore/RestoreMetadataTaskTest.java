@@ -105,7 +105,7 @@ public class RestoreMetadataTaskTest
     when(fileBlobStore.getBlobIdStream()).thenReturn(Stream.of(blobId));
     when(blobStoreManager.get("test")).thenReturn(fileBlobStore);
 
-    when(fileBlobStore.get(blobId)).thenReturn(blob);
+    when(fileBlobStore.get(blobId, true)).thenReturn(blob);
     when(fileBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
   }
 
@@ -135,6 +135,20 @@ public class RestoreMetadataTaskTest
 
     verify(restoreBlobStrategy).restore(any(), eq(blob), eq("test"));
     verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any());
+  }
+
+  @Test
+  public void testRestoreMetadata_BlobIsMarkedAsDeleted() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    underTest.configure(configuration);
+
+    blobAttributes.setDeleted(true);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy, never()).restore(any(), any(), any());
+    verify(fileBlobStore).maybeUndeleteBlob(any(), any(), any());
   }
 
   @Test
