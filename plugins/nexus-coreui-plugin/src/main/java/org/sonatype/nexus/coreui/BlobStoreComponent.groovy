@@ -14,12 +14,12 @@ package org.sonatype.nexus.coreui
 
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Provider
 import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
@@ -52,7 +52,7 @@ class BlobStoreComponent
   BlobStoreManager blobStoreManager
 
   @Inject
-  Map<String, Provider<BlobStore>> blobstorePrototypes
+  Map<String, BlobStoreDescriptor> blobstoreDescriptors
 
   @Inject
   ApplicationDirectories applicationDirectories
@@ -72,9 +72,9 @@ class BlobStoreComponent
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
-  List<ReferenceXO> readTypes() {
-    blobstorePrototypes.collect { key, provider ->
-      new ReferenceXO(id: key, name: key)
+  List<BlobStoreTypeXO> readTypes() {
+    blobstoreDescriptors.collect { key, descriptor ->
+      new BlobStoreTypeXO(id: key, name: descriptor.name, formFields: descriptor.formFields)
     }
   }
 

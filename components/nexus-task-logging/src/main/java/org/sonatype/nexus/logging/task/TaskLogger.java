@@ -43,4 +43,9 @@ public interface TaskLogger
    * @param event log event containing progress
    */
   void progress(TaskLoggingEvent event);
+
+  /**
+   * Flush any pending progress messages so they are logged immediately
+   */
+  void flush();
 }

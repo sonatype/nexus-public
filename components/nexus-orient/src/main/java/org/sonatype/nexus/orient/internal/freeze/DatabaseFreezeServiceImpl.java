@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.orient.internal.freeze;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,9 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 import org.sonatype.nexus.orient.freeze.FreezeRequest;
 import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
+import org.sonatype.nexus.orient.freeze.ReadOnlyState;
+import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.security.privilege.ApplicationPermission;
 
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -65,6 +69,8 @@ public class DatabaseFreezeServiceImpl
 
   public static final String SERVER_NAME = "*";
 
+  static final ApplicationPermission READ_ONLY_PERMISSION = new ApplicationPermission(SERVER_NAME, Arrays.asList("read"));
+
   private final Set<Provider<DatabaseInstance>> providers;
 
   private final EventManager eventManager;
@@ -75,12 +81,15 @@ public class DatabaseFreezeServiceImpl
 
   private final NodeAccess nodeAccess;
 
+  private final SecurityHelper securityHelper;
+
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers,
                                    final EventManager eventManager,
                                    final DatabaseFrozenStateManager databaseFrozenStateManager,
                                    final Provider<OServer> server,
-                                   final NodeAccess nodeAccess)
+                                   final NodeAccess nodeAccess,
+                                   final SecurityHelper securityHelper)
   {
     this.providers = checkNotNull(providers);
     this.eventManager = checkNotNull(eventManager);
@@ -88,6 +97,7 @@ public class DatabaseFreezeServiceImpl
     checkNotNull(server);
     distributedServerManagerProvider = () -> server.get().getDistributedManager();
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.securityHelper = securityHelper;
   }
 
   @Override
@@ -207,6 +217,12 @@ public class DatabaseFreezeServiceImpl
     }
   }
 
+  @Override
+  public ReadOnlyState getReadOnlyState() {
+    return new DefaultReadOnlyState(getState(),
+        securityHelper.allPermitted(READ_ONLY_PERMISSION));
+  }
+
   /**
    * Check {@link DatabaseFrozenStateManager#getState()} to see if cluster state is represents a state change
    * different from our local status.
@@ -249,7 +265,7 @@ public class DatabaseFreezeServiceImpl
     for (String database : distributedServerManager.getMessageService().getDatabases()) {
       log.info("Updating server role of {} database to {}", database, serverRole);
       distributedServerManager.executeInDistributedDatabaseLock(database, 0l, null, distributedConfiguration -> {
-        distributedConfiguration.setServerRole("*", serverRole);
+        distributedConfiguration.setServerRole(SERVER_NAME, serverRole);
         return null;
       });
     }

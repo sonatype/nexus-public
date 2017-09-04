@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.storage.internal;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,22 +33,18 @@ import org.sonatype.nexus.repository.storage.BucketDeleter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
 import org.sonatype.nexus.repository.storage.StorageFacetManager;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskScheduler;
-import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
-import static org.sonatype.nexus.repository.storage.internal.StorageFacetCleanupTaskDescriptor.TYPE_ID;
 
 /**
  * @since 3.2.1
  */
 @Named
-@ManagedLifecycle(phase = TASKS)
+@ManagedLifecycle(phase = SERVICES)
 @Singleton
 public class StorageFacetManagerImpl
     extends StateGuardLifecycleSupport
@@ -61,33 +56,16 @@ public class StorageFacetManagerImpl
 
   private final BucketEntityAdapter bucketEntityAdapter;
 
-  private final TaskScheduler taskScheduler;
-
   private final BucketDeleter bucketDeleter;
-
-  private final String storageCleanupCron;
 
   @Inject
   public StorageFacetManagerImpl(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider,
                                  final BucketEntityAdapter bucketEntityAdapter,
-                                 final TaskScheduler taskScheduler,
-                                 final BucketDeleter bucketDeleter,
-                                 @Named("${nexus.storageCleanup.cron:-0 */10 * * * ?}") final String storageCleanupCron)
+                                 final BucketDeleter bucketDeleter)
   {
     this.databaseInstanceProvider = checkNotNull(databaseInstanceProvider);
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
-    this.taskScheduler = checkNotNull(taskScheduler);
     this.bucketDeleter = checkNotNull(bucketDeleter);
-    this.storageCleanupCron = checkNotNull(storageCleanupCron);
-  }
-
-  @Override
-  protected void doStart() throws Exception {
-    if (!taskScheduler.listsTasks().stream().anyMatch((info) -> TYPE_ID.equals(info.getConfiguration().getTypeId()))) {
-      TaskConfiguration configuration = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-      Schedule schedule = taskScheduler.getScheduleFactory().cron(new Date(), storageCleanupCron);
-      taskScheduler.scheduleTask(configuration, schedule);
-    }
   }
 
   @Override

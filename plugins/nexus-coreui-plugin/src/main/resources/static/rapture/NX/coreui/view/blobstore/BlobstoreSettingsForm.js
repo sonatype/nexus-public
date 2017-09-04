@@ -52,7 +52,12 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'id',
-        readOnly: true
+        readOnly: true,
+        onChange: function(value) {
+          var settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset');
+          var blobstoreTypeModel = NX.getApplication().getStore('BlobstoreType').getById(value);
+          settingsFieldSet.importProperties(null, blobstoreTypeModel.get('formFields'), me.editableCondition);
+        }
       },
       {
         xtype: 'textfield',
@@ -61,13 +66,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Name_FieldLabel'),
         readOnly: true
       },
-      {
-        xtype: 'textfield',
-        name: 'path',
-        itemId: 'path',
-        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Path_FieldLabel'),
-        readOnly: true
-      }
+      { xtype: 'nx-coreui-formfield-settingsfieldset' }
     ];
 
     me.callParent();
@@ -76,13 +75,19 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     Ext.override(me.getForm(), {
       getValues: function() {
         var values = this.callParent(arguments);
-        values['attributes'] = {file:{path:values['path']}};
+        var type = values['type'].toLowerCase();
+        values.attributes = {};
+        values.attributes[type] = me.down('nx-coreui-formfield-settingsfieldset').exportProperties(values);
         return values;
       },
-
       setValues: function(values) {
         var attrs = values['attributes'];
-        values['path'] = attrs['file']['path'];
+        var type = values['type'].toLowerCase();
+        for (var prop in attrs[type]) {
+          if (attrs[type].hasOwnProperty(prop)) {
+            values["property_" + prop] = attrs[type][prop];
+          }
+        }
         this.callParent(arguments);
       }
     });

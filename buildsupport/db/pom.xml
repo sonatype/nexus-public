@@ -29,7 +29,8 @@
 
   <properties>
     <orientdb.version>2.2.SONATYPE-SNAPSHOT</orientdb.version>
-    <hazelcast.version>3.6.6</hazelcast.version>
+    <hazelcast.version>3.7.8</hazelcast.version>
+    <hazelcast-aws.version>2.0.1</hazelcast-aws.version>
   </properties>
 
   <dependencyManagement>
@@ -141,8 +142,8 @@
 
       <dependency>
         <groupId>com.hazelcast</groupId>
-        <artifactId>hazelcast-cloud</artifactId>
-        <version>${hazelcast.version}</version>
+        <artifactId>hazelcast-aws</artifactId>
+        <version>${hazelcast-aws.version}</version>
       </dependency>
 
       <dependency>

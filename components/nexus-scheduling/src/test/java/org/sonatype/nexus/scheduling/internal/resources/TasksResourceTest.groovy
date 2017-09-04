@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling.internal.resources
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.ws.rs.WebApplicationException
+import javax.ws.rs.core.Response.Status
 
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
@@ -24,6 +25,9 @@ import org.sonatype.nexus.scheduling.schedule.Schedule
 import spock.lang.Specification
 
 import static TaskInfo.State.*
+import static javax.ws.rs.core.Response.Status.CONFLICT
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR
+import static javax.ws.rs.core.Response.Status.NOT_FOUND
 
 public class TasksResourceTest
     extends Specification {
@@ -31,12 +35,16 @@ public class TasksResourceTest
 
   def taskScheduler = Mock(TaskScheduler)
 
+  def visibleConfig = new TaskConfiguration(visible: true)
+  def invisibleConfig = new TaskConfiguration(visible: false)
+
   def testTasks = [
-    new TestTaskInfo(id: 'task1', name: 'Task 1', currentState: new TestCurrentState(state: WAITING)),
+    new TestTaskInfo(id: 'task0', name: 'Invisible task', currentState: new TestCurrentState(state: WAITING), configuration: invisibleConfig),
+    new TestTaskInfo(id: 'task1', name: 'Task 1', currentState: new TestCurrentState(state: WAITING), configuration: visibleConfig),
     new TestTaskInfo(id: 'task2', name: 'Task 2', currentState: new TestCurrentState(state: RUNNING,
-        runStarted: new Date(), future: new CompletableFuture())),
+        runStarted: new Date(), future: new CompletableFuture()), configuration: visibleConfig),
     new TestTaskInfo(id: 'task3', name: 'Task 3', currentState: new TestCurrentState(state: DONE,
-        runStarted: new Date(), future: CompletableFuture.completedFuture(null)))
+        runStarted: new Date(), future: CompletableFuture.completedFuture(null)), configuration: visibleConfig)
   ]
 
   def setup() {
@@ -73,7 +81,7 @@ public class TasksResourceTest
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       invalidTaskXO == null
       WebApplicationException exception = thrown()
-      exception.response.status == 404
+      Status.fromStatusCode(exception.response.status) == NOT_FOUND
   }
 
   def 'run invokes runNow on tasks'() {
@@ -90,7 +98,7 @@ public class TasksResourceTest
     then: 'a 404 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception1 = thrown()
-      exception1.response.status == 404
+      Status.fromStatusCode(exception1.response.status) == NOT_FOUND
 
     when: 'an error occurs'
       tasksResource.run('error')
@@ -98,10 +106,10 @@ public class TasksResourceTest
     then: 'a 500 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> throw new RuntimeException("error") }
       WebApplicationException exception2 = thrown()
-      exception2.response.status == 500
+      Status.fromStatusCode(exception2.response.status) == INTERNAL_SERVER_ERROR
   }
 
-  def 'stop invokes cancels running tasks'() {
+  def 'stop cancels running tasks'() {
     when: 'stop called with valid id for a running task'
       tasksResource.stop('task2')
       
@@ -112,18 +120,18 @@ public class TasksResourceTest
     when: 'stop called with valid id for a non-running task'
       tasksResource.stop('task1')
       
-    then: 'task found and invoked once with runNow()'
+    then: 'task found, a 409 is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception1 = thrown()
-      exception1.response.status == 404
+      Status.fromStatusCode(exception1.response.status) == CONFLICT
 
     when: 'stop called with completed task'
       tasksResource.stop('task3')
-      
+
     then: 'a 409 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception2 = thrown()
-      exception2.response.status == 409
+      Status.fromStatusCode(exception2.response.status) == CONFLICT
 
     when: 'stop called with invalid id'
       tasksResource.stop('nosuchtask')
@@ -131,7 +139,7 @@ public class TasksResourceTest
     then: 'a 404 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       WebApplicationException exception3 = thrown()
-      exception3.response.status == 404
+      Status.fromStatusCode(exception3.response.status) == NOT_FOUND
 
     when: 'an error occurs'
       tasksResource.stop('error')
@@ -139,7 +147,7 @@ public class TasksResourceTest
     then: 'a 500 response is generated'
       1 * taskScheduler.getTaskById(_) >> { String id -> throw new RuntimeException("error") }
       WebApplicationException exception4 = thrown()
-      exception4.response.status == 500
+      Status.fromStatusCode(exception4.response.status) == INTERNAL_SERVER_ERROR
   }
 
   class TestTaskInfo implements TaskInfo {

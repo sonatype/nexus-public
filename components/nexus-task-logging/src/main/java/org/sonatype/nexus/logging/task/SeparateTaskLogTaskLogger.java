@@ -14,6 +14,7 @@ package org.sonatype.nexus.logging.task;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.MDC;
@@ -21,6 +22,7 @@ import org.slf4j.MDC;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
 /**
@@ -76,5 +78,14 @@ public class SeparateTaskLogTaskLogger
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
     MDC.remove(TASK_LOG_ONLY_MDC);
     MDC.remove(TASK_LOG_WITH_PROGRESS_MDC);
+  }
+
+  @Override
+  public void flush() {
+    if (lastProgressEvent != null) {
+      Logger logger = Optional.ofNullable(lastProgressEvent.getLogger()).orElse(log);
+      logger.info(PROGRESS, lastProgressEvent.getMessage(), lastProgressEvent.getArgumentArray());
+    }
+    super.flush();
   }
 }

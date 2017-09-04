@@ -14,19 +14,26 @@ package org.sonatype.nexus.internal.node;
 
 import java.io.File;
 import java.security.cert.Certificate;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.NodeConfiguration;
+import org.sonatype.nexus.common.node.NodeConfigurationSource;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for local {@link NodeAccess}.
@@ -39,6 +46,9 @@ public class LocalNodeAccessTest
 
   private NodeAccess nodeAccess;
 
+  @Mock
+  private NodeConfigurationSource nodeConfigurationSource;
+
   @Before
   public void setUp() throws Exception {
     File dir = util.createTempDir("keystores");
@@ -48,7 +58,7 @@ public class LocalNodeAccessTest
     keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
-    nodeAccess = new LocalNodeAccess(() -> keyStoreManager);
+    nodeAccess = new LocalNodeAccess(() -> keyStoreManager, nodeConfigurationSource);
     nodeAccess.start();
   }
 
@@ -68,5 +78,16 @@ public class LocalNodeAccessTest
   @Test
   public void localIsOldestNode() {
     assertThat(nodeAccess.isOldestNode(), is(true));
+  }
+
+  @Test
+  public void testFriendlyNames() {
+    when(nodeConfigurationSource.getById("id"))
+        .thenReturn(Optional.of(new NodeConfiguration("id", "friendly name")));
+
+    String retrieved = nodeAccess.getFriendlyName("id");
+    assertThat(retrieved, equalTo("friendly name"));
+    nodeAccess.setFriendlyName("id", "updated friendly name");
+    verify(nodeConfigurationSource, times(1)).setFriendlyName("id", "updated friendly name");
   }
 }

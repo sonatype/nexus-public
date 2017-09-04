@@ -45,10 +45,14 @@ public class BearerToken
     final String headerValue = request.getHeader(AUTHORIZATION);
     if (headerValue != null && headerValue.startsWith("Bearer ")) {
       List<String> parts = Lists.newArrayList(Splitter.on(' ').split(headerValue));
-      if (parts.size() == 2 && "Bearer".equals(parts.get(0)) && parts.get(1).startsWith(format)) {
+      if (parts.size() == 2 && "Bearer".equals(parts.get(0)) && matchesFormat(parts)) {
         return parts.get(1).replaceAll(format + ".", "");
       }
     }
     return null;
+  }
+
+  protected boolean matchesFormat(final List<String> parts) {
+    return parts.get(1).startsWith(format);
   }
 }

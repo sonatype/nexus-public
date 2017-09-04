@@ -286,8 +286,8 @@
                   <replacefilter token="docExpansion: &quot;none&quot;"
                                  value="docExpansion:'list', apisSorter:'alpha', operationsSorter:'alpha'"/>
                   <!-- remove unused API selector form -->
-                  <replacefilter token="&lt;form" value="&lt;!-- &lt;form"/>
-                  <replacefilter token="form&gt;" value="form&gt; --&gt;"/>
+                  <replacefilter token="&lt;div id='header'"
+                                 value="&lt;div id='header' style='display: none;'"/>
                 </replace>
 
                 <!--

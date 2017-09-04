@@ -57,6 +57,9 @@ class InstallConfigurationCustomizer
         if (file.name == 'jetty-https.xml') {
           supportBundle << new SanitizedJettyFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
+        else if (file.name == 'hazelcast.xml') {
+          supportBundle << new SanitizedHazelcastFileSource(CONFIG, "$prefix/${file.name}", file, priority)
+        }
         else {
           supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
         }
@@ -134,6 +137,38 @@ class InstallConfigurationCustomizer
      * Constructor.
      */
     SanitizedJettyFileSource(final Type type, final String path, final File file, final Priority priority) {
+      super(type, path, file, priority, STYLESHEET)
+    }
+  }
+
+  /**
+   * Removes AWS credentials from hazelcast.xml, if present.
+   */
+  static class SanitizedHazelcastFileSource
+    extends SanitizedXmlSourceSupport {
+
+    static final STYLESHEET = '''
+      <xsl:stylesheet version="1.0"
+       xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+       xmlns:hz="http://www.hazelcast.com/schema/config">
+       <xsl:output omit-xml-declaration="no" standalone="no"
+                   indent="yes"/>
+
+       <xsl:template match="node()|@*">
+        <xsl:copy>
+         <xsl:apply-templates select="node()|@*"/>
+        </xsl:copy>
+       </xsl:template>
+
+       <xsl:template match="hz:access-key/text()">
+        <xsl:text>removed</xsl:text>
+       </xsl:template>
+       <xsl:template match="hz:secret-key/text()">
+        <xsl:text>removed</xsl:text>
+       </xsl:template>
+      </xsl:stylesheet>'''.stripMargin()
+
+    SanitizedHazelcastFileSource(final Type type, final String path, final File file, final Priority priority) {
       super(type, path, file, priority, STYLESHEET)
     }
   }

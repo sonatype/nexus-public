@@ -113,7 +113,7 @@ public final class EntityHook
     recordingAdapters.put(adapter.getSchemaType(), adapter);
     recordingDatabases.add(adapter.getDbName());
 
-    pendingDbs.removeIf(db -> startRecording(db));
+    pendingDbs.removeIf(db -> db.isClosed() || startRecording(db));
   }
 
   /**

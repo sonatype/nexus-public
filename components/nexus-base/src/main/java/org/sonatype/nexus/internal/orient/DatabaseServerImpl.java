@@ -39,6 +39,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.DatabaseServer;
+import org.sonatype.nexus.orient.OrientConfigCustomizer;
 import org.sonatype.nexus.orient.entity.EntityHook;
 
 import com.google.common.collect.ImmutableList;
@@ -89,6 +90,8 @@ public class DatabaseServerImpl
 
   private final List<OServerHandlerConfiguration> injectedHandlers;
 
+  private final List<OrientConfigCustomizer> configCustomizers;
+
   private final EntityHook entityHook;
 
   private final ClassLoader uberClassLoader;
@@ -108,6 +111,7 @@ public class DatabaseServerImpl
   @Inject
   public DatabaseServerImpl(final ApplicationDirectories applicationDirectories,
                             final List<OServerHandlerConfiguration> injectedHandlers,
+                            final List<OrientConfigCustomizer> configCustomizers,
                             @Named("nexus-uber") final ClassLoader uberClassLoader,
                             @Named("${nexus.orient.binaryListenerEnabled:-false}") final boolean binaryListenerEnabled,
                             @Named("${nexus.orient.httpListenerEnabled:-false}") final boolean httpListenerEnabled,
@@ -119,6 +123,7 @@ public class DatabaseServerImpl
   {
     this.applicationDirectories = checkNotNull(applicationDirectories);
     this.injectedHandlers = checkNotNull(injectedHandlers);
+    this.configCustomizers = checkNotNull(configCustomizers);
     this.uberClassLoader = checkNotNull(uberClassLoader);
     this.httpListenerEnabled = httpListenerEnabled;
     this.dynamicPlugins = dynamicPlugins;
@@ -217,42 +222,16 @@ public class DatabaseServerImpl
 
     config.network.listeners = new ArrayList<>();
 
-    // HACK: Optionally enable the binary listener
+    OServerNetworkListenerConfiguration binaryListener = null, httpListener = null;
+
     if (binaryListenerEnabled) {
-      OServerNetworkListenerConfiguration listener = new OServerNetworkListenerConfiguration();
-      listener.ipAddress = "0.0.0.0";
-      listener.portRange = binaryPortRange;
-      listener.protocol = "binary";
-      listener.socket = "default";
-      config.network.listeners.add(listener);
-      log.info("Binary listener enabled: {}:[{}]", listener.ipAddress, listener.portRange);
+      binaryListener = createBinaryListener(binaryPortRange);
+      config.network.listeners.add(binaryListener);
     }
 
-    // HACK: Optionally enable the http listener
     if (httpListenerEnabled) {
-      OServerNetworkListenerConfiguration listener = new OServerNetworkListenerConfiguration();
-      listener.ipAddress = "0.0.0.0";
-      listener.portRange = httpPortRange;
-      listener.protocol = "http";
-      listener.socket = "default";
-      listener.parameters = new OServerParameterConfiguration[] {
-          new OServerParameterConfiguration("network.http.charset", "UTF-8"),
-          new OServerParameterConfiguration("network.http.jsonResponseError", "true")
-      };
-
-      OServerCommandConfiguration getCommand = new OServerCommandConfiguration();
-      getCommand.implementation = OServerCommandGetStaticContent.class.getName();
-      getCommand.pattern = "GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.ttf GET|*.svgz";
-      getCommand.parameters = new OServerEntryConfiguration[] {
-          new OServerEntryConfiguration("http.cache:*.htm *.html", "Cache-Control: no-cache, no-store, max-age=0, must-revalidate\\r\\nPragma: no-cache"),
-          new OServerEntryConfiguration("http.cache:default", "Cache-Control: max-age=120")
-      };
-      listener.commands = new OServerCommandConfiguration[] {
-          getCommand
-      };
-
-      config.network.listeners.add(listener);
-      log.info("HTTP listener enabled: {}:[{}]", listener.ipAddress, listener.portRange);
+      httpListener = createHttpListener(httpPortRange);
+      config.network.listeners.add(httpListener);
     }
 
     config.storages = new OServerStorageConfiguration[]{};
@@ -276,7 +255,53 @@ public class DatabaseServerImpl
     // especially network partitions we don't want the write quorum getting lowered and endanger consistency 
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(-1);
 
+    // Apply customizations to server configuration
+    configCustomizers.forEach((it) -> it.apply(config));
+
+    if (binaryListener != null) {
+      log.info("Binary listener enabled: {}:[{}]", binaryListener.ipAddress, binaryListener.portRange);
+    }
+
+    if (httpListener != null) {
+      log.info("HTTP listener enabled: {}:[{}]", httpListener.ipAddress, httpListener.portRange);
+    }
+
     return config;
+  }
+
+  private OServerNetworkListenerConfiguration createBinaryListener(final String binaryPortRange) {
+    OServerNetworkListenerConfiguration listener;
+    listener = new OServerNetworkListenerConfiguration();
+    listener.ipAddress = "0.0.0.0";
+    listener.portRange = binaryPortRange;
+    listener.protocol = "binary";
+    listener.socket = "default";
+    return listener;
+  }
+
+  private OServerNetworkListenerConfiguration createHttpListener(final String httpPortRange) {
+    OServerNetworkListenerConfiguration listener;
+    listener = new OServerNetworkListenerConfiguration();
+    listener.ipAddress = "0.0.0.0";
+    listener.portRange = httpPortRange;
+    listener.protocol = "http";
+    listener.socket = "default";
+    listener.parameters = new OServerParameterConfiguration[] {
+        new OServerParameterConfiguration("network.http.charset", "UTF-8"),
+        new OServerParameterConfiguration("network.http.jsonResponseError", "true")
+    };
+
+    OServerCommandConfiguration getCommand = new OServerCommandConfiguration();
+    getCommand.implementation = OServerCommandGetStaticContent.class.getName();
+    getCommand.pattern = "GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg GET|*.json GET|*.woff GET|*.ttf GET|*.svgz";
+    getCommand.parameters = new OServerEntryConfiguration[] {
+        new OServerEntryConfiguration("http.cache:*.htm *.html", "Cache-Control: no-cache, no-store, max-age=0, must-revalidate\\r\\nPragma: no-cache"),
+        new OServerEntryConfiguration("http.cache:default", "Cache-Control: max-age=120")
+    };
+    listener.commands = new OServerCommandConfiguration[] {
+        getCommand
+    };
+    return listener;
   }
 
   @Override

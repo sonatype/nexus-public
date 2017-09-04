@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import org.slf4j.Logger;
+
 /**
  * Each task is executed in its own thread and its {@link TaskLogger} is stored in it here.
  *
@@ -46,6 +48,20 @@ public class TaskLoggerHelper
     TaskLogger taskLogger = get();
     if (taskLogger != null) {
       taskLogger.progress(event);
+    }
+  }
+
+  public static void progress(final Logger logger, final String message, Object... args) {
+    progress(new TaskLoggingEvent(logger, message, args));
+  }
+
+  /**
+   * @see TaskLogger#flush()
+   */
+  public static void flush() {
+    TaskLogger taskLogger = get();
+    if (taskLogger != null) {
+      taskLogger.flush();
     }
   }
 }

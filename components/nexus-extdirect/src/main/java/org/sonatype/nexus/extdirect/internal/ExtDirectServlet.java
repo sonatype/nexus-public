@@ -39,7 +39,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.analytics.EventDataBuilder;
+import org.sonatype.nexus.analytics.EventData;
+import org.sonatype.nexus.analytics.EventDataFactory;
 import org.sonatype.nexus.analytics.EventRecorder;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -99,14 +100,18 @@ public class ExtDirectServlet
 
   private final Provider<EventRecorder> recorderProvider;
 
+  private final Provider<EventDataFactory> eventDataFactoryProvider;
+
   @Inject
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
-                          final Provider<EventRecorder> recorderProvider)
+                          final Provider<EventRecorder> recorderProvider,
+                          final Provider<EventDataFactory> eventDataFactoryProvider)
   {
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
     this.recorderProvider = checkNotNull(recorderProvider);
+    this.eventDataFactoryProvider = checkNotNull(eventDataFactoryProvider);
   }
 
   @Override
@@ -210,15 +215,16 @@ public class ExtDirectServlet
         }
 
         Response response = null;
-        EventDataBuilder builder = null;
         EventRecorder recorder = recorderProvider.get();
+        EventData eventData = null;
+        long started = System.nanoTime();
 
         // Maybe record analytics events
         if (recorder != null && recorder.isEnabled()) {
-          builder = new EventDataBuilder("Ext.Direct")
-              .set("type", method.getType().name())
-              .set("name", method.getName())
-              .set("action", method.getActionName());
+            eventData = eventDataFactoryProvider.get().create("Ext.Direct");
+            eventData.getAttributes().put("type", method.getType().name());
+            eventData.getAttributes().put("name", method.getName());
+            eventData.getAttributes().put("action", method.getActionName());
         }
 
         MDC.put(getClass().getName(), method.getFullName());
@@ -234,11 +240,12 @@ public class ExtDirectServlet
         }
         finally {
           // Record analytics event
-          if (recorder != null && builder != null) {
+          if (recorder != null && eventData != null) {
             if (response != null) {
-              builder.set("success", response.isSuccess());
+              eventData.getAttributes().put("success", String.valueOf(response.isSuccess()));
             }
-            recorder.record(builder.build());
+            eventData.setDuration(System.nanoTime() - started);
+            recorder.record(eventData);
           }
 
           MDC.remove(getClass().getName());

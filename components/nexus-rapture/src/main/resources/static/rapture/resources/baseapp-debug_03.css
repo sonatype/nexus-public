@@ -299,13 +299,8 @@
 /**
  * @class NX.view.dashboard.Welcome
  */
-.nx-dashboard-welcome {
+.nx-iframe-full {
   background-color: white;
-}
-.nx-dashboard-welcome .logo {
-  text-align: center;
-  vertical-align: middle;
-  margin: 40px 0 0 0;
 }
 
 /**

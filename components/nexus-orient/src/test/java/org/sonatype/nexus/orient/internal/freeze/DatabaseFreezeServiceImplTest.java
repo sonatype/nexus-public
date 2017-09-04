@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.inject.Provider;
 
@@ -30,7 +31,9 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFrozenStateManager;
 import org.sonatype.nexus.orient.freeze.FreezeRequest;
 import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
+import org.sonatype.nexus.orient.freeze.ReadOnlyState;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.collect.Sets;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -56,6 +59,7 @@ import static java.util.stream.Stream.of;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Matchers.any;
@@ -106,6 +110,9 @@ public class DatabaseFreezeServiceImplTest
   @Mock
   NodeAccess nodeAccess;
 
+  @Mock
+  SecurityHelper securityHelper;
+
   DatabaseFrozenStateManager databaseFrozenStateManager;
 
   DatabaseFreezeServiceImpl underTest;
@@ -143,7 +150,8 @@ public class DatabaseFreezeServiceImplTest
         eventManager,
         databaseFrozenStateManager,
         () -> server,
-        nodeAccess);
+        nodeAccess,
+        securityHelper);
 
     when(server.getDistributedManager()).thenReturn(distributedServerManager);
 
@@ -251,7 +259,7 @@ public class DatabaseFreezeServiceImplTest
   public void onNodeMergedNoChange() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
     underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        mockManager, () -> server, nodeAccess);
+        mockManager, () -> server, nodeAccess, securityHelper);
 
     // verify we are in writable state
     verifyWriteFails(false);
@@ -277,7 +285,8 @@ public class DatabaseFreezeServiceImplTest
   @Test
   public void onNodeMergedStateRequiresFreeze() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, mockManager, () -> server, nodeAccess);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager,
+        mockManager, () -> server, nodeAccess, securityHelper);
 
     // verify we start in writable state
     verifyWriteFails(false);
@@ -302,7 +311,8 @@ public class DatabaseFreezeServiceImplTest
   @Test
   public void onNodeMergedStateRequiresRelease() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
-    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager, mockManager, () -> server, nodeAccess);
+    underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager,
+        mockManager, () -> server, nodeAccess, securityHelper);
 
     underTest.freezeLocalDatabases();
     // verify we start in read-only state
@@ -326,7 +336,7 @@ public class DatabaseFreezeServiceImplTest
         () -> instance,
         () -> instance,
         () -> instance
-    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess);
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
 
     when(instance.isFrozen())
         .thenReturn(true, true, true, false);
@@ -343,13 +353,75 @@ public class DatabaseFreezeServiceImplTest
         () -> instance,
         () -> instance,
         () -> instance
-    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess);
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
 
     when(instance.isFrozen())
         .thenReturn(false, true, true, true);
     assertThat(underTest.isFrozen(), is(false));
 
     verify(instance, times(1)).isFrozen();
+  }
+
+  @Test
+  public void getReadOnlyState() {
+    // start in empty state
+    verifyState(underTest.getReadOnlyState(), false, "", false);
+
+    // user initiated freeze
+    FreezeRequest request = underTest.requestFreeze(InitiatorType.USER_INITIATED, INITIATOR_ID);
+    verifyState(underTest.getReadOnlyState(), true, "", false);
+    // as authenticated person
+    when(securityHelper.allPermitted(any())).thenReturn(true);
+    verifyState(underTest.getReadOnlyState(), true,
+        s -> s.contains("activated by an administrator"), false);
+    when(securityHelper.allPermitted(any())).thenReturn(false);
+
+    // back to empty
+    underTest.releaseRequest(request);
+    verifyState(underTest.getReadOnlyState(), false, "", false);
+
+    // system initiated freeze
+    underTest.requestFreeze(InitiatorType.SYSTEM, INITIATOR_ID);
+    verifyState(underTest.getReadOnlyState(), true, "", true);
+    when(securityHelper.allPermitted(any())).thenReturn(true);
+    verifyState(underTest.getReadOnlyState(), true,
+        s -> s.contains("activated by 1 running system"), true);
+    when(securityHelper.allPermitted(any())).thenReturn(false);
+
+    // stack a second system freeze
+    underTest.requestFreeze(InitiatorType.SYSTEM, INITIATOR_ID);
+    verifyState(underTest.getReadOnlyState(), true, "", true);
+    when(securityHelper.allPermitted(any())).thenReturn(true);
+    verifyState(underTest.getReadOnlyState(), true,
+        s -> s.contains("activated by 2 running system"), true);
+    when(securityHelper.allPermitted(any())).thenReturn(false);
+
+    // cleanup
+    underTest.releaseAllRequests();
+    verifyState(underTest.getReadOnlyState(), false, "", false);
+
+  }
+
+  /**
+   * @param state {@link ReadOnlyState} to check
+   * @param frozen expected value for {@link ReadOnlyState#isFrozen()}
+   * @param message expected exact value for {@link ReadOnlyState#getSummaryReason()}
+   * @param system expected value for {@link ReadOnlyState#isSystemInitiated()}
+   */
+  void verifyState(ReadOnlyState state, boolean frozen, String message, boolean system) {
+    verifyState(state, frozen, s -> s.equals(message), system);
+  }
+
+  /**
+   * @param state {@link ReadOnlyState} to check
+   * @param frozen expected value for {@link ReadOnlyState#isFrozen()}
+   * @param stringPredicate test for {@link ReadOnlyState#getSummaryReason()}
+   * @param system expected value for {@link ReadOnlyState#isSystemInitiated()}
+   */
+  void verifyState(ReadOnlyState state, boolean frozen, Predicate<String> stringPredicate, boolean system) {
+    assertThat(state.isFrozen(), is(frozen));
+    assertTrue(state.getSummaryReason() + " doesn't match expectation", stringPredicate.test(state.getSummaryReason()));
+    assertThat(state.isSystemInitiated(), is(system));
   }
 
   /**

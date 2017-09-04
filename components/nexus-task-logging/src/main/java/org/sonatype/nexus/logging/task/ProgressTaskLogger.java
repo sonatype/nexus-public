@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.util.Optional;
 import java.util.concurrent.Future;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -21,7 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 
 /**
@@ -42,7 +42,7 @@ public class ProgressTaskLogger
 
   private Future<?> progressLoggingThread;
 
-  private TaskLoggingEvent lastProgressEvent;
+  TaskLoggingEvent lastProgressEvent;
 
   ProgressTaskLogger(final Logger log) {
     this.log = checkNotNull(log);
@@ -63,10 +63,16 @@ public class ProgressTaskLogger
     lastProgressEvent = event;
   }
 
+  @Override
+  public void flush() {
+    logProgress();
+  }
+
   @VisibleForTesting
   void logProgress() {
     if (lastProgressEvent != null) {
-      log.info(INTERNAL_PROGRESS, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
+      Logger logger = Optional.ofNullable(lastProgressEvent.getLogger()).orElse(log);
+      logger.info(INTERNAL_PROGRESS, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
           lastProgressEvent.getArgumentArray());
 
       // clear last progress so it does not get logged again

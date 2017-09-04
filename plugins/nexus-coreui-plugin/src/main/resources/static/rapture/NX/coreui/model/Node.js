@@ -24,6 +24,7 @@ Ext.define('NX.coreui.model.Node', {
     { name: 'nodeIdentity', type: 'string' },
     { name: 'local', type: 'bool' },
     { name: 'socketAddress', type: 'string' },
+    { name: 'friendlyName', type: 'string' },
     { name: 'attributes', type: 'auto' /*object*/}
   ]
 });

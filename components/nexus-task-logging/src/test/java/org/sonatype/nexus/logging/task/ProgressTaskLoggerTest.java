@@ -52,7 +52,7 @@ public class ProgressTaskLoggerTest
   @Test
   public void testProgress() {
     String message = "test message";
-    TaskLoggingEvent event = new TaskLoggingEvent(message);
+    TaskLoggingEvent event = new TaskLoggingEvent(mockLogger, message);
     underTest.progress(event);
 
     // invoke method normally invoke via thread

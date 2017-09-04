@@ -18,11 +18,7 @@ import javax.inject.Singleton
 
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
-import org.sonatype.nexus.orient.freeze.FreezeRequest
-import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
 import org.sonatype.nexus.rapture.StateContributor
-import org.sonatype.nexus.security.SecurityHelper
-import org.sonatype.nexus.security.privilege.ApplicationPermission
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static com.google.common.collect.ImmutableMap.of
@@ -37,41 +33,20 @@ class DatabaseStateContributor
 
   private final DatabaseFreezeService databaseFreezeService
 
-  private final SecurityHelper securityHelper
-
   @Inject
-  DatabaseStateContributor(final DatabaseFreezeService databaseFreezeService, final SecurityHelper securityHelper) {
+  DatabaseStateContributor(final DatabaseFreezeService databaseFreezeService) {
     this.databaseFreezeService = checkNotNull(databaseFreezeService)
-    this.securityHelper = checkNotNull(securityHelper)
   }
 
   @Override
   Map<String, Object> getState() {
-    List<FreezeRequest> requests = databaseFreezeService.getState()
+    def state = databaseFreezeService.getReadOnlyState()
     return of(STATE_ID,
         of(
-          'dbFrozen', databaseFreezeService.isFrozen(),
-          'system', isSystem(requests),
-          'reason', calculateReason(requests)
+          'dbFrozen', state.isFrozen(),
+          'system', state.isSystemInitiated(),
+          'reason', state.getSummaryReason()
         )
     )
-  }
-
-  String calculateReason(List<FreezeRequest> requests) {
-    if (requests.isEmpty() ||
-      !securityHelper.allPermitted(new ApplicationPermission("*", Arrays.asList("read")))) {
-      return ""
-    }
-
-    def userInitiated = requests.find { it.initiatorType == InitiatorType.USER_INITIATED }
-    if (userInitiated != null) {
-      return "activated by an administrator at ${userInitiated.getTimestamp().toString("yyyy-MM-dd HH:mm:ss ZZ")}"
-    } else {
-      return "activated by ${requests.size()} running system task(s)"
-    }
-  }
-
-  boolean isSystem(List<FreezeRequest> requests) {
-    return !requests.findAll { it.initiatorType == InitiatorType.SYSTEM }?.isEmpty()
   }
 }

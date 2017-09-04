@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
 
@@ -54,6 +55,7 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -557,8 +559,11 @@ public class FileBlobStore
   public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     try {
       maybeRebuildDeletedBlobIndex();
+
+      log.info("Begin deleted blobs processing");
       // only process each blob once (in-use blobs may be re-added to the index)
-      for (int i = 0, numBlobs = deletedBlobIndex.size(); i < numBlobs; i++) {
+      ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+      for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
         byte[] bytes = deletedBlobIndex.peek();
         if (bytes == null) {
           return;
@@ -573,7 +578,10 @@ public class FileBlobStore
           // still in use, so move it to end of the queue
           deletedBlobIndex.add(bytes);
         }
+        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+            counter + 1, numBlobs);
       }
+      progressLogger.flush();
     }
     catch (BlobStoreException e) {
       throw e;
@@ -768,6 +776,8 @@ public class FileBlobStore
       }
 
       log.warn("Rebuilding deletions index file {}", deletedIndex);
+      ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+      final AtomicInteger processed = new AtomicInteger();
       int softDeletedBlobsFound = getAttributeFilePaths()
           .map(FileBlobAttributes::new)
           .mapToInt(attributes -> {
@@ -782,13 +792,23 @@ public class FileBlobStore
             catch (IOException e) {
               log.warn("Failed to add blobId to index from attribute file {}", attributes.getPath(), e);
             }
+            finally {
+              progressLogger.info("Elapsed time: {}, processed: {}, deleted: {}", progressLogger.getElapsed(),
+                  processed.incrementAndGet(), deletedBlobIndex.size());
+            }
             return 0;
           })
           .sum();
-      log.warn("Added {} soft deleted blob(s) to index file {}", softDeletedBlobsFound, deletedIndex);
+
+      progressLogger.flush();
+      log.warn("Elapsed time: {}, Added {} soft deleted blob(s) to index file {}", progressLogger.getElapsed(),
+          softDeletedBlobsFound, deletedIndex);
 
       metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
       metadata.store();
+    }
+    else {
+      log.info("Deletions index file rebuild not required");
     }
   }
 

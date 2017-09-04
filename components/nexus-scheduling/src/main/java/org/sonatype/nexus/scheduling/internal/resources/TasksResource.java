@@ -35,11 +35,16 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.api.TaskXO;
 import org.sonatype.nexus.scheduling.internal.resources.doc.TasksResourceDoc;
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.sonatype.nexus.scheduling.internal.resources.TasksResource.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
@@ -57,7 +62,7 @@ public class TasksResource
 {
   public static final String RESOURCE_URI = BETA_API_PREFIX + "/tasks";
 
-  private  static final String TRIGGER_SOURCE = "REST API";
+  private static final String TRIGGER_SOURCE = "REST API";
 
   private final TaskScheduler taskScheduler;
 
@@ -67,8 +72,11 @@ public class TasksResource
   }
 
   @GET
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:tasks:read")
   public Page<TaskXO> getTasks() {
     List<TaskXO> taskXOs = taskScheduler.listsTasks().stream()
+        .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
         .map(TaskXO::fromTaskInfo)
         .collect(toList());
 
@@ -77,12 +85,16 @@ public class TasksResource
 
   @GET
   @Path("/{id}")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:tasks:read")
   public TaskXO getTaskById(@PathParam("id") final String id) {
     return TaskXO.fromTaskInfo(getTaskInfo(id));
   }
 
   @POST
   @Path("/{id}/run")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:tasks:start")
   public void run(@PathParam("id") final String id) {
     try {
       getTaskInfo(id).runNow(TRIGGER_SOURCE);
@@ -92,21 +104,23 @@ public class TasksResource
     }
     catch (Exception e) {
       log.error("error running task with id {}", id, e);
-      throw new WebApplicationException(format("Error running task %s", id), 500);
+      throw new WebApplicationException(format("Error running task %s", id), INTERNAL_SERVER_ERROR);
     }
   }
 
   @POST
   @Path("/{id}/stop")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:tasks:stop")
   public void stop(@PathParam("id") final String id) {
     try {
       TaskInfo taskInfo = getTaskInfo(id);
       Future<?> taskFuture = taskInfo.getCurrentState().getFuture();
       if (taskFuture == null) {
-        throw new WebApplicationException(format("Task %s is not running", id), 404);
+        throw new WebApplicationException(format("Task %s is not running", id), CONFLICT);
       }
       if (!taskFuture.cancel(false)) {
-        throw new WebApplicationException(format("Unable to stop task %s", id), 409);
+        throw new WebApplicationException(format("Unable to stop task %s", id), CONFLICT);
       }
     }
     catch (WebApplicationException webApplicationException) {
@@ -114,12 +128,13 @@ public class TasksResource
     }
     catch (Exception e) {
       log.error("error stopping task with id {}", id, e);
-      throw new WebApplicationException(format("Error running task %s", id), 500);
+      throw new WebApplicationException(format("Error running task %s", id), INTERNAL_SERVER_ERROR);
     }
   }
 
   private TaskInfo getTaskInfo(final String id) {
     return ofNullable(taskScheduler.getTaskById(id))
+        .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
         .orElseThrow(() -> new NotFoundException("Unable to locate task with id " + id));
   }
 }

@@ -110,4 +110,13 @@ public class RestoreFile
     }
     throw new IllegalArgumentException(path + " is not a valid restore file");
   }
+
+  @Override
+  public String toString() {
+    return "{" +
+        "databaseName=" + databaseName +
+        ", timestamp=" + timestamp +
+        ", version=" + version +
+        "}";
+  }
 }

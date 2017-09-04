@@ -13,6 +13,7 @@
 package org.sonatype.nexus.analytics;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
@@ -22,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -33,15 +35,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link EventDataBuilder}.
+ * Tests for {@link EventDataFactory}.
  */
-public class EventDataBuilderTest
+public class EventDataFactoryTest
     extends TestSupport
 {
   private ThreadState threadState;
 
   @Mock
   private Subject subject;
+
+  @Mock
+  private NodeAccess nodeAccess;
 
   @Before
   public void setUp() throws Exception {
@@ -64,21 +69,20 @@ public class EventDataBuilderTest
     when(subject.getSession(false)).thenReturn(session);
     when(session.getId()).thenReturn("1234");
 
-    EventData event = new EventDataBuilder("TEST").build();
+    EventData event = new EventDataFactory(nodeAccess).create("TEST");
     assertThat(event, notNullValue());
     assertThat(event.getType(), is("TEST"));
     assertThat(event.getTimestamp(), notNullValue());
     assertThat(event.getSequence(), notNullValue());
     assertThat(event.getUserId(), is("foo"));
     assertThat(event.getSessionId(), is("1234"));
-    assertThat(event.getDuration(), notNullValue());
   }
 
   @Test
   public void subjectWithNullPrincipal() throws Exception {
     when(subject.getPrincipal()).thenReturn(null);
 
-    EventData event = new EventDataBuilder("TEST").build();
+    EventData event = new EventDataFactory(nodeAccess).create("TEST");
     assertThat(event, notNullValue());
     assertThat(event.getUserId(), nullValue());
   }
@@ -87,21 +91,19 @@ public class EventDataBuilderTest
   public void subjectWithNullSession() throws Exception {
     when(subject.getSession(false)).thenReturn(null);
 
-    EventData event = new EventDataBuilder("TEST").build();
+    EventData event = new EventDataFactory(nodeAccess).create("TEST");
     assertThat(event, notNullValue());
     assertThat(event.getSessionId(), nullValue());
   }
 
   @Test
-  public void setAttributes() throws Exception {
-    EventData event = new EventDataBuilder("TEST")
-        .set("foo", "bar")
-        .set("baz", null)
-        .build();
+  public void nodeIdWhenClustered() throws Exception {
+    when(nodeAccess.getId()).thenReturn("e91d48ec-8460-11e7-bb31-be2e44b06b34");
+
+    EventData event = new EventDataFactory(nodeAccess).create("TEST");
 
     assertThat(event, notNullValue());
-    assertThat(event.getAttributes().entrySet(), hasSize(2));
-    assertThat(event.getAttributes(), hasEntry("foo", (Object) "bar"));
-    assertThat(event.getAttributes(), hasEntry("baz", null));
+    assertThat(event.getAttributes().entrySet(), hasSize(1));
+    assertThat(event.getAttributes(), hasEntry("nodeId", "e91d48ec-8460-11e7-bb31-be2e44b06b34"));
   }
 }

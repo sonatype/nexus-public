@@ -103,7 +103,7 @@ public final class EntityLog
   }
 
   private OLocalPaginatedStorage storage() {
-    if (storage == null) {
+    if (storage == null || storage.isClosed()) {
       // use temp TX to get local storage; note we don't need a TX when reading write-ahead-log
       ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       try (ODatabaseDocumentInternal db = databaseProvider.get().acquire()) {

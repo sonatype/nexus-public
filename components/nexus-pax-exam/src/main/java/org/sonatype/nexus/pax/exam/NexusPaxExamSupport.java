@@ -418,9 +418,6 @@ public abstract class NexusPaxExamSupport
 
         keepRuntimeFolder(), // keep files around in case we need to debug
 
-        editConfigurationFilePut(PAX_URL_MAVEN_FILE, // so pax-exam can fetch its feature
-            "org.ops4j.pax.url.mvn.repositories", "https://repo1.maven.org/maven2@id=central"),
-
         editConfigurationFilePut(PAX_URL_MAVEN_FILE, // so we can fetch local snapshots
             "org.ops4j.pax.url.mvn.localRepository", localRepo),
 

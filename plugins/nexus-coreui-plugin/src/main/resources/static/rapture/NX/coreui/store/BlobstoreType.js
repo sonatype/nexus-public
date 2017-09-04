@@ -19,7 +19,7 @@
  */
 Ext.define('NX.coreui.store.BlobstoreType', {
   extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.Reference',
+  model: 'NX.coreui.model.BlobstoreType',
 
   proxy: {
     type: 'direct',

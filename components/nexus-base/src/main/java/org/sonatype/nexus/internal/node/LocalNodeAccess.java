@@ -13,15 +13,19 @@
 package org.sonatype.nexus.internal.node;
 
 import java.security.cert.Certificate;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.node.NodeConfiguration;
+import org.sonatype.nexus.common.node.NodeConfigurationSource;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.ssl.CertificateUtil;
@@ -45,6 +49,8 @@ public class LocalNodeAccess
 {
   private final Provider<KeyStoreManager> keyStoreProvider;
 
+  private final NodeConfigurationSource nodeConfigurationSource;
+
   private Certificate certificate;
 
   private String fingerprint;
@@ -54,8 +60,10 @@ public class LocalNodeAccess
   private boolean freshNode;
 
   @Inject
-  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider) {
+  public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider,
+                         final NodeConfigurationSource nodeConfigurationSource) {
     this.keyStoreProvider = checkNotNull(keyStoreProvider);
+    this.nodeConfigurationSource = checkNotNull(nodeConfigurationSource);
   }
 
   @Override
@@ -140,5 +148,17 @@ public class LocalNodeAccess
     return getClass().getSimpleName() + "{" +
         "id='" + id + '\'' +
         '}';
+  }
+
+  @Override
+  public void setFriendlyName(final String nodeId, final String friendlyName) {
+    nodeConfigurationSource.setFriendlyName(nodeId, friendlyName);
+  }
+
+  @Override
+  @Nullable
+  public String getFriendlyName(final String nodeId) {
+    Optional<NodeConfiguration> config = nodeConfigurationSource.getById(nodeId);
+    return config.isPresent() ? config.get().getFriendlyNodeName() : null;
   }
 }

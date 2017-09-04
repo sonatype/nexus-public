@@ -35,8 +35,9 @@ Ext.define('NX.coreui.view.system.Nodes', {
         && NX.State.getValue('nodes', {})['enabled']) {
       me.masters = [{xtype: 'nx-coreui-system-nodelist'}];
       me.tabs = {
-        xtype: 'nx-info-panel',
-        title: NX.I18n.get('System_Bundles_Details_Tab')
+        xtype: 'nx-coreui-system-node-settings',
+        title: NX.I18n.get('Nodes_NodeSettings_Title'),
+        weight: 10
       };
     }
     else {

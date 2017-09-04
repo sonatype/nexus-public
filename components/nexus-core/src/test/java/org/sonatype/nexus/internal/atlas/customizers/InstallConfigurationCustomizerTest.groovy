@@ -13,10 +13,14 @@
 package org.sonatype.nexus.internal.atlas.customizers
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedHazelcastFileSource
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource
 
 import org.junit.Test
+import org.xmlunit.builder.DiffBuilder
+import org.xmlunit.builder.Input
 
+import static org.junit.Assert.assertFalse
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG
 
@@ -61,6 +65,63 @@ class InstallConfigurationCustomizerTest
 </Configure>
 '''
 
-    assert expected == source.content.text.replace('\r\n', '\n')
+    def diff = DiffBuilder.compare(Input.fromString(expected))
+        .withTest(Input.fromStream(source.content))
+        .build()
+
+    assertFalse(diff.toString(), diff.hasDifferences())
+  }
+
+  @Test
+  void 'SanitizedHazelcastFileSource removes aws credentials'() {
+    File temp = File.createTempFile("test-", ".xml")
+    temp.deleteOnExit()
+
+    temp << '''<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.6.xsd">
+  <network>
+    <join>
+      <aws enabled="true">
+        <access-key>my-access-key</access-key>
+        <secret-key>my-secret-key</secret-key>
+        <region>us-west-1</region>
+        <security-group-name>hazelcast-sg</security-group-name>
+        <tag-key>type</tag-key>
+        <tag-value>nxrm</tag-value>
+      </aws>
+    </join>
+  </network>
+</hazelcast>
+'''
+
+    SanitizedHazelcastFileSource source = new SanitizedHazelcastFileSource(CONFIG, 'test/file', temp, DEFAULT)
+    source.prepare()
+
+    final String expected = '''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<hazelcast xmlns="http://www.hazelcast.com/schema/config" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.6.xsd">
+  <network>
+    <join>
+      <aws enabled="true">
+        <access-key>removed</access-key>
+        <secret-key>removed</secret-key>
+        <region>us-west-1</region>
+        <security-group-name>hazelcast-sg</security-group-name>
+        <tag-key>type</tag-key>
+        <tag-value>nxrm</tag-value>
+      </aws>
+    </join>
+  </network>
+</hazelcast>
+'''
+
+    def diff = DiffBuilder.compare(Input.fromString(expected))
+      .withTest(Input.fromStream(source.content))
+      .build()
+
+    assertFalse(diff.toString(), diff.hasDifferences())
   }
 }

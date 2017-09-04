@@ -48,7 +48,7 @@ public interface TasksResourceDoc
   @ApiOperation("Stop task")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = "Task was stopped"),
-      @ApiResponse(code = 412, message = "Task not running"),
+      @ApiResponse(code = 409, message = "Unable to stop task"),
       @ApiResponse(code = 404, message = "Task not found")
   })
   void stop(@ApiParam(value = "Id of the task to stop") final String id);

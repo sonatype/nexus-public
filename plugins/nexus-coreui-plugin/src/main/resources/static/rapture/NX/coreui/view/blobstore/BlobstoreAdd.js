@@ -74,15 +74,13 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreAdd', {
     // onChange listener to pre-populate the path
     nameField.on({
       change: function(f, newName, oldName) {
-        var pathField = f.next('#path'),
+        var pathField = f.up().query('[name=property_path]')[0],
             wd = me.defaultWorkDirectory,
             oldPath = wd + me.fileSeparator + oldName;
-        if (!pathField.getValue() || pathField.getValue() === oldPath) {
+        if (pathField && (!pathField.getValue() || pathField.getValue() === oldPath)) {
           pathField.setValue(wd + me.fileSeparator + newName);
         }
       }
     });
-
-    me.down('#path').setReadOnly(false);
   }
 });

@@ -24,7 +24,7 @@ Ext.define('NX.view.dashboard.Welcome', {
     'NX.Icons'
   ],
 
-  cls: 'nx-dashboard-welcome',
+  cls: 'nx-iframe-full',
   width: '100%',
   layout: 'fit'
 });

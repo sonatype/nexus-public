@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.restore;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,25 +27,26 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
-
-import com.google.common.base.Stopwatch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
+import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
  * @since 3.4
  */
 @Named
+@TaskLogging(TASK_LOG_ONLY_WITH_PROGRESS)
 public class RestoreMetadataTask
     extends TaskSupport
     implements Cancelable
@@ -94,18 +94,12 @@ public class RestoreMetadataTask
 
     BlobStore store = blobStoreManager.get(blobStoreName);
 
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
     long undeleted = 0;
-    Stopwatch elapsed = Stopwatch.createStarted();
-    Stopwatch progress = Stopwatch.createStarted();
     if (store instanceof FileBlobStore) {
       FileBlobStore fileBlobStore = (FileBlobStore) store;
       for (BlobId blobId : (Iterable<BlobId>)fileBlobStore.getBlobIdStream()::iterator) {
-        boolean logProgress = progress.elapsed(TimeUnit.SECONDS) > 60;
-        if (logProgress) {
-          progress.reset().start();
-        }
-
         Optional<Context> context = buildContext(blobStoreName, fileBlobStore, blobId);
         if (context.isPresent()) {
           Context c =  context.get();
@@ -121,16 +115,15 @@ public class RestoreMetadataTask
 
         processed++;
 
-        if (logProgress) {
-          log.info(PROGRESS, "Elapsed time: {}, processed: {}, un-deleted: {}",
-              elapsed, processed, undeleted);
-        }
+        progressLogger.info("Elapsed time: {}, processed: {}, un-deleted: {}", progressLogger.getElapsed(),
+            processed, undeleted);
+
         if (isCanceled()) {
           break;
         }
       }
-      log.info(PROGRESS, "Elapsed time: {}, processed: {}, un-deleted: {}",
-          elapsed, processed, undeleted);
+
+      progressLogger.flush();
     }
     else {
       log.error("Blob store does not support rebuild: {}", blobStoreName);

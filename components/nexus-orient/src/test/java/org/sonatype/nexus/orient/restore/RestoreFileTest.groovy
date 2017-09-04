@@ -89,4 +89,27 @@ class RestoreFileTest
     then:
       filename.endsWith('3.4.0.bak')
   }
+
+  def 'toString prints attribute values' () {
+    given: 'a path pointing to file for populating attributes'
+      File tempFile = new File(tempDir, 'config-2017-07-06-11-16-49-3.4.1.bak')
+
+    when: 'RestoreFile.newInstance'
+      RestoreFile restoreFile = RestoreFile.newInstance(tempFile.toPath())
+
+    then:
+      restoreFile.toString() == '{databaseName=config, timestamp=2017-07-06-11-16-49, version=3.4.1}'
+  }
+
+  def 'toString prints attribute values null with version' () {
+    given: 'a path pointing to file for populating attributes'
+      File tempFile = new File(tempDir, 'config-2017-07-06-11-16-49.bak')
+
+    when: 'RestoreFile.newInstance'
+      RestoreFile restoreFile = RestoreFile.newInstance(tempFile.toPath())
+
+    then:
+      restoreFile.toString() == '{databaseName=config, timestamp=2017-07-06-11-16-49, version=null}'
+  }
+
 }

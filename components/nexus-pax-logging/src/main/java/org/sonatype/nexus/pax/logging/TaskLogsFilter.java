@@ -18,6 +18,8 @@ import org.sonatype.nexus.logging.task.TaskLoggingEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static ch.qos.logback.core.spi.FilterReply.DENY;
@@ -63,6 +65,7 @@ public class TaskLogsFilter
   }
 
   private TaskLoggingEvent toTaskLoggerEvent(final ILoggingEvent event) {
-    return new TaskLoggingEvent(event.getMessage(), event.getArgumentArray());
+    Logger logger = LoggerFactory.getLogger(event.getLoggerName());
+    return new TaskLoggingEvent(logger, event.getMessage(), event.getArgumentArray());
   }
 }

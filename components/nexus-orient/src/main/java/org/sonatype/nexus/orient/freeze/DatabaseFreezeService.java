@@ -93,6 +93,13 @@ public interface DatabaseFreezeService
   boolean isFrozen();
 
   /**
+   * More descriptive object reflecting {@link #isFrozen()}.
+   *
+   * @return the current {@link ReadOnlyState}; never null
+   */
+  ReadOnlyState getReadOnlyState();
+
+  /**
    * Check {@link #isFrozen()} and throw a {@link OModificationOperationProhibitedException} if it is.
    *
    * @throws OModificationOperationProhibitedException thrown if database is frozen

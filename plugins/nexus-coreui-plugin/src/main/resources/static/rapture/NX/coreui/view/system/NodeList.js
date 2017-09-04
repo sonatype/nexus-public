@@ -41,9 +41,15 @@ Ext.define('NX.coreui.view.system.NodeList', {
       }
     },
     {
-      header: 'Node Identity',
-      dataIndex: 'nodeIdentity',
-      stateId: 'nodeIdentity',
+      header: 'Node Name',
+      dataIndex: 'friendlyName',
+      stateId: 'friendlyName',
+      flex: 1
+    },
+    {
+      header: 'Socket Address',
+      dataIndex: 'socketAddress',
+      stateId: 'socketAddress',
       flex: 1
     },
     {
@@ -53,9 +59,9 @@ Ext.define('NX.coreui.view.system.NodeList', {
       width: 80
     },
     {
-      header: 'Socket Address',
-      dataIndex: 'socketAddress',
-      stateId: 'socketAddress',
+      header: 'Node Identity',
+      dataIndex: 'nodeIdentity',
+      stateId: 'nodeIdentity',
       flex: 1
     }
   ],

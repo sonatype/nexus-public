@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.analytics;
 
-import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.session.Session;
@@ -23,17 +27,23 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Helper to build {@link EventData} instances.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class EventDataBuilder
+@Named
+@Singleton
+public class EventDataFactory
 {
-  private static final RollingCounter counter = new RollingCounter(999_999_999_999_999L);
+  private final RollingCounter counter = new RollingCounter(999_999_999_999_999L);
 
-  private final EventData data = new EventData();
+  private final NodeAccess nodeAccess;
 
-  private final long started;
+  @Inject
+  public EventDataFactory(final NodeAccess nodeAccess) {
+    this.nodeAccess = checkNotNull(nodeAccess);
+  }
 
-  public EventDataBuilder(final String type) {
+  public EventData create(final String type) {
+    EventData data = new EventData();
     data.setType(type);
     data.setTimestamp(System.currentTimeMillis());
     data.setSequence(counter.next());
@@ -52,23 +62,11 @@ public class EventDataBuilder
       }
     }
 
-    // track started time in nanoseconds for duration calculation
-    started = System.nanoTime();
-  }
-
-  public EventDataBuilder set(final String name, @Nullable final Object value) {
-    checkNotNull(name);
-    if (value == null) {
-      data.getAttributes().put(name, null);
+    // capture node id
+    if (nodeAccess.getId() != null) {
+      data.getAttributes().put("nodeId", nodeAccess.getId());
     }
-    else {
-      data.getAttributes().put(name, String.valueOf(value));
-    }
-    return this;
-  }
 
-  public EventData build() {
-    data.setDuration(System.nanoTime() - started);
     return data;
   }
 }

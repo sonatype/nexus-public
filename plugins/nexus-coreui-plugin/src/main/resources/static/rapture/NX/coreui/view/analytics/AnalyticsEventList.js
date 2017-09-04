@@ -89,6 +89,12 @@ Ext.define('NX.coreui.view.analytics.AnalyticsEventList', {
           flex: 1
         },
         {
+          header: "node",
+          dataIndex: 'nodeId',
+          stateId: 'nodeId',
+          flex: 1
+        },
+        {
           header: NX.I18n.get('Analytics_AnalyticsEventList_Attributes_Header'),
           dataIndex: 'attributes',
           stateId: 'attributes',

@@ -15,6 +15,8 @@ package org.sonatype.nexus.common.node;
 import java.security.cert.Certificate;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
@@ -70,4 +72,25 @@ public interface NodeAccess
    * @since 3.3
    */
   boolean isOldestNode();
+
+  /**
+   * Marks the node with the matching nodeId with the given friendly name
+   *
+   * @since 3.6
+   *
+   * @param nodeId identifier of the node to mark
+   * @param friendlyName node's friendly name
+   */
+  void setFriendlyName(String nodeId, String friendlyName);
+
+  /**
+   * Retrieves the friendly name of the node with the specified nodeId
+   *
+   * @since 3.6
+   *
+   * @param nodeId identifier of the marked node
+   * @return node's friendly name
+   */
+  @Nullable
+  String getFriendlyName(String nodeId);
 }

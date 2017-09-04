@@ -268,8 +268,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerProxyFacet_IndexTypeHub_BoxLabel: 'Use Docker Hub',
     Repository_Facet_DockerProxyFacet_IndexTypeCustom_BoxLabel: 'Custom index',
     Repository_Facet_DockerProxyFacet_IndexUrl_HelpText: 'Location of Docker index',
-    Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel: 'Legacy Authentication Mode',
-    Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel: 'Force basic authentication',
+    Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel: 'Force basic authentication',
+    Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel: 'Disable to allow anonymous pull (Note: also requires Docker Bearer Token Realm to be activated)',
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',
@@ -891,6 +891,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     FeatureGroups_System_Text: 'System',
     FeatureGroups_System_Description: 'System administration',
 
+    // Admin -> System -> API
+    Api_Text: 'API',
+    Api_Description: 'Learn how to interact with Nexus Repository Manager programmatically',
+
     // Admin -> System -> Capabilities
     Capabilities_Text: 'Capabilities',
     Capabilities_Description: 'Manage capabilities',
@@ -1015,6 +1019,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ' components and changes to configuration?',
     Nodes_force_release_warning: 'Warning: read-only mode has been enabled by system tasks. Releasing read-only mode before those tasks are complete may cause them to fail and/or cause data loss.',
     Nodes_force_release_confirmation: 'Are you sure you want to forcibly release read-only mode?',
+    Nodes_NodeSettings_Title: 'Edit Node',
+    Nodes_NodeSettingsForm_Update_Error: 'You do not have permission to update nodes',
+    Nodes_NodeSettingsForm_Update_Success: 'Node updated, node is now named: ',
+    Nodes_NodeSettingsForm_ID_FieldLabel: 'Node ID',
+    Nodes_NodeSettingsForm_ID_HelpText: 'System-generated node identity',
+    Nodes_NodeSettingsForm_Local_FieldLabel: 'Local',
+    Nodes_NodeSettingsForm_Local_HelpText: 'Whether the current UI session is connected to the listed node',
+    Nodes_NodeSettingsForm_SocketAddress_FieldLabel: 'Socket Address',
+    Nodes_NodeSettingsForm_SocketAddress_HelpText: 'The IP address and port number used by the listed node to communicate with the cluster',
+    Nodes_NodeSettingsForm_FriendlyName_FieldLabel: 'Node Name',
+    Nodes_NodeSettingsForm_FriendlyName_HelpText: 'Custom alias for this node',
 
     // Admin -> System -> Tasks
     Tasks_Text: 'Tasks',

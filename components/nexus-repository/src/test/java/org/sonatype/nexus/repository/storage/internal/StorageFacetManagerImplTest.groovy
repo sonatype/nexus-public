@@ -21,12 +21,6 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.storage.Bucket
 import org.sonatype.nexus.repository.storage.BucketDeleter
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter
-import org.sonatype.nexus.scheduling.TaskConfiguration
-import org.sonatype.nexus.scheduling.TaskInfo
-import org.sonatype.nexus.scheduling.TaskScheduler
-import org.sonatype.nexus.scheduling.schedule.Cron
-import org.sonatype.nexus.scheduling.schedule.Schedule
-import org.sonatype.nexus.scheduling.schedule.ScheduleFactory
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import org.junit.Before
@@ -38,8 +32,6 @@ import org.mockito.Mock
 import static org.hamcrest.Matchers.is
 import static org.hamcrest.Matchers.startsWith
 import static org.junit.Assert.assertThat
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.eq
 import static org.mockito.Matchers.same
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.never
@@ -49,13 +41,9 @@ import static org.mockito.Mockito.when
 class StorageFacetManagerImplTest
     extends TestSupport
 {
-  static final String TASK_TYPE_ID = 'repository.storage-facet-cleanup'
-
   static final String TEST_REPOSITORY_NAME = 'testRepository'
 
   static final String TEST_BLOB_STORE_NAME = 'testBlobStore'
-
-  static final String CRON_EXPRESSION = '0 * * * * ?'
 
   @Mock
   private BlobStore blobStore
@@ -73,19 +61,7 @@ class StorageFacetManagerImplTest
   private BucketDeleter bucketDeleter
 
   @Mock
-  private TaskScheduler taskScheduler
-
-  @Mock
-  private ScheduleFactory scheduleFactory
-
-  @Mock
   private Repository repository
-
-  @Mock
-  private TaskInfo taskInfo
-
-  @Mock
-  private Cron cron
 
   @Mock
   private ODatabaseDocumentTx db
@@ -101,9 +77,7 @@ class StorageFacetManagerImplTest
     underTest = new StorageFacetManagerImpl(
         { databaseInstance },
         bucketEntityAdapter,
-        taskScheduler,
-        bucketDeleter,
-        CRON_EXPRESSION
+        bucketDeleter
     )
   }
 
@@ -138,33 +112,5 @@ class StorageFacetManagerImplTest
     verify(bucketDeleter, never()).deleteBucket(normalBucket)
     verify(bucketDeleter).deleteBucket(failedBucket)
     verify(bucketDeleter).deleteBucket(deleteBucket)
-  }
-
-  @Test
-  void 'will create a new cleanup task if one does not exist on startup'() {
-    TaskConfiguration taskConfiguration = new TaskConfiguration()
-    taskConfiguration.setTypeId(TASK_TYPE_ID)
-
-    when(taskScheduler.listsTasks()).thenReturn([])
-    when(taskScheduler.getScheduleFactory()).thenReturn(scheduleFactory)
-    when(taskScheduler.createTaskConfigurationInstance(TASK_TYPE_ID)).thenReturn(taskConfiguration)
-    when(scheduleFactory.cron(any(Date), eq(CRON_EXPRESSION))).thenReturn(cron)
-
-    underTest.doStart()
-
-    verify(taskScheduler).scheduleTask(taskConfiguration, cron)
-  }
-
-  @Test
-  void 'will not create a duplicate cleanup task if one exists on startup'() {
-    TaskConfiguration taskConfiguration = new TaskConfiguration()
-    taskConfiguration.setTypeId(TASK_TYPE_ID)
-
-    when(taskInfo.getConfiguration()).thenReturn(taskConfiguration)
-    when(taskScheduler.listsTasks()).thenReturn([taskInfo])
-
-    underTest.doStart()
-
-    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration), any(Schedule))
   }
 }

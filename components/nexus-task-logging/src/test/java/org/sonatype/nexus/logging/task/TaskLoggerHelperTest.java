@@ -16,6 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.junit.Test;
 import org.mockito.Mock;
+import org.slf4j.Logger;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -24,6 +25,9 @@ import static org.mockito.Mockito.verify;
 public class TaskLoggerHelperTest
     extends TestSupport
 {
+  @Mock
+  private Logger logger;
+
   @Mock
   private TaskLogger taskLogger;
 
@@ -34,7 +38,7 @@ public class TaskLoggerHelperTest
     TaskLoggerHelper.start(taskLogger);
     assertNotNull(TaskLoggerHelper.get());
 
-    TaskLoggingEvent event = new TaskLoggingEvent("message");
+    TaskLoggingEvent event = new TaskLoggingEvent(logger, "message");
     TaskLoggerHelper.progress(event);
     verify(taskLogger).progress(event);
 
