@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Allows the logic for managing bearer tokens to be shared between formats and it is intended that this will be
  * subclassed and a format-specific concrete implementation provided.
  *
- * @since 3.6.0
+ * @since 3.6
  */
 public abstract class BearerTokenManager
     extends ComponentSupport

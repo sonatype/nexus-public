@@ -21,7 +21,7 @@ import org.sonatype.nexus.scheduling.TaskInfo
 /**
  * Task transfer object for REST APIs.
  * 
- * @since 3.6.0
+ * @since 3.6
  */
 @CompileStatic
 @ToString(includePackage = false, includeNames = true)

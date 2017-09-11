@@ -10,35 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.io;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+/*global Ext, NX*/
 
 /**
- * Allows a custom class loader to be used with ObjectInputStream.
+ * API feature flag store.
  *
  * @since 3.6
  */
-public class ObjectInputStreamWithClassLoader
-    extends ObjectInputStream
-{
-  private final ClassLoader loader;
+Ext.define('NX.coreui.store.Api', {
+    extend: 'Ext.data.Store',
 
-  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final ClassLoader loader)
-      throws IOException
-  {
-    super(inputStream);
-    this.loader = checkNotNull(loader);
-  }
+    proxy: {
+        type: 'direct',
+        api: {
+            read: 'NX.direct.coreui_Api.read'
+        },
 
-  protected Class resolveClass(final ObjectStreamClass classDesc)
-      throws IOException, ClassNotFoundException
-  {
-    return Class.forName(classDesc.getName(), false, loader);
-  }
-}
+        reader: {
+            type: 'json',
+            root: 'data',
+            successProperty: 'success'
+        }
+    }
+});

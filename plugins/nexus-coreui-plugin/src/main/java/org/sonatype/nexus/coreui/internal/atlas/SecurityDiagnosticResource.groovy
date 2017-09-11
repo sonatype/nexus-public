@@ -48,7 +48,7 @@ class SecurityDiagnosticResource
     extends ComponentSupport
     implements Resource
 {
-  static final String RESOURCE_URI = '/atlas/security-diagnostic'
+  public static final String RESOURCE_URI = '/atlas/security-diagnostic'
 
   private final SecuritySystem securitySystem
 

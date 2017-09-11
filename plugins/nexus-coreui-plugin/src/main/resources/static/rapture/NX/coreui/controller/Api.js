@@ -93,7 +93,23 @@ Ext.define('NX.coreui.controller.Api', {
         flex: 1,
         border: false,
         frame: false,
-        src: url
+        hidden: true,
+        src: url,
+        listeners: {
+          load: function () {
+            var iframe = this;
+            // if the api content has loaded properly, show it
+            if (iframe.getWin().iframeLoaded) {
+              iframe.show();
+            }
+            else {
+              // else complain and leave it hidden
+              //<if debug>
+              me.logDebug('API iframe did not load: ' + url);
+              //</if>
+            }
+          }
+        }
       });
     }
   }

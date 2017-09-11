@@ -24,7 +24,7 @@ import org.sonatype.nexus.rest.Page;
 /**
  * Swagger documentation for {@link TasksResource}
  *
- * @since 3.6.0
+ * @since 3.6
  */
 @Api(value = "tasks")
 public interface TasksResourceDoc

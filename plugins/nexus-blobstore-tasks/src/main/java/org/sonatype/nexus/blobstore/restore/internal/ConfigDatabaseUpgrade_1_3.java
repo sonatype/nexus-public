@@ -32,7 +32,7 @@ import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
  * Upgrades existing {@code blobstore.rebuildComponentDB} tasks to set {@code restoreBlobs = true} which
  * will replicate the previous behavior of the task.
  *
- * @since 3.6.0
+ * @since 3.6
  */
 @Named
 @Singleton

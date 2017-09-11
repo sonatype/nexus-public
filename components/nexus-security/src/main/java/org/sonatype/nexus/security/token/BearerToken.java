@@ -28,7 +28,7 @@ import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 /**
  * Extracts a token from a HttpServletRequest
  *
- * @since 3.6.0
+ * @since 3.6
  */
 public class BearerToken
     implements ApiKeyExtractor

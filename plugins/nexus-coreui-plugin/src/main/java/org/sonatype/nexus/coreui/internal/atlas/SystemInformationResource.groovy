@@ -43,7 +43,7 @@ class SystemInformationResource
     extends ComponentSupport
     implements Resource
 {
-  static final String RESOURCE_URI = '/atlas/system-information'
+  public static final String RESOURCE_URI = '/atlas/system-information'
 
   private final SystemInformationGenerator systemInformationGenerator
 

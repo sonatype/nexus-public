@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * with a summary line logged every 5 seconds the exception continues to repeat.
  * The full stack is logged again each minute, assuming it's still repeating.
  *
- * @since 3.6.0
+ * @since 3.6
  */
 public class ExceptionSummarizer
 {

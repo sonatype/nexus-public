@@ -14,13 +14,15 @@ package org.sonatype.nexus.logging.task;
 
 import java.util.Optional;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 
@@ -37,6 +39,8 @@ public class ProgressTaskLogger
   static final String PROGRESS_LINE = "---- %s ----";
 
   private static final long INTERVAL_MINUTES = 10L;
+
+  private static final ScheduledExecutorService executorService = createExecutorService();
 
   protected final Logger log;
 
@@ -80,8 +84,15 @@ public class ProgressTaskLogger
     }
   }
 
+  private static ScheduledExecutorService createExecutorService() {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1,
+        new ThreadFactoryBuilder().setNameFormat("task-logging-%d").build());
+    executor.setRemoveOnCancelPolicy(true);
+    return executor;
+  }
+
   private void startProgressThread() {
-    progressLoggingThread = newSingleThreadScheduledExecutor()
+    progressLoggingThread = executorService
         .scheduleAtFixedRate(this::logProgress, INTERVAL_MINUTES, INTERVAL_MINUTES, MINUTES);
   }
 }

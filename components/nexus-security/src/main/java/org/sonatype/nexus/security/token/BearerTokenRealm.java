@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * {@link AuthenticatingRealm} that maps bearer tokens to valid {@link Subject}s. This class provides format agnostic
  * behaviour with the intention that it will be subclassed for formats that require token auth.
  *
- * @since 3.6.0
+ * @since 3.6
  */
 public abstract class BearerTokenRealm
     extends AuthenticatingRealm

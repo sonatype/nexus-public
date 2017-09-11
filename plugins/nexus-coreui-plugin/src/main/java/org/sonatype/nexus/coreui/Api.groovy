@@ -10,35 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.io;
+package org.sonatype.nexus.coreui
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
+import com.softwarementors.extjs.djn.config.annotations.DirectAction
+import org.sonatype.nexus.rapture.StateContributor
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
 
 /**
- * Allows a custom class loader to be used with ObjectInputStream.
+ * API feature flag
  *
  * @since 3.6
  */
-public class ObjectInputStreamWithClassLoader
-    extends ObjectInputStream
+@Named
+@Singleton
+@DirectAction(action = 'coreui_Api')
+class Api
+    implements StateContributor
 {
-  private final ClassLoader loader;
+  @Inject
+  @Named('${nexus.admin.system.apidocs.enabled:-false}')
+  boolean enabled
 
-  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final ClassLoader loader)
-      throws IOException
-  {
-    super(inputStream);
-    this.loader = checkNotNull(loader);
-  }
-
-  protected Class resolveClass(final ObjectStreamClass classDesc)
-      throws IOException, ClassNotFoundException
-  {
-    return Class.forName(classDesc.getName(), false, loader);
+  @Override
+  @Nullable
+  Map<String, Object> getState() {
+    return ['api': enabled]
   }
 }

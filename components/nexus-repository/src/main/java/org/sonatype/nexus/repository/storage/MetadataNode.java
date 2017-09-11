@@ -63,7 +63,6 @@ public abstract class MetadataNode<T>
   /**
    * Gets the bucket this is part of.
    */
-  @Nullable
   public EntityId bucketId() {
     return require(bucketId, P_BUCKET);
   }
