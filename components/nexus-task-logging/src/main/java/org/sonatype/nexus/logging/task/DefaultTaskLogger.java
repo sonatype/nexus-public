@@ -15,15 +15,17 @@ package org.sonatype.nexus.logging.task;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
@@ -48,6 +50,8 @@ public class DefaultTaskLogger
   private static final long INTERVAL = 60L;
 
   private static final TaskLoggingEvent MARK_LOG_MESSAGE = new TaskLoggingEvent(MARK_LINE);
+
+  private static final ScheduledExecutorService executorService = createExecutorService();
 
   private final Logger log;
 
@@ -87,7 +91,7 @@ public class DefaultTaskLogger
   }
 
   private void startLogThread() {
-    loggingThread = newSingleThreadScheduledExecutor()
+    loggingThread = executorService
         .scheduleAtFixedRate(this::updateMainLogWithProgress, DELAY, INTERVAL, SECONDS);
   }
 
@@ -120,5 +124,12 @@ public class DefaultTaskLogger
   @Override
   public final void progress(final TaskLoggingEvent event) {
     lastProgressEvent = event;
+  }
+
+  private static ScheduledExecutorService createExecutorService() {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1,
+        new ThreadFactoryBuilder().setNameFormat("task-logging-%d").build());
+    executor.setRemoveOnCancelPolicy(true);
+    return executor;
   }
 }
