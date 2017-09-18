@@ -28,4 +28,14 @@ public interface ContentPermissionChecker
                       String repositoryFormat,
                       String action,
                       VariableSource variableSource);
+
+  /**
+   * Ensure that either the view permission or that a JEXL content selector permission is permitted
+   *
+   * @since 3.6
+   */
+  boolean isPermittedJexlOnly(String repositoryName,
+                              String repositoryFormat,
+                              String action,
+                              VariableSource variableSource);
 }

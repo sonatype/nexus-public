@@ -276,7 +276,12 @@ extends DirectComponentSupport
   private Map<String, String> filterProperties(final Map<String, String> properties, final Capability capability) {
     properties.collectEntries { key, value ->
       if (capability.isPasswordProperty(key)) {
-        [key, PasswordPlaceholder.get()]
+        if ('PKI'.equals(properties.get('authenticationType'))) {
+          [key, '']
+        }
+        else {
+          [key, PasswordPlaceholder.get()]
+        }
       }
       else {
         [key, value]

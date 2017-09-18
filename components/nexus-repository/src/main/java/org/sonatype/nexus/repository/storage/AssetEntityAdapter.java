@@ -105,7 +105,7 @@ public class AssetEntityAdapter
    */
   public static final String P_BLOB_UPDATED = "blob_updated";
 
-  private static final String I_BUCKET_COMPONENT_NAME = new OIndexNameBuilder()
+  public static final String I_BUCKET_COMPONENT_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_BUCKET)
       .property(P_COMPONENT)

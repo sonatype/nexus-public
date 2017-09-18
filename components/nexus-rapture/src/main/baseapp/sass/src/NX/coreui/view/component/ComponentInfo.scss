@@ -1,0 +1,17 @@
+/**
+ * @class NX.coreui.view.component.ComponentInfo
+ */
+
+.nx-coreui-component-componentinfo {
+  border-top: 1px solid silver;
+  > .x-panel-header {
+    background-color: white;
+    * {
+      font-weight: normal;
+      font-family: $font-regular;
+      font-size: 18px;
+      line-height: 20px;
+      color: black;
+    }
+  }
+}

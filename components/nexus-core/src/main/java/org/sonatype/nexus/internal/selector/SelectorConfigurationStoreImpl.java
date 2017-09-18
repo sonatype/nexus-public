@@ -83,6 +83,14 @@ public class SelectorConfigurationStoreImpl
 
   @Override
   @Guarded(by = STARTED)
+  public SelectorConfiguration getByName(final String name) {
+    checkNotNull(name);
+
+    return inTx(databaseInstance).call(db -> entityAdapter.getByName(db, name));
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public void create(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
 

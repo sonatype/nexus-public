@@ -52,6 +52,7 @@ public class CapabilityComponentTest
     capabilityReference.context() >> capabilityContext
     capabilityRegistry.get(_ as CapabilityIdentity) >> capabilityReference
     capabilityRegistry.get(_ as Predicate) >> [capabilityReference]
+    capability.isPasswordProperty('password') >> true
   }
 
   def 'password is not returned in as cleartext'() {
@@ -62,6 +63,17 @@ public class CapabilityComponentTest
       capabilities[0].properties.username == 'username'
       capabilities[0].properties.password == PasswordPlaceholder.get()
       2 * capability.isPasswordProperty(_) >> { String propertyName -> propertyName == 'password' }
+  }
+
+  def 'password is returned as empty when using PKI authentication'() {
+    setup:
+      capabilityContext.properties().put('authenticationType', 'PKI')
+
+    when:
+      def capabilities = underTest.read()
+
+    then:
+      capabilities[0].properties.password == ''
   }
 
   def 'when password provide to update is placeholder use actual current password'() {

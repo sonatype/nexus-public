@@ -51,7 +51,7 @@ public class ContentAuth
   @Inject
   public ContentAuth(final ContentAuthHelper contentAuthHelper)
   {
-    super(NAME, 2, 2);
+    super(NAME, 2, 3);
     this.contentAuthHelper = checkNotNull(contentAuthHelper);
   }
 
@@ -65,32 +65,44 @@ public class ContentAuth
     OIdentifiable identifiable = (OIdentifiable) iParams[0];
     ODocument document = identifiable.getRecord();
     String browsedRepositoryName = (String) iParams[1];
+    boolean jexlOnly = iParams.length > 2 && (boolean) iParams[2];
+
     switch (document.getClassName()) {
       case "asset":
-        return contentAuthHelper.checkAssetPermissions(document, browsedRepositoryName);
+        return checkAssetPermissions(document, browsedRepositoryName, jexlOnly);
       case "component":
-        return checkComponentAssetPermissions(document, browsedRepositoryName);
+        return checkComponentAssetPermissions(document, browsedRepositoryName, jexlOnly);
       default:
         return false;
     }
   }
 
-  private boolean checkComponentAssetPermissions(final ODocument component, final String sourceRepositoryName) {
+  private boolean checkComponentAssetPermissions(final ODocument component,
+                                                 final String sourceRepositoryName,
+                                                 final boolean jexlOnly)
+  {
     checkNotNull(component);
     for (ODocument asset : browseComponentAssets(component)) {
-      if (contentAuthHelper.checkAssetPermissions(asset, sourceRepositoryName)) {
+      if (checkAssetPermissions(asset, sourceRepositoryName, jexlOnly)) {
         return true;
       }
     }
     return false;
   }
 
-  @Override
-  public String getSyntax() {
-    return NAME + "(<asset|component>)";
+  private boolean checkAssetPermissions(final ODocument asset, final String repositoryName, final boolean jexlOnly) {
+    if (jexlOnly) {
+      return contentAuthHelper.checkAssetPermissionsJexlOnly(asset, repositoryName);
+    }
+    return contentAuthHelper.checkAssetPermissions(asset, repositoryName);
   }
 
-  private List<ODocument> browseComponentAssets(ODocument component) {
+  @Override
+  public String getSyntax() {
+    return NAME + "(<asset|component>, [jexlSelectorsOnly])";
+  }
+
+  private List<ODocument> browseComponentAssets(final ODocument component) {
     checkNotNull(component);
     OIdentifiable bucket = component.field(ComponentEntityAdapter.P_BUCKET, OIdentifiable.class);
     ODatabaseDocumentInternal db = component.getDatabase();

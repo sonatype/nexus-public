@@ -75,7 +75,9 @@ public class MavenRestoreBlobStrategy
   }
 
   @Override
-  public void restore(final Properties properties, final Blob blob, final String blobStoreName) {
+  public void restore(final Properties properties, final Blob blob, final String blobStoreName, final boolean isDryRun) // NOSONAR
+  {
+    String logPrefix = isDryRun ? "::DRY RUN:: " : "";
     String name = properties.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
     String repoName = properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER);
 
@@ -104,17 +106,19 @@ public class MavenRestoreBlobStrategy
           return;
         }
 
-        TransactionalStoreMetadata.operation
-            .withDb(storageFacet.get().txSupplier())
-            .throwing(IOException.class)
-            .call(() -> mavenFacet.get().put(mavenPath,
-                new AssetBlob(nodeAccess, blobStoreManager.get(blobStoreName), store -> blob,
-                    properties.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER), hashingStream.hashes(), true
-                ),
-                null));
+        if (!isDryRun) {
+          TransactionalStoreMetadata.operation
+              .withDb(storageFacet.get().txSupplier())
+              .throwing(IOException.class)
+              .call(() -> mavenFacet.get().put(mavenPath,
+                  new AssetBlob(nodeAccess, blobStoreManager.get(blobStoreName), store -> blob,
+                      properties.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER), hashingStream.hashes(), true
+                  ),
+                  null));
+        }
 
-        log.info("Restored asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
-            blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
+        log.info("{}Restored asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
+            logPrefix, blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
       }
       else {
         log.debug("Skipping asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",

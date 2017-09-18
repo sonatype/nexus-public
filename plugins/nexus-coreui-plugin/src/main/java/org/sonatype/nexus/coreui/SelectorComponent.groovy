@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.coreui
 
+import org.sonatype.nexus.selector.CselSelector
+import org.sonatype.nexus.selector.JexlSelector
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -21,6 +24,7 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.selector.CselExpressionValidator
 import org.sonatype.nexus.selector.JexlExpressionValidator
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorManager
@@ -57,6 +61,9 @@ class SelectorComponent
   @Inject
   JexlExpressionValidator jexlExpressionValidator
 
+  @Inject
+  CselExpressionValidator cselExpressionValidator
+
   /**
    * @return a list of selectors
    */
@@ -77,7 +84,12 @@ class SelectorComponent
   @RequiresPermissions('nexus:selectors:create')
   @Validate(groups = [Create.class, Default.class])
   SelectorXO create(final @NotNull @Valid SelectorXO selectorXO) {
-    jexlExpressionValidator.validate(selectorXO.expression)
+    if (selectorXO.type == JexlSelector.TYPE) {
+      jexlExpressionValidator.validate(selectorXO.expression)
+    }
+    else if (selectorXO.type == CselSelector.TYPE) {
+      cselExpressionValidator.validate(selectorXO.expression);
+    }
     def configuration = new SelectorConfiguration(
         name: selectorXO.name,
         type: selectorXO.type,
@@ -97,7 +109,12 @@ class SelectorComponent
   @RequiresPermissions('nexus:selectors:update')
   @Validate(groups = [Update.class, Default.class])
   SelectorXO update(final @NotNull @Valid SelectorXO selectorXO) {
-    jexlExpressionValidator.validate(selectorXO.expression)
+    if (selectorXO.type == JexlSelector.TYPE) {
+      jexlExpressionValidator.validate(selectorXO.expression)
+    }
+    else if (selectorXO.type == CselSelector.TYPE) {
+      cselExpressionValidator.validate(selectorXO.expression);
+    }
     selectorManager.update(selectorManager.read(new DetachedEntityId(selectorXO.id)).with {
       description = selectorXO.description
       attributes = ['expression': selectorXO.expression]

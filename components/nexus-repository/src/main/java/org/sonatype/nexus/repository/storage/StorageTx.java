@@ -43,21 +43,25 @@ public interface StorageTx
   /**
    * Begins the transaction.
    */
+  @Override
   void begin();
 
   /**
    * Commits the transaction.
    */
+  @Override
   void commit();
 
   /**
    * Rolls back the transaction.
    */
+  @Override
   void rollback();
 
   /**
    * Closes the transaction. Uncommitted changes will be lost, and the object will be ineligible for further use.
    */
+  @Override
   void close();
 
   /**
@@ -132,6 +136,14 @@ public interface StorageTx
    */
   @Nullable
   Asset findAsset(EntityId id, Bucket bucket);
+
+  /**
+   * Gets a asset by id, regardless of which bucket it resides in, or {@code null} if not found.
+   *
+   * @since 3.6
+   */
+  @Nullable
+  Asset findAsset(EntityId id);
 
   /**
    * Gets an asset by some identifying property, owned by the specified bucket, or {@code null} if not found.

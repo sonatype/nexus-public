@@ -58,7 +58,7 @@ Ext.define('NX.coreui.controller.SearchDocker', {
         }
       },
       {
-        id: 'attributes.docker.content_digest',
+        id: 'assets.attributes.docker.content_digest',
         group: NX.I18n.get('SearchDocker_Group'),
         config: {
           format: 'docker',
@@ -79,7 +79,7 @@ Ext.define('NX.coreui.controller.SearchDocker', {
         {id: 'attributes.docker.imageName'},
         {id: 'attributes.docker.imageTag'},
         {id: 'attributes.docker.layerAncestry'},
-        {id: 'attributes.docker.content_digest'}
+        {id: 'assets.attributes.docker.content_digest'}
       ]
     }, me);
   }

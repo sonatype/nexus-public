@@ -13,6 +13,7 @@
 package org.sonatype.nexus.selector;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.sonatype.nexus.common.entity.Entity;
 
@@ -62,6 +63,21 @@ public class SelectorConfiguration
 
   public void setAttributes(final Map<String,Object> attributes) {
     this.attributes = attributes;
+  }
+
+  @Override
+  public boolean equals(final Object other) {
+    if (other instanceof SelectorConfiguration) {
+      SelectorConfiguration o = (SelectorConfiguration) other;
+      return Objects.equals(name, o.name) && Objects.equals(type, o.type) && Objects.equals(description, o.description)
+          && Objects.equals(attributes, o.attributes);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type, description, attributes);
   }
 
   @Override

@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
+import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -146,7 +147,7 @@ public class ContentExpressionFunction
     SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
 
     selectorConfiguration.setAttributes(ImmutableMap.of("expression", jexlExpression));
-    selectorConfiguration.setType("jexl");
+    selectorConfiguration.setType(JexlSelector.TYPE);
     selectorConfiguration.setName("preview");
 
     try {

@@ -1,3 +1,63 @@
+/*<if slicer>*/
+.x-tab-nx-light-top-over:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-top-over-corners.gif), sides:url(images/tab/tab-nx-light-top-over-sides.gif), stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-nx-light-bottom-over:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-bottom-over-corners.gif), sides:url(images/tab/tab-nx-light-bottom-over-sides.gif), stretch:top";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-nx-light-top-active:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-top-active-corners.gif), sides:url(images/tab/tab-nx-light-top-active-sides.gif), stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-nx-light-bottom-active:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-bottom-active-corners.gif), sides:url(images/tab/tab-nx-light-bottom-active-sides.gif), stretch:top";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-nx-light-top-disabled:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-top-disabled-corners.gif), sides:url(images/tab/tab-nx-light-top-disabled-sides.gif), stretch:bottom";
+}
+
+/*</if slicer>*/
+/* */
+/*<if slicer>*/
+.x-tab-nx-light-bottom-disabled:after {
+  display: none;
+  content: "x-slicer:corners:url(images/tab/tab-nx-light-bottom-disabled-corners.gif), sides:url(images/tab/tab-nx-light-bottom-disabled-sides.gif), stretch:top";
+}
+
+/*</if slicer>*/
+/* */
+.x-tab-bar-nx-light-top {
+  padding: 5px 0 2px 0;
+}
+
+.x-tab-bar-nx-light-bottom {
+  padding: 2px 0 5px 0;
+}
+
+.x-tab-bar-nx-light-left {
+  padding: 0 2px 0 5px;
+}
+
 .x-tab-bar-nx-light-right {
   padding: 0 5px 0 2px;
 }
@@ -294,13 +354,6 @@
 }
 .nx-unsupported-browser .icons {
   padding: 20px 0 50px 0;
-}
-
-/**
- * @class NX.view.dashboard.Welcome
- */
-.nx-iframe-full {
-  background-color: white;
 }
 
 /**
@@ -3655,6 +3708,40 @@
  */
 .nx-coreui-component-details {
   background-color: white;
+}
+
+/**
+ * @class NX.coreui.view.component.ComponentAssetInfo
+ */
+.nx-coreui-component-componentassetinfo {
+  border-top: 1px solid silver;
+}
+.nx-coreui-component-componentassetinfo > .x-panel-header {
+  background-color: white;
+}
+.nx-coreui-component-componentassetinfo > .x-panel-header * {
+  font-weight: normal;
+  font-family: "Proxima Nova", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 20px;
+  color: black;
+}
+
+/**
+ * @class NX.coreui.view.component.ComponentInfo
+ */
+.nx-coreui-component-componentinfo {
+  border-top: 1px solid silver;
+}
+.nx-coreui-component-componentinfo > .x-panel-header {
+  background-color: white;
+}
+.nx-coreui-component-componentinfo > .x-panel-header * {
+  font-weight: normal;
+  font-family: "Proxima Nova", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 20px;
+  color: black;
 }
 
 /**

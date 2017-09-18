@@ -50,6 +50,7 @@ import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
@@ -147,13 +148,16 @@ public class FileBlobStore
 
   private boolean supportsAtomicMove;
 
+  private final DryRunPrefix dryRunPrefix;
+
   @Inject
   public FileBlobStore(@Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
                        @Named("temporary") final LocationStrategy temporaryLocationStrategy,
                        final FileOperations fileOperations,
                        final ApplicationDirectories directories,
                        final BlobStoreMetricsStore storeMetrics,
-                       final NodeAccess nodeAccess)
+                       final NodeAccess nodeAccess,
+                       final DryRunPrefix dryRunPrefix)
   {
     this.permanentLocationStrategy = checkNotNull(permanentLocationStrategy);
     this.temporaryLocationStrategy = checkNotNull(temporaryLocationStrategy);
@@ -161,6 +165,7 @@ public class FileBlobStore
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.storeMetrics = checkNotNull(storeMetrics);
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.dryRunPrefix = checkNotNull(dryRunPrefix);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
   }
@@ -173,9 +178,11 @@ public class FileBlobStore
                        final BlobStoreMetricsStore storeMetrics,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
-                       final NodeAccess nodeAccess)
+                       final NodeAccess nodeAccess,
+                       final DryRunPrefix dryRunPrefix)
   {
-    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics, nodeAccess);
+    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics, nodeAccess,
+        dryRunPrefix);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -596,7 +603,7 @@ public class FileBlobStore
   {
     FileBlobAttributes attributes = (FileBlobAttributes) getBlobAttributes(blobId);
     String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    if (!maybeUndeleteBlob(inUseChecker, blobId, attributes)) {
+    if (!maybeUndeleteBlob(inUseChecker, blobId, attributes, false)) {
       // not in use, so it's safe to delete the file
       log.debug("Hard deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
           blobId, attributes.getDeletedReason(), blobStoreConfiguration.getName(), blobName);
@@ -606,23 +613,27 @@ public class FileBlobStore
 
   public boolean maybeUndeleteBlob(@Nullable final BlobStoreUsageChecker inUseChecker,
                                    final BlobId blobId,
-                                   final FileBlobAttributes attributes)
+                                   final FileBlobAttributes attributes,
+                                   final boolean isDryRun)
   {
+    String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
       String deletedReason = attributes.getDeletedReason();
-      attributes.setDeleted(false);
-      attributes.setDeletedReason(null);
-      try {
-        attributes.store();
-      }
-      catch (IOException e) {
-        log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-            blobId, deletedReason, blobStoreConfiguration.getName(), blobName, e);
+      if (!isDryRun) {
+        attributes.setDeleted(false);
+        attributes.setDeletedReason(null);
+        try {
+          attributes.store();
+        }
+        catch (IOException e) {
+          log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+              blobId, deletedReason, blobStoreConfiguration.getName(), blobName, e);
+        }
       }
       log.warn(
-          "Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-          blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
+          "{}Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+          logPrefix, blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
       return true;
     }
     return false;

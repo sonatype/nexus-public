@@ -46,11 +46,6 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
         name: 'id'
       },
       {
-        xtype: 'hiddenfield',
-        name: 'type',
-        value: 'jexl'
-      },
-      {
         xtype: 'fieldcontainer',
         items: {
           xtype: 'fieldset',
@@ -65,6 +60,19 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
               name: 'name',
               itemId: 'name',
               fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Name_FieldLabel'),
+              readOnly: true
+            },
+            {
+              xtype: 'combo',
+              cls: 'nx-combo-disabled',
+              name: 'type',
+              fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Type_FieldLabel'),
+              editable: false,
+              store: [
+                ['jexl', NX.I18n.get('Selector_SelectorSettingsForm_Type_Jexl')],
+                ['csel', NX.I18n.get('Selector_SelectorSettingsForm_Type_Sonatype')]
+              ],
+              value: 'csel',
               readOnly: true
             },
             {
@@ -85,14 +93,22 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
             xtype: 'textfield',
             allowBlank: false
           },
-          items: {
+          items: [{
             xtype: 'textareafield',
             name: 'expression',
             itemId: 'expression',
             fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Expression_FieldLabel'),
-            helpText: NX.I18n.get('Selector_SelectorSettingsForm_Expression_HelpText'),
-            afterBodyEl: NX.I18n.get('Selector_SelectorSettingsForm_Expression_AfterBodyEl')
-          }
+            helpText: NX.I18n.get('Selector_SelectorSettingsForm_Expression_HelpText')
+          },{
+              xtype: 'panel',
+              itemId: 'sexlHelp',
+              html: NX.I18n.get('Selector_SelectorSettingsForm_Expression_Examples')
+          },{
+              xtype: 'panel',
+              itemId: 'jexlHelp',
+              html: NX.I18n.get('Selector_SelectorSettingsForm_Expression_Examples_jexl'),
+              hidden: true
+          }]
         }
       }
     ];

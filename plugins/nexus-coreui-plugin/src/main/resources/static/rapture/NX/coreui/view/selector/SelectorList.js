@@ -49,13 +49,22 @@ Ext.define('NX.coreui.view.selector.SelectorList', {
         header: NX.I18n.get('Selector_SelectorList_Name_Header'),
         dataIndex: 'name',
         stateId: 'name',
-        flex: 1
+        flex: 4
+      },
+      {
+        header: NX.I18n.get('Selector_SelectorList_Type_Header'),
+        dataIndex: 'type',
+        stateId: 'type',
+        flex: 1,
+        renderer: function(value) {
+          return value.toUpperCase();
+        }
       },
       {
         header: NX.I18n.get('Selector_SelectorList_Description_Header'),
         dataIndex: 'description',
         stateId: 'description',
-        flex: 1
+        flex: 4
       }
     ];
 

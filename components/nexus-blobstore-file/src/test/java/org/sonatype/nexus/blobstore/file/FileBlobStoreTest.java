@@ -31,6 +31,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -55,6 +56,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
@@ -93,6 +95,9 @@ public class FileBlobStoreTest
   @Mock
   NodeAccess nodeAccess;
 
+  @Mock
+  DryRunPrefix dryRunPrefix;
+
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin"
@@ -107,6 +112,7 @@ public class FileBlobStoreTest
   @Before
   public void initBlobStore() {
     when(nodeAccess.getId()).thenReturn("test");
+    when(dryRunPrefix.get()).thenReturn("");
     when(appDirs.getWorkDirectory(any())).thenReturn(util.createTempDir());
     when(attributes.isDeleted()).thenReturn(true);
 
@@ -125,7 +131,7 @@ public class FileBlobStoreTest
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
         permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, configuration,
-        appDirs, nodeAccess);
+        appDirs, nodeAccess, dryRunPrefix);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 
@@ -239,14 +245,14 @@ public class FileBlobStoreTest
   public void testMaybeUndeleteBlob_AttributesNotDeleted() throws IOException {
     when(attributes.isDeleted()).thenReturn(false);
 
-    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes);
+    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(false));
     verify(blobStoreUsageChecker, never()).test(eq(underTest), any(BlobId.class), anyString());
   }
 
   @Test
   public void testMaybeUndeleteBlob_CheckerNull() throws IOException {
-    boolean result = underTest.maybeUndeleteBlob(null, new BlobId("fakeid"), attributes);
+    boolean result = underTest.maybeUndeleteBlob(null, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(false));
   }
 
@@ -254,11 +260,23 @@ public class FileBlobStoreTest
   public void testMaybeUndeleteBlob_CheckInUse() throws IOException {
     when(blobStoreUsageChecker.test(eq(underTest), any(BlobId.class), anyString())).thenReturn(true);
 
-    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes);
+    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(true));
     verify(attributes).setDeleted(false);
     verify(attributes).setDeletedReason(null);
     verify(attributes).store();
+  }
+
+  @Test
+  public void testMaybeUndeleteBlob_CheckInUse_DryRun() throws IOException {
+    when(blobStoreUsageChecker.test(eq(underTest), any(BlobId.class), anyString())).thenReturn(true);
+
+    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, true);
+    assertThat(result, is(true));
+    verify(attributes).getProperties();
+    verify(attributes).isDeleted();
+    verify(attributes).getDeletedReason();
+    verifyNoMoreInteractions(attributes);
   }
 
   private void setRebuildMetadataToTrue() throws IOException {

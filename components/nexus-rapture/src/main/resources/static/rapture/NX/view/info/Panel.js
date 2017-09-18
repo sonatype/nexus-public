@@ -41,7 +41,8 @@ Ext.define('NX.view.info.Panel', {
     subsection = {
       xtype: 'panel',
       ui: 'nx-subsection',
-      title: me.titled,
+      //if framed the title will come from the inset section
+      title: me.framed ? undefined : me.titled,
       frame: me.framed,
       items: { xtype: 'nx-info' }
     };
@@ -49,6 +50,8 @@ Ext.define('NX.view.info.Panel', {
     inset = {
       xtype: 'panel',
       ui: 'nx-inset',
+      title: me.titled,
+      collapsible: me.collapsible,
 
       items: subsection
     };

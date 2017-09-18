@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
+import java.util.Arrays;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -60,5 +62,16 @@ public class ContentAuthHelper
       }
       return false;
     });
+  }
+
+  /**
+   * @since 3.6
+   */
+  public boolean checkAssetPermissionsJexlOnly(final ODocument asset, final String... repositoryNames) {
+    String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
+    VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
+    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName -> contentPermissionChecker
+        .isPermittedJexlOnly(repositoryName, format, BROWSE, variableSource)));
   }
 }

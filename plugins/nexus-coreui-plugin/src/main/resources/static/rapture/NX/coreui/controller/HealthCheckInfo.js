@@ -37,6 +37,14 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
         'nx-coreui-component-details': {
           afterrender: me.bindHealthCheckInfo,
           updated: me.loadHealthCheckInfo
+        },
+        'nx-coreui-component-componentinfo': {
+          afterrender: me.bindHealthCheckInfo,
+          updated: me.loadHealthCheckInfo
+        },
+        'nx-coreui-component-componentassetinfo': {
+          beforeRender: me.bindHealthCheckInfo,
+          update: me.onComponentAssetInfoUpdated
         }
       }
     });
@@ -51,39 +59,45 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
    */
   loadHealthCheckInfo: function(panel, model) {
     var me = this,
-        components = [],
-        infoPanel = panel.down('#healthCheckInfo');
+        components = [];
 
-    if (infoPanel && model && model.get('healthCheckLoading') === undefined) {
-      model.beginEdit();
-      model.set('healthCheckLoading', true);
-      model.endEdit();
-      components.push({
-        id: model.getId(),
-        group: model.get('group'),
-        name: model.get('name'),
-        version: model.get('version'),
-        format: model.get('format')
-      });
-      NX.direct.healthcheck_Info.read(components, function(response) {
-        var success = Ext.isObject(response) && response.success;
+    if (me.healthCheckAllowed) {
+      if (model && model.get('healthCheckLoading') === undefined) {
         model.beginEdit();
-        model.set('healthCheckLoading', false);
-        model.set('healthCheckError', !success);
+        model.set('healthCheckLoading', true);
         model.endEdit();
-        if (success) {
-          Ext.Array.each(response.data, function(entry) {
-            model.beginEdit();
-            Ext.Object.each(entry['healthCheck'], function(key, value) {
-              model.set('healthCheck' + Ext.String.capitalize(key), value);
+        components.push({
+          id: model.getId(),
+          group: model.get('group'),
+          name: model.get('name'),
+          version: model.get('version'),
+          format: model.get('format')
+        });
+        NX.direct.healthcheck_Info.read(components, function (response) {
+          var success = Ext.isObject(response) && response.success;
+          model.beginEdit();
+          model.set('healthCheckLoading', false);
+          model.set('healthCheckError', !success);
+          model.endEdit();
+          if (success) {
+            Ext.Array.each(response.data, function (entry) {
+              model.beginEdit();
+              Ext.Object.each(entry['healthCheck'], function (key, value) {
+                model.set('healthCheck' + Ext.String.capitalize(key), value);
+              });
+              model.endEdit();
             });
-            model.endEdit();
-          });
-        }
-        me.renderHealthCheckFields(panel, model);
-      }, undefined, {enableBuffer: false});
+          }
+          me.renderHealthCheckFields(panel, model);
+        }, undefined, {enableBuffer: false});
+      }
+      me.renderHealthCheckFields(panel, model);
     }
-    me.renderHealthCheckFields(panel, model);
+  },
+
+  onComponentAssetInfoUpdated: function(panel, asset, component) {
+    this.bindHealthCheckInfo(panel);
+    this.loadHealthCheckInfo(panel, component);
   },
 
   /**
@@ -97,8 +111,8 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
     panel.mon(
         NX.Conditions.isPermitted("nexus:healthcheck:read"),
         {
-          satisfied: Ext.pass(me.addHealthCheckInfo, panel),
-          unsatisfied: Ext.pass(me.removeHealthCheckInfo, panel),
+          satisfied: me.addHealthCheckInfo,
+          unsatisfied: me.removeHealthCheckInfo,
           scope: me
         }
     );
@@ -110,15 +124,9 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
    * @private
    * @param {Ext.Panel} panel to add health check info section to
    */
-  addHealthCheckInfo: function(panel) {
-    var infoPanel = panel.down('#healthCheckInfo');
-
-    if (!infoPanel) {
-      panel.add({
-        xtype: 'nx-info',
-        itemId: 'healthCheckInfo'
-      });
-    }
+  addHealthCheckInfo: function() {
+    var me = this;
+    me.healthCheckAllowed = true;
   },
 
   /**
@@ -127,12 +135,9 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
    * @private
    * @param {Ext.Panel} panel to remove health check info section from
    */
-  removeHealthCheckInfo: function(panel) {
-    var infoPanel = panel.down('#healthCheckInfo');
-
-    if (infoPanel) {
-      panel.remove(infoPanel);
-    }
+  removeHealthCheckInfo: function() {
+    var me = this;
+    me.healthCheckAllowed = false;
   },
 
   /**
@@ -144,18 +149,38 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
    */
   renderHealthCheckFields: function(panel, model) {
     var me = this,
-        infoPanel = panel.down('#healthCheckInfo'),
+        infoPanel,
         info = {};
 
-    if (infoPanel) {
+    if (me.healthCheckAllowed) {
       if (model) {
-        info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = me.renderMostPopularVersion(model);
-        info[NX.I18n.get('HealthCheckInfo_Age_Label')] = me.renderAge(model);
-        info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = me.renderPopularity(model);
+        if (panel.setInfo) {
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label'), me.renderMostPopularVersion(model));
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Age_Label'), me.renderAge(model));
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Popularity_Label'), me.renderPopularity(model));
+          panel.showInfo();
+        }
+        else {
+          infoPanel = me.getOrAddInfoPanel(panel);
+          info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = me.renderMostPopularVersion(model);
+          info[NX.I18n.get('HealthCheckInfo_Age_Label')] = me.renderAge(model);
+          info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = me.renderPopularity(model);
+          infoPanel.showInfo(info);
+        }
       }
-      infoPanel.showInfo(info);
+      panel.fireEvent('healthCheckLoaded', panel, model);
     }
-    panel.fireEvent('healthCheckLoaded', panel, model);
+  },
+
+  getOrAddInfoPanel: function(panel) {
+    var infoPanel = panel.down('#healthCheckInfo');
+    if (!infoPanel) {
+      infoPanel = panel.add({
+        xtype: 'nx-info',
+        itemId: 'healthCheckInfo'
+      });
+    }
+    return infoPanel;
   },
 
   /**

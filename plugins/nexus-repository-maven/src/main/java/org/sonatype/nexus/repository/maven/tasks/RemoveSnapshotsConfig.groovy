@@ -20,7 +20,7 @@ import groovy.transform.ToString;
  * @since 3.0
  */
 @Immutable
-@ToString
+@ToString(includeNames = true)
 class RemoveSnapshotsConfig
 {
   /**

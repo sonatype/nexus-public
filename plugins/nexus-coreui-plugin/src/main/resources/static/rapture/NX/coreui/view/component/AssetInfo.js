@@ -48,6 +48,8 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     info[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
     info[NX.I18n.get('Assets_Info_Blob_Created')] = assetModel.get('blobCreated');
     info[NX.I18n.get('Assets_Info_Blob_Updated')] = assetModel.get('blobUpdated');
+    info[NX.I18n.get('Assets_Info_Downloaded_Count')] = assetModel.get('downloadCount') + ' '
+            + NX.I18n.get('Assets_Info_Downloaded_Unit');
     info[NX.I18n.get('Assets_Info_Last_Downloaded')] = assetModel.get('lastDownloaded');
     info[NX.I18n.get('Assets_Info_Locally_Cached')] = contentType !== 'unknown' && size > 0;
     info[NX.I18n.get('Assets_Info_BlobRef')] = assetModel.get('blobRef');

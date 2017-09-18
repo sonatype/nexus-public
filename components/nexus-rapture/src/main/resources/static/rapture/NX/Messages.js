@@ -30,6 +30,15 @@ Ext.define('NX.Messages', {
     NX.getApplication().getMessageController().addMessage(message);
   },
 
+  /**
+   * Check if a message with a matching type already exists
+   * @public
+   * @param {Object} message
+   */
+  messageExists: function(message) {
+    return NX.getApplication().getMessageController().messageExists(message);
+  },
+
   //
   // High-level helpers
   //

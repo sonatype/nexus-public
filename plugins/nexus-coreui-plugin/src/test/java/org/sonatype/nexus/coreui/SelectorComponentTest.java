@@ -18,10 +18,12 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Path;
 
 import org.sonatype.goodies.testsupport.inject.InjectedTestSupport;
+import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.inject.Binder;
+import org.eclipse.sisu.space.BeanScanning;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,7 +46,7 @@ public class SelectorComponentTest
   private Path path = mock(Path.class);
 
   @Override
-  public void configure(Binder binder) {
+  public void configure(final Binder binder) {
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
     ConstraintViolation constraintViolation = mock(ConstraintViolation.class);
     binder.bind(ConstraintViolationFactory.class).toInstance(constraintViolationFactory);
@@ -53,13 +55,67 @@ public class SelectorComponentTest
     when(constraintViolation.getPropertyPath()).thenReturn(path);
   }
 
+  @Override
+  public BeanScanning scanning() {
+    return BeanScanning.INDEX;
+  }
+
   @Test
-  public void testCreate_invalidExpression() {
+  public void testCreateJexl_invalidExpression() {
     SelectorXO xo = new SelectorXO();
     xo.setExpression("a ==== b");
+    xo.setType("jexl");
 
     try {
       component.create(xo);
+      fail();
+    }
+    catch (ConstraintViolationException e) {
+      assertThat(e.getConstraintViolations().size(), is(1));
+      assertThat(e.getConstraintViolations().iterator().next().getPropertyPath(), is(path));
+    }
+  }
+
+  @Test
+  public void testCreateCsel_invalidExpression() {
+    SelectorXO xo = new SelectorXO();
+    xo.setExpression("a ==== b");
+    xo.setType(CselSelector.TYPE);
+
+    try {
+      component.create(xo);
+      fail();
+    }
+    catch (ConstraintViolationException e) {
+      assertThat(e.getConstraintViolations().size(), is(1));
+      assertThat(e.getConstraintViolations().iterator().next().getPropertyPath(), is(path));
+    }
+  }
+
+  @Test
+  public void testUpdateJexl_invalidExpression() {
+    SelectorXO xo = new SelectorXO();
+    xo.setExpression("a ==== b");
+    xo.setType("jexl");
+
+    try {
+      component.update(xo);
+      fail();
+    }
+    catch (ConstraintViolationException e) {
+      assertThat(e.getConstraintViolations().size(), is(1));
+      assertThat(e.getConstraintViolations().iterator().next().getPropertyPath(), is(path));
+    }
+  }
+
+  @Test
+  public void testUpdateCsel_invalidExpression() {
+    SelectorXO xo = new SelectorXO();
+    xo.setExpression("a ==== b");
+    xo.setType(CselSelector.TYPE);
+
+    try {
+      component.update(xo);
       fail();
     }
     catch (ConstraintViolationException e) {

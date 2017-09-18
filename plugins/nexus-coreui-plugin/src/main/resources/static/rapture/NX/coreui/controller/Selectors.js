@@ -54,7 +54,9 @@ Ext.define('NX.coreui.controller.Selectors', {
     {ref: 'previewExpression', selector: 'nx-coreui-selector-preview-window textareafield[name=jexl]'},
     {ref: 'previewWindowPreviewButton', selector: 'nx-coreui-selector-preview-window button[action=preview]'},
     {ref: 'addSettingsForm', selector: 'nx-coreui-selector-add nx-coreui-selector-settings-form'},
-    {ref: 'editSettingsForm', selector: 'nx-coreui-selector-settings nx-coreui-selector-settings-form'}
+    {ref: 'editSettingsForm', selector: 'nx-coreui-selector-settings nx-coreui-selector-settings-form'},
+    {ref: 'jexlHelp', selector: 'nx-coreui-selector-settings-form #jexlHelp'},
+    {ref: 'sexlHelp', selector: 'nx-coreui-selector-settings-form #sexlHelp'}
   ],
   icons: {
     'selector-default': {
@@ -108,7 +110,8 @@ Ext.define('NX.coreui.controller.Selectors', {
           click: me.showAddWindow
         },
         'nx-coreui-selector-settings-form': {
-          submitted: me.loadStores
+          submitted: me.loadStores,
+          recordloaded: me.recordLoaded
         },
         'nx-coreui-selector-settings-form button[action=preview]': {
           click: me.showPreviewWindow
@@ -144,6 +147,19 @@ Ext.define('NX.coreui.controller.Selectors', {
 
     if (Ext.isDefined(model)) {
       me.getSettings().loadRecord(model);
+    }
+  },
+
+  recordLoaded: function(formPanel, record) {
+    var me = this;
+
+    if (record && record.get('type') === 'jexl') {
+      me.getSexlHelp().hide();
+      me.getJexlHelp().show();
+    }
+    else {
+      me.getJexlHelp().hide();
+      me.getSexlHelp().show();
     }
   },
 

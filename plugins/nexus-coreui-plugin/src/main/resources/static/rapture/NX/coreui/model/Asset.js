@@ -30,6 +30,7 @@ Ext.define('NX.coreui.model.Asset', {
     {name: 'blobCreated', type: 'date', dateFormat: 'c' },
     {name: 'blobUpdated', type: 'date', dateFormat: 'c' },
     {name: 'lastDownloaded', type: 'date', dateFormat: 'c' },
+    {name: 'downloadCount', type: 'int'},
     {name: 'blobRef', type: 'string', sortType: 'asUCText'},
     {name: 'componentId', type: 'string', sortType: 'asUCText'},
     {name: 'attributes', type: 'auto' /*object*/}

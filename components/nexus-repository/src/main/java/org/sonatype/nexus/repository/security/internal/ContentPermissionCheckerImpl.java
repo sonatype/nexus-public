@@ -98,4 +98,19 @@ public class ContentPermissionCheckerImpl
     return selectorManager.browse().stream()
         .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
   }
+
+  @Override
+  public boolean isPermittedJexlOnly(final String repositoryName,
+                                     final String repositoryFormat,
+                                     final String action,
+                                     final VariableSource variableSource)
+  {
+    // check view perm first, if applicable, grant access
+    if (isViewPermitted(repositoryName, repositoryFormat, action)) {
+      return true;
+    }
+    // otherwise check the content selector perms
+    return selectorManager.browseJexl().stream()
+        .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
+  }
 }

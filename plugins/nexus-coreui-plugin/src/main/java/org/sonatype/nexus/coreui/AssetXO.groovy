@@ -23,8 +23,7 @@ import org.hibernate.validator.constraints.NotEmpty
  */
 @ToString(includePackage = false, includeNames = true)
 @EqualsAndHashCode(includes = ["id"])
-class AssetXO
-{
+class AssetXO {
   @NotEmpty
   String id
 
@@ -51,10 +50,12 @@ class AssetXO
   Date blobUpdated
 
   Date lastDownloaded
-  
+
+  long downloadCount
+
   @NotEmpty
   String blobRef
-  
+
   String componentId
 
   @NotEmpty

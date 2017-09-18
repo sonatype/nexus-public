@@ -35,6 +35,7 @@ import org.junit.Test
 import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.is
 import static org.mockito.Matchers.any
 import static org.mockito.Matchers.anyBoolean
 import static org.mockito.Matchers.anyString
@@ -596,5 +597,27 @@ extends TestSupport
     underTest.attachBlob(asset, assetBlob)
     verify(asset, never()).blobCreated(any(DateTime))
     verify(asset).blobUpdated(any(DateTime))
+  }
+
+  @Test
+  void 'verifying asset lookup by id'() {
+    def assetId = mock(EntityId)
+    def asset = mock(Asset)
+    when(assetEntityAdapter.read(db, assetId)).thenReturn(asset);
+    def underTest = new StorageTxImpl(
+        'test',
+        blobTx,
+        db,
+        bucket,
+        WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP)
+
+    assertThat underTest.findAsset(assetId), is(asset)
   }
 }

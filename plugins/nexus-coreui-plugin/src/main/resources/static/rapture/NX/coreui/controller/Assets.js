@@ -371,19 +371,27 @@ Ext.define('NX.coreui.controller.Assets', {
   analyzeAsset: function(button) {
     var me = this,
         componentDetails = me.getComponentDetails(),
-        win = button.up('window'),
-        form = button.up('form'),
-        formValues = form.getForm().getValues(),
-        repositoryName = componentDetails.componentModel.get('repositoryName'),
-        assetId = form.down('combo[name="asset"]').getValue();
+        win,
+        form,
+        formValues,
+        repositoryName,
+        assetId;
 
-    NX.direct.ahc_Component.analyzeAsset(repositoryName, assetId, formValues.emailAddress, formValues.password,
-        formValues.proprietaryPackages, formValues.reportLabel, function(response) {
-      if (Ext.isObject(response) && response.success) {
-        win.close();
-        NX.Messages.add({text: NX.I18n.get('ComponentDetails_Analyze_Success'), type: 'success'});
-      }
-    });
+    if (componentDetails) {
+      win = button.up('window');
+      form = button.up('form');
+      formValues = form.getForm().getValues();
+      repositoryName = componentDetails.componentModel.get('repositoryName');
+      assetId = form.down('combo[name="asset"]').getValue();
+
+      NX.direct.ahc_Component.analyzeAsset(repositoryName, assetId, formValues.emailAddress, formValues.password,
+          formValues.proprietaryPackages, formValues.reportLabel, function(response) {
+            if (Ext.isObject(response) && response.success) {
+              win.close();
+              NX.Messages.add({text: NX.I18n.get('ComponentDetails_Analyze_Success'), type: 'success'});
+            }
+          });
+    }
   },
 
   /**
@@ -391,12 +399,16 @@ Ext.define('NX.coreui.controller.Assets', {
    */
   selectedApplicationChanged: function(combo) {
     var me = this,
-        labelField = me.getAnalyzeApplicationWindow().down('textfield[name="reportLabel"]');
+        componentDetails = me.getComponentDetails(),
+        labelField;
 
-    if (!labelField.isDirty()) {
-      //I am setting the original value so it won't be marked dirty unless user touches it
-      labelField.originalValue = combo.getRawValue();
-      labelField.setValue(combo.getRawValue());
+    if (componentDetails) {
+      labelField = me.getAnalyzeApplicationWindow().down('textfield[name="reportLabel"]');
+      if (!labelField.isDirty()) {
+        //I am setting the original value so it won't be marked dirty unless user touches it
+        labelField.originalValue = combo.getRawValue();
+        labelField.setValue(combo.getRawValue());
+      }
     }
   },
 

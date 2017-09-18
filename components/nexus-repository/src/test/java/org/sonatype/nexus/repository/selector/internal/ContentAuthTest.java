@@ -138,4 +138,60 @@ public class ContentAuthTest
     verify(contentAuthHelper).checkAssetPermissions(assetDocument, new String[]{"group_repo"});
     verify(contentAuthHelper, never()).checkAssetPermissions(assetDocument, new String[]{REPOSITORY_NAME});
   }
+
+  @Test
+  public void testAssetPermitted_jexlOnly() {
+    when(contentAuthHelper.checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME })).thenReturn(
+        true);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME, true }, null),
+        is(true));
+    verify(contentAuthHelper, times(1)).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
+
+  @Test
+  public void testAssetNotPermitted_jexlOnly() {
+    when(contentAuthHelper.checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME })).thenReturn(
+        false);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { assetDocument, REPOSITORY_NAME, true }, null),
+        is(false));
+    verify(contentAuthHelper, times(1)).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
+
+  @Test
+  public void testComponentPermitted_jexlOnly() {
+    when(contentAuthHelper.checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME })).thenReturn(
+        true);
+    assertThat(
+        underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME, true }, null),
+        is(true));
+    verify(contentAuthHelper, times(1)).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
+
+  @Test
+  public void testComponentNotPermitted_jexlOnly() {
+    when(contentAuthHelper.checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME })).thenReturn(
+        false);
+    assertThat(
+        underTest.execute(underTest, null, null, new Object[] { componentDocument, REPOSITORY_NAME, true }, null),
+        is(false));
+    verify(contentAuthHelper, times(1)).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
+
+  @Test
+  public void testComponentPermitted_withGroupRepo_jexlOnly() {
+    when(contentAuthHelper.checkAssetPermissionsJexlOnly(assetDocument, new String[] { "group_repo" }))
+        .thenReturn(true);
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo", true }, null),
+        is(true));
+    verify(contentAuthHelper).checkAssetPermissionsJexlOnly(assetDocument, new String[] { "group_repo" });
+    verify(contentAuthHelper, never()).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
+
+  @Test
+  public void testComponentNotPermitted_withGroupRepo_jexlOnly() {
+    assertThat(underTest.execute(underTest, null, null, new Object[] { componentDocument, "group_repo", true }, null),
+        is(false));
+    verify(contentAuthHelper).checkAssetPermissionsJexlOnly(assetDocument, new String[] { "group_repo" });
+    verify(contentAuthHelper, never()).checkAssetPermissionsJexlOnly(assetDocument, new String[] { REPOSITORY_NAME });
+  }
 }

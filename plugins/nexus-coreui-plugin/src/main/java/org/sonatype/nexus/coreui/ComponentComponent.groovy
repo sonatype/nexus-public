@@ -16,6 +16,7 @@ import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.ws.rs.WebApplicationException
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
@@ -24,6 +25,7 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.QueryOptions
 import org.sonatype.nexus.repository.maintenance.MaintenanceService
@@ -45,6 +47,7 @@ import org.sonatype.nexus.validation.Validate
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.ImmutableList
+import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
@@ -53,6 +56,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.hibernate.validator.constraints.NotEmpty
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static javax.ws.rs.core.Response.Status
 
 /**
  * Component {@link DirectComponent}.
@@ -78,7 +82,7 @@ class ComponentComponent
   }
 
   private static final Closure ASSET_CONVERTER = { Asset asset, String componentName, String repositoryName,
-                                                   Map<String, String> repoNamesForBuckets ->
+                                                   Map<String, String> repoNamesForBuckets, long lastThirty ->
     new AssetXO(
         id: EntityHelper.id(asset).value,
         name: asset.name() ?: componentName,
@@ -91,8 +95,9 @@ class ComponentComponent
         blobUpdated: asset.blobUpdated()?.toDate(),
         lastDownloaded: asset.lastDownloaded()?.toDate(),
         blobRef: asset.blobRef() ? asset.blobRef().toString() : '',
-        componentId: asset.componentId?.value,
-        attributes: asset.attributes().backing()
+        componentId: asset.componentId() ? asset.componentId().value : '',
+        attributes: asset.attributes().backing(),
+        downloadCount: lastThirty
     )
   }
 
@@ -115,7 +120,10 @@ class ComponentComponent
   BrowseService browseService
 
   @Inject
-  MaintenanceService maintenanceService;
+  MaintenanceService maintenanceService
+
+  @Inject
+  AssetDownloadCountStore assetDownloadCountStore
 
   @DirectMethod
   @Timed
@@ -144,7 +152,8 @@ class ComponentComponent
     }
     def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'));
     def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
-    return result.results.collect(ASSET_CONVERTER.rcurry(parameters.getFilter('componentName'), repository.name, repoNamesForBuckets))
+
+    return createAssetXOs(result.results, parameters.getFilter('componentName'), repositoryName, repoNamesForBuckets)
   }
 
   private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
@@ -186,7 +195,7 @@ class ComponentComponent
         toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
-        result.results.collect(ASSET_CONVERTER.rcurry(null, null, [:])) // buckets not needed for asset preview screen
+        result.results.collect(ASSET_CONVERTER.rcurry(null, null, [:], 0)) // buckets not needed for asset preview screen
     )
   }
 
@@ -201,10 +210,10 @@ class ComponentComponent
     }
     def result = browseService.browseAssets(repository, toQueryOptions(parameters))
     def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
+
     return new PagedResponse<AssetXO>(
         result.total,
-        result.results.collect(ASSET_CONVERTER.rcurry(null, repositoryName, repoNamesForBuckets))
-    )
+        createAssetXOs(result.results, null, repositoryName, repoNamesForBuckets))
   }
 
   @DirectMethod
@@ -269,14 +278,23 @@ class ComponentComponent
     List<Asset> assets;
     try {
       storageTx.begin()
-      component = storageTx.findComponentInBucket(new DetachedEntityId(componentId), storageTx.findBucket(repository))
-      assets = Lists.newArrayList(storageTx.browseAssets(component))
+      component = storageTx.findComponent(new DetachedEntityId(componentId))
+      if (component == null) {
+        throw new WebApplicationException(Status.NOT_FOUND)
+      }
+
+      Iterable<Asset> browsedAssets = storageTx.browseAssets(component)
+      if (browsedAssets == null || Iterables.isEmpty(browsedAssets)) {
+        throw new WebApplicationException(Status.NOT_FOUND);
+      }
+
+      assets = Lists.newArrayList(browsedAssets)
     }
     finally {
       storageTx.close()
     }
     ensurePermissions(repository, assets, BreadActions.READ)
-    return component ? COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO : null
+    return COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO
   }
 
   /**
@@ -295,15 +313,20 @@ class ComponentComponent
     Asset asset;
     try {
       storageTx.begin()
-      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
+      asset = storageTx.findAsset(new DetachedEntityId(assetId))
+      if (asset == null) {
+        throw new WebApplicationException(Status.NOT_FOUND);
+      }
     }
     finally {
       storageTx.close()
     }
+
     ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
     if (asset) {
       def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
-      return ASSET_CONVERTER.call(asset, null, repository.name, repoNamesForBuckets)
+      def lastThirty = assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name())
+      return ASSET_CONVERTER.call(asset, null, repository.name, repoNamesForBuckets, lastThirty)
     }
     else {
       return null
@@ -342,5 +365,17 @@ class ComponentComponent
       }
     }
     throw new AuthorizationException()
+  }
+
+  private List<AssetXO> createAssetXOs(List<Asset> assets,
+                                       String componentName,
+                                       String repositoryName,
+                                       Map<String, String> repoNamesForBuckets) {
+    List<AssetXO> assetXOs = new ArrayList<>()
+    for (Asset asset : assets) {
+      def lastThirty = assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name())
+      assetXOs.add(ASSET_CONVERTER.call(asset, componentName, repositoryName, repoNamesForBuckets, lastThirty))
+    }
+    return assetXOs
   }
 }

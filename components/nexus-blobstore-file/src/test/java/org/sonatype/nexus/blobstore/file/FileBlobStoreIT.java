@@ -38,6 +38,7 @@ import org.sonatype.nexus.blobstore.file.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.collect.ImmutableMap;
@@ -110,9 +111,13 @@ public class FileBlobStoreIT
   @Mock
   NodeAccess nodeAccess;
 
+  @Mock
+  DryRunPrefix dryRunPrefix;
+
   @Before
   public void setUp() throws Exception {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
+    when(dryRunPrefix.get()).thenReturn("");
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
     contentDirectory = blobStoreDirectory.resolve("content");
@@ -132,7 +137,7 @@ public class FileBlobStoreIT
         temporaryLocationStrategy,
         fileOperations,
         applicationDirectories,
-        metricsStore, nodeAccess);
+        metricsStore, nodeAccess, dryRunPrefix);
     underTest.init(config);
     underTest.start();
   }

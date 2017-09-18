@@ -36,6 +36,8 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class JexlSelector
     implements Selector
 {
+  public static final String TYPE = "jexl";
+
   // this stops JEXL from using expensive new Throwable().getStackTrace() to find caller info
   private static final JexlInfo CALLER_INFO = new JexlInfo(JexlSelector.class.getName(), 0, 0);
 
@@ -75,11 +77,15 @@ public class JexlSelector
     }
   }
 
+  public String getSourceText() {
+    return expression.map(JexlExpression::getSourceText).orElse("");
+  }
+
   public static String prettyExceptionMsg(JexlException e) {
     JexlInfo info = e.getInfo();
     if (info != null) {
       String detail = e.getMessage();
-      if (!Strings2.isBlank(detail)) {
+      if (!Strings2.isBlank(detail) && detail.indexOf('\'') > -1) {
         detail = e.getMessage().substring(detail.indexOf('\'') + 1, detail.lastIndexOf('\''));
       }
       String parseMsg = detail.isEmpty() ? detail : String.format(" Error parsing string: '%s'.", detail);

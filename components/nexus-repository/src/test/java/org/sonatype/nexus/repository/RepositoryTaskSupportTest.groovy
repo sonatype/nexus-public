@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository
 
-import org.sonatype.goodies.common.MultipleFailures
+import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.scheduling.TaskConfiguration
@@ -42,7 +42,7 @@ class RepositoryTaskSupportTest
    * Verify that repository field must be present in configuration.
    */
   @Test
-  public void 'repository field must be present'() {
+  void 'repository field must be present'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     task = new TestTask()
     task.install(repositoryManager)
@@ -56,7 +56,7 @@ class RepositoryTaskSupportTest
    * Verify that repository exists.
    */
   @Test
-  public void 'repository exists'() {
+  void 'repository exists'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, 'foo')
     task = new TestTask()
@@ -71,7 +71,7 @@ class RepositoryTaskSupportTest
    * Verify that configured repository satisfies task repository filter (appliesTo).
    */
   @Test
-  public void 'repository satisfies filter'() {
+  void 'repository satisfies filter'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, 'foo')
     when(repositoryManager.get('foo')).thenReturn(mock(Repository))
@@ -92,7 +92,7 @@ class RepositoryTaskSupportTest
    * Verify that task is executed for repository.
    */
   @Test
-  public void 'task is executed for repository'() {
+  void 'task is executed for repository'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, 'foo')
     def testRepository = mock(Repository)
@@ -116,7 +116,7 @@ class RepositoryTaskSupportTest
    * Verify that task is executed for all repositories.
    */
   @Test
-  public void 'task is executed for all repositories'() {
+  void 'task is executed for all repositories'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, '*')
     def testRepository1 = mock(Repository)
@@ -140,7 +140,7 @@ class RepositoryTaskSupportTest
    * Verify that task is executed for repositories that satisfy filter (appliesTo).
    */
   @Test
-  public void 'task is executed for filtered repositories'() {
+  void 'task is executed for filtered repositories'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, '*')
     def testRepository1 = mock(Repository)
@@ -169,7 +169,7 @@ class RepositoryTaskSupportTest
    * Verify that task is executed for all repositories regardless exception.
    */
   @Test
-  public void 'task is executed for all repositories regardless exception'() {
+  void 'task is executed for all repositories regardless exception'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, '*')
     def testRepository1 = mock(Repository)
@@ -188,7 +188,7 @@ class RepositoryTaskSupportTest
     task.install(repositoryManager)
     task.configure(configuration)
 
-    thrown.expect(MultipleFailures.MultipleFailuresException)
+    thrown.expect(MultipleFailuresException)
     task.execute()
     assert [testRepository1, testRepository2] == actualRepositories
   }
@@ -197,7 +197,7 @@ class RepositoryTaskSupportTest
    * Verify that task stops execution once cancelled.
    */
   @Test
-  public void 'task stops if cancelled'() {
+  void 'task stops if cancelled'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, '*')
     def testRepository1 = mock(Repository)

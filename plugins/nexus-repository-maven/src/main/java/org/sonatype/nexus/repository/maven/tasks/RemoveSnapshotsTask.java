@@ -48,7 +48,8 @@ public class RemoveSnapshotsTask
   
   @Override
   protected void execute(final Repository repository) {
-    log.info("Executing removal of snapshots on repository: {}", repository);
+    log.info("Executing removal of snapshots on repository '{}'", repository.getName());
+
     TaskConfiguration config = getConfiguration();
     RemoveSnapshotsConfig removeSnapshotsConfig = new RemoveSnapshotsConfig(
         config.getInteger(MINIMUM_SNAPSHOT_RETAINED_COUNT, 1),

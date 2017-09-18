@@ -37,6 +37,12 @@ public interface SelectorConfigurationStore
   SelectorConfiguration read(EntityId entityId);
 
   /**
+   * @since 3.6
+   * @return configuration by name
+   */
+  SelectorConfiguration getByName(String name);
+
+  /**
    * Persist a new configuration.
    */
   void create(SelectorConfiguration configuration);

@@ -26,10 +26,14 @@ import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
  * {@link SelectorConfiguration} entity-adapter.
@@ -54,6 +58,8 @@ public class SelectorConfigurationEntityAdapter
 
   private static final String P_ATTRIBUTES = "attributes";
 
+  private static final String FIND_BY_NAME = String.format("select from %s where %s = :%s", DB_CLASS, P_NAME, P_NAME);
+
   @VisibleForTesting
   static final String I_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -77,6 +83,17 @@ public class SelectorConfigurationEntityAdapter
         .setMandatory(true)
         .setNotNull(true);
     type.createIndex(I_NAME, INDEX_TYPE.UNIQUE, P_NAME);
+  }
+
+  /**
+   * @since 3.6
+   */
+  public SelectorConfiguration getByName(final ODatabaseDocumentTx db, final String name) {
+    Map<String, Object> parameters = ImmutableMap.of(P_NAME, name);
+
+    Iterable<ODocument> docs = db.command(new OCommandSQL(FIND_BY_NAME)).execute(parameters);
+
+    return this.readEntity(Iterables.getFirst(docs, null));
   }
 
   @Override

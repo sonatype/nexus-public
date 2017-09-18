@@ -26,6 +26,8 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
 
   cls: 'nx-coreui-component-assetattributes',
 
+  manageHeight: false,
+
   /**
    * model to display
    */

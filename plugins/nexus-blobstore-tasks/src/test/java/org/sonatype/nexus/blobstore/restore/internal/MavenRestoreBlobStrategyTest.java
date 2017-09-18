@@ -141,4 +141,11 @@ public class MavenRestoreBlobStrategyTest
     verify(mavenFacet).get(mavenPath);
     verifyNoMoreInteractions(mavenFacet);
   }
+
+  @Test
+  public void testRestoreDryRun() throws Exception {
+    underTest.restore(properties, blob, "test", true);
+    verify(mavenFacet).get(mavenPath);
+    verifyNoMoreInteractions(mavenFacet);
+  }
 }

@@ -40,6 +40,8 @@ public class RestoreMetadataTaskDescriptor
 
   static final String UNDELETE_BLOBS = "undeleteBlobs";
 
+  static final String DRY_RUN = "dryRun";
+
   private interface Messages extends MessageBundle {
     @DefaultMessage("Restore Asset/Component metadata from Blob Store")
     String name();
@@ -61,6 +63,12 @@ public class RestoreMetadataTaskDescriptor
 
     @DefaultMessage("Un-delete blobs which still have metadata referencing them.")
     String undeleteBlobsHelpText();
+
+    @DefaultMessage("Dry Run")
+    String dryRunLabel();
+
+    @DefaultMessage("Log actions, but make no changes.")
+    String dryRunHelpText();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -77,6 +85,9 @@ public class RestoreMetadataTaskDescriptor
             messages.blobstoreNameHelpText(),
             MANDATORY
         ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+        new CheckboxFormField(DRY_RUN,
+            messages.dryRunLabel(),
+            messages.dryRunHelpText(), OPTIONAL).withInitialValue(false),
         new CheckboxFormField(RESTORE_BLOBS,
             messages.restoreBlobsLabel(),
             messages.restoreBlobsHelpText(), OPTIONAL).withInitialValue(true),

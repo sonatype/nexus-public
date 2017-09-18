@@ -16,6 +16,7 @@ import java.util.Collections;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -31,6 +32,7 @@ import static org.sonatype.nexus.selector.JexlSelector.prettyExceptionMsg;
  * @since 3.1
  */
 @Named
+@Singleton
 public class JexlExpressionValidator
     extends ComponentSupport
 {

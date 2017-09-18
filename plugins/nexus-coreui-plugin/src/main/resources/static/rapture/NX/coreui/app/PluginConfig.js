@@ -67,15 +67,24 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.Browse',
+      active: function () {
+        return !NX.State.getValue('browseComponentAssetTree') &&
+            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+      }
+    },
+    {
       id: 'NX.coreui.controller.BrowseAssets',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return !NX.State.getValue('browseComponentAssetTree') &&
+            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
     {
       id: 'NX.coreui.controller.BrowseComponents',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return !NX.State.getValue('browseComponentAssetTree') &&
+            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
     {
@@ -88,6 +97,13 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.Capabilities',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.ComponentAssetTree',
+      active: function () {
+        return NX.State.getValue('browseComponentAssetTree') &&
+            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
     'NX.coreui.controller.FeatureGroups',

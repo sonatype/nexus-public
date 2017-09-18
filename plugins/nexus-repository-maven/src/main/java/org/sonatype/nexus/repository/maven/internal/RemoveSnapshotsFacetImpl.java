@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -68,6 +69,7 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.index.query.QueryBuilders.wildcardQuery;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.version;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -139,7 +141,8 @@ public class RemoveSnapshotsFacetImpl
   public void removeSnapshots(RemoveSnapshotsConfig config)
   {
     Repository repository = getRepository();
-    log.info("Removing snapshots on repository {} with configuration: {}", repository.getName(), config);
+    String repositoryName = repository.getName();
+    log.info("Beginning snapshot removal on repository '{}' with configuration: {}", repositoryName, config);
     UnitOfWork.beginBatch(facet(StorageFacet.class).txSupplier());
     Set<GAV> metadataUpdateRequired = new HashSet<>();
     try {
@@ -156,17 +159,26 @@ public class RemoveSnapshotsFacetImpl
 
     //only update metadata for non-proxy repos
     if (!repository.optionalFacet(ProxyFacet.class).isPresent()) {
-      log.info("Updating metadata on repository: {}", repository.getName());
+      log.info("Updating metadata on repository '{}'", repositoryName);
+      ProgressLogIntervalHelper intervalLogger = new ProgressLogIntervalHelper(log, 60);
+
+      int processed = 0;
       for (GAV gav : metadataUpdateRequired) {
         Optional<MavenHostedFacet> mavenHostedFacet = repository.optionalFacet(MavenHostedFacet.class);
         if (mavenHostedFacet.isPresent()) {
           mavenHostedFacet.get().deleteMetadata(gav.group, gav.name, gav.baseVersion);
+          intervalLogger
+              .info("Elapsed time: {}, updated metadata for {} GAVs", intervalLogger.getElapsed(), ++processed);
         }
       }
+
+      intervalLogger.flush();
     }
     else {
-      log.info("Skipping metadata updates on proxy repository: {}", repository.getName());
+      log.info("Skipping metadata updates on proxy repository '{}'", repositoryName);
     }
+
+    log.info("Completed snapshot removal on repository '{}'", repositoryName);
   }
 
   /**
@@ -206,17 +218,21 @@ public class RemoveSnapshotsFacetImpl
   private Collection<GAV> processReleasedSnapshots(final Repository repository, final RemoveSnapshotsConfig config,
                                                    final StorageTx tx)
   {
+    log.info("Begin processing released snapshots");
     Date gracePeriod = DateTime.now().minusDays(Math.max(config.getGracePeriod(), 0)).toDate();
-    log.debug("Looking for snapshots with associated releases created before {}", gracePeriod);
 
     //lookup results and group around the baseVersion
     Iterable<Component> releasedSnapshots = findReleasedSnapshots(tx, repository, gracePeriod);
     Map<GAV, List<Component>> groupedReleasedSnapshots = stream(releasedSnapshots.spliterator(), false)
         .collect(Collectors.groupingBy(GROUPING_FUNCTION));
-    log.info("Processing {} GAVs found that have already been released and for which the grace period has elapsed",
-        groupedReleasedSnapshots.size());
+    int releasedSnapshotsSize = groupedReleasedSnapshots.size();
+
+    log.info(PROGRESS, "Processing {} GAVs found that have already been released and for which the grace period has elapsed",
+        releasedSnapshotsSize);
 
     long deleted = 0;
+    long processed = 0;
+    ProgressLogIntervalHelper intervalLogger = new ProgressLogIntervalHelper(log, 60);
 
     for (Entry<GAV, List<Component>> entry : groupedReleasedSnapshots.entrySet()) {
       GAV key = entry.getKey();
@@ -224,17 +240,23 @@ public class RemoveSnapshotsFacetImpl
       for (Component component : entry.getValue()) {
         log.debug("Deleting component: {}", component);
         tx.deleteComponent(component);
-        if (++deleted % batchSize == 0) {
-          log.debug("Committing batch delete");
-          tx.commit();
-          tx.begin();
+
+        if (maybeCommit(tx, ++deleted)) {
+          intervalLogger.info("Elapsed time: {}, GAVs processed: {}, released snapshots deleted: {}",
+              intervalLogger.getElapsed(), processed, deleted);
         }
       }
+
+      log.debug("Done processing GAV = {}", key);
+      processed++;
     }
     //commit any potential leftovers that didn't fit in the batch delete window
     log.debug("Committing final batch delete");
     tx.commit();
     tx.begin();
+
+    log.info("Elapsed time: {}, deleted {} components from {} distinct GAVs", intervalLogger.getElapsed(), deleted,
+        releasedSnapshotsSize);
     log.info("Finished processing snapshots with associated releases");
     return groupedReleasedSnapshots.keySet();
   }
@@ -250,15 +272,18 @@ public class RemoveSnapshotsFacetImpl
       return new HashSet<>();
     }
 
+    log.info("Begin processing snapshots");
+    ProgressLogIntervalHelper intervalLogger = new ProgressLogIntervalHelper(log, 60);
     DateTime olderThan = DateTime.now().minusDays(Math.max(config.getSnapshotRetentionDays(), 0));
     Set<GAV> snapshotCandidates = Sets.newHashSet(findSnapshotCandidates(tx, repository, config.getMinimumRetained()));
-    log.info("Processing {} GAVs found with more than minimum {} snapshot versions", snapshotCandidates.size(),
+    log.info(PROGRESS, "Processing {} GAVs found with more than minimum {} snapshot versions", snapshotCandidates.size(),
         config.getMinimumRetained());
 
     // only interested in the ones where we actually delete something, otherwise we would needlessly regenerate metadata
     Set<GAV> gavsWithDeletions = new HashSet<>();
-
     long deleted = 0;
+    long processed = 0;
+
     for (GAV snapshotCandidate : snapshotCandidates) {
       log.debug("Processing GAV = {}", snapshotCandidate);
       List<Component> components = Lists.newArrayList(findSnapshots(tx, repository, snapshotCandidate));
@@ -273,26 +298,42 @@ public class RemoveSnapshotsFacetImpl
           .collect(Collectors.toList());
 
       if (!toDelete.isEmpty()) {
+        log.debug("Found {} components to remove for GAV = {}", toDelete.size(), snapshotCandidate);
+
         gavsWithDeletions.add(snapshotCandidate);
         for (Component component : toDelete) {
           log.debug("Deleting component: {}", component);
           tx.deleteComponent(component);
-          if (++deleted % batchSize == 0) {
-            log.debug("Committing batch delete");
-            tx.commit();
-            tx.begin();
+
+          if (maybeCommit(tx, ++deleted)) {
+            intervalLogger.info("Elapsed time: {}, GAVs processed: {}, snapshots deleted: {}",
+                intervalLogger.getElapsed(), processed, deleted);
           }
         }
         log.debug("Committing final batch delete");
         tx.commit();
         tx.begin();
       }
+
+      processed++;
     }
 
+    log.info("Elapsed time: {}, deleted {} components from {} distinct GAVs", intervalLogger.getElapsed(), deleted,
+        gavsWithDeletions.size());
     log.info("Finished processing snapshots with more than {} versions created before {}", config.getMinimumRetained(),
         olderThan);
-    log.info("Deleted {} components from {} distinct GAVs", deleted, gavsWithDeletions.size());
+
     return gavsWithDeletions;
+  }
+
+  private boolean maybeCommit(StorageTx tx, long deleted) {
+    if (deleted % batchSize == 0) {
+      tx.commit();
+      tx.begin();
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -301,39 +342,39 @@ public class RemoveSnapshotsFacetImpl
   private Iterable<Component> findReleasedSnapshots(final StorageTx tx, final Repository repository,
                                                     final Date gracePeriod)
   {
+    log.info(PROGRESS, "Beginning search for released snapshots created before {} on repository '{}'", gracePeriod,
+        repository.getName());
+
     Bucket bucket = tx.findBucket(repository);
     Iterable<SearchHit> releases = searchService.browseUnrestricted(ALL_RELEASES);
-    Set<Component> components = StreamSupport.stream(releases.spliterator(), false)
-        .map( hit -> {
-          GAV gav = gavFromSearchHit(hit);
-          log.debug("looking in {} for snapshots older than {} for component {}",
-              repository.getName(), gracePeriod, gav);
-          QueryBuilder query = makeQueryForSnapshots(gav);
-          Iterable<SearchHit> hits =
-              searchService.browseUnrestrictedInRepos(query, Collections.singleton(repository.getName()));
-          return hits;
-        })
-        .flatMap(hits ->
-          StreamSupport.stream(hits.spliterator(), false).map(hit -> {
-            GAV gav = gavFromSearchHit(hit);
-            log.debug("found snapshot {} to mark for deletion", gav);
-            return gav;
-          })
-        )
-        .collect(Collectors.toSet()).stream()
-        .flatMap( gav -> {
-          GAV casted = (GAV) gav;
-          OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_OF_A_RELEASE))
-              .execute(
-                  AttachedEntityHelper.id(bucket),
-                  casted.group,
-                  casted.name,
-                  casted.baseVersion,
-                  gracePeriod
-              );
-          return result.stream().map(componentEntityAdapter::readEntity);
-        })
-        .collect(Collectors.toSet());
+
+    Set<Component> components = StreamSupport.stream(releases.spliterator(), false).flatMap(hit -> {
+      GAV gav = gavFromSearchHit(hit);
+      log.debug("looking in {} for snapshots older than {} for component {}", repository.getName(), gracePeriod, gav);
+      QueryBuilder query = makeQueryForSnapshots(gav);
+      Iterable<SearchHit> hits =
+          searchService.browseUnrestrictedInRepos(query, Collections.singleton(repository.getName()));
+
+      return StreamSupport.stream(hits.spliterator(), false);
+    }).map(hit -> {
+      GAV gav = gavFromSearchHit(hit);
+      log.debug("found snapshot {} to mark for deletion", gav);
+      return gav;
+    }).collect(Collectors.toSet()).stream().flatMap(gav -> {
+      log.debug("getting removable components from database for component {}", gav);
+      OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_OF_A_RELEASE))
+          .execute(
+              AttachedEntityHelper.id(bucket),
+              gav.group,
+              gav.name,
+              gav.baseVersion,
+              gracePeriod
+          );
+      return result.stream();
+    }).map(componentEntityAdapter::readEntity).collect(Collectors.toSet());
+
+    log.info(PROGRESS, "Completed search in repository '{}', and found {} components to delete for released snapshots",
+        repository.getName(), components.size());
 
     return components;
   }
@@ -377,6 +418,9 @@ public class RemoveSnapshotsFacetImpl
   @VisibleForTesting
   Iterable<GAV> findSnapshotCandidates(final StorageTx tx, final Repository repository, int minimumCount)
   {
+    log.info(PROGRESS, "Searching for GAVS with snapshots that qualify for deletion on repository '{}'",
+        repository.getName());
+
     final Bucket bucket = tx.findBucket(repository);
     final OResultSet<ODocument> result = tx.getDb().command(new OSQLSynchQuery<>(SNAPSHOTS_WITH_MINIMUM_COUNT))
         .execute(AttachedEntityHelper.id(bucket), minimumCount);

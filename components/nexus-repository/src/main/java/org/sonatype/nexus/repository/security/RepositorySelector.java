@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -22,7 +24,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class RepositorySelector
 {
-  private static final String ALL = "*";
+  @VisibleForTesting
+  public static final String ALL = "*";
 
   private static final String ALL_OF_FORMAT_PREFIX = "*-";
 
@@ -44,6 +47,8 @@ public class RepositorySelector
   }
 
   public static RepositorySelector fromSelector(final String selector) {
+    checkNotNull(selector);
+
     if (ALL.equals(selector)) {
       return new RepositorySelector(ALL, ALL);
     }

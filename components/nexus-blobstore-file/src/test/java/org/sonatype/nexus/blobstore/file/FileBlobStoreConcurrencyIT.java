@@ -39,6 +39,7 @@ import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
 import org.sonatype.nexus.blobstore.file.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.base.Objects;
@@ -77,12 +78,16 @@ public class FileBlobStoreConcurrencyIT
   @Mock
   NodeAccess nodeAccess;
 
+  @Mock
+  DryRunPrefix dryRunPrefix;
+
   @Before
   public void setUp() throws Exception {
     Path root = util.createTempDir().toPath();
     Path content = root.resolve("content");
 
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
+    when(dryRunPrefix.get()).thenReturn("");
 
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(root.toFile());
@@ -98,7 +103,7 @@ public class FileBlobStoreConcurrencyIT
         new SimpleFileOperations(),
         metricsStore,
         config,
-        applicationDirectories, nodeAccess);
+        applicationDirectories, nodeAccess, dryRunPrefix);
     underTest.start();
   }
 

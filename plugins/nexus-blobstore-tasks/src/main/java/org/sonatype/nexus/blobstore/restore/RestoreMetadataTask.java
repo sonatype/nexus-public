@@ -27,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.Repository;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
@@ -59,15 +61,20 @@ public class RestoreMetadataTask
 
   private final BlobStoreUsageChecker blobStoreUsageChecker;
 
+  private final DryRunPrefix dryRunPrefix;
+
   @Inject
   public RestoreMetadataTask(final BlobStoreManager blobStoreManager,
                              final RepositoryManager repositoryManager,
                              final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
-                             final BlobStoreUsageChecker blobStoreUsageChecker) {
+                             final BlobStoreUsageChecker blobStoreUsageChecker,
+                             final DryRunPrefix dryRunPrefix)
+  {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.restoreBlobStrategies = checkNotNull(restoreBlobStrategies);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
+    this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
   @Override
@@ -78,25 +85,32 @@ public class RestoreMetadataTask
   @Override
   protected Void execute() throws Exception {
     String blobStoreId = checkNotNull(getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID));
+    boolean dryRun = getConfiguration().getBoolean(DRY_RUN, false);
     boolean restoreBlobs = getConfiguration().getBoolean(RESTORE_BLOBS, false);
     boolean undeleteBlobs = getConfiguration().getBoolean(UNDELETE_BLOBS, false);
 
-    restore(blobStoreId, restoreBlobs, undeleteBlobs);
+    restore(blobStoreId, restoreBlobs, undeleteBlobs, dryRun);
 
     return null;
   }
 
-  private void restore(final String blobStoreName, final boolean restore, final boolean undelete) { // NOSONAR
+  private void restore(final String blobStoreName, final boolean restore, final boolean undelete, final boolean dryRun) // NOSONAR
+  {
     if (!restore && !undelete) {
       log.warn("No repair/restore operations selected");
       return;
     }
 
+    String logPrefix = dryRun ? dryRunPrefix.get() : "";
     BlobStore store = blobStoreManager.get(blobStoreName);
 
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
     long undeleted = 0;
+
+    if (dryRun) {
+      log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
+    }
     if (store instanceof FileBlobStore) {
       FileBlobStore fileBlobStore = (FileBlobStore) store;
       for (BlobId blobId : (Iterable<BlobId>)fileBlobStore.getBlobIdStream()::iterator) {
@@ -104,10 +118,11 @@ public class RestoreMetadataTask
         if (context.isPresent()) {
           Context c =  context.get();
           if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
-            c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName);
+            c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
           }
           if (undelete &&
-              fileBlobStore.maybeUndeleteBlob(blobStoreUsageChecker, c.blobId, (FileBlobAttributes) c.blobAttributes))
+              fileBlobStore
+                  .maybeUndeleteBlob(blobStoreUsageChecker, c.blobId, (FileBlobAttributes) c.blobAttributes, dryRun))
           {
             undeleted++;
           }
@@ -115,7 +130,7 @@ public class RestoreMetadataTask
 
         processed++;
 
-        progressLogger.info("Elapsed time: {}, processed: {}, un-deleted: {}", progressLogger.getElapsed(),
+        progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
             processed, undeleted);
 
         if (isCanceled()) {

@@ -33,6 +33,20 @@ public interface SelectorManager
   List<SelectorConfiguration> browse();
 
   /**
+   * Return all existing content selectors.
+   *
+   * @since 3.6
+   */
+  List<SelectorConfiguration> browseJexl();
+
+  /**
+   * @return the content selectors for the active user
+   *
+   * @since 3.6
+   */
+  List<SelectorConfiguration> browseActive(List<String> repositoryNames, List<String> formats);
+
+  /**
    * Read content selector by id.
    */
   @Nullable

@@ -20,7 +20,6 @@ import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -70,13 +69,7 @@ public abstract class RepositoryTaskSupport
     final String repositoryName = getRepositoryField();
     checkArgument(!Strings.isNullOrEmpty(repositoryName));
     if ("*".equals(repositoryName)) {
-      return Iterables.filter(repositoryManager.browse(), new Predicate<Repository>()
-      {
-        @Override
-        public boolean apply(final Repository input) {
-          return appliesTo(input);
-        }
-      });
+      return Iterables.filter(repositoryManager.browse(), this::appliesTo);
     }
     else {
       Repository repository = checkNotNull(repositoryManager.get(repositoryName));

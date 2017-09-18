@@ -298,6 +298,14 @@ public class StorageTxImpl
     return bucketOwns(bucket, asset) ? asset : null;
   }
 
+  @Nullable
+  @Override
+  @Guarded(by = ACTIVE)
+  public Asset findAsset(final EntityId id) {
+    checkNotNull(id);
+    return assetEntityAdapter.read(db, id);
+  }
+
   private boolean bucketOwns(final Bucket bucket, @Nullable final MetadataNode<?> item) {
     return item != null && Objects.equals(id(bucket), item.bucketId());
   }

@@ -19,6 +19,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.internal.ContentPermissionCheckerImpl;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
@@ -57,7 +58,7 @@ public class ContentPermissionCheckerImplTest
     config = new SelectorConfiguration();
     config.setName("selector");
     config.setDescription("selector");
-    config.setType("jexl");
+    config.setType(JexlSelector.TYPE);
     config.setAttributes(Collections.singletonMap("expression", "true"));
   }
 

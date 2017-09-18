@@ -48,6 +48,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Browse_BrowseAssetList_Name_Column: 'Name',
     Browse_BrowseAssetList_EmptyText_View: 'No assets found in repository',
     Browse_BrowseAssetList_EmptyText_Filter: 'No assets matched "$filter"',
+    Assets_Info_Repository: 'Repository',
+    Assets_Info_Format: 'Format',
+    Assets_Info_Group: 'Component Group',
+    Assets_Info_Name: 'Component Name',
+    Assets_Info_Version: 'Component Version',
     Assets_Info_Path: 'Path',
     Assets_Info_ContentType: 'Content type',
     Assets_Info_FileSize: 'File size',
@@ -57,15 +62,25 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Assets_Info_Blob_Created: 'Blob created',
     Assets_Info_Blob_Updated: 'Blob updated',
     Assets_Info_ContainingRepositoryName: 'Containing repo',
+    Assets_Info_Downloaded_Count: 'Last 30 days',
+    Assets_Info_Downloaded_Unit: 'downloads',
     AssetInfo_Delete_Button: 'Delete asset',
     AssetInfo_Delete_Title: 'Confirm deletion?',
     AssetInfo_Delete_Success: 'Asset deleted: {0}',
+    Component_Asset_Tree_Title_Feature: 'Tree',
+    Component_Asset_Tree_Description_Feature: 'View tree layout of components and assets',
+    Component_Asset_Tree_EmptyText_View: 'No component/assets found in repository',
+    Component_Asset_Tree_Expand_Failure: 'Unable to show requested tree entry',
+    Component_Asset_Tree_Filtered_EmptyText_View: 'All components have been filtered out, try using <a href="#browse/search">search</a> instead?',
+    Component_Asset_Tree_Results_Warning: 'There may be additional results, try filtering the results or searching if you cannot find what you\'re looking for.',
+    Component_Asset_Tree_Html_View: 'HTML View',
 
     ComponentDetails_Delete_Button: 'Delete component',
     ComponentDetails_Analyze_Button: 'Analyze application',
     ComponentDetails_Delete_Title: 'Confirm deletion?',
     ComponentDetails_Delete_Success: 'Component deleted: {0}',
     ComponentDetails_Analyze_Success: 'Analysis in process. Email will be sent when report is ready.',
+    ComponentDetails_Loading_Mask: 'Loading...',
 
     AnalyzeApplicationWindow_Title: 'Analyze Application',
     AnalyzeApplicationWindow_Form_Asset_FieldLabel: 'Application asset',
@@ -413,6 +428,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Update_Success: 'Selector updated: {0}',
     Selector_SelectorList_New_Button: 'Create selector',
     Selector_SelectorList_Name_Header: 'Name',
+    Selector_SelectorList_Type_Header: 'Type',
     Selector_SelectorList_Description_Header: 'Description',
     Selector_SelectorList_EmptyText: 'No selectors defined',
     Selector_SelectorList_Filter_EmptyText: 'No selectors matched "$filter"',
@@ -420,13 +436,23 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selectors_Delete_Message: 'Selector deleted: {0}',
     Selector_SelectorFeature_Settings_Title: 'Settings',
     Selector_SelectorSettingsForm_Name_FieldLabel: 'Name',
+    Selector_SelectorSettingsForm_Type_FieldLabel: 'Type',
+    Selector_SelectorSettingsForm_Type_Jexl: 'JEXL',
+    Selector_SelectorSettingsForm_Type_Sonatype: 'CSEL',
     Selector_SelectorSettingsForm_Description_FieldLabel: 'Description',
     Selector_SelectorSettingsForm_Expression_FieldLabel: 'Search expression',
-    Selector_SelectorSettingsForm_Expression_HelpText: 'Use JEXL query to identify repositories, components or assets',
-    Selector_SelectorSettingsForm_Expression_AfterBodyEl: '<div style="font-size: 11px"><br/>' +
+    Selector_SelectorSettingsForm_Expression_HelpText: 'Use query to identify repositories, components or assets',
+    Selector_SelectorSettingsForm_Expression_Examples: '<div style="font-size: 11px"><br/>' +
+    '<h4>Example Content Selector Expressions:</h4>' +
+    '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
+    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =~ "^org.sonatype.nexus."</i></p>' +
+    '<br/>' +
+    '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+    '</div>',
+    Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus."</i></p>' +
+    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =~ "^org.sonatype.nexus."</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',

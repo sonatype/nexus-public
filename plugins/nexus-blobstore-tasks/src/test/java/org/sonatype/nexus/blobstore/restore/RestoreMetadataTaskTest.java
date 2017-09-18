@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -77,6 +78,9 @@ public class RestoreMetadataTaskTest
   @Mock
   BlobStoreUsageChecker blobstoreUsageChecker;
 
+  @Mock
+  DryRunPrefix dryRunPrefix;
+
   BlobId blobId;
 
   FileBlobAttributes blobAttributes;
@@ -86,7 +90,7 @@ public class RestoreMetadataTaskTest
   @Before
   public void setup() throws Exception {
     underTest = new RestoreMetadataTask(blobStoreManager, repositoryManager,
-        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker);
+        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix);
 
     configuration = new TaskConfiguration();
     configuration.setString(BLOB_STORE_NAME_FIELD_ID, "test");
@@ -107,6 +111,8 @@ public class RestoreMetadataTaskTest
 
     when(fileBlobStore.get(blobId, true)).thenReturn(blob);
     when(fileBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+
+    when(dryRunPrefix.get()).thenReturn("");
   }
 
   @Test
@@ -118,8 +124,8 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
-    verify(restoreBlobStrategy).restore(propertiesArgumentCaptor.capture(), eq(blob), eq("test"));
-    verify(fileBlobStore).maybeUndeleteBlob(blobstoreUsageChecker, blobId, blobAttributes);
+    verify(restoreBlobStrategy).restore(propertiesArgumentCaptor.capture(), eq(blob), eq("test"), eq(false));
+    verify(fileBlobStore).maybeUndeleteBlob(blobstoreUsageChecker, blobId, blobAttributes, false);
     Properties properties = propertiesArgumentCaptor.getValue();
 
     assertThat(properties.getProperty("@BlobStore.blob-name"), is("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"));
@@ -133,8 +139,8 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(restoreBlobStrategy).restore(any(), eq(blob), eq("test"));
-    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any());
+    verify(restoreBlobStrategy).restore(any(), eq(blob), eq("test"), eq(false));
+    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any(), eq(false));
   }
 
   @Test
@@ -148,7 +154,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(restoreBlobStrategy, never()).restore(any(), any(), any());
-    verify(fileBlobStore).maybeUndeleteBlob(any(), any(), any());
+    verify(fileBlobStore).maybeUndeleteBlob(any(), any(), any(), eq(false));
   }
 
   @Test
@@ -160,6 +166,6 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(restoreBlobStrategy, never()).restore(any(), any(), any());
-    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any());
+    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any(), eq(false));
   }
 }
