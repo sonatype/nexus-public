@@ -17,8 +17,13 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.BrowseNode
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
+
 import spock.lang.Specification
 import spock.lang.Subject
+
+import static org.sonatype.nexus.coreui.BrowseComponent.ASSET
+import static org.sonatype.nexus.coreui.BrowseComponent.COMPONENT
+import static org.sonatype.nexus.coreui.BrowseComponent.FOLDER
 
 /**
  * @since 3.1
@@ -42,6 +47,11 @@ class BrowseComponentTest
   @Subject
   BrowseComponent browseComponent = new BrowseComponent(browseNodeStore: browseNodeStore, repositoryManager: repositoryManager)
 
+  def setup() {
+    componentId.value >> "componentId"
+    assetId.value >> "assetId"
+  }
+
   def "Root node list query"() {
     given: 'These test objects'
       def browseNodes = [new BrowseNode(path: 'com'),
@@ -59,9 +69,9 @@ class BrowseComponentTest
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 root entries are returned'
-      xos*.type == ['folder', 'component', 'asset']
       xos*.text == ['com', 'org', 'net']
       xos*.id   == ['com', 'org', 'net']
+      xos*.type == [FOLDER, COMPONENT, ASSET]
       xos*.leaf == [false, false, true]
   }
 
@@ -82,9 +92,9 @@ class BrowseComponentTest
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
-      xos*.type == ['folder', 'component', 'asset']
       xos*.text == ['com', 'org', 'net']
       xos*.id   == ['com/boogie/down/com', 'com/boogie/down/org', 'com/boogie/down/net']
+      xos*.type == [FOLDER, COMPONENT, ASSET]
       xos*.leaf == [false, false, true]
   }
 
@@ -104,9 +114,9 @@ class BrowseComponentTest
     List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
-      xos*.type == ['folder', 'component', 'asset']
       xos*.text == ['com', 'org', 'n/e/t']
       xos*.id   == ['com/boo%2Fgie/down/com', 'com/boo%2Fgie/down/org', 'com/boo%2Fgie/down/n%2Fe%2Ft']
+      xos*.type == [FOLDER, COMPONENT, ASSET]
       xos*.leaf == [false, false, true]
   }
 
@@ -114,12 +124,16 @@ class BrowseComponentTest
     given: 'This repository and a list of browse nodes'
       repositoryManager.get(REPOSITORY_NAME) >> repository
       browseNodeStore.getChildrenByPath(repository, [], null) >> [
-          new BrowseNode(path: '1.0', assetId: assetId),
-          new BrowseNode(path: '1.10-alpha', assetId: assetId),
-          new BrowseNode(path: '1.10', assetId: assetId),
-          new BrowseNode(path: '1.2', assetId: assetId),
-          new BrowseNode(path: 'z'),
-          new BrowseNode(path: 'a'),
+          new BrowseNode(path: '1.0', componentId: componentId),
+          new BrowseNode(path: '1.10-alpha', componentId: componentId),
+          new BrowseNode(path: '1.10', componentId: componentId),
+          new BrowseNode(path: '1.2', componentId: componentId),
+          new BrowseNode(path: 'alpha'),
+          new BrowseNode(path: 'cr-acl'),
+          new BrowseNode(path: 'ga.js'),
+          new BrowseNode(path: 'adtld'),
+          new BrowseNode(path: 'a-load'),
+          new BrowseNode(path: 'AdminLTE-angular-sass'),
           new BrowseNode(path: '2')
       ]
 
@@ -129,6 +143,7 @@ class BrowseComponentTest
       List<BrowseNodeXO> xos = browseComponent.read(parameters)
 
     then: 'the entries are sorted properly'
-      xos*.text == ['a', 'z', '2', '1.0', '1.2', '1.10-alpha', '1.10']
+      xos*.text == ['2', 'a-load', 'AdminLTE-angular-sass', 'adtld', 'alpha', 'cr-acl', 'ga.js', '1.0', '1.2', '1.10-alpha', '1.10']
+      xos*.type == [FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, COMPONENT, COMPONENT, COMPONENT, COMPONENT]
   }
 }

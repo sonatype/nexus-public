@@ -51,12 +51,13 @@ Ext.define('NX.coreui.controller.Selectors', {
     {ref: 'previewWindow', selector: 'nx-coreui-selector-preview-window'},
     {ref: 'previewAssetList', selector: 'nx-coreui-selector-preview-window gridpanel'},
     {ref: 'previewRepositoryComboBox', selector: 'nx-coreui-selector-preview-window combo[name=selectedRepository]'},
-    {ref: 'previewExpression', selector: 'nx-coreui-selector-preview-window textareafield[name=jexl]'},
+    {ref: 'previewExpression', selector: 'nx-coreui-selector-preview-window textareafield[name=expression]'},
+    {ref: 'type', selector: 'nx-coreui-selector-preview-window combo[name=type]'},
     {ref: 'previewWindowPreviewButton', selector: 'nx-coreui-selector-preview-window button[action=preview]'},
     {ref: 'addSettingsForm', selector: 'nx-coreui-selector-add nx-coreui-selector-settings-form'},
     {ref: 'editSettingsForm', selector: 'nx-coreui-selector-settings nx-coreui-selector-settings-form'},
     {ref: 'jexlHelp', selector: 'nx-coreui-selector-settings-form #jexlHelp'},
-    {ref: 'sexlHelp', selector: 'nx-coreui-selector-settings-form #sexlHelp'}
+    {ref: 'cselHelp', selector: 'nx-coreui-selector-settings-form #cselHelp'}
   ],
   icons: {
     'selector-default': {
@@ -154,12 +155,12 @@ Ext.define('NX.coreui.controller.Selectors', {
     var me = this;
 
     if (record && record.get('type') === 'jexl') {
-      me.getSexlHelp().hide();
+      me.getCselHelp().hide();
       me.getJexlHelp().show();
     }
     else {
       me.getJexlHelp().hide();
-      me.getSexlHelp().show();
+      me.getCselHelp().show();
     }
   },
 
@@ -210,7 +211,8 @@ Ext.define('NX.coreui.controller.Selectors', {
     assetStore.removeAll();
 
     Ext.create('NX.coreui.view.selector.SelectorPreviewWindow', {
-      jexl: form.findField('expression').getValue(),
+      expression: form.findField('expression').getValue(),
+      type: form.findField('type').getValue(),
       assetStore: assetStore
     });
   },
@@ -248,9 +250,14 @@ Ext.define('NX.coreui.controller.Selectors', {
           value: repositoryName
         },
         {
-          id: 'jexlExpression',
-          property: 'jexlExpression',
+          id: 'expression',
+          property: 'expression',
           value: me.getPreviewExpression().getValue()
+        },
+        {
+          id: 'type',
+          property: 'type',
+          value: me.getType().getValue()
         }
       ]);
     }

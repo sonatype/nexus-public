@@ -62,7 +62,7 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
         me.summary[NX.I18n.get('Search_Assets_Name')] = me.componentModel.get('name');
         me.summary[NX.I18n.get('Search_Assets_Version')] = me.componentModel.get('version');
 
-        this.down('#summaryPanel').showInfo(me.summary);
+        this.showInfo();
 
         this.fireEvent('updated', this, me.componentModel);
     },
@@ -70,6 +70,10 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
         this.summary[key] = value;
     },
     showInfo: function() {
-        this.down('#summaryPanel').showInfo(this.summary);
+        var me = this;
+        var summaryPanel = me.down('#summaryPanel');
+        if (summaryPanel) {
+            summaryPanel.showInfo(me.summary);
+        }
     }
 });

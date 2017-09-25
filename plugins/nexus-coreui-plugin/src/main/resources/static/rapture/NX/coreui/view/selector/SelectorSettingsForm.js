@@ -101,7 +101,7 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
             helpText: NX.I18n.get('Selector_SelectorSettingsForm_Expression_HelpText')
           },{
               xtype: 'panel',
-              itemId: 'sexlHelp',
+              itemId: 'cselHelp',
               html: NX.I18n.get('Selector_SelectorSettingsForm_Expression_Examples')
           },{
               xtype: 'panel',

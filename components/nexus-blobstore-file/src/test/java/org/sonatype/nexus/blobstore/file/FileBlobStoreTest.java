@@ -291,4 +291,27 @@ public class FileBlobStoreTest
     assertThat(queueFile.isEmpty(), is(expectEmpty));
     queueFile.close();
   }
+
+  byte[] deletedBlobStorePropertiesNoBlobName = ("deleted = true\n" +
+      "@BlobStore.created-by = admin\n" +
+      "size = 40\n" +
+      "@Bucket.repo-name = maven-releases\n" +
+      "creationTime = 1486679665325\n" +
+      "@BlobStore.content-type = text/plain\n" +
+      "sha1 = cbd5bce1c926e6b55b6b4037ce691b8f9e5dea0f").getBytes(StandardCharsets.ISO_8859_1);
+
+  @Test
+  public void testCompactCorruptAttributes() throws Exception {
+    when(nodeAccess.isOldestNode()).thenReturn(true);
+    underTest.doStart();
+
+    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+        deletedBlobStorePropertiesNoBlobName);
+
+    setRebuildMetadataToTrue();
+
+    underTest.compact();
+
+    verify(fileOperations, times(2)).delete(any());
+  }
 }

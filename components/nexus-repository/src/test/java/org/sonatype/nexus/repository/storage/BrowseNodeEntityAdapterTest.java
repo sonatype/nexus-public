@@ -373,6 +373,21 @@ public class BrowseNodeEntityAdapterTest
   }
 
   @Test
+  public void testGetChildrenByPath_repoViewPerms_root_nodes_filtering_case_insensitive() {
+    setupTestGetChildrenByPath(false);
+    when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
+        .thenReturn(true);
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
+          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "COM"));
+      List<String> names = new LinkedList<>();
+      nodes.forEach((a) -> names.add(a.getPath()));
+      assertThat(names, contains("com"));
+    }
+    verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
+  }
+
+  @Test
   public void testGetChildrenByPath_repoViewPerms_root_nodes_filtering_children() {
     setupTestGetChildrenByPath(false);
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
@@ -380,6 +395,21 @@ public class BrowseNodeEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
           REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "foo"));
+      List<String> names = new LinkedList<>();
+      nodes.forEach((a) -> names.add(a.getPath()));
+      assertThat(names, contains("com"));
+    }
+    verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  public void testGetChildrenByPath_repoViewPerms_root_nodes_filtering_children_case_insensitive() {
+    setupTestGetChildrenByPath(false);
+    when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
+        .thenReturn(true);
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
+          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "FOO"));
       List<String> names = new LinkedList<>();
       nodes.forEach((a) -> names.add(a.getPath()));
       assertThat(names, contains("com"));
@@ -463,7 +493,23 @@ public class BrowseNodeEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       List<BrowseNode> nodes = Lists.newArrayList(underTest
           .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "com"));
+              "node-with"));
+      List<String> names = new LinkedList<>();
+      nodes.forEach((a) -> names.add(a.getPath()));
+      assertThat(names, contains("node-with-perm", "node-without-perm"));
+    }
+    verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  public void testGetChildrenByPath_repoViewPerms_filtering_case_insensitive() {
+    setupTestGetChildrenByPath(false);
+    when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
+        .thenReturn(true);
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      List<BrowseNode> nodes = Lists.newArrayList(underTest
+          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
+              "NODE-WITH"));
       List<String> names = new LinkedList<>();
       nodes.forEach((a) -> names.add(a.getPath()));
       assertThat(names, contains("node-with-perm", "node-without-perm"));
@@ -480,6 +526,22 @@ public class BrowseNodeEntityAdapterTest
       List<BrowseNode> nodes = Lists.newArrayList(underTest
           .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
               "foo"));
+      List<String> names = new LinkedList<>();
+      nodes.forEach((a) -> names.add(a.getPath()));
+      assertThat(names, contains("foo"));
+    }
+    verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  public void testGetChildrenByPath_repoViewPerms_filtering_children_case_insensitive() {
+    setupTestGetChildrenByPath(false);
+    when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
+        .thenReturn(true);
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      List<BrowseNode> nodes = Lists.newArrayList(underTest
+          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
+              "FOO"));
       List<String> names = new LinkedList<>();
       nodes.forEach((a) -> names.add(a.getPath()));
       assertThat(names, contains("foo"));

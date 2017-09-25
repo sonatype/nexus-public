@@ -39,8 +39,7 @@ public class ProxyHandler
 {
   @Nonnull
   @Override
-  public Response handle(@Nonnull final Context context) throws Exception {
-
+  public Response handle(@Nonnull final Context context) throws Exception { // NOSONAR
     final Response response = buildMethodNotAllowedResponse(context);
     if (response != null) {
       return response;
@@ -55,6 +54,9 @@ public class ProxyHandler
     }
     catch (ProxyServiceException e) {
       return HttpResponses.serviceUnavailable();
+    }
+    catch (CooperationException e) { // NOSONAR
+      return HttpResponses.serviceUnavailable(e.getMessage());
     }
     catch (IOException | UncheckedIOException e) {
       return HttpResponses.badGateway();

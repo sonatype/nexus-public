@@ -462,7 +462,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // Admin -> Repository -> Selectors -> Preview Window
     SelectorPreviewWindow_Title: 'Preview results',
-    SelectorPreviewWindow_jexl_FieldLabel: 'Expression',
+    SelectorPreviewWindow_expression_FieldLabel: 'Expression',
+    SelectorPreviewWindow_expression_jexl: 'JEXL',
+    SelectorPreviewWindow_expression_csel: 'CSEL',
+    SelectorPreviewWindow_type_FieldLabel: 'Type',
     SelectorPreviewWindow_repository_FieldLabel: 'Preview Repository',
     SelectorPreviewWindow_repository_HelpText: 'Select a repository to evaluate the content selector and see the content that would be available.',
     SelectorPreviewWindow_repository_EmptyText: 'Select a repository...',

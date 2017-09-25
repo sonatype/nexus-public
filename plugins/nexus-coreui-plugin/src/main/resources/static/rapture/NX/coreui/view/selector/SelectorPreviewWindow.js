@@ -27,9 +27,9 @@ Ext.define('NX.coreui.view.selector.SelectorPreviewWindow', {
 
   config: {
     /**
-     * @cfg {String} jexl selector.
+     * @cfg {String} expression selector.
      */
-    jexl: undefined
+    expression: undefined
   },
 
   resizable: true,
@@ -62,12 +62,25 @@ Ext.define('NX.coreui.view.selector.SelectorPreviewWindow', {
           buttonAlign: 'left',
           items: [
             {
+              xtype: 'combo',
+              cls: 'nx-combo-disabled',
+              name: 'type',
+              fieldLabel: NX.I18n.get('SelectorPreviewWindow_type_FieldLabel'),
+              editable: false,
+              store: [
+                ['jexl', NX.I18n.get('Selector_SelectorSettingsForm_Type_Jexl')],
+                ['csel', NX.I18n.get('Selector_SelectorSettingsForm_Type_Sonatype')]
+              ],
+              value: 'csel',
+              readOnly: true
+            },
+            {
               xtype: 'textareafield',
-              name: 'jexl',
-              itemId: 'jexl',
-              fieldLabel: NX.I18n.get('SelectorPreviewWindow_jexl_FieldLabel'),
+              name: 'expression',
+              itemId: 'expression',
+              fieldLabel: NX.I18n.get('SelectorPreviewWindow_expression_FieldLabel'),
               allowBlank: false,
-              value: me.jexl
+              value: me.expression
             },
             {
               xtype: 'combo',

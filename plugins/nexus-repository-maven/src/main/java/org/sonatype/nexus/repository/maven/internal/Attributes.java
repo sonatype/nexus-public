@@ -95,6 +95,6 @@ public final class Attributes
     /**
      * Represents some other resource not belonging to Maven2 repository layout.
      */
-    OTHER;
+    OTHER
   }
 }

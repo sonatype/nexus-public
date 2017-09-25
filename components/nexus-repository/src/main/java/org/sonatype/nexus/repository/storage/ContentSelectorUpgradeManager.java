@@ -65,7 +65,7 @@ public class ContentSelectorUpgradeManager
       catch (Exception e) {
         log.warn(
             "Failed to parse jexl content selector for conversion to csel content selector with name={}, expression={}",
-            name, expression, e);
+            name, expression, log.isDebugEnabled() ? e : null);
       }
     });
   }

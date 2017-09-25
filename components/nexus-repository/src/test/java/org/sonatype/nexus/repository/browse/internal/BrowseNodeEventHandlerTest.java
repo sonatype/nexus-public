@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.browse.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
@@ -92,5 +94,26 @@ public class BrowseNodeEventHandlerTest
     handler.on(event);
 
     verify(browseNodeStore, never()).deleteNodeByAssetId(any());
+  }
+
+  @Test
+  public void onConfigurationDeleted() {
+    ConfigurationDeletedEvent event = mock(ConfigurationDeletedEvent.class);
+    when(event.isLocal()).thenReturn(true);
+    when(event.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+
+    handler.on(event);
+
+    verify(browseNodeStore).truncateRepository(REPOSITORY_NAME);
+  }
+
+  @Test
+  public void onConfigurationDeleted_remote() {
+    ConfigurationDeletedEvent event = mock(ConfigurationDeletedEvent.class);
+    when(event.isLocal()).thenReturn(false);
+
+    handler.on(event);
+
+    verify(browseNodeStore, never()).truncateRepository(any());
   }
 }

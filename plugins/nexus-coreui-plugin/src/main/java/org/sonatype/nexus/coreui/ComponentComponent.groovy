@@ -40,7 +40,10 @@ import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
+import org.sonatype.nexus.selector.CselExpressionValidator
+import org.sonatype.nexus.selector.CselSelector
 import org.sonatype.nexus.selector.JexlExpressionValidator
+import org.sonatype.nexus.selector.JexlSelector
 import org.sonatype.nexus.selector.VariableSource
 import org.sonatype.nexus.validation.Validate
 
@@ -117,6 +120,9 @@ class ComponentComponent
   JexlExpressionValidator jexlExpressionValidator
 
   @Inject
+  CselExpressionValidator cselExpressionValidator
+
+  @Inject
   BrowseService browseService
 
   @Inject
@@ -150,7 +156,7 @@ class ComponentComponent
     if (!repository.configuration.online) {
       return null
     }
-    def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'));
+    def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'))
     def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
 
     return createAssetXOs(result.results, parameters.getFilter('componentName'), repositoryName, repoNamesForBuckets)
@@ -175,14 +181,19 @@ class ComponentComponent
   @ExceptionMetered
   PagedResponse<AssetXO> previewAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
-    String jexlExpression = parameters.getFilter('jexlExpression')
-    if (!jexlExpression || !repositoryName) {
+    String expression = parameters.getFilter('expression')
+    String type = parameters.getFilter('type')
+    if (!expression || !type || !repositoryName) {
       return null
     }
 
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
-
-    jexlExpressionValidator.validate(jexlExpression)
+    if (type == JexlSelector.TYPE) {
+      jexlExpressionValidator.validate(expression)
+    }
+    else if (type == CselSelector.TYPE) {
+      cselExpressionValidator.validate(expression);
+    }
     List<Repository> selectedRepositories = getPreviewRepositories(repositorySelector)
     if (!selectedRepositories.size()) {
       return null
@@ -191,7 +202,7 @@ class ComponentComponent
     def result = browseService.previewAssets(
         repositorySelector,
         selectedRepositories,
-        jexlExpression,
+        expression,
         toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
@@ -225,7 +236,7 @@ class ComponentComponent
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
 
-    Component component;
+    Component component
     try {
       storageTx.begin()
       component = storageTx.findComponent(new DetachedEntityId(componentId))
@@ -246,9 +257,8 @@ class ComponentComponent
   void deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    String format = repository.format.toString()
 
-    Asset asset;
+    Asset asset
     try {
       storageTx.begin()
       asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
@@ -274,8 +284,8 @@ class ComponentComponent
   ComponentXO readComponent(@NotEmpty String componentId, @NotEmpty String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    Component component;
-    List<Asset> assets;
+    Component component
+    List<Asset> assets
     try {
       storageTx.begin()
       component = storageTx.findComponent(new DetachedEntityId(componentId))
@@ -285,7 +295,7 @@ class ComponentComponent
 
       Iterable<Asset> browsedAssets = storageTx.browseAssets(component)
       if (browsedAssets == null || Iterables.isEmpty(browsedAssets)) {
-        throw new WebApplicationException(Status.NOT_FOUND);
+        throw new WebApplicationException(Status.NOT_FOUND)
       }
 
       assets = Lists.newArrayList(browsedAssets)
@@ -310,12 +320,12 @@ class ComponentComponent
   AssetXO readAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    Asset asset;
+    Asset asset
     try {
       storageTx.begin()
-      asset = storageTx.findAsset(new DetachedEntityId(assetId))
+      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
       if (asset == null) {
-        throw new WebApplicationException(Status.NOT_FOUND);
+        throw new WebApplicationException(Status.NOT_FOUND)
       }
     }
     finally {

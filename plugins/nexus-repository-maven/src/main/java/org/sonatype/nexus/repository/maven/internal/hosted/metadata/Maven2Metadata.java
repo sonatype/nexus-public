@@ -34,7 +34,7 @@ public class Maven2Metadata
 {
   public enum Level
   {
-    GROUP, ARTIFACT, BASEVERSION;
+    GROUP, ARTIFACT, BASEVERSION
   }
 
   // G level

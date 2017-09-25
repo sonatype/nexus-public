@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 
@@ -23,9 +25,12 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
+import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
+import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -39,6 +44,8 @@ import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.selector.CselExpressionValidator;
+import org.sonatype.nexus.selector.JexlExpressionValidator;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.base.Suppliers;
@@ -95,6 +102,12 @@ public class ComponentComponentTest
   @Mock
   AssetDownloadCountStore assetDownloadCountStore;
 
+  @Mock
+  JexlExpressionValidator jexlExpressionValidator;
+
+  @Mock
+  CselExpressionValidator cselExpressionValidator;
+
   private ComponentComponent underTest;
 
   @Before
@@ -106,6 +119,8 @@ public class ComponentComponentTest
     underTest.setMaintenanceService(maintenanceService);
     underTest.setBrowseService(browseService);
     underTest.setAssetDownloadCountStore(assetDownloadCountStore);
+    underTest.setJexlExpressionValidator(jexlExpressionValidator);
+    underTest.setCselExpressionValidator(cselExpressionValidator);
 
     when(repositoryManager.get("testRepositoryName")).thenReturn(repository);
     when(repository.getName()).thenReturn("testRepositoryName");
@@ -216,7 +231,9 @@ public class ComponentComponentTest
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
-    when(storageTx.findAsset(eq(new DetachedEntityId("someid")))).thenReturn(asset);
+    Bucket bucket = mock(Bucket.class);
+    when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(storageTx.findAsset(eq(new DetachedEntityId("someid")), eq(bucket))).thenReturn(asset);
     when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
     when(assetDownloadCountStore.getLastThirtyDays(repository.getName(), asset.name())).thenReturn(10L);
     when(browseService.getRepositoryBucketNames(repository)).thenReturn(Collections.singletonMap(new DetachedEntityId("someId"), "testBucketName"));
@@ -238,5 +255,40 @@ public class ComponentComponentTest
       assertThat(e.getResponse(), is(notNullValue()));
       assertThat(e.getResponse().getStatus(), is(404));
     }
+  }
+
+  @Test
+  public void testPreviewAsset_jexl() {
+    when(browseService.previewAssets(any(), any(), any(), any()))
+        .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
+    underTest.previewAssets(createParameters("jexl", "foo"));
+
+    verify(jexlExpressionValidator).validate("foo");
+  }
+
+  @Test
+  public void testPreviewAsset_csel() {
+    when(browseService.previewAssets(any(), any(), any(), any()))
+        .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
+    underTest.previewAssets(createParameters("csel", "foo"));
+
+    verify(cselExpressionValidator).validate("foo");
+  }
+
+  private StoreLoadParameters createParameters(final String type, final String expression) {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    List<Filter> filters = new ArrayList<>();
+    filters.add(createFilter("repositoryName", "testRepositoryName"));
+    filters.add(createFilter("type", type));
+    filters.add(createFilter("expression", expression));
+    parameters.setFilter(filters);
+    return parameters;
+  }
+
+  private Filter createFilter(final String property, final String value) {
+    Filter filter = new Filter();
+    filter.setProperty(property);
+    filter.setValue(value);
+    return filter;
   }
 }

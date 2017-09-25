@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.common.app.VersionComparator
+import org.sonatype.nexus.common.text.Strings2
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
@@ -45,6 +46,10 @@ class BrowseComponent
     extends DirectComponentSupport
     implements StateContributor
 {
+  static final FOLDER = "folder"
+  static final COMPONENT = "component"
+  static final ASSET = "asset"
+
   @Inject
   BrowseNodeConfiguration configuration
 
@@ -74,29 +79,32 @@ class BrowseComponent
       pathSegments = path.split('/').collect EncodingUtil.&urlDecode
     }
 
-    Iterable<BrowseNode> browseNodes = browseNodeStore.getChildrenByPath(repository, pathSegments, filter)
-
-    def browseNodeXos = []
-
-    browseNodes.collect { browseNode ->
-      browseNodeXos.add(new BrowseNodeXO(
-          id: isRoot(path) ? EncodingUtil.urlEncode(browseNode.path) : (path + '/' + EncodingUtil.urlEncode(browseNode.path)),
-          type: browseNode.assetId != null ? 'asset' : browseNode.componentId != null ? 'component' : 'folder',
+    return browseNodeStore.getChildrenByPath(repository, pathSegments, filter).collect { browseNode ->
+      def encodedPath = EncodingUtil.urlEncode(browseNode.path)
+      new BrowseNodeXO(
+          id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),
+          type: browseNode.assetId != null ? ASSET : browseNode.componentId != null ? COMPONENT : FOLDER,
           text: browseNode.path,
           leaf: browseNode.assetId != null,
           componentId: browseNode.componentId != null ? browseNode.componentId.value : null,
           assetId: browseNode.assetId != null ? browseNode.assetId.value : null
-      ))
+      )
+    }.sort { a, b ->
+      if (a.type == COMPONENT && b.type == COMPONENT) {
+        try {
+          return versionComparator.compare(a.text, b.text)
+        }
+        catch (IllegalArgumentException e) {
+          return 0
+        }
+      }
+      else if (a.type == b.type) {
+        return Strings2.lower(a.text) <=> Strings2.lower(b.text)
+      }
+      else {
+        return b.type <=> a.type
+      }
     }
-
-    return browseNodeXos.sort { a, b ->
-      try {
-        return versionComparator.compare(a.text, b.text)
-      }
-      catch (IllegalArgumentException e) {
-        return 0
-      }
-    }.sort { a, b -> a.leaf <=> b.leaf }
   }
 
   @Override

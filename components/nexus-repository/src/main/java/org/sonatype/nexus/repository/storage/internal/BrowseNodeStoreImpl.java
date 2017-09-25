@@ -31,6 +31,7 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
@@ -181,12 +182,20 @@ public class BrowseNodeStoreImpl
   @Override
   @Guarded(by = STARTED)
   public void truncateRepository(final String repositoryName) {
+    log.debug("Deleting all browse nodes for repositoryName={}", repositoryName);
+
     int removedCount;
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     do {
       removedCount = inTxRetry(databaseInstance).call(db -> entityAdapter.truncateRepository(db, repositoryName));
+      progressLogger.info("Deleted {} browse nodes for repositoryName={} in {}", removedCount, repositoryName,
+          progressLogger.getElapsed());
     }
     //keep repeating the delete until there are none left
     while (removedCount == truncateCount);
+
+    progressLogger.flush();
+    log.debug("All browse nodes deleted for repositoryName={} in ", repositoryName, progressLogger.getElapsed());
   }
 
   @Override

@@ -84,7 +84,7 @@ public class GroupFacetImpl
 
   private Config config;
 
-  private CacheController cacheController;
+  protected CacheController cacheController;
 
   @Inject
   public GroupFacetImpl(final RepositoryManager repositoryManager,

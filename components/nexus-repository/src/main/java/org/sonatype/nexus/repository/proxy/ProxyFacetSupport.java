@@ -110,20 +110,24 @@ public abstract class ProxyFacetSupport
   private Cooperation<Content> contentCooperation;
 
   /**
-   * Configures content {@link Cooperation} for this proxy; a {@code passiveTimeout} of 0 disables cooperation.
+   * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
    *
+   * @param enabled should threads attempt to cooperate when downloading resources
    * @param passiveTimeout used when passively cooperating on an initial download
    * @param activeTimeout used when actively cooperating on a download dependency
+   * @param threadsPerKey maximum threads that can cooperate on the same download
    *
    * @since 3.4
    */
   @Inject
   protected void configureCooperation(
-      @Named("${nexus.proxy.passiveCooperationTimeout:-600s}") final Time passiveTimeout,
-      @Named("${nexus.proxy.activeCooperationTimeout:-10s}") final Time activeTimeout)
+      @Named("${nexus.proxy.cooperation.enabled:-true}") final boolean cooperationEnabled,
+      @Named("${nexus.proxy.cooperation.passiveTimeout:-0s}") final Time passiveTimeout,
+      @Named("${nexus.proxy.cooperation.activeTimeout:-30s}") final Time activeTimeout,
+      @Named("${nexus.proxy.cooperation.threadsPerKey:-100}") final int threadsPerKey)
   {
-    if (passiveTimeout.value() > 0) {
-      this.contentCooperation = new Cooperation<>(passiveTimeout, activeTimeout);
+    if (cooperationEnabled) {
+      this.contentCooperation = new Cooperation<>(passiveTimeout, activeTimeout, threadsPerKey);
     }
   }
 

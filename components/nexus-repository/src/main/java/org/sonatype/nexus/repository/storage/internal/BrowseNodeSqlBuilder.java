@@ -34,6 +34,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.base.Joiner;
 import com.orientechnologies.orient.core.id.ORID;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
@@ -121,9 +122,9 @@ public class BrowseNodeSqlBuilder
       query.append(String.format("and %s = :%s ", P_PARENT_ID, P_PARENT_ID));
     }
     if (!Strings2.isEmpty(filter)) {
-      parameters.put(P_FILTER, "%" + filter + "%");
+      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
       query.append(
-          String.format("and (asset_id is null or $asset.%s like :%s) ", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+          String.format("and (asset_id is null or $asset.%s.toLowerCase() like :%s) ", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
     }
     query.append("and ");
     query.append(getAuthorizationWhereClause(authzRepositoryName, format, parameters, true));
@@ -161,8 +162,8 @@ public class BrowseNodeSqlBuilder
       query.append(String.format("and %s = :%s ", P_PARENT_ID, P_PARENT_ID));
     }
     if (!Strings2.isEmpty(filter)) {
-      parameters.put(P_FILTER, "%" + filter + "%");
-      query.append(String.format("and (%s is null or %s like :%s) ", P_ASSET_ID, P_PATH, P_FILTER));
+      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
+      query.append(String.format("and (%s is null or %s.%s.toLowerCase() like :%s) ", P_ASSET_ID, P_ASSET_ID, MetadataNodeEntityAdapter.P_NAME, P_FILTER));
     }
     query.append(String.format("limit :%s", P_NODE_LIMIT));
 
@@ -179,10 +180,10 @@ public class BrowseNodeSqlBuilder
    * @return           The query string that can be passed into orient verbatim to retrieve some results
    */
   public String getChildMatchingFilterQuery(final String filter, final Map<String, Object> parameters) {
-    parameters.put(P_FILTER, "%" + filter + "%");
+    parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
 
     final String query = String.format(
-        "select @rid from (traverse %s, %s from (select from :%s)) where @class = 'asset' and %s like :%s limit 1",
+        "select @rid from (traverse %s, %s from (select from :%s)) where @class = 'asset' and %s.toLowerCase() like :%s limit 1",
         P_CHILDREN_IDS, P_ASSET_ID, P_ID, MetadataNodeEntityAdapter.P_NAME, P_FILTER);
 
     log.debug("Assembled apply_filter_to_children query: {}", query);
@@ -216,8 +217,8 @@ public class BrowseNodeSqlBuilder
     query.append(authClause);
 
     if (filter != null) {
-      parameters.put(P_FILTER, "%" + filter + "%");
-      query.append(String.format(" and (@class = 'asset' and %s like :%s)", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
+      query.append(String.format(" and (@class = 'asset' and %s.toLowerCase() like :%s)", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
     }
 
     query.append(" limit 1");

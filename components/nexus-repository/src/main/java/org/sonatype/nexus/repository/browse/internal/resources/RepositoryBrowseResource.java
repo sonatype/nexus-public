@@ -48,10 +48,6 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -64,7 +60,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 @Named
 @Singleton
 @Path(RepositoryBrowseResource.RESOURCE_URI)
-@Api(value = "repositorybrowse", description = "Browse contents of a repository in a directory/path structure.")
 @Produces(TEXT_HTML)
 public class RepositoryBrowseResource
     extends ComponentSupport
@@ -101,17 +96,8 @@ public class RepositoryBrowseResource
   }
 
   @GET
-  @ApiOperation("Retrieve directory listing")
-  public Response getHtml(
-      @ApiParam(value = "Name of the repository to retrieve an html directory listing for.", required = true)
-      @PathParam("repositoryName")
-      final String repositoryName,
-
-      @ApiParam(value = "Path in the named repository to retrieve an html listing for.", required = false)
-      @PathParam("repositoryPath")
-      final String repositoryPath,
-
-      @Context final UriInfo uriInfo)
+  public Response getHtml(@PathParam("repositoryName") final String repositoryName,
+                          @PathParam("repositoryPath") final String repositoryPath, @Context final UriInfo uriInfo)
   {
     log.debug("Get HTML directory listing for repository {} on path {}", repositoryName, repositoryPath);
 

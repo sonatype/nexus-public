@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.storage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +39,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -74,16 +76,8 @@ public class BrowseNodeEntityAdapter
 
   private static final String I_ASSET_ID = new OIndexNameBuilder().type(DB_CLASS).property(P_ASSET_ID).build();
 
-  private static final String CHILD_NODE_QUERY = String.format(
-      "select from %s where %s = :%s and %s = :%s and %s = :%s", DB_CLASS,
-      P_PARENT_ID, P_PARENT_ID, P_PATH, P_PATH, P_REPOSITORY_NAME, P_REPOSITORY_NAME);
-
   private static final String NODE_WITH_ASSET_QUERY = String.format(
       "select from %s where %s = :asset_id", DB_CLASS, P_ASSET_ID);
-
-  private static final String ROOT_NODE_QUERY = String.format(
-      "select from %s where %s is null and %s = :%s and %s = :%s", DB_CLASS,
-      P_PARENT_ID, P_PATH, P_PATH, P_REPOSITORY_NAME, P_REPOSITORY_NAME);
 
   private static final String UPDATE_NODE_ASSET_COMPONENT = String.format(
       "UPDATE :%s SET %s = :%s, %s = :%s RETURN AFTER @this", P_ID, P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID,
@@ -430,16 +424,14 @@ public class BrowseNodeEntityAdapter
   {
     checkNotNull(pathName);
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put(P_REPOSITORY_NAME, repositoryName);
-    parameters.put(P_PARENT_ID, parentId);
-    parameters.put(P_PATH, pathName);
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex(I_PARENT_ID_PATH);
+    ORecordId id = (ORecordId) index.get(new OCompositeKey(parentId, pathName, repositoryName));
 
-    Iterable<ODocument> docs = db.command(new OCommandSQL(parentId == null ? ROOT_NODE_QUERY : CHILD_NODE_QUERY))
-        .execute(parameters);
+    if (id == null) {
+      return null;
+    }
 
-    Iterator<BrowseNode> nodeIterator = transform(docs).iterator();
-    return nodeIterator.hasNext() ? nodeIterator.next() : null;
+    return transformEntity(document(db, new AttachedEntityId(this, id)));
   }
 
   @Override

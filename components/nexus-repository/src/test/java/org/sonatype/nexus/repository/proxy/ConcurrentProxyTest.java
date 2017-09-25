@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import javax.annotation.Nonnull;
@@ -107,6 +108,8 @@ public class ConcurrentProxyTest
 
   Map<String, Content> storage = new ConcurrentHashMap<>();
 
+  AtomicInteger cooperationExceptionCount = new AtomicInteger();
+
   @Spy
   ProxyFacetSupport underTest = new ProxyFacetSupport()
   {
@@ -133,13 +136,16 @@ public class ConcurrentProxyTest
       if (context.equals(metaContext)) {
         return META_PREFIX + path;
       }
-      // simulate formats which load index files to find URLs
-      try (InputStream in = get(metaContext).openInputStream()) {
-        return ASSET_PREFIX + path; // pretend we used the index
+      if (path.contains("indirect")) {
+        // simulate formats which load index files to find URLs
+        try (InputStream in = get(metaContext).openInputStream()) {
+          return ASSET_PREFIX + path; // pretend we used the index
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      return ASSET_PREFIX + path;
     }
 
     @Override
@@ -187,7 +193,7 @@ public class ConcurrentProxyTest
   }
 
   void verifyValidGet() throws IOException {
-    Content content = underTest.get(new Context(repository, randomRequest("some/valid/asset/path-")));
+    Content content = underTest.get(new Context(repository, randomRequest("some/valid/indirect/path-")));
     try (InputStream in = content.openInputStream()) {
       assertThat(toByteArray(in), is(ASSET_CONTENT));
     }
@@ -195,7 +201,7 @@ public class ConcurrentProxyTest
 
   void verifyBrokenGet() {
     try {
-      underTest.get(new Context(repository, randomRequest("some/broken/asset/path-")));
+      underTest.get(new Context(repository, randomRequest("some/broken/indirect/path-")));
       fail("Expected IOException");
     }
     catch (IOException e) {
@@ -203,11 +209,20 @@ public class ConcurrentProxyTest
     }
   }
 
+  void verifyThreadLimit(Request request) throws IOException {
+    try {
+      underTest.get(new Context(repository, request));
+    }
+    catch (CooperationException e) {
+      cooperationExceptionCount.incrementAndGet();
+    }
+  }
+
   @Test
   public void noDownloadCooperation() throws Exception {
     int iterations = 2;
 
-    underTest.configureCooperation(Time.seconds(0), Time.seconds(1));
+    underTest.configureCooperation(false, Time.seconds(0), Time.seconds(0), 0);
 
     ConcurrentRunner runner = new ConcurrentRunner(iterations, 60);
     runner.addTask(NUM_CLIENTS, this::verifyValidGet);
@@ -224,7 +239,7 @@ public class ConcurrentProxyTest
   public void downloadCooperation() throws Exception {
     int iterations = 2;
 
-    underTest.configureCooperation(Time.seconds(60), Time.seconds(1));
+    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(1), 2 * NUM_CLIENTS);
 
     ConcurrentRunner runner = new ConcurrentRunner(iterations, 60);
     runner.addTask(NUM_CLIENTS, this::verifyValidGet);
@@ -250,8 +265,29 @@ public class ConcurrentProxyTest
   }
 
   @Test
+  public void limitCooperatingThreads() throws Exception {
+    int threadLimit = 10;
+
+    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(1), threadLimit);
+
+    Request request = new Request.Builder().action(GET).path("some/fixed/path").build();
+
+    ConcurrentRunner runner = new ConcurrentRunner(1, 60);
+    runner.addTask(NUM_CLIENTS, () -> verifyThreadLimit(request));
+    runner.go();
+
+    assertThat(runner.getRunInvocations(), is(runner.getTaskCount() * runner.getIterations()));
+
+    // only one request should have made it upstream
+    assertThat(upstreamRequests.count(ASSET_PREFIX + "some/fixed/path"), is(1));
+
+    // majority of requests should have been cancelled to maintain thread limit
+    assertThat(cooperationExceptionCount.get(), is(NUM_CLIENTS - threadLimit));
+  }
+
+  @Test
   public void downloadTimeoutsAreStaggered() throws Exception {
-    CooperatingFuture<String> cooperatingFuture = new CooperatingFuture<>();
+    CooperatingFuture<String> cooperatingFuture = new CooperatingFuture<>("testKey");
 
     long[] downloadTimeMillis = new long[10];
 

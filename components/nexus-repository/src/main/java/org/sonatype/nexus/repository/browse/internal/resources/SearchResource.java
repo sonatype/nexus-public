@@ -103,7 +103,7 @@ public class SearchResource
       .put("docker.imageName", "attributes.docker.imageName")
       .put("docker.imageTag", "attributes.docker.imageTag")
       .put("docker.layerId", "attributes.docker.layerAncestry")
-      .put("docker.contentDigest", "attributes.docker.content_digest")
+      .put("docker.contentDigest", "assets.attributes.docker.content_digest")
       // PyPi
       .put("pypi.classifiers", "assets.attributes.pypi.classifiers")
       .put("pypi.description", "assets.attributes.pypi.description")

@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
@@ -67,6 +68,13 @@ public class BrowseNodeEventHandler
   public void on(final AssetDeletedEvent event) {
     if (shouldProcess(event)) {
       browseNodeStore.deleteNodeByAssetId(event.getAssetId());
+    }
+  }
+
+  @Subscribe
+  public void on(final ConfigurationDeletedEvent event) {
+    if (shouldProcess(event)) {
+      browseNodeStore.truncateRepository(event.getRepositoryName());
     }
   }
 

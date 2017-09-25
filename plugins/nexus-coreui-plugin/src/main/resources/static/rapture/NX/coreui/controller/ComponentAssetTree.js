@@ -372,7 +372,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.maybeUnmask(componentInfoPanel);
         if (me.isPanelVisible(componentInfoPanel) && me.isResponseSuccessful(response)) {
           componentInfoPanel.setModel(me.getComponentModel().create(response.data));
-          componentInfoPanel.showInfo();
          }
       });
     }
