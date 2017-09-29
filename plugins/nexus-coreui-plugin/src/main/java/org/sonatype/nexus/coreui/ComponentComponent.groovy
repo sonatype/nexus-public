@@ -313,7 +313,7 @@ class ComponentComponent
     Asset asset;
     try {
       storageTx.begin()
-      asset = storageTx.findAsset(new DetachedEntityId(assetId))
+      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
       if (asset == null) {
         throw new WebApplicationException(Status.NOT_FOUND);
       }

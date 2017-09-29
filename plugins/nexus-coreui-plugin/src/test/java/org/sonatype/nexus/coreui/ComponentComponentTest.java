@@ -216,7 +216,9 @@ public class ComponentComponentTest
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
-    when(storageTx.findAsset(eq(new DetachedEntityId("someid")))).thenReturn(asset);
+    Bucket bucket = mock(Bucket.class);
+    when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(storageTx.findAsset(eq(new DetachedEntityId("someid")), eq(bucket))).thenReturn(asset);
     when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
     when(assetDownloadCountStore.getLastThirtyDays(repository.getName(), asset.name())).thenReturn(10L);
     when(browseService.getRepositoryBucketNames(repository)).thenReturn(Collections.singletonMap(new DetachedEntityId("someId"), "testBucketName"));

@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.sonatype.goodies.common.Time;
@@ -47,6 +48,8 @@ public class Cooperation<T>
 
   private final Time activeTimeout;
 
+  private final int threadsPerKey;
+
   @FunctionalInterface
   public interface IOCall<T>
   {
@@ -56,10 +59,12 @@ public class Cooperation<T>
   /**
    * @param passiveTimeout used when passively waiting for an initial download
    * @param activeTimeout used when actively waiting for a download dependency
+   * @param threadsPerKey maximum threads that can wait for the same download
    */
-  public Cooperation(final Time passiveTimeout, final Time activeTimeout) {
+  public Cooperation(final Time passiveTimeout, final Time activeTimeout, final int threadsPerKey) {
     this.passiveTimeout = checkNotNull(passiveTimeout);
     this.activeTimeout = checkNotNull(activeTimeout);
+    this.threadsPerKey = threadsPerKey;
   }
 
   /**
@@ -67,13 +72,16 @@ public class Cooperation<T>
    *
    * @param key uniquely identifies the content to be downloaded
    * @param fetch function that will download the remote content
+   *
    * @return remote content
-   * @throws IOException
+   *
+   * @throws IOException when download fails
+   * @throws CooperationException when cooperation fails
    */
   public T cooperate(final String key, final IOCall<T> fetch) throws IOException {
 
     // try and declare our interest in downloading the content
-    CooperatingFuture<T> myFuture = new CooperatingFuture<>();
+    CooperatingFuture<T> myFuture = new CooperatingFuture<>(key);
     CooperatingFuture<T> theirFuture = futureValues.putIfAbsent(key, myFuture);
 
     if (theirFuture == null) {
@@ -90,29 +98,82 @@ public class Cooperation<T>
       }
     }
 
-    // stagger timeout to preserve a minimum gap between download requests for the same content
-    // (use shorter timeout if we're part of a download chain, to avoid accumulating undue delay)
-    Time timeout = theirFuture.staggerTimeout(isDownloading() ? activeTimeout : passiveTimeout);
-
-    log.debug("Attempt cooperative wait on {} for {}", key, timeout);
+    theirFuture.increaseCooperation(threadsPerKey);
     try {
-      // wait for the primary thread to finish its download
-      return theirFuture.get(timeout.value(), timeout.unit());
+      if (currentThreadAlreadyDownloading()) {
+        // this is a dependency; use shorter timeout and be prepared to download in parallel
+        // (just in case the thread we're waiting on ends up waiting on our primary content)
+        return waitForDownload(theirFuture, fetch, activeTimeout, true);
+      }
+      else {
+        // waiting for primary content; use longer timeout and avoid downloading in parallel
+        return waitForDownload(theirFuture, fetch, passiveTimeout, false);
+      }
     }
-    catch (ExecutionException e) { // NOSONAR unwrap and report download errors
-      propagateIfPossible(e.getCause(), IOException.class);
-      throw new RuntimeException(e.getCause());
+    finally {
+      theirFuture.decreaseCooperation();
     }
-    catch (CancellationException | InterruptedException | TimeoutException e) {
-      log.debug("Abandoned cooperative wait on {} for {}", key, timeout, e);
-    }
-
-    // primary download thread might be stuck, so check cache before trying the download ourselves
-    // (if there are download errors then don't disturb the primary thread, just let them propagate)
-    return download(theirFuture, fetch, true);
   }
 
-  private static boolean isDownloading() {
+  /**
+   * Cooperatively waits for the download thread; may resort to downloading in parallel if allowed.
+   *
+   * @param future shared future that request threads cooperate on
+   * @param fetch function that will download the remote content
+   * @param initialTimeout how long to wait for the download if we were the only thread waiting
+   * @param downloadOnTimeout whether to download in parallel if original thread takes too long
+   *
+   * @return remote content
+   *
+   * @throws IOException when download fails
+   * @throws CooperationException when cooperation fails
+   */
+  private T waitForDownload(final CooperatingFuture<T> future, // NOSONAR
+                            final IOCall<T> fetch,
+                            final Time initialTimeout,
+                            final boolean downloadOnTimeout)
+      throws IOException
+  {
+    try {
+      if (initialTimeout.value() <= 0) {
+        log.debug("Attempt cooperative wait on {}", future);
+        return future.get(); // wait indefinitely
+      }
+
+      Time timeout = initialTimeout;
+      if (downloadOnTimeout) {
+        timeout = future.staggerTimeout(timeout); // preserve minimum gap between parallel downloads
+      }
+
+      log.debug("Attempt cooperative wait on {} for {}", future, timeout);
+      return future.get(timeout.value(), timeout.unit());
+    }
+    catch (ExecutionException e) { // NOSONAR unwrap and report download errors
+      log.debug("Cooperative wait failed on {}", future, e.getCause());
+      propagateIfPossible(e.getCause(), IOException.class);
+      throw new IOException("Cooperative wait failed on " + future, e.getCause());
+    }
+    catch (CancellationException | InterruptedException e) {
+      log.debug("Cooperative wait cancelled on {}", future, e);
+      throw new CooperationException("Cooperative wait cancelled on " + future);
+    }
+    catch (TimeoutException e) {
+      log.debug("Cooperative wait timed out on {}", future, e);
+
+      if (downloadOnTimeout) {
+        return download(future, fetch, true); // go remote in case original download thread is stuck
+      }
+
+      throw new CooperationException("Cooperative wait timed out on " + future);
+    }
+  }
+
+  /**
+   * Is the current thread flagged as already downloading some other content?
+   *
+   * This can happen when a download dependency, such as an index file, is needed to complete the initial request.
+   */
+  private static boolean currentThreadAlreadyDownloading() {
     return TRUE.equals(isDownloading.get());
   }
 
@@ -122,7 +183,7 @@ public class Cooperation<T>
   private T download(final CooperatingFuture<T> future, final IOCall<T> fetch, final boolean checkCache)
       throws IOException
   {
-    if (isDownloading()) {
+    if (currentThreadAlreadyDownloading()) {
       return future.download(fetch, checkCache);
     }
     try {
@@ -142,6 +203,37 @@ public class Cooperation<T>
       extends CompletableFuture<T>
   {
     private final AtomicLong staggerTimeMillis = new AtomicLong(System.currentTimeMillis());
+
+    private final AtomicInteger cooperationCount = new AtomicInteger(1);
+
+    private final String key;
+
+    CooperatingFuture(final String key) {
+      this.key = checkNotNull(key);
+    }
+
+    /**
+     * Increases the cooperation count by one.
+     *
+     * @throws CooperationException if increasing the count would breach the given limit.
+     */
+    public void increaseCooperation(final int limit) {
+      // try to avoid depleting entire request pool with waiting threads
+      cooperationCount.getAndUpdate(count -> {
+        if (count >= limit) {
+          log.debug("Thread cooperation maxed for {}", this);
+          throw new CooperationException("Thread cooperation maxed for " + this);
+        }
+        return count + 1;
+      });
+    }
+
+    /**
+     * Decreases the cooperation count by one.
+     */
+    public void decreaseCooperation() {
+      cooperationCount.decrementAndGet();
+    }
 
     /**
      * @return staggered timeout that makes sure waiting threads don't all wake-up at the same time
@@ -167,6 +259,11 @@ public class Cooperation<T>
       T value = fetch.call(checkCache);
       complete(value);
       return value;
+    }
+
+    @Override
+    public String toString() {
+      return key + " (" + cooperationCount.get() + " threads cooperating)";
     }
   }
 }

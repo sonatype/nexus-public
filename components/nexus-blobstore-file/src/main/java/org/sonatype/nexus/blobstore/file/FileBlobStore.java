@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -70,6 +71,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.Files.exists;
+import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -601,12 +603,10 @@ public class FileBlobStore
   private void maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId)
       throws IOException
   {
-    FileBlobAttributes attributes = (FileBlobAttributes) getBlobAttributes(blobId);
-    String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    if (!maybeUndeleteBlob(inUseChecker, blobId, attributes, false)) {
-      // not in use, so it's safe to delete the file
-      log.debug("Hard deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-          blobId, attributes.getDeletedReason(), blobStoreConfiguration.getName(), blobName);
+    Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
+    if (!attributesOption.isPresent() || !maybeUndeleteBlob(inUseChecker, blobId, attributesOption.get(), false)) {
+      // attributes file is missing or blob id not in use, so it's safe to delete the file
+      log.debug("Hard deleting blob id: {}, in blob store: {}", blobId, blobStoreConfiguration.getName());
       deleteHard(blobId);
     }
   }
@@ -616,9 +616,17 @@ public class FileBlobStore
                                    final FileBlobAttributes attributes,
                                    final boolean isDryRun)
   {
+    checkNotNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
-    String blobName = attributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName)) {
+    Optional<String> blobName = Optional.of(attributes)
+        .map(FileBlobAttributes::getProperties)
+        .map(p -> p.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER));
+    if (!blobName.isPresent()) {
+      log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER,
+          blobId, attributes.getPath());
+      return false;
+    }
+    if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
       String deletedReason = attributes.getDeletedReason();
       if (!isDryRun) {
         attributes.setDeleted(false);
@@ -628,12 +636,12 @@ public class FileBlobStore
         }
         catch (IOException e) {
           log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-              blobId, deletedReason, blobStoreConfiguration.getName(), blobName, e);
+              blobId, deletedReason, blobStoreConfiguration.getName(), blobName.get(), e);
         }
       }
       log.warn(
           "{}Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-          logPrefix, blobId, deletedReason, blobStoreConfiguration.getName(), blobName);
+          logPrefix, blobId, deletedReason, blobStoreConfiguration.getName(), blobName.get());
       return true;
     }
     return false;

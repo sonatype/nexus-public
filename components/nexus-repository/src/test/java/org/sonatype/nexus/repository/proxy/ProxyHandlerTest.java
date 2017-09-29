@@ -97,6 +97,15 @@ public class ProxyHandlerTest
   }
 
   @Test
+  public void testCooperationExceptionReturns503ResponseWithMessage() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(new CooperationException("Cooperation failed")).when(proxyFacet).get(context);
+    Response response = underTest.handle(context);
+    assertStatusCode(response, HttpStatus.SERVICE_UNAVAILABLE);
+    assertStatusMessage(response, "Cooperation failed");
+  }
+
+  @Test
   public void testIOExceptionReturns502Response() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
     doThrow(new IOException("message")).when(proxyFacet).get(context);
@@ -112,5 +121,9 @@ public class ProxyHandlerTest
 
   private void assertStatusCode(final Response response, final int statusCode) {
     assertThat(response.getStatus().getCode(), is(statusCode));
+  }
+
+  private void assertStatusMessage(final Response response, final String statusMessage) {
+    assertThat(response.getStatus().getMessage(), is(statusMessage));
   }
 }
