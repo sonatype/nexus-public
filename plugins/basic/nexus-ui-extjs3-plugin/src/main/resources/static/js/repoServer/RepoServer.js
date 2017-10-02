@@ -388,6 +388,10 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
           title : 'Welcome',
           id : 'welcome',
           closable : false,
+          layout: {
+            type: 'vbox',
+            align: 'stretch'
+          },
           items : [{
                 layout : 'column',
                 border : false,
