@@ -35,7 +35,7 @@ import com.google.common.base.Predicate;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.version;
+import static org.sonatype.nexus.common.app.VersionComparator.version;
 
 /**
  * Maven 2 archetype catalog merger.

@@ -22,5 +22,6 @@
     <feature>nexus-repository-httpbridge</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-raw</feature>
+    <feature>nexus-restore-maven</feature>
   </feature>
 </features>

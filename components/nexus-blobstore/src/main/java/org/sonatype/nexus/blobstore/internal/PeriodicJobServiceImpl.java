@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore.internal;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -59,7 +60,7 @@ public class PeriodicJobServiceImpl
 
   @Override
   protected void doStart() throws Exception {
-    executor = Executors.newScheduledThreadPool(1, new NexusThreadFactory("file-blobstore-metrics", "blobstore"));
+    executor = Executors.newScheduledThreadPool(1, new NexusThreadFactory("blobstore-metrics", "blobstore"));
   }
 
   @Override

@@ -27,6 +27,10 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
+  <properties>
+    <aws-java-sdk.version>1.11.201</aws-java-sdk.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -232,6 +236,42 @@
         <groupId>org.redline-rpm</groupId>
         <artifactId>redline</artifactId>
         <version>1.2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-core</artifactId>
+        <version>${aws-java-sdk.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-s3</artifactId>
+        <version>${aws-java-sdk.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-sts</artifactId>
+        <version>${aws-java-sdk.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
     </dependencies>

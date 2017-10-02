@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.internal;
+package org.sonatype.nexus.blobstore.restore.maven.internal;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,7 +26,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -43,6 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.common.hash.Hashes.hash;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
@@ -89,9 +89,7 @@ public class MavenRestoreBlobStrategy
       return;
     }
 
-    try (MultiHashingInputStream hashingStream = new MultiHashingInputStream(
-        Arrays.asList(HashAlgorithm.MD5, HashAlgorithm.SHA1), blob.getInputStream()))
-    {
+    try {
       Optional<StorageFacet> storageFacet = getFacet(repoName, StorageFacet.class);
       Optional<MavenFacet> mavenFacet = getFacet(repoName, MavenFacet.class);
       if (storageFacet.isPresent() && mavenFacet.isPresent()) {
@@ -112,7 +110,8 @@ public class MavenRestoreBlobStrategy
               .throwing(IOException.class)
               .call(() -> mavenFacet.get().put(mavenPath,
                   new AssetBlob(nodeAccess, blobStoreManager.get(blobStoreName), store -> blob,
-                      properties.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER), hashingStream.hashes(), true
+                      properties.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER),
+                      hash(Arrays.asList(HashAlgorithm.MD5, HashAlgorithm.SHA1), blob.getInputStream()), true
                   ),
                   null));
         }

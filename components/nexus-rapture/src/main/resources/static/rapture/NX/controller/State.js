@@ -64,7 +64,8 @@ Ext.define('NX.controller.State', {
           userchanged: me.onUserChanged,
           uisettingschanged: me.onUiSettingsChanged,
           licensechanged: me.onLicenseChanged,
-          serveridchanged: me.reloadWhenServerIdChanged
+          serveridchanged: me.reloadWhenServerIdChanged,
+          clusteridchanged: me.reloadWhenServerIdChanged
         }
       },
       store: {
@@ -327,7 +328,11 @@ Ext.define('NX.controller.State', {
   onSuccess: function (event) {
     var me = this,
         serverId = me.getValue('serverId'),
-        state;
+        clusterId = me.getValue('clusterId'),
+        state = event.data.data,
+        clustered = Ext.isDefined(state.nodes) && state.nodes.value.enabled,
+        oldClusterId = state.clusterId ? state.clusterId.value : clusterId,
+        oldServerId = state.serverId ? state.serverId.value : serverId;
 
     me.receiving = true;
 
@@ -339,13 +344,10 @@ Ext.define('NX.controller.State', {
 
     NX.State.setValue('receiving', true);
 
-    // propagate event data
-    state = event.data.data;
-
-    if (!me.reloadWhenServerIdChanged(serverId, state.serverId ? state.serverId.value : serverId)) {
+    if ( (clustered && !me.reloadWhenServerIdChanged(clusterId, oldClusterId)) ||
+        (!clustered && !me.reloadWhenServerIdChanged(serverId, oldServerId)) ) {
       me.setValues(state);
     }
-
     // TODO: Fire global refresh event
   },
 
@@ -438,7 +440,7 @@ Ext.define('NX.controller.State', {
   },
 
   reloadWhenServerIdChanged: function (serverId, oldServerId) {
-    if (oldServerId && (serverId !== oldServerId)) {
+    if (oldServerId && (serverId !== oldServerId) && !serverId.startsWith('ignore')) {
       // FIXME: i18n
       NX.Dialogs.showInfo(
           'Server restarted',

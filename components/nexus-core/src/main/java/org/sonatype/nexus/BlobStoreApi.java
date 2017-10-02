@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus;
 
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.script.ScriptApi;
 
@@ -33,4 +35,13 @@ public interface BlobStoreApi
    * @param path the path where the BlobStore should store data
    */
   BlobStoreConfiguration createFileBlobStore(String name, String path);
+
+  /**
+   * Create a new S3 based BlobStore.
+   *
+   * @param name the name for the new BlobStore
+   * @param config the configuration map for the new blobstore
+   * @since 3.6
+   */
+  BlobStoreConfiguration createS3BlobStore(String name, Map<String, String> config);
 }

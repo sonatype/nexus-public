@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.storage;
 import java.util.HashMap;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.Iterables;
@@ -31,8 +30,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
 public class AssetEntityAdapterTest
 {
@@ -67,10 +67,10 @@ public class AssetEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       db.begin();
 
-      Component component = createComponent("some-group", "some-component", "1.0");
+      Component component = createComponent(bucket, "some-group", "some-component", "1.0");
       componentEntityAdapter.addEntity(db, component);
 
-      Asset asset = createAsset("some-asset", component);
+      Asset asset = createAsset(bucket, "some-asset", component);
       assetEntityAdapter.addEntity(db, asset);
 
       db.commit();
@@ -111,22 +111,4 @@ public class AssetEntityAdapterTest
     assertFalse(asset.attributes().child("optional").contains("test-key"));
   }
 
-  private Component createComponent(final String group, final String name, final String version) {
-    Component component = new Component();
-    component.bucketId(EntityHelper.id(bucket));
-    component.format("format-id");
-    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    component.group(group).name(name).version(version);
-    return component;
-  }
-
-  private Asset createAsset(final String name, final Component component) {
-    Asset asset = new Asset();
-    asset.bucketId(EntityHelper.id(bucket));
-    asset.format("format-id");
-    asset.componentId(id(component));
-    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    asset.name(name);
-    return asset;
-  }
 }

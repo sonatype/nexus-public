@@ -13,6 +13,7 @@
 package org.sonatype.nexus.orient;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.inject.Provider;
 
@@ -47,10 +48,21 @@ public abstract class DatabaseUpgradeSupport
   protected static void withDatabaseAndClass(final Provider<DatabaseInstance> databaseInstance, final String className,
                                              final BiConsumer<ODatabaseDocumentTx, OClass> consumer)
   {
-    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
+    withDatabase(databaseInstance, db -> {
       if (db.getMetadata().getSchema().existsClass(className)) {
         consumer.accept(db, db.getMetadata().getSchema().getClass(className));
       }
+    });
+  }
+
+  /**
+   * Runs a {@link Consumer} with a {@link ODatabaseDocumentTx}
+   */
+  protected static void withDatabase(final Provider<DatabaseInstance> databaseInstance,
+                                     final Consumer<ODatabaseDocumentTx> consumer)
+  {
+    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
+      consumer.accept(db);
     }
   }
 }

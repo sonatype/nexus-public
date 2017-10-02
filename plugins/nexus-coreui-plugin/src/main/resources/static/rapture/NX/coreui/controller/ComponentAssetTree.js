@@ -220,19 +220,12 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       //reset the filter
       componentAssetTreeStore.proxy.setExtraParam('filter');
       componentAssetTreeStore.proxy.setExtraParam('repositoryName', model.get('name'));
-
-      //remove the side panel which if there, is showing old data
-      me.removeSideContent();
-
     }
 
     // Update HTML View link
     me.updateHtmlLink(model);
 
-    //this will trigger the tree to be reloaded
-    componentAssetTreeStore.setRootNode({
-      expanded: true
-    });
+    me.reloadNodes();
 
     me.expandTree();
 
@@ -314,10 +307,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
       componentAssetTreeStore.proxy.setExtraParam('filter', value);
 
-      //this will trigger the tree to be reloaded
-      componentAssetTreeStore.setRootNode({
-        expanded: true
-      });
+      me.reloadNodes();
     }
   },
 
@@ -747,6 +737,18 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     if (!hasPath) {
       me.bookmark(index, model);
     }
+  },
+
+  reloadNodes: function() {
+    var me = this, componentAssetTreeStore = me.getStore('ComponentAssetTree');
+
+    //remove the side panel which if there, is showing old data
+    me.removeSideContent();
+
+    //this will trigger the tree to be reloaded
+    componentAssetTreeStore.setRootNode({
+      expanded: true
+    });
   }
 
 });

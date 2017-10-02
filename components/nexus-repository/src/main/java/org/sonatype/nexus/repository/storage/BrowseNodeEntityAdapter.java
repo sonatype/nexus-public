@@ -440,6 +440,13 @@ public class BrowseNodeEntityAdapter
   }
 
   @Override
+  public void register(final ODatabaseDocumentTx db, @Nullable final Runnable initializer) {
+    if (enabled) {
+      super.register(db, initializer);
+    }
+  }
+
+  @Override
   protected void defineType(final ODatabaseDocumentTx db, final OClass type) {
     if (!enabled) {
       return;

@@ -12,15 +12,19 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
+import org.slf4j.MDC;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -46,14 +50,35 @@ public class ProgressTaskLogger
 
   private Future<?> progressLoggingThread;
 
+  private Map<String, String> mdcMap;
+
+  private final long initialDelay;
+
+  private final long progressInterval;
+
+  private final TimeUnit timeUnit;
+
   TaskLoggingEvent lastProgressEvent;
 
   ProgressTaskLogger(final Logger log) {
+    this(log, INTERVAL_MINUTES, INTERVAL_MINUTES, MINUTES);
+  }
+
+  ProgressTaskLogger(final Logger log,
+                     final long initialDelay,
+                     final long progressInterval,
+                     final TimeUnit timeUnit)
+  {
     this.log = checkNotNull(log);
+    this.initialDelay = initialDelay;
+    checkArgument(progressInterval > 0, "progressInterval must be greater than 0");
+    this.progressInterval = progressInterval;
+    this.timeUnit = checkNotNull(timeUnit);
   }
 
   @Override
   public void start() {
+    mdcMap = MDC.getCopyOfContextMap();
     startProgressThread();
   }
 
@@ -75,6 +100,10 @@ public class ProgressTaskLogger
   @VisibleForTesting
   void logProgress() {
     if (lastProgressEvent != null) {
+      if (mdcMap != null) {
+        MDC.setContextMap(mdcMap);
+      }
+
       Logger logger = Optional.ofNullable(lastProgressEvent.getLogger()).orElse(log);
       logger.info(INTERNAL_PROGRESS, format(PROGRESS_LINE, lastProgressEvent.getMessage()),
           lastProgressEvent.getArgumentArray());
@@ -93,6 +122,6 @@ public class ProgressTaskLogger
 
   private void startProgressThread() {
     progressLoggingThread = executorService
-        .scheduleAtFixedRate(this::logProgress, INTERVAL_MINUTES, INTERVAL_MINUTES, MINUTES);
+        .scheduleAtFixedRate(this::logProgress, initialDelay, progressInterval, timeUnit);
   }
 }

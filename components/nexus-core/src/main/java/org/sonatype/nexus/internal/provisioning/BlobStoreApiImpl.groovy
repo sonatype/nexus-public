@@ -38,4 +38,10 @@ class BlobStoreApiImpl
     return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'File',
         attributes: [file: [path: checkNotNull(path)]])).blobStoreConfiguration
   }
+
+  @Override
+  BlobStoreConfiguration createS3BlobStore(final String name, final Map<String, String> config) {
+    return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'S3',
+        attributes: [s3: config])).blobStoreConfiguration
+  }
 }

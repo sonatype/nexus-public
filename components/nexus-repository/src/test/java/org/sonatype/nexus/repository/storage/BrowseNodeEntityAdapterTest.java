@@ -75,6 +75,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
 public class BrowseNodeEntityAdapterTest
     extends TestSupport
@@ -176,23 +178,25 @@ public class BrowseNodeEntityAdapterTest
       assetEntityAdapter.register(db);
       underTest.register(db);
 
+      Component component = createComponent(bucket, "tomcat", "catalina", "5.0.28");
       componentId = EntityHelper
-          .id(componentEntityAdapter.readEntity(componentEntityAdapter.addEntity(db, createComponent())));
+          .id(componentEntityAdapter.readEntity(
+              componentEntityAdapter.addEntity(db, component)));
 
       assetIdWithPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("com/example/leaf-with-perm"))));
+          .addEntity(db, createAsset(bucket, "com/example/leaf-with-perm", component))));
       assetIdWithoutPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("com/example/leaf-without-perm"))));
+          .addEntity(db, createAsset(bucket, "com/example/leaf-without-perm", component))));
       assetIdFoo = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("com/example/foo"))));
+          .addEntity(db, createAsset(bucket, "com/example/foo", component))));
       assetIdhiddenWithPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("com/example/node-with-perm/hidden-leaf-with-perm"))));
+          .addEntity(db, createAsset(bucket, "com/example/node-with-perm/hidden-leaf-with-perm", component))));
       assetIdhiddenWithoutPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("com/example/node-without-perm/hidden-leaf-without-perm"))));
+          .addEntity(db, createAsset(bucket, "com/example/node-without-perm/hidden-leaf-without-perm", component))));
       assetIdRootWithPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("root-leaf-with-perm"))));
+          .addEntity(db, createAsset(bucket, "root-leaf-with-perm", component))));
       assetIdRootWithoutPerm = EntityHelper.id(assetEntityAdapter.readEntity(assetEntityAdapter
-          .addEntity(db, createAsset("root-leaf-without-perm"))));
+          .addEntity(db, createAsset(bucket, "root-leaf-without-perm", component))));
     }
 
     OSQLEngine.getInstance().registerFunction(ContentAuth.NAME, contentAuth);
@@ -819,20 +823,6 @@ public class BrowseNodeEntityAdapterTest
         assetId,
         null,
         true));
-  }
-
-  private Component createComponent() {
-    Component component = new Component();
-    component.bucketId(EntityHelper.id(bucket));
-    component.format("format-id");
-    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    component.group("tomcat").name("catalina").version("5.0.28");
-    return component;
-  }
-
-  private Asset createAsset(final String assetName) {
-    return new Asset().format("format-id").componentId(componentId).bucketId(EntityHelper.id(bucket)).name(assetName)
-        .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 
   private void setupTestGetChildrenByPath() {

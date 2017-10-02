@@ -46,9 +46,6 @@ public class LocalNodeAccessTest
 
   private NodeAccess nodeAccess;
 
-  @Mock
-  private NodeConfigurationSource nodeConfigurationSource;
-
   @Before
   public void setUp() throws Exception {
     File dir = util.createTempDir("keystores");
@@ -58,7 +55,7 @@ public class LocalNodeAccessTest
     keyStoreManager = new KeyStoreManagerImpl(new CryptoHelperImpl(), new KeyStoreStorageManagerImpl(dir), config);
     keyStoreManager.generateAndStoreKeyPair("a", "b", "c", "d", "e", "f");
 
-    nodeAccess = new LocalNodeAccess(() -> keyStoreManager, nodeConfigurationSource);
+    nodeAccess = new LocalNodeAccess(() -> keyStoreManager);
     nodeAccess.start();
   }
 
@@ -78,16 +75,5 @@ public class LocalNodeAccessTest
   @Test
   public void localIsOldestNode() {
     assertThat(nodeAccess.isOldestNode(), is(true));
-  }
-
-  @Test
-  public void testFriendlyNames() {
-    when(nodeConfigurationSource.getById("id"))
-        .thenReturn(Optional.of(new NodeConfiguration("id", "friendly name")));
-
-    String retrieved = nodeAccess.getFriendlyName("id");
-    assertThat(retrieved, equalTo("friendly name"));
-    nodeAccess.setFriendlyName("id", "updated friendly name");
-    verify(nodeConfigurationSource, times(1)).setFriendlyName("id", "updated friendly name");
   }
 }

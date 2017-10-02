@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.file.internal;
+package org.sonatype.nexus.blobstore.internal;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.blobstore.PeriodicJobService.PeriodicJob;
 
 import org.junit.After;
 import org.junit.Before;

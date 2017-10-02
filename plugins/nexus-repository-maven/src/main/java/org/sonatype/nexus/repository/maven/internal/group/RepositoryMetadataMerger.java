@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.Constants;
@@ -43,8 +44,7 @@ import org.apache.maven.artifact.repository.metadata.Versioning;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.STRING_VERSION_COMPARATOR;
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.version;
+import static org.sonatype.nexus.common.app.VersionComparator.version;
 
 /**
  * Maven 2 repository metadata merger.
@@ -200,7 +200,7 @@ public class RepositoryMetadataMerger
       return null;
     }
     if (result.getVersioning() != null && !result.getVersioning().getVersions().isEmpty()) {
-      Collections.sort(result.getVersioning().getVersions(), STRING_VERSION_COMPARATOR);
+      Collections.sort(result.getVersioning().getVersions(), VersionComparator.INSTANCE);
       // the last in ordered list
       String latest = result.getVersioning().getVersions().get(result.getVersioning().getVersions().size() - 1);
       // the last non-snapshot in ordered list, may be null

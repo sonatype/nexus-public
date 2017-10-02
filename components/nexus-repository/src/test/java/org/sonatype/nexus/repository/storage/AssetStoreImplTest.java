@@ -32,6 +32,8 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class AssetStoreImplTest
@@ -42,18 +44,16 @@ public class AssetStoreImplTest
 
   private AssetEntityAdapter assetEntityAdapter;
 
-  private BucketEntityAdapter bucketEntityAdapter;
-
-  private ComponentEntityAdapter componentEntityAdapter;
-
   private AssetStoreImpl underTest;
 
   private Bucket bucket;
 
+  private Component component;
+
   @Before
   public void setUp() {
-    bucketEntityAdapter = new BucketEntityAdapter();
-    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
+    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
     underTest = new AssetStoreImpl(database.getInstanceProvider(), assetEntityAdapter);
@@ -62,10 +62,14 @@ public class AssetStoreImplTest
       bucketEntityAdapter.register(db);
       componentEntityAdapter.register(db);
       assetEntityAdapter.register(db);
+
       bucket = new Bucket();
       bucket.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
       bucket.setRepositoryName("test-repo");
       bucketEntityAdapter.addEntity(db, bucket);
+
+      component = createComponent(bucket, "group", "name", "1.0");
+      componentEntityAdapter.addEntity(db, component);
     }
   }
 
@@ -73,9 +77,9 @@ public class AssetStoreImplTest
   public void getNextPageReturnsEntriesByPages() {
     int limit = 2;
 
-    Asset asset1 = createAsset("asset1");
-    Asset asset2 = createAsset("asset2");
-    Asset asset3 = createAsset("asset3");
+    Asset asset1 = createAsset(bucket, "asset1", component);
+    Asset asset2 = createAsset(bucket, "asset2", component);
+    Asset asset3 = createAsset(bucket, "asset3", component);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       assetEntityAdapter.addEntity(db, asset1);
@@ -98,7 +102,7 @@ public class AssetStoreImplTest
   public void getNextPageStopsAtNullEntry() {
     int limit = 2;
 
-    Asset asset1 = createAsset("asset1");
+    Asset asset1 = createAsset(bucket, "asset1", component);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       assetEntityAdapter.addEntity(db, asset1);
@@ -111,14 +115,5 @@ public class AssetStoreImplTest
 
     assertThat(assetPage1.size(), is(1));
     assertThat(assetPage1.get(0).getValue(), is(EntityHelper.id(asset1)));
-  }
-
-  private Asset createAsset(final String name) {
-    Asset asset = new Asset();
-    asset.bucketId(EntityHelper.id(bucket));
-    asset.format("maven2");
-    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    asset.name(name);
-    return asset;
   }
 }

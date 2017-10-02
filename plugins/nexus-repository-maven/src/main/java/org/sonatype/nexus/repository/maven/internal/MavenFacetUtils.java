@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,10 +45,6 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashingOutputStream;
-import org.eclipse.aether.util.version.GenericVersionScheme;
-import org.eclipse.aether.version.InvalidVersionSpecificationException;
-import org.eclipse.aether.version.Version;
-import org.eclipse.aether.version.VersionScheme;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
@@ -66,35 +61,6 @@ public final class MavenFacetUtils
 {
   private MavenFacetUtils() {
     // nop
-  }
-
-  /**
-   * Generic version scheme for parsing versions from string.
-   */
-  private static final VersionScheme VERSION_SCHEME = new GenericVersionScheme();
-
-  /**
-   * Version comparator that uses version scheme to sort version strings.
-   */
-  public static final Comparator<String> STRING_VERSION_COMPARATOR = new Comparator<String>()
-  {
-    @Override
-    public int compare(final String o1, final String o2) {
-      return version(o1).compareTo(version(o2));
-    }
-  };
-
-  /**
-   * Parses out Aether version from a string.
-   */
-  public static Version version(final String version) {
-    try {
-      return VERSION_SCHEME.parseVersion(version);
-    }
-    catch (InvalidVersionSpecificationException e) {
-      // this never happens, see implementation
-      throw new RuntimeException(e);
-    }
   }
 
   /**

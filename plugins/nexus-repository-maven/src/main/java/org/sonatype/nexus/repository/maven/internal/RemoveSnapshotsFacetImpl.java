@@ -68,10 +68,10 @@ import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.index.query.QueryBuilders.wildcardQuery;
+import static org.sonatype.nexus.common.app.VersionComparator.version;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.version;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 

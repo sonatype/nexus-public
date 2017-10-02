@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.Lists;
@@ -33,6 +32,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
 public class ComponentEntityAdapterTest
     extends TestSupport
@@ -78,7 +78,7 @@ public class ComponentEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
 
-      Component component = createComponent(group, name, version);
+      Component component = createComponent(bucket, group, name, version);
       entityAdapter.addEntity(db, component);
 
       Query query = Query.builder().where("group").eq(group).and("name").eq(name).and("version").eq(version).build();
@@ -100,7 +100,7 @@ public class ComponentEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
 
-      Component component = createComponent(GROUP, name, version);
+      Component component = createComponent(bucket, GROUP, name, version);
       entityAdapter.addEntity(db, component);
 
       List<Component> components1 =
@@ -127,10 +127,10 @@ public class ComponentEntityAdapterTest
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
 
-      Component component1 = createComponent(GROUP, "name", "version1");
+      Component component1 = createComponent(bucket, GROUP, "name", "version1");
       entityAdapter.addEntity(db, component1);
 
-      Component component2 = createComponent(GROUP, "name", "version2");
+      Component component2 = createComponent(bucket, GROUP, "name", "version2");
       entityAdapter.addEntity(db, component2);
 
       List<Component> allComponents =
@@ -145,14 +145,5 @@ public class ComponentEntityAdapterTest
 
       assertThat(firstComponent, hasSize(1));
     }
-  }
-
-  private Component createComponent(final String group, final String name, final String version) {
-    Component component = new Component();
-    component.bucketId(EntityHelper.id(bucket));
-    component.format("format-id");
-    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    component.group(group).name(name).version(version);
-    return component;
   }
 }

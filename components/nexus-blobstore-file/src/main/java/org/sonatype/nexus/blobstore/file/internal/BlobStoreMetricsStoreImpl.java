@@ -23,8 +23,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.PeriodicJobService;
+import org.sonatype.nexus.blobstore.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.stateguard.Guarded;

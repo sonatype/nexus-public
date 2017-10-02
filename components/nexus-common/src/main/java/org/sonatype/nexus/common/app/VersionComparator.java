@@ -27,13 +27,16 @@ import org.eclipse.aether.version.Version;
 public class VersionComparator
     implements Comparator<String>
 {
-  private final GenericVersionScheme versionScheme = new GenericVersionScheme();
+  private static final GenericVersionScheme VERSION_SCHEME = new GenericVersionScheme();
 
   public static final Comparator<String> INSTANCE = new VersionComparator();
 
-  private Version parseVersion(final String version) {
+  /**
+   * Parses out Aether version from a string.
+   */
+  public static Version version(final String version) {
     try {
-      return versionScheme.parseVersion(version);
+      return VERSION_SCHEME.parseVersion(version);
     }
     catch (InvalidVersionSpecificationException e) {
       throw new IllegalArgumentException(e);
@@ -42,6 +45,6 @@ public class VersionComparator
 
   @Override
   public int compare(final String o1, final String o2) {
-    return parseVersion(o1).compareTo(parseVersion(o2));
+    return version(o1).compareTo(version(o2));
   }
 }

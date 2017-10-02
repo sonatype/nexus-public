@@ -10,10 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.internal;
+package org.sonatype.nexus.blobstore.restore.maven.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -22,6 +23,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -29,15 +31,20 @@ import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 
+import com.google.common.collect.Maps;
+import com.google.common.hash.HashCode;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -88,6 +95,8 @@ public class MavenRestoreBlobStrategyTest
 
   Properties properties = new Properties();
 
+  byte[] blobBytes = "blobbytes".getBytes();
+
   @Before
   public void setup() throws IOException {
     underTest = new MavenRestoreBlobStrategy(maven2MavenPathParser, nodeAccess, repositoryManager, blobStoreManager);
@@ -105,7 +114,7 @@ public class MavenRestoreBlobStrategyTest
     when(storageTx.findBucket(repository)).thenReturn(bucket);
 
     when(blob.getId()).thenReturn(new BlobId("test"));
-    when(blob.getInputStream()).thenReturn(mock(InputStream.class));
+    when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
 
     when(maven2MavenPathParser.parsePath("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"))
         .thenReturn(mavenPath);
@@ -147,5 +156,19 @@ public class MavenRestoreBlobStrategyTest
     underTest.restore(properties, blob, "test", true);
     verify(mavenFacet).get(mavenPath);
     verifyNoMoreInteractions(mavenFacet);
+  }
+
+  @Test
+  public void testCorrectChecksums() throws Exception {
+    Map<HashAlgorithm, HashCode> expectedHashes = Maps.newHashMap();
+    expectedHashes.put(HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashBytes(blobBytes));
+    expectedHashes.put(HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashBytes(blobBytes));
+    ArgumentCaptor<AssetBlob> assetBlobCaptor = ArgumentCaptor.forClass(AssetBlob.class);
+
+    underTest.restore(properties, blob, "test", false);
+    verify(mavenFacet).get(mavenPath);
+    verify(mavenFacet).put(eq(mavenPath), assetBlobCaptor.capture(), eq(null));
+
+    assertEquals("asset hashes do not match blob", expectedHashes, assetBlobCaptor.getValue().getHashes());
   }
 }

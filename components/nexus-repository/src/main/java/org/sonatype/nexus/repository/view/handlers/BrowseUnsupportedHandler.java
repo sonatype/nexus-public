@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import java.net.URL;
-import java.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -27,12 +26,15 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Matcher;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
+
+import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,11 +61,13 @@ public class BrowseUnsupportedHandler
   private final boolean treeEnabled;
 
   @Inject
-  public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final BrowseNodeConfiguration configuration) {
+  public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final BrowseNodeConfiguration configuration,
+                                  final SecurityHandler securityHandler) {
     this.templateHelper = checkNotNull(templateHelper);
+    checkNotNull(securityHandler);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
     checkNotNull(template);
-    this.route = new Route(MATCHER, Collections.singletonList(this));
+    this.route = new Route(MATCHER, ImmutableList.of(securityHandler, this));
     this.treeEnabled = checkNotNull(configuration).isEnabled();
   }
 

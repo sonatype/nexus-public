@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.common.node;
 
-import org.sonatype.nexus.common.entity.Entity;
+import java.io.Serializable;
+import java.util.Objects;
+
 
 /**
  * Node configuration
@@ -20,8 +22,10 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.6
  */
 public class NodeConfiguration
-    extends Entity
+    implements Serializable
 {
+
+  private static final long serialVersionUID = 5687759567911666915L;
 
   /**
    * UUID identifying cluster node
@@ -56,5 +60,23 @@ public class NodeConfiguration
 
   public void setFriendlyNodeName(final String friendlyNodeName) {
     this.friendlyNodeName = friendlyNodeName;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final NodeConfiguration other = (NodeConfiguration) obj;
+    return Objects.equals(this.getId(), other.getId())
+        && Objects.equals(this.getFriendlyNodeName(), other.getFriendlyNodeName());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getId(), getFriendlyNodeName());
   }
 }

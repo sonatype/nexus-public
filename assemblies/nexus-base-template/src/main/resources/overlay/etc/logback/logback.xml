@@ -20,8 +20,8 @@
   <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <File>${karaf.data}/log/nexus.log</File>
     <Append>true</Append>
-    <encoder>
-      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+    <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <fileNamePattern>${karaf.data}/log/nexus-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
@@ -39,8 +39,8 @@
     <sift>
       <appender name="taskAppender" class="ch.qos.logback.core.FileAppender">
         <file>${karaf.data}/log/tasks/${taskIdAndDate}.log</file>
-        <encoder>
-          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+        <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
+          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
         </encoder>
       </appender>
     </sift>

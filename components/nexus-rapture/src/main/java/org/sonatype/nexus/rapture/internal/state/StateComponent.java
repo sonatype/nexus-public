@@ -24,6 +24,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
@@ -57,13 +58,16 @@ public class StateComponent
   /**
    * Randomly generated identifier on each boot to identify the running instance of the server and detect server reboots.
    */
-  private static final String serverId = String.valueOf(System.nanoTime());
+  private final String serverId;
 
   private final List<Provider<StateContributor>> stateContributors;
 
   @Inject
-  public StateComponent(final List<Provider<StateContributor>> stateContributors) {
+  public StateComponent(final List<Provider<StateContributor>> stateContributors, final NodeAccess nodeAccess) {
     this.stateContributors = checkNotNull(stateContributors);
+    // special key on serverId hints UI event listeners to ignore serverId changes
+    final String prefix = checkNotNull(nodeAccess).isClustered() ? "ignore." : "";
+    this.serverId = prefix + String.valueOf(System.nanoTime());
   }
 
   @Timed

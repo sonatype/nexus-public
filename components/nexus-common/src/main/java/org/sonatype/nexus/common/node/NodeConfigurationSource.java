@@ -18,7 +18,7 @@ import java.util.Optional;
 /**
  * persistence mechanism for {@link NodeConfiguration}
  *
- * @since 3.6
+ * @since 3.7
  */
 public interface NodeConfigurationSource
 {
@@ -68,4 +68,13 @@ public interface NodeConfigurationSource
    * @param friendlyName specified by admin
    */
   void setFriendlyName(String nodeId, String friendlyName);
+
+  /**
+   * returns the current node's friendly name
+   *
+   * @since 3.7
+   *
+   * @return friendlyName specified by admin
+   */
+  String sayMyName();
 }
