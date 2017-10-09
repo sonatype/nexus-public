@@ -64,6 +64,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Assets_Info_ContainingRepositoryName: 'Containing repo',
     Assets_Info_Downloaded_Count: 'Last 30 days',
     Assets_Info_Downloaded_Unit: 'downloads',
+    Assets_Info_UploadedBy: 'Uploader',
+    Assets_Info_UploadedIp: 'Uploader\'s IP Address',
     AssetInfo_Delete_Button: 'Delete asset',
     AssetInfo_Delete_Title: 'Confirm deletion?',
     AssetInfo_Delete_Success: 'Asset deleted: {0}',
@@ -445,14 +447,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Expression_Examples: '<div style="font-size: 11px"><br/>' +
     '<h4>Example Content Selector Expressions:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =~ "^org.sonatype.nexus."</i></p>' +
+    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',
     Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =~ "^org.sonatype.nexus."</i></p>' +
+    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',

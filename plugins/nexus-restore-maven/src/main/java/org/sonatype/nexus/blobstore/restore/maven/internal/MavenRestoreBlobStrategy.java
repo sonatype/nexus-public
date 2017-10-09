@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -62,22 +63,26 @@ public class MavenRestoreBlobStrategy
 
   private final BlobStoreManager blobStoreManager;
 
+  private final DryRunPrefix dryRunPrefix;
+
   @Inject
   public MavenRestoreBlobStrategy(final MavenPathParser mavenPathParser,
                                   final NodeAccess nodeAccess,
                                   final RepositoryManager repositoryManager,
-                                  final BlobStoreManager blobStoreManager)
+                                  final BlobStoreManager blobStoreManager,
+                                  final DryRunPrefix dryRunPrefix)
   {
     this.mavenPathParser = checkNotNull(mavenPathParser);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
   @Override
   public void restore(final Properties properties, final Blob blob, final String blobStoreName, final boolean isDryRun) // NOSONAR
   {
-    String logPrefix = isDryRun ? "::DRY RUN:: " : "";
+    String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     String name = properties.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
     String repoName = properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER);
 

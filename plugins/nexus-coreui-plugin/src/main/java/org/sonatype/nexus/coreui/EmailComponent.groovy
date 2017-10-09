@@ -88,10 +88,6 @@ class EmailComponent
   @Validate
   EmailConfigurationXO update(@NotNull @Valid final EmailConfigurationXO configuration)
   {
-    if(PasswordPlaceholder.is(configuration.password)) {
-      // the transfer object contains the mask, preserve existing password value
-      configuration.password = emailManager.configuration.password
-    }
     emailManager.configuration = convert(configuration)
     return read()
   }
@@ -103,7 +99,7 @@ class EmailComponent
         host: value.host,
         port: value.port,
         username: value.username,
-        password: value.password,
+        password: PasswordPlaceholder.is(value.password) ? emailManager.configuration.password : value.password,
         fromAddress: value.fromAddress,
         subjectPrefix: value.subjectPrefix,
         startTlsEnabled: value.startTlsEnabled,

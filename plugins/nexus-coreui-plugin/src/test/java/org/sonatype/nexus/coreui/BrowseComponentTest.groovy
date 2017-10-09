@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.BrowseNode
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
@@ -34,18 +35,20 @@ class BrowseComponentTest
   private static final String REPOSITORY_NAME = 'repositoryName'
   private static final String ROOT = '/'
 
+  BrowseNodeConfiguration configuration = new BrowseNodeConfiguration()
+
   BrowseNodeStore browseNodeStore = Mock()
+
+  RepositoryManager repositoryManager = Mock()
 
   EntityId assetId = Mock()
 
   EntityId componentId = Mock()
 
-  RepositoryManager repositoryManager = Mock()
-
   Repository repository = Mock()
 
   @Subject
-  BrowseComponent browseComponent = new BrowseComponent(browseNodeStore: browseNodeStore, repositoryManager: repositoryManager)
+  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore, repositoryManager: repositoryManager)
 
   def setup() {
     componentId.value >> "componentId"
@@ -65,7 +68,7 @@ class BrowseComponentTest
           filter: 'foo')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, [], 'foo') >> browseNodes
+      1 * browseNodeStore.getChildrenByPath(repository, [], configuration.maxHtmlNodes,'foo') >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 root entries are returned'
@@ -88,7 +91,7 @@ class BrowseComponentTest
           filter: null)
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, ['com','boogie','down'], null) >> browseNodes
+      1 * browseNodeStore.getChildrenByPath(repository, ['com','boogie','down'], configuration.maxHtmlNodes, null) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -110,7 +113,7 @@ class BrowseComponentTest
         node: 'com/boo%2Fgie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, ['com','boo/gie','down'], null) >> browseNodes
+      1 * browseNodeStore.getChildrenByPath(repository, ['com','boo/gie','down'], configuration.maxHtmlNodes, null) >> browseNodes
     List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -123,7 +126,7 @@ class BrowseComponentTest
   def 'browse nodes are sorted'() {
     given: 'This repository and a list of browse nodes'
       repositoryManager.get(REPOSITORY_NAME) >> repository
-      browseNodeStore.getChildrenByPath(repository, [], null) >> [
+      browseNodeStore.getChildrenByPath(repository, [], configuration.maxHtmlNodes, null) >> [
           new BrowseNode(path: '1.0', componentId: componentId),
           new BrowseNode(path: '1.10-alpha', componentId: componentId),
           new BrowseNode(path: '1.10', componentId: componentId),

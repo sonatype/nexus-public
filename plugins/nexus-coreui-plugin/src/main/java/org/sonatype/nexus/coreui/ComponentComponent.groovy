@@ -20,7 +20,6 @@ import javax.ws.rs.WebApplicationException
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
-import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
@@ -100,7 +99,9 @@ class ComponentComponent
         blobRef: asset.blobRef() ? asset.blobRef().toString() : '',
         componentId: asset.componentId() ? asset.componentId().value : '',
         attributes: asset.attributes().backing(),
-        downloadCount: lastThirty
+        downloadCount: lastThirty,
+        createdBy: asset.createdBy(),
+        createdByIp: asset.createdByIp()
     )
   }
 
@@ -319,17 +320,11 @@ class ComponentComponent
   @Nullable
   AssetXO readAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
-    Asset asset
-    try {
-      storageTx.begin()
-      asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
-      if (asset == null) {
-        throw new WebApplicationException(Status.NOT_FOUND)
-      }
-    }
-    finally {
-      storageTx.close()
+
+    Asset asset = browseService.getAssetById(new DetachedEntityId(assetId), repository)
+
+    if (asset == null) {
+      throw new WebApplicationException(Status.NOT_FOUND)
     }
 
     ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)

@@ -40,6 +40,13 @@
               root: 'data',
               successProperty: 'success'
           }
+      },
+      listeners: {
+          beforeload: function (store) {
+              if (store.isLoading()) {
+                  return false;
+              }
+          }
       }
   });
 }());

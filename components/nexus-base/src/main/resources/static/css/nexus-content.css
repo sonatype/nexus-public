@@ -22,6 +22,10 @@ body {
   padding: 0;
 }
 
+body.htmlIndex {
+  padding: 0.5em;
+}
+
 .nexus-header {
   position: absolute;
   left: 0;

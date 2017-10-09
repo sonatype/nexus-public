@@ -31,18 +31,21 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.storage.StorageFacetImpl.Config;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
 import com.google.common.io.ByteStreams;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import static com.google.common.hash.HashCode.fromString;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -99,6 +102,9 @@ public class StorageFacetImplTest
   private ClientInfoProvider clientInfoProvider;
 
   @Mock
+  private ClientInfo clientInfo;
+
+  @Mock
   private ContentValidatorSelector contentValidatorSelector;
 
   @Mock
@@ -118,6 +124,9 @@ public class StorageFacetImplTest
 
   @Mock
   private Payload payload;
+
+  @Captor
+  private ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
   private StorageFacetImpl underTest;
 
@@ -187,6 +196,30 @@ public class StorageFacetImplTest
       assertThat(tempBlob.getHashes(), hasEntry(SHA1, fromString("b7e23ec29af22b0b4e41da31e868d57226121c84")));
       assertThat(tempBlob.getHashesVerified(), is(true));
       assertThat(tempBlob.getBlob(), is(blob));
+    }
+    verify(blobStore).deleteHard(blobId);
+  }
+
+  @Test
+  public void createTempBlob_uploader() throws Exception {
+    byte[] contents = "hello, world".getBytes(StandardCharsets.UTF_8);
+    underTest.doConfigure(configuration);
+    when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(blobStore.create(any(InputStream.class), Matchers.<Map<String, String>> any()))
+        .thenAnswer(invocationOnMock -> {
+          ByteStreams.toByteArray((InputStream) invocationOnMock.getArguments()[0]);
+          return blob;
+        });
+    when(blobMetrics.getContentSize()).thenReturn((long) contents.length);
+    when(clientInfoProvider.getCurrentThreadClientInfo()).thenReturn(clientInfo);
+    when(clientInfo.getRemoteIP()).thenReturn("10.1.1.1");
+    when(clientInfo.getUserid()).thenReturn("jpicard");
+    when(payload.openInputStream()).thenAnswer(invocationOnMock -> new ByteArrayInputStream(contents));
+    try (TempBlob tempBlob = underTest.createTempBlob(payload, singletonList(SHA1))) {
+      verify(blobStore).create(any(InputStream.class), mapArgumentCaptor.capture());
+
+      assertThat(mapArgumentCaptor.getValue(), hasEntry(BlobStore.CREATED_BY_IP_HEADER, "10.1.1.1"));
+      assertThat(mapArgumentCaptor.getValue(), hasEntry(BlobStore.CREATED_BY_HEADER, "jpicard"));
     }
     verify(blobStore).deleteHard(blobId);
   }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.group;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -207,7 +208,22 @@ public class GroupFacetImpl
       }
     }
 
-    return new ArrayList(leafMembers);
+    return new ArrayList<>(leafMembers);
+  }
+
+  @Override
+  public List<Repository> allMembers() {
+    return allMembers(new ArrayList<>(), getRepository());
+  }
+
+  private static List<Repository> allMembers(final List<Repository> members, final Repository root) {
+    members.add(root);
+    List<Repository> groupMembers = root.optionalFacet(GroupFacet.class).map(GroupFacet::members)
+        .orElseGet(Collections::emptyList);
+    for (Repository child : groupMembers) {
+        allMembers(members, child);
+      }
+    return members;
   }
 
   @Override

@@ -22,6 +22,9 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 import org.sonatype.nexus.orient.OClassNameBuilder;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,16 +35,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
-@Upgrades(model = DatabaseInstanceNames.COMPONENT, from = "1.5", to = "1.6")
-public class ComponentDatabaseUpgrade_1_6
+@Upgrades(model = DatabaseInstanceNames.COMPONENT, from = "1.6", to = "1.7")
+public class ComponentDatabaseUpgrade_1_7
     extends DatabaseUpgradeSupport
 {
+  private static final String ASSET = new OClassNameBuilder().type("asset").build();
+
   private static final String BROWSE_NODE = new OClassNameBuilder().type("browse_node").build();
 
   private final Provider<DatabaseInstance> componentDatabaseInstance;
 
   @Inject
-  public ComponentDatabaseUpgrade_1_6(
+  public ComponentDatabaseUpgrade_1_7(
       @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDatabaseInstance)
   {
     this.componentDatabaseInstance = checkNotNull(componentDatabaseInstance);
@@ -51,6 +56,15 @@ public class ComponentDatabaseUpgrade_1_6
   public void apply() throws Exception {
     withDatabaseAndClass(componentDatabaseInstance, BROWSE_NODE, (db, table) -> {
       db.getMetadata().getSchema().dropClass(BROWSE_NODE);
+    });
+
+    withDatabaseAndClass(componentDatabaseInstance, ASSET, (db, table) -> {
+      if (table.existsProperty(AssetEntityAdapter.P_CREATED_BY)) {
+        table.createProperty(AssetEntityAdapter.P_CREATED_BY, OType.STRING);
+      }
+      if (table.existsProperty(AssetEntityAdapter.P_CREATED_BY_IP)) {
+        table.createProperty(AssetEntityAdapter.P_CREATED_BY_IP, OType.STRING);
+      }
     });
   }
 }

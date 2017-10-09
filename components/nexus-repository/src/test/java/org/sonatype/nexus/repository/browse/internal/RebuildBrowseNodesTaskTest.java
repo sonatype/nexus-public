@@ -114,7 +114,7 @@ public class RebuildBrowseNodesTaskTest
         bucketStore,
         browseNodeWrapper,
         browseNodeStore,
-        new BrowseNodeConfiguration(true, true, LIMIT, 10000, 1000, 1000)
+        new BrowseNodeConfiguration(true, true, LIMIT, 10000, 10000, 1000, 1000)
     );
   }
 

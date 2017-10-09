@@ -86,6 +86,8 @@ public class StorageTxImpl
 
   private final String createdBy;
 
+  private final String createdByIp;
+
   private final BlobTx blobTx;
 
   private final ODatabaseDocumentTx db;
@@ -115,6 +117,7 @@ public class StorageTxImpl
   private NumberSequence retryDelay;
 
   public StorageTxImpl(final String createdBy,
+                       final String createdByIp,
                        final BlobTx blobTx,
                        final ODatabaseDocumentTx db,
                        final Bucket bucket,
@@ -128,6 +131,7 @@ public class StorageTxImpl
                        final MimeRulesSource mimeRulesSource)
   {
     this.createdBy = checkNotNull(createdBy);
+    this.createdByIp = checkNotNull(createdByIp);
     this.blobTx = checkNotNull(blobTx);
     this.db = checkNotNull(db);
     this.bucket = checkNotNull(bucket);
@@ -315,6 +319,13 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public Asset findAssetWithProperty(final String propName, final Object propValue, final Bucket bucket) {
     return assetEntityAdapter.findByProperty(db, propName, propValue, bucket);
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = ACTIVE)
+  public Asset findAssetWithProperty(final String propName, final Object propValue) {
+    return assetEntityAdapter.findByProperty(db, propName, propValue);
   }
 
   @Nullable
@@ -613,6 +624,7 @@ public class StorageTxImpl
     storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
     storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
     storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
+    storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);
     if (!skipContentVerification) {
       storageHeaders.put(
           BlobStore.CONTENT_TYPE_HEADER,
@@ -658,7 +670,16 @@ public class StorageTxImpl
       }
 
       // Mark assets whose checksums were not verified locally, for possible later verification
-      asset.attributes().child(PROVENANCE).set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
+      NestedAttributesMap provenance = asset.attributes().child(PROVENANCE);
+      provenance.set(HASHES_NOT_VERIFIED, !assetBlob.getHashesVerified());
+
+      Map<String, String> blobHeaders = assetBlob.getBlob().getHeaders();
+      if (blobHeaders.containsKey(BlobStore.CREATED_BY_HEADER)) {
+        asset.createdBy(blobHeaders.get(BlobStore.CREATED_BY_HEADER));
+      }
+      if (blobHeaders.containsKey(BlobStore.CREATED_BY_IP_HEADER)) {
+        asset.createdByIp(blobHeaders.get(BlobStore.CREATED_BY_IP_HEADER));
+      }
 
       assetBlob.setAttached(true);
     }

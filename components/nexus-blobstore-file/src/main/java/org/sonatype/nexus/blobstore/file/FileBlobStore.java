@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -435,10 +436,9 @@ public class FileBlobStore
       Lock lock = blob.lock();
       try {
         if (blob.isStale()) {
-          FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
-          boolean loaded = blobAttributes.load();
-          if (!loaded) {
-            log.warn("Attempt to access non-existent blob {} ({})", blobId, blobAttributes.getPath());
+          FileBlobAttributes blobAttributes = getFileBlobAttributes(blobId);
+          if (blobAttributes == null) {
+            log.warn("Attempt to access non-existent blob {} ({})", blobId, attributePath(blobId));
             return null;
           }
 
@@ -474,11 +474,9 @@ public class FileBlobStore
     try {
       log.debug("Soft deleting blob {}", blobId);
 
-      Path attribPath = attributePath(blobId);
-      FileBlobAttributes blobAttributes = new FileBlobAttributes(attribPath);
+      FileBlobAttributes blobAttributes = getFileBlobAttributes(blobId);
 
-      boolean loaded = blobAttributes.load();
-      if (!loaded) {
+      if (blobAttributes == null) {
         // This could happen under some concurrent situations (two threads try to delete the same blob)
         // but it can also occur if the deleted index refers to a manually-deleted blob.
         log.warn("Attempt to mark-for-delete non-existent blob {}", blobId);
@@ -516,8 +514,7 @@ public class FileBlobStore
       log.debug("Hard deleting blob {}", blobId);
 
       Path attributePath = attributePath(blobId);
-      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath);
-      Long contentSize = getContentSizeForDeletion(blobAttributes);
+      Long contentSize = getContentSizeForDeletion(blobId);
 
       Path blobPath = contentPath(blobId);
 
@@ -539,15 +536,11 @@ public class FileBlobStore
   }
 
   @Nullable
-  private Long getContentSizeForDeletion(final FileBlobAttributes blobAttributes) {
-    try {
-      blobAttributes.load();
-      return blobAttributes.getMetrics() != null ? blobAttributes.getMetrics().getContentSize() : null;
-    }
-    catch (Exception e) {
-      log.warn("Unable to load attributes {}, delete will not be added to metrics.", blobAttributes.getPath(), e);
-      return null;
-    }
+  private Long getContentSizeForDeletion(final BlobId blobId) {
+    return Optional.ofNullable(getFileBlobAttributes(blobId))
+          .map(BlobAttributes::getMetrics)
+          .map(BlobMetrics::getContentSize)
+          .orElse(null);
   }
 
 
@@ -797,11 +790,11 @@ public class FileBlobStore
       log.warn("Rebuilding deletions index file {}", deletedIndex);
       ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
       final AtomicInteger processed = new AtomicInteger();
-      int softDeletedBlobsFound = getAttributeFilePaths()
-          .map(FileBlobAttributes::new)
+      int softDeletedBlobsFound = getBlobIdStream()
+          .map(this::getFileBlobAttributes)
+          .filter(Objects::nonNull)
           .mapToInt(attributes -> {
             try {
-              attributes.load();
               if (attributes.isDeleted()) {
                 String blobId = getBlobIdFromAttributeFilePath(attributes.getPath());
                 deletedBlobIndex.add(blobId.getBytes(StandardCharsets.UTF_8));
@@ -912,15 +905,28 @@ public class FileBlobStore
     }
   }
 
+  @Nullable
   @Override
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
+    Path blobPath = attributePath(blobId);
     try {
-      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath(blobId));
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
       return blobAttributes.load() ? blobAttributes : null;
     }
-    catch (IOException e) {
-      log.error("Unable to load FileBlobAttributes for blob id: {}", blobId, e);
+    catch (Exception e) {
+      String msg = "Unable to load BlobAttributes for blob id: {}, path: {}";
+      if (log.isDebugEnabled()) {
+        log.error(msg, blobId, blobPath, e);
+      }
+      else {
+        log.error(msg, blobId, blobPath);
+      }
       return null;
     }
+  }
+
+  @Nullable
+  private FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
+    return (FileBlobAttributes) getBlobAttributes(blobId);
   }
 }

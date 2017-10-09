@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.MetadataNode;
@@ -51,6 +52,8 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -90,6 +93,8 @@ public class BrowseServiceImpl
 
   private final BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
 
+  private final BucketStore bucketStore;
+
   @Inject
   public BrowseServiceImpl(@Named(GroupType.NAME) final Type groupType,
                            final ComponentEntityAdapter componentEntityAdapter,
@@ -97,7 +102,8 @@ public class BrowseServiceImpl
                            final ContentPermissionChecker contentPermissionChecker,
                            final AssetEntityAdapter assetEntityAdapter,
                            final BrowseAssetsSqlBuilder browseAssetsSqlBuilder,
-                           final BrowseComponentsSqlBuilder browseComponentsSqlBuilder)
+                           final BrowseComponentsSqlBuilder browseComponentsSqlBuilder,
+                           final BucketStore bucketStore)
   {
     this.groupType = checkNotNull(groupType);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
@@ -106,6 +112,7 @@ public class BrowseServiceImpl
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.browseAssetsSqlBuilder = checkNotNull(browseAssetsSqlBuilder);
     this.browseComponentsSqlBuilder = checkNotNull(browseComponentsSqlBuilder);
+    this.bucketStore = checkNotNull(bucketStore);
   }
 
   @Override
@@ -327,5 +334,31 @@ public class BrowseServiceImpl
   List<Asset> getAssets(final Iterable<ODocument> results) {
     checkNotNull(results);
     return Lists.newArrayList(transform(results, assetEntityAdapter::readEntity));
+  }
+
+  @Override
+  public Asset getAssetById(final EntityId assetId, final Repository repository) {
+    List<Repository> members = allMembers(repository);
+
+    return Transactional.operation.withDb(repository.facet(StorageFacet.class).txSupplier()).call(() -> {
+      StorageTx tx = UnitOfWork.currentTx();
+      Asset candidate = tx.findAsset(assetId);
+      if (candidate != null) {
+        final String asssetBucketRepositoryName = bucketStore.getById(candidate.bucketId()).getRepositoryName();
+        if (members.stream().anyMatch(repo -> repo.getName().equals(asssetBucketRepositoryName))) {
+          return candidate;
+        }
+      }
+      return null;
+    });
+  }
+
+  private List<Repository> allMembers(final Repository repository) {
+    if (groupType.equals(repository.getType())) {
+      return repository.facet(GroupFacet.class).allMembers();
+    }
+    else {
+      return Collections.singletonList(repository);
+    }
   }
 }

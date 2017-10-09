@@ -55,7 +55,8 @@ public class Launcher
 
   private final JettyServer server;
 
-  public Launcher(final File defaultsFile, @Nullable final File propertiesFile) throws Exception {
+  public Launcher(final File defaultsFile, @Nullable final File propertiesFile,
+                  @Nullable final File nodeNamePropertiesFile) throws Exception {
 
     configureLogging();
 
@@ -65,6 +66,7 @@ public class Launcher
 
     builder.properties(defaultsFile, true);
     builder.properties(propertiesFile, false);
+    builder.properties(nodeNamePropertiesFile, "nexus.clustered.nodeName", false);
     builder.override(System.getProperties());
 
     Map<String, String> props = builder.build();

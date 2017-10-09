@@ -23,7 +23,6 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.OClassNameBuilder;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.storage.DatabaseThreadUtils;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.selector.CselAssetSql;
@@ -75,16 +74,12 @@ public class BrowseNodeSqlBuilder
 
   private final CselAssetSqlBuilder cselAssetSqlBuilder;
 
-  private final int maxNodes;
-
   @Inject
   public BrowseNodeSqlBuilder(final SelectorManager selectorManager,
-                              final CselAssetSqlBuilder cselAssetSqlBuilder,
-                              final BrowseNodeConfiguration configuration)
+                              final CselAssetSqlBuilder cselAssetSqlBuilder)
   {
     this.selectorManager = checkNotNull(selectorManager);
     this.cselAssetSqlBuilder = checkNotNull(cselAssetSqlBuilder);
-    this.maxNodes = checkNotNull(configuration).getMaxNodes();
   }
 
   /**
@@ -106,7 +101,8 @@ public class BrowseNodeSqlBuilder
                                                             final String authzRepositoryName,
                                                             final String format,
                                                             @Nullable final String filter,
-                                                            final Map<String, Object> parameters)
+                                                            final Map<String, Object> parameters,
+                                                            final int maxNodes)
   {
     parameters.put(P_REPOSITORY_NAME, assetRepositoryName);
     parameters.put(P_NODE_LIMIT, maxNodes);
@@ -124,7 +120,8 @@ public class BrowseNodeSqlBuilder
     if (!Strings2.isEmpty(filter)) {
       parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
       query.append(
-          String.format("and (asset_id is null or $asset.%s.toLowerCase() like :%s) ", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+          String.format("and (asset_id is null or $asset.%s.toLowerCase() like :%s) ", MetadataNodeEntityAdapter.P_NAME,
+              P_FILTER));
     }
     query.append("and ");
     query.append(getAuthorizationWhereClause(authzRepositoryName, format, parameters, true));
@@ -147,7 +144,8 @@ public class BrowseNodeSqlBuilder
   public String getBrowseNodesQuery(@Nullable final ORID parentId,
                                     final String assetRepositoryName,
                                     @Nullable final String filter,
-                                    final Map<String, Object> parameters)
+                                    final Map<String, Object> parameters,
+                                    final int maxNodes)
   {
     parameters.put(P_REPOSITORY_NAME, assetRepositoryName);
     parameters.put(P_NODE_LIMIT, maxNodes);
@@ -163,7 +161,8 @@ public class BrowseNodeSqlBuilder
     }
     if (!Strings2.isEmpty(filter)) {
       parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
-      query.append(String.format("and (%s is null or %s.%s.toLowerCase() like :%s) ", P_ASSET_ID, P_ASSET_ID, MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+      query.append(String.format("and (%s is null or %s.%s.toLowerCase() like :%s) ", P_ASSET_ID, P_ASSET_ID,
+          MetadataNodeEntityAdapter.P_NAME, P_FILTER));
     }
     query.append(String.format("limit :%s", P_NODE_LIMIT));
 

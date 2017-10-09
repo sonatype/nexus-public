@@ -127,7 +127,7 @@ public class RebuildBrowseNodesManagerTest
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, securityHelper,
-        new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder(), new BrowseNodeConfiguration()),
+        new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder()),
         new BrowseNodeConfiguration());
     underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler,
         repositoryManager, configuration);

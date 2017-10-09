@@ -213,6 +213,7 @@ public class StorageFacetImpl
         ImmutableMap.of(
             BlobStore.BLOB_NAME_HEADER, "temp",
             BlobStore.CREATED_BY_HEADER, createdBy(),
+            BlobStore.CREATED_BY_IP_HEADER, createdByIp(),
             BlobStore.TEMPORARY_BLOB_HEADER, ""));
     return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
   }
@@ -240,12 +241,25 @@ public class StorageFacetImpl
     return clientInfo.getUserid();
   }
 
+  /**
+   * Returns the "principal name" to be used with current instance of {@link StorageTx}.
+   */
+  @Nonnull
+  private String createdByIp() {
+    ClientInfo clientInfo = clientInfoProvider.getCurrentThreadClientInfo();
+    if (clientInfo == null || clientInfo.getRemoteIP() == null) {
+      return "system";
+    }
+    return clientInfo.getRemoteIP();
+  }
+
   @Nonnull
   private StorageTx openStorageTx(final ODatabaseDocumentTx db) {
     BlobStore blobStore = blobStoreManager.get(config.blobStoreName);
     return StateGuardAspect.around(
         new StorageTxImpl(
             createdBy(),
+            createdByIp(),
             new BlobTx(nodeAccess, blobStore),
             db,
             bucket,

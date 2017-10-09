@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
@@ -27,6 +29,8 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -47,11 +51,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -106,6 +112,9 @@ public class BrowseServiceImplTest
   @Mock
   AssetEntityAdapter assetEntityAdapter;
 
+  @Mock
+  BucketStore bucketStore;
+
   BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
 
   BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
@@ -133,7 +142,7 @@ public class BrowseServiceImplTest
     browseComponentsSqlBuilder = new BrowseComponentsSqlBuilder(componentEntityAdapter);
 
     underTest = spy(new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder));
+        contentPermissionChecker, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder, bucketStore));
   }
 
   @Test
@@ -207,6 +216,63 @@ public class BrowseServiceImplTest
 
     assertThat(params.get("browsedRepository"), is("releases"));
     assertThat(params.get("rid"), is("assetOne"));
+  }
+
+  @Test
+  public void testGetAssetById_withEntityId() {
+    EntityId assetId = new DetachedEntityId(assetOneORID.toString());
+    EntityId bucketId = mock(EntityId.class);
+    Bucket bucket = mock(Bucket.class);
+
+    when(storageTx.findAsset(assetId)).thenReturn(assetOne);
+    when(assetOne.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("releases");
+
+    when(assetEntityAdapter.readEntity(assetOneDoc)).thenReturn(assetOne);
+
+    assertThat(underTest.getAssetById(assetId, mavenReleases), is(assetOne));
+  }
+
+  @Test
+  public void testGetAssetById_withEntityId_groupRepository() {
+    EntityId assetId = new DetachedEntityId(assetOneORID.toString());
+    EntityId bucketId = mock(EntityId.class);
+    Bucket bucket = mock(Bucket.class);
+
+    when(storageTx.findAsset(assetId)).thenReturn(assetOne);
+    when(assetOne.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("releases");
+
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(new GroupType());
+    when(groupRepository.getName()).thenReturn("group-repository");
+    when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.allMembers()).thenReturn(Arrays.asList(groupRepository, mavenReleases));
+    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+
+    when(assetEntityAdapter.readEntity(assetOneDoc)).thenReturn(assetOne);
+
+    assertThat(underTest.getAssetById(assetId, groupRepository), is(assetOne));
+    verify(groupFacet).allMembers();
+  }
+
+  @Test
+  public void testGetAssetById_withEntityId_wrongRepository() {
+    EntityId assetId = new DetachedEntityId(assetOneORID.toString());
+    EntityId bucketId = mock(EntityId.class);
+    Bucket bucket = mock(Bucket.class);
+
+    when(storageTx.findAsset(assetId)).thenReturn(assetOne);
+    when(assetOne.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("some-other-repository");
+
+    when(assetEntityAdapter.readEntity(assetOneDoc)).thenReturn(assetOne);
+
+    assertNull(underTest.getAssetById(assetId, mavenReleases));
   }
 
   @Test

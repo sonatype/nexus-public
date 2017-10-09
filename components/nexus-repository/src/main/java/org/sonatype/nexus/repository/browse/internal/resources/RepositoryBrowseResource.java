@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,16 +33,20 @@ import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.encoding.EncodingUtil;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.internal.model.BrowseListItem;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.rest.Resource;
@@ -48,10 +54,13 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.Iterables;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.sonatype.nexus.common.encoding.EncodingUtil.urlEncode;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
@@ -75,29 +84,38 @@ public class RepositoryBrowseResource
 
   private final BrowseNodeStore browseNodeStore;
 
+  private final BrowseNodeConfiguration configuration;
+
   private final TemplateHelper templateHelper;
 
   private final SecurityHelper securityHelper;
 
   private final URL template;
 
+  private final BucketStore bucketStore;
+
   @Inject
   public RepositoryBrowseResource(final RepositoryManager repositoryManager,
                                   final BrowseNodeStore browseNodeStore,
+                                  final BrowseNodeConfiguration configuration,
+                                  final BucketStore bucketStore,
                                   final TemplateHelper templateHelper,
                                   final SecurityHelper securityHelper)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.browseNodeStore = checkNotNull(browseNodeStore);
+    this.configuration = checkNotNull(configuration);
     this.templateHelper = checkNotNull(templateHelper);
     this.securityHelper = checkNotNull(securityHelper);
+    this.bucketStore = checkNotNull(bucketStore);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
     checkNotNull(template);
   }
 
   @GET
   public Response getHtml(@PathParam("repositoryName") final String repositoryName,
-                          @PathParam("repositoryPath") final String repositoryPath, @Context final UriInfo uriInfo)
+                          @PathParam("repositoryPath") final String repositoryPath,
+                          @Context final UriInfo uriInfo)
   {
     log.debug("Get HTML directory listing for repository {} on path {}", repositoryName, repositoryPath);
 
@@ -108,9 +126,8 @@ public class RepositoryBrowseResource
 
     Repository repository = repositoryManager.get(repositoryName);
 
-    if (repository == null || !securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
-      log.debug("Requested repository could not be located or user does not have permission: {} ",repositoryName);
-      throw new WebApplicationException("Repository not found", NOT_FOUND);
+    if (repository == null) {
+      throwNotFound(repositoryName);
     }
 
     List<String> pathSegments = new ArrayList<>();
@@ -119,15 +136,23 @@ public class RepositoryBrowseResource
       pathSegments = asList(EncodingUtil.urlDecode(repositoryPath.split("/")));
     }
 
-    Iterable<BrowseNode> browseNodes = browseNodeStore.getChildrenByPath(repository, pathSegments, null);
+    Iterable<BrowseNode> browseNodes = browseNodeStore.getChildrenByPath(repository, pathSegments, configuration.getMaxHtmlNodes(), null);
 
-    if (browseNodes == null) {
+    if (browseNodes == null && securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
       log.debug("Requested path {} could not be located in repository {}", repositoryPath, repositoryName);
       throw new WebApplicationException("Path not found", NOT_FOUND);
     }
+    else if (browseNodes == null || Iterables.isEmpty(browseNodes)) {
+      throwNotFound(repositoryName);
+    }
 
-    return Response.ok(templateHelper.render(template,
-        initializeTemplateParameters(repositoryPath, toListItems(browseNodes, repository, repositoryPath)))).build();
+    return Response.ok(templateHelper.render(template, initializeTemplateParameters(repositoryName, repositoryPath,
+        toListItems(browseNodes, repository, repositoryPath)))).build();
+  }
+
+  private void throwNotFound(final String repositoryName) {
+    log.debug("Requested repository could not be located or user does not have permission: {} ", repositoryName);
+    throw new WebApplicationException("Repository not found", NOT_FOUND);
   }
 
   private List<BrowseListItem> toListItems(final Iterable<BrowseNode> browseNodes, final Repository repository, final String path) {
@@ -139,10 +164,7 @@ public class RepositoryBrowseResource
         String lastModified = null;
         String listItemPath;
         if (browseNode.getAssetId() != null) {
-          Asset asset = Transactional.operation.withDb(repository.facet(StorageFacet.class).txSupplier()).call(() -> {
-            StorageTx tx = UnitOfWork.currentTx();
-            return tx.findAsset(browseNode.getAssetId(), tx.findBucket(repository));
-          });
+          Asset asset = getAssetById(repository, browseNode.getAssetId());
 
           if (asset == null) {
             log.error("Could not find expected asset (id): {}/{} ({}) in repository: {}", path, browseNode.getPath(),
@@ -168,6 +190,25 @@ public class RepositoryBrowseResource
     return listItems;
   }
 
+  private Asset getAssetById(final Repository repository, final EntityId assetId) {
+    Optional<GroupFacet> optionalGroupFacet = repository.optionalFacet(GroupFacet.class);
+    List<Repository> members = optionalGroupFacet.isPresent() ? optionalGroupFacet.get().allMembers()
+        : Collections.singletonList(repository);
+
+    return Transactional.operation.withDb(repository.facet(StorageFacet.class).txSupplier()).call(() -> {
+      StorageTx tx = UnitOfWork.currentTx();
+      Asset candidate = tx.findAsset(assetId);
+      if (candidate != null) {
+        final String asssetBucketRepositoryName = bucketStore.getById(candidate.bucketId()).getRepositoryName();
+        if (members.stream().anyMatch(repo -> repo.getName().equals(asssetBucketRepositoryName))) {
+          return candidate;
+        }
+      }
+
+      return null;
+    });
+  }
+
   private Iterable<BrowseNode> sort(final Iterable<BrowseNode> nodes) {
     List<BrowseNode> sortedBrowseNodes = new ArrayList<>();
     nodes.forEach(sortedBrowseNodes::add);
@@ -185,7 +226,7 @@ public class RepositoryBrowseResource
     return sortedBrowseNodes;
   }
 
-  private TemplateParameters initializeTemplateParameters(final String path, final List<BrowseListItem> listItems) {
+  private TemplateParameters initializeTemplateParameters(final String repositoryName, final String path, final List<BrowseListItem> listItems) {
     TemplateParameters templateParameters = templateHelper.parameters();
 
     if (isRoot(path)) {
@@ -195,12 +236,23 @@ public class RepositoryBrowseResource
     templateParameters.set("requestPath", "/" + path);
     templateParameters.set("listItems", listItems);
 
+    templateParameters.set("showMoreContentWarning", configuration.getMaxHtmlNodes() == listItems.size());
+    templateParameters.set("restUrl", "/swagger-ui/");
+    if (Strings2.isBlank(path)) {
+      templateParameters.set("encodedPath", String.format("/#browse/browse:%s", repositoryName));
+    }
+    else {
+      String encodedPath = urlEncode("/" + path + "/");
+      templateParameters.set("encodedPath", String.format("/#browse/browse:%s:%s", repositoryName, encodedPath));
+    }
+    templateParameters.set("searchUrl", "/#browse/search");
+
     return templateParameters;
   }
 
   private String getListItemPath(final Repository repository, final BrowseNode browseNode, final Asset asset) {
     if (asset == null) {
-      return EncodingUtil.urlEncode(browseNode.getPath()) + "/";
+      return urlEncode(browseNode.getPath()) + "/";
     }
 
     return repository.getUrl() + "/" + asset.name();

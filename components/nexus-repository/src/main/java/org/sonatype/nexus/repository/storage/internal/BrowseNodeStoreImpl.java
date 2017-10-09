@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -138,15 +139,16 @@ public class BrowseNodeStoreImpl
   @Guarded(by = STARTED)
   public Iterable<BrowseNode> getChildrenByPath(final Repository repository,
                                                 final Iterable<String> pathSegments,
+                                                final int maxNodes,
                                                 final String filter)
   {
     String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
     if (repository.getType() instanceof GroupType) {
-      return getChildrenByPath(getRepositoryNamesFromGroup(repository), format, pathSegments, repositoryName, filter);
+      return getChildrenByPath(getRepositoryNamesFromGroup(repository), format, pathSegments, repositoryName, maxNodes, filter);
     }
     else {
-      return getChildrenByPath(repository.getName(), format, pathSegments, repositoryName, filter);
+      return getChildrenByPath(repository.getName(), format, pathSegments, repositoryName, maxNodes, filter);
     }
   }
 
@@ -236,10 +238,11 @@ public class BrowseNodeStoreImpl
                                                  final String format,
                                                  final Iterable<String> pathSegments,
                                                  final String repositoryNameForPermission,
+                                                 final int maxNodes,
                                                  final String filter)
   {
     try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
-      return entityAdapter.getChildrenByPath(db, pathSegments, repositoryName, repositoryNameForPermission, format, filter);
+      return entityAdapter.getChildrenByPath(db, pathSegments, repositoryName, repositoryNameForPermission, format, maxNodes, filter);
     }
   }
 
@@ -247,12 +250,13 @@ public class BrowseNodeStoreImpl
                                                  final String format,
                                                  final Iterable<String> pathSegments,
                                                  final String repositoryNameForPermission,
+                                                 final int maxNodes,
                                                  final String filter)
   {
     Set<String> nodeNames = new HashSet<>();
     List<BrowseNode> children = null;
     for (String repositoryName : repositoryNames) {
-      Iterable<BrowseNode> nodes = getChildrenByPath(repositoryName, format, pathSegments, repositoryNameForPermission, filter);
+      Iterable<BrowseNode> nodes = getChildrenByPath(repositoryName, format, pathSegments, repositoryNameForPermission, maxNodes, filter);
       if (nodes == null) {
         continue;
       }

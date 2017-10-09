@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -93,13 +94,17 @@ public class MavenRestoreBlobStrategyTest
   @Mock
   MavenFacet mavenFacet;
 
+  @Mock
+  DryRunPrefix dryRunPrefix;
+
   Properties properties = new Properties();
 
   byte[] blobBytes = "blobbytes".getBytes();
 
   @Before
   public void setup() throws IOException {
-    underTest = new MavenRestoreBlobStrategy(maven2MavenPathParser, nodeAccess, repositoryManager, blobStoreManager);
+    underTest = new MavenRestoreBlobStrategy(maven2MavenPathParser, nodeAccess, repositoryManager, blobStoreManager,
+        dryRunPrefix);
     properties.setProperty("@BlobStore.blob-name", "org/codehaus/plexus/plexus/3.1/plexus-3.1.pom");
     properties.setProperty("@Bucket.repo-name", "test-repo");
     properties.setProperty("size", "1000");

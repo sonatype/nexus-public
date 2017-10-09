@@ -304,7 +304,7 @@ public class RepositoryManagerImpl
     checkNotNull(configuration);
     String repositoryName = checkNotNull(configuration.getRepositoryName());
 
-    log.debug("Creating repository: {} -> {}", repositoryName, configuration);
+    log.info("Creating repository: {} -> {}", repositoryName, configuration);
 
     Repository repository = newRepository(configuration);
 
@@ -353,7 +353,7 @@ public class RepositoryManagerImpl
     checkNotNull(name);
     databaseFreezeService.checkUnfrozen("Unable to delete repository when database is frozen.");
 
-    log.debug("Deleting repository: {}", name);
+    log.info("Deleting repository: {}", name);
 
     Repository repository = repository(name);
     Configuration configuration = repository.getConfiguration();

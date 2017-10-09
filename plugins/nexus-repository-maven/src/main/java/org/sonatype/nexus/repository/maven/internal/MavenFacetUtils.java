@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +49,9 @@ import com.google.common.hash.HashingOutputStream;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.common.app.VersionComparator.version;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -62,6 +66,12 @@ public final class MavenFacetUtils
   private MavenFacetUtils() {
     // nop
   }
+
+  /**
+   * Version comparator that uses version scheme to sort version strings directly on the component.
+   */
+  public static final Comparator<Component> COMPONENT_VERSION_COMPARATOR = Comparator
+      .comparing(o -> version(o.version()));
 
   /**
    * Finds component in given repository by maven path.
@@ -96,6 +106,21 @@ public final class MavenFacetUtils
   {
     // The maven path is stored in the asset 'name' field, which is indexed (the maven format-specific key is not).
     return tx.findAssetWithProperty(P_NAME, mavenPath.getPath(), bucket);
+  }
+
+  /**
+   * Is a given Component a release
+   */
+  public static boolean isRelease(final Component component) {
+    return !isSnapshot(component);
+  }
+
+  /**
+   * Is a given Component a snapshot
+   */
+  public static boolean isSnapshot(final Component component) {
+    String baseVersion = (String) component.attributes().child(Maven2Format.NAME).get(P_BASE_VERSION);
+    return baseVersion != null && baseVersion.endsWith(SNAPSHOT_VERSION_SUFFIX);
   }
 
   /**

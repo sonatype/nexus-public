@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.group;
 
+import java.util.Optional;
+
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -104,6 +106,18 @@ public class GroupFacetImplTest
     assertThat(underTest.leafMembers(), contains(hosted1, hosted2));
   }
 
+  @Test
+  public void testAllMembers() throws Exception {
+    Repository hosted1 = hostedRepository("hosted1");
+    Repository group1 = groupRepository("group1", hosted1);
+    underTest.attach(group1);
+
+    for (Repository repo : underTest.allMembers()) {
+      System.out.println(repo.getName());
+    }
+    assertThat(underTest.allMembers(), contains(group1, hosted1));
+  }
+
   private ConstraintViolationFactory makeConstraintViolationFactory() {
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
     when(constraintViolationFactory.createViolation(anyString(), anyString()))
@@ -130,6 +144,7 @@ public class GroupFacetImplTest
     when(hostedRepository.getType()).thenReturn(new HostedType());
     when(hostedRepository.getName()).thenReturn(name);
     when(hostedRepository.getFormat()).thenReturn(format);
+    when(hostedRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
     when(repositoryManager.get(name)).thenReturn(hostedRepository);
     return hostedRepository;
   }
@@ -142,6 +157,7 @@ public class GroupFacetImplTest
     when(repositoryManager.get(name)).thenReturn(groupRepository);
     GroupFacet groupFacet = mock(GroupFacet.class);
     when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
     when(groupFacet.members()).thenReturn(copyOf(repositories));
     return groupRepository;
   }

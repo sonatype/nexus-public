@@ -133,12 +133,12 @@ public class BrowseNodeStoreImplTest
   }
 
   private BrowseNodeStoreImpl createBrowseNodeStoreImpl() {
-    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 1000, 10, 2);
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 1000, 1000, 10, 2);
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, securityHelper,
-        new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder(), configuration), configuration);
+        new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder()), configuration);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       bucketEntityAdapter.register(db);
@@ -213,7 +213,7 @@ public class BrowseNodeStoreImplTest
       browseNodeEntityAdapter.addEntity(db, rootNode);
     }
 
-    List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(repository, Collections.emptyList(), null));
+    List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(repository, Collections.emptyList(), 100, null));
     assertThat(nodes, hasSize(1));
     assertThat(EntityHelper.id(nodes.get(0)), is(EntityHelper.id(rootNode)));
   }
@@ -236,7 +236,7 @@ public class BrowseNodeStoreImplTest
     }
 
     List<EntityId> ids = new ArrayList<>();
-    underTest.getChildrenByPath(groupRepository, Collections.emptyList(), null).forEach(
+    underTest.getChildrenByPath(groupRepository, Collections.emptyList(), 100, null).forEach(
         node -> ids.add(EntityHelper.id(node)));
     assertThat(ids, hasSize(2));
     assertThat(ids, contains(EntityHelper.id(groupMetadataNode), EntityHelper.id(rootNode)));
@@ -257,7 +257,7 @@ public class BrowseNodeStoreImplTest
     Repository groupRepository = createGroupRepository(Collections.singletonList(repository), "bar");
 
     List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(groupRepository, Collections.emptyList(),
-        null));
+        100, null));
     assertThat(nodes, empty());
   }
 
@@ -266,7 +266,7 @@ public class BrowseNodeStoreImplTest
     when(repository.getName()).thenReturn("foo");
     Repository groupRepository = createGroupRepository(Collections.singletonList(repository), "bar");
 
-    assertNull(underTest.getChildrenByPath(groupRepository, Collections.emptyList(), null));
+    assertNull(underTest.getChildrenByPath(groupRepository, Collections.emptyList(), 100, null));
   }
 
   private Repository createGroupRepository(final List<Repository> repositories, final String name) {
@@ -310,7 +310,7 @@ public class BrowseNodeStoreImplTest
     BrowseNode node = new BrowseNode();
     BrowseNode node2 = new BrowseNode();
 
-    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 10000, 10, 10);
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 10000, 10000, 10, 10);
     underTest = new BrowseNodeStoreImpl(database.getInstanceProvider(), entityAdapter, configuration);
 
     when(entityAdapter.getByAssetId(any(), eq(id))).thenReturn(Arrays.asList(node, node2));
@@ -345,11 +345,11 @@ public class BrowseNodeStoreImplTest
       underTest.createNodes(REPOSITORY_NAME, Arrays.asList("asset" + i));
     }
 
-    assertThat(Iterables.size(underTest.getChildrenByPath(repository, Collections.emptyList(), null)), is(20));
+    assertThat(Iterables.size(underTest.getChildrenByPath(repository, Collections.emptyList(), 100, null)), is(20));
 
     underTest.truncateRepository(REPOSITORY_NAME);
 
-    assertThat(Iterables.size(underTest.getChildrenByPath(repository, Collections.emptyList(), null)), is(0));
+    assertThat(Iterables.size(underTest.getChildrenByPath(repository, Collections.emptyList(), 100, null)), is(0));
   }
 
   @Test

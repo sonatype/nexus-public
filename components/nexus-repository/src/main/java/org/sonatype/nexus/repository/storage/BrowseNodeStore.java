@@ -63,10 +63,12 @@ public interface BrowseNodeStore
   /**
    * Get the list of nodes found under the specified tree path. (Filtered by permissions)
    *
+   * @param maxNodes
+   *
    * @return the children or null if the path does not exist
    */
   @Nullable
-  Iterable<BrowseNode> getChildrenByPath(Repository repository, Iterable<String> pathSegments, @Nullable String filter);
+  Iterable<BrowseNode> getChildrenByPath(Repository repository, Iterable<String> pathSegments, int maxNodes, @Nullable String filter);
 
   /**
    * Save a node to the store

@@ -745,10 +745,12 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     //remove the side panel which if there, is showing old data
     me.removeSideContent();
 
-    //this will trigger the tree to be reloaded
-    componentAssetTreeStore.setRootNode({
-      expanded: true
-    });
+    if (!componentAssetTreeStore.isLoading()) {
+      //this will trigger the tree to be reloaded
+      componentAssetTreeStore.setRootNode({
+          expanded: true
+      });
+    }
   }
 
 });

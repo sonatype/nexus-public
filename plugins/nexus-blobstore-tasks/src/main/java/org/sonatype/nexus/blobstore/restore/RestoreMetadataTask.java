@@ -29,7 +29,6 @@ import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
-import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -41,14 +40,12 @@ import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
-import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
  * @since 3.4
  */
 @Named
-@TaskLogging(TASK_LOG_ONLY_WITH_PROGRESS)
 public class RestoreMetadataTask
     extends TaskSupport
     implements Cancelable

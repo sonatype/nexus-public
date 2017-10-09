@@ -58,11 +58,12 @@ public class LauncherActivator
 
     final File defaultsFile = new File(baseDir, "etc/nexus-default.properties");
     final File propertiesFile = new File(dataDir, "etc/nexus.properties");
+    final File nodeNamePropertiesFile = new File(dataDir, "etc/node-name.properties");
 
     maybeCopyDefaults(defaultsFile, propertiesFile);
 
     MDC.put("userId", SYSTEM_USERID);
-    launcher = new Launcher(defaultsFile, propertiesFile);
+    launcher = new Launcher(defaultsFile, propertiesFile, nodeNamePropertiesFile);
     launcher.startAsync(
         () -> {
           connectorConfigurationTracker = new ConnectorConfigurationTracker(

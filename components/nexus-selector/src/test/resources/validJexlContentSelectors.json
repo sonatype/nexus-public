@@ -365,5 +365,7 @@
     "coordinate.version == \"3.5.0\"",
     "coordinate.extension == \"pom\"",
     "coordinate.classifier == \"sources\"",
-    "coordinate.id == \"id\""
+    "coordinate.id == \"id\"",
+    "format =^ \"maven2\"",
+    "format =^ \"maven2\" && path =^ \"/path\""
 ]

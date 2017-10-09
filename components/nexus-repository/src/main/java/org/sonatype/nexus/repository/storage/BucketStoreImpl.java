@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -57,6 +58,13 @@ public class BucketStoreImpl
   {
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       return entityAdapter.read(db, repositoryName);
+    }
+  }
+
+  @Override
+  public Bucket getById(final EntityId bucketId) {
+    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
+      return entityAdapter.read(db, bucketId);
     }
   }
 }

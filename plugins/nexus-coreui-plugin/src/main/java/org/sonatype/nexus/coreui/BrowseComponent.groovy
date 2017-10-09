@@ -12,27 +12,26 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.sonatype.nexus.common.app.VersionComparator
-import org.sonatype.nexus.common.text.Strings2
+import javax.annotation.Nullable
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
 
-import com.codahale.metrics.annotation.ExceptionMetered
-import com.codahale.metrics.annotation.Timed
-import com.softwarementors.extjs.djn.config.annotations.DirectAction
-import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import org.sonatype.nexus.common.app.VersionComparator
 import org.sonatype.nexus.common.encoding.EncodingUtil
+import org.sonatype.nexus.common.text.Strings2
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.storage.BrowseNode
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
-import javax.annotation.Nullable
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
+import com.codahale.metrics.annotation.ExceptionMetered
+import com.codahale.metrics.annotation.Timed
+import com.softwarementors.extjs.djn.config.annotations.DirectAction
+import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 
 /**
  * Browse {@link DirectComponent}.
@@ -59,7 +58,7 @@ class BrowseComponent
   @Inject
   RepositoryManager repositoryManager
 
-  VersionComparator versionComparator = new VersionComparator()
+  final VersionComparator versionComparator = new VersionComparator()
 
   @DirectMethod
   @Timed
@@ -79,7 +78,7 @@ class BrowseComponent
       pathSegments = path.split('/').collect EncodingUtil.&urlDecode
     }
 
-    return browseNodeStore.getChildrenByPath(repository, pathSegments, filter).collect { browseNode ->
+    return browseNodeStore.getChildrenByPath(repository, pathSegments, configuration.maxNodes, filter).collect { browseNode ->
       def encodedPath = EncodingUtil.urlEncode(browseNode.path)
       new BrowseNodeXO(
           id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),
@@ -110,7 +109,7 @@ class BrowseComponent
   @Override
   @Nullable
   Map<String, Object> getState() {
-    return ['browseComponentAssetTree': configuration.isEnabled(), 'browseTreeMaxNodes': configuration.getMaxNodes()]
+    return ['browseComponentAssetTree': configuration.enabled, 'browseTreeMaxNodes': configuration.maxNodes]
   }
 
   def isRoot(String path) {

@@ -30,42 +30,41 @@ public class BrowseNodeConfiguration
    */
   public static final String ENABLED = "nexus.browse.component.tree.enabled";
 
+  private final boolean enabled;
+
+  private final boolean automaticRebuild;
+
   private final int rebuildPageSize;
+
+  private final int maxNodes;
+
+  private final int maxHtmlNodes;
 
   private final int maxTruncateCount;
 
   private final int maxUpdateChildCount;
-
-  private final boolean automaticRebuild;
-
-  private final boolean enabled;
-
-  private final int maxNodes;
 
   @Inject
   public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.enabled:-false}") final boolean enabled,
                                  @Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
                                  @Named("${nexus.browse.component.tree.rebuildPageSize:-1000}") final int rebuildPageSize,
                                  @Named("${nexus.browse.component.tree.maxNodes:-10000}") final int maxNodes,
+                                 @Named("${nexus.browse.component.tree.maxHtmlNodes:-10000}") final int maxHtmlNodes,
                                  @Named("${nexus.browse.component.tree.maxTruncateNodes:-1000}") final int maxTruncateCount,
                                  @Named("${nexus.browse.component.tree.maxUpdateChildNodes:-1000}") final int maxUpdateChildCount)
   {
     this.enabled = enabled;
     this.automaticRebuild = automaticRebuild;
+    this.rebuildPageSize = rebuildPageSize;
     this.maxNodes = maxNodes;
+    this.maxHtmlNodes = maxHtmlNodes;
     this.maxTruncateCount = maxTruncateCount;
     this.maxUpdateChildCount = maxUpdateChildCount;
-    this.rebuildPageSize = rebuildPageSize;
   }
 
   @VisibleForTesting
   public BrowseNodeConfiguration() {
-    this.enabled = true;
-    this.automaticRebuild = true;
-    this.maxNodes = 10000;
-    this.maxTruncateCount = 1000;
-    this.maxUpdateChildCount = 1000;
-    this.rebuildPageSize = 1000;
+    this(true, true, 1000, 10000, 10000, 1000, 1000);
   }
 
   /**
@@ -80,6 +79,14 @@ public class BrowseNodeConfiguration
    */
   public int getMaxNodes() {
     return maxNodes;
+  }
+
+  /**
+   * @since 3.7
+   * @return the maximum number of nodes to display in the browse html view (for a given level of the tree)
+   */
+  public int getMaxHtmlNodes() {
+    return maxHtmlNodes;
   }
 
   /**

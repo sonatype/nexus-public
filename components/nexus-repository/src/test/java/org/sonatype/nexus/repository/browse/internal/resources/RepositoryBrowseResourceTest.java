@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.repository.browse.internal.resources;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -27,13 +29,18 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.internal.model.BrowseListItem;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.security.SecurityHelper;
 
@@ -54,6 +61,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unchecked")
 public class RepositoryBrowseResourceTest
     extends TestSupport
 {
@@ -91,6 +99,14 @@ public class RepositoryBrowseResourceTest
   @Mock
   private Asset asset;
 
+  private BrowseNodeConfiguration configuration = new BrowseNodeConfiguration();
+
+  @Mock
+  private BucketStore bucketStore;
+
+  @Mock
+  private Bucket bucket;
+
   private RepositoryBrowseResource underTest;
 
   @Before
@@ -104,19 +120,30 @@ public class RepositoryBrowseResourceTest
     when(repository.getFormat()).thenReturn(new Format("format") {});
     when(repository.getType()).thenReturn(new ProxyType());
 
+    when(repository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(txSupplier);
     when(txSupplier.get()).thenReturn(storageTx);
 
-    when(storageTx.findAsset(any(), any())).thenReturn(asset);
+    when(storageTx.findAsset(any())).thenReturn(asset);
 
-    when(browseNodeStore.getChildrenByPath(repository, Collections.emptyList(), null)).thenReturn(
-        Collections.singleton(new BrowseNode().withRepositoryName("repositoryName").withPath("org")));
-    when(browseNodeStore.getChildrenByPath(repository, Collections.singletonList("org"), null))
+    EntityId bucketId = mock(EntityId.class);
+    when(asset.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("repositoryName");
+
+
+    when(browseNodeStore
+        .getChildrenByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .thenReturn(Collections.singleton(new BrowseNode().withRepositoryName("repositoryName").withPath("org")));
+    when(browseNodeStore
+        .getChildrenByPath(repository, Collections.singletonList("org"), configuration.getMaxHtmlNodes(), null))
         .thenReturn(Collections.singleton(new BrowseNode().withRepositoryName("repositoryName").withPath("sonatype")));
     when(repositoryManager.get("repositoryName")).thenReturn(repository);
 
-    underTest = new RepositoryBrowseResource(repositoryManager, browseNodeStore, templateHelper, securityHelper);
+    underTest = new RepositoryBrowseResource(repositoryManager, browseNodeStore, configuration, bucketStore,
+        templateHelper, securityHelper);
   }
 
   @Test
@@ -166,7 +193,8 @@ public class RepositoryBrowseResourceTest
         new BrowseNode().withRepositoryName("repositoryName").withPath("Org"),
         new BrowseNode().withRepositoryName("repositoryName").withPath("com"),
         new BrowseNode().withRepositoryName("repositoryName").withPath("B.txt").withAssetId(mock(EntityId.class)));
-    when(browseNodeStore.getChildrenByPath(repository, Collections.emptyList(), null)).thenReturn(nodes);
+    when(browseNodeStore.getChildrenByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .thenReturn(nodes);
 
     underTest.getHtml("repositoryName", "", uriInfo);
 
@@ -190,9 +218,47 @@ public class RepositoryBrowseResourceTest
     when(asset.blobUpdated()).thenReturn(new DateTime(0));
     when(asset.name()).thenReturn("a1.txt");
     when(repository.getUrl()).thenReturn("http://foo/bar");
-    when(browseNodeStore.getChildrenByPath(repository, Collections.emptyList(), null)).thenReturn(nodes);
+    when(browseNodeStore.getChildrenByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .thenReturn(nodes);
 
     underTest.getHtml("repositoryName", "", uriInfo);
+
+    ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
+    verify(templateHelper).render(any(), argument.capture());
+
+    List<BrowseListItem> listItems = (List<BrowseListItem>) argument.getValue().get().get("listItems");
+    assertThat(listItems.size(), is(1));
+
+    BrowseListItem item = listItems.get(0);
+    assertThat(item.getName(), is("a.txt"));
+    assertThat(item.getSize(), is("1024"));
+    assertThat(item.getLastModified(), is(String.valueOf(asset.blobUpdated())));
+    assertThat(item.getResourceUri(), is("http://foo/bar/a1.txt"));
+  }
+
+  @Test
+  public void validateAsset_groupRepository() throws Exception {
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(new GroupType());
+    when(groupRepository.getName()).thenReturn("group-repository");
+    when(groupRepository.getFormat()).thenReturn(new Format("format") {});
+    when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.allMembers()).thenReturn(Arrays.asList(groupRepository, repository));
+    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+    when(repositoryManager.get("group-repository")).thenReturn(groupRepository);
+
+    List<BrowseNode> nodes = asList(
+        new BrowseNode().withRepositoryName("repositoryName").withPath("a.txt").withAssetId(mock(EntityId.class)));
+    when(asset.size()).thenReturn(1024L);
+    when(asset.blobUpdated()).thenReturn(new DateTime(0));
+    when(asset.name()).thenReturn("a1.txt");
+    when(groupRepository.getUrl()).thenReturn("http://foo/bar");
+    when(browseNodeStore
+        .getChildrenByPath(groupRepository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .thenReturn(nodes);
+
+    underTest.getHtml("group-repository", "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -236,6 +302,15 @@ public class RepositoryBrowseResourceTest
   }
 
   @Test
+  public void validatePathNotFoundRequestNotAuthorized() throws Exception {
+    when(securityHelper.allPermitted(any())).thenReturn(false);
+    expectedException.expect(WebApplicationException.class);
+    expectedException.expectMessage("Repository not found");
+
+    underTest.getHtml("repositoryName", "missing", uriInfo);
+  }
+
+  @Test
   public void validateRepositoryNotFoundRequest() throws Exception {
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");
@@ -245,6 +320,9 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateRepositoryNotAuthorizedRequest() throws Exception {
+    when(browseNodeStore.getChildrenByPath(repository, Collections.singletonList("org"),
+        configuration.getMaxHtmlNodes(), null))
+        .thenReturn(Collections.emptyList());
     when(securityHelper.allPermitted(any())).thenReturn(false);
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");

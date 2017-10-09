@@ -14,6 +14,7 @@ package org.sonatype.nexus.selector;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.apache.commons.jexl3.JexlException;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -40,6 +41,19 @@ public class CselAssetSqlBuilderTest
 
     assertThat(whereClause.getSql(), is("name matches :a0"));
     assertThat(whereClause.getSqlParameters().get("a0"), is(".*"));
+  }
+
+  @Test
+  public void buildWhereClauseHandlesStartsWithMatching() throws Exception {
+    CselAssetSql whereClause = builder.buildWhereClause("path =^ \"assetname\"", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("name like :a0"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("assetname%"));
+  }
+
+  @Test(expected = JexlException.class)
+  public void buildWhereClauseHandlesStartsWithMatchingWithInvalidValue() throws Exception {
+    builder.buildWhereClause("path =^ 7", FORMAT, "a", "");
   }
 
   @Test

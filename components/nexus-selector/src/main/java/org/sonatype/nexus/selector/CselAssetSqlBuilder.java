@@ -13,12 +13,14 @@
 package org.sonatype.nexus.selector;
 
 import java.io.StringReader;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import com.google.common.base.Strings;
+import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlInfo;
 import org.apache.commons.jexl3.parser.ASTAndNode;
 import org.apache.commons.jexl3.parser.ASTEQNode;
@@ -29,6 +31,7 @@ import org.apache.commons.jexl3.parser.ASTJexlScript;
 import org.apache.commons.jexl3.parser.ASTOrNode;
 import org.apache.commons.jexl3.parser.ASTReference;
 import org.apache.commons.jexl3.parser.ASTReferenceExpression;
+import org.apache.commons.jexl3.parser.ASTSWNode;
 import org.apache.commons.jexl3.parser.ASTStringLiteral;
 import org.apache.commons.jexl3.parser.JexlNode;
 import org.apache.commons.jexl3.parser.Parser;
@@ -135,6 +138,31 @@ public class CselAssetSqlBuilder
   }
 
   /**
+   * Convert `a =^ "something"` into `a like "something%"`
+   */
+  @Override
+  protected Object visit(final ASTSWNode node, final Object data) {
+    StringBuilder result = visitOperator(node, "like", data);
+
+    CselAssetSql cselAssetSql = (CselAssetSql) data;
+    String lastParameterName = cselAssetSql.getLastParameterName();
+
+    if (lastParameterName != null) {
+      Map<String,Object> parameters = cselAssetSql.getSqlParameters();
+      Object parameter = parameters.get(lastParameterName);
+
+      if (parameter instanceof String) {
+        parameters.put(lastParameterName, parameters.get(lastParameterName) + "%");
+        return result;
+      }
+
+      throw new JexlException(node, "Starts with expression must be assigned a string value");
+    }
+
+    throw new JexlException(node, "No parameters are defined");
+  }
+
+  /**
    * Convert field names
    */
   @Override
@@ -182,7 +210,7 @@ public class CselAssetSqlBuilder
     return result;
   }
 
-  private Object visitOperator(final JexlNode node, final String operator, final Object data) {
+  private StringBuilder visitOperator(final JexlNode node, final String operator, final Object data) {
     CselAssetSql cselAssetSql = (CselAssetSql) data;
     StringBuilder result = cselAssetSql.getSqlBuilder();
     JexlNode leftChild = node.jjtGetChild(LEFT);

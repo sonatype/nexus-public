@@ -143,6 +143,7 @@ public class BrowseNodeEntityAdapter
                                                 final String assetRepositoryName,
                                                 final String authzRepositoryName,
                                                 final String format,
+                                                final int maxNodes,
                                                 @Nullable final String filter)
   {
     checkNotNull(db);
@@ -163,18 +164,21 @@ public class BrowseNodeEntityAdapter
 
     // check repository permission first before falling back to content auth
     if (hasRepositoryPermission(db, authzRepositoryName)) {
-      Iterable<BrowseNode> nodes = transform(db.command(new OCommandSQL(browseNodeSqlBuilder
-          .getBrowseNodesQuery(parentId, assetRepositoryName, filter, parameters)))
-          .execute(parameters));
+      String getBrowseNodesQuery = browseNodeSqlBuilder
+          .getBrowseNodesQuery(parentId, assetRepositoryName, filter, parameters, maxNodes);
+      Iterable<BrowseNode> nodes = transform(db.command(new OCommandSQL(getBrowseNodesQuery)).execute(parameters));
+
       if (filter != null) {
         nodes = applyFilterToChildren(db, nodes, filter);
       }
       return nodes;
     }
     else {
-      Iterable<BrowseNode> nodes = transform(db.command(new OCommandSQL(browseNodeSqlBuilder
+      String getBrowseNodesWithAuthQuery = browseNodeSqlBuilder
           .getBrowseNodesQueryWithContentSelectorAuthz(parentId, assetRepositoryName, authzRepositoryName, format,
-              filter, parameters))).execute(parameters));
+              filter, parameters, maxNodes);
+      Iterable<BrowseNode> nodes = transform(
+          db.command(new OCommandSQL(getBrowseNodesWithAuthQuery)).execute(parameters));
       return hasAuthorizedChildren(db, nodes, assetRepositoryName, authzRepositoryName, format, filter);
     }
   }

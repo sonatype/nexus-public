@@ -150,6 +150,17 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     return first != null ? readEntity(first) : null;
   }
 
+  T findByProperty(final ODatabaseDocumentTx db, final String propName, final Object propValue) {
+    checkNotNull(propName);
+    checkNotNull(propValue);
+
+    Map<String, Object> parameters = ImmutableMap.of("propValue", propValue);
+    String query = String.format("select from %s where %s = :propValue", getTypeName(), propName);
+    Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
+    ODocument first = Iterables.getFirst(docs, null);
+    return first != null ? readEntity(first) : null;
+  }
+
   Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
                             @Nullable final String whereClause,
                             @Nullable final Map<String, Object> parameters,

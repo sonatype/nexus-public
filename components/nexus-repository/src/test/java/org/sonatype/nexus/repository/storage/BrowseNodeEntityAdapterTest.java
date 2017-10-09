@@ -59,6 +59,7 @@ import org.mockito.Mock;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -82,6 +83,7 @@ public class BrowseNodeEntityAdapterTest
     extends TestSupport
 {
   private static final String MAVEN_2 = "maven2";
+  private static final int MAX_NODES = 10000;
 
   @Mock
   private ContentAuth contentAuth;
@@ -162,8 +164,7 @@ public class BrowseNodeEntityAdapterTest
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
-    browseNodeSqlBuilder = new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder(),
-        new BrowseNodeConfiguration());
+    browseNodeSqlBuilder = new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder());
     underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, securityHelper,
         browseNodeSqlBuilder, new BrowseNodeConfiguration());
 
@@ -302,10 +303,10 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_contentAuth() {
     setupTestGetChildrenByPath();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, asList("com", "example"),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      Iterable<BrowseNode> nodes = underTest
+          .getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null);
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("leaf-with-perm", "node-with-perm", "foo"));
     }
   }
@@ -315,8 +316,9 @@ public class BrowseNodeEntityAdapterTest
     reset(contentAuth);
     when(contentAuth.execute(any(), any(), any(), any(), any())).thenReturn(false);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      assertThat(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null), nullValue());
+      assertThat(
+          underTest.getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null),
+          nullValue());
     }
   }
 
@@ -324,10 +326,9 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_contentAuth_onlyCselSelectors_root_nodes() {
     setupTestGetChildrenByPath();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("com", "root-leaf"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -337,10 +338,9 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_contentAuth_cselAndJexlSelectors_root_nodes() {
     setupTestGetChildrenByPath(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("com", "root-leaf"));
     }
     verify(contentAuth, times(2)).execute(any(), any(), any(), any(), any());
@@ -352,10 +352,9 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("com", "root-leaf", "hidden-root-leaf"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -367,10 +366,9 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "com"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "com"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("com"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -382,10 +380,9 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "COM"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "COM"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("com"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -397,10 +394,9 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "foo"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "foo"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("com"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -412,10 +408,9 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "FOO"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "FOO"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("com"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -427,9 +422,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      assertThat(underTest
-          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "nothingmatchesme"), nullValue());
+      Iterable<BrowseNode> matches = underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES,
+              "nothingmatchesme");
+      assertThat(matches, nullValue());
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
   }
@@ -439,8 +435,10 @@ public class BrowseNodeEntityAdapterTest
     reset(contentAuth);
     when(contentAuth.execute(any(), any(), any(), any(), any())).thenReturn(false);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      assertThat(underTest.getChildrenByPath(db, Arrays.asList("com", "example"),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null), nullValue());
+      Iterable<BrowseNode> matches = underTest
+          .getChildrenByPath(db, asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
+              MAX_NODES, null);
+      assertThat(matches, nullValue());
     }
   }
 
@@ -448,11 +446,10 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_contentAuth_onlyCselSelectors() {
     setupTestGetChildrenByPath();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME,
-              MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("foo", "leaf-with-perm", "node-with-perm"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -462,11 +459,10 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_contentAuth_cselAndJexlSelectors() {
     setupTestGetChildrenByPath(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("foo", "leaf-with-perm", "node-with-perm"));
     }
     verify(contentAuth, times(2)).execute(any(), any(), any(), any(), any());
@@ -478,11 +474,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names,
           containsInAnyOrder("foo", "leaf-with-perm", "leaf-without-perm", "node-with-perm", "node-without-perm"));
     }
@@ -495,11 +490,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "node-with"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "node-with"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("node-with-perm", "node-without-perm"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -511,11 +505,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "NODE-WITH"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "NODE-WITH"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("node-with-perm", "node-without-perm"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -527,11 +520,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "foo"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "foo"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("foo"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -543,11 +535,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "FOO"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "FOO"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, contains("foo"));
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
@@ -559,9 +550,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      assertThat(underTest
-          .getChildrenByPath(db, Arrays.asList("com", "example"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2,
-              "nothingmatchesme"), nullValue());
+      List<String> path = asList("com", "example");
+      Iterable<BrowseNode> matches = underTest
+          .getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "nothingmatchesme");
+      assertThat(matches, nullValue());
     }
     verify(contentAuth, never()).execute(any(), any(), any(), any(), any());
   }
@@ -571,10 +563,10 @@ public class BrowseNodeEntityAdapterTest
     when(securityHelper.anyPermitted(new RepositoryViewPermission("*", PERM_REPOSITORY_NAME, BreadActions.BROWSE)))
         .thenReturn(true);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, asList("com", "example"),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names,
           containsInAnyOrder("leaf-with-perm", "leaf-without-perm", "node-with-perm", "node-without-perm", "foo"));
     }
@@ -584,10 +576,9 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_rootPath() {
     setupTestGetChildrenByPath();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, emptyList(),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<BrowseNode> nodes = newArrayList(underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("com", "root-leaf"));
     }
   }
@@ -596,10 +587,10 @@ public class BrowseNodeEntityAdapterTest
   public void testGetChildrenByPath_filtered() {
     setupTestGetChildrenByPath();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      List<BrowseNode> nodes = Lists.newArrayList(underTest.getChildrenByPath(db, Arrays.asList("com", "example"),
-          REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "foo"));
-      List<String> names = new LinkedList<>();
-      nodes.forEach((a) -> names.add(a.getPath()));
+      List<String> path = asList("com", "example");
+      List<BrowseNode> nodes = newArrayList(
+          underTest.getChildrenByPath(db, path, REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "foo"));
+      List<String> names = newArrayList(nodes).stream().map(BrowseNode::getPath).collect(toList());
       assertThat(names, containsInAnyOrder("foo"));
     }
   }
@@ -614,7 +605,8 @@ public class BrowseNodeEntityAdapterTest
         .thenReturn(asList(config));
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      Iterable<BrowseNode> nodes = underTest.getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null);
+      Iterable<BrowseNode> nodes = underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null);
       assertThat(nodes, containsInAnyOrder(
           hasProperty("path", is("com")),
           hasProperty("path", is("root-leaf"))));
@@ -632,7 +624,7 @@ public class BrowseNodeEntityAdapterTest
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       Iterable<BrowseNode> nodes = underTest
-          .getChildrenByPath(db, asList("com"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, "with-perm");
+          .getChildrenByPath(db, asList("com"), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, "with-perm");
       assertThat(nodes, contains(hasProperty("path", is("example"))));
     }
   }
@@ -650,14 +642,15 @@ public class BrowseNodeEntityAdapterTest
         .thenReturn(configs);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      Iterable<BrowseNode> nodes = underTest.getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, null);
+      Iterable<BrowseNode> nodes = underTest
+          .getChildrenByPath(db, emptyList(), REPOSITORY_NAME, PERM_REPOSITORY_NAME, MAVEN_2, MAX_NODES, null);
       assertThat(nodes, nullValue());
     }
   }
 
   @Test
   public void getByPath() {
-    List<String> pathSegments = Arrays.asList("com", "sonatype", "example");
+    List<String> pathSegments = asList("com", "sonatype", "example");
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       insertTestNodes(db, pathSegments, REPOSITORY_NAME);
@@ -675,7 +668,7 @@ public class BrowseNodeEntityAdapterTest
   @Test
   public void getByPath_notFound() {
     String repositoryName = "repository";
-    List<String> pathSegments = Arrays.asList("com", "sonatype", "example");
+    List<String> pathSegments = asList("com", "sonatype", "example");
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       underTest.register(db);

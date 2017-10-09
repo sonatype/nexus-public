@@ -86,6 +86,9 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     summary[NX.I18n.get('Assets_Info_BlobRef')] = asset.get('blobRef');
     summary[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = asset.get('containingRepositoryName');
 
+    summary[NX.I18n.get('Assets_Info_UploadedBy')] = asset.get('createdBy');
+    summary[NX.I18n.get('Assets_Info_UploadedIp')] = asset.get('createdByIp');
+
     this.down('#summaryPanel').showInfo(summary);
     this.down('#attributesPanel').setAssetModel(asset);
 

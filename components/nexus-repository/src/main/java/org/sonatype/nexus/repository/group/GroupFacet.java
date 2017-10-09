@@ -37,6 +37,13 @@ public interface GroupFacet
   boolean member(Repository repository);
 
   /**
+   * Return list of all member repositories including transitive
+   * 
+   * @since 3.7
+   */
+  List<Repository> allMembers();
+
+  /**
    * Return list of (non-transitive) member repositories.
    */
   List<Repository> members();

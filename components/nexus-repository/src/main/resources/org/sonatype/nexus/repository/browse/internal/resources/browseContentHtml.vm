@@ -44,8 +44,19 @@
 
     <link rel="stylesheet" type="text/css" href="$nexusUrl/static/css/nexus-content.css?$urlSuffix"/>
 </head>
-<body>
+<body class="htmlIndex">
 <h1>Index of ${requestPath}</h1>
+
+#if($showMoreContentWarning)
+<h3>
+  There may be additional items to display.
+</h3>
+<p>
+  If you need to script against the number of items in the database, consider using <a href="$restUrl">the rest api</a>.
+  If you wish to see additional items then go to the <a href="$browseUrl">filtering the browse view</a> or <a href="$searchUrl">use search</a>.
+</p>
+#end
+
 <table cellspacing="10">
     <tr>
         <th align="left">Name</th>

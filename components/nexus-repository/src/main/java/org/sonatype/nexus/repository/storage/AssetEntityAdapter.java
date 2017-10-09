@@ -96,6 +96,20 @@ public class AssetEntityAdapter
   public static final String P_SIZE = "size";
 
   /**
+   * Key of {@link Asset} created by attribute (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String P_CREATED_BY = "created_by";
+
+  /**
+   * Key of {@link Asset} created by ip attribute (if asset has backing content).
+   *
+   * @see StorageTx#attachBlob(Asset, AssetBlob)
+   */
+  public static final String P_CREATED_BY_IP = "created_by_ip";
+
+  /**
    * Key of {@link Asset} attribute indicating when a blob was first attached to this asset.
    */
   public static final String P_BLOB_CREATED = "blob_created";
@@ -152,6 +166,8 @@ public class AssetEntityAdapter
     type.createProperty(P_LAST_DOWNLOADED, OType.DATETIME);
     type.createProperty(P_BLOB_CREATED, OType.DATETIME);
     type.createProperty(P_BLOB_UPDATED, OType.DATETIME);
+    type.createProperty(P_CREATED_BY, OType.STRING);
+    type.createProperty(P_CREATED_BY_IP, OType.STRING);
 
     ODocument metadata = db.newInstance()
         .field("ignoreNullValues", false)
@@ -185,6 +201,8 @@ public class AssetEntityAdapter
     Date lastDownloaded = document.field(P_LAST_DOWNLOADED, OType.DATETIME);
     Date blobCreated = document.field(P_BLOB_CREATED, OType.DATETIME);
     Date blobUpdated = document.field(P_BLOB_UPDATED, OType.DATETIME);
+    String createdBy = document.field(P_CREATED_BY, OType.STRING);
+    String createdByIp = document.field(P_CREATED_BY_IP, OType.STRING);
 
     if (componentId != null) {
       entity.componentId(new AttachedEntityId(componentEntityAdapter, componentId));
@@ -192,6 +210,8 @@ public class AssetEntityAdapter
     entity.name(name);
     entity.size(size);
     entity.contentType(contentType);
+    entity.createdBy(createdBy);
+    entity.createdByIp(createdByIp);
     if (blobRef != null) {
       entity.blobRef(BlobRef.parse(blobRef));
     }
@@ -215,6 +235,8 @@ public class AssetEntityAdapter
     document.field(P_NAME, entity.name());
     document.field(P_SIZE, entity.size());
     document.field(P_CONTENT_TYPE, entity.contentType());
+    document.field(P_CREATED_BY, entity.createdBy());
+    document.field(P_CREATED_BY_IP, entity.createdByIp());
     BlobRef blobRef = entity.blobRef();
     document.field(P_BLOB_REF, blobRef != null ? blobRef.toString() : null);
     DateTime lastDownloaded = entity.lastDownloaded();

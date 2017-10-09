@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.storage;
 import java.util.HashMap;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
+import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -27,26 +29,35 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 public class StorageTestUtil
 {
+  public static Bucket createBucket(final String repositoryName)
+  {
+    Bucket bucket = new Bucket()
+        .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+    bucket.setEntityMetadata(new DetachedEntityMetadata(new DetachedEntityId("a"), new DetachedEntityVersion("1")));
+    bucket.setRepositoryName(repositoryName);
+    return bucket;
+  }
+
   public static Component createComponent(final Bucket bucket,
                                           final String group,
                                           final String name,
                                           final String version)
   {
-    Component component = new Component();
-    component.bucketId(EntityHelper.id(bucket));
-    component.format("format-id");
-    component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    component.group(group).name(name).version(version);
-    return component;
+    return new Component()
+        .bucketId(id(bucket))
+        .format("format-id")
+        .group(group)
+        .name(name)
+        .version(version)
+        .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 
   public static Asset createAsset(final Bucket bucket, final String name, final Component component) {
-    Asset asset = new Asset();
-    asset.bucketId(EntityHelper.id(bucket));
-    asset.format("format-id");
-    asset.componentId(id(component));
-    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    asset.name(name);
-    return asset;
+    return new Asset()
+        .bucketId(id(bucket))
+        .format("format-id")
+        .name(name)
+        .componentId(id(component))
+        .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 }

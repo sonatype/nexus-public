@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.LocationStrategy;
 import org.sonatype.nexus.blobstore.TemporaryLocationStrategy;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -68,9 +67,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 public class FileBlobStoreTest
     extends TestSupport
 {
-  @Mock
-  private LocationStrategy permanentLocationStrategy;
-
   @Mock
   private TemporaryLocationStrategy temporaryLocationStrategy;
 
@@ -130,7 +126,7 @@ public class FileBlobStoreTest
     configuration.setAttributes(attributes);
 
     underTest = new FileBlobStore(util.createTempDir().toPath(),
-        permanentLocationStrategy, temporaryLocationStrategy, fileOperations, metrics, configuration,
+        blobId -> blobId.asUniqueString(), temporaryLocationStrategy, fileOperations, metrics, configuration,
         appDirs, nodeAccess, dryRunPrefix);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));

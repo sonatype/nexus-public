@@ -15,6 +15,8 @@ package org.sonatype.nexus.selector;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 /**
  * @since 3.6
  */
@@ -43,6 +45,14 @@ public class CselAssetSql
 
   public String getNextParameterName() {
     return parameterPrefix + sqlParameters.size();
+  }
+
+  @Nullable
+  public String getLastParameterName() {
+    if (getSqlParameters().isEmpty()) {
+      return null;
+    }
+    return parameterPrefix + (getSqlParameters().size() - 1);
   }
 
   public String getSql() {

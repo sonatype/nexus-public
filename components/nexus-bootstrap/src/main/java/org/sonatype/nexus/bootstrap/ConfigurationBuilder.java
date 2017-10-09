@@ -94,6 +94,35 @@ public class ConfigurationBuilder
     return properties(resource.toURI().toURL());
   }
 
+  /**
+   * Adds the single 'onlyConcern' property to this builder, from the given file
+   *
+   * @since 3.7
+   * @param resource properties file
+   * @param onlyConcern the only property in the file that we want
+   * @param required whether or not the file is required
+   * @return ConfigurationBuilder
+   * @throws IOException
+   */
+  public ConfigurationBuilder properties(final File resource, final String onlyConcern, final boolean required)
+      throws IOException {
+    if (resource == null || !resource.exists()) {
+      if (required) {
+        throw new IllegalStateException("Missing required resource: " + resource);
+      }
+      return this;
+    }
+    URL url = resource.toURI().toURL();
+    log.debug("Reading properties from: {}", url);
+    PropertyMap props = new PropertyMap();
+    props.load(url);
+    PropertyMap trimmed = new PropertyMap();
+    if (props.containsKey(onlyConcern)) {
+      trimmed.put(onlyConcern, props.get(onlyConcern));
+    }
+    return properties(trimmed);
+  }
+
   public ConfigurationBuilder defaults() throws IOException {
     return properties("default.properties", true);
   }

@@ -226,17 +226,15 @@ public class ComponentComponentTest
   public void testReadAsset() {
     Asset asset = mock(Asset.class);
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
-    VariableSource variableSource = mock(VariableSource.class);
     when(asset.getEntityMetadata()).thenReturn(entityMetadata);
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
-    Bucket bucket = mock(Bucket.class);
-    when(storageTx.findBucket(repository)).thenReturn(bucket);
-    when(storageTx.findAsset(eq(new DetachedEntityId("someid")), eq(bucket))).thenReturn(asset);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
+
     when(assetDownloadCountStore.getLastThirtyDays(repository.getName(), asset.name())).thenReturn(10L);
-    when(browseService.getRepositoryBucketNames(repository)).thenReturn(Collections.singletonMap(new DetachedEntityId("someId"), "testBucketName"));
+    when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
+    when(browseService.getRepositoryBucketNames(repository))
+        .thenReturn(Collections.singletonMap(new DetachedEntityId("someid"), "testBucketName"));
     AssetXO assetXO = underTest.readAsset("someid", "testRepositoryName");
 
     assertThat(assetXO, is(notNullValue()));
