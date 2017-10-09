@@ -29,7 +29,7 @@
 
   <properties>
     <apache-activemq.version>5.9.1</apache-activemq.version>
-    <apache-camel.version>2.13.4</apache-camel.version>
+    <apache-camel.version>2.18.3</apache-camel.version>
   </properties>
 
   <dependencyManagement>
