@@ -39,6 +39,8 @@ public class BrowseNode
 
   private String repositoryName;
 
+  private String assetNameLowercase;
+
   @Nullable
   public EntityId getAssetId() {
     return assetId;
@@ -62,6 +64,14 @@ public class BrowseNode
     return require(repositoryName, BrowseNodeSqlBuilder.P_REPOSITORY_NAME);
   }
 
+  /**
+   * @since 3.7
+   */
+  @Nullable
+  public String getAssetNameLowercase() {
+    return assetNameLowercase;
+  }
+
   public void setAssetId(@Nullable final EntityId assetId) {
     this.assetId = assetId;
   }
@@ -82,6 +92,13 @@ public class BrowseNode
   public void setRepositoryName(final String repositoryName) {
     checkNotNull(repositoryName);
     this.repositoryName = repositoryName;
+  }
+
+  /**
+   * @since 3.7
+   */
+  public void setAssetNameLowercase(@Nullable final String assetNameLowercase) {
+    this.assetNameLowercase = assetNameLowercase;
   }
 
   public BrowseNode withAssetId(@Nullable final EntityId assetId) {
@@ -109,6 +126,14 @@ public class BrowseNode
     return this;
   }
 
+  /**
+   * @since 3.7
+   */
+  public BrowseNode withAssetNameLowercase(@Nullable final String assetNameLowercase) {
+    setAssetNameLowercase(assetNameLowercase);
+    return this;
+  }
+
   private <V> V require(final V value, final String name) {
     checkState(value != null, "Missing property: %s", name);
     return value;
@@ -122,6 +147,7 @@ public class BrowseNode
         ", parentId=" + parentId +
         ", path='" + path + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
+        ", assetNameLowercase='" + assetNameLowercase + '\'' +
         '}';
   }
 }

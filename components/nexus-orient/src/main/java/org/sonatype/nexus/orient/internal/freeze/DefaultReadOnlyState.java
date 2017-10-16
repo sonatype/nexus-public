@@ -18,7 +18,6 @@ import org.sonatype.nexus.orient.freeze.FreezeRequest;
 import org.sonatype.nexus.orient.freeze.ReadOnlyState;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.SYSTEM;
 import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_INITIATED;
 

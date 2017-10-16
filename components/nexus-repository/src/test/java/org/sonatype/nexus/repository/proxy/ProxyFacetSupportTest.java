@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;

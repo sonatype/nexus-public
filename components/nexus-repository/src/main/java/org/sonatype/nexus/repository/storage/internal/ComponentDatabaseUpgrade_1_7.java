@@ -59,10 +59,10 @@ public class ComponentDatabaseUpgrade_1_7
     });
 
     withDatabaseAndClass(componentDatabaseInstance, ASSET, (db, table) -> {
-      if (table.existsProperty(AssetEntityAdapter.P_CREATED_BY)) {
+      if (!table.existsProperty(AssetEntityAdapter.P_CREATED_BY)) {
         table.createProperty(AssetEntityAdapter.P_CREATED_BY, OType.STRING);
       }
-      if (table.existsProperty(AssetEntityAdapter.P_CREATED_BY_IP)) {
+      if (!table.existsProperty(AssetEntityAdapter.P_CREATED_BY_IP)) {
         table.createProperty(AssetEntityAdapter.P_CREATED_BY_IP, OType.STRING);
       }
     });

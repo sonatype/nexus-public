@@ -366,7 +366,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_HTTP_Title: 'HTTP request settings',
 
     HealthCheckRepositoryColumn_Header: 'Health check',
-    HealthCheckRepositoryColumn_Analyzing: 'Analyzing…',
+    HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',
     HealthCheckRepositoryColumn_Analyzing_Tooltip: '<span><h2>The Analysis is Under Way</h2>' +
     'The contents of your repository are being analyzed. This process should only take a few minutes.<br><br>' +
     'When the analysis is complete and this page has been refreshed, we will show you the top 5 most vulnerable ' +
@@ -385,7 +385,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Analyze_Dialog_Yes_Text: 'Yes, only this repository',
     HealthCheckRepositoryColumn_Analyze_Permission_Error: '<span><h2>Insufficient Permissions to Analyze a Repository</h2>' +
     'To analyze a repository your user account must have permissions to start analysis.</span>',
-    HealthCheckRepositoryColumn_Loading: 'Loading…',
+    HealthCheckRepositoryColumn_Loading: 'Loading&hellip;',
     HealthCheckRepositoryColumn_CollectingTrendData: 'Insufficient trend data',
     HealthCheckRepositoryColumn_DownloadsDisabled: 'Download trends disabled',
     HealthCheckRepositoryColumn_Unavailable_Tooltip: '<span><h2>Repository Health Check Unavailable</h2>A Repository Health Check (RHC) ' +

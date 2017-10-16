@@ -36,7 +36,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.reflect.Whitebox.setInternalState;
+import static org.mockito.internal.util.reflection.Whitebox.setInternalState;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;

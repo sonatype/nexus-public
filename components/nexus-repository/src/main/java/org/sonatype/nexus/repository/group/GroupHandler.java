@@ -53,7 +53,7 @@ public class GroupHandler
   @VisibleForTesting
   public static class DispatchedRepositories
   {
-    private final Set<String> dispatched = Sets.newHashSet();
+    private final Set<String> dispatched = Sets.newLinkedHashSet();
 
     public void add(final Repository repository) {
       dispatched.add(repository.getName());

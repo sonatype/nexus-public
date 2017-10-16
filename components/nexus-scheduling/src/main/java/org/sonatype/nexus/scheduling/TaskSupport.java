@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLoggerFactory;
 import org.sonatype.nexus.logging.task.TaskLoggerHelper;
-import org.sonatype.nexus.logging.task.TaskLoggingMarkers;
 
 import com.google.common.base.Strings;
 

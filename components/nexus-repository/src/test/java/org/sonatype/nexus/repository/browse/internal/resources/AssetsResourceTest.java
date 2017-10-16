@@ -18,17 +18,14 @@ import javax.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
-import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.rest.Page;
-import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
@@ -61,19 +58,10 @@ public class AssetsResourceTest
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
-  EntityMetadata assetTwoEntityMetadata;
-
-  @Mock
-  EntityId assetTwoEntityId;
-
-  @Mock
   BrowseResult<Asset> browseResult;
 
   @Mock
   AssetEntityAdapter assetEntityAdapter;
-
-  @Mock
-  VariableSource variableSource;
 
   @Mock
   MaintenanceService maintenanceService;

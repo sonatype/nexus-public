@@ -310,4 +310,22 @@ public class FileBlobStoreTest
 
     verify(fileOperations, times(2)).delete(any());
   }
+
+  byte[] emptyBlobStoreProperties = ("").getBytes(StandardCharsets.ISO_8859_1);
+
+  @Test
+  public void testDeleteWithCorruptAttributes() throws Exception {
+    when(nodeAccess.isOldestNode()).thenReturn(true);
+    underTest.doStart();
+
+    Path contentPath = underTest.getAbsoluteBlobDir().resolve("content");
+    Path bytesPath = contentPath.resolve("test-blob.bytes");
+    Path propertiesPath = contentPath.resolve("test-blob.properties");
+    write(propertiesPath, emptyBlobStoreProperties);
+
+    underTest.delete(new BlobId("test-blob"), "deleting");
+
+    verify(fileOperations).delete(propertiesPath);
+    verify(fileOperations).delete(bytesPath);
+  }
 }

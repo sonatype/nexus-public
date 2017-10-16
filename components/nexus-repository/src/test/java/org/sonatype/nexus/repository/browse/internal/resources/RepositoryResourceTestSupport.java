@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
 import com.google.common.base.Supplier;
-import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

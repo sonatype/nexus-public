@@ -205,21 +205,21 @@ public class BrowseNodeEntityAdapterTest
 
   private void createTree() {
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
-      ORID orid = createBrowseNode(db, null, "com", REPOSITORY_NAME, null);
-      orid = createBrowseNode(db, orid, "example", REPOSITORY_NAME, null);
+      ORID orid = createBrowseNode(db, null, "com", REPOSITORY_NAME, null, null);
+      orid = createBrowseNode(db, orid, "example", REPOSITORY_NAME, null, null);
 
-      createBrowseNode(db, orid, "leaf-with-perm", REPOSITORY_NAME, assetIdWithPerm);
-      createBrowseNode(db, orid, "leaf-without-perm", REPOSITORY_NAME, assetIdWithoutPerm);
-      createBrowseNode(db, orid, "foo", REPOSITORY_NAME, assetIdFoo);
+      createBrowseNode(db, orid, "leaf-with-perm", REPOSITORY_NAME, assetIdWithPerm, "com/example/leaf-with-perm");
+      createBrowseNode(db, orid, "leaf-without-perm", REPOSITORY_NAME, assetIdWithoutPerm, "com/example/leaf-without-perm");
+      createBrowseNode(db, orid, "foo", REPOSITORY_NAME, assetIdFoo, "com/example/foo");
 
-      ORID parentId = createBrowseNode(db, orid, "node-with-perm", REPOSITORY_NAME, null);
-      createBrowseNode(db, parentId, "hidden-leaf-with-perm", REPOSITORY_NAME, assetIdhiddenWithPerm);
+      ORID parentId = createBrowseNode(db, orid, "node-with-perm", REPOSITORY_NAME, null, null);
+      createBrowseNode(db, parentId, "hidden-leaf-with-perm", REPOSITORY_NAME, assetIdhiddenWithPerm, "com/example/node-with-perm/hidden-leaf-with-perm");
 
-      parentId = createBrowseNode(db, orid, "node-without-perm", REPOSITORY_NAME, null);
-      createBrowseNode(db, parentId, "hidden-leaf-without-perm", REPOSITORY_NAME, assetIdhiddenWithoutPerm);
+      parentId = createBrowseNode(db, orid, "node-without-perm", REPOSITORY_NAME, null, null);
+      createBrowseNode(db, parentId, "hidden-leaf-without-perm", REPOSITORY_NAME, assetIdhiddenWithoutPerm, "com/example/node-without-perm/hidden-leaf-without-perm");
 
-      createBrowseNode(db, null, "root-leaf", REPOSITORY_NAME, assetIdRootWithPerm);
-      createBrowseNode(db, null, "hidden-root-leaf", REPOSITORY_NAME, assetIdRootWithoutPerm);
+      createBrowseNode(db, null, "root-leaf", REPOSITORY_NAME, assetIdRootWithPerm, "root-leaf-with-perm");
+      createBrowseNode(db, null, "hidden-root-leaf", REPOSITORY_NAME, assetIdRootWithoutPerm, "root-leaf-without-perm");
     }
   }
 
@@ -238,10 +238,10 @@ public class BrowseNodeEntityAdapterTest
     BrowseNode node1 = dbTx().call(db -> underTest.upsert(db, REPOSITORY_NAME, rootNodeId, "foo", true));
     // add a component
     BrowseNode node2 = dbTx()
-        .call(db -> underTest.upsert(db, REPOSITORY_NAME, rootNodeId, "foo", null, componentId, true));
+        .call(db -> underTest.upsert(db, REPOSITORY_NAME, rootNodeId, "foo", null, componentId, null, true));
     // add an asset
-    BrowseNode node3 = dbTx()
-        .call(db -> underTest.upsert(db, REPOSITORY_NAME, rootNodeId, "foo", assetIdFoo, null, true));
+    BrowseNode node3 = dbTx().call(
+        db -> underTest.upsert(db, REPOSITORY_NAME, rootNodeId, "foo", assetIdFoo, null, "com/example/foo", true));
 
     EntityId nodeId = EntityHelper.id(node1);
     assertThat(nodeId, is(EntityHelper.id(node2)));
@@ -253,6 +253,7 @@ public class BrowseNodeEntityAdapterTest
     assertThat(actualNode.getRepositoryName(), is(REPOSITORY_NAME));
     assertThat(actualNode.getAssetId(), is(assetIdFoo));
     assertThat(actualNode.getComponentId(), is(componentId));
+    assertThat(actualNode.getAssetNameLowercase(), is("com/example/foo"));
   }
 
   private OrientOperations<RuntimeException, ?> dbTx() {
@@ -806,7 +807,8 @@ public class BrowseNodeEntityAdapterTest
                                 final ORID parentId,
                                 final String path,
                                 final String repositoryName,
-                                final EntityId assetId)
+                                final EntityId assetId,
+                                final String assetNameLowercase)
   {
     return underTest.recordIdentity(underTest.upsert(
         db,
@@ -815,6 +817,7 @@ public class BrowseNodeEntityAdapterTest
         path,
         assetId,
         null,
+        assetNameLowercase,
         true));
   }
 

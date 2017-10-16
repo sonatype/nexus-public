@@ -52,8 +52,8 @@
   There may be additional items to display.
 </h3>
 <p>
-  If you need to script against the number of items in the database, consider using <a href="$restUrl">the rest api</a>.
-  If you wish to see additional items then go to the <a href="$browseUrl">filtering the browse view</a> or <a href="$searchUrl">use search</a>.
+  If you need to script against the full list of items in the database, try using <a href="$restUrl">the rest api</a>.
+  You may also try adding a ?filter= parameter to the url.
 </p>
 #end
 

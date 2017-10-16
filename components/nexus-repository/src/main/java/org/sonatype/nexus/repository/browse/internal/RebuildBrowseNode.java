@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.browse.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 
@@ -36,6 +38,8 @@ class RebuildBrowseNode
   private EntityId componentId;
 
   private BrowseNode browseNode;
+
+  private String assetNameLowercase;
 
   public RebuildBrowseNode getParentNode() {
     return parentNode;
@@ -83,6 +87,22 @@ class RebuildBrowseNode
 
   public RebuildBrowseNode withBrowseNode(final BrowseNode browseNode) {
     this.browseNode = browseNode;
+    return this;
+  }
+
+  /**
+   * @since 3.7
+   */
+  @Nullable
+  public String getAssetNameLowercase() {
+    return assetNameLowercase;
+  }
+
+  /**
+   * @since 3.7
+   */
+  public RebuildBrowseNode withAssetNameLowercase(@Nullable final String assetNameLowercase) {
+    this.assetNameLowercase = assetNameLowercase;
     return this;
   }
 }

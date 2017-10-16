@@ -27,6 +27,7 @@ import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.inject.name.Names.named;
 
 /**
  * Default {@link GlobalComponentLookupHelper}.
@@ -56,20 +57,50 @@ public class GlobalComponentLookupHelperImpl
   public Object lookup(final String className) {
     checkNotNull(className);
     try {
-      log.trace("Looking up component: {}", className);
-      Class type = classLoader.loadClass(className);
+      log.trace("Looking up component by class-name: {}", className);
+      Class<?> type = classLoader.loadClass(className);
+      return lookup(type);
+    }
+    catch (Exception e) {
+      log.trace("Unable to lookup component by class-name: {}; ignoring", className, e);
+    }
+    return null;
+  }
 
+  @Override
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public <T> T lookup(final Class<T> clazz) {
+    checkNotNull(clazz);
+    return (T) lookup(Key.get(clazz));
+  }
+
+  @Override
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public <T> T lookup(final Class<T> clazz, final String name) {
+    checkNotNull(clazz);
+    checkNotNull(name);
+    return (T) lookup(Key.get(clazz, named(name)));
+  }
+
+  @Override
+  @Nullable
+  public Object lookup(final Key key) {
+    checkNotNull(key);
+    try {
+      log.trace("Looking up component by key: {}", key);
       @SuppressWarnings("unchecked")
-      Iterator<BeanEntry> iter = beanLocator.locate(Key.get(type)).iterator();
+      Iterator<BeanEntry> iter = beanLocator.locate(key).iterator();
       if (iter.hasNext()) {
         return iter.next().getValue();
       }
       else {
-        log.trace("Component not found: {}", className);
+        log.trace("Component not found for key: {}", key);
       }
     }
     catch (Exception e) {
-      log.trace("Unable to lookup component: {}; ignoring", className, e);
+      log.trace("Unable to lookup component by key: {}; ignoring", key, e);
     }
     return null;
   }

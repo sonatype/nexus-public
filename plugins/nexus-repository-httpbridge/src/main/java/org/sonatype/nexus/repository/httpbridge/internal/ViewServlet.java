@@ -66,6 +66,8 @@ public class ViewServlet
   @VisibleForTesting
   static final String P_DESCRIBE = "describe";
 
+  protected static final String REPOSITORY_NOT_FOUND_MESSAGE = "Repository not found";
+
   private final RepositoryManager repositoryManager;
 
   private final HttpResponseSenderSelector httpResponseSenderSelector;
@@ -142,7 +144,7 @@ public class ViewServlet
 
     Repository repo = repository(path.getRepositoryName());
     if (repo == null) {
-      send(null, HttpResponses.notFound("Repository not found"), httpResponse);
+      send(null, HttpResponses.notFound(REPOSITORY_NOT_FOUND_MESSAGE), httpResponse);
       return;
     }
     log.debug("Repository: {}", repo);

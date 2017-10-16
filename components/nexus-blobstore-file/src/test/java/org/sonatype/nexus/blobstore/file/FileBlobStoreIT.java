@@ -468,4 +468,25 @@ public class FileBlobStoreIT
     verify(fileOperations, times(2)).delete(any());
   }
 
+  @Test
+  public void testSoftDeleteFallsBackToHardDelete() throws Exception {
+    byte[] content = new byte[TEST_DATA_LENGTH];
+    Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    Path bytesPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    Path propertiesPath = contentDirectory.resolve(volumeChapterLocationStrategy.location(blob.getId()) +
+        FileBlobStore.BLOB_ATTRIBUTE_SUFFIX);
+
+    // truncate blob properties file to simulate corruption
+    Files.write(propertiesPath, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
+
+    assertThat(Files.exists(bytesPath), is(true));
+    assertThat(Files.exists(propertiesPath), is(true));
+
+    underTest.delete(blob.getId(), "deleting");
+
+    assertThat(Files.exists(bytesPath), is(false));
+    assertThat(Files.exists(propertiesPath), is(false));
+  }
+
 }

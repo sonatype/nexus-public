@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.browse.internal.resources;
 
 import java.net.URL;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +27,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -115,6 +118,7 @@ public class RepositoryBrowseResource
   @GET
   public Response getHtml(@PathParam("repositoryName") final String repositoryName,
                           @PathParam("repositoryPath") final String repositoryPath,
+                          @QueryParam("filter") final String filter,
                           @Context final UriInfo uriInfo)
   {
     log.debug("Get HTML directory listing for repository {} on path {}", repositoryName, repositoryPath);
@@ -127,7 +131,7 @@ public class RepositoryBrowseResource
     Repository repository = repositoryManager.get(repositoryName);
 
     if (repository == null) {
-      throwNotFound(repositoryName);
+      throw createNotFoundException(repositoryName, null);
     }
 
     List<String> pathSegments = new ArrayList<>();
@@ -136,29 +140,45 @@ public class RepositoryBrowseResource
       pathSegments = asList(EncodingUtil.urlDecode(repositoryPath.split("/")));
     }
 
-    Iterable<BrowseNode> browseNodes = browseNodeStore.getChildrenByPath(repository, pathSegments, configuration.getMaxHtmlNodes(), null);
+    Iterable<BrowseNode> browseNodes = browseNodeStore
+        .getChildrenByPath(repository, pathSegments, configuration.getMaxHtmlNodes(), filter);
 
-    if (browseNodes == null && securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE))) {
+    final boolean permitted = securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE));
+    final boolean hasChildren = browseNodes != null && !Iterables.isEmpty(browseNodes);
+    final List<BrowseListItem> listItems = hasChildren ?
+        toListItems(browseNodes, repository, repositoryPath, filter) :
+        Collections.emptyList();
+
+    //if there are visible children return them, or if we are at the root node and permitted to browse the repo
+    if (hasChildren || (isRoot(repositoryPath) && permitted)) {
+      return Response
+          .ok(templateHelper.render(template, initializeTemplateParameters(repositoryName, repositoryPath, listItems)))
+          .build();
+    }
+
+    throw createNotFoundException(repositoryName, permitted ? repositoryPath : null);
+  }
+
+  private WebApplicationException createNotFoundException(final String repositoryName, final String repositoryPath) {
+    if (repositoryPath == null) {
+      log.debug("Requested repository could not be located or user does not have permission: {} ", repositoryName);
+      return new WebApplicationException("Repository not found", NOT_FOUND);
+    }
+    else {
       log.debug("Requested path {} could not be located in repository {}", repositoryPath, repositoryName);
-      throw new WebApplicationException("Path not found", NOT_FOUND);
+      return new WebApplicationException("Path not found", NOT_FOUND);
     }
-    else if (browseNodes == null || Iterables.isEmpty(browseNodes)) {
-      throwNotFound(repositoryName);
-    }
-
-    return Response.ok(templateHelper.render(template, initializeTemplateParameters(repositoryName, repositoryPath,
-        toListItems(browseNodes, repository, repositoryPath)))).build();
   }
 
-  private void throwNotFound(final String repositoryName) {
-    log.debug("Requested repository could not be located or user does not have permission: {} ", repositoryName);
-    throw new WebApplicationException("Repository not found", NOT_FOUND);
-  }
-
-  private List<BrowseListItem> toListItems(final Iterable<BrowseNode> browseNodes, final Repository repository, final String path) {
+  private List<BrowseListItem> toListItems(final Iterable<BrowseNode> browseNodes,
+                                           final Repository repository,
+                                           final String path,
+                                           final String filter)
+  {
     List<BrowseListItem> listItems = new ArrayList<>();
 
     if (browseNodes != null) {
+      SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
       for (BrowseNode browseNode : sort(browseNodes)) {
         String size = null;
         String lastModified = null;
@@ -174,11 +194,12 @@ public class RepositoryBrowseResource
           }
 
           size = String.valueOf(asset.size());
-          lastModified = String.valueOf(asset.blobUpdated());
-          listItemPath = getListItemPath(repository, browseNode, asset);
+          lastModified = Optional.ofNullable(asset.blobUpdated()).map(dateTime -> format.format(dateTime.toDate()))
+              .orElse("");
+          listItemPath = getListItemPath(repository, browseNode, asset, filter);
         }
         else {
-          listItemPath = getListItemPath(repository, browseNode, null);
+          listItemPath = getListItemPath(repository, browseNode, null, filter);
         }
 
         listItems.add(
@@ -250,9 +271,15 @@ public class RepositoryBrowseResource
     return templateParameters;
   }
 
-  private String getListItemPath(final Repository repository, final BrowseNode browseNode, final Asset asset) {
+  private String getListItemPath(final Repository repository,
+                                 final BrowseNode browseNode,
+                                 final Asset asset,
+                                 final String filter)
+  {
+    String filterParam = filter == null ? "" : "?filter=" + URLEncoder.encode(filter);
+
     if (asset == null) {
-      return urlEncode(browseNode.getPath()) + "/";
+      return urlEncode(browseNode.getPath()) + "/" + filterParam;
     }
 
     return repository.getUrl() + "/" + asset.name();

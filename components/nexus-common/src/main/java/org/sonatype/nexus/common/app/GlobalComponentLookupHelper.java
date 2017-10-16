@@ -13,6 +13,9 @@
 package org.sonatype.nexus.common.app;
 
 import javax.annotation.Nullable;
+import javax.inject.Named;
+
+import com.google.inject.Key;
 
 /**
  * Helper to lookup components in global context.
@@ -32,7 +35,29 @@ public interface GlobalComponentLookupHelper
   @Nullable
   Object lookup(String className);
 
-  // TODO: Consider adding lookup(Class) and lookup(Key) helpers?
+  /**
+   * Lookup a component by {@link Class}.
+   *
+   * @return Component reference, or {@code null} if the component was not found.
+   * @since 3.7
+   */
+  <T> T lookup(Class<T> clazz);
+
+  /**
+   * Lookup a component by {@link Class} and @{@link Named} name.
+   *
+   * @return Component reference, or {@code null} if the component was not found.
+   * @since 3.7
+   */
+  <T> T lookup(Class<T> clazz, String name);
+
+  /**
+   * Lookup a component by {@link Key}.
+   *
+   * @return Component reference, or {@code null} if the component was not found.
+   * @since 3.7
+   */
+  Object lookup(Key key);
 
  /**
    * Lookup a type by class-name.

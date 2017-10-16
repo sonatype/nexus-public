@@ -24,7 +24,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.repository.storage.DatabaseThreadUtils;
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.selector.CselAssetSql;
 import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.CselSelector;
@@ -52,8 +51,6 @@ public class BrowseNodeSqlBuilder
 
   public static final String P_NODE_LIMIT = "node_limit";
 
-  public static final String P_FILTER = "filter";
-
   public static final String P_ASSET_ID = "asset_id";
 
   public static final String P_COMPONENT_ID = "component_id";
@@ -67,6 +64,8 @@ public class BrowseNodeSqlBuilder
   public static final String P_CHILDREN_IDS = "children_ids";
 
   public static final String P_ID = "id";
+
+  public static final String P_ASSET_NAME_LOWERCASE = "asset_name_lowercase";
 
   private static final String OR = " or ";
 
@@ -108,8 +107,7 @@ public class BrowseNodeSqlBuilder
     parameters.put(P_NODE_LIMIT, maxNodes);
 
     final StringBuilder query = new StringBuilder(String
-        .format("select from %s let $asset = (select from $current.%s) where %s = :%s ", DB_CLASS, P_ASSET_ID,
-            P_REPOSITORY_NAME, P_REPOSITORY_NAME));
+        .format("select from %s where %s = :%s ", DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME));
     if (parentId == null) {
       query.append(String.format("and %s is null ", P_PARENT_ID));
     }
@@ -118,13 +116,13 @@ public class BrowseNodeSqlBuilder
       query.append(String.format("and %s = :%s ", P_PARENT_ID, P_PARENT_ID));
     }
     if (!Strings2.isEmpty(filter)) {
-      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
+      parameters.put(P_ASSET_NAME_LOWERCASE, "%" + Strings2.lower(filter) + "%");
       query.append(
-          String.format("and (asset_id is null or $asset.%s.toLowerCase() like :%s) ", MetadataNodeEntityAdapter.P_NAME,
-              P_FILTER));
+          String.format("and (asset_id is null or %s like :%s) ", P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE));
     }
-    query.append("and ");
-    query.append(getAuthorizationWhereClause(authzRepositoryName, format, parameters, true));
+    query.append("and (asset_id is null or (");
+    query.append(getAuthorizationWhereClause(authzRepositoryName, format, parameters));
+    query.append("))");
     query.append(String.format(" limit :%s", P_NODE_LIMIT));
 
     log.debug("Assembled browse_node_with_content_selector_authz query: {}", query);
@@ -160,9 +158,9 @@ public class BrowseNodeSqlBuilder
       query.append(String.format("and %s = :%s ", P_PARENT_ID, P_PARENT_ID));
     }
     if (!Strings2.isEmpty(filter)) {
-      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
-      query.append(String.format("and (%s is null or %s.%s.toLowerCase() like :%s) ", P_ASSET_ID, P_ASSET_ID,
-          MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+      parameters.put(P_ASSET_NAME_LOWERCASE, "%" + Strings2.lower(filter) + "%");
+      query.append(String
+          .format("and (%s is null or %s like :%s) ", P_ASSET_ID, P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE));
     }
     query.append(String.format("limit :%s", P_NODE_LIMIT));
 
@@ -179,11 +177,11 @@ public class BrowseNodeSqlBuilder
    * @return           The query string that can be passed into orient verbatim to retrieve some results
    */
   public String getChildMatchingFilterQuery(final String filter, final Map<String, Object> parameters) {
-    parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
+    parameters.put(P_ASSET_NAME_LOWERCASE, "%" + Strings2.lower(filter) + "%");
 
     final String query = String.format(
-        "select @rid from (traverse %s, %s from (select from :%s)) where @class = 'asset' and %s.toLowerCase() like :%s limit 1",
-        P_CHILDREN_IDS, P_ASSET_ID, P_ID, MetadataNodeEntityAdapter.P_NAME, P_FILTER);
+        "select @rid from (traverse %s from (select from :%s)) where %s like :%s limit 1",
+        P_CHILDREN_IDS, P_ID, P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE);
 
     log.debug("Assembled apply_filter_to_children query: {}", query);
     return query;
@@ -210,15 +208,18 @@ public class BrowseNodeSqlBuilder
     parameters.put(P_REPOSITORY_NAME, assetRepositoryName);
     parameters.put(P_AUTHZ_REPOSITORY_NAME, authzRepositoryName);
 
-    final String authClause = getAuthorizationWhereClause(authzRepositoryName, format, parameters, false);
+    final String authClause = getAuthorizationWhereClause(authzRepositoryName, format, parameters);
     final StringBuilder query = new StringBuilder(String
-        .format("select @rid from (traverse %s, %s from (select from :%s)) where ", P_CHILDREN_IDS, P_ASSET_ID, P_ID));
-    query.append(authClause);
+        .format("select @rid from (traverse %s from (select from :%s)) where ", P_CHILDREN_IDS, P_ID));
 
     if (filter != null) {
-      parameters.put(P_FILTER, "%" + Strings2.lower(filter) + "%");
-      query.append(String.format(" and (@class = 'asset' and %s.toLowerCase() like :%s)", MetadataNodeEntityAdapter.P_NAME, P_FILTER));
+      parameters.put(P_ASSET_NAME_LOWERCASE, "%" + Strings2.lower(filter) + "%");
+      query.append(String.format(" %s like :%s and ", P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE));
     }
+
+    query.append("(asset_id is not null and (");
+    query.append(authClause);
+    query.append("))");
 
     query.append(" limit 1");
 
@@ -228,8 +229,7 @@ public class BrowseNodeSqlBuilder
 
   private String getAuthorizationWhereClause(final String repositoryName,
                                              final String format,
-                                             final Map<String, Object> parameters,
-                                             final boolean browseNodeContext)
+                                             final Map<String, Object> parameters)
   {
     List<SelectorConfiguration> selectors = DatabaseThreadUtils
         .withOtherDatabase(() -> selectorManager.browseActive(asList(repositoryName), asList(format)));
@@ -238,13 +238,12 @@ public class BrowseNodeSqlBuilder
     boolean allCsel =
         !selectors.isEmpty() && selectors.stream().allMatch(selector -> CselSelector.TYPE.equals(selector.getType()));
 
-    String prefix = browseNodeContext ? "(asset_id is null or (" : "(@class = 'asset' and (";
-    StringBuilder authClause = new StringBuilder(prefix);
+    StringBuilder authClause = new StringBuilder();
     for (int i = 0; i < selectors.size(); i++) {
       if (CselSelector.TYPE.equals(selectors.get(i).getType())) {
         CselAssetSql cselAssetSql = cselAssetSqlBuilder
             .buildWhereClause((String) selectors.get(i).getAttributes().get("expression"), format,
-                'a' + Integer.toString(i) + 'a', browseNodeContext ? "$asset." : "");
+                'a' + Integer.toString(i) + 'a', "asset_id.");
         parameters.putAll(cselAssetSql.getSqlParameters());
         selectorsSql.add('(' + cselAssetSql.getSql() + ')');
       }
@@ -253,15 +252,12 @@ public class BrowseNodeSqlBuilder
       authClause.append(Joiner.on(OR).join(selectorsSql));
     }
     if (!allCsel) {
-      if (authClause.length() > prefix.length()) {
+      if (authClause.length() > 0) {
         authClause.append(OR);
       }
-      authClause.append(
-          "contentAuth(" + (browseNodeContext ? "@this.asset_id" : "@this") + ", :" + P_AUTHZ_REPOSITORY_NAME
-              + ", true) = true");
+      authClause.append(String.format("contentAuth(@this.asset_id, :%s, true) = true", P_AUTHZ_REPOSITORY_NAME));
       parameters.put(P_AUTHZ_REPOSITORY_NAME, repositoryName);
     }
-    authClause.append("))");
     return authClause.toString();
   }
 }

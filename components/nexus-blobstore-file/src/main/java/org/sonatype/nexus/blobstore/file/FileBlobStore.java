@@ -479,8 +479,8 @@ public class FileBlobStore
       if (blobAttributes == null) {
         // This could happen under some concurrent situations (two threads try to delete the same blob)
         // but it can also occur if the deleted index refers to a manually-deleted blob.
-        log.warn("Attempt to mark-for-delete non-existent blob {}", blobId);
-        return false;
+        log.warn("Attempt to mark-for-delete non-existent blob {}, hard deleting instead", blobId);
+        return deleteHard(blobId);
       }
       else if (blobAttributes.isDeleted()) {
         log.debug("Attempt to delete already-deleted blob {}", blobId);
@@ -914,13 +914,8 @@ public class FileBlobStore
       return blobAttributes.load() ? blobAttributes : null;
     }
     catch (Exception e) {
-      String msg = "Unable to load BlobAttributes for blob id: {}, path: {}";
-      if (log.isDebugEnabled()) {
-        log.error(msg, blobId, blobPath, e);
-      }
-      else {
-        log.error(msg, blobId, blobPath);
-      }
+        log.error("Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}",
+            blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
       return null;
     }
   }

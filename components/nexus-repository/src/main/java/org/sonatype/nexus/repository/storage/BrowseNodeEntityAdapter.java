@@ -54,6 +54,7 @@ import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.DB_CLASS;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_ASSET_ID;
+import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_ASSET_NAME_LOWERCASE;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_CHILDREN_IDS;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_COMPONENT_ID;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_ID;
@@ -80,19 +81,20 @@ public class BrowseNodeEntityAdapter
       "select from %s where %s = :asset_id", DB_CLASS, P_ASSET_ID);
 
   private static final String UPDATE_NODE_ASSET_COMPONENT = String.format(
-      "UPDATE :%s SET %s = :%s, %s = :%s RETURN AFTER @this", P_ID, P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID,
-      P_COMPONENT_ID);
+      "UPDATE :%s SET %s = :%s, %s = :%s, %s = :%s RETURN AFTER @this", P_ID, P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID,
+      P_COMPONENT_ID, P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE);
 
-  private static final String UPDATE_NODE_ASSET = String.format("UPDATE :%s SET %s = :%s RETURN AFTER @this", P_ID,
-      P_ASSET_ID, P_ASSET_ID);
+  private static final String UPDATE_NODE_ASSET = String
+      .format("UPDATE :%s SET %s = :%s, %s = :%s RETURN AFTER @this", P_ID, P_ASSET_ID, P_ASSET_ID,
+          P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE);
 
   private static final String UPDATE_NODE_COMPONENT = String.format("UPDATE :%s SET %s = :%s RETURN AFTER @this", P_ID,
       P_COMPONENT_ID, P_COMPONENT_ID);
 
   private static final String INSERT_QUERY = String.format(
-      "INSERT INTO %s SET %s = :%s, %s = :%s, %s = :%s, %s = :%s, %s = :%s RETURN @this", DB_CLASS,
+      "INSERT INTO %s SET %s = :%s, %s = :%s, %s = :%s, %s = :%s, %s = :%s, %s = :%s RETURN @this", DB_CLASS,
       P_PARENT_ID, P_PARENT_ID, P_PATH, P_PATH, P_REPOSITORY_NAME, P_REPOSITORY_NAME,
-      P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID, P_COMPONENT_ID);
+      P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID, P_COMPONENT_ID, P_ASSET_NAME_LOWERCASE, P_ASSET_NAME_LOWERCASE);
 
   private static final String ADD_CHILD_QUERY = String
       .format("UPDATE :%s ADD %s = :%s", P_PARENT_ID, P_CHILDREN_IDS, P_CHILDREN_IDS);
@@ -237,7 +239,7 @@ public class BrowseNodeEntityAdapter
     }
 
     return upsert(db, node.getRepositoryName(), node.getParentId(), node.getPath(), node.getAssetId(),
-        node.getComponentId(), updateChildLinks);
+        node.getComponentId(), node.getAssetNameLowercase(), updateChildLinks);
   }
 
   public BrowseNode upsert(final ODatabaseDocumentTx db,
@@ -246,7 +248,7 @@ public class BrowseNodeEntityAdapter
                            final String pathName,
                            final boolean updateChildLinks)
   {
-    return upsert(db, repositoryName, parentId, pathName, null, null, updateChildLinks);
+    return upsert(db, repositoryName, parentId, pathName, null, null, null, updateChildLinks);
   }
 
   public BrowseNode upsert(final ODatabaseDocumentTx db,
@@ -255,6 +257,7 @@ public class BrowseNodeEntityAdapter
                            final String pathName,
                            final EntityId assetId,
                            final EntityId componentId,
+                           final String assetNameLowercase,
                            final boolean createChildLinks)
   {
     checkNotNull(db);
@@ -266,6 +269,7 @@ public class BrowseNodeEntityAdapter
     Map<String, Object> parameters = new HashMap<>();
     parameters.put(P_ASSET_ID, assetId != null ? assetEntityAdapter.recordIdentity(assetId) : null);
     parameters.put(P_COMPONENT_ID, componentId != null ? componentEntityAdapter.recordIdentity(componentId) : null);
+    parameters.put(P_ASSET_NAME_LOWERCASE, assetNameLowercase);
 
     BrowseNode node = getNode(db, repositoryName, parentRid, pathName);
     if (node != null) {
@@ -292,7 +296,8 @@ public class BrowseNodeEntityAdapter
       catch (OCommandExecutionException e) {
         log.error("Concurrent insert for path={}, attempting update instead", pathName, e);
 
-        return upsert(db, repositoryName, parentId, pathName, assetId, componentId, createChildLinks);
+        return upsert(db, repositoryName, parentId, pathName, assetId, componentId, assetNameLowercase,
+            createChildLinks);
       }
     }
   }
@@ -478,6 +483,7 @@ public class BrowseNodeEntityAdapter
     type.createProperty(P_PARENT_ID, OType.LINK, type);
     type.createProperty(P_COMPONENT_ID, OType.LINK, componentEntityAdapter.getSchemaType());
     type.createProperty(P_ASSET_ID, OType.LINK, assetEntityAdapter.getSchemaType());
+    type.createProperty(P_ASSET_NAME_LOWERCASE, OType.STRING);
   }
 
   @Override
@@ -487,8 +493,9 @@ public class BrowseNodeEntityAdapter
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
     String path = document.field(P_PATH, OType.STRING);
     ORID parentId = document.field(P_PARENT_ID, ORID.class);
+    String assetNameLowercase = document.field(P_ASSET_NAME_LOWERCASE, OType.STRING);
 
-    entity.withRepositoryName(repositoryName).withPath(path);
+    entity.withRepositoryName(repositoryName).withPath(path).withAssetNameLowercase(assetNameLowercase);
 
     entity.setAssetId(assetId != null ? new AttachedEntityId(assetEntityAdapter, assetId) : null);
     entity.setComponentId(componentId != null ? new AttachedEntityId(componentEntityAdapter, componentId) : null);
@@ -498,6 +505,7 @@ public class BrowseNodeEntityAdapter
   @Override
   protected void writeFields(final ODocument document, final BrowseNode entity) throws Exception {
     document.field(P_PATH, entity.getPath());
+    document.field(P_ASSET_NAME_LOWERCASE, entity.getAssetNameLowercase());
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
     document.field(P_PARENT_ID, entity.getParentId() != null ? recordIdentity(entity.getParentId()) : null);
     document.field(P_COMPONENT_ID,

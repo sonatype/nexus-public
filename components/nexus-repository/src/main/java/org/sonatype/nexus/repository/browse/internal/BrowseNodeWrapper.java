@@ -34,7 +34,9 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
 
 import org.apache.commons.collections.CollectionUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.text.Strings2.lower;
 
 /**
  * Wraps format specific behaviour for browse nodes
@@ -118,7 +120,7 @@ public class BrowseNodeWrapper
     rootNodes.computeIfAbsent(rootName, s -> new RebuildBrowseNode().withName(rootName));
     RebuildBrowseNode root = rootNodes.get(rootName);
     RebuildBrowseNode assetNode = createNodes(root, assetPath.subList(1, assetPath.size()));
-    assetNode.withAssetId(EntityHelper.id(asset));
+    assetNode.withAssetId(EntityHelper.id(asset)).withAssetNameLowercase(lower(asset.name()));
 
     if (CollectionUtils.isNotEmpty(componentPath)) {
       RebuildBrowseNode componentNode = createNodes(root, componentPath.subList(1, componentPath.size()));
@@ -156,7 +158,8 @@ public class BrowseNodeWrapper
 
       BrowseNode browseNode = browseNodeStore.save(
           new BrowseNode().withAssetId(node.getAssetId()).withComponentId(node.getComponentId())
-              .withPath(node.getName()).withParentId(parentId).withRepositoryName(repositoryName), updateChildLinks);
+              .withPath(node.getName()).withParentId(parentId).withRepositoryName(repositoryName)
+              .withAssetNameLowercase(node.getAssetNameLowercase()), updateChildLinks);
 
       node.withBrowseNode(browseNode);
     }
