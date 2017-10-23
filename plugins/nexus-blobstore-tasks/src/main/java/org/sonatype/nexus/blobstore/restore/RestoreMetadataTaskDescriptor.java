@@ -40,6 +40,8 @@ public class RestoreMetadataTaskDescriptor
 
   static final String UNDELETE_BLOBS = "undeleteBlobs";
 
+  static final String INTEGRITY_CHECK = "integrityCheck";
+
   static final String DRY_RUN = "dryRun";
 
   private interface Messages extends MessageBundle {
@@ -69,6 +71,12 @@ public class RestoreMetadataTaskDescriptor
 
     @DefaultMessage("Log actions, but make no changes.")
     String dryRunHelpText();
+
+    @DefaultMessage("Integrity check")
+    String integrityCheckLabel();
+
+    @DefaultMessage("Verify integrity between asset metadata and blob properties")
+    String integrityCheckHelpText();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -93,7 +101,10 @@ public class RestoreMetadataTaskDescriptor
             messages.restoreBlobsHelpText(), OPTIONAL).withInitialValue(true),
         new CheckboxFormField(UNDELETE_BLOBS,
             messages.undeleteBlobsLabel(),
-            messages.undeleteBlobsHelpText(), OPTIONAL).withInitialValue(true)
+            messages.undeleteBlobsHelpText(), OPTIONAL).withInitialValue(true),
+        new CheckboxFormField(INTEGRITY_CHECK,
+            messages.integrityCheckLabel(),
+            messages.integrityCheckHelpText(), OPTIONAL).withInitialValue(true)
     );
   }
 }

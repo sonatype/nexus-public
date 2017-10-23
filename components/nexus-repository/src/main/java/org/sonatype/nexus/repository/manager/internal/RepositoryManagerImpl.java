@@ -285,6 +285,14 @@ public class RepositoryManagerImpl
   }
 
   @Override
+  @Guarded(by = STARTED)
+  public Iterable<Repository> browseForBlobStore(String blobStoreId) {
+    return stream(browse().spliterator(), true)
+        .filter(r -> blobStoreId.equals(r.getConfiguration().attributes("storage").get("blobStoreName")))
+        ::iterator;
+  }
+
+  @Override
   public boolean exists(final String name) {
     return stream(browse().spliterator(), false).anyMatch(repository -> repository.getName().equalsIgnoreCase(name));
   }

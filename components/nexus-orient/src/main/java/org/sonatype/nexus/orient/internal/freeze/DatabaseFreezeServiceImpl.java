@@ -175,6 +175,9 @@ public class DatabaseFreezeServiceImpl
       releaseLocalDatabases();
       eventManager.post(new DatabaseFreezeChangeEvent(false));
     }
+    if (!result) {
+      log.error("failed to release {}; freeze request state {}", request, getState());
+    }
     return result;
   }
 

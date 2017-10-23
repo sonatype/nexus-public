@@ -13,38 +13,33 @@
 package org.sonatype.nexus.blobstore.restore.maven.internal;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.storage.AssetBlob;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
-import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
-import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
-import static org.sonatype.nexus.common.hash.Hashes.hash;
-import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * @since 3.4
@@ -52,18 +47,9 @@ import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 @Named("maven2")
 @Singleton
 public class MavenRestoreBlobStrategy
-    extends ComponentSupport
-    implements RestoreBlobStrategy
+    extends BaseRestoreBlobStrategy<MavenRestoreBlobData>
 {
   private final MavenPathParser mavenPathParser;
-
-  private final NodeAccess nodeAccess;
-
-  private final RepositoryManager repositoryManager;
-
-  private final BlobStoreManager blobStoreManager;
-
-  private final DryRunPrefix dryRunPrefix;
 
   @Inject
   public MavenRestoreBlobStrategy(final MavenPathParser mavenPathParser,
@@ -72,76 +58,57 @@ public class MavenRestoreBlobStrategy
                                   final BlobStoreManager blobStoreManager,
                                   final DryRunPrefix dryRunPrefix)
   {
+    super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
     this.mavenPathParser = checkNotNull(mavenPathParser);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
   @Override
-  public void restore(final Properties properties, final Blob blob, final String blobStoreName, final boolean isDryRun) // NOSONAR
-  {
-    String logPrefix = isDryRun ? dryRunPrefix.get() : "";
-    String name = properties.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-    String repoName = properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER);
-
-    MavenPath mavenPath = mavenPathParser.parsePath(name);
-
-    if (mavenPath.getCoordinates() == null && !mavenPathParser.isRepositoryMetadata(mavenPath)) {
-      log.warn("Skipping as no maven coordinates found and is not maven metadata, blob store: {}, repository: {}, blob name: {}, blob id: {}",
-          blobStoreName, repoName, name, blob.getId());
-      return;
-    }
-
-    try {
-      Optional<StorageFacet> storageFacet = getFacet(repoName, StorageFacet.class);
-      Optional<MavenFacet> mavenFacet = getFacet(repoName, MavenFacet.class);
-      if (storageFacet.isPresent() && mavenFacet.isPresent()) {
-        Content content = TransactionalTouchMetadata.operation
-            .withDb(storageFacet.get().txSupplier())
-            .throwing(IOException.class)
-            .call(() -> mavenFacet.get().get(mavenPath));
-
-        if (content != null) {
-          log.debug("Skipping as asset already exists, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
-              blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
-          return;
-        }
-
-        if (!isDryRun) {
-          TransactionalStoreMetadata.operation
-              .withDb(storageFacet.get().txSupplier())
-              .throwing(IOException.class)
-              .call(() -> mavenFacet.get().put(mavenPath,
-                  new AssetBlob(nodeAccess, blobStoreManager.get(blobStoreName), store -> blob,
-                      properties.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER),
-                      hash(Arrays.asList(HashAlgorithm.MD5, HashAlgorithm.SHA1), blob.getInputStream()), true
-                  ),
-                  null));
-        }
-
-        log.info("{}Restored asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
-            logPrefix, blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
-      }
-      else {
-        log.debug("Skipping asset, blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
-            blobStoreName, repoName, mavenPath.getPath(), name, blob.getId());
-      }
-    }
-    catch (IOException e) {
-      log.error("Error while restoring asset: blob store: {}, repository: {}, maven path: {}, blob name: {}, blob id: {}",
-          blobStoreName, repoName, mavenPath.getPath(), name, blob.getId(), e);
-    }
+  protected MavenRestoreBlobData createRestoreData(final RestoreBlobData blobData) {
+    return new MavenRestoreBlobData(blobData, mavenPathParser.parsePath(blobData.getBlobName()));
   }
 
-  private <T extends Facet> Optional<T> getFacet(final String repositoryName, final Class<T> facetClass) {
-    Optional<T> facet = Optional.ofNullable(repositoryName)
-        .map(repositoryManager::get)
-        .map(r -> r.optionalFacet(facetClass).orElse(null));
-    if (!facet.isPresent()) {
-      log.debug("Facet not found, repository: {}, facet type: {}", repositoryName, facetClass);
+  @Override
+  protected boolean canAttemptRestore(@Nonnull final MavenRestoreBlobData data) {
+    MavenPath mavenPath = data.getMavenPath();
+    Repository repository = data.getBlobData().getRepository();
+
+    if (mavenPath.getCoordinates() == null && !mavenPathParser.isRepositoryMetadata(mavenPath)) {
+      log.warn("Skipping as no maven coordinates found and is not maven metadata");
+      return false;
     }
-    return facet;
+
+    Optional<MavenFacet> mavenFacet = repository.optionalFacet(MavenFacet.class);
+
+    if (!mavenFacet.isPresent()) {
+      log.warn("Skipping as Maven Facet not found on repository: {}", repository.getName());
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  @Nonnull
+  protected List<HashAlgorithm> getHashAlgorithms() {
+    return newArrayList(MD5, SHA1);
+  }
+
+  @Override
+  protected String getAssetPath(@Nonnull final MavenRestoreBlobData data) {
+    return data.getMavenPath().getPath();
+  }
+
+  @Override
+  @TransactionalTouchBlob
+  protected boolean assetExists(@Nonnull final MavenRestoreBlobData data) throws IOException {
+    return data.getBlobData().getRepository().facet(MavenFacet.class).get(data.getMavenPath()) != null;
+  }
+
+  @Override
+  @TransactionalStoreMetadata
+  protected void createAssetFromBlob(@Nonnull final AssetBlob assetBlob, @Nonnull final MavenRestoreBlobData data)
+      throws IOException
+  {
+    data.getBlobData().getRepository().facet(MavenFacet.class).put(data.getMavenPath(), assetBlob, null);
   }
 }

@@ -10,41 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.manager;
+package org.sonatype.nexus.blobstore.restore;
 
-import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.config.Configuration;
 
 /**
- * Repository manager.
+ * Strategy for checking the integrity of the assets in a repository against its blobstore
  *
- * @since 3.0
+ * @since 3.7
  */
-public interface RepositoryManager
-  extends Lifecycle
+public interface IntegrityCheckStrategy
 {
-  Iterable<Repository> browse();
-
   /**
-   * @since 3.7
+   * Run the integrity check on the given repository and blob store
+   *
+   * @param repository  repository to check
+   * @param blobStore   blob store to check
+   * @param isCancelled Supplier to check during processing if the task is cancelled
    */
-  Iterable<Repository> browseForBlobStore(String blobStoreId);
-
-  boolean exists(String name);
-
-  @Nullable
-  Repository get(String name);
-
-  Repository create(Configuration configuration) throws Exception;
-
-  Repository update(Configuration configuration) throws Exception;
-
-  void delete(String name) throws Exception;
-
-  boolean isBlobstoreUsed(String blobStoreName);
-
-  long blobstoreUsageCount(String blobStoreName);
+  void check(final Repository repository, final BlobStore blobStore, final Supplier<Boolean> isCancelled);
 }

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository
 import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 
 import org.junit.Rule
@@ -45,7 +46,7 @@ class RepositoryTaskSupportTest
   void 'repository field must be present'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     task = new TestTask()
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     thrown.expect(IllegalArgumentException)
@@ -60,7 +61,7 @@ class RepositoryTaskSupportTest
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, 'foo')
     task = new TestTask()
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     thrown.expect(NullPointerException)
@@ -81,7 +82,7 @@ class RepositoryTaskSupportTest
         return false
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     thrown.expect(IllegalStateException)
@@ -105,7 +106,7 @@ class RepositoryTaskSupportTest
         actualRepository = repository
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     task.execute()
@@ -129,7 +130,7 @@ class RepositoryTaskSupportTest
         actualRepositories << repository
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     task.execute()
@@ -158,7 +159,7 @@ class RepositoryTaskSupportTest
         return repository != testRepository1
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     task.execute()
@@ -185,7 +186,7 @@ class RepositoryTaskSupportTest
         }
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     thrown.expect(MultipleFailuresException)
@@ -213,7 +214,7 @@ class RepositoryTaskSupportTest
         }
       }
     }
-    task.install(repositoryManager)
+    task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
     task.execute()

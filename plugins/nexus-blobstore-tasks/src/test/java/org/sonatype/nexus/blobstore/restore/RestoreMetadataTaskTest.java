@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore.restore;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -28,23 +30,35 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.TYPE_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
@@ -81,6 +95,17 @@ public class RestoreMetadataTaskTest
   @Mock
   DryRunPrefix dryRunPrefix;
 
+  @Mock
+  StorageTx storageTx;
+
+  @Mock
+  DefaultIntegrityCheckStrategy defaultIntegrityCheckStrategy;
+
+  @Mock
+  IntegrityCheckStrategy testIntegrityCheckStrategy;
+
+  Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
+
   BlobId blobId;
 
   FileBlobAttributes blobAttributes;
@@ -89,8 +114,14 @@ public class RestoreMetadataTaskTest
 
   @Before
   public void setup() throws Exception {
+    integrityCheckStrategies = spy(new HashMap<>());
+    integrityCheckStrategies.put(Maven2Format.NAME, testIntegrityCheckStrategy);
+    integrityCheckStrategies.put(DEFAULT_NAME, defaultIntegrityCheckStrategy);
+
     underTest = new RestoreMetadataTask(blobStoreManager, repositoryManager,
-        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix);
+        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies);
+
+    reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
     configuration = new TaskConfiguration();
     configuration.setString(BLOB_STORE_NAME_FIELD_ID, "test");
@@ -119,6 +150,7 @@ public class RestoreMetadataTaskTest
   public void testRestoreMetadata() throws Exception {
     configuration.setBoolean(RESTORE_BLOBS, true);
     configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
 
     underTest.execute();
@@ -135,6 +167,7 @@ public class RestoreMetadataTaskTest
   public void testRestoreMetadataNoUnDelete() throws Exception {
     configuration.setBoolean(RESTORE_BLOBS, true);
     configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
 
     underTest.execute();
@@ -147,6 +180,7 @@ public class RestoreMetadataTaskTest
   public void testRestoreMetadata_BlobIsMarkedAsDeleted() throws Exception {
     configuration.setBoolean(RESTORE_BLOBS, true);
     configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
 
     blobAttributes.setDeleted(true);
@@ -158,14 +192,77 @@ public class RestoreMetadataTaskTest
   }
 
   @Test
-  public void testNoRestoreMetadataNoUnDelete() throws Exception {
+  public void testNoRestoreMetadataNoUnDeleteNoIntegrityCheck() throws Exception {
     configuration.setBoolean(RESTORE_BLOBS, false);
     configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+
     underTest.configure(configuration);
 
     underTest.execute();
 
-    verify(restoreBlobStrategy, never()).restore(any(), any(), any());
-    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any(), eq(false));
+    verifyZeroInteractions(blobStoreManager);
+  }
+
+  @Test
+  public void testIntegrityCheck_BlobStoreDoesNotExist() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(blobStoreManager.get(anyString())).thenReturn(null);
+
+    underTest.execute();
+
+    verifyZeroInteractions(repositoryManager);
+  }
+
+  @Test
+  public void testIntegrityCheck_SkipGroupRepositories() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repository.getType()).thenReturn(new GroupType());
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(singletonList(repository));
+
+    underTest.execute();
+
+    verifyZeroInteractions(integrityCheckStrategies);
+  }
+
+  @Test
+  public void testIntegrityCheck_DefaultStrategy() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(singletonList(repository));
+
+    // this should return the DefaultIntegrityCheckStrategy
+    when(mavenFormat.getValue()).thenReturn("foo");
+
+    underTest.execute();
+
+    verify(defaultIntegrityCheckStrategy).check(any(), any(), any());
+    verifyZeroInteractions(testIntegrityCheckStrategy);
+  }
+
+  @Test
+  public void testIntegrityCheck() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, false);
+    configuration.setBoolean(INTEGRITY_CHECK, true);
+    underTest.configure(configuration);
+
+    when(repositoryManager.browseForBlobStore(any())).thenReturn(singletonList(repository));
+
+    underTest.execute();
+
+    verifyZeroInteractions(defaultIntegrityCheckStrategy);
+    verify(testIntegrityCheckStrategy).check(eq(repository), eq(fileBlobStore), any());
   }
 }

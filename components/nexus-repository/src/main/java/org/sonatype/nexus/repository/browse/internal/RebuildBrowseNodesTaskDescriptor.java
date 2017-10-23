@@ -42,6 +42,6 @@ public class RebuildBrowseNodesTaskDescriptor
         configuration.isEnabled() ? VISIBLE : NOT_VISIBLE, configuration.isEnabled() ? EXPOSED : NOT_EXPOSED,
         new RepositoryCombobox(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository to rebuild browse tree",
             true).excludingAnyOfTypes(GroupType.NAME).includeAnEntryForAllRepositories(),
-        nodeAccess.isClustered() ? newMultinodeFormField().withInitialValue(true) : null);
+        nodeAccess.isClustered() ? newLimitNodeFormField() : null);
   }
 }

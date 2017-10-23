@@ -12,17 +12,21 @@
  */
 package org.sonatype.nexus.repository;
 
+import java.util.Set;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,6 +34,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Support for tasks that applies to repositories.
+ *
+ * If task is configured to run against a repository group (or all repositories) the repository list will be exploded
+ * such that the task is run against all repositories referenced in all groups including the group repository itself.
+ * Thus, task business logic should not need to process group members themselves
  *
  * @since 3.0
  */
@@ -41,13 +49,19 @@ public abstract class RepositoryTaskSupport
 
   private RepositoryManager repositoryManager;
 
+  private Type groupType;
+
+  private Set<Repository> processedRepositories;
+
   @Inject
-  public void install(final RepositoryManager repositoryManager) {
+  public void install(final RepositoryManager repositoryManager, @Named(GroupType.NAME) final Type groupType) {
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.groupType = checkNotNull(groupType, "repository group type required");
   }
 
   @Override
   protected Object execute() throws Exception {
+    processedRepositories = Sets.newHashSet();
     MultipleFailures failures = new MultipleFailures();
     for (Repository repository : findRepositories()) {
       if (!isCanceled()) {
@@ -83,6 +97,33 @@ public abstract class RepositoryTaskSupport
    */
   protected String getRepositoryField() {
     return getConfiguration().getString(REPOSITORY_NAME_FIELD_ID);
+  }
+
+  /**
+   * Returns true if the repository is of type {@link GroupType}
+   *
+   * @since 3.7
+   */
+  protected boolean isGroupRepository(final Repository repository) {
+    return groupType.equals(repository.getType());
+  }
+
+  /**
+   * Tracks processed repositories
+   *
+   * @since 3.7
+   */
+  protected void markProcessed(final Repository repository) {
+    processedRepositories.add(repository);
+  }
+
+  /**
+   * Returns true if the specified repository has already been processed during task execution
+   *
+   * @since 3.7
+   */
+  protected boolean hasBeenProcessed(final Repository repository) {
+    return processedRepositories.contains(repository);
   }
 
   /**

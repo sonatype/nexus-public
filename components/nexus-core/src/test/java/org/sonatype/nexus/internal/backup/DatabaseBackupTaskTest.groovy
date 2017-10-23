@@ -37,6 +37,7 @@ class DatabaseBackupTaskTest
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> true
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -45,13 +46,13 @@ class DatabaseBackupTaskTest
     then: 'the databaseBackup and freeze services should be called appropriately'
       1 * databaseBackup.dbNames() >> ['test']
       1 * databaseBackup.fullBackup('target', 'test', _) >> dumbBackupJob
-      1 * freezeService.releaseRequest(!null)
   }
 
   def 'task should fail somewhat gracefully if the file cannot be created'() {
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> true
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -62,7 +63,6 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.fullBackup('target', 'test', _) >> { String backupFolder, String dbName ->
         throw new IOException("mocked exception")
       }
-      1 * freezeService.releaseRequest(!null)
       thrown(MultipleFailuresException)
   }
 
@@ -70,6 +70,7 @@ class DatabaseBackupTaskTest
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> true
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -79,7 +80,6 @@ class DatabaseBackupTaskTest
       1 * databaseBackup.dbNames() >> ['test1', 'test2']
       1 * databaseBackup.fullBackup('target', 'test1', _) >> dumbBackupJob
       1 * databaseBackup.fullBackup('target', 'test2', _) >> dumbBackupJob
-      1 * freezeService.releaseRequest(!null)
       notThrown(MultipleFailuresException)
   }
 
@@ -87,6 +87,7 @@ class DatabaseBackupTaskTest
     def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
     dbBackupTask.configure(taskConfiguration())
     freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> true
 
     when: 'the task is executed with good values'
       dbBackupTask.location = 'target'
@@ -98,8 +99,25 @@ class DatabaseBackupTaskTest
         throw new IOException("mocked exception")
       }
       1 * databaseBackup.fullBackup('target','test2', _) >> dumbBackupJob
-      1 * freezeService.releaseRequest(!null)
-      thrown(MultipleFailuresException)
+      MultipleFailuresException exception = thrown()
+      exception.getFailures().get(0).getMessage().contains('please check filesystem permissions')
+  }
+
+  def 'failure to release freeze is treated as a task failure'() {
+    def dbBackupTask = new DatabaseBackupTask(databaseBackup, freezeService)
+    dbBackupTask.configure(taskConfiguration())
+    freezeService.requestFreeze(_, _) >> mockRequest
+    freezeService.releaseRequest(mockRequest) >> false
+
+    when: 'the task is executed'
+      dbBackupTask.location = 'target'
+      dbBackupTask.execute()
+
+    then: 'backup completes ok, but release is captured'
+      1 * databaseBackup.dbNames() >> ['test']
+      1 * databaseBackup.fullBackup('target', 'test', _) >> dumbBackupJob
+      MultipleFailuresException exception = thrown()
+      exception.getFailures().get(0).getMessage().startsWith('failed to automatically release read-only state')
   }
 
   def dumbBackupJob = new Callable<Void>() {

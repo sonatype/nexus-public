@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.restore;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,13 +32,16 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
+import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
@@ -56,22 +60,29 @@ public class RestoreMetadataTask
 
   private final Map<String, RestoreBlobStrategy> restoreBlobStrategies;
 
+  private final Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
+
   private final BlobStoreUsageChecker blobStoreUsageChecker;
 
   private final DryRunPrefix dryRunPrefix;
+
+  private final IntegrityCheckStrategy defaultIntegrityCheckStrategy;
 
   @Inject
   public RestoreMetadataTask(final BlobStoreManager blobStoreManager,
                              final RepositoryManager repositoryManager,
                              final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
                              final BlobStoreUsageChecker blobStoreUsageChecker,
-                             final DryRunPrefix dryRunPrefix)
+                             final DryRunPrefix dryRunPrefix,
+                             final Map<String, IntegrityCheckStrategy> integrityCheckStrategies)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.restoreBlobStrategies = checkNotNull(restoreBlobStrategies);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
+    this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
+    this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
   }
 
   @Override
@@ -85,8 +96,11 @@ public class RestoreMetadataTask
     boolean dryRun = getConfiguration().getBoolean(DRY_RUN, false);
     boolean restoreBlobs = getConfiguration().getBoolean(RESTORE_BLOBS, false);
     boolean undeleteBlobs = getConfiguration().getBoolean(UNDELETE_BLOBS, false);
+    boolean integrityCheck = getConfiguration().getBoolean(INTEGRITY_CHECK, false);
 
     restore(blobStoreId, restoreBlobs, undeleteBlobs, dryRun);
+
+    blobStoreIntegrityCheck(integrityCheck, blobStoreId);
 
     return null;
   }
@@ -140,6 +154,27 @@ public class RestoreMetadataTask
     else {
       log.error("Blob store does not support rebuild: {}", blobStoreName);
     }
+  }
+
+  private void blobStoreIntegrityCheck(final boolean integrityCheck, final String blobStoreId) {
+    if (!integrityCheck) {
+      log.warn("Integrity check operation not selected");
+      return;
+    }
+
+    BlobStore blobStore = blobStoreManager.get(blobStoreId);
+
+    if (blobStore == null) {
+      log.error("Unable to find blob store '{}' in the blob store manager", blobStoreId);
+      return;
+    }
+
+    StreamSupport.stream(repositoryManager.browseForBlobStore(blobStoreId).spliterator(), false)
+        .filter(r -> !(r.getType() instanceof GroupType))
+        .forEach(repository -> integrityCheckStrategies
+            .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
+            .check(repository, blobStore, this::isCanceled)
+        );
   }
 
   private Optional<Context> buildContext(final String blobStoreName, final FileBlobStore fileBlobStore,

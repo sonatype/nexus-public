@@ -131,7 +131,7 @@ Ext.define('NX.coreui.controller.Privileges', {
       },
       component: {
         'nx-coreui-privilege-list': {
-          beforerender: me.loadStores
+          beforerender: me.loadPrivilegeStores
         },
         'nx-coreui-privilege-list button[action=new]': {
           click: me.showSelectTypePanel
@@ -317,6 +317,14 @@ Ext.define('NX.coreui.controller.Privileges', {
         }
       ]
     }));
-  }
+  },
 
+  loadPrivilegeStores: function() {
+    var me = this;
+
+    Ext.each(this.stores, function(store){
+      me.getStore(store).clearFilter(true);
+    });
+    me.loadStores();
+  }
 });

@@ -875,6 +875,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Metrics_ThreadStates_Runnable: 'Runnable',
     Metrics_ThreadStates_TimedWaiting: 'Timed waiting',
     Metrics_ThreadStates_Waiting: 'Waiting',
+    Support_Metrics_Dispatches_Title: 'Active Web Requests',
+    Support_Metrics_ResponseCode_Title: 'Web Response Codes',
+    Support_Metrics_Requests_Title: 'Web Requests',
+
 
     // Admin -> Support -> Support Request
     SupportRequest_Text: 'Support Request',

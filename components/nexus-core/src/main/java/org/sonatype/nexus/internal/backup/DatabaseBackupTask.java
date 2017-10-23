@@ -96,32 +96,32 @@ public class DatabaseBackupTask
     log.info("task named '{}' database backup to location {}", getName(), location);
     MultipleFailures failures = new MultipleFailures();
 
-    FreezeRequest request = freezeService.requestFreeze(InitiatorType.SYSTEM, getConfiguration().getName());
+    final FreezeRequest request = freezeService.requestFreeze(InitiatorType.SYSTEM, getConfiguration().getName());
     if (request == null) {
       throw new RuntimeException("unable to perform backup task, as attempt to freeze databases failed");
     }
-    try {
-      for (String dbName : databaseBackup.dbNames()) {
-        try {
-          log.info("database backup of {} starting", dbName);
-          Callable<Void> job = databaseBackup.fullBackup(location, dbName, timestamp);
-          jobs.add(job);
-        }
-        catch (Exception e) {
-          failures.add(new RuntimeException(String.format(
-              "database backup of %s to location: %s please check filesystem permissions and that the location exists",
-              dbName, location), e));
-        }
+    for (String dbName : databaseBackup.dbNames()) {
+      try {
+        log.info("database backup of {} starting", dbName);
+        Callable<Void> job = databaseBackup.fullBackup(location, dbName, timestamp);
+        jobs.add(job);
       }
-
-      monitorBackupResults(jobs, failures);
-      failures.maybePropagate();
-      return null;
-    } finally {
-      if (freezeService.releaseRequest(request)) {
-        log.error("failed to release {}", request);
+      catch (Exception e) {
+        failures.add(new RuntimeException(String.format(
+            "database backup of %s to location: %s please check filesystem permissions and that the location exists",
+            dbName, location), e));
       }
     }
+
+    monitorBackupResults(jobs, failures);
+    if (!freezeService.releaseRequest(request)) {
+      failures.add(new RuntimeException(
+          "failed to automatically release read-only state; view the nodes screen to disable read-only mode."));
+    }
+
+    failures.maybePropagate();
+    return null;
+
   }
 
   private void monitorBackupResults(final List<Callable<Void>> jobs, final MultipleFailures failures)

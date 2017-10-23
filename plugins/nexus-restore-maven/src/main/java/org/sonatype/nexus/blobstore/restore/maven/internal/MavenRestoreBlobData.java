@@ -10,32 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.maven.internal;
 
-import java.util.List;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.repository.maven.MavenPath;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.formfields.FormField;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
-
-public class RestoreMetadataTaskDescriptorTest
-    extends TestSupport
+/**
+ * @since 3.7
+ */
+public final class MavenRestoreBlobData // must be public for guice injection
 {
-  RestoreMetadataTaskDescriptor underTest;
+  private final RestoreBlobData blobData;
 
-  @Before
-  public void setup() {
-    underTest = new RestoreMetadataTaskDescriptor();
+  private final MavenPath mavenPath;
+
+  public MavenRestoreBlobData(final RestoreBlobData blobData, final MavenPath mavenPath) {
+    this.blobData = blobData;
+    this.mavenPath = mavenPath;
   }
 
-  @Test
-  public void testGetFormFields() {
-    List<FormField> formField = underTest.getFormFields();
-    assertThat(formField, hasSize(5));
+  public RestoreBlobData getBlobData() {
+    return blobData;
+  }
+
+  public MavenPath getMavenPath() {
+    return mavenPath;
   }
 }

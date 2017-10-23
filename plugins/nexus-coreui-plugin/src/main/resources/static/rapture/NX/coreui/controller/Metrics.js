@@ -120,28 +120,68 @@ Ext.define('NX.coreui.controller.Metrics', {
         var data = Ext.decode(response.responseText);
 
         // return gauge value
-        function gv(name) {
+        function gaugeValue(name) {
           return data.gauges[name].value;
+        }
+        
+        // return count from counter
+        function counterValue(name) {
+          return data.counters[name].count;
+        }
+       
+        // return count from meter
+        function meterCountValue(name) {
+          return data.meters[name].count;
+        }
+
+        // return count from timer
+        function timerCountValue(name) {
+          return data.timers[name].count;
         }
 
         // update memory charts
         panel.setTotalData([
-          { value: Math.round((gv('jvm.memory.total.used') / gv('jvm.memory.total.max')) * 100) }
+          { value: Math.round((gaugeValue('jvm.memory.total.used') / gaugeValue('jvm.memory.total.max')) * 100) }
         ]);
         panel.setMemoryDistData([
-          { name: NX.I18n.get('Support_Metrics_Heap_Title'), data: gv('jvm.memory.heap.used') },
-          { name: NX.I18n.get('Metrics_Heap_NonHeapItem'), data: gv('jvm.memory.total.used') - gv('jvm.memory.heap.used') },
-          { name: NX.I18n.get('Metrics_Heap_Available'), data: gv('jvm.memory.total.max') - gv('jvm.memory.total.used') }
+          { name: NX.I18n.get('Support_Metrics_Heap_Title'), data: gaugeValue('jvm.memory.heap.used') },
+          { name: NX.I18n.get('Metrics_Heap_NonHeapItem'), data: gaugeValue('jvm.memory.total.used') - gaugeValue('jvm.memory.heap.used') },
+          { name: NX.I18n.get('Metrics_Heap_Available'), data: gaugeValue('jvm.memory.total.max') - gaugeValue('jvm.memory.total.used') }
         ]);
 
         // update threads charts
         panel.setThreadStatesData([
-          { name: NX.I18n.get('Metrics_ThreadStates_New'), data: gv('jvm.thread-states.new.count') },
-          { name: NX.I18n.get('Metrics_ThreadStates_Terminated'), data: gv('jvm.thread-states.terminated.count') },
-          { name: NX.I18n.get('Metrics_ThreadStates_Blocked'), data: gv('jvm.thread-states.blocked.count') },
-          { name: NX.I18n.get('Metrics_ThreadStates_Runnable'), data: gv('jvm.thread-states.runnable.count') },
-          { name: NX.I18n.get('Metrics_ThreadStates_TimedWaiting'), data: gv('jvm.thread-states.timed_waiting.count') },
-          { name: NX.I18n.get('Metrics_ThreadStates_Waiting'), data: gv('jvm.thread-states.waiting.count') }
+          { name: NX.I18n.get('Metrics_ThreadStates_New'), data: gaugeValue('jvm.thread-states.new.count') },
+          { name: NX.I18n.get('Metrics_ThreadStates_Terminated'), data: gaugeValue('jvm.thread-states.terminated.count') },
+          { name: NX.I18n.get('Metrics_ThreadStates_Blocked'), data: gaugeValue('jvm.thread-states.blocked.count') },
+          { name: NX.I18n.get('Metrics_ThreadStates_Runnable'), data: gaugeValue('jvm.thread-states.runnable.count') },
+          { name: NX.I18n.get('Metrics_ThreadStates_TimedWaiting'), data: gaugeValue('jvm.thread-states.timed_waiting.count') },
+          { name: NX.I18n.get('Metrics_ThreadStates_Waiting'), data: gaugeValue('jvm.thread-states.waiting.count') }
+        ]);
+        
+        // update active requests
+        panel.setActiveRequestsData([
+          { name: 'active-requests', data: counterValue('org.eclipse.jetty.webapp.WebAppContext.active-requests') },
+          { name: 'active-dispatches', data: counterValue('org.eclipse.jetty.webapp.WebAppContext.active-dispatches') },
+          { name: 'active-suspended', data: counterValue('org.eclipse.jetty.webapp.WebAppContext.active-suspended') }
+        ]);
+        
+        // update web response codes
+        panel.setResponseCodeData([
+          {name: '1xx', data: meterCountValue('org.eclipse.jetty.webapp.WebAppContext.1xx-responses')},
+          {name: '2xx', data: meterCountValue('org.eclipse.jetty.webapp.WebAppContext.2xx-responses')},
+          {name: '3xx', data: meterCountValue('org.eclipse.jetty.webapp.WebAppContext.3xx-responses')},
+          {name: '4xx', data: meterCountValue('org.eclipse.jetty.webapp.WebAppContext.4xx-responses')},
+          {name: '5xx', data: meterCountValue('org.eclipse.jetty.webapp.WebAppContext.5xx-responses')}
+        ]);
+        
+        panel.setWebRequestData([
+          {name: 'GET', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.get-requests')},    
+          {name: 'PUT', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.put-requests')},    
+          {name: 'POST', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.post-requests')},    
+          {name: 'DELETE', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.delete-requests')},    
+          {name: 'OTHER', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.other-requests')},    
+          {name: 'OPTIONS', data: timerCountValue('org.eclipse.jetty.webapp.WebAppContext.options-requests')}    
         ]);
       }
     });
