@@ -248,6 +248,21 @@ public class StorageTxImpl
     }
   }
 
+  @Override
+  @Guarded(by = {ACTIVE})
+  public Iterable<ODocument> browse(final String selectSql,
+                                    @Nullable final Map<String, Object> params,
+                                    final int bufferSize,
+                                    final long timeoutSeconds)
+  {
+    if (Strings2.isBlank(selectSql)) {
+      return Collections.emptyList();
+    }
+    else {
+      return OrientAsyncHelper.asyncIterable(db, selectSql, params, bufferSize, timeoutSeconds);
+    }
+  }
+
   @Nullable
   @Override
   @Guarded(by = ACTIVE)

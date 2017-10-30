@@ -108,6 +108,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         'nx-coreui-componentassettreefeature nx-coreui-browse-repository-list': {
           beforerender: me.onBeforeRender
         },
+        'nx-coreui-componentassettreefeature nx-drilldown-item > container': {
+          beforedeactivate: me.onBeforeDeactivate
+        },
         'nx-coreui-componentassettreefeature treepanel': {
           select: me.selectNode,
           itemkeydown: me.itemKeyDown
@@ -494,6 +497,16 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.reselect();
       });
     }
+  },
+
+  /**
+   * @private
+   * Clears the filter box before the view is changed
+   */
+  onBeforeDeactivate: function(oldCard) {
+    var filterBox = oldCard.down('nx-searchbox');
+
+    filterBox && filterBox.clearSearch && filterBox.clearSearch();
   },
 
   /**

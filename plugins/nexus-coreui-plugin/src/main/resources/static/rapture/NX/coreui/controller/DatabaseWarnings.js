@@ -51,7 +51,7 @@ Ext.define('NX.coreui.controller.DatabaseWarnings', {
     var me = this,
         warningPanel = me.getDatabaseFreezeWarning(),
         databaseFreezeState = NX.State.getValue('db', {})['dbFrozen'],
-        quorumState = NX.State.getValue('quorum', {})['quorumPresent'],
+        quorumState = NX.State.getValue('quorum', {'quorumPresent':true})['quorumPresent'],
         reason = NX.State.getValue('db', {})['reason'];
 
     if (warningPanel) {

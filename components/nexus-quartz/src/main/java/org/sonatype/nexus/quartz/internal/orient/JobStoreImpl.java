@@ -1137,9 +1137,9 @@ public class JobStoreImpl
     checkState(jobDetailEntity != null, "Missing job-detail for trigger-key: %s", triggerKey);
     JobDetail jobDetail = jobDetailEntity.getValue();
 
-    // block other triggers for job if concurrent execution is disallowed
+    // block triggers for job if concurrent execution is disallowed
     if (jobDetail.isConcurrentExectionDisallowed()) {
-      blockOtherTriggers(db, triggerKey, jobDetail);
+      blockTriggers(db, triggerKey, jobDetail);
     }
 
     jobDetail.getJobDataMap().clearDirtyFlag(); // clear before handing to quartz
@@ -1162,9 +1162,9 @@ public class JobStoreImpl
    *
    * @see #triggersFired
    */
-  private void blockOtherTriggers(final ODatabaseDocumentTx db,
-                                  final TriggerKey firedTriggerKey,
-                                  final JobDetail jobDetail)
+  private void blockTriggers(final ODatabaseDocumentTx db,
+                             final TriggerKey firedTriggerKey,
+                             final JobDetail jobDetail)
   {
     JobKey jobKey = jobDetail.getKey();
 
@@ -1185,11 +1185,6 @@ public class JobStoreImpl
     }
 
     for (TriggerEntity entity : matches) {
-      // skip the trigger which was fired
-      if (firedTriggerKey.equals(entity.getValue().getKey())) {
-        continue;
-      }
-
       if (entity.getState() == PAUSED) {
         entity.setState(PAUSED_BLOCKED);
       }

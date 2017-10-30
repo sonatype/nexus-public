@@ -22,6 +22,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -113,6 +114,9 @@ public class BrowseServiceImplTest
   AssetEntityAdapter assetEntityAdapter;
 
   @Mock
+  AssetDownloadCountStore assetDownloadCountStore;
+
+  @Mock
   BucketStore bucketStore;
 
   BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
@@ -142,7 +146,7 @@ public class BrowseServiceImplTest
     browseComponentsSqlBuilder = new BrowseComponentsSqlBuilder(componentEntityAdapter);
 
     underTest = spy(new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder, bucketStore));
+        contentPermissionChecker, assetDownloadCountStore, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder, bucketStore));
   }
 
   @Test
@@ -318,5 +322,18 @@ public class BrowseServiceImplTest
 
     assertThat(params.get("browsedRepository"), is("releases"));
     assertThat(params.get("rid"), is("componentOne"));
+  }
+
+  @Test
+  public void testGetLastThirtyDays() {
+    Bucket bucket = mock(Bucket.class);
+    EntityId bucketId = mock(EntityId.class);
+    when(assetOne.name()).thenReturn("/foo/one");
+    when(assetOne.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("last-thirty-repo");
+    when(assetDownloadCountStore.getLastThirtyDays("last-thirty-repo", "/foo/one")).thenReturn(99L);
+
+    assertThat(underTest.getLastThirtyDays(assetOne), is(99L));
   }
 }

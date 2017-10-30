@@ -24,7 +24,6 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.QueryOptions
 import org.sonatype.nexus.repository.maintenance.MaintenanceService
@@ -128,9 +127,6 @@ class ComponentComponent
 
   @Inject
   MaintenanceService maintenanceService
-
-  @Inject
-  AssetDownloadCountStore assetDownloadCountStore
 
   @DirectMethod
   @Timed
@@ -330,7 +326,7 @@ class ComponentComponent
     ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
     if (asset) {
       def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
-      def lastThirty = assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name())
+      def lastThirty = browseService.getLastThirtyDays(asset)
       return ASSET_CONVERTER.call(asset, null, repository.name, repoNamesForBuckets, lastThirty)
     }
     else {
@@ -378,7 +374,7 @@ class ComponentComponent
                                        Map<String, String> repoNamesForBuckets) {
     List<AssetXO> assetXOs = new ArrayList<>()
     for (Asset asset : assets) {
-      def lastThirty = assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name())
+      def lastThirty = browseService.getLastThirtyDays(asset)
       assetXOs.add(ASSET_CONVERTER.call(asset, componentName, repositoryName, repoNamesForBuckets, lastThirty))
     }
     return assetXOs

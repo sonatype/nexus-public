@@ -21,6 +21,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -75,6 +76,17 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class MetadataRebuilder
     extends ComponentSupport
 {
+  private final int bufferSize;
+
+  private final int timeoutSeconds;
+
+  @Inject
+  public MetadataRebuilder(@Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize,
+                           @Named("${nexus.maven.metadata.rebuild.timeoutSeconds:-60}") final int timeoutSeconds)
+  {
+    this.bufferSize = bufferSize;
+    this.timeoutSeconds = timeoutSeconds;
+  }
   /**
    * Rebuilds/updates Maven metadata.
    *
@@ -98,7 +110,8 @@ public class MetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion).rebuildMetadata();
+      new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
+          .rebuildMetadata();
     }
     finally {
       UnitOfWork.end();
@@ -177,12 +190,19 @@ public class MetadataRebuilder
     
     private final boolean rebuildChecksums;
 
-    public Worker(final Repository repository,
+    private final int bufferSize;
+
+    private final long timeoutSeconds;
+
+    public Worker(final Repository repository, // NOSONAR
                   final boolean update,
                   final boolean rebuildChecksums,
                   @Nullable final String groupId,
                   @Nullable final String artifactId,
-                  @Nullable final String baseVersion)
+                  @Nullable final String baseVersion,
+                  final int bufferSize,
+                  final int timeoutSeconds
+    )
     {
       this.repository = repository;
       this.mavenFacet = repository.facet(MavenFacet.class);
@@ -192,6 +212,8 @@ public class MetadataRebuilder
       this.sqlParams = Maps.newHashMap();
       this.sql = buildSql(groupId, artifactId, baseVersion);
       this.rebuildChecksums = rebuildChecksums;
+      this.bufferSize = bufferSize;
+      this.timeoutSeconds = timeoutSeconds;
     }
 
     /**
@@ -255,7 +277,7 @@ public class MetadataRebuilder
     private Iterable<ODocument> browseGAVs() {
       return Transactional.operation.call(() -> {
         final StorageTx tx = UnitOfWork.currentTx();
-        return tx.browse(sql, sqlParams);
+        return tx.browse(sql, sqlParams, bufferSize, timeoutSeconds);
       });
     }
 

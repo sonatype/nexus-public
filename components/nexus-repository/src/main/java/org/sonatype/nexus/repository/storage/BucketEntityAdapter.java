@@ -20,10 +20,16 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
+import org.sonatype.nexus.repository.storage.internal.BucketCreatedEvent;
+import org.sonatype.nexus.repository.storage.internal.BucketDeletedEvent;
+import org.sonatype.nexus.repository.storage.internal.BucketUpdatedEvent;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -105,5 +111,29 @@ public class BucketEntityAdapter
   @Nullable
   public Bucket read(final ODatabaseDocumentTx db, final String name) {
     return read.execute(db, name);
+  }
+
+  @Override
+  public boolean sendEvents() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
+    final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
+    final String repositoryName = document.field(P_REPOSITORY_NAME);
+
+    log.debug("newEvent: eventKind: {}, repositoryName: {}, metadata: {}", eventKind, repositoryName, metadata);
+    switch (eventKind) {
+      case CREATE:
+        return new BucketCreatedEvent(metadata, repositoryName);
+      case UPDATE:
+        return new BucketUpdatedEvent(metadata, repositoryName);
+      case DELETE:
+        return new BucketDeletedEvent(metadata, repositoryName);
+      default:
+        return null;
+    }
   }
 }

@@ -17,6 +17,7 @@ import javax.inject.Provider
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.common.collect.NestedAttributesMap
+import org.sonatype.nexus.common.entity.EntityMetadata
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
@@ -29,10 +30,13 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet
 import org.sonatype.nexus.repository.config.internal.ConfigurationStore
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
+import org.sonatype.nexus.repository.manager.RepositoryMetadataUpdatedEvent
+import org.sonatype.nexus.repository.storage.internal.BucketUpdatedEvent
 
 import com.google.common.collect.ImmutableMap
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
 import static com.google.common.collect.Lists.asList
@@ -40,8 +44,12 @@ import static com.google.common.collect.Lists.newArrayList
 import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
 import static org.fest.assertions.api.Assertions.assertThat
+import static org.hamcrest.Matchers.instanceOf
 import static org.junit.Assert.assertFalse
 import static org.mockito.Matchers.any
+import static org.mockito.Matchers.isA
+import static org.mockito.Mockito.atLeastOnce
+import static org.mockito.Mockito.never
 import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
@@ -130,6 +138,9 @@ class RepositoryManagerImplTest
 
   @Mock
   NestedAttributesMap groupAttributesMap
+
+  @Mock
+  EntityMetadata entityMetadata
 
   //Subject of the test
   RepositoryManagerImpl repositoryManager
@@ -323,4 +334,23 @@ class RepositoryManagerImplTest
     iterator.next()
   }
 
+  @Test
+  void 'post metadata-updated-event when bucket of existing repository is updated'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+    BucketUpdatedEvent bucketEvent = new BucketUpdatedEvent(entityMetadata, MAVEN_CENTRAL_NAME)
+    repositoryManager.onBucketUpdated(bucketEvent)
+    ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object)
+    verify(eventManager, atLeastOnce()).post(eventCaptor.capture())
+    Object repoEvent = eventCaptor.allValues.last()
+    assertThat(repoEvent, is(instanceOf(RepositoryMetadataUpdatedEvent)))
+    assertThat(repoEvent.repository, is(mavenCentralRepository))
+  }
+
+  @Test
+  void 'do not post metadata-updated-event when bucket of deleted repository is updated'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+    BucketUpdatedEvent bucketEvent = new BucketUpdatedEvent(entityMetadata, 'some-deleted-repo$uuid')
+    repositoryManager.onBucketUpdated(bucketEvent)
+    verify(eventManager, never()).post(isA(RepositoryMetadataUpdatedEvent))
+  }
 }

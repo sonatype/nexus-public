@@ -86,6 +86,17 @@ public interface StorageTx
   Iterable<ODocument> browse(String selectSql, @Nullable Map<String, Object> params);
 
   /**
+   * Same as {@link #browse(String, Map)} but additionally exposes the bufferSize and timeoutSeconds options of the
+   * backing {@link OrientAsyncHelper#asyncIterable} method
+   *
+   * @see OrientAsyncHelper#asyncIterable(ODatabaseDocumentTx, String, Map, int, long)
+   */
+  Iterable<ODocument> browse(final String selectSql,
+                             @Nullable final Map<String, Object> params,
+                             final int bufferSize,
+                             final long timeoutSeconds);
+
+  /**
    * Finds a bucket based on the repository.
    */
   @Nullable

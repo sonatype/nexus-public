@@ -204,7 +204,7 @@ public class S3BlobStore
     return create(headers, destination -> {
         try (InputStream data = blobData) {
           MetricsInputStream input = new MetricsInputStream(data);
-          TransferManager transferManager = TransferManagerBuilder.standard().build();
+          TransferManager transferManager = TransferManagerBuilder.standard().withS3Client(s3).build();
           transferManager.upload(getConfiguredBucket(), destination, input, new ObjectMetadata())
               .waitForCompletion();
           return input.getMetrics();

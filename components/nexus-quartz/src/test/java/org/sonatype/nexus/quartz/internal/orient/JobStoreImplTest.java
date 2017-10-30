@@ -28,6 +28,9 @@ package org.sonatype.nexus.quartz.internal.orient;
  * under the License.
  */
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +39,7 @@ import java.util.Set;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,12 +50,14 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.quartz.DateBuilder;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
+import org.quartz.JobPersistenceException;
 import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.SchedulerException;
@@ -70,6 +76,7 @@ import org.quartz.spi.OperableTrigger;
 import org.quartz.spi.SchedulerSignaler;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -77,6 +84,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 
 /**
  * Tests for {@link JobStoreImpl}. Based on original Quartz 2.2.2 AbstractJobStoreTest.
@@ -90,6 +98,8 @@ public class JobStoreImplTest
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
   private JobStoreImpl jobStore;
+
+  private TriggerEntityAdapter triggerEntityAdapter;
 
   @Before
   public void setUp() throws Exception {
@@ -109,7 +119,7 @@ public class JobStoreImplTest
 
   private JobStoreImpl createJobStore() {
     final JobDetailEntityAdapter jobDetailEntityAdapter = new JobDetailEntityAdapter();
-    final TriggerEntityAdapter triggerEntityAdapter = new TriggerEntityAdapter();
+    triggerEntityAdapter = new TriggerEntityAdapter();
     final CalendarEntityAdapter calendarEntityAdapter = new CalendarEntityAdapter();
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       jobDetailEntityAdapter.register(db);
@@ -602,6 +612,42 @@ public class JobStoreImplTest
     assertThat(queryJobDetail("testJob").getVersion(), greaterThan(baseRecordVersion));
   }
 
+  @Test
+  public void testConcurrentExecutionPrevented() throws Exception {
+    JobDetail job = JobBuilder.newJob(MyNonConcurrentJob.class).withIdentity("testJob").build();
+    SimpleScheduleBuilder schedule = SimpleScheduleBuilder.repeatSecondlyForever(5);
+    ZoneOffset offset = OffsetDateTime.now().getOffset();
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime startTime = now.plusMinutes(1);
+    OperableTrigger trigger = (OperableTrigger) TriggerBuilder.newTrigger().withIdentity("testJob").forJob(job)
+        .withSchedule(schedule).startAt(Date.from(startTime.toInstant(offset))).build();
+    Date fireTime = trigger.computeFirstFireTime(null);
+    assertEquals(true, fireTime != null);
+    jobStore.storeJobAndTrigger(job, trigger);
+
+    List<OperableTrigger> triggers = jobStore
+        .acquireNextTriggers(startTime.plusSeconds(5).toInstant(offset).toEpochMilli(), Integer.MAX_VALUE, 1);
+
+    assertEquals(1, triggers.size());
+    jobStore.triggersFired(triggers); // start the jobs
+
+    // do not notify jobStore that jobs have completed (simulate long running task)
+    triggers = jobStore
+        .acquireNextTriggers(startTime.plusSeconds(10).toInstant(offset).toEpochMilli(), Integer.MAX_VALUE, 1);
+    assertEquals(0, triggers.size());
+
+    List<OperableTrigger> triggersForJob = jobStore.getTriggersForJob(job.getKey());
+    assertEquals(1, triggersForJob.size());
+    Iterable<TriggerEntity> entities = inTx(database.getInstanceProvider())
+        .throwing(JobPersistenceException.class)
+        .call(db -> triggerEntityAdapter.browseByJobKey(db, job.getKey()));
+
+    for (TriggerEntity entity : entities) {
+      assertThat("all job triggers should be blocked", entity.getState(),
+          anyOf(is(State.BLOCKED), is(State.PAUSED_BLOCKED)));
+    }
+  }
+
   private ODocument queryJobDetail(final String name) {
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       String selectJob = "select from quartz_job_detail where name=?";
@@ -637,6 +683,19 @@ public class JobStoreImplTest
    */
   @PersistJobDataAfterExecution
   public static class MyJob
+      implements Job
+  {
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+      //
+    }
+  }
+
+  /**
+   * An empty, non-concurrent job for testing purpose.
+   */
+  @PersistJobDataAfterExecution
+  @DisallowConcurrentExecution
+  public static class MyNonConcurrentJob
       implements Job
   {
     public void execute(JobExecutionContext context) throws JobExecutionException {

@@ -29,7 +29,6 @@ import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
@@ -100,9 +99,6 @@ public class ComponentComponentTest
   BrowseService browseService;
 
   @Mock
-  AssetDownloadCountStore assetDownloadCountStore;
-
-  @Mock
   JexlExpressionValidator jexlExpressionValidator;
 
   @Mock
@@ -118,7 +114,6 @@ public class ComponentComponentTest
     underTest.setVariableResolverAdapterManager(variableResolverAdapterManager);
     underTest.setMaintenanceService(maintenanceService);
     underTest.setBrowseService(browseService);
-    underTest.setAssetDownloadCountStore(assetDownloadCountStore);
     underTest.setJexlExpressionValidator(jexlExpressionValidator);
     underTest.setCselExpressionValidator(cselExpressionValidator);
 
@@ -231,7 +226,7 @@ public class ComponentComponentTest
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
 
-    when(assetDownloadCountStore.getLastThirtyDays(repository.getName(), asset.name())).thenReturn(10L);
+    when(browseService.getLastThirtyDays(asset)).thenReturn(10L);
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
     when(browseService.getRepositoryBucketNames(repository))
         .thenReturn(Collections.singletonMap(new DetachedEntityId("someid"), "testBucketName"));

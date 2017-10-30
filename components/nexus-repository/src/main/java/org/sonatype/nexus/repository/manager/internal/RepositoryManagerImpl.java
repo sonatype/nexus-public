@@ -50,8 +50,10 @@ import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.manager.RepositoryMetadataUpdatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
+import org.sonatype.nexus.repository.storage.internal.BucketUpdatedEvent;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
 import com.google.common.collect.ImmutableList;
@@ -438,6 +440,17 @@ public class RepositoryManagerImpl
       catch (Exception e) {
         log.error("Failed to replicate: {}", event, e);
       }
+    }
+  }
+
+  @Subscribe
+  public void onBucketUpdated(final BucketUpdatedEvent event) {
+    Repository repository = repositories.get(event.getRepositoryName());
+    if (repository != null) {
+      eventManager.post(new RepositoryMetadataUpdatedEvent(repository));
+    }
+    else {
+      log.debug("Not posting metadata update event for deleted repository {}", event.getRepositoryName());
     }
   }
 }
