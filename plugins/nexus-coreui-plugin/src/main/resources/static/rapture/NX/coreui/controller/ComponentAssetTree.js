@@ -152,6 +152,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       'tree-asset': {
         file: 'page_white_stack.png',
         variants: ['x16']
+      },
+      'tree-asset-folder': {
+        file: 'folder_page_white.png',
+        variants: ['x16', 'x32']
       }
     });
   },
@@ -275,7 +279,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   browseNodesLoaded: function(store, node, records) {
     var message = { type: 'warning', text: NX.I18n.get('Component_Asset_Tree_Results_Warning')};
-    if (records.length === NX.State.getValue('browseTreeMaxNodes') && !NX.Messages.messageExists(message)) {
+    if (records && records.length === NX.State.getValue('browseTreeMaxNodes') && !NX.Messages.messageExists(message)) {
       NX.Messages.add(message);
     }
   },
@@ -550,8 +554,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
    */
   deleteComponent: function() {
     var me = this,
-        componentInfo = me.getComponentInfo(),
         treePanel = me.getComponentAssetTreePanel(),
+        componentInfo = me.getComponentInfo(),
         componentModel, componentId, repositoryName;
 
     if (componentInfo) {
@@ -561,8 +565,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), componentId, function() {
         NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
           if (Ext.isObject(response) && response.success) {
+            var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
+            me.removeNodeFromTree(selectedRecord);
             me.removeSideContent();
-            me.removeNodeFromTree(treePanel.getSelectionModel().getSelection()[0]);
             NX.Messages.add({text: NX.I18n.format('ComponentDetails_Delete_Success', componentId), type: 'success'});
           }
         });
@@ -576,16 +581,23 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
    */
   deleteAsset: function () {
     var me = this,
-        componentAssetInfo = me.getComponentAssetInfo(),
-        treePanel = me.getComponentAssetTreePanel();
+        treePanel = me.getComponentAssetTreePanel(),
+        componentAssetInfo = me.getComponentAssetInfo();
 
     if (componentAssetInfo) {
       var asset = componentAssetInfo.assetModel;
       NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), asset.get('name'), function () {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
+            var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
+            if (selectedRecord.get('leaf')) {
+              me.removeNodeFromTree(selectedRecord);
+            }
+            else {
+              selectedRecord.set('type', 'folder');
+              selectedRecord.set('iconCls', selectedRecord.computeIconClass());
+            }
             me.removeSideContent();
-            me.removeNodeFromTree(treePanel.getSelectionModel().getSelection()[0]);
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });

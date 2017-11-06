@@ -164,7 +164,7 @@ public class BlobStoreMetricsStoreImpl
   }
 
   private BlobStoreMetrics getCombinedMetrics(final File[] blobStoreMetricsFiles) {
-    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, getAvailableSpace());
+    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, getAvailableSpace(), false);
     for (File metricsFile : blobStoreMetricsFiles) {
       PropertiesFile metricsPropertiesFile = new PropertiesFile(metricsFile);
 

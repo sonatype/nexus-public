@@ -81,15 +81,24 @@ public interface BrowseNodeStore
   BrowseNode save(BrowseNode node, boolean updateChildLinks);
 
   /**
-   * Remove a node from the store, including any parent nodes that would now have no children
+   * Remove a node from the store, including any parent nodes that would now have no children.
+   * If a node has children, it will not be deleted but the asset id will be cleared.
    */
   void deleteNode(BrowseNode node);
 
   /**
    * Remove a node from the store that matches the specified Asset,
-   * including any parent nodes that would now have no children
+   * including any parent nodes that would now have no children. If a node has children, then just set the assetId to
+   * null.
    */
   void deleteNodeByAssetId(EntityId assetId);
+
+  /**
+   * Remove a node from the store that matches the specified Component,
+   * including any parent nodes that would now have no children. If the node has children, then just set the componentId
+   * to null.
+   */
+  void deleteNodeByComponentId(EntityId assetId);
 
   void truncateRepository(String repositoryName);
 

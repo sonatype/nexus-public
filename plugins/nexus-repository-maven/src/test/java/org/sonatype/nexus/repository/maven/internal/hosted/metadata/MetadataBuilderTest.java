@@ -112,7 +112,7 @@ public class MetadataBuilderTest
 
     final Maven2Metadata gmd = testSubject.onExitGroupId();
     assertThat(gmd, notNullValue());
-    assertThat(gmd.getGroupId(), equalTo("group"));
+    assertThat(gmd.getGroupId(), nullValue());
     assertThat(gmd.getArtifactId(), nullValue());
     assertThat(gmd.getPlugins(), hasSize(1));
   }
@@ -147,7 +147,7 @@ public class MetadataBuilderTest
 
     final Maven2Metadata gmd = testSubject.onExitGroupId();
     assertThat(gmd, notNullValue());
-    assertThat(gmd.getGroupId(), equalTo("group"));
+    assertThat(gmd.getGroupId(), nullValue());
     assertThat(gmd.getPlugins(), hasSize(1));
   }
 }

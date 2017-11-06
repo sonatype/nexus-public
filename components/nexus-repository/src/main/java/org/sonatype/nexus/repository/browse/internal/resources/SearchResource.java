@@ -15,6 +15,10 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,6 +29,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
@@ -32,6 +37,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.browse.BrowseService;
+import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.SearchResourceDoc;
@@ -49,13 +55,17 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.shiro.util.CollectionUtils.isEmpty;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
+import static org.sonatype.nexus.repository.browse.api.AssetXO.fromElasicSearchMap;
+import static org.sonatype.nexus.repository.browse.internal.resources.AssetMapUtils.getValueFromAssetMap;
 import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.RESOURCE_URI;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
@@ -77,7 +87,9 @@ public class SearchResource
 {
   public static final String RESOURCE_URI = BETA_API_PREFIX + "/search";
 
-  private static final Map<String, String> SEARCH_PARAMS = ImmutableMap.<String, String>builder()
+  public static final String SEARCH_ASSET_URI = "/assets";
+
+  static final Map<String, String> SEARCH_PARAMS = ImmutableMap.<String, String>builder()
       // common
       .put("repository", REPOSITORY_NAME)
       .put("format", "format")
@@ -115,6 +127,11 @@ public class SearchResource
       .put("rubygems.summary", "assets.attributes.rubygems.summary")
       .build();
 
+  // all search params that apply to assets
+  static final Map<String, String> ASSET_SEARCH_PARAMS = SEARCH_PARAMS.entrySet().stream()
+      .filter(e -> e.getValue().startsWith("assets."))
+      .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   private final BrowseService browseService;
@@ -147,7 +164,6 @@ public class SearchResource
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = buildQuery(uriInfo);
-    log.debug("Query: {}", query);
 
     int from = tokenEncoder.decode(continuationToken, query);
     SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
@@ -183,6 +199,31 @@ public class SearchResource
   }
 
   /**
+   * @since 3.7
+   */
+  @GET
+  @Path(SEARCH_ASSET_URI)
+  public Page<AssetXO> searchAssets(
+      @QueryParam("continuationToken") final String continuationToken,
+      @Context final UriInfo uriInfo)
+  {
+    QueryBuilder query = buildQuery(uriInfo);
+
+    int from = tokenEncoder.decode(continuationToken, query);
+    SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
+
+    // get the asset specific parameters
+    MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
+
+    List<AssetXO> assetXOs = Arrays.stream(response.getHits().hits())
+        .flatMap(hit -> extractAssets(hit, assetParams))
+        .collect(toList());
+
+    return new Page<>(assetXOs, assetXOs.size() == PAGE_SIZE ?
+        tokenEncoder.encode(from, PAGE_SIZE, query) : null);
+  }
+
+  /**
    * Builds a {@link QueryBuilder} based on configured search parameters.
    *
    * @param uriInfo {@link UriInfo} to extract query parameters from
@@ -198,8 +239,16 @@ public class SearchResource
     }
 
     queryParams.forEach((key, value) -> {
-      if (!SEARCH_PARAMS.containsKey(key) || value.isEmpty()) {
-        // no search param of that name, or no value sent
+      if (value.isEmpty() || value.get(0).isEmpty()) {
+        // no value sent
+        return;
+      }
+      if ("q".equals(key)) {
+        // skip the keyword search
+        return;
+      }
+      if ("continuationToken".equals(key)) {
+        // skip the continuation token
         return;
       }
       if ("repository".equals(key)) {
@@ -211,10 +260,62 @@ public class SearchResource
           return;
         }
       }
-      query.filter(termQuery(SEARCH_PARAMS.get(key), value.get(0)));
+      query.filter(termQuery(SEARCH_PARAMS.getOrDefault(key, key), value.get(0)));
     });
 
+    log.debug("Query: {}", query);
     return query;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Stream<AssetXO> extractAssets(final SearchHit componentHit,
+                                        final MultivaluedMap<String, String> assetParams)
+  {
+    Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
+    Repository repository = repositoryManagerRESTAdapter.getRepository((String) componentMap.get(REPOSITORY_NAME));
+
+    List<Map<String, Object>> assets = (List<Map<String, Object>>) componentMap.get("assets");
+    if (assets == null) {
+      return Stream.empty();
+    }
+
+    return assets.stream()
+        .filter(assetMap -> filterAsset(assetMap, assetParams))
+        .map(asset -> fromElasicSearchMap(asset, repository));
+  }
+
+  @VisibleForTesting
+  boolean filterAsset(final Map<String, Object> assetMap, final MultivaluedMap<String, String> assetParams) {
+    // if no asset parameters were sent, we'll count that as return all assets
+    if (isEmpty(assetParams)) {
+      return true;
+    }
+
+    AtomicBoolean assetValueFound = new AtomicBoolean(false);
+
+    // loop each asset specific http query parameter to filter out assets that do not apply
+    assetParams.forEach((key, values) -> {
+      String assetParam = ASSET_SEARCH_PARAMS.get(key);
+
+      // does the assetMap contain the requested value?
+      getValueFromAssetMap(assetMap, assetParam).ifPresent(assetValue -> {
+        if (assetValue.equals(values.get(0))) {
+          assetValueFound.set(true);
+        }
+      });
+    });
+
+    return assetValueFound.get();
+  }
+
+  @VisibleForTesting
+  MultivaluedMap<String, String> getAssetParams(final UriInfo uriInfo) {
+    return uriInfo.getQueryParameters()
+        .entrySet().stream()
+        .filter(t -> ASSET_SEARCH_PARAMS.containsKey(t.getKey()))
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> {
+          throw new IllegalStateException(format("Duplicate key %s", u));
+        }, MultivaluedHashMap::new));
   }
 
 }

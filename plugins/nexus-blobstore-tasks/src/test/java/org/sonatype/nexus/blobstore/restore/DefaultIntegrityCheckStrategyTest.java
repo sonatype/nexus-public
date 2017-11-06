@@ -12,18 +12,21 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -112,7 +115,7 @@ public class DefaultIntegrityCheckStrategyTest
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
-    verify(logger).error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset);
+    verify(logger).error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
   }
 
   @Test
@@ -126,7 +129,7 @@ public class DefaultIntegrityCheckStrategyTest
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
-    verify(logger).warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset);
+    verify(logger).warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
   }
 
   @Test
@@ -207,6 +210,13 @@ public class DefaultIntegrityCheckStrategyTest
   }
 
   @Test
+  public void testCheck_MissingBlobData() {
+    runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> false, "name", getMockBlobWithoutData());
+
+    verify(logger).error(eq(BLOB_DATA_MISSING_FOR_ASSET), anyString());
+  }
+
+  @Test
   public void testCheckAsset_Canceled() {
     runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> true);
 
@@ -225,10 +235,22 @@ public class DefaultIntegrityCheckStrategyTest
                        final HashCode blobHash,
                        final Supplier<Boolean> cancel)
   {
+    runTest(assetName, assetHash, blobName, blobHash, cancel, "blob", getMockBlobWithData());
+  }
+
+  private void runTest(final String assetName,
+                       final HashCode assetHash,
+                       final String blobName,
+                       final HashCode blobHash,
+                       final Supplier<Boolean> cancel,
+                       final String blobId,
+                       final Blob mockBlob)
+  {
     Asset asset = getMockAsset(assetName, assetHash);
     BlobAttributes blobAttributes = getMockBlobAttribues(blobName, blobHash.toString());
     when(storageTx.browseAssets(any(Bucket.class))).thenReturn(newHashSet(asset));
     when(blobStore.getBlobAttributes(any())).thenReturn(blobAttributes);
+    when(blobStore.get(new BlobId(blobId))).thenReturn(mockBlob);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, cancel);
 
@@ -267,6 +289,19 @@ public class DefaultIntegrityCheckStrategyTest
     when(asset.getChecksum(SHA1)).thenReturn(sha1);
     when(asset.requireBlobRef()).thenReturn(new BlobRef("node", "store", "blob"));
     return asset;
+  }
+
+  private Blob getMockBlobWithData() {
+    Blob blob = mock(Blob.class);
+    InputStream blobBytes = mock(InputStream.class);
+    when(blob.getInputStream()).thenReturn(blobBytes);
+    return blob;
+  }
+
+  private Blob getMockBlobWithoutData() {
+    Blob blob = mock(Blob.class);
+    when(blob.getInputStream()).thenThrow(new BlobStoreException("bse", new BlobId("blob")));
+    return blob;
   }
 
   // The whole point of the integrity checker is to log, so we need to run verifications against a mock logger

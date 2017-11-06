@@ -12,13 +12,15 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -43,6 +45,8 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.ByteStreams;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -66,6 +70,8 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class IndexSyncService
     extends LifecycleSupport
 {
+  public static final String INDEX_UPGRADE_MARKER = "INDEX_UPGRADE_MARKER";
+
   private final Provider<DatabaseInstance> componentDatabase;
 
   private final ComponentEntityAdapter componentEntityAdapter;
@@ -200,9 +206,14 @@ public class IndexSyncService
     }
   }
 
-  private OLogSequenceNumber loadCheckpoint() throws IOException {
-    try (DataInputStream in = new DataInputStream(new FileInputStream(checkpointFile))) {
-      return new OLogSequenceNumber(in);
+  @VisibleForTesting
+  OLogSequenceNumber loadCheckpoint() throws IOException {
+    try (InputStream in = new FileInputStream(checkpointFile)) {
+      byte[] nexusLsnBytes = ByteStreams.toByteArray(in);
+      if (Arrays.equals(nexusLsnBytes, INDEX_UPGRADE_MARKER.getBytes(StandardCharsets.UTF_8))) {
+        throw new UnknownDeltaException("Index upgrade indicator found in Elasticsearch marker file");
+      }
+      return new OLogSequenceNumber(ByteStreams.newDataInput(nexusLsnBytes));
     }
   }
 

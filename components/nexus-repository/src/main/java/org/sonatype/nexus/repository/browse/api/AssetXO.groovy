@@ -22,6 +22,8 @@ import groovy.transform.ToString
 import groovy.transform.builder.Builder
 
 import static org.sonatype.nexus.common.entity.EntityHelper.id
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.ID
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
 
 /**
  * Asset transfer object for REST APIs.
@@ -45,15 +47,26 @@ class AssetXO
   String format
 
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
-
     String internalId = id(asset).getValue()
 
-    return new AssetXO(
-        path: asset.name(),
-        downloadUrl: repository.url + '/' + asset.name(),
-        id: new RepositoryItemIDXO(repository.name, internalId).value,
-        repository: repository.name,
-        format: repository.format.value
-    )
+    return builder()
+        .path(asset.name())
+        .downloadUrl(repository.url + '/' + asset.name())
+        .id(new RepositoryItemIDXO(repository.name, internalId).value)
+        .repository(repository.name)
+        .format(repository.format.value)
+        .build()
+  }
+
+  static AssetXO fromElasicSearchMap(final Map map, final Repository repository) {
+    String internalId = (String) map.get(ID)
+
+    return builder()
+        .path((String) map.get(NAME))
+        .downloadUrl(repository.url + '/' + (String) map.get(NAME))
+        .id(new RepositoryItemIDXO(repository.name, internalId).value)
+        .repository(repository.name)
+        .format(repository.format.value)
+        .build()
   }
 }

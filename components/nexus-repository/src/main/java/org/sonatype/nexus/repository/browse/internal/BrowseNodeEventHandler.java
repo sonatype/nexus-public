@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 
 import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -61,13 +62,24 @@ public class BrowseNodeEventHandler
   }
 
   /**
-   * Handles the AssetDeletedEvent. This implementation will delete the asset path entry,
-   * and any parent path entries that will no longer have children.
+   * Handles the AssetDeletedEvent. If the associated asset nodes have no children they will be deleted. Otherwise the
+   * assetId will be set to null.
    */
   @Subscribe
   public void on(final AssetDeletedEvent event) {
     if (shouldProcess(event)) {
       browseNodeStore.deleteNodeByAssetId(event.getAssetId());
+    }
+  }
+
+  /**
+   * Handles the ComponentDeletedEvent. Sets the componentId to null on the browse node. Node deletions will be handled
+   * when the associated assets are deleted.
+   */
+  @Subscribe
+  public void on(final ComponentDeletedEvent event) {
+    if (shouldProcess(event)) {
+      browseNodeStore.deleteNodeByComponentId(event.getComponentId());
     }
   }
 

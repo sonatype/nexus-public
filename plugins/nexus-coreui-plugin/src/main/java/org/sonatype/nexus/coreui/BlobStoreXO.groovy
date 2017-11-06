@@ -43,4 +43,6 @@ class BlobStoreXO
 
   @Range
   long repositoryUseCount
+
+  boolean unlimited
 }

@@ -24,19 +24,23 @@ Ext.define('NX.coreui.model.ComponentAssetTree', {
     {name: 'type', type: 'string', sortType: 'asUCText'},
     {name: 'text', type: 'string', sortType: 'asUCText'},
     {name: 'iconCls', type: 'string', convert: function(value, record){
-      switch (record.get('type')) {
-        case 'folder':
-          return 'nx-icon-tree-folder-x16';
-        case 'component':
-          return 'nx-icon-tree-component-x16';
-        case 'asset':
-          return 'nx-icon-tree-asset-x16';
-        default:
-          return null;
-      }
+      return record.computeIconClass();
     }},
     {name: 'leaf', type: 'boolean'},
     {name: 'componentId', type: 'string'},
     {name: 'assetId', type: 'string'}
-  ]
+  ],
+
+  computeIconClass: function() {
+    switch (this.get('type')) {
+      case 'folder':
+        return 'nx-icon-tree-folder-x16';
+      case 'component':
+        return 'nx-icon-tree-component-x16';
+      case 'asset':
+        return this.get('leaf')? 'nx-icon-tree-asset-x16' : 'nx-icon-tree-asset-folder-x16';
+      default:
+        return null;
+    }
+  }
 });

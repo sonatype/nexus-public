@@ -59,6 +59,7 @@ public abstract class RepositoryResourceTestSupport
     configureMockedRepository(mavenReleases, mavenReleasesId, "http://localhost:8081/repository/maven-releases");
 
     when(format.toString()).thenReturn("maven2");
+    when(format.getValue()).thenReturn("maven2");
 
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);

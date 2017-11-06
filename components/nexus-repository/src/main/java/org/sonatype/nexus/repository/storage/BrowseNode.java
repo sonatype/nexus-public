@@ -41,6 +41,8 @@ public class BrowseNode
 
   private String assetNameLowercase;
 
+  private boolean leaf;
+
   @Nullable
   public EntityId getAssetId() {
     return assetId;
@@ -72,6 +74,13 @@ public class BrowseNode
     return assetNameLowercase;
   }
 
+  /**
+   * @since 3.7
+   */
+  public boolean isLeaf() {
+    return leaf;
+  }
+
   public void setAssetId(@Nullable final EntityId assetId) {
     this.assetId = assetId;
   }
@@ -99,6 +108,13 @@ public class BrowseNode
    */
   public void setAssetNameLowercase(@Nullable final String assetNameLowercase) {
     this.assetNameLowercase = assetNameLowercase;
+  }
+
+  /**
+   * @since 3.7
+   */
+  public void setLeaf(final boolean leaf) {
+    this.leaf = leaf;
   }
 
   public BrowseNode withAssetId(@Nullable final EntityId assetId) {

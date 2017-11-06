@@ -52,7 +52,13 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreList', {
         },
         {
           header: NX.I18n.get('Blobstore_BlobstoreList_AvailableSpace_Header'), dataIndex: 'availableSpace',
-          stateId: 'availableSpace', renderer: Ext.util.Format.fileSize, flex: 1
+          stateId: 'availableSpace', renderer: function(value, metaData, record, row, col, store, gridView) {
+            if (record.data.unlimited) {
+              return 'Unlimited';
+            }
+
+            return Ext.util.Format.fileSize(value, metaData, record, row, col, store, gridView);
+          }, flex: 1
         }
       ],
 

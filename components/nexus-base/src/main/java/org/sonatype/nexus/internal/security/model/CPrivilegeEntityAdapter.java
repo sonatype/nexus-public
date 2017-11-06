@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -24,6 +23,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
 import org.sonatype.nexus.security.config.CPrivilege;
 
 import com.google.common.collect.Maps;
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * {@link CPrivilege} entity adapter.
@@ -66,6 +65,8 @@ public class CPrivilegeEntityAdapter
   private final ReadEntityByPropertyAction<CPrivilege> read = new ReadEntityByPropertyAction<>(this, P_ID);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
+
+  private final UpdateEntityByPropertyAction<CPrivilege> update = new UpdateEntityByPropertyAction<>(this, P_ID);
 
   public CPrivilegeEntityAdapter() {
     super(DB_CLASS);
@@ -113,23 +114,6 @@ public class CPrivilegeEntityAdapter
   }
 
   //
-  // TODO: Sort out API below with EntityAdapter, do not expose ODocument
-  //
-
-  private static final String READ_QUERY = String.format("SELECT FROM %s WHERE %s = ?", DB_CLASS, P_ID);
-
-  @Nullable
-  @Deprecated
-  public ODocument readDocument(final ODatabaseDocumentTx db, final String id) {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(READ_QUERY);
-    List<ODocument> results = db.command(query).execute(id);
-    if (results.isEmpty()) {
-      return null;
-    }
-    return results.get(0);
-  }
-
-  //
   // Actions
   //
 
@@ -146,5 +130,12 @@ public class CPrivilegeEntityAdapter
    */
   public boolean delete(final ODatabaseDocumentTx db, final String id) {
     return delete.execute(db, id);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public boolean update(final ODatabaseDocumentTx db, final CPrivilege entity) {
+    return update.execute(db, entity, entity.getId());
   }
 }

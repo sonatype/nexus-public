@@ -59,7 +59,7 @@ class BrowseComponentTest
     given: 'These test objects'
       def browseNodes = [new BrowseNode(path: 'com'),
                          new BrowseNode(path: 'org', componentId: componentId),
-                         new BrowseNode(path: 'net', assetId: assetId)]
+                         new BrowseNode(path: 'net', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -82,7 +82,7 @@ class BrowseComponentTest
     given: 'These test objects'
       def browseNodes = [new BrowseNode(path: 'com'),
                          new BrowseNode(path: 'org', componentId: componentId),
-                         new BrowseNode(path: 'net', assetId: assetId)]
+                         new BrowseNode(path: 'net', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -105,7 +105,7 @@ class BrowseComponentTest
     given: 'These test objects'
     def browseNodes = [new BrowseNode(path: 'com'),
                        new BrowseNode(path: 'org', componentId: componentId),
-                       new BrowseNode(path: 'n/e/t', assetId: assetId)]
+                       new BrowseNode(path: 'n/e/t', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
     TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(

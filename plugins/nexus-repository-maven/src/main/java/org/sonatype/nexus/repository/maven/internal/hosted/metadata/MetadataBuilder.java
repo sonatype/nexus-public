@@ -105,7 +105,7 @@ public class MetadataBuilder
       log.debug("No plugins in group: {}", groupId);
       return null;
     }
-    return Maven2Metadata.newGroupLevel(DateTime.now(), groupId, plugins);
+    return Maven2Metadata.newGroupLevel(DateTime.now(), plugins);
   }
 
   public boolean addPlugin(final String prefix, final String artifactId, final String name) {

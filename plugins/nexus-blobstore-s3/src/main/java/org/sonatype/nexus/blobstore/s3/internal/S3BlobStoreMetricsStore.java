@@ -145,7 +145,7 @@ public class S3BlobStoreMetricsStore
   }
 
   private BlobStoreMetrics getCombinedMetrics(final Stream<S3PropertiesFile> blobStoreMetricsFiles) {
-    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, Long.MAX_VALUE);
+    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, -1, true);
 
     blobStoreMetricsFiles.forEach(metricsFile -> {
         try {

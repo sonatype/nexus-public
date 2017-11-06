@@ -60,11 +60,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -308,7 +310,9 @@ public class BrowseNodeStoreImplTest
     BrowseNodeEntityAdapter entityAdapter = mock(BrowseNodeEntityAdapter.class);
     EntityId id = mock(EntityId.class);
     BrowseNode node = new BrowseNode();
+    node.setLeaf(true);
     BrowseNode node2 = new BrowseNode();
+    node2.setLeaf(true);
 
     BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 10000, 10000, 10, 10);
     underTest = new BrowseNodeStoreImpl(database.getInstanceProvider(), entityAdapter, configuration);
@@ -317,6 +321,38 @@ public class BrowseNodeStoreImplTest
     underTest.deleteNodeByAssetId(id);
     verify(entityAdapter).deleteEntity(any(), eq(node));
     verify(entityAdapter).deleteEntity(any(), eq(node2));
+  }
+
+  @Test
+  public void testDeleteByAssetIdFolderAsset() {
+    BrowseNodeEntityAdapter entityAdapter = mock(BrowseNodeEntityAdapter.class);
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 10000, 10000, 10, 10);
+    underTest = new BrowseNodeStoreImpl(database.getInstanceProvider(), entityAdapter, configuration);
+
+    EntityId id = mock(EntityId.class);
+    BrowseNode node = new BrowseNode().withAssetId(mock(EntityId.class));
+    when(entityAdapter.getByAssetId(any(), eq(id))).thenReturn(Arrays.asList(node));
+
+    underTest.deleteNodeByAssetId(id);
+
+    verify(entityAdapter).save(any(), eq(node), eq(false));
+    assertThat(node.getAssetId(), is(nullValue()));
+  }
+
+  @Test
+  public void testDeleteByComponentId() {
+    BrowseNodeEntityAdapter entityAdapter = mock(BrowseNodeEntityAdapter.class);
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, 10000, 10000, 10, 10);
+    underTest = new BrowseNodeStoreImpl(database.getInstanceProvider(), entityAdapter, configuration);
+
+    EntityId id = mock(EntityId.class);
+    BrowseNode node = new BrowseNode().withComponentId(mock(EntityId.class));
+    when(entityAdapter.getByComponentId(any(), eq(id))).thenReturn(Arrays.asList(node));
+
+    underTest.deleteNodeByComponentId(id);
+
+    verify(entityAdapter).save(any(), eq(node), eq(false));
+    assertThat(node.getComponentId(), is(nullValue()));
   }
 
   @Test

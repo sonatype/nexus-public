@@ -15,13 +15,12 @@ package org.sonatype.nexus.repository.browse.internal.resources.doc;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
+import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.resources.SearchResource;
 import org.sonatype.nexus.rest.Page;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
@@ -34,45 +33,15 @@ import io.swagger.annotations.ApiParam;
 public interface SearchResourceDoc
 {
   @ApiOperation("Search components")
-  @ApiImplicitParams({
-      @ApiImplicitParam(name = "q", value = "Query by keyword", dataType = "string", paramType = "query"),
-      // common
-      @ApiImplicitParam(name = "repository", value = "Repository name", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "format", value = "Query by format", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "group", value = "Component group", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "name", value = "Component name", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "version", value = "Component version", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "md5", value = "Specific MD5 hash of component's asset", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "sha1", value = "Specific SHA-1 hash of component's asset", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "sha256", value = "Specific SHA-256 hash of component's asset", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "sha512", value = "Specific SHA-512 hash of component's asset", dataType = "string", paramType = "query"),
-      // Maven specific
-      @ApiImplicitParam(name = "maven.groupId", value = "Maven groupId", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "maven.artifactId", value = "Maven artifactId", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "maven.baseVersion", value = "Maven base version", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "maven.extension", value = "Maven extension of component's asset", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "maven.classifier", value = "Maven classifier of component's asset", dataType = "string", paramType = "query"),
-      // Nuget specific
-      @ApiImplicitParam(name = "nuget.id", value = "Nuget id", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "nuget.tags", value = "Nuget tags", dataType = "string", paramType = "query"),
-      // NPM specific
-      @ApiImplicitParam(name = "npm.scope", value = "NPM scope", dataType = "string", paramType = "query"),
-      // Docker specific
-      @ApiImplicitParam(name = "docker.imageName", value = "Docker image name", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "docker.imageTag", value = "Docker image tag", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "docker.layerId", value = "Docker layer ID", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "docker.contentDigest", value = "Docker content digest", dataType = "string", paramType = "query"),
-      // PyPi specific
-      @ApiImplicitParam(name = "pypi.classifiers", value = "PyPi classifiers", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "pypi.description", value = "PyPi description", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "pypi.keywords", value = "PyPi keywords", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "pypi.summary", value = "PyPi summary", dataType = "string", paramType = "query"),
-      // RubyGems specific
-      @ApiImplicitParam(name = "rubygems.description", value = "RubyGems description", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "rubygems.platform", value = "RubyGems platform", dataType = "string", paramType = "query"),
-      @ApiImplicitParam(name = "rubygems.summary", value = "RubyGems summary", dataType = "string", paramType = "query")
-  })
+  @SearchParams
   Page<ComponentXO> search(
+      @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
+      final String continuationToken,
+      @Context final UriInfo uriInfo);
+
+  @ApiOperation("Search assets")
+  @SearchParams
+  Page<AssetXO> searchAssets(
       @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
       final String continuationToken,
       @Context final UriInfo uriInfo);

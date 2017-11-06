@@ -50,6 +50,9 @@ public class NexusBasicHttpAuthenticationFilter
 {
   public static final String NAME = "nx-basic-authc";
 
+  // This is the base64 encoded version of ":" i.e. empty credentials, required to allow anonymous v1 Docker search.
+  private static final String EMPTY_CREDENTIALS = "Og==";
+
   /**
    * @since 3.1
    */
@@ -143,5 +146,19 @@ public class NexusBasicHttpAuthenticationFilter
       request.setAttribute(ATTR_USER_ID, userId);
     }
     return super.onLoginSuccess(token, subject, request, response);
+  }
+
+  @Override
+  protected boolean isLoginAttempt(final String authzHeader) {
+    return !isEmptyCredentials(authzHeader) && super.isLoginAttempt(authzHeader);
+  }
+
+  private boolean isEmptyCredentials(final String authzHeader) {
+    if (!authzHeader.toLowerCase().contains("basic ")) {
+      return false;
+    }
+
+    String[] parts = authzHeader.split(" ");
+    return parts.length > 1 && parts[1].equals(EMPTY_CREDENTIALS);
   }
 }

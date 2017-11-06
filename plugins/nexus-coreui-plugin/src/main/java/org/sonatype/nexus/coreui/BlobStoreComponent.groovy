@@ -124,6 +124,7 @@ class BlobStoreComponent
         blobCount: blobStore.metrics.blobCount,
         totalSize: blobStore.metrics.totalSize,
         availableSpace: blobStore.metrics.availableSpace,
+        unlimited: blobStore.metrics.unlimited,
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name)
     )
   }

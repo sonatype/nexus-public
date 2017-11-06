@@ -92,7 +92,7 @@ public class MetadataUpdaterTest
     when(mavenFacet.get(mavenPath)).thenReturn(null, content);
     UnitOfWork.beginBatch(tx);
     try {
-      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", new ArrayList<Plugin>()));
+      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
     }
     finally {
       UnitOfWork.end();
@@ -110,7 +110,7 @@ public class MetadataUpdaterTest
                 "text/xml")), content);
     UnitOfWork.beginBatch(tx);
     try {
-      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", new ArrayList<Plugin>()));
+      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
     }
     finally {
       UnitOfWork.end();
@@ -126,7 +126,7 @@ public class MetadataUpdaterTest
         new Content(new StringPayload("ThisIsNotAnXml", "text/xml")), content);
     UnitOfWork.beginBatch(tx);
     try {
-      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", new ArrayList<Plugin>()));
+      testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
     }
     finally {
       UnitOfWork.end();
@@ -139,7 +139,7 @@ public class MetadataUpdaterTest
   @Test
   public void replace() throws IOException {
     when(mavenFacet.get(mavenPath)).thenReturn(content);
-    testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", new ArrayList<Plugin>()));
+    testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
     verify(tx, times(0)).commit();
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));

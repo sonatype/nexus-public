@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.I_PARENT_ID_PATH;
 
@@ -173,12 +174,24 @@ public class BrowseNodeStoreImpl
   @Override
   @Guarded(by = STARTED)
   public void deleteNodeByAssetId(final EntityId assetId) {
-    Iterable<BrowseNode> assetNodes;
-    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
-      assetNodes = entityAdapter.getByAssetId(db, assetId);
-    }
+    inTx(databaseInstance).call(db -> entityAdapter.getByAssetId(db, assetId)).forEach(assetNode -> {
+      if (assetNode.isLeaf()) {
+        deleteNode(assetNode);
+      }
+      else {
+        assetNode.setAssetId(null);
+        save(assetNode, false);
+      }
+    });
+  }
 
-    assetNodes.forEach(this::deleteNode);
+  @Override
+  @Guarded(by = STARTED)
+  public void deleteNodeByComponentId(final EntityId componentId) {
+    inTx(databaseInstance).call(db -> entityAdapter.getByComponentId(db, componentId)).forEach(componentNode -> {
+      componentNode.setComponentId(null);
+      save(componentNode, false);
+    });
   }
 
   @Override

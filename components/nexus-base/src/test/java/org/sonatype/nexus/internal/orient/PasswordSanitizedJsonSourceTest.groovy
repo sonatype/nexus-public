@@ -18,6 +18,7 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 import org.sonatype.nexus.orient.DatabaseExternalizer
 import org.sonatype.nexus.orient.DatabaseInstance
 
+import groovy.json.JsonSlurper
 import org.junit.rules.TemporaryFolder
 import org.junit.Rule
 import spock.lang.Specification
@@ -40,7 +41,7 @@ class PasswordSanitizedJsonSourceTest
       instance.externalizer() >> externalizer
       PasswordSanitizedJsonSource passwordSanitizedJsonSource = new PasswordSanitizedJsonSource(Type.CONFIG,
           'path', instanceProvider)
-      File exportJsonFile = temporaryFolder.newFile('export.json')
+      File exportJsonFile = temporaryFolder.newFile()
 
     when: 'a database is exported'
       passwordSanitizedJsonSource.generate(exportJsonFile)
@@ -52,4 +53,30 @@ class PasswordSanitizedJsonSourceTest
       }
   }
 
+  def 'Excludes sensitive fields from the export.'() {
+    given: 'a PasswordSanitizedJsonSource'
+      DatabaseInstance instance = Mock(DatabaseInstance)
+      DatabaseExternalizer externalizer = Mock(DatabaseExternalizer)
+      externalizer.export(_, _) >> {
+        output, excludedClassNames ->
+          output.write(('{"secret": "secret-key", "applicationPassword": "password", ' +
+              '"systemPassword": "password", "password": "password"}').bytes)
+      }
+      Provider<DatabaseInstance> instanceProvider = Mock(Provider)
+      instanceProvider.get() >> instance
+      instance.externalizer() >> externalizer
+      PasswordSanitizedJsonSource passwordSanitizedJsonSource = new PasswordSanitizedJsonSource(Type.CONFIG,
+          'path', instanceProvider)
+      File exportJsonFile = temporaryFolder.newFile()
+
+    when: 'a database is exported'
+      passwordSanitizedJsonSource.generate(exportJsonFile)
+
+    then: 'the sensitive files are replaced in the exported JSON'
+      def result = new JsonSlurper().parse(exportJsonFile)
+      assert result.secret == PasswordSanitizedJsonSource.REPLACEMENT
+      assert result.applicationPassword == PasswordSanitizedJsonSource.REPLACEMENT
+      assert result.systemPassword == PasswordSanitizedJsonSource.REPLACEMENT
+      assert result.password == PasswordSanitizedJsonSource.REPLACEMENT
+  }
 }

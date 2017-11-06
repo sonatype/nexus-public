@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +38,6 @@ import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -57,8 +54,10 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,6 +68,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -78,6 +78,9 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
+import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_CHILDREN_IDS;
+import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_PATH;
+import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_REPOSITORY_NAME;
 
 public class BrowseNodeEntityAdapterTest
     extends TestSupport
@@ -794,6 +797,32 @@ public class BrowseNodeEntityAdapterTest
         }
       }
     });
+  }
+
+  @Test
+  public void readFieldsSetsNonLeaf() throws Exception {
+    BrowseNode entity = new BrowseNode();
+    ODocument document = mock(ODocument.class);
+    when(document.field(P_REPOSITORY_NAME, OType.STRING)).thenReturn(REPOSITORY_NAME);
+    when(document.field(P_PATH, OType.STRING)).thenReturn("path");
+    when(document.field(P_CHILDREN_IDS, OType.LINKSET)).thenReturn(newHashSet(mock(OIdentifiable.class)));
+
+    underTest.readFields(document, entity);
+
+    assertThat(entity.isLeaf(), is(false));
+  }
+
+  @Test
+  public void readFieldsSetsLeaf() throws Exception {
+    BrowseNode entity = new BrowseNode();
+    ODocument document = mock(ODocument.class);
+    when(document.field(P_REPOSITORY_NAME, OType.STRING)).thenReturn(REPOSITORY_NAME);
+    when(document.field(P_PATH, OType.STRING)).thenReturn("path");
+    when(document.field(P_CHILDREN_IDS, OType.LINKSET)).thenReturn(emptySet());
+
+    underTest.readFields(document, entity);
+
+    assertThat(entity.isLeaf(), is(true));
   }
 
   private void insertTestNodes(final ODatabaseDocumentTx db, final Iterable<String> pathSegments, final String repositoryName) {

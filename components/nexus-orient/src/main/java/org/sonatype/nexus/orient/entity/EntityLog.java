@@ -100,6 +100,10 @@ public final class EntityLog
     public UnknownDeltaException(final OLogSequenceNumber since, final Throwable cause) {
       super(String.format("Changes exist since %s but details are not available", since), cause);
     }
+
+    public UnknownDeltaException(final String message) {
+      super(message);
+    }
   }
 
   private OLocalPaginatedStorage storage() {

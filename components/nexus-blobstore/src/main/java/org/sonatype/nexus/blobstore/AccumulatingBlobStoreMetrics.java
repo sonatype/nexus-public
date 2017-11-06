@@ -28,10 +28,17 @@ public class AccumulatingBlobStoreMetrics
 
   private final long availableSpace;
 
-  public AccumulatingBlobStoreMetrics(final long blobCount, final long totalSize, final long availableSpace) {
+  private final boolean unlimited;
+
+  public AccumulatingBlobStoreMetrics(final long blobCount,
+                                      final long totalSize,
+                                      final long availableSpace,
+                                      final boolean unlimited)
+  {
     this.blobCount = blobCount;
     this.totalSize = totalSize;
     this.availableSpace = availableSpace;
+    this.unlimited = unlimited;
   }
 
   @Override
@@ -55,5 +62,10 @@ public class AccumulatingBlobStoreMetrics
   @Override
   public long getAvailableSpace() {
     return availableSpace;
+  }
+
+  @Override
+  public boolean isUnlimited() {
+    return unlimited;
   }
 }

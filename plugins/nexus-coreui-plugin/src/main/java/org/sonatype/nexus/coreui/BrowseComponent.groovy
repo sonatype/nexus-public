@@ -84,7 +84,7 @@ class BrowseComponent
           id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),
           type: browseNode.assetId != null ? ASSET : browseNode.componentId != null ? COMPONENT : FOLDER,
           text: browseNode.path,
-          leaf: browseNode.assetId != null,
+          leaf: browseNode.leaf,
           componentId: browseNode.componentId != null ? browseNode.componentId.value : null,
           assetId: browseNode.assetId != null ? browseNode.assetId.value : null
       )

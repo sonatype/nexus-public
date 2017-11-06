@@ -242,6 +242,7 @@ public class Maven2Metadata
 
   private final DateTime lastUpdated;
 
+  @Nullable
   private final String groupId;
 
   @Nullable
@@ -261,7 +262,7 @@ public class Maven2Metadata
 
   private Maven2Metadata(final Level level,
                          final DateTime lastUpdated,
-                         final String groupId,
+                         @Nullable final String groupId,
                          @Nullable final String artifactId,
                          @Nullable final String version,
                          @Nullable final List<Plugin> plugins,
@@ -291,6 +292,7 @@ public class Maven2Metadata
     return lastUpdated;
   }
 
+  @Nullable
   public String getGroupId() {
     return groupId;
   }
@@ -327,13 +329,11 @@ public class Maven2Metadata
   }
 
   public static Maven2Metadata newGroupLevel(final DateTime lastUpdated,
-                                             final String groupId,
                                              final List<Plugin> plugins)
   {
     checkNotNull(lastUpdated);
-    checkNotNull(groupId);
     checkNotNull(plugins);
-    return new Maven2Metadata(Level.GROUP, lastUpdated, groupId, null, null, plugins, null, null);
+    return new Maven2Metadata(Level.GROUP, lastUpdated, null, null, null, plugins, null, null);
   }
 
   public static Maven2Metadata newArtifactLevel(final DateTime lastUpdated,

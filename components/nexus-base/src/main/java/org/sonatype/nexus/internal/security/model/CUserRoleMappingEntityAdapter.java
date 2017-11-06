@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
-import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -24,6 +23,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 
 import com.google.common.collect.Sets;
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * {@link CUserRoleMapping} entity adapter.
@@ -64,6 +63,8 @@ public class CUserRoleMappingEntityAdapter
       P_SOURCE);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_USER_ID, P_SOURCE);
+
+  private final UpdateEntityByPropertyAction<CUserRoleMapping> update = new UpdateEntityByPropertyAction<>(this, P_USER_ID, P_SOURCE);
 
   public CUserRoleMappingEntityAdapter() {
     super(DB_CLASS);
@@ -101,30 +102,19 @@ public class CUserRoleMappingEntityAdapter
     document.field(P_ROLES, entity.getRoles());
   }
 
-  //
-  // TODO: Sort out API below with EntityAdapter, do not expose ODocument
-  //
-
-  private static final String READ_QUERY =
-      String.format("SELECT FROM %s WHERE %s = ? AND %s = ?", DB_CLASS, P_USER_ID, P_SOURCE);
-
   @Nullable
   public CUserRoleMapping read(final ODatabaseDocumentTx db, final String userId, final String source) {
     return read.execute(db, userId, source);
   }
 
-  @Nullable
-  @Deprecated
-  public ODocument readDocument(final ODatabaseDocumentTx db, final String userId, final String source) {
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(READ_QUERY);
-    List<ODocument> results = db.command(query).execute(userId, source);
-    if (results.isEmpty()) {
-      return null;
-    }
-    return results.get(0);
-  }
-
   public boolean delete(final ODatabaseDocumentTx db, final String userId, final String source) {
     return delete.execute(db, userId, source);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public boolean update(final ODatabaseDocumentTx db, final CUserRoleMapping entity) {
+    return update.execute(db, entity, entity.getUserId(), entity.getSource());
   }
 }

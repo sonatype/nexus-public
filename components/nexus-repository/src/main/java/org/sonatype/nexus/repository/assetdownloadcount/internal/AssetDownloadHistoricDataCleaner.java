@@ -63,8 +63,8 @@ public class AssetDownloadHistoricDataCleaner
     this.assetDownloadCountEntityAdapter = checkNotNull(assetDownloadCountEntityAdapter);
     this.interval = interval;
     executorService = NexusExecutorService.forCurrentSubject(Executors.newSingleThreadExecutor(
-        new NexusThreadFactory("assetdownloads-cleaner", "Asset Downloads Historic Data Cleaner")
-    ));
+        new NexusThreadFactory("assetdownloads-cleaner", "Asset Downloads Historic Data Cleaner",
+            Thread.MIN_PRIORITY)));
   }
 
   public void start() {
@@ -109,6 +109,7 @@ public class AssetDownloadHistoricDataCleaner
         removedCount = inTxRetry(databaseInstance)
             .call(db -> assetDownloadCountEntityAdapter.removeOldRecords(db, dateType));
         log.debug("Removed {} old records of type {}", removedCount, dateType.name());
+        Thread.yield();
       }
       //keep repeating the delete until there are none left
       while (removedCount > 0 && removedCount == assetDownloadCountEntityAdapter.getMaxDeleteSize());

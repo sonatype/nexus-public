@@ -41,7 +41,6 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.valueOf;
@@ -218,21 +217,27 @@ public class OrientSecurityConfigurationSource
 
       try {
         inTxRetry(databaseInstance).throwing(UserNotFoundException.class).run(db -> {
-          ODocument document = userEntityAdapter.readDocument(db, user.getId());
-          if (document == null) {
+          CUser existing = userEntityAdapter.read(db, user.getId());
+          if (existing == null) {
             throw new UserNotFoundException(user.getId());
           }
-          if (user.getVersion() != null && !Objects.equals(user.getVersion(), valueOf(document.getVersion()))) {
+          if (!Objects.equals(user.getVersion(), existing.getVersion())) {
             throw concurrentlyModified("User", user.getId());
           }
-          userEntityAdapter.writeEntity(document, user);
+          userEntityAdapter.update(db, user);
 
-          CUserRoleMapping mapping = mapping(user.getId(), roles);
-          try {
-            updateUserRoleMapping(mapping);
+          CUserRoleMapping mapping = userRoleMappingEntityAdapter.read(db, user.getId(), UserManager.DEFAULT_SOURCE);
+          if (mapping == null) {
+            addUserRoleMapping(mapping(user.getId(), roles));
           }
-          catch (NoSuchRoleMappingException e) {
-            addUserRoleMapping(mapping);
+          else {
+            try {
+              mapping.setRoles(roles);
+              updateUserRoleMapping(mapping);
+            }
+            catch (NoSuchRoleMappingException e) {
+              throw new RuntimeException(e);
+            }
           }
         });
       }
@@ -296,14 +301,14 @@ public class OrientSecurityConfigurationSource
 
       try {
         inTxRetry(databaseInstance).throwing(NoSuchPrivilegeException.class).run(db -> {
-          ODocument document = privilegeEntityAdapter.readDocument(db, privilege.getId());
-          if (document == null) {
+          CPrivilege existing = privilegeEntityAdapter.read(db, privilege.getId());
+          if (existing == null) {
             throw new NoSuchPrivilegeException(privilege.getId());
           }
-          if (privilege.getVersion() != null && !Objects.equals(privilege.getVersion(), valueOf(document.getVersion()))) {
+          if (!Objects.equals(privilege.getVersion(), existing.getVersion())) {
             throw concurrentlyModified("Privilege", privilege.getId());
           }
-          privilegeEntityAdapter.writeEntity(document, privilege);
+          privilegeEntityAdapter.update(db, privilege);
         });
       }
       catch (OConcurrentModificationException e) {
@@ -360,14 +365,14 @@ public class OrientSecurityConfigurationSource
 
       try {
         inTxRetry(databaseInstance).throwing(NoSuchRoleException.class).run(db -> {
-          ODocument document = roleEntityAdapter.readDocument(db, role.getId());
-          if (document == null) {
+          CRole existing = roleEntityAdapter.read(db, role.getId());
+          if (existing == null) {
             throw new NoSuchRoleException(role.getId());
           }
-          if (role.getVersion() != null && !Objects.equals(role.getVersion(), valueOf(document.getVersion()))) {
+          if (!Objects.equals(role.getVersion(), existing.getVersion())) {
             throw concurrentlyModified("Role", role.getId());
           }
-          roleEntityAdapter.writeEntity(document, role);
+          roleEntityAdapter.update(db, role);
         });
       }
       catch (OConcurrentModificationException e) {
@@ -435,14 +440,14 @@ public class OrientSecurityConfigurationSource
 
       try {
         inTxRetry(databaseInstance).throwing(NoSuchRoleMappingException.class).run(db -> {
-          ODocument document = userRoleMappingEntityAdapter.readDocument(db, mapping.getUserId(), mapping.getSource());
-          if (document == null) {
+          CUserRoleMapping existing = userRoleMappingEntityAdapter.read(db, mapping.getUserId(), mapping.getSource());
+          if (existing == null) {
             throw new NoSuchRoleMappingException(mapping.getUserId());
           }
-          if (mapping.getVersion() != null && !Objects.equals(mapping.getVersion(), valueOf(document.getVersion()))) {
+          if (!Objects.equals(mapping.getVersion(), existing.getVersion())) {
             throw concurrentlyModified("User-role mapping", mapping.getUserId());
           }
-          userRoleMappingEntityAdapter.writeEntity(document, mapping);
+          userRoleMappingEntityAdapter.update(db, mapping);
         });
       }
       catch (OConcurrentModificationException e) {

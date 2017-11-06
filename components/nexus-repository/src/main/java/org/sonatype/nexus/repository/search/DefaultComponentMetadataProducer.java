@@ -21,6 +21,7 @@ import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
@@ -54,6 +55,8 @@ public class DefaultComponentMetadataProducer
 
   public static final String ASSETS = "assets";
 
+  public static final String ID = "id";
+
   @Override
   public String getMetadata(final Component component,
                             final Iterable<Asset> assets,
@@ -73,6 +76,7 @@ public class DefaultComponentMetadataProducer
     List<Map<String, Object>> allAssetMetadata = new ArrayList<>();
     for (Asset asset : assets) {
       Map<String, Object> assetMetadata = new HashMap<>();
+      put(assetMetadata, ID, documentId(asset));
       put(assetMetadata, NAME, asset.name());
       put(assetMetadata, CONTENT_TYPE, asset.contentType());
       put(assetMetadata, ATTRIBUTES, asset.attributes().backing());
@@ -91,6 +95,10 @@ public class DefaultComponentMetadataProducer
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private String documentId(final Asset asset) {
+    return EntityHelper.id(asset).getValue();
   }
 
   private static void put(final Map<String, Object> metadata, final String key, final Object value) {

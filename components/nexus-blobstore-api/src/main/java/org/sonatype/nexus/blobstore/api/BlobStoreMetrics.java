@@ -35,4 +35,9 @@ public interface BlobStoreMetrics
    * may return a value set by a policy rather than some hard storage limit.
    */
   long getAvailableSpace();
+
+  /**
+   * Boolean flag indicating whether or not this blob store has an unlimited amount of space (S3 for example).
+   */
+  boolean isUnlimited();
 }

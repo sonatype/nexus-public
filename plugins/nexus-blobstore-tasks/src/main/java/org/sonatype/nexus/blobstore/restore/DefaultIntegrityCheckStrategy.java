@@ -57,6 +57,8 @@ public class DefaultIntegrityCheckStrategy
 
   static final String BLOB_PROPERTIES_MISSING_FOR_ASSET = "Blob properties missing for asset '{}'.";
 
+  static final String BLOB_DATA_MISSING_FOR_ASSET = "Blob data missing for asset '{}'.";
+
   static final String BLOB_PROPERTIES_MARKED_AS_DELETED = "Blob properties marked as deleted for asset '{}'. Will be removed on next compact.";
 
   static final String SHA1_MISMATCH = "SHA1 does not match on asset '{}'! Metadata SHA1: '{}', Blob SHA1: '{}'";
@@ -81,7 +83,7 @@ public class DefaultIntegrityCheckStrategy
         blobStore.getBlobStoreConfiguration().getName());
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
-    long corrupt = 0;
+    long failed = 0;
 
     for (Asset asset : getAssets(repository)) {
       try {
@@ -98,30 +100,37 @@ public class DefaultIntegrityCheckStrategy
         BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
 
         if (blobAttributes == null) {
-          log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset);
+          log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
+          failed++;
         }
         else if (blobAttributes.isDeleted()) {
-          log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset);
+          log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
+          failed++;
         }
-        else {
-          if (!checkAsset(blobAttributes, asset)) {
-            corrupt++;
-          }
+        else if (!blobDataExists(blobStore.get(blobId))){
+          log.error(BLOB_DATA_MISSING_FOR_ASSET, asset.name());
+          failed++;
+        }
+        else if (!checkAsset(blobAttributes, asset)) {
+          failed++;
         }
       }
       catch (IllegalStateException e) {
         // thrown by requireBlobRef
         log.error(ERROR_ACCESSING_BLOB, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
+        failed++;
       }
       catch (IllegalArgumentException e) {
         // thrown by checkAsset inner methods
         log.error(ERROR_PROCESSING_ASSET_WITH_EX, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
+        failed++;
       }
       catch (Exception e) {
         log.error(ERROR_PROCESSING_ASSET, asset.toString(), e);
+        failed++;
       }
       progressLogger
-          .info("Elapsed time: {}, processed: {}, corrupt: {}", progressLogger.getElapsed(), ++processed, corrupt);
+          .info("Elapsed time: {}, processed: {}, failed integrity check: {}", progressLogger.getElapsed(), ++processed, failed);
     }
     progressLogger.flush();
   }
@@ -190,6 +199,19 @@ public class DefaultIntegrityCheckStrategy
     }
 
     return true;
+  }
+
+  /**
+   * returns true if the blobs data is accessible, false otherwise
+   */
+  protected boolean blobDataExists(final Blob blob) {
+    try {
+      blob.getInputStream().close();
+      return true;
+    }
+    catch (Exception e) { // NOSONAR
+      return false;
+    }
   }
 
   /**

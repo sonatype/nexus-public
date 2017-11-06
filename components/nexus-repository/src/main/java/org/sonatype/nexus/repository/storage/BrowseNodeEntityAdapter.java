@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -49,8 +50,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Streams.stream;
+import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.DB_CLASS;
 import static org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder.P_ASSET_ID;
@@ -79,6 +82,9 @@ public class BrowseNodeEntityAdapter
 
   private static final String NODE_WITH_ASSET_QUERY = String.format(
       "select from %s where %s = :asset_id", DB_CLASS, P_ASSET_ID);
+
+  private static final String NODE_WITH_COMPONENT_QUERY = String.format(
+      "select from %s where %s = :%s", DB_CLASS, P_COMPONENT_ID, P_COMPONENT_ID);
 
   private static final String UPDATE_NODE_ASSET_COMPONENT = String.format(
       "UPDATE :%s SET %s = :%s, %s = :%s, %s = :%s RETURN AFTER @this", P_ID, P_ASSET_ID, P_ASSET_ID, P_COMPONENT_ID,
@@ -345,7 +351,7 @@ public class BrowseNodeEntityAdapter
     checkNotNull(repositoryName);
 
     return db.command(new OCommandSQL(TRUNCATE_REPOSITORY_QUERY + " limit " + truncateCount))
-        .execute(Collections.singletonMap(P_REPOSITORY_NAME, repositoryName));
+        .execute(singletonMap(P_REPOSITORY_NAME, repositoryName));
   }
 
   @Override
@@ -353,12 +359,13 @@ public class BrowseNodeEntityAdapter
     checkNotNull(db);
     checkNotNull(node);
 
-    ORID nodeId = recordIdentity(EntityHelper.id(node));
+    EntityId entityId = EntityHelper.id(node);
+    ORID nodeId = recordIdentity(entityId);
     db.delete(nodeId);
 
     if (node.getParentId() != null) {
       Map<String, Object> parameters = new HashMap<>();
-      parameters.put(P_CHILDREN_IDS, nodeId);
+      parameters.put(P_CHILDREN_IDS, entityId);
       parameters.put(P_PARENT_ID, recordIdentity(node.getParentId()));
 
       db.command(new OCommandSQL(REMOVE_CHILD_QUERY)).execute(parameters);
@@ -387,16 +394,26 @@ public class BrowseNodeEntityAdapter
     return transformEntity(db.getRecord(recordIdentity(id)));
   }
 
-  public Iterable<BrowseNode> getByAssetId(final ODatabaseDocumentTx db, final EntityId assetId) {
+  public Iterable<BrowseNode> getByAssetId(final ODatabaseDocumentTx db, final EntityId id) {
+    checkNotNull(id);
+
+    return getBy(db, NODE_WITH_ASSET_QUERY, singletonMap(P_ASSET_ID, assetEntityAdapter.recordIdentity(id)));
+  }
+
+  public Iterable<BrowseNode> getByComponentId(final ODatabaseDocumentTx db, final EntityId id) {
+    checkNotNull(id);
+
+    return getBy(db, NODE_WITH_COMPONENT_QUERY,
+        singletonMap(P_COMPONENT_ID, componentEntityAdapter.recordIdentity(id)));
+  }
+
+  private Iterable<BrowseNode> getBy(final ODatabaseDocumentTx db, String query, Map<String, Object> parameters) {
     checkNotNull(db);
-    checkNotNull(assetId);
+    checkState(!Strings2.isEmpty(query));
+    checkNotNull(parameters);
+    checkState(!parameters.isEmpty());
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put(P_ASSET_ID, assetEntityAdapter.recordIdentity(assetId));
-
-    Iterable<ODocument> docs = db.command(new OCommandSQL(NODE_WITH_ASSET_QUERY)).execute(parameters);
-
-    return transform(docs);
+    return transform(db.command(new OCommandSQL(query)).execute(parameters));
   }
 
   public Iterable<BrowseNode> getByPath(final ODatabaseDocumentTx db,
@@ -423,7 +440,7 @@ public class BrowseNodeEntityAdapter
   }
 
   public void updateChildren(final ODatabaseDocumentTx db, final ORID browseNodeId) {
-    db.command(new OCommandSQL(UPDATE_CHILDREN_QUERY)).execute(Collections.singletonMap(P_ID, browseNodeId));
+    db.command(new OCommandSQL(UPDATE_CHILDREN_QUERY)).execute(singletonMap(P_ID, browseNodeId));
   }
 
   private BrowseNode getNode(final ODatabaseDocumentTx db,
@@ -494,12 +511,15 @@ public class BrowseNodeEntityAdapter
     String path = document.field(P_PATH, OType.STRING);
     ORID parentId = document.field(P_PARENT_ID, ORID.class);
     String assetNameLowercase = document.field(P_ASSET_NAME_LOWERCASE, OType.STRING);
+    Set<OIdentifiable> childIds = document.field(P_CHILDREN_IDS, OType.LINKSET);
 
     entity.withRepositoryName(repositoryName).withPath(path).withAssetNameLowercase(assetNameLowercase);
 
     entity.setAssetId(assetId != null ? new AttachedEntityId(assetEntityAdapter, assetId) : null);
     entity.setComponentId(componentId != null ? new AttachedEntityId(componentEntityAdapter, componentId) : null);
     entity.setParentId(parentId != null ? new AttachedEntityId(this, parentId) : null);
+
+    entity.setLeaf(childIds.isEmpty());
   }
 
   @Override

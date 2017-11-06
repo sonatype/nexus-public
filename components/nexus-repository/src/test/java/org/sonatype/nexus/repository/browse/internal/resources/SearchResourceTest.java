@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.browse.internal.resources;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -21,6 +23,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
+import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -31,6 +34,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +44,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 
 import static com.google.common.collect.ImmutableMap.of;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
@@ -48,10 +53,17 @@ import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.collection.IsMapContaining.hasKey;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createAsset;
+import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createComponent;
+import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.ASSET_SEARCH_PARAMS;
+import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.SEARCH_PARAMS;
 
 public class SearchResourceTest
     extends RepositoryResourceTestSupport
@@ -63,19 +75,16 @@ public class SearchResourceTest
   SearchService searchService;
 
   @Mock
-  UriInfo uriInfo;
-
-  @Mock
   SearchResponse searchResponse;
 
   @Mock
   SearchHits searchHits;
 
   @Mock
-  SearchHit searchHit;
+  SearchHit searchHitMaven;
 
   @Mock
-  SearchHit searchHit1;
+  SearchHit searchHitNpm;
 
   @Captor
   ArgumentCaptor<QueryBuilder> queryBuilderArgumentCaptor;
@@ -100,10 +109,15 @@ public class SearchResourceTest
   private void setupResponse() {
     when(searchResponse.getHits()).thenReturn(searchHits);
 
-    Map<String, Object> source = of("group", "test", "repository_name", "test-repo", "name", "foo", "version", "1.0");
-    when(searchHit.sourceAsMap()).thenReturn(source);
-    when(searchHit.getSource()).thenReturn(source);
-    when(searchHit.getId()).thenReturn("id1");
+    List assets = newArrayList(
+        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
+        createAsset("antlr.pom", "maven2", "second-sha1", of("extension", "pom"))
+    );
+    Map<String, Object> component = createComponent("foo", "test-repo", "format", "test", "1.0", assets);
+
+    when(searchHitMaven.sourceAsMap()).thenReturn(component);
+    when(searchHitMaven.getSource()).thenReturn(component);
+    when(searchHitMaven.getId()).thenReturn("id1");
 
     when(browseService.browseComponentAssets(eq(repository), anyString())).thenReturn(browseResult);
     Asset mockedAsset = getMockedAsset("first", "one");
@@ -112,23 +126,21 @@ public class SearchResourceTest
     when(browseResult.getResults()).thenReturn(asList(mockedAsset,
         mockedAsset1));
 
-    Map<String, Object> source2 = of("name", "bar", "repository_name", "test-repo");
-    when(searchHit1.sourceAsMap()).thenReturn(source2);
-    when(searchHit1.getSource()).thenReturn(source2);
-    when(searchHit1.getId()).thenReturn("id2");
+    List assets2 = newArrayList(
+        createAsset("bar.one", "npm", "third-sha1", of("extension", "one")),
+        createAsset("bar.two", "npm", "fourth-sha1", of("extension", "two")),
+        createAsset("bar.three", "npm", "fifth-sha1", of("extension", "three"))
+    );
+    Map<String, Object> component2 = createComponent("bar", "test-repo", "npm", "group2", "2.0", assets2);
+    when(searchHitNpm.sourceAsMap()).thenReturn(component2);
+    when(searchHitNpm.getSource()).thenReturn(component2);
+    when(searchHitNpm.getId()).thenReturn("id2");
 
-    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHit, searchHit1});
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven, searchHitNpm});
   }
 
   @Test
   public void testSearch() {
-    //URI Info containing the search parameters
-    MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap();
-    multivaluedMap.putSingle("format", "maven2");
-    multivaluedMap.putSingle("notValid", "missing"); //this one should be ignored
-
-    when(uriInfo.getQueryParameters()).thenReturn(multivaluedMap);
-
     //the expected query
     QueryBuilder expected = boolQuery()
         .filter(termQuery("format", "maven2"));
@@ -136,40 +148,143 @@ public class SearchResourceTest
     when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
-    Page<ComponentXO> componentPage = underTest.search(null, uriInfo);
+    Page<ComponentXO> componentPage = underTest.search(null, uriInfo("?format=maven2"));
 
     List<ComponentXO> items = componentPage.getItems();
 
     assertThat(items, hasSize(2));
-    
+
     ComponentXO componentXO = items.stream().filter(item -> item.getName().equals("foo")).findFirst().get();
     assertThat(componentXO.getGroup(), is("test"));
     assertThat(componentXO.getVersion(), is("1.0"));
 
     ComponentXO componentXO1 = items.stream().filter(item -> item.getName().equals("bar")).findFirst().get();
-    assertThat(componentXO1.getGroup(), nullValue());
-    assertThat(componentXO1.getVersion(), nullValue());
-    
+    assertThat(componentXO1.getGroup(), is("group2"));
+    assertThat(componentXO1.getVersion(), is("2.0"));
+
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
   }
 
   @Test
-  public void testBuildQuery() {
-    MultivaluedMap<String, String> multivaluedMap = new MultivaluedHashMap();
-    multivaluedMap.putSingle("format", "maven2");
-    multivaluedMap.putSingle("notValid", "missing"); //this one should be ignored
-    multivaluedMap.put("sha256", emptyList()); //this one should be ignored as well because it is empty
-    multivaluedMap.putSingle("q", "some kind of string query");
+  public void testSearchAndDownload_NoAssetParams_WillReturnAll() {
+    // mock Elastic is only returning npm
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
 
-    when(uriInfo.getQueryParameters()).thenReturn(multivaluedMap);
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+
+    Page<AssetXO> assets = underTest.searchAssets(null, uriInfo("?format=npm"));
+
+    List<AssetXO> items = assets.getItems();
+
+    assertThat(items, hasSize(3));
+
+    AssetXO assetXO = items.stream().filter(item -> item.getPath().equals("bar.one")).findFirst().get();
+    assertThat(assetXO.getRepository(), is("test-repo"));
+    assertThat(assetXO.getDownloadUrl(), is("http://localhost:8081/test/bar.one"));
+
+    AssetXO assetXO2 = items.stream().filter(item -> item.getPath().equals("bar.three")).findFirst().get();
+    assertThat(assetXO2.getRepository(), is("test-repo"));
+    assertThat(assetXO2.getDownloadUrl(), is("http://localhost:8081/test/bar.three"));
 
     //the expected query
     QueryBuilder expected = boolQuery()
-        .must(queryStringQuery("some kind of string query"))
-        .filter(termQuery("format", "maven2"));
+        .filter(termQuery("format", "npm"));
+    assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
+  }
 
-    QueryBuilder actual = underTest.buildQuery(uriInfo);
+  @Test
+  public void testSearchAndDownload_SpecificAssetParam_WillReturnOne() {
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+
+    Page<AssetXO> assets = underTest.searchAssets(null, uriInfo("?format=npm&sha1=fifth-sha1"));
+
+    List<AssetXO> items = assets.getItems();
+
+    assertThat(items, hasSize(1));
+
+    AssetXO assetXO = items.get(0);
+    assertThat(assetXO.getPath(), equalTo("bar.three"));
+    assertThat(assetXO.getRepository(), is("test-repo"));
+    assertThat(assetXO.getDownloadUrl(), is("http://localhost:8081/test/bar.three"));
+
+    //the expected query
+    QueryBuilder expected = boolQuery()
+        .filter(termQuery("assets.attributes.checksum.sha1", "fifth-sha1"))
+        .filter(termQuery("format", "npm"));
+    assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
+  }
+
+  @Test
+  public void testSearchAndDownload_SpecificAssetParam_NotFound() {
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+
+    Page<AssetXO> assets = underTest.searchAssets(null, uriInfo("?format=npm&sha1=notfound"));
+
+    List<AssetXO> items = assets.getItems();
+
+    assertThat(items, hasSize(0));
+  }
+
+  @Test
+  public void testBuildQuery() {
+    //the expected query
+    QueryBuilder expected = boolQuery()
+        .must(queryStringQuery("someKindOfStringQuery"))
+        .filter(termQuery("format", "maven2"))
+        .filter(termQuery("arbitrary.param", "random"));
+
+    String uri = "?format=maven2" +
+        "&arbitrary.param=random" +
+        "&sha256=" + //this one should be ignored because it is empty
+        "&q=someKindOfStringQuery";
+    QueryBuilder actual = underTest.buildQuery(uriInfo(uri));
 
     assertThat(actual.toString(), is(expected.toString()));
   }
+
+  @Test
+  public void testGetAssetParams() {
+    MultivaluedMap<String, String> result = underTest.getAssetParams(uriInfo("?sha1=thisisthesha1&name=antlr"));
+    assertThat(result.size(), equalTo(1));
+    assertThat(result, hasKey("sha1"));
+
+    // put every single search param into the pam
+    StringBuilder sb = new StringBuilder();
+    Set<String> allKeys = SEARCH_PARAMS.keySet();
+    allKeys.forEach(s -> sb.append(s).append("=valueDoesNotMatter&"));
+
+    // asert only assert params remain
+    result = underTest.getAssetParams(uriInfo("?" + sb.toString()));
+    assertThat(result.size(), equalTo(ASSET_SEARCH_PARAMS.size()));
+    assertThat(result.keySet(), equalTo(ASSET_SEARCH_PARAMS.keySet()));
+  }
+
+  @Test
+  public void testFilterAsset() {
+    // no asset params will return all assets
+    assertTrue(underTest.filterAsset(
+        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
+        new MultivaluedHashMap<>()));
+
+    // regular positive case
+    assertTrue(underTest.filterAsset(
+        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
+        uriInfo("?sha1=first-sha1").getQueryParameters()));
+
+    // regular negative case
+    assertFalse(underTest.filterAsset(
+        createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
+        uriInfo("?sha1=another-sha1").getQueryParameters()));
+  }
+
+  private UriInfo uriInfo(final String uri) {
+    return new ResteasyUriInfo(URI.create(uri));
+  }
+
 }

@@ -27,7 +27,6 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -152,7 +151,7 @@ public class SecurityComponent
 
       // HACK: roles for the current user are not exposed to the UI.
       // HACK: but we need to know if user is admin or not for some things (like outreach)
-      if (subject.hasRole(Roles.ADMIN_ROLE_ID)) {
+      if (subject.isPermitted(new WildcardPermission2("nexus:*"))) {
         userXO.setAdministrator(true);
       }
 
