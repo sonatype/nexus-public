@@ -21,7 +21,7 @@ import org.sonatype.nexus.templates.TemplateManager;
 import org.sonatype.nexus.templates.repository.RepositoryTemplate;
 import org.sonatype.nexus.templates.repository.maven.Maven2ProxyRepositoryTemplate;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.maven.index.ArtifactInfo;
 import org.apache.maven.index.IteratorSearchResponse;
 import org.apache.maven.index.MAVEN;
@@ -131,7 +131,7 @@ public class DefaultIndexerManagerIT
 
     IndexingContext repoCtx2 = indexerManager.getRepositoryIndexContext(repo);
 
-    Assert.assertSame(repoCtx, repoCtx2);
+    Assert.assertNotSame(repoCtx, repoCtx2);
   }
 
   @Test
