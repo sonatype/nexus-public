@@ -39,7 +39,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * Retains blobstore metrics in memory, periodically writing them out
  * to AWS S3.  Similar to the file blobstore {@link BlobStoreMetricsStore}.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 public class S3BlobStoreMetricsStore

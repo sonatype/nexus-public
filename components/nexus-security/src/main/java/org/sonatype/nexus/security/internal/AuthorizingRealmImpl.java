@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Named(AuthorizingRealmImpl.NAME)
-@Description("Nexus Authorizing Realm")
+@Description("Local Authorizing Realm")
 public class AuthorizingRealmImpl
     extends AuthorizingRealm
     implements Realm

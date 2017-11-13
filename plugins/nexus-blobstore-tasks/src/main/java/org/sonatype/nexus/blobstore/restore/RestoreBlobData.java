@@ -26,7 +26,7 @@ import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 /**
  * Simple structure for relevant data for a blob during metadata restoration
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class RestoreBlobData
 {

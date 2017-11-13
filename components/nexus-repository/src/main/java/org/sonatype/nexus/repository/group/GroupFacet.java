@@ -39,7 +39,7 @@ public interface GroupFacet
   /**
    * Return list of all member repositories including transitive
    * 
-   * @since 3.7
+   * @since 3.6.1
    */
   List<Repository> allMembers();
 

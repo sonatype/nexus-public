@@ -10,45 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.internal;
+package org.sonatype.nexus.repository.storage;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.Checkpoint;
-import org.sonatype.nexus.common.upgrade.Checkpoints;
+import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Upgrade checkpoint for elasticsearch index. It exists for the sole purpose of forcing a reindexing of all
- * repositories to pull in new attributes/elements.
+ * Task descriptor for {@link RebuildAssetUploadMetadataTask}.
  *
- * @since 3.6.1
+ * @since 3.6
  */
 @Named
 @Singleton
-@Checkpoints(model = ElasticSearchIndexCheckpoint.MODEL, local = true)
-public class ElasticSearchIndexCheckpoint
-    implements Checkpoint
+public class RebuildAssetUploadMetadataTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  static final String MODEL = "elasticsearch";
+  public static final String TYPE_ID = "rebuild.asset.uploadMetadata";
 
-  @Override
-  public void begin(final String version) throws Exception {
-    //no-op
-  }
-
-  @Override
-  public void commit() throws Exception {
-    // no-op
-  }
-
-  @Override
-  public void rollback() throws Exception {
-    // no-op
-  }
-
-  @Override
-  public void end() {
-    //no-op
+  @Inject
+  public RebuildAssetUploadMetadataTaskDescriptor(final NodeAccess nodeAccess) {
+    super(
+        TYPE_ID,
+        RebuildAssetUploadMetadataTask.class,
+        "Rebuild asset upload metadata",
+        NOT_VISIBLE,
+        NOT_EXPOSED,
+        nodeAccess.isClustered() ? newLimitNodeFormField() : null);
   }
 }

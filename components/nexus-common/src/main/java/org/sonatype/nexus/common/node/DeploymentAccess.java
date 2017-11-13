@@ -26,7 +26,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  * In clustered environments however, {@link #getId()} will be the same across all nodes, where as
  * node identity ({@link NodeAccess#getId()}) will differ from node to node.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public interface DeploymentAccess
     extends Lifecycle

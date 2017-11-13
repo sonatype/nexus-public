@@ -147,6 +147,6 @@ public abstract class TaskDescriptorSupport
    */
   protected static ComboboxFormField<String> newLimitNodeFormField() {
     return new ComboboxFormField<String>(LIMIT_NODE_KEY, LIMIT_NODE_LABEL, LIMIT_NODE_HELP, true)
-        .withStoreApi("node_NodeAccess.nodes").withIdMapping("name");
+        .withStoreApi("node_NodeAccess.nodes").withIdMapping("name").withNameMapping("displayName");
   }
 }

@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Test utils for storage classes
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class StorageTestUtil
 {

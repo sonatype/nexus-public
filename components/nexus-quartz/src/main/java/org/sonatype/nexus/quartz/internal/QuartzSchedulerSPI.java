@@ -279,7 +279,8 @@ public class QuartzSchedulerSPI
   /**
    * Re-attach listeners to all existing jobs.
    */
-  private void reattachJobListeners() throws SchedulerException {
+  @VisibleForTesting
+  void reattachJobListeners() throws SchedulerException {
     log.debug("Re-attaching listeners to jobs");
 
     // Install job supporting listeners for each NX task being scheduled
@@ -298,6 +299,11 @@ public class QuartzSchedulerSPI
       }
 
       attachJobListener(jobDetail, trigger);
+
+      if (isRunNow(trigger)) {
+        scheduler.rescheduleJob(trigger.getKey(), trigger);
+        scheduler.resumeJob(jobKey);
+      }
     }
   }
 

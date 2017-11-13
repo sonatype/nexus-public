@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Helper to build {@link EventData} instances.
  *
- * @since 3.next
+ * @since 3.6.0
  */
 @Named
 @Singleton

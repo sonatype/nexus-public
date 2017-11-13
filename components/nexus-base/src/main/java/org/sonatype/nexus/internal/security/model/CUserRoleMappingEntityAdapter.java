@@ -112,7 +112,7 @@ public class CUserRoleMappingEntityAdapter
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   public boolean update(final ODatabaseDocumentTx db, final CUserRoleMapping entity) {
     return update.execute(db, entity, entity.getUserId(), entity.getSource());

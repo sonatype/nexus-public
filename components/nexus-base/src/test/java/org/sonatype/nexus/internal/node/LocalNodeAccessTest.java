@@ -14,26 +14,20 @@ package org.sonatype.nexus.internal.node;
 
 import java.io.File;
 import java.security.cert.Certificate;
-import java.util.Optional;
+import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.common.node.NodeConfiguration;
-import org.sonatype.nexus.common.node.NodeConfigurationSource;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for local {@link NodeAccess}.
@@ -75,5 +69,11 @@ public class LocalNodeAccessTest
   @Test
   public void localIsOldestNode() {
     assertThat(nodeAccess.isOldestNode(), is(true));
+  }
+
+  @Test
+  public void getMemberAliasesKeyValueEqualToIdentity() {
+    assertThat(nodeAccess.getMemberAliases(),
+        equalTo(Collections.singletonMap(nodeAccess.getId(), nodeAccess.getId())));
   }
 }

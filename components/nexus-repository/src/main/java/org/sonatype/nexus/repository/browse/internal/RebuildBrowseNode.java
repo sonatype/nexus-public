@@ -91,7 +91,7 @@ class RebuildBrowseNode
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   @Nullable
   public String getAssetNameLowercase() {
@@ -99,7 +99,7 @@ class RebuildBrowseNode
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   public RebuildBrowseNode withAssetNameLowercase(@Nullable final String assetNameLowercase) {
     this.assetNameLowercase = assetNameLowercase;

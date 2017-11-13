@@ -35,6 +35,11 @@ public abstract class SingletonEntityAdapter<T extends Entity>
   }
 
   @Override
+  protected int getMinimumClusters() {
+    return 1; 
+  }
+
+  @Override
   public boolean sendEvents() {
     return true; // enable replication workaround for all singleton entities
   }

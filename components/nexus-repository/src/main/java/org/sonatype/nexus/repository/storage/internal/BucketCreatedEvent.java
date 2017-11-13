@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link Bucket} created event.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class BucketCreatedEvent
     extends EntityCreatedEvent

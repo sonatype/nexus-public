@@ -49,15 +49,6 @@ Ext.define('NX.coreui.view.system.NodeSettingsForm', {
         helpText: NX.I18n.get('Nodes_NodeSettingsForm_ID_HelpText')
       },
       {
-        name: 'local',
-        xtype: 'checkbox',
-        itemId: 'local',
-        fieldLabel: NX.I18n.get('Nodes_NodeSettingsForm_Local_FieldLabel'),
-        helpText: NX.I18n.get('Nodes_NodeSettingsForm_Local_HelpText'),
-        readOnly: true,
-        editable: false
-      },
-      {
         name: 'socketAddress',
         itemId: 'socketAddress',
         readOnly: true,

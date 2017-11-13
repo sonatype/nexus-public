@@ -38,7 +38,9 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
+import static org.sonatype.nexus.common.entity.EntityHelper.hasMetadata;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
  * @since 3.6
@@ -68,6 +70,11 @@ public class AssetStoreImpl
     try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
       return entityAdapter.read(db, id);
     }
+  }
+
+  @Override
+  public Iterable<Asset> getByIds(final Iterable<EntityId> ids) {
+    return inTxRetry(databaseInstance).call(db -> entityAdapter.transform(entityAdapter.documents(db, ids)));
   }
 
   @Override
@@ -108,5 +115,31 @@ public class AssetStoreImpl
     }
 
     return page;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Asset save(Asset asset) {
+    if (hasMetadata(asset)) {
+      inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, asset));
+      return asset;
+    }
+    else {
+      return inTxRetry(databaseInstance).call(db -> entityAdapter.readEntity(entityAdapter.addEntity(db, asset)));
+    }
+  }
+
+  @Override
+  public void save(final Iterable<Asset> assets) {
+    inTxRetry(databaseInstance).run(db -> {
+      assets.forEach(asset -> {
+        if (hasMetadata(asset)) {
+          entityAdapter.editEntity(db, asset);
+        }
+        else {
+          entityAdapter.addEntity(db, asset);
+        }
+      });
+    });
   }
 }

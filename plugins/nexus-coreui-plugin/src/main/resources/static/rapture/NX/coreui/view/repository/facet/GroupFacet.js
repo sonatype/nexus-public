@@ -37,7 +37,7 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
   initComponent: function () {
     var me = this;
 
-    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true});
+    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true, sorters: undefined});
     me.repositoryStore.filter([
       {property: 'format', value: me.format}
     ]);

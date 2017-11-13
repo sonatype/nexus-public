@@ -43,7 +43,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN
 /**
  * Creates configured AmazonS3 clients.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 public class AmazonS3Factory

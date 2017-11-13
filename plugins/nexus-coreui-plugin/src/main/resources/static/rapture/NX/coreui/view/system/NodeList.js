@@ -53,12 +53,6 @@ Ext.define('NX.coreui.view.system.NodeList', {
       flex: 1
     },
     {
-      header: 'Local',
-      dataIndex: 'local',
-      stateId: 'local',
-      width: 80
-    },
-    {
       header: 'Node Identity',
       dataIndex: 'nodeIdentity',
       stateId: 'nodeIdentity',

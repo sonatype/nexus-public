@@ -39,7 +39,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * {@link DeploymentIdentifier#getId()} is generated at first run and not modifiable.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 @ManagedLifecycle(phase = SCHEMAS)

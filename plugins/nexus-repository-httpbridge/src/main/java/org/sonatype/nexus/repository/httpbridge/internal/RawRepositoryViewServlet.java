@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
 /**
  * Repository view servlet servicing only Raw repositories.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 @Singleton

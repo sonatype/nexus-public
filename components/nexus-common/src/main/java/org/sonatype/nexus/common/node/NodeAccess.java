@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.node;
 
 import java.security.cert.Certificate;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -70,4 +71,13 @@ public interface NodeAccess
    * @since 3.3
    */
   boolean isOldestNode();
+
+  /**
+   * Returns a {@link Map} of {@link #getId()} keys to friendly node name alias values.
+   * Values in the {@link Map} should never be null; if no alias is set for a member, the
+   * value in the map for the {@link #getId()} must also be {@link #getId()}.
+   *
+   * @since 3.6.1
+   */
+  Map<String, String> getMemberAliases();
 }

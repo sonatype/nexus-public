@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.attributes.AttributesFacet;
 /**
  * Emitted when a repository's metadata attributes have been updated.
  *
- * @since 3.7
+ * @since 3.6.1
  * @see AttributesFacet
  */
 public class RepositoryMetadataUpdatedEvent

@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Upgrade step to fix the browse_node table's properties and indices if it was defined without them via 3.6
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 @Singleton

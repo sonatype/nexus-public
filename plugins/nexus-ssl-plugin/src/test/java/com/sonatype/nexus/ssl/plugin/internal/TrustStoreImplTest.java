@@ -13,6 +13,7 @@
 package com.sonatype.nexus.ssl.plugin.internal;
 
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.stream.Stream;
 
@@ -28,6 +29,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.stream.Collectors.joining;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -82,6 +84,9 @@ public class TrustStoreImplTest
     underTest = new TrustStoreImpl(eventManager, keyStoreManager, databaseFreezeService);
 
     frozenException = mockOrientException(OModificationOperationProhibitedException.class);
+
+    // Mocking certificate.getEncoded() to return some data rather than NULL
+    when(certificate.getEncoded()).thenReturn(new byte[]{0, 1, 2, 3, 4});
   }
 
   @Test
@@ -131,6 +136,30 @@ public class TrustStoreImplTest
   }
 
   @Test
+  public void importTrustCertificate_throwCertificateEncodingExceptionWhileCalculateSha1() throws Exception {
+    when(certificate.getEncoded()).thenThrow(new CertificateEncodingException("Throwing exception for test"));
+
+    Certificate certAdded = underTest.importTrustCertificate(certificate, "test");
+
+    assertNotNull(certAdded);
+    verify(keyStoreManager).importTrustCertificate(certificate, "test");
+    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+  }
+
+  @Test
+  public void importTrustCertificateStrings_throwCertificateEncodingExceptionWhileCalculateSha1()
+      throws KeystoreException, CertificateException
+  {
+    when(certificate.getEncoded()).thenThrow(new CertificateEncodingException("Throwing exception for test"));
+
+    Certificate certAdded = underTest.importTrustCertificate(CERT_IN_PEM_UNIX, "test");
+
+    assertNotNull(certAdded);
+    verify(keyStoreManager).importTrustCertificate(isA(Certificate.class), eq("test"));
+    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+  }
+
+  @Test
   public void testDelete() throws KeystoreException {
     when(keyStoreManager.getTrustedCertificate("test")).thenReturn(certificate);
 
@@ -154,5 +183,18 @@ public class TrustStoreImplTest
 
     verify(keyStoreManager, times(0)).removeTrustCertificate(anyString());
     verifyZeroInteractions(eventManager);
+  }
+
+  @Test
+  public void testDelete_throwCertificateEncodingExceptionWhileCalculateSha1()
+      throws KeystoreException, CertificateEncodingException
+  {
+    when(certificate.getEncoded()).thenThrow(new CertificateEncodingException("Throwing exception for test"));
+    when(keyStoreManager.getTrustedCertificate("test")).thenReturn(certificate);
+
+    underTest.removeTrustCertificate("test");
+
+    verify(keyStoreManager).removeTrustCertificate("test");
+    verify(databaseFreezeService).checkUnfrozen("Unable to remove a certificate while database is frozen.");
   }
 }

@@ -64,7 +64,7 @@ public interface BrowseService
   /**
    * Returns an asset based on the supplied id and repository.
    * 
-   * @since 3.7
+   * @since 3.6.1
    */
   Asset getAssetById(EntityId assetId, final Repository repository);
 

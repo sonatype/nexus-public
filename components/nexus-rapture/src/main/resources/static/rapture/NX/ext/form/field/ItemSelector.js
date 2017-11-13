@@ -124,6 +124,7 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       title: title,
       store: {
         model: me.store.model,
+        sorters: me.store.getSorters(),
         data: []
       },
       displayField: me.displayField,

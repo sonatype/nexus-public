@@ -35,6 +35,11 @@ public interface AssetStore
   Asset getById(EntityId id);
 
   /**
+   * Get the assets matching the ids or an empty iterable
+   */
+  Iterable<Asset> getByIds(Iterable<EntityId> id);
+
+  /**
    * Gets the number of assets matching the given {@link Query} clause.
    */
   long countAssets(@Nullable Iterable<Bucket> buckets);
@@ -50,4 +55,14 @@ public interface AssetStore
    * @return a page of assets in a bucket (up to limit number of assets or the end of the records available)
    */
   <T> List<Entry<T, EntityId>> getNextPage(OIndexCursor cursor, int limit);
+
+  /**
+   * Save changes made to an asset
+   */
+  Asset save(Asset asset);
+
+  /**
+   * Save changes to multiple assets
+   */
+  void save(Iterable<Asset> assets);
 }

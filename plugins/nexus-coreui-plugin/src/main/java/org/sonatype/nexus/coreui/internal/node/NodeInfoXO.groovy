@@ -24,4 +24,5 @@ class NodeInfoXO
 {
   String name
   Boolean local
+  String displayName
 }
