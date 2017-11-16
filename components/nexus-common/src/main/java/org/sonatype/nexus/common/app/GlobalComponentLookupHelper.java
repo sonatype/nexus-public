@@ -39,7 +39,7 @@ public interface GlobalComponentLookupHelper
    * Lookup a component by {@link Class}.
    *
    * @return Component reference, or {@code null} if the component was not found.
-   * @since 3.7
+   * @since 3.6.1
    */
   <T> T lookup(Class<T> clazz);
 
@@ -47,7 +47,7 @@ public interface GlobalComponentLookupHelper
    * Lookup a component by {@link Class} and @{@link Named} name.
    *
    * @return Component reference, or {@code null} if the component was not found.
-   * @since 3.7
+   * @since 3.6.1
    */
   <T> T lookup(Class<T> clazz, String name);
 
@@ -55,7 +55,7 @@ public interface GlobalComponentLookupHelper
    * Lookup a component by {@link Key}.
    *
    * @return Component reference, or {@code null} if the component was not found.
-   * @since 3.7
+   * @since 3.6.1
    */
   Object lookup(Key key);
 

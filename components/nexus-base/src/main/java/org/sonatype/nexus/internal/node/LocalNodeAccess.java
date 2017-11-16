@@ -13,6 +13,8 @@
 package org.sonatype.nexus.internal.node;
 
 import java.security.cert.Certificate;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,7 +29,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -52,6 +54,8 @@ public class LocalNodeAccess
   private String id;
 
   private boolean freshNode;
+
+  private Map<String, String> memberAliases = Collections.emptyMap();
 
   @Inject
   public LocalNodeAccess(@Named(KeyStoreManagerImpl.NAME) final Provider<KeyStoreManager> keyStoreProvider) {
@@ -87,6 +91,8 @@ public class LocalNodeAccess
 
     id = NodeIdEncoding.nodeIdForCertificate(certificate);
     log.info("ID: {}", id);
+
+    memberAliases = ImmutableMap.of(id, id);
   }
 
   @Override
@@ -122,7 +128,7 @@ public class LocalNodeAccess
 
   @Override
   public Set<String> getMemberIds() {
-    return ImmutableSet.of(getId());
+    return memberAliases.keySet();
   }
 
   @Override
@@ -133,6 +139,11 @@ public class LocalNodeAccess
   @Override
   public boolean isOldestNode() {
     return true;
+  }
+
+  @Override
+  public Map<String, String> getMemberAliases() {
+    return memberAliases;
   }
 
   @Override

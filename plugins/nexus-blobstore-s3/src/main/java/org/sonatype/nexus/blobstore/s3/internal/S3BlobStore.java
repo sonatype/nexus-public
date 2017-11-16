@@ -73,7 +73,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * A {@link BlobStore} that stores its content on AWS S3.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named(S3BlobStore.TYPE)
 public class S3BlobStore

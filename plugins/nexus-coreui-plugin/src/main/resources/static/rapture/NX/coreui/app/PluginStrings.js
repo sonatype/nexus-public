@@ -79,6 +79,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     ComponentDetails_Delete_Button: 'Delete component',
     ComponentDetails_Analyze_Button: 'Analyze application',
+    ComponentDetails_Delete_Body: 'This will delete all asset(s) associated with the component: {0}',
     ComponentDetails_Delete_Title: 'Confirm deletion?',
     ComponentDetails_Delete_Success: 'Component deleted: {0}',
     ComponentDetails_Analyze_Success: 'Analysis in process. Email will be sent when report is ready.',
@@ -562,7 +563,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     User_UserChangePassword_Submit_Button: 'Change password',
     User_UserChangePassword_Cancel_Button: '@Button_Cancel',
     User_UserChangePassword_NoPermission_Error: 'You do not have permission to change your password',
-    User_UserList_New_Button: 'Create user',
+    User_UserList_New_Button: 'Create local user',
     User_UserList_Source_Label: 'Source:',
     User_UserList_Default_Button: 'Default',
     User_UserList_Filter_EmptyText: 'Filter by user ID',

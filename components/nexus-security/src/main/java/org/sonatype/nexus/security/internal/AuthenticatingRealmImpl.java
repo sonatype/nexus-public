@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Named(AuthenticatingRealmImpl.NAME)
-@Description("Nexus Authenticating Realm")
+@Description("Local Authenticating Realm")
 public class AuthenticatingRealmImpl
     extends AuthenticatingRealm
     implements Realm

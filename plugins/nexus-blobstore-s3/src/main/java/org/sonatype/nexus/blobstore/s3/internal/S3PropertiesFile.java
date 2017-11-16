@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Persistent properties file stored in AWS S3.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class S3PropertiesFile
     extends Properties

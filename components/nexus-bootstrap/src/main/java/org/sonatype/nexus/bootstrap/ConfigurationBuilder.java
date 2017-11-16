@@ -97,7 +97,7 @@ public class ConfigurationBuilder
   /**
    * Adds the single 'onlyConcern' property to this builder, from the given file
    *
-   * @since 3.7
+   * @since 3.6.1
    * @param resource properties file
    * @param onlyConcern the only property in the file that we want
    * @param required whether or not the file is required

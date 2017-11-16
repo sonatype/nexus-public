@@ -19,7 +19,7 @@ import ch.qos.logback.core.pattern.PatternLayoutEncoderBase;
 /**
  * Adds the ability to use %node in an encoder pattern
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class NexusLayoutEncoder
     extends PatternLayoutEncoderBase<ILoggingEvent>

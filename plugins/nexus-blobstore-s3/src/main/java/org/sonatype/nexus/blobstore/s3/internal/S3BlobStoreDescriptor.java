@@ -28,7 +28,7 @@ import org.sonatype.nexus.formfields.StringTextFormField;
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named(S3BlobStoreDescriptor.TYPE)
 public class S3BlobStoreDescriptor

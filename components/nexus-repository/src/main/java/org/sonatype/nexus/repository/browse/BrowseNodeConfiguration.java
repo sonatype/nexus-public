@@ -82,7 +82,7 @@ public class BrowseNodeConfiguration
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    * @return the maximum number of nodes to display in the browse html view (for a given level of the tree)
    */
   public int getMaxHtmlNodes() {

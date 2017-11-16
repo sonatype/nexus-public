@@ -49,11 +49,15 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Streams.stream;
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 
 /**
@@ -339,6 +343,17 @@ public abstract class EntityAdapter<T extends Entity>
       rid = getRecordIdObfuscator().decode(getSchemaType(), id.getValue());
     }
     return db.getRecord(rid);
+  }
+
+  public Iterable<ODocument> documents(final ODatabaseDocumentTx db, final Iterable<EntityId> ids) {
+    Set<ORID> rids = stream(ids).map(id -> {
+      if (id instanceof AttachedEntityId) {
+        return ((AttachedEntityId) id).getIdentity();
+      }
+      return getRecordIdObfuscator().decode(getSchemaType(), id.getValue());
+    }).collect(toSet());
+
+    return db.command(new OCommandSQL("select from :rids")).execute(singletonMap("rids", rids));
   }
 
   /**

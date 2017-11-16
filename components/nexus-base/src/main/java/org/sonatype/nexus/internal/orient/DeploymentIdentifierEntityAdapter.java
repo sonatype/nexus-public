@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * {@link SingletonEntityAdapter} to store our single {@link DeploymentIdentifier} record.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 class DeploymentIdentifierEntityAdapter
     extends SingletonEntityAdapter<DeploymentIdentifier>

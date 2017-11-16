@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 /**
  * {@link Bucket} event.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public interface BucketEvent
 {

@@ -1,0 +1,23 @@
+{
+  "data": {
+    "created": "2017-06-14T18:55:48Z",
+    "email": "Sencha@localhost",
+    "expires": "2022-06-15T00:00:00Z",
+    "name": "Sencha",
+    "uuid": "1d6b0d9c-3333-4e65-885f-5b07a1fc3198"
+  },
+  "publicKey": {
+    "algorithm": "RSA",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuVOK++/XG6EezpsY35G9kNXOKZTeeEVFxuxZSY5fhjzKv2X1GGb3WhQpbf1UEifm2HIbbnP4h6rJTLvnQBSEVsjSYe8KFkCHKR3KM0L9RGS54eef+qlOY3/aqDj67EfFWgNSut+BzG9FbqNDM7nHOxGwp/4PyQTXrrAvz/QtmNCU4OpWYdzHIuYorWuUlgQFb3znKk6Y2s+ABpUWsrQs8eIVcKbKNVkdvlsHL3sTG4eLn6Q35+B3LXTz92nGq8YHhuK+VtqeIuY5/5LG5TseAuCxp9uLal7uw2FF7WCm8lDyuyVRi8jK3RFJdb/VYCC58bOgPDJq0JfeVVJm6are7QIDAQAB"
+  },
+  "signatures": [
+    {
+      "name": "Sencha",
+      "uuid": "1d6b0d9c-3333-4e65-885f-5b07a1fc3198",
+      "created": "2017-06-14T18:55:49Z",
+      "algorithm": "SHA1withRSA",
+      "nonce": "SIBax7AeKL4\u003d",
+      "signature": "NDhZfpYhRDHp6L+peeel+c2YajzMdrEDOOhwO0js7F6UuKMR0NiK6AfB+5bG/6wlZgFoso7NTfLkV45L13vZnBpM86VKMO7ihZsykgMl3KSONvwfl/I62bHuSNACIg2y86esnuztdgpOOOQbXravMZ84iTeUnyCCaZYl/CVGE861N3cszpDzugr+qBleK0e1AqOJaH2KAvNPI4ls3mkPj8f4u+hLpvYvNjxWj11/CIQACSwefAmlQ7gH0/v5SkQMnlcF5rFnQ2UZ8QBqPkoVqHBWjs9cVVXOveD+roaYvHGkYU/hfFiLc8KGgR4nqVvD+oYmuj3QHvQQ0uBPJgdJ2g\u003d\u003d"
+    }
+  ]
+}

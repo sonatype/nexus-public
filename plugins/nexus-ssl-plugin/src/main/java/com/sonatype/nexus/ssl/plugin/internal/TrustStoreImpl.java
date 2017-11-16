@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
 import org.sonatype.nexus.ssl.CertificateDeletedEvent;
-import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
 import org.sonatype.nexus.ssl.TrustStore;
@@ -45,6 +45,8 @@ import com.google.common.base.Throwables;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
+import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
 
 /**
  * {@link TrustStore} implementation.
@@ -92,6 +94,11 @@ public class TrustStoreImpl
 
     eventManager.post(new CertificateCreatedEvent(alias, certificate));
 
+    log.info("Certificate added successfully in trust-store with Fingerprint: {}, Name: {} and SHA1 Identifier: {} ",
+        alias,
+        getCertificateName(certificate),
+        getCertificateSha1(certificate));
+
     return certificate;
   }
 
@@ -99,13 +106,9 @@ public class TrustStoreImpl
   public Certificate importTrustCertificate(final String certificateInPEM, final String alias)
       throws KeystoreException, CertificateException
   {
-    databaseFreezeService.checkUnfrozen("Unable to import a certificate while database is frozen.");
-    final Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(certificateInPEM);
-    keyStoreManager.importTrustCertificate(certificate, alias);
+    final Certificate certificate = decodePEMFormattedCertificate(certificateInPEM);
 
-    eventManager.post(new CertificateCreatedEvent(alias, certificate));
-
-    return certificate;
+    return importTrustCertificate(certificate, alias);
   }
 
   @Override
@@ -126,6 +129,13 @@ public class TrustStoreImpl
     sslcontext = null;
 
     eventManager.post(new CertificateDeletedEvent(alias, certificate));
+
+    log.info(
+        "Certificate removed successfully from trust-store with Fingerprint : {}, Name : {} and SHA1 Identifier : {}",
+        alias,
+        getCertificateName(certificate),
+        getCertificateSha1(certificate));
+
   }
 
   @Override
@@ -299,5 +309,26 @@ public class TrustStoreImpl
       trustManagerFactory.init(trustStore);
     }
     return trustManagerFactory.getTrustManagers();
+  }
+
+  private String getCertificateName(final Certificate certificate) {
+    if (certificate instanceof X509Certificate) {
+      X509Certificate cert = (X509Certificate) certificate;
+      return cert.getSubjectDN().getName();
+    }
+    else {
+      log.warn("Unknown certificate found, hence can't get the name.");
+      return "Unknown";
+    }
+  }
+
+  private String getCertificateSha1(final Certificate certificate) {
+    try {
+      return calculateSha1(certificate);
+    }
+    catch (CertificateEncodingException e) {
+      log.error("Error occurred while calculating certificate SHA1", e);
+      return "Unknown";
+    }
   }
 }

@@ -133,7 +133,7 @@ public class CPrivilegeEntityAdapter
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   public boolean update(final ODatabaseDocumentTx db, final CPrivilege entity) {
     return update.execute(db, entity, entity.getId());

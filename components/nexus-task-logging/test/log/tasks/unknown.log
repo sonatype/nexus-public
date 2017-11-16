@@ -1,0 +1,13 @@
+2017-08-29 11:56:10,094-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgress STARTING
+2017-08-29 11:56:10,294-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgress SUCCEEDED
+2017-08-29 11:56:10,294-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgress FINISHED
+2017-08-29 11:56:10,295-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgressMark STARTING
+2017-08-29 11:56:10,297-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgressMark SUCCEEDED
+2017-08-29 11:56:10,297-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testProgressMark FINISHED
+2017-08-29 11:56:10,298-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testFinishClearsMDCValues STARTING
+2017-08-29 11:56:10,300-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testFinishClearsMDCValues SUCCEEDED
+2017-08-29 11:56:10,300-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.DefaultTaskLoggerTest - TEST testFinishClearsMDCValues FINISHED
+2017-08-29 11:56:10,302-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerFactoryTest - TEST testNexusLogOnly STARTING
+2017-08-29 11:56:10,311-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerFactoryTest - TEST testNexusLogOnly SUCCEEDED
+2017-08-29 11:56:10,311-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerFactoryTest - TEST testNexusLogOnly FINISHED
+2017-08-29 11:56:10,312-0700 INFO  [main] *SYSTEM org.sonatype.nexus.logging.task.TaskLoggerFactoryTest - TEST testBoth STARTING

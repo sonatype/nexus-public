@@ -18,7 +18,7 @@ import java.util.Optional;
 /**
  * persistence mechanism for {@link NodeConfiguration}
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public interface NodeConfigurationSource
 {
@@ -72,7 +72,7 @@ public interface NodeConfigurationSource
   /**
    * returns the current node's friendly name
    *
-   * @since 3.7
+   * @since 3.6.1
    *
    * @return friendlyName specified by admin
    */

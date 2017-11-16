@@ -35,7 +35,7 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.SHA1_HASH
 /**
  * A data holder for the content of each blob's .attribs.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public class S3BlobAttributes implements BlobAttributes
 {

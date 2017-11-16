@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Singleton
 @Named(ConfiguredUsersUserManager.SOURCE)
-@Description("All Configured Users")
+@Description("All Users with Roles")
 public class ConfiguredUsersUserManager
     extends AbstractReadOnlyUserManager
 {

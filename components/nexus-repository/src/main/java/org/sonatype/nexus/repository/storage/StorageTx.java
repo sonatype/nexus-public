@@ -165,7 +165,7 @@ public interface StorageTx
   /**
    * Gets an asset by some identifying property, or {@code null} if not found.
    * 
-   * @since 3.7
+   * @since 3.6.1
    */
   @Nullable
   Asset findAssetWithProperty(String propName, Object propValue);

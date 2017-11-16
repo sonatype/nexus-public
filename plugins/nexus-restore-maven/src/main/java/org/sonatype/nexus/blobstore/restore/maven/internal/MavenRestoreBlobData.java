@@ -16,7 +16,7 @@ import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.repository.maven.MavenPath;
 
 /**
- * @since 3.7
+ * @since 3.6.1
  */
 public final class MavenRestoreBlobData // must be public for guice injection
 {

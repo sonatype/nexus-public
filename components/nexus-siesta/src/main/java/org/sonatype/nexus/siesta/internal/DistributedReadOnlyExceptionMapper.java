@@ -28,7 +28,7 @@ import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
  *
  * This will handle exceptions generated when writes to orientdb fail due to being in replica mode.
  *
- * @since 3.next
+ * @since 3.6.0
  */
 @Named
 @Singleton

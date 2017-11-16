@@ -22,7 +22,7 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * Utility for working with asset maps that come out of Elastic
  *
- * @since 3.7
+ * @since 3.6.1
  */
 class AssetMapUtils
 {

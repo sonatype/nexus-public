@@ -199,7 +199,7 @@ public class SearchResource
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   @GET
   @Path(SEARCH_ASSET_URI)

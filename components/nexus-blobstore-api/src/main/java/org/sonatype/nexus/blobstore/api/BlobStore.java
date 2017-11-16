@@ -53,7 +53,7 @@ public interface BlobStore
   /**
    * Audit information (e.g. the ip of a principal that created the blob)
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   String CREATED_BY_IP_HEADER = "BlobStore.created-by-ip";
 

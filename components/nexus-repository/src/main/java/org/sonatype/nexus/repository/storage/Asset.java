@@ -119,7 +119,7 @@ public class Asset
   /**
    * Gets the user used to create this
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   @Nullable
   public String createdBy() {
@@ -129,7 +129,7 @@ public class Asset
   /**
    * Gets the ip address used to create this
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   @Nullable
   public String createdByIp() {
@@ -139,7 +139,7 @@ public class Asset
   /**
    * Sets the user used to create this
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   public Asset createdBy(@Nullable final String createdBy) {
     this.createdBy = createdBy;
@@ -149,7 +149,7 @@ public class Asset
   /**
    * Sets the IP address used to create this
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   public Asset createdByIp(@Nullable final String createdByIp) {
     this.createdByIp = createdByIp;

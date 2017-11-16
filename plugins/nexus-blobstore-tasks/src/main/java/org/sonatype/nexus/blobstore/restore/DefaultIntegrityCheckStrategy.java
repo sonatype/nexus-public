@@ -43,7 +43,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 /**
  * Default {@link IntegrityCheckStrategy} which checks name and SHA1 checksum
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named(DefaultIntegrityCheckStrategy.DEFAULT_NAME)
 @Singleton

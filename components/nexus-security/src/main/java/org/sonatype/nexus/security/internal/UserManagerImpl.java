@@ -54,7 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named("default")
 @Singleton
-@Description("Default")
+@Description("Local")
 public class UserManagerImpl
     extends AbstractUserManager
     implements RoleMappingUserManager

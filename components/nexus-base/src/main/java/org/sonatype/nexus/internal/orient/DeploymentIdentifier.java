@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.Entity;
  *
  * {@link #getId()} is randomly generated at first launch for NXRM and is not modifiable.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 class DeploymentIdentifier
     extends Entity

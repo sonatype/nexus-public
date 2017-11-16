@@ -131,7 +131,7 @@ public class CRoleEntityAdapter
   }
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   public boolean update(final ODatabaseDocumentTx db, final CRole entity) {
     return update.execute(db, entity, entity.getId());

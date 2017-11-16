@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Test utility class for API resources
  *
- * @since 3.7
+ * @since 3.6.1
  */
 class ResourcesTestUtils
 {

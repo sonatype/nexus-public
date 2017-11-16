@@ -29,7 +29,7 @@ public interface RepositoryManager
   Iterable<Repository> browse();
 
   /**
-   * @since 3.7
+   * @since 3.6.1
    */
   Iterable<Repository> browseForBlobStore(String blobStoreId);
 

@@ -30,6 +30,7 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
+import org.sonatype.nexus.scheduling.schedule.Manual
 import org.sonatype.nexus.scheduling.schedule.Now
 import org.sonatype.nexus.scheduling.schedule.Schedule
 import org.sonatype.nexus.testcommon.event.SimpleEventManager
@@ -46,6 +47,8 @@ import org.quartz.Job
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobKey
+import org.quartz.ListenerManager
+import org.quartz.Scheduler
 import org.quartz.SchedulerListener
 import org.quartz.Trigger
 import org.quartz.TriggerKey
@@ -57,6 +60,7 @@ import static org.mockito.Matchers.anyObject
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.reset
+import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
 import static org.mockito.Mockito.when
@@ -253,6 +257,40 @@ class QuartzSchedulerSPITest
     underTest.pause()
     underTest.runNow('trigger-source', new JobKey('name', 'group'), quartzTaskInfo, quartzTaskState)
     verify(quartzTaskInfo, never()).setNexusTaskState(anyObject(), anyObject(), anyObject(), anyObject())
+  }
+
+  @Test
+  void 'reattachListeners also starts Now type tasks'() {
+    testReattachListeners(new Now(), true)
+  }
+
+  @Test
+  void 'reattachListeners does not start Manual type tasks'() {
+    testReattachListeners(new Manual(), false)
+  }
+
+  private Scheduler testReattachListeners(schedule, shouldRun) {
+    JobDetailEntity jobDetailEntity = mockJobDetailEntity()
+    TriggerEntity triggerEntity = mockTriggerEntity(jobDetailEntity.value.key, schedule)
+    Scheduler scheduler = mock(Scheduler)
+    Set<JobKey> jobs = Collections.singleton(jobDetailEntity.getValue().getKey())
+    JobDetail jobDetail = jobDetailEntity.getValue()
+    Trigger trigger = triggerEntity.getValue()
+    ListenerManager listenerManager = mock(ListenerManager)
+
+    //note the variables are all defined above as groovy/mockito is choking when i try to use the values inline
+    when(scheduler.getJobKeys(anyObject())).thenReturn(jobs)
+    when(scheduler.getJobDetail(jobDetailEntity.value.key)).thenReturn(jobDetail)
+    when(scheduler.getTrigger(new TriggerKey(jobDetailEntity.value.key.name, jobDetailEntity.value.key.group))).thenReturn(trigger)
+    when(scheduler.getListenerManager()).thenReturn(listenerManager)
+
+    def old = underTest.@scheduler
+    underTest.@scheduler = scheduler
+    underTest.reattachJobListeners()
+    underTest.@scheduler = old
+
+    verify(scheduler, shouldRun ? times(1) : never()).rescheduleJob(triggerEntity.value.getKey(), triggerEntity.value);
+    verify(scheduler, shouldRun ? times(1) : never()).resumeJob(jobDetailEntity.value.key);
   }
 
   private JobDetailEntity mockJobDetailEntity() {

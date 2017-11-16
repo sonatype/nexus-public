@@ -40,7 +40,7 @@ import static org.sonatype.nexus.common.hash.Hashes.hash;
  * Provides the common logic for metadata restoration from a blob. Subclasses will implement the format-specific
  * restoration mechanisms
  *
- * @since 3.7
+ * @since 3.6.1
  */
 public abstract class BaseRestoreBlobStrategy<T>
     extends ComponentSupport

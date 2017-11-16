@@ -42,6 +42,10 @@
             },
             "last_updated": {
               "type": "long"
+            },
+            "id": {
+              "type": "string",
+              "index": "not_analyzed"
             }
           }
         },

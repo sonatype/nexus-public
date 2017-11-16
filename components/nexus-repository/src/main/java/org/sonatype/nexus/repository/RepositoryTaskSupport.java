@@ -102,7 +102,7 @@ public abstract class RepositoryTaskSupport
   /**
    * Returns true if the repository is of type {@link GroupType}
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   protected boolean isGroupRepository(final Repository repository) {
     return groupType.equals(repository.getType());
@@ -111,7 +111,7 @@ public abstract class RepositoryTaskSupport
   /**
    * Tracks processed repositories
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   protected void markProcessed(final Repository repository) {
     processedRepositories.add(repository);
@@ -120,7 +120,7 @@ public abstract class RepositoryTaskSupport
   /**
    * Returns true if the specified repository has already been processed during task execution
    *
-   * @since 3.7
+   * @since 3.6.1
    */
   protected boolean hasBeenProcessed(final Repository repository) {
     return processedRepositories.contains(repository);

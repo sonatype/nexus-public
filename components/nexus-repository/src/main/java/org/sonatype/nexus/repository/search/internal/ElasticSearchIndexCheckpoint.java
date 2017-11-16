@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.upgrade.Checkpoints;
  * Upgrade checkpoint for elasticsearch index. It exists for the sole purpose of forcing a reindexing of all
  * repositories to pull in new attributes/elements.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 @Singleton

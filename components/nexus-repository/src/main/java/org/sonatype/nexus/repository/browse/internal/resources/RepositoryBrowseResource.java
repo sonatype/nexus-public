@@ -258,7 +258,6 @@ public class RepositoryBrowseResource
     templateParameters.set("listItems", listItems);
 
     templateParameters.set("showMoreContentWarning", configuration.getMaxHtmlNodes() == listItems.size());
-    templateParameters.set("restUrl", "/swagger-ui/");
     if (Strings2.isBlank(path)) {
       templateParameters.set("encodedPath", String.format("/#browse/browse:%s", repositoryName));
     }

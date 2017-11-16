@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRAD
  * Updates the $data-dir/elasticsearch/nexus.lsn file with a reindex marker string to
  * trigger the IndexSyncService service to update all indexes.
  *
- * @since 3.7
+ * @since 3.6.1
  */
 @Named
 @Singleton
