@@ -172,7 +172,7 @@ Ext.define('NX.controller.SettingsForm', {
   },
 
   /**
-   * Toggle editable on settings form hen editable condition is satisfied (if specified).
+   * Toggle editable on settings form when editable condition is satisfied (if specified).
    *
    * @private
    * @param {NX.view.SettingsForm} form

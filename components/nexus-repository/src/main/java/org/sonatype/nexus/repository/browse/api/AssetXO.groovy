@@ -46,14 +46,19 @@ class AssetXO
 
   String format
 
+  Map checksum
+
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
     String internalId = id(asset).getValue()
+
+    Map checksum = asset.attributes().child(Asset.CHECKSUM).backing()
 
     return builder()
         .path(asset.name())
         .downloadUrl(repository.url + '/' + asset.name())
         .id(new RepositoryItemIDXO(repository.name, internalId).value)
         .repository(repository.name)
+        .checksum(checksum)
         .format(repository.format.value)
         .build()
   }
@@ -66,6 +71,7 @@ class AssetXO
         .downloadUrl(repository.url + '/' + (String) map.get(NAME))
         .id(new RepositoryItemIDXO(repository.name, internalId).value)
         .repository(repository.name)
+        .checksum(map.subMap(['attributes']).subMap([Asset.CHECKSUM]))
         .format(repository.format.value)
         .build()
   }

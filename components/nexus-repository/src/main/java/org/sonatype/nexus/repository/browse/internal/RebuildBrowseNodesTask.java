@@ -29,21 +29,18 @@ import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.AssetStore;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * Browse nodes rebuild task.
@@ -60,24 +57,20 @@ public class RebuildBrowseNodesTask
 
   private final BucketStore bucketStore;
 
-  private final BrowseNodeWrapper browseNodeWrapper;
+  private final BrowseNodeManager browseNodeManager;
 
-  private final BrowseNodeStore browseNodeStore;
-
-  private final int limit;
+  private final int rebuildPageSize;
 
   @Inject
   public RebuildBrowseNodesTask(final AssetStore assetStore,
                                 final BucketStore bucketStore,
-                                final BrowseNodeWrapper browseNodeWrapper,
-                                final BrowseNodeStore browseNodeStore,
+                                final BrowseNodeManager browseNodeManager,
                                 final BrowseNodeConfiguration configuration)
   {
     this.assetStore = checkNotNull(assetStore);
     this.bucketStore = checkNotNull(bucketStore);
-    this.browseNodeWrapper = checkNotNull(browseNodeWrapper);
-    this.browseNodeStore = checkNotNull(browseNodeStore);
-    this.limit = checkNotNull(configuration).getRebuildPageSize();
+    this.browseNodeManager = checkNotNull(browseNodeManager);
+    this.rebuildPageSize = checkNotNull(configuration).getRebuildPageSize();
   }
 
   @Override
@@ -87,35 +80,36 @@ public class RebuildBrowseNodesTask
 
   @Override
   protected void execute(final Repository repo) {
-    browseNodeStore.truncateRepository(repo.getName());
-    Iterable<Bucket> buckets = singletonList(bucketStore.read(repo.getName()));
-    List<ORID> bucketIds = stream(buckets.spliterator(), false).map(AttachedEntityHelper::id).collect(toList());
+
+    browseNodeManager.deleteByRepository(repo.getName());
+
+    Bucket bucket = bucketStore.read(repo.getName());
+    ORID bucketId = AttachedEntityHelper.id(bucket);
 
     try {
       long processed = 0;
-      long total = assetStore.countAssets(buckets);
+      long total = assetStore.countAssets(ImmutableList.of(bucket));
 
       if (total > 0) {
         ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
         Stopwatch sw = Stopwatch.createStarted();
         long lastTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
-        OIndexCursor cursor = assetStore.getIndex(AssetEntityAdapter.I_BUCKET_COMPONENT_NAME).descCursor();
-        List<Entry<OCompositeKey, EntityId>> nextPage = assetStore.getNextPage(cursor, limit);
+        OIndexCursor cursor = assetStore.getIndex(AssetEntityAdapter.I_BUCKET_COMPONENT_NAME).cursor();
+        List<Entry<OCompositeKey, EntityId>> nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
         while (!Iterables.isEmpty(nextPage)) {
           checkContinuation(repo);
 
-          List<Asset> assets = new ArrayList<>(limit);
+          List<Asset> assets = new ArrayList<>(rebuildPageSize);
           for (Entry<OCompositeKey, EntityId> indexEntry : nextPage) {
-            ORID bucketId = (ORID) indexEntry.getKey().getKeys().get(BUCKET_KEY_ID);
-            if (bucketIds.contains(bucketId)) {
+            if (bucketId.equals(indexEntry.getKey().getKeys().get(BUCKET_KEY_ID))) {
               assets.add(assetStore.getById(indexEntry.getValue()));
             }
           }
 
           int assetsSize = Iterables.size(assets);
 
-          browseNodeWrapper.createFromAssets(repo, assets);
+          browseNodeManager.createFromAssets(repo, assets);
 
           processed += assetsSize;
 
@@ -125,13 +119,9 @@ public class RebuildBrowseNodesTask
 
           lastTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
-          nextPage = assetStore.getNextPage(cursor, limit);
+          nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
         }
         progressLogger.flush(); // ensure final rebuild message is flushed
-
-        progressLogger.info("updating children references for {} assets", total);
-        progressLogger.flush();
-        browseNodeStore.updateChildNodes(repo.getName());
       }
     }
     catch (Exception e) {

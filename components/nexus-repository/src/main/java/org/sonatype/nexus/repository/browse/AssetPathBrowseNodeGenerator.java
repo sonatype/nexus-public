@@ -12,49 +12,39 @@
  */
 package org.sonatype.nexus.repository.browse;
 
-import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
+import com.google.common.base.Splitter;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
+import static com.google.common.collect.Lists.newArrayList;
 
 /**
- * Implementation of a {@link BrowseNodeGenerator} which creates a folder structure from the path of the asset by
- * splitting on /.
+ * Asset-led layout that assumes the asset name is its path and components have the same path as their assets.
  *
- * @since 3.6
+ * @since 3.7
  */
-public abstract class AbstractPathBrowseNodeGenerator
-  implements BrowseNodeGenerator
+public abstract class AssetPathBrowseNodeGenerator
+    implements BrowseNodeGenerator
 {
   /**
    * Construct the asset path by splitting the asset name on the `/` character.
-   *
-   * @return the path to the asset
    */
   @Override
-  public List<String> computeAssetPath(final Asset asset, @Nullable final Component component) {
+  public List<String> computeAssetPath(final Asset asset, final Component component) {
     checkNotNull(asset);
 
-    String assetName = asset.name();
-    if (assetName.startsWith("/")) {
-      assetName = assetName.substring(1);
-    }
-    return asList(assetName.split("/"));
+    return newArrayList(Splitter.on('/').omitEmptyStrings().split(asset.name()));
   }
 
   /**
-   * Same path as the asset
-   *
-   * @return the path to the asset
+   * Component path is same as the asset path.
    */
   @Override
   public List<String> computeComponentPath(final Asset asset, final Component component) {
-    return (component != null) ? computeAssetPath(asset, component) : Collections.emptyList();
+    return computeAssetPath(asset, component);
   }
 }

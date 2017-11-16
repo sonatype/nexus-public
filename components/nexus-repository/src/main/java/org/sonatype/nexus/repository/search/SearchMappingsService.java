@@ -10,21 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.repository.browse.AssetPathBrowseNodeGenerator;
+package org.sonatype.nexus.repository.search;
 
 /**
- * RAW places components at the same level as their assets.
+ * Provide a listing of all {@link SearchMapping}s that have been contributed via {@link SearchMappings}.
  *
- * @since 3.6
+ * @since 3.7
  */
-@Singleton
-@Named(RawFormat.NAME)
-public class RawBrowseNodeGenerator
-    extends AssetPathBrowseNodeGenerator
+public interface SearchMappingsService
 {
+  /**
+   * Get all {@link SearchMapping}s.
+   */
+  Iterable<SearchMapping> getAllMappings();
 }

@@ -16,7 +16,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -29,23 +28,71 @@ import static com.google.common.base.Preconditions.checkState;
 public class BrowseNode
     extends Entity
 {
-  private EntityId assetId;
-
-  private EntityId componentId;
-
-  private EntityId parentId;
-
-  private String path;
-
   private String repositoryName;
 
-  private String assetNameLowercase;
+  private String parentPath;
+
+  private String name;
 
   private boolean leaf;
 
   @Nullable
-  public EntityId getAssetId() {
-    return assetId;
+  private EntityId componentId;
+
+  @Nullable
+  private EntityId assetId;
+
+  @Nullable
+  private String assetNameLowercase;
+
+  public String getRepositoryName() {
+    return require(repositoryName, BrowseNodeEntityAdapter.P_REPOSITORY_NAME);
+  }
+
+  public void setRepositoryName(final String repositoryName) {
+    this.repositoryName = checkNotNull(repositoryName);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public String getParentPath() {
+    return require(parentPath, BrowseNodeEntityAdapter.P_PARENT_PATH);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public void setParentPath(final String parentPath) {
+    this.parentPath = checkNotNull(parentPath);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public String getName() {
+    return require(name, BrowseNodeEntityAdapter.P_NAME);
+  }
+
+  /**
+   * @since 3.7
+   */
+  public void setName(final String name) {
+    this.name = checkNotNull(name);
+  }
+
+  /**
+   * @since 3.6.1
+   */
+  public boolean isLeaf() {
+    return leaf;
+  }
+
+  /**
+   * @since 3.6.1
+   */
+  public void setLeaf(final boolean leaf) {
+    this.leaf = leaf;
   }
 
   @Nullable
@@ -53,17 +100,17 @@ public class BrowseNode
     return componentId;
   }
 
+  public void setComponentId(final EntityId componentId) {
+    this.componentId = checkNotNull(componentId);
+  }
+
   @Nullable
-  public EntityId getParentId() {
-    return parentId;
+  public EntityId getAssetId() {
+    return assetId;
   }
 
-  public String getPath() {
-    return require(path, BrowseNodeSqlBuilder.P_PATH);
-  }
-
-  public String getRepositoryName() {
-    return require(repositoryName, BrowseNodeSqlBuilder.P_REPOSITORY_NAME);
+  public void setAssetId(final EntityId assetId) {
+    this.assetId = checkNotNull(assetId);
   }
 
   /**
@@ -77,77 +124,8 @@ public class BrowseNode
   /**
    * @since 3.6.1
    */
-  public boolean isLeaf() {
-    return leaf;
-  }
-
-  public void setAssetId(@Nullable final EntityId assetId) {
-    this.assetId = assetId;
-  }
-
-  public void setComponentId(@Nullable final EntityId componentId) {
-    this.componentId = componentId;
-  }
-
-  public void setParentId(@Nullable final EntityId parentId) {
-    this.parentId = parentId;
-  }
-
-  public void setPath(final String path) {
-    checkNotNull(path);
-    this.path = path;
-  }
-
-  public void setRepositoryName(final String repositoryName) {
-    checkNotNull(repositoryName);
-    this.repositoryName = repositoryName;
-  }
-
-  /**
-   * @since 3.6.1
-   */
-  public void setAssetNameLowercase(@Nullable final String assetNameLowercase) {
-    this.assetNameLowercase = assetNameLowercase;
-  }
-
-  /**
-   * @since 3.6.1
-   */
-  public void setLeaf(final boolean leaf) {
-    this.leaf = leaf;
-  }
-
-  public BrowseNode withAssetId(@Nullable final EntityId assetId) {
-    setAssetId(assetId);
-    return this;
-  }
-
-  public BrowseNode withComponentId(@Nullable final EntityId componentId) {
-    setComponentId(componentId);
-    return this;
-  }
-
-  public BrowseNode withParentId(@Nullable final EntityId parentId) {
-    setParentId(parentId);
-    return this;
-  }
-
-  public BrowseNode withPath(final String path) {
-    setPath(path);
-    return this;
-  }
-
-  public BrowseNode withRepositoryName(final String repositoryName) {
-    setRepositoryName(repositoryName);
-    return this;
-  }
-
-  /**
-   * @since 3.6.1
-   */
-  public BrowseNode withAssetNameLowercase(@Nullable final String assetNameLowercase) {
-    setAssetNameLowercase(assetNameLowercase);
-    return this;
+  public void setAssetNameLowercase(final String assetNameLowercase) {
+    this.assetNameLowercase = checkNotNull(assetNameLowercase);
   }
 
   private <V> V require(final V value, final String name) {
@@ -158,11 +136,12 @@ public class BrowseNode
   @Override
   public String toString() {
     return "BrowseNode{" +
-        "assetId=" + assetId +
-        ", componentId=" + componentId +
-        ", parentId=" + parentId +
-        ", path='" + path + '\'' +
-        ", repositoryName='" + repositoryName + '\'' +
+        "repositoryName=" + repositoryName +
+        ", parentPath=" + parentPath +
+        ", name=" + name +
+        ", leaf=" + leaf +
+        ", componentId='" + componentId + '\'' +
+        ", assetId='" + assetId + '\'' +
         ", assetNameLowercase='" + assetNameLowercase + '\'' +
         '}';
   }

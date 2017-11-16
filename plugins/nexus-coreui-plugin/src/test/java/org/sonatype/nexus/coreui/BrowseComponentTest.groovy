@@ -57,9 +57,9 @@ class BrowseComponentTest
 
   def "Root node list query"() {
     given: 'These test objects'
-      def browseNodes = [new BrowseNode(path: 'com'),
-                         new BrowseNode(path: 'org', componentId: componentId),
-                         new BrowseNode(path: 'net', assetId: assetId, leaf: true)]
+      def browseNodes = [new BrowseNode(name: 'com'),
+                         new BrowseNode(name: 'org', componentId: componentId),
+                         new BrowseNode(name: 'net', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -68,7 +68,7 @@ class BrowseComponentTest
           filter: 'foo')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, [], configuration.maxHtmlNodes,'foo') >> browseNodes
+      1 * browseNodeStore.getByPath(repository, [], configuration.maxHtmlNodes,'foo') >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 root entries are returned'
@@ -80,9 +80,9 @@ class BrowseComponentTest
 
   def "non-root list query"() {
     given: 'These test objects'
-      def browseNodes = [new BrowseNode(path: 'com'),
-                         new BrowseNode(path: 'org', componentId: componentId),
-                         new BrowseNode(path: 'net', assetId: assetId, leaf: true)]
+      def browseNodes = [new BrowseNode(name: 'com'),
+                         new BrowseNode(name: 'org', componentId: componentId),
+                         new BrowseNode(name: 'net', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -91,7 +91,7 @@ class BrowseComponentTest
           filter: null)
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, ['com','boogie','down'], configuration.maxHtmlNodes, null) >> browseNodes
+      1 * browseNodeStore.getByPath(repository, ['com','boogie','down'], configuration.maxHtmlNodes, null) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -103,9 +103,9 @@ class BrowseComponentTest
 
   def 'validate encoded segments'() {
     given: 'These test objects'
-    def browseNodes = [new BrowseNode(path: 'com'),
-                       new BrowseNode(path: 'org', componentId: componentId),
-                       new BrowseNode(path: 'n/e/t', assetId: assetId, leaf: true)]
+    def browseNodes = [new BrowseNode(name: 'com'),
+                       new BrowseNode(name: 'org', componentId: componentId),
+                       new BrowseNode(name: 'n/e/t', assetId: assetId, leaf: true)]
 
     when: 'Requesting the list of root nodes'
     TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -113,7 +113,7 @@ class BrowseComponentTest
         node: 'com/boo%2Fgie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getChildrenByPath(repository, ['com','boo/gie','down'], configuration.maxHtmlNodes, null) >> browseNodes
+      1 * browseNodeStore.getByPath(repository, ['com','boo/gie','down'], configuration.maxHtmlNodes, null) >> browseNodes
     List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -126,18 +126,18 @@ class BrowseComponentTest
   def 'browse nodes are sorted'() {
     given: 'This repository and a list of browse nodes'
       repositoryManager.get(REPOSITORY_NAME) >> repository
-      browseNodeStore.getChildrenByPath(repository, [], configuration.maxHtmlNodes, null) >> [
-          new BrowseNode(path: '1.0', componentId: componentId),
-          new BrowseNode(path: '1.10-alpha', componentId: componentId),
-          new BrowseNode(path: '1.10', componentId: componentId),
-          new BrowseNode(path: '1.2', componentId: componentId),
-          new BrowseNode(path: 'alpha'),
-          new BrowseNode(path: 'cr-acl'),
-          new BrowseNode(path: 'ga.js'),
-          new BrowseNode(path: 'adtld'),
-          new BrowseNode(path: 'a-load'),
-          new BrowseNode(path: 'AdminLTE-angular-sass'),
-          new BrowseNode(path: '2')
+      browseNodeStore.getByPath(repository, [], configuration.maxHtmlNodes, null) >> [
+          new BrowseNode(name: '1.0', componentId: componentId),
+          new BrowseNode(name: '1.10-alpha', componentId: componentId),
+          new BrowseNode(name: '1.10', componentId: componentId),
+          new BrowseNode(name: '1.2', componentId: componentId),
+          new BrowseNode(name: 'alpha'),
+          new BrowseNode(name: 'cr-acl'),
+          new BrowseNode(name: 'ga.js'),
+          new BrowseNode(name: 'adtld'),
+          new BrowseNode(name: 'a-load'),
+          new BrowseNode(name: 'AdminLTE-angular-sass'),
+          new BrowseNode(name: '2')
       ]
 
 

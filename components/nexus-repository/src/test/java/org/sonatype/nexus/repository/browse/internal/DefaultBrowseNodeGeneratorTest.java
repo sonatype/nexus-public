@@ -10,17 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage.internal;
+package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.internal.DefaultBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
 import org.junit.Test;
+
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -109,6 +110,28 @@ public class DefaultBrowseNodeGeneratorTest
     List<String> path = generator.computeComponentPath(asset, component);
 
     assertThat(path, contains(component.group(), component.name(), component.version()));
+  }
+
+  @Test
+  public void lastSegmentBehaviour() {
+    assertThat(generator.lastSegment(""), is(""));
+    assertThat(generator.lastSegment("/"), is(""));
+    assertThat(generator.lastSegment("//"), is(""));
+    assertThat(generator.lastSegment("///"), is(""));
+    assertThat(generator.lastSegment("////"), is(""));
+    assertThat(generator.lastSegment("a"), is("a"));
+    assertThat(generator.lastSegment("a/"), is("a"));
+    assertThat(generator.lastSegment("/a"), is("a"));
+    assertThat(generator.lastSegment("/a/"), is("a"));
+    assertThat(generator.lastSegment("//a"), is("a"));
+    assertThat(generator.lastSegment("a//"), is("a"));
+    assertThat(generator.lastSegment("//a//"), is("a"));
+    assertThat(generator.lastSegment("a/b"), is("b"));
+    assertThat(generator.lastSegment("a/b/"), is("b"));
+    assertThat(generator.lastSegment("/a/b"), is("b"));
+    assertThat(generator.lastSegment("/a/b/"), is("b"));
+    assertThat(generator.lastSegment("a/.b"), is(".b"));
+    assertThat(generator.lastSegment("a/b.c"), is("b.c"));
   }
 
   private Asset createAsset(final String assetName) {

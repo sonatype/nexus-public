@@ -10,21 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.swagger;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.repository.browse.AssetPathBrowseNodeGenerator;
+import io.swagger.models.Swagger;
 
 /**
- * RAW places components at the same level as their assets.
+ * Listener providing a hook for customizing the {@link Swagger} model.
  *
- * @since 3.6
+ * @since 3.7
  */
-@Singleton
-@Named(RawFormat.NAME)
-public class RawBrowseNodeGenerator
-    extends AssetPathBrowseNodeGenerator
+public interface SwaggerContributor
 {
+  /**
+   * Call after JAX-RS resource has been scanned.
+   * @param swagger the swagger definition
+   */
+  void contribute(Swagger swagger);
 }

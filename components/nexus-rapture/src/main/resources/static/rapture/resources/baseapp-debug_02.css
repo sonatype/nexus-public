@@ -2124,6 +2124,15 @@
 }
 
 /**
+ * Styles a section as an important message
+ * cls: 'nx-form-important-msg'
+ */
+.nx-form-important-msg {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/**
  * @class Ext.button.Button
  */
 /**
@@ -15685,8 +15694,4 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 
 .x-tab-nx-light-pressed .x-tab-close-btn {
   background-position: -24px 0;
-}
-
-.x-tab-nx-light-closable .x-tab-wrap {
-  padding-right: 15px;
 }

@@ -114,8 +114,6 @@ public class StorageFacetImpl
 
   private Config config;
 
-  private Bucket bucket;
-
   private WritePolicySelector writePolicySelector;
 
   @Inject
@@ -166,10 +164,10 @@ public class StorageFacetImpl
   }
 
   private void initBucket() {
-    // get or create the bucket for the repository and set bucketId for fast lookup later
+    // create the bucket for the repository if it doesn't exist
     inTxRetry(databaseInstanceProvider).run(db -> {
       String repositoryName = getRepository().getName();
-      bucket = bucketEntityAdapter.read(db, repositoryName);
+      Bucket bucket = bucketEntityAdapter.read(db, repositoryName);
       if (bucket == null) {
         bucket = new Bucket();
         bucket.setRepositoryName(repositoryName);
@@ -188,7 +186,10 @@ public class StorageFacetImpl
   protected void doDelete() throws Exception {
     // skip when replicating, origin node will delete the bucket blobs
     if (!EventHelper.isReplicating()) {
-      storageFacetManager.enqueueDeletion(getRepository(), blobStoreManager.get(config.blobStoreName), bucket);
+      inTxRetry(databaseInstanceProvider).run(db -> {
+        Bucket bucket = bucketEntityAdapter.read(db, getRepository().getName());
+        storageFacetManager.enqueueDeletion(getRepository(), blobStoreManager.get(config.blobStoreName), bucket);
+      });
     }
   }
 
@@ -262,7 +263,7 @@ public class StorageFacetImpl
             createdByIp(),
             new BlobTx(nodeAccess, blobStore),
             db,
-            bucket,
+            getRepository().getName(),
             config.writePolicy == null ? WritePolicy.ALLOW : config.writePolicy,
             writePolicySelector,
             bucketEntityAdapter,
@@ -274,5 +275,4 @@ public class StorageFacetImpl
         )
     );
   }
-
 }

@@ -28,6 +28,14 @@ public interface MavenPathParser
   MavenPath parsePath(String path);
 
   /**
+   * Parses path into {@link MavenPath} with optional case sensitivity
+   *
+   * @since 3.7
+   */
+  @Nonnull
+  MavenPath parsePath(String path, boolean caseSensitive);
+
+  /**
    * Returns {@code true} if passed in path represent repository metadata path.
    */
   boolean isRepositoryMetadata(MavenPath path);

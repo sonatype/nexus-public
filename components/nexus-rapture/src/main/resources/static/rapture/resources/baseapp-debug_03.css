@@ -1,3 +1,7 @@
+.x-tab-nx-light-closable .x-tab-wrap {
+  padding-right: 15px;
+}
+
 /*<if slicer>*/
 .x-tab-nx-light-top-over:after {
   display: none;

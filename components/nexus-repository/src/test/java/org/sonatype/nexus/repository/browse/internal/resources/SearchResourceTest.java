@@ -17,19 +17,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.search.SearchMapping;
+import org.sonatype.nexus.repository.search.SearchMappings;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.rest.Page;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -62,8 +68,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createAsset;
 import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createComponent;
-import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.ASSET_SEARCH_PARAMS;
-import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.SEARCH_PARAMS;
 
 public class SearchResourceTest
     extends RepositoryResourceTestSupport
@@ -97,13 +101,20 @@ public class SearchResourceTest
 
   SearchResource underTest;
 
+  Map<String, SearchMappings> searchMappings = ImmutableMap.of(
+      "default", () -> ImmutableList.of(
+          new SearchMapping("sha1", "assets.attributes.checksum.sha1", ""),
+          new SearchMapping("sha256", "assets.attributes.checksum.sha256", "")
+      )
+  );
+
   @Before
   public void setup() {
     configureMockedRepository(repository, "test-repo", "http://localhost:8081/test");
     setupResponse();
 
     underTest = new SearchResource(repositoryManagerRESTAdapter, browseService, searchService, new GroupType(),
-        new TokenEncoder());
+        new TokenEncoder(), searchMappings);
   }
 
   private void setupResponse() {
@@ -161,6 +172,7 @@ public class SearchResourceTest
     ComponentXO componentXO1 = items.stream().filter(item -> item.getName().equals("bar")).findFirst().get();
     assertThat(componentXO1.getGroup(), is("group2"));
     assertThat(componentXO1.getVersion(), is("2.0"));
+    assertThat(componentXO1.getAssets().get(0).getChecksum().get("sha1"), is("87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
 
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
   }
@@ -232,6 +244,43 @@ public class SearchResourceTest
   }
 
   @Test
+  public void testSearchAndDownload_SpecificAssetParam_NotFound_404_HTTP_RESPONSE() {
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+    try {
+      underTest.searchAndDownloadAssets(uriInfo("?format=npm&sha1=notfound"));
+    }
+    catch (WebApplicationException webEx) {
+      assertThat(webEx.getResponse().getStatus(), equalTo(404));
+    }
+  }
+
+  @Test
+  public void testSearchAndDownload_SpecificAssetParam_NotFound_400_HTTP_RESPONSE() {
+    // mock Elastic is only returning npm
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+    try {
+      underTest.searchAndDownloadAssets(uriInfo("?format=npm"));
+    }
+    catch (WebApplicationException webEx) {
+      assertThat(webEx.getResponse().getStatus(), equalTo(400));
+    }
+  }
+
+  @Test
+  public void testSearchAndDownload_SpecificAssetParam_AssetFound_302_REDIRECT() {
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+        .thenReturn(searchResponse);
+    Response response = underTest.searchAndDownloadAssets(uriInfo("?format=npm&sha1=fifth-sha1"));
+    assertThat(response.getStatus(), equalTo(302));
+    assertThat(response.getHeaderString("Location"), is("http://localhost:8081/test/bar.three"));
+  }
+
+  @Test
   public void testBuildQuery() {
     //the expected query
     QueryBuilder expected = boolQuery()
@@ -256,13 +305,13 @@ public class SearchResourceTest
 
     // put every single search param into the pam
     StringBuilder sb = new StringBuilder();
-    Set<String> allKeys = SEARCH_PARAMS.keySet();
+    Set<String> allKeys = underTest.getSearchParams().keySet();
     allKeys.forEach(s -> sb.append(s).append("=valueDoesNotMatter&"));
 
     // asert only assert params remain
     result = underTest.getAssetParams(uriInfo("?" + sb.toString()));
-    assertThat(result.size(), equalTo(ASSET_SEARCH_PARAMS.size()));
-    assertThat(result.keySet(), equalTo(ASSET_SEARCH_PARAMS.keySet()));
+    assertThat(result.size(), equalTo(underTest.getAssetSearchParams().size()));
+    assertThat(result.keySet(), equalTo(underTest.getAssetSearchParams().keySet()));
   }
 
   @Test

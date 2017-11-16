@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetStore;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
 
@@ -51,6 +50,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.goodies.common.Time.seconds;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.I_BUCKET_COMPONENT_NAME;
 
 public class RebuildBrowseNodesTaskTest
@@ -58,7 +58,7 @@ public class RebuildBrowseNodesTaskTest
 {
   static final String REPOSITORY_NAME = "repository-name";
 
-  private static final int LIMIT = 2;
+  private static final int REBUILD_PAGE_SIZE = 2;
 
   private RebuildBrowseNodesTask underTest;
 
@@ -69,10 +69,7 @@ public class RebuildBrowseNodesTaskTest
   private BucketStore bucketStore;
 
   @Mock
-  private BrowseNodeWrapper browseNodeWrapper;
-
-  @Mock
-  private BrowseNodeStore browseNodeStore;
+  private BrowseNodeManager browseNodeManager;
 
   @Mock
   private Repository repository;
@@ -95,7 +92,7 @@ public class RebuildBrowseNodesTaskTest
   private OIndex bucketComponentIndex;
 
   @Mock
-  private OIndexCursor descendingCursor;
+  private OIndexCursor cursor;
 
   @Before
   public void setUp() {
@@ -107,14 +104,13 @@ public class RebuildBrowseNodesTaskTest
     when(bucketMetadata.getDocument()).thenReturn(bucketDocument);
     when(bucketDocument.getIdentity()).thenReturn(bucketRid);
     when(assetStore.getIndex(I_BUCKET_COMPONENT_NAME)).thenReturn(bucketComponentIndex);
-    when(bucketComponentIndex.descCursor()).thenReturn(descendingCursor);
+    when(bucketComponentIndex.cursor()).thenReturn(cursor);
 
     underTest = new RebuildBrowseNodesTask(
         assetStore,
         bucketStore,
-        browseNodeWrapper,
-        browseNodeStore,
-        new BrowseNodeConfiguration(true, true, LIMIT, 10000, 10000, 1000, 1000)
+        browseNodeManager,
+        new BrowseNodeConfiguration(true, true, REBUILD_PAGE_SIZE, 1000, 10_000, 10_000, seconds(0))
     );
   }
 
@@ -124,10 +120,10 @@ public class RebuildBrowseNodesTaskTest
 
     underTest.execute(repository);
 
-    verify(browseNodeStore).truncateRepository(repository.getName());
+    verify(browseNodeManager).deleteByRepository(repository.getName());
     verify(assetStore).countAssets(any());
     verifyNoMoreInteractions(assetStore);
-    verifyNoMoreInteractions(browseNodeStore);
+    verifyNoMoreInteractions(browseNodeManager);
   }
 
   @Test
@@ -146,17 +142,17 @@ public class RebuildBrowseNodesTaskTest
     List<Entry<Object, EntityId>> page3 = emptyList();
 
     when(assetStore.countAssets(any())).thenReturn(3L);
-    when(assetStore.getNextPage(any(), eq(LIMIT))).thenReturn(page1, page2, page3);
+    when(assetStore.getNextPage(any(), eq(REBUILD_PAGE_SIZE))).thenReturn(page1, page2, page3);
     when(assetStore.getById(EntityHelper.id(asset1))).thenReturn(asset1);
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
     underTest.execute(repository);
 
-    verify(assetStore, times(3)).getNextPage(any(), eq(LIMIT));
+    verify(assetStore, times(3)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
-    verify(browseNodeWrapper).createFromAssets(eq(repository), eq(asList(asset1, asset2)));
-    verify(browseNodeWrapper).createFromAssets(eq(repository), eq(asList(asset3)));
+    verify(browseNodeManager).createFromAssets(eq(repository), eq(asList(asset1, asset2)));
+    verify(browseNodeManager).createFromAssets(eq(repository), eq(asList(asset3)));
   }
 
   private Asset createMockAsset(final String id) {

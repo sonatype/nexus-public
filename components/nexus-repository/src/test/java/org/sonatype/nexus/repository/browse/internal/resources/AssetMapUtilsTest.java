@@ -26,7 +26,6 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.browse.internal.resources.AssetMapUtils.getValueFromAssetMap;
 import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createAsset;
-import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.SEARCH_PARAMS;
 
 public class AssetMapUtilsTest
 {
@@ -39,12 +38,12 @@ public class AssetMapUtilsTest
 
   @Test
   public void testGetValueFromAssetMap_sha1() {
-    runGetValueFromAssetMapTest(assetMap, SEARCH_PARAMS.get("sha1"), "first-sha1");
+    runGetValueFromAssetMapTest(assetMap, "assets.attributes.checksum.sha1", "first-sha1");
   }
 
   @Test
   public void testGetValueFromAssetMap_MavenExtension() {
-    runGetValueFromAssetMapTest(assetMap, SEARCH_PARAMS.get("maven.extension"), "jar");
+    runGetValueFromAssetMapTest(assetMap, "assets.attributes.maven2.extension", "jar");
   }
 
   @Test
@@ -64,7 +63,7 @@ public class AssetMapUtilsTest
 
   @Test
   public void testGetValueFromAssetMap_EmptyMap() {
-    runGetValueFromAssetMapTest(emptyMap(), SEARCH_PARAMS.get("sha1"), null);
+    runGetValueFromAssetMapTest(emptyMap(), "assets.attributes.checksum.sha1", null);
   }
 
   private void runGetValueFromAssetMapTest(final Map<String, Object> assetMap, final String query, final String match) {

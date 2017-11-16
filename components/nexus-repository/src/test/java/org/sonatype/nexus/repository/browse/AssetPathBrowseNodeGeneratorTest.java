@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.browse;
 
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.AbstractPathBrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
@@ -23,19 +21,27 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AbstractPathBrowseNodeGeneratorTest
+public class AssetPathBrowseNodeGeneratorTest
 {
-  private BrowseNodeGenerator generator = new AbstractPathBrowseNodeGenerator()
+  private BrowseNodeGenerator generator = new AssetPathBrowseNodeGenerator()
   {
   };
 
   @Test
-  public void computeAssetPath() {
-    Component component = null;
+  public void computeAssetPathNoComponent() {
+    Asset asset = createAsset("asset/path/foo");
+
+    List<String> path = generator.computeAssetPath(asset, null);
+
+    assertThat(path, contains("asset", "path", "foo"));
+  }
+
+  @Test
+  public void computeAssetPathWithComponent() {
+    Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("asset/path/foo");
 
     List<String> path = generator.computeAssetPath(asset, component);
@@ -51,15 +57,6 @@ public class AbstractPathBrowseNodeGeneratorTest
     List<String> path = generator.computeComponentPath(asset, component);
 
     assertThat(path, contains("asset", "path", "foo"));
-  }
-
-  @Test
-  public void computeComponentPathNoComponent() {
-    Asset asset = createAsset("asset/path/foo");
-
-    List<String> path = generator.computeComponentPath(asset, null);
-
-    assertThat(path.size(), is(0));
   }
 
   private Asset createAsset(final String assetName) {

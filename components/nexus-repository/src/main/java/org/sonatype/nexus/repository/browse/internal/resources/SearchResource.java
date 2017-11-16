@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -31,6 +30,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -42,13 +42,14 @@ import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.SearchResourceDoc;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.search.SearchMapping;
+import org.sonatype.nexus.repository.search.SearchMappings;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -58,6 +59,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.shiro.util.CollectionUtils.isEmpty;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
@@ -89,48 +92,7 @@ public class SearchResource
 
   public static final String SEARCH_ASSET_URI = "/assets";
 
-  static final Map<String, String> SEARCH_PARAMS = ImmutableMap.<String, String>builder()
-      // common
-      .put("repository", REPOSITORY_NAME)
-      .put("format", "format")
-      .put("group", "group.raw")
-      .put("name", "name.raw")
-      .put("version", "version")
-      .put("md5", "assets.attributes.checksum.md5")
-      .put("sha1", "assets.attributes.checksum.sha1")
-      .put("sha256", "assets.attributes.checksum.sha256")
-      .put("sha512", "assets.attributes.checksum.sha512")
-      // Maven
-      .put("maven.groupId", "attributes.maven2.groupId")
-      .put("maven.artifactId", "attributes.maven2.artifactId")
-      .put("maven.baseVersion", "attributes.maven2.baseVersion")
-      .put("maven.extension", "assets.attributes.maven2.extension")
-      .put("maven.classifier", "assets.attributes.maven2.classifier")
-      // Nuget
-      .put("nuget.id", "attributes.nuget.id")
-      .put("nuget.tags", "assets.attributes.nuget.tags")
-      // NPM
-      .put("npm.scope", "group")
-      // Docker
-      .put("docker.imageName", "attributes.docker.imageName")
-      .put("docker.imageTag", "attributes.docker.imageTag")
-      .put("docker.layerId", "attributes.docker.layerAncestry")
-      .put("docker.contentDigest", "assets.attributes.docker.content_digest")
-      // PyPi
-      .put("pypi.classifiers", "assets.attributes.pypi.classifiers")
-      .put("pypi.description", "assets.attributes.pypi.description")
-      .put("pypi.keywords", "assets.attributes.pypi.keywords")
-      .put("pypi.summary", "assets.attributes.pypi.summary")
-      // RubyGems
-      .put("rubygems.description", "assets.attributes.rubygems.description")
-      .put("rubygems.platform", "assets.attributes.rubygems.platform")
-      .put("rubygems.summary", "assets.attributes.rubygems.summary")
-      .build();
-
-  // all search params that apply to assets
-  static final Map<String, String> ASSET_SEARCH_PARAMS = SEARCH_PARAMS.entrySet().stream()
-      .filter(e -> e.getValue().startsWith("assets."))
-      .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+  public static final String SEARCH_AND_DOWNLOAD_URI = "/assets/download";
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
@@ -144,18 +106,37 @@ public class SearchResource
 
   private final TokenEncoder tokenEncoder;
 
+  private final Map<String, String> searchParams;
+
+  private final Map<String, String> assetSearchParams;
+
   @Inject
   public SearchResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                         final BrowseService browseService,
                         final SearchService searchService,
                         @Named(GroupType.NAME) final Type groupType,
-                        final TokenEncoder tokenEncoder)
+                        final TokenEncoder tokenEncoder,
+                        final Map<String, SearchMappings> searchMappings)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
     this.searchService = checkNotNull(searchService);
     this.groupType = checkNotNull(groupType);
     this.tokenEncoder = checkNotNull(tokenEncoder);
+    this.searchParams = checkNotNull(searchMappings).entrySet().stream()
+        .flatMap(e -> stream(e.getValue().get().spliterator(), true))
+        .collect(toMap(SearchMapping::getAlias, SearchMapping::getAttribute));
+    this.assetSearchParams = searchParams.entrySet().stream()
+        .filter(e -> e.getValue().startsWith("assets."))
+        .collect(toMap(Entry::getKey, Entry::getValue));
+  }
+
+  Map<String, String> getSearchParams() {
+    return searchParams;
+  }
+
+  Map<String, String> getAssetSearchParams() {
+    return assetSearchParams;
   }
 
   @GET
@@ -210,17 +191,24 @@ public class SearchResource
     QueryBuilder query = buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
-    SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
 
-    // get the asset specific parameters
-    MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
-
-    List<AssetXO> assetXOs = Arrays.stream(response.getHits().hits())
-        .flatMap(hit -> extractAssets(hit, assetParams))
-        .collect(toList());
-
+    List<AssetXO> assetXOs = retrieveAssets(query, uriInfo, from);
     return new Page<>(assetXOs, assetXOs.size() == PAGE_SIZE ?
         tokenEncoder.encode(from, PAGE_SIZE, query) : null);
+  }
+
+  /**
+   * @since 3.7
+   */
+  @GET
+  @Path(SEARCH_AND_DOWNLOAD_URI)
+  public Response searchAndDownloadAssets(@Context final UriInfo uriInfo)
+  {
+    QueryBuilder query = buildQuery(uriInfo);
+
+    List<AssetXO> assetXOs = retrieveAssets(query, uriInfo);
+
+    return new AssetDownloadResponseProcessor(assetXOs).process();
   }
 
   /**
@@ -255,16 +243,31 @@ public class SearchResource
         Repository repository = repositoryManagerRESTAdapter.getRepository(value.get(0));
         if (groupType.equals(repository.getType())) {
           repository.facet(GroupFacet.class).leafMembers().forEach(r ->
-              query.should(termQuery(SEARCH_PARAMS.get(key), r.getName())));
+              query.should(termQuery(searchParams.get(key), r.getName())));
           query.minimumNumberShouldMatch(1);
           return;
         }
       }
-      query.filter(termQuery(SEARCH_PARAMS.getOrDefault(key, key), value.get(0)));
+      query.filter(termQuery(searchParams.getOrDefault(key, key), value.get(0)));
     });
 
     log.debug("Query: {}", query);
     return query;
+  }
+
+  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo, final int from) {
+    SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
+
+    // get the asset specific parameters
+    MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
+
+    return Arrays.stream(response.getHits().hits())
+        .flatMap(hit -> extractAssets(hit, assetParams))
+        .collect(toList());
+  }
+
+  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo) {
+    return this.retrieveAssets(query, uriInfo, 0);
   }
 
   @SuppressWarnings("unchecked")
@@ -295,7 +298,7 @@ public class SearchResource
 
     // loop each asset specific http query parameter to filter out assets that do not apply
     assetParams.forEach((key, values) -> {
-      String assetParam = ASSET_SEARCH_PARAMS.get(key);
+      String assetParam = assetSearchParams.get(key);
 
       // does the assetMap contain the requested value?
       getValueFromAssetMap(assetMap, assetParam).ifPresent(assetValue -> {
@@ -312,8 +315,8 @@ public class SearchResource
   MultivaluedMap<String, String> getAssetParams(final UriInfo uriInfo) {
     return uriInfo.getQueryParameters()
         .entrySet().stream()
-        .filter(t -> ASSET_SEARCH_PARAMS.containsKey(t.getKey()))
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (u, v) -> {
+        .filter(t -> assetSearchParams.containsKey(t.getKey()))
+        .collect(toMap(Entry::getKey, Entry::getValue, (u, v) -> {
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));
   }

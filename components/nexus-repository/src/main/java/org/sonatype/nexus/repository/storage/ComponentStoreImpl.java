@@ -56,7 +56,7 @@ public class ComponentStoreImpl
   @Guarded(by = STARTED)
   public Component read(final EntityId id)
   {
-    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
+    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
       return entityAdapter.read(db, id);
     }
   }

@@ -13,16 +13,22 @@
 package org.sonatype.nexus.repository.browse.internal.resources.doc;
 
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.browse.internal.resources.AssetDownloadResponseProcessor;
 import org.sonatype.nexus.repository.browse.internal.resources.SearchResource;
 import org.sonatype.nexus.rest.Page;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
+import static org.sonatype.nexus.repository.browse.internal.resources.AssetDownloadResponseProcessor.*;
 
 /**
  * Swagger documentation for {@link SearchResource}
@@ -33,16 +39,24 @@ import io.swagger.annotations.ApiParam;
 public interface SearchResourceDoc
 {
   @ApiOperation("Search components")
-  @SearchParams
   Page<ComponentXO> search(
       @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
       final String continuationToken,
       @Context final UriInfo uriInfo);
 
   @ApiOperation("Search assets")
-  @SearchParams
   Page<AssetXO> searchAssets(
       @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
       final String continuationToken,
+      @Context final UriInfo uriInfo);
+
+  @ApiOperation(value = "Search and download asset",
+    notes = "Returns a 302 Found with location header field set to download URL. "
+      + "Search must return a single asset to receive download URL.")
+  @ApiResponses(value = {
+      @ApiResponse(code = 400, message = SEARCH_RETURNED_MULTIPLE_ASSETS),
+      @ApiResponse(code = 404, message = NO_SEARCH_RESULTS_FOUND)
+  })
+  Response searchAndDownloadAssets(
       @Context final UriInfo uriInfo);
 }

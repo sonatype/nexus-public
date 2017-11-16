@@ -14,17 +14,16 @@ package org.sonatype.nexus.repository.browse.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -39,14 +38,11 @@ public class BrowseNodeEventHandlerTest
   private BrowseNodeEventHandler handler;
 
   @Mock
-  private BrowseNodeWrapper browseNodeWrapper;
-
-  @Mock
-  private BrowseNodeStore browseNodeStore;
+  private BrowseNodeManager browseNodeManager;
 
   @Before
   public void setup() {
-    handler = new BrowseNodeEventHandler(new BrowseNodeConfiguration(), browseNodeWrapper, browseNodeStore);
+    handler = new BrowseNodeEventHandler(new BrowseNodeConfiguration(), browseNodeManager);
   }
 
   @Test
@@ -60,7 +56,7 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeWrapper).createFromAsset(REPOSITORY_NAME, asset);
+    verify(browseNodeManager).createFromAsset(REPOSITORY_NAME, asset);
   }
 
   @Test
@@ -70,7 +66,7 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeWrapper, never()).createFromAsset(any(), any());
+    verify(browseNodeManager, never()).createFromAsset(any(), any());
   }
 
   @Test
@@ -83,7 +79,7 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeStore).deleteNodeByAssetId(assetId);
+    verify(browseNodeManager).deleteAssetNode(assetId);
   }
 
   @Test
@@ -93,7 +89,7 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeStore, never()).deleteNodeByAssetId(any());
+    verify(browseNodeManager, never()).deleteAssetNode(any());
   }
 
   @Test
@@ -104,7 +100,7 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeStore).truncateRepository(REPOSITORY_NAME);
+    verify(browseNodeManager).deleteByRepository(REPOSITORY_NAME);
   }
 
   @Test
@@ -114,6 +110,6 @@ public class BrowseNodeEventHandlerTest
 
     handler.on(event);
 
-    verify(browseNodeStore, never()).truncateRepository(any());
+    verify(browseNodeManager, never()).deleteByRepository(any());
   }
 }

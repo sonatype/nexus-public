@@ -130,6 +130,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-swagger</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>io.swagger</groupId>
       <artifactId>swagger-annotations</artifactId>
     </dependency>

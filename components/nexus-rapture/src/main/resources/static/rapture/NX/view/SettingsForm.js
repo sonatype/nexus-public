@@ -229,25 +229,18 @@ Ext.define('NX.view.SettingsForm', {
 
     bottomBar = me.getDockedItems('toolbar[dock="bottom"]')[0];
     if (bottomBar) {
-      if (editable) {
-        if (bottomBar.editableMarker) {
-          bottomBar.remove(bottomBar.editableMarker);
-          bottomBar.editableMarker = undefined;
-        }
+      if (bottomBar.editableMarker) {
+        bottomBar.remove(bottomBar.editableMarker);
+        bottomBar.editableMarker = undefined;
       }
-      else {
-        if (me.editableMarker) {
-          bottomBar.editableMarker = Ext.widget({
-            xtype: 'label',
-            text: me.editableMarker,
-            // TODO replace style with css class?
-            style: {
-              fontSize: '10px',
-              fontWeight: 'bold'
-            }
-          });
-          bottomBar.add(bottomBar.editableMarker);
-        }
+
+      if (!editable && me.editableMarker) {
+        bottomBar.editableMarker = Ext.widget({
+          xtype: 'label',
+          text: me.editableMarker,
+          cls: 'nx-form-important-msg'
+        });
+        bottomBar.add(bottomBar.editableMarker);
       }
     }
   }

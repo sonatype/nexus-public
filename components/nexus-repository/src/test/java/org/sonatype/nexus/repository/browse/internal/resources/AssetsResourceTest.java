@@ -150,6 +150,19 @@ public class AssetsResourceTest
   }
 
   @Test
+  public void testChecksumExists() throws Exception {
+    RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
+            "c0ac2ab6c5e93a4a3909f0830fdadfcd");
+
+    when(assetEntityAdapter.recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId()))).thenReturn(assetOneORID);
+    when(browseService.getAssetById(assetOneORID, mavenReleases)).thenReturn(assetOne);
+
+    AssetXO assetXO = underTest.getAssetById(repositoryItemIDXO.getValue());
+
+    assertThat(assetXO.getChecksum().get("sha1"), is("87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+  }
+
+  @Test
   public void testGetAssetById_illegalArgumentException() {
     RepositoryItemIDXO repositoryItemIDXO = new RepositoryItemIDXO("maven-releases",
         "c0ac2ab6c5e93a4a3909f0830fdadfcd");

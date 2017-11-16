@@ -141,7 +141,7 @@ public class RepositoryBrowseResource
     }
 
     Iterable<BrowseNode> browseNodes = browseNodeStore
-        .getChildrenByPath(repository, pathSegments, configuration.getMaxHtmlNodes(), filter);
+        .getByPath(repository, pathSegments, configuration.getMaxHtmlNodes(), filter);
 
     final boolean permitted = securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE));
     final boolean hasChildren = browseNodes != null && !Iterables.isEmpty(browseNodes);
@@ -183,11 +183,11 @@ public class RepositoryBrowseResource
         String size = null;
         String lastModified = null;
         String listItemPath;
-        if (browseNode.getAssetId() != null) {
+        if (browseNode.isLeaf()) {
           Asset asset = getAssetById(repository, browseNode.getAssetId());
 
           if (asset == null) {
-            log.error("Could not find expected asset (id): {}/{} ({}) in repository: {}", path, browseNode.getPath(),
+            log.error("Could not find expected asset (id): {}/{} ({}) in repository: {}", path, browseNode.getName(),
                 browseNode.getAssetId().toString(), repository.getName());
             //something bad going on here, move along to the next
             continue;
@@ -203,7 +203,7 @@ public class RepositoryBrowseResource
         }
 
         listItems.add(
-            new BrowseListItem(listItemPath, browseNode.getPath(), browseNode.getAssetId() == null, lastModified, size,
+            new BrowseListItem(listItemPath, browseNode.getName(), !browseNode.isLeaf(), lastModified, size,
                 ""));
       }
     }
@@ -241,7 +241,7 @@ public class RepositoryBrowseResource
       else if (o2.getAssetId() == null && o1.getAssetId() != null) {
         return 1;
       }
-      return Strings2.lower(o1.getPath()).compareTo(Strings2.lower(o2.getPath()));
+      return Strings2.lower(o1.getName()).compareTo(Strings2.lower(o2.getName()));
     });
 
     return sortedBrowseNodes;
@@ -278,7 +278,7 @@ public class RepositoryBrowseResource
     String filterParam = filter == null ? "" : "?filter=" + URLEncoder.encode(filter);
 
     if (asset == null) {
-      return urlEncode(browseNode.getPath()) + "/" + filterParam;
+      return urlEncode(browseNode.getName()) + "/" + filterParam;
     }
 
     return repository.getUrl() + "/" + asset.name();

@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.browse.internal.resources;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseService;
@@ -26,6 +30,8 @@ import com.google.common.base.Supplier;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.Map;
 
 import static org.mockito.Mockito.when;
 
@@ -78,11 +84,14 @@ public abstract class RepositoryResourceTestSupport
   }
 
   Asset getMockedAsset(String name, String idValue) {
+    Map<String,Object> checksum = Maps.newHashMap(ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+
     AssetMocks assetMocks = new AssetMocks();
     MockitoAnnotations.initMocks(assetMocks);
 
     when(assetMocks.asset.name()).thenReturn(name);
     when(assetMocks.asset.getEntityMetadata()).thenReturn(assetMocks.assetEntityMetadata);
+    when(assetMocks.asset.attributes()).thenReturn(new NestedAttributesMap("attributes", ImmutableMap.of(Asset.CHECKSUM, checksum)));
 
     when(assetMocks.assetEntityMetadata.getId()).thenReturn(assetMocks.assetEntityId);
     when(assetMocks.assetEntityId.getValue()).thenReturn(idValue);

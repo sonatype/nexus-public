@@ -75,7 +75,7 @@ public class SettingsCapabilityDescriptor
     String sessionTimeoutLabel();
 
     @DefaultMessage(
-        "Period of inactivity before session is timing out (minutes). A value of 0 will mean that session never expires"
+        "Period of inactivity before session times out (minutes). A value of 0 will mean that a session never expires."
     )
     String sessionTimeoutHelp();
 

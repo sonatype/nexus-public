@@ -15,7 +15,11 @@ package org.sonatype.nexus.repository.browse;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.goodies.common.Time;
+
 import com.google.common.annotations.VisibleForTesting;
+
+import static org.sonatype.goodies.common.Time.seconds;
 
 /**
  * Configuration options for browse tree
@@ -36,35 +40,35 @@ public class BrowseNodeConfiguration
 
   private final int rebuildPageSize;
 
+  private final int deletePageSize;
+
   private final int maxNodes;
 
   private final int maxHtmlNodes;
 
-  private final int maxTruncateCount;
-
-  private final int maxUpdateChildCount;
+  private final Time queryTimeout;
 
   @Inject
   public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.enabled:-false}") final boolean enabled,
                                  @Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
                                  @Named("${nexus.browse.component.tree.rebuildPageSize:-1000}") final int rebuildPageSize,
+                                 @Named("${nexus.browse.component.tree.deletePageSize:-1000}") final int deletePageSize,
                                  @Named("${nexus.browse.component.tree.maxNodes:-10000}") final int maxNodes,
                                  @Named("${nexus.browse.component.tree.maxHtmlNodes:-10000}") final int maxHtmlNodes,
-                                 @Named("${nexus.browse.component.tree.maxTruncateNodes:-1000}") final int maxTruncateCount,
-                                 @Named("${nexus.browse.component.tree.maxUpdateChildNodes:-1000}") final int maxUpdateChildCount)
+                                 @Named("${nexus.browse.component.tree.queryTimeout:-59s}") final Time queryTimeout)
   {
     this.enabled = enabled;
     this.automaticRebuild = automaticRebuild;
     this.rebuildPageSize = rebuildPageSize;
+    this.deletePageSize = deletePageSize;
     this.maxNodes = maxNodes;
     this.maxHtmlNodes = maxHtmlNodes;
-    this.maxTruncateCount = maxTruncateCount;
-    this.maxUpdateChildCount = maxUpdateChildCount;
+    this.queryTimeout = queryTimeout;
   }
 
   @VisibleForTesting
   public BrowseNodeConfiguration() {
-    this(true, true, 1000, 10000, 10000, 1000, 1000);
+    this(true, true, 1000, 1000, 10_000, 10_000, seconds(0));
   }
 
   /**
@@ -75,6 +79,15 @@ public class BrowseNodeConfiguration
   }
 
   /**
+   * The number of nodes to delete at a time while truncating the browse tree
+   *
+   * @since 3.7
+   */
+  public int getDeletePageSize() {
+    return deletePageSize;
+  }
+
+  /**
    * The maximum number of nodes to display on a given level of a tree
    */
   public int getMaxNodes() {
@@ -82,25 +95,21 @@ public class BrowseNodeConfiguration
   }
 
   /**
+   * The maximum number of nodes to display in the browse html view (for a given level of the tree)
+   *
    * @since 3.6.1
-   * @return the maximum number of nodes to display in the browse html view (for a given level of the tree)
    */
   public int getMaxHtmlNodes() {
     return maxHtmlNodes;
   }
 
   /**
-   * The maximum number of nodes to truncate in a transaction
+   * How long to wait for filtered subtree queries to complete before returning a potentially truncated set of results
+   *
+   * @since 3.7
    */
-  public int getMaxTruncateCount() {
-    return maxTruncateCount;
-  }
-
-  /**
-   * The maximum number of nodes to update with children in a transaction
-   */
-  public int getMaxUpdateChildCount() {
-    return maxUpdateChildCount;
+  public Time getQueryTimeout() {
+    return queryTimeout;
   }
 
   /**

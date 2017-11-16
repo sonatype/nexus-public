@@ -24,3 +24,12 @@
   border-bottom: 1px solid $color-gainsboro !important;
   border-left: 1px solid $color-gainsboro !important;
 }
+
+/**
+ * Styles a section as an important message
+ * cls: 'nx-form-important-msg'
+ */
+.nx-form-important-msg {
+  font-size: 10px;
+  font-weight: bold;
+}

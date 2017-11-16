@@ -92,7 +92,7 @@ public class StorageTxImpl
 
   private final ODatabaseDocumentTx db;
 
-  private final Bucket bucket;
+  private final String repositoryName;
 
   private final WritePolicy writePolicy;
 
@@ -120,7 +120,7 @@ public class StorageTxImpl
                        final String createdByIp,
                        final BlobTx blobTx,
                        final ODatabaseDocumentTx db,
-                       final Bucket bucket,
+                       final String repositoryName,
                        final WritePolicy writePolicy,
                        final WritePolicySelector writePolicySelector,
                        final BucketEntityAdapter bucketEntityAdapter,
@@ -134,7 +134,7 @@ public class StorageTxImpl
     this.createdByIp = checkNotNull(createdByIp);
     this.blobTx = checkNotNull(blobTx);
     this.db = checkNotNull(db);
-    this.bucket = checkNotNull(bucket);
+    this.repositoryName = checkNotNull(repositoryName);
     this.writePolicy = checkNotNull(writePolicy);
     this.writePolicySelector = checkNotNull(writePolicySelector);
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
@@ -559,7 +559,7 @@ public class StorageTxImpl
     checkNotNull(hashAlgorithms);
 
     if (!writePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + repositoryName);
     }
 
     Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, streamSupplier, headers, declaredContentType,
@@ -587,7 +587,7 @@ public class StorageTxImpl
     checkArgument(!Strings2.isBlank(declaredContentType), "no declaredContentType provided");
 
     if (!writePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + repositoryName);
     }
 
     Map<String, String> storageHeaders = buildStorageHeaders(blobName, null, headers, declaredContentType, true);
@@ -612,7 +612,7 @@ public class StorageTxImpl
     checkNotNull(originalBlob);
 
     if (!writePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + repositoryName);
     }
 
     Map<String, String> storageHeadersMap = buildStorageHeaders(blobName, originalBlob, headers, declaredContentType,
@@ -636,7 +636,7 @@ public class StorageTxImpl
         "skipContentVerification set true but no declaredContentType provided"
     );
     Builder<String, String> storageHeaders = ImmutableMap.builder();
-    storageHeaders.put(Bucket.REPO_NAME_HEADER, bucket.getRepositoryName());
+    storageHeaders.put(Bucket.REPO_NAME_HEADER, repositoryName);
     storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
     storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
     storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);
@@ -665,7 +665,7 @@ public class StorageTxImpl
 
     final WritePolicy effectiveWritePolicy = writePolicySelector.select(asset, writePolicy);
     if (!effectiveWritePolicy.checkCreateAllowed()) {
-      throw new IllegalOperationException("Repository is read only: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository is read only: " + repositoryName);
     }
 
     NestedAttributesMap checksums = asset.attributes().child(CHECKSUM);
@@ -753,8 +753,7 @@ public class StorageTxImpl
         if (checksumsMatch) {
           // still respect write policy even when de-duplicating
           if (!effectiveWritePolicy.checkUpdateAllowed()) {
-            throw new IllegalOperationException(
-                "Repository does not allow updating assets: " + bucket.getRepositoryName());
+            throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
           }
           assetBlob.setDuplicate(oldBlob);
           return true;
@@ -774,7 +773,7 @@ public class StorageTxImpl
     if (asset.blobRef() != null) {
       // updating old blob
       if (!effectiveWritePolicy.checkUpdateAllowed()) {
-        throw new IllegalOperationException("Repository does not allow updating assets: " + bucket.getRepositoryName());
+        throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
       }
       asset.blobUpdated(now);
       deleteBlob(asset.blobRef(), effectiveWritePolicy, format("Updating asset %s", EntityHelper.id(asset)));
@@ -802,8 +801,7 @@ public class StorageTxImpl
     BlobRef oldBlobRef = asset.blobRef();
     if (oldBlobRef != null) {
       if (!writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
-        throw new IllegalOperationException(
-            "Repository does not allow updating assets: " + bucket.getRepositoryName());
+        throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
       }
     }
     final AssetBlob assetBlob = createBlob(
@@ -835,8 +833,7 @@ public class StorageTxImpl
     BlobRef oldBlobRef = asset.blobRef();
     if (oldBlobRef != null) {
       if (!writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
-        throw new IllegalOperationException(
-            "Repository does not allow updating assets: " + bucket.getRepositoryName());
+        throw new IllegalOperationException( "Repository does not allow updating assets: " + repositoryName);
       }
     }
     final AssetBlob assetBlob = createBlob(
@@ -866,8 +863,7 @@ public class StorageTxImpl
     // Enforce write policy ahead, as we have asset here
     BlobRef oldBlobRef = asset.blobRef();
     if (oldBlobRef != null && !writePolicySelector.select(asset, writePolicy).checkUpdateAllowed()) {
-      throw new IllegalOperationException(
-          "Repository does not allow updating assets: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
     }
     AssetBlob assetBlob = createBlob(blobName, originalBlob, headers, declaredContentType, skipContentVerification);
     attachBlob(asset, assetBlob);
@@ -914,8 +910,7 @@ public class StorageTxImpl
   private void deleteBlob(final BlobRef blobRef, @Nullable WritePolicy effectiveWritePolicy, final String reason) {
     checkNotNull(blobRef);
     if (effectiveWritePolicy != null && !effectiveWritePolicy.checkDeleteAllowed()) {
-      throw new IllegalOperationException(
-          "Repository does not allow deleting assets: " + bucket.getRepositoryName());
+      throw new IllegalOperationException("Repository does not allow deleting assets: " + repositoryName);
     }
     blobTx.delete(blobRef, reason);
   }
@@ -925,12 +920,7 @@ public class StorageTxImpl
    */
   @Nullable
   private Bucket bucketOf(final String repositoryName) {
-    if (bucket.getRepositoryName().equals(repositoryName)) {
-      return bucket;
-    }
-    else {
-      return bucketEntityAdapter.read(db, repositoryName);
-    }
+    return bucketEntityAdapter.read(db, repositoryName);
   }
 
   /**

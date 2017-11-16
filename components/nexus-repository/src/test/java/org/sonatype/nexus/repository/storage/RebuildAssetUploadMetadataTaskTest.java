@@ -138,6 +138,20 @@ public class RebuildAssetUploadMetadataTaskTest
   }
 
   @Test
+  public void executeSkipsAssetsWithANoBlobRef() {
+    Asset assetWithNoBlobRef = createAsset(null);
+    assetWithNoBlobRef.createdBy("somebody");
+    assetStore.save(assetWithNoBlobRef);
+
+    task.execute();
+
+    Asset updatedAssetWithNoBlobRef = assetStore.getById(id(assetWithNoBlobRef));
+    assertThat(updatedAssetWithNoBlobRef.name(), is(assetWithNoBlobRef.name()));
+    assertThat(updatedAssetWithNoBlobRef.createdBy(), is("somebody"));
+    assertThat(updatedAssetWithNoBlobRef.createdByIp(), is(nullValue()));
+  }
+
+  @Test
   public void executeSkipsFirstAssetWithAnEmptyCreatedBy() {
     Blob blob = createMockBlob("blobId");
     when(blob.getHeaders()).thenReturn(Collections.singletonMap(CREATED_BY_IP_HEADER, "192.168.0.1"));
@@ -162,7 +176,9 @@ public class RebuildAssetUploadMetadataTaskTest
     Asset asset = new Asset();
     asset.bucketId(id(bucket));
     asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    asset.blobRef(new BlobRef("node", "store", blob.getId().asUniqueString()));
+    if (blob != null) {
+      asset.blobRef(new BlobRef("node", "store", blob.getId().asUniqueString()));
+    }
     asset.format("format");
     asset.name("asset" + (assets++));
     return asset;

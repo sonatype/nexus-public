@@ -10,21 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.repository.browse;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.List;
 
-import org.sonatype.nexus.repository.browse.AssetPathBrowseNodeGenerator;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Component;
 
 /**
- * RAW places components at the same level as their assets.
+ * Component-led layout that places components one level above their assets.
  *
- * @since 3.6
+ * @since 3.7
  */
-@Singleton
-@Named(RawFormat.NAME)
-public class RawBrowseNodeGenerator
+public abstract class ComponentPathBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator
 {
+  /**
+   * Component path is one level above the asset path.
+   */
+  @Override
+  public List<String> computeComponentPath(final Asset asset, final Component component) {
+    List<String> assetPath = computeAssetPath(asset, component);
+    return assetPath.subList(0, assetPath.size() - 1);
+  }
 }

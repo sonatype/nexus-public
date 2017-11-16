@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.browse.api;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -23,6 +27,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -49,8 +55,11 @@ public class AssetXOTest
 
   @Before
   public void setup() {
+    Map<String,Object> checksum = Maps.newHashMap(ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+
     when(assetOne.name()).thenReturn("nameOne");
     when(assetOne.getEntityMetadata()).thenReturn(assetOneEntityMetadata);
+    when(assetOne.attributes()).thenReturn(new NestedAttributesMap(Asset.CHECKSUM, checksum));
 
     when(assetOneORID.toString()).thenReturn("assetOneORID");
 

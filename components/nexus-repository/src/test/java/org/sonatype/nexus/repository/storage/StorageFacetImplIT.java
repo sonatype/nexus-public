@@ -32,6 +32,7 @@ import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.attributes.internal.AttributesFacetImpl;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
@@ -99,10 +100,6 @@ public class StorageFacetImplIT
 
   @Before
   public void setUp() throws Exception {
-    NodeAccess mockNodeAccess = mock(NodeAccess.class);
-    when(mockNodeAccess.getId()).thenReturn("testNodeId");
-    BlobStoreManager mockBlobStoreManager = mock(BlobStoreManager.class);
-    when(mockBlobStoreManager.get(anyString())).thenReturn(mock(BlobStore.class));
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     HexRecordIdObfuscator recordIdObfuscator = new HexRecordIdObfuscator();
     bucketEntityAdapter.enableObfuscation(recordIdObfuscator);
@@ -110,22 +107,14 @@ public class StorageFacetImplIT
     componentEntityAdapter.enableObfuscation(recordIdObfuscator);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     assetEntityAdapter.enableObfuscation(recordIdObfuscator);
-    ContentValidatorSelector contentValidatorSelector = new ContentValidatorSelector(Collections.<String, ContentValidator>emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
-    MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.<String, MimeRulesSource>emptyMap());
-    StorageFacetManager storageFacetManager = mock(StorageFacetManager.class);
-    underTest = new StorageFacetImpl(
-        mockNodeAccess,
-        mockBlobStoreManager,
+
+    schemaRegistration = new ComponentSchemaRegistration(
         database.getInstanceProvider(),
         bucketEntityAdapter,
         componentEntityAdapter,
-        assetEntityAdapter,
-        mock(ClientInfoProvider.class),
-        contentValidatorSelector,
-        mimeRulesSourceSelector,
-        storageFacetManager
-    );
-    underTest.installDependencies(mock(EventManager.class));
+        assetEntityAdapter);
+
+    schemaRegistration.start();
 
     StorageFacetImpl.Config config = new StorageFacetImpl.Config();
     ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
@@ -145,17 +134,7 @@ public class StorageFacetImplIT
     when(testRepository2.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
     when(testRepository2.facet(SearchFacet.class)).thenReturn(mock(SearchFacet.class));
 
-    schemaRegistration = new ComponentSchemaRegistration(
-        database.getInstanceProvider(),
-        bucketEntityAdapter,
-        componentEntityAdapter,
-        assetEntityAdapter);
-
-    schemaRegistration.start();
-
-    underTest.attach(testRepository1);
-    underTest.init();
-    underTest.start();
+    underTest = storageFacetImpl("testNodeId", bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, testRepository1);
   }
 
   @After
@@ -811,6 +790,76 @@ public class StorageFacetImplIT
       assertThat(asset.lastDownloaded(), notNullValue());
       assertThat(asset.markAsDownloaded(), is(false));
     }
+  }
+
+  @Test
+  public void bucketAttributesConsistentOnConcurrentAccess() throws Exception {
+    // in an HA environment another node's StorageFacetImpl can make
+    // changes to the underlying database
+    BucketEntityAdapter otherBucketEntityAdapter = new BucketEntityAdapter();
+    ComponentEntityAdapter otherComponentEntityAdapter = new ComponentEntityAdapter(otherBucketEntityAdapter);
+    AssetEntityAdapter otherAssetEntityAdapter =
+        new AssetEntityAdapter(otherBucketEntityAdapter, otherComponentEntityAdapter);
+    StorageFacetImpl otherNodeStorageFacetImpl = storageFacetImpl("otherNodeId",
+        otherBucketEntityAdapter, otherComponentEntityAdapter, otherAssetEntityAdapter, testRepository1);
+
+    AttributesFacetImpl attributesFacet = attributesFacetImpl(testRepository1);
+
+    // access attributes through underTest
+    when(testRepository1.facet(StorageFacet.class)).thenReturn(underTest);
+    attributesFacet.modifyAttributes(attributes -> attributes.set("foo", "original"));
+    assertThat(attributesFacet.getAttributes().require("foo", String.class), equalTo("original"));
+
+    // update attributes through otherNodeStorageFacetImpl
+    when(testRepository1.facet(StorageFacet.class)).thenReturn(otherNodeStorageFacetImpl);
+    attributesFacet.modifyAttributes(attributes -> attributes.set("foo", "updated"));
+
+    // retrieve updated attributes through underTest
+    when(testRepository1.facet(StorageFacet.class)).thenReturn(underTest);
+    assertThat(attributesFacet.getAttributes().require("foo", String.class), equalTo("updated"));
+  }
+
+  private StorageFacetImpl storageFacetImpl(final String nodeId,
+                                            final BucketEntityAdapter bucketEntityAdapter,
+                                            final ComponentEntityAdapter componentEntityAdapter,
+                                            final AssetEntityAdapter assetEntityAdapter,
+                                            final Repository repository) throws Exception {
+    NodeAccess mockNodeAccess = mock(NodeAccess.class);
+    when(mockNodeAccess.getId()).thenReturn(nodeId);
+    BlobStoreManager mockBlobStoreManager = mock(BlobStoreManager.class);
+    when(mockBlobStoreManager.get(anyString())).thenReturn(mock(BlobStore.class));
+    ContentValidatorSelector contentValidatorSelector =
+        new ContentValidatorSelector(Collections.emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
+    MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.emptyMap());
+    StorageFacetManager storageFacetManager = mock(StorageFacetManager.class);
+    StorageFacetImpl storageFacetImpl = new StorageFacetImpl(
+        mockNodeAccess,
+        mockBlobStoreManager,
+        database.getInstanceProvider(),
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        mock(ClientInfoProvider.class),
+        contentValidatorSelector,
+        mimeRulesSourceSelector,
+        storageFacetManager
+    );
+    storageFacetImpl.installDependencies(mock(EventManager.class));
+
+    storageFacetImpl.attach(repository);
+    storageFacetImpl.init();
+    storageFacetImpl.start();
+
+    return storageFacetImpl;
+  }
+
+  private AttributesFacetImpl attributesFacetImpl(Repository repository) throws Exception {
+    AttributesFacetImpl attributesFacetImpl = new AttributesFacetImpl();
+    attributesFacetImpl.installDependencies(mock(EventManager.class));
+    attributesFacetImpl.attach(repository);
+    attributesFacetImpl.init();
+    attributesFacetImpl.start();
+    return attributesFacetImpl;
   }
 
   private StorageTx beginTX() {

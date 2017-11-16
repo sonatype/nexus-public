@@ -86,17 +86,18 @@ public class RebuildAssetUploadMetadataTask
       Iterable<EntityId> assetIds = assets.stream().map(Entry::getValue).collect(toList());
 
       Collection<Asset> assetsToUpdate = stream(assetStore.getByIds(assetIds))
-          .filter(asset -> Strings2.isEmpty(asset.createdBy())).map(asset -> {
-        BlobStore blobStore = blobStoreManager.get(asset.blobRef().getStore());
-        Blob blob = blobStore.get(asset.blobRef().getBlobId());
-        if (blob != null) {
-          asset.createdBy(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER));
-          asset.createdByIp(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER));
-          asset.blobCreated(blob.getMetrics().getCreationTime());
-        }
+          .filter(asset -> Strings2.isEmpty(asset.createdBy()))
+          .filter(asset -> asset.blobRef() != null).map(asset -> {
+            BlobStore blobStore = blobStoreManager.get(asset.blobRef().getStore());
+            Blob blob = blobStore.get(asset.blobRef().getBlobId());
+            if (blob != null) {
+              asset.createdBy(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER));
+              asset.createdByIp(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER));
+              asset.blobCreated(blob.getMetrics().getCreationTime());
+            }
 
-        return asset;
-      }).collect(toList());
+            return asset;
+          }).collect(toList());
 
       assetStore.save(assetsToUpdate);
 

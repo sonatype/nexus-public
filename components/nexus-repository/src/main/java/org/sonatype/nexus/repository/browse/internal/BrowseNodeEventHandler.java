@@ -22,10 +22,11 @@ import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -40,53 +41,45 @@ public class BrowseNodeEventHandler
 {
   private final boolean enabled;
 
-  private final BrowseNodeWrapper browseNodeWrapper;
-
-  private final BrowseNodeStore browseNodeStore;
+  private final BrowseNodeManager browseNodeManager;
 
   @Inject
   public BrowseNodeEventHandler(final BrowseNodeConfiguration configuration,
-                                final BrowseNodeWrapper browseNodeWrapper,
-                                final BrowseNodeStore browseNodeStore)
+                                final BrowseNodeManager browseNodeManager)
   {
     this.enabled = checkNotNull(configuration).isEnabled();
-    this.browseNodeWrapper = checkNotNull(browseNodeWrapper);
-    this.browseNodeStore = checkNotNull(browseNodeStore);
+    this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 
   @Subscribe
+  @AllowConcurrentEvents
   public void on(final AssetCreatedEvent event) {
     if (shouldProcess(event)) {
-      browseNodeWrapper.createFromAsset(event.getRepositoryName(), event.getAsset());
+      browseNodeManager.createFromAsset(event.getRepositoryName(), event.getAsset());
     }
   }
 
-  /**
-   * Handles the AssetDeletedEvent. If the associated asset nodes have no children they will be deleted. Otherwise the
-   * assetId will be set to null.
-   */
   @Subscribe
+  @AllowConcurrentEvents
   public void on(final AssetDeletedEvent event) {
     if (shouldProcess(event)) {
-      browseNodeStore.deleteNodeByAssetId(event.getAssetId());
+      browseNodeManager.deleteAssetNode(event.getAssetId());
     }
   }
 
-  /**
-   * Handles the ComponentDeletedEvent. Sets the componentId to null on the browse node. Node deletions will be handled
-   * when the associated assets are deleted.
-   */
   @Subscribe
+  @AllowConcurrentEvents
   public void on(final ComponentDeletedEvent event) {
     if (shouldProcess(event)) {
-      browseNodeStore.deleteNodeByComponentId(event.getComponentId());
+      browseNodeManager.deleteComponentNode(event.getComponentId());
     }
   }
 
   @Subscribe
+  @AllowConcurrentEvents
   public void on(final ConfigurationDeletedEvent event) {
     if (shouldProcess(event)) {
-      browseNodeStore.truncateRepository(event.getRepositoryName());
+      browseNodeManager.deleteByRepository(event.getRepositoryName());
     }
   }
 

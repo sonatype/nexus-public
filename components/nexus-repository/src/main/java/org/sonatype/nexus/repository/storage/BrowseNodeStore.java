@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -20,92 +22,39 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Store providing access to the browse tree for assets & components.
  *
- * @since 3.6
+ * @since 3.7
  */
 public interface BrowseNodeStore
 {
   /**
-   * Adds nodes to the tree from pathSegments
+   * Creates a {@link BrowseNode} for the given asset.
+   */
+  void createAssetNode(String repositoryName, List<String> path, Asset asset);
+
+  /**
+   * Creates a {@link BrowseNode} for the given component.
+   */
+  void createComponentNode(String repositoryName, List<String> path, Component component);
+
+  /**
+   * Deletes the asset's {@link BrowseNode}.
+   */
+  void deleteAssetNode(EntityId assetId);
+
+  /**
+   * Deletes the component's {@link BrowseNode}.
+   */
+  void deleteComponentNode(EntityId componentId);
+
+  /**
+   * Deletes all {@link BrowseNode}s belonging to the given repository.
+   */
+  void deleteByRepository(String repositoryName);
+
+  /**
+   * Returns the {@link BrowseNode}s directly visible under the given path.
    *
-   * @return the leaf path
+   * An optional substring can be supplied to further filter the nodes by name.
    */
-  BrowseNode createNodes(String repositoryName, Iterable<String> pathSegments);
-
-  /**
-   * Adds nodes to the tree from pathSegments
-   *
-   * @param repositoryName the name of the repository to create the tree for
-   * @param pathSegments the path to create browse nodes for
-   * @param createChildLinks whether to skip creating child links or not (used when bulk inserting nodes)
-   * @return the leaf path
-   */
-  BrowseNode createNodes(String repositoryName, Iterable<String> pathSegments, boolean createChildLinks);
-
-  /**
-   * @param id
-   * @return the BrowseNode identified by id
-   */
-  BrowseNode getById(EntityId id);
-
-  /**
-   * @param assetId
-   * @return the BrowseNode with the associated assetId or null if no browse node was found
-   */
-  BrowseNode getByAssetId(EntityId assetId);
-
-  /**
-   * @param repositoryName
-   * @param pathSegments
-   * @return all nodes matching the path segments for the repository or an empty list
-   */
-  Iterable<BrowseNode> getByPath(final String repositoryName, final Iterable<String> pathSegments);
-
-  /**
-   * Get the list of nodes found under the specified tree path. (Filtered by permissions)
-   *
-   * @param maxNodes
-   *
-   * @return the children or null if the path does not exist
-   */
-  @Nullable
-  Iterable<BrowseNode> getChildrenByPath(Repository repository, Iterable<String> pathSegments, int maxNodes, @Nullable String filter);
-
-  /**
-   * Save a node to the store
-   */
-  BrowseNode save(BrowseNode node);
-
-  /**
-   * Save a node to the store
-   */
-  BrowseNode save(BrowseNode node, boolean updateChildLinks);
-
-  /**
-   * Remove a node from the store, including any parent nodes that would now have no children.
-   * If a node has children, it will not be deleted but the asset id will be cleared.
-   */
-  void deleteNode(BrowseNode node);
-
-  /**
-   * Remove a node from the store that matches the specified Asset,
-   * including any parent nodes that would now have no children. If a node has children, then just set the assetId to
-   * null.
-   */
-  void deleteNodeByAssetId(EntityId assetId);
-
-  /**
-   * Remove a node from the store that matches the specified Component,
-   * including any parent nodes that would now have no children. If the node has children, then just set the componentId
-   * to null.
-   */
-  void deleteNodeByComponentId(EntityId assetId);
-
-  void truncateRepository(String repositoryName);
-
-  /**
-   * Update all browse node children_ids sets in a repository
-   *
-   * @param repositoryName of the repository to update
-   */
-  void updateChildNodes(String repositoryName);
+  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes, @Nullable String filter);
 }

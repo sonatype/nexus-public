@@ -15,6 +15,7 @@ package org.sonatype.nexus.swagger.internal;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.rest.Component;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.swagger.SwaggerContributor;
 
 import com.google.common.collect.ImmutableSet;
 import io.swagger.converter.ModelConverter;
@@ -51,9 +53,14 @@ public class SwaggerModel
 
   private final Reader reader;
 
+  private final List<SwaggerContributor> contributors;
+
   @Inject
-  public SwaggerModel(final ApplicationVersion applicationVersion) {
+  public SwaggerModel(final ApplicationVersion applicationVersion,
+                      final List<SwaggerContributor> contributors)
+  {
     this.applicationVersion = checkNotNull(applicationVersion);
+    this.contributors = checkNotNull(contributors);
 
     // filter banned types from model, such as Groovy's MetaClass
     ModelConverters.getInstance().addConverter(new ModelFilter());
@@ -63,6 +70,7 @@ public class SwaggerModel
 
   public void scan(final Class<Resource> resourceClass) {
     reader.read(resourceClass);
+    contributors.forEach(c -> c.contribute(getSwagger()));
   }
 
   public Swagger getSwagger() {

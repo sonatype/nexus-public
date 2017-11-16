@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import java.util.Locale;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -38,12 +40,18 @@ public class Maven2MavenPathParser
   @Nonnull
   @Override
   public MavenPath parsePath(final String path) {
+    return parsePath(path, true);
+  }
+
+  @Nonnull
+  @Override
+  public MavenPath parsePath(final String path, final boolean caseSensitive) {
     checkNotNull(path);
     String pathWithoutLeadingSlash = path;
     if (path.startsWith("/")) {
       pathWithoutLeadingSlash = path.substring(1);
     }
-    final Coordinates coordinates = maven2LayoutedPathToCoordinates(pathWithoutLeadingSlash);
+    final Coordinates coordinates = maven2LayoutedPathToCoordinates(pathWithoutLeadingSlash, caseSensitive);
     return new MavenPath(pathWithoutLeadingSlash, coordinates);
   }
 
@@ -57,7 +65,7 @@ public class Maven2MavenPathParser
    * If path does not obeys Maven2 layout or is not an artifact path, {@code null} is returned.
    */
   @Nullable
-  private Coordinates maven2LayoutedPathToCoordinates(final String pathString) {
+  private Coordinates maven2LayoutedPathToCoordinates(final String pathString, final boolean caseSensitive) {
     String str = pathString;
     try {
       int vEndPos = str.lastIndexOf('/');
@@ -155,11 +163,19 @@ public class Maven2MavenPathParser
         }
       }
       else {
-        if (!fileName.startsWith(artifactId + "-" + baseVersion + ".")
-            && !fileName.startsWith(artifactId + "-" + baseVersion + "-")) {
-          // The path does not represents an artifact (filename does not match artifactId-version)!
+        String fileNameStr = fileName;
+        String artifactStr = artifactId + "-" + baseVersion;
+
+        if (!caseSensitive) {
+          fileNameStr = fileNameStr.toLowerCase(Locale.ROOT);
+          artifactStr = artifactStr.toLowerCase(Locale.ROOT);
+        }
+
+        if (!fileNameStr.startsWith(artifactStr) || "-.".indexOf(fileNameStr.charAt(artifactStr.length())) == -1) {
+          // The path does not represent an artifact (filename does not match artifactId-version[-.])!
           return null;
         }
+
         int nTailPos = artifactId.length() + baseVersion.length() + 1;
         tail = str.substring(nTailPos);
       }

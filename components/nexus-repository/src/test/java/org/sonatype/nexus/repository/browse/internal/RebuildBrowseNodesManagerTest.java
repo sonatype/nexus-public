@@ -22,35 +22,32 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
-import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.MetadataNode;
-import org.sonatype.nexus.repository.storage.internal.BrowseNodeSqlBuilder;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -126,9 +123,7 @@ public class RebuildBrowseNodesManagerTest
     bucketEntityAdapter = new BucketEntityAdapter();
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
-    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, securityHelper,
-        new BrowseNodeSqlBuilder(selectorManager, new CselAssetSqlBuilder()),
-        new BrowseNodeConfiguration());
+    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());
     underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler,
         repositoryManager, configuration);
 
@@ -195,10 +190,14 @@ public class RebuildBrowseNodesManagerTest
   public void doStartSkipsTaskSchedulingIfThereAreBrowseNodes() throws Exception {
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     Asset asset = createAsset("asset", "maven2", bucket);
-    assetEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), asset);
-    browseNodeEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(),
-        new BrowseNode().withPath("asset").withRepositoryName(REPOSITORY_NAME)
-            .withAssetId(new AttachedEntityId(browseNodeEntityAdapter, AttachedEntityHelper.id(asset))));
+
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      assetEntityAdapter.addEntity(db, asset);
+    }
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      browseNodeEntityAdapter.createAssetNode(db, REPOSITORY_NAME, asList(asset.name()), asset);
+    }
+
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
         .thenReturn(taskConfiguration);
 
@@ -211,12 +210,16 @@ public class RebuildBrowseNodesManagerTest
   public void doStartIncludesRepositoriesWithZeroAssets() throws Exception {
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     Asset asset = createAsset("asset", "maven2", bucket);
-    assetEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), asset);
-    browseNodeEntityAdapter.save(databaseInstanceRule.getInstance().acquire(),
-        new BrowseNode().withPath("asset").withRepositoryName(REPOSITORY_NAME).withAssetId(EntityHelper.id(asset)),
-        true);
 
-    assetEntityAdapter.deleteEntity(databaseInstanceRule.getInstance().acquire(), asset);
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      assetEntityAdapter.addEntity(db, asset);
+    }
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      browseNodeEntityAdapter.createAssetNode(db, REPOSITORY_NAME, asList(asset.name()), asset);
+    }
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      assetEntityAdapter.deleteEntity(db, asset);
+    }
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
         .thenReturn(taskConfiguration);

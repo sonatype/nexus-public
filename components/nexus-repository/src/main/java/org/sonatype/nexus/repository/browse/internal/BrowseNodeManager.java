@@ -12,40 +12,31 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
 
-import org.apache.commons.collections.CollectionUtils;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.text.Strings2.lower;
 
 /**
- * Wraps format specific behaviour for browse nodes
+ * Manages format specific behaviour for browse nodes
  *
- * @since 3.6
+ * @since 3.7
  */
 @Named
 @Singleton
-public class BrowseNodeWrapper
+public class BrowseNodeManager
 {
   private static final String DEFAULT_PATH_HANDLER = "default";
 
@@ -58,7 +49,7 @@ public class BrowseNodeWrapper
   private final BrowseNodeGenerator defaultGenerator;
 
   @Inject
-  public BrowseNodeWrapper(final BrowseNodeStore browseNodeStore,
+  public BrowseNodeManager(final BrowseNodeStore browseNodeStore,
                            final ComponentStore componentStore,
                            final Map<String, BrowseNodeGenerator> pathGenerators)
   {
@@ -69,7 +60,7 @@ public class BrowseNodeWrapper
   }
 
   /**
-   * Creates the browse nodes used to access an asset and it's component (if it has one).
+   * Creates the browse nodes used to access an asset and its component (if it has one).
    *
    * @param repositoryName of the repository that the asset is stored in
    * @param asset          that needs to be accessible from the browse nodes
@@ -81,12 +72,7 @@ public class BrowseNodeWrapper
     checkNotNull(asset);
 
     BrowseNodeGenerator generator = pathGenerators.getOrDefault(asset.format(), defaultGenerator);
-
-    Map<String, RebuildBrowseNode> rootNodes = new HashMap<>();
-
-    computeNodesForAsset(generator, rootNodes, asset);
-
-    writeNodes(repositoryName, rootNodes, true);
+    createBrowseNodes(repositoryName, generator, asset);
   }
 
   /**
@@ -101,68 +87,48 @@ public class BrowseNodeWrapper
     checkNotNull(repository);
     checkNotNull(assets);
 
+    String repositoryName = repository.getName();
     BrowseNodeGenerator generator = pathGenerators.getOrDefault(repository.getFormat().getValue(), defaultGenerator);
-    Map<String, RebuildBrowseNode> rootNodes = new LinkedHashMap<>();
-
-    assets.forEach(asset -> computeNodesForAsset(generator, rootNodes, asset));
-
-    writeNodes(repository.getName(), rootNodes, false);
+    assets.forEach(asset -> createBrowseNodes(repositoryName, generator, asset));
   }
 
-  private void computeNodesForAsset(final BrowseNodeGenerator generator, final Map<String, RebuildBrowseNode> rootNodes, final Asset asset) {
+  /**
+   * Creates an asset browse node and optional component browse node if the asset has a component.
+   */
+  private void createBrowseNodes(final String repositoryName, final BrowseNodeGenerator generator, final Asset asset) {
     Component component = asset.componentId() != null ? componentStore.read(asset.componentId()) : null;
 
     List<String> assetPath = generator.computeAssetPath(asset, component);
-    List<String> componentPath = generator.computeComponentPath(asset, component);
+    if (!assetPath.isEmpty()) {
+      browseNodeStore.createAssetNode(repositoryName, assetPath, asset);
+    }
 
-    String rootName = assetPath.get(0);
-
-    rootNodes.computeIfAbsent(rootName, s -> new RebuildBrowseNode().withName(rootName));
-    RebuildBrowseNode root = rootNodes.get(rootName);
-    RebuildBrowseNode assetNode = createNodes(root, assetPath.subList(1, assetPath.size()));
-    assetNode.withAssetId(EntityHelper.id(asset)).withAssetNameLowercase(lower(asset.name()));
-
-    if (CollectionUtils.isNotEmpty(componentPath)) {
-      RebuildBrowseNode componentNode = createNodes(root, componentPath.subList(1, componentPath.size()));
-      componentNode.withComponentId(EntityHelper.id(component));
+    if (component != null) {
+      List<String> componentPath = generator.computeComponentPath(asset, component);
+      if (!componentPath.isEmpty()) {
+        browseNodeStore.createComponentNode(repositoryName, componentPath, component);
+      }
     }
   }
 
-  private RebuildBrowseNode createNodes(final RebuildBrowseNode root, final List<String> path) {
-    RebuildBrowseNode lastNode = root;
-
-    for (String name : path) {
-      RebuildBrowseNode parentNode = lastNode;
-      parentNode.getChildren()
-          .computeIfAbsent(name, s -> new RebuildBrowseNode().withParentNode(parentNode).withName(name));
-      lastNode = parentNode.getChildren().get(name);
-    }
-
-    return lastNode;
+  /**
+   * Deletes the asset's browse node.
+   */
+  public void deleteAssetNode(final EntityId assetId) {
+    browseNodeStore.deleteAssetNode(assetId);
   }
 
-  private void writeNodes(final String repositoryName,
-                          final Map<String, RebuildBrowseNode> rootNodes,
-                          final boolean updateChildLinks)
-  {
-    Queue<RebuildBrowseNode> nodes = new LinkedList<>(rootNodes.values());
-
-    while (!nodes.isEmpty()) {
-      RebuildBrowseNode node = nodes.remove();
-      RebuildBrowseNode parent = node.getParentNode();
-      nodes.addAll(node.getChildren().values());
-
-      EntityId parentId = parent != null && parent.getBrowseNode() != null ?
-          EntityHelper.id(parent.getBrowseNode()) :
-          null;
-
-      BrowseNode browseNode = browseNodeStore.save(
-          new BrowseNode().withAssetId(node.getAssetId()).withComponentId(node.getComponentId())
-              .withPath(node.getName()).withParentId(parentId).withRepositoryName(repositoryName)
-              .withAssetNameLowercase(node.getAssetNameLowercase()), updateChildLinks);
-
-      node.withBrowseNode(browseNode);
-    }
+  /**
+   * Deletes the component's browse node.
+   */
+  public void deleteComponentNode(final EntityId componentId) {
+    browseNodeStore.deleteComponentNode(componentId);
   }
 
+  /**
+   * Deletes all browse nodes belonging to the given repository.
+   */
+  public void deleteByRepository(final String repositoryName) {
+    browseNodeStore.deleteByRepository(repositoryName);
+  }
 }

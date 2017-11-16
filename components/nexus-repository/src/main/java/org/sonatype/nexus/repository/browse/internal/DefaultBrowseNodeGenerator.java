@@ -13,57 +13,42 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.repository.browse.AbstractPathBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
 import com.google.inject.Singleton;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Default handler of events that require management of folder data. This implementation will create a folder structure
- * based on the group, name, and version of the component and put the assets underneath the component node.
+ * Component-led layout based on group, name, and version; places components one level above their assets.
  *
  * @since 3.6
  */
 @Singleton
 @Named
 public class DefaultBrowseNodeGenerator
-    extends AbstractPathBrowseNodeGenerator
+    extends ComponentPathBrowseNodeGenerator
 {
   /**
-   * @return componentPath/assetName if the component was not null, otherwise assetName
+   * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
   @Override
   public List<String> computeAssetPath(final Asset asset, @Nullable final Component component) {
     checkNotNull(asset);
 
     if (component != null) {
-      List<String> path = new ArrayList<>();
+      List<String> path = computeComponentPath(asset, component);
 
-      if (!Strings2.isBlank(component.group())) {
-        path.add(component.group());
-      }
-
-      path.add(component.name());
-
-      if (!Strings2.isBlank(component.version())) {
-        path.add(component.version());
-      }
-
-      String name = asset.name();
-      int lastSlash = name.lastIndexOf('/');
-      if (lastSlash != -1 && lastSlash != name.length() - 1) {
-        name = name.substring(lastSlash + 1);
-      }
-      path.add(name);
+      // place asset just below component
+      path.add(lastSegment(asset.name()));
 
       return path;
     }
@@ -73,14 +58,22 @@ public class DefaultBrowseNodeGenerator
   }
 
   /**
-   * @return [componentGroup]/componentName/[componentVersion] if component is not null, otherwise an emptyList
+   * @return [componentGroup]/componentName/[componentVersion]
    */
   @Override
   public List<String> computeComponentPath(final Asset asset, final Component component) {
-    if (component == null) {
-      return Collections.emptyList();
+    List<String> path = new ArrayList<>();
+
+    if (!Strings2.isBlank(component.group())) {
+      path.add(component.group());
     }
-    List<String> path = computeAssetPath(asset, component);
-    return path.subList(0, path.size() - 1);
+
+    path.add(component.name());
+
+    if (!Strings2.isBlank(component.version())) {
+      path.add(component.version());
+    }
+
+    return path;
   }
 }
