@@ -24,6 +24,8 @@ import com.google.common.base.Function;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.sort.SortBuilder;
 
 /**
@@ -102,13 +104,6 @@ public interface SearchService
    *
    * @since 3.1
    */
-  Iterable<SearchHit> browseUnrestricted(QueryBuilder query, int from, int size);
-
-  /**
-   * Search component metadata and browse results (paged), without the effect of content selectors.
-   *
-   * @since 3.1
-   */
   SearchResponse searchUnrestricted(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
 
   /**
@@ -117,6 +112,15 @@ public interface SearchService
    * @since 3.1
    */
   SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
+
+  /**
+   * Search component metadata and browse results using aggregations with content selectors applied.
+   *
+   * @since 3.7
+   */
+  SearchResponse searchInReposWithAggregations(QueryBuilder query,
+                                               List<AggregationBuilder> aggregations,
+                                               Collection<String> repoNames);
 
   /**
    * Count the number of results for a given query, without the effect of content selectors.

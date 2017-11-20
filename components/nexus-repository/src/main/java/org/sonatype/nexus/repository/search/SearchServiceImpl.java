@@ -72,6 +72,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -435,12 +437,6 @@ public class SearchServiceImpl
   }
 
   @Override
-  public Iterable<SearchHit> browseUnrestricted(final QueryBuilder query, final int from, final int size) {
-    SearchResponse response = searchUnrestricted(query, null, from, size);
-    return response.getHits();
-  }
-
-  @Override
   public SearchResponse searchUnrestricted(final QueryBuilder query,
                                            @Nullable final List<SortBuilder> sort,
                                            final int from,
@@ -477,6 +473,25 @@ public class SearchServiceImpl
     }
   }
 
+  @Override
+  public SearchResponse searchInReposWithAggregations(final QueryBuilder query,
+                                                      final List<AggregationBuilder> aggregations,
+                                                      final Collection<String> repoNames)
+  {
+    if (!validateQuery(query)) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+    final String[] searchableIndexes = getSearchableIndexes(true, repoNames);
+    if (searchableIndexes.length == 0) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+
+    try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
+      return executeSearch(query, aggregations, searchableIndexes,
+          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())));
+    }
+  }
+
   private SearchResponse executeSearch(final QueryBuilder query,
                                        final String[] searchableIndexes,
                                        final int from,
@@ -500,6 +515,40 @@ public class SearchServiceImpl
         searchRequestBuilder.addSort(entry);
       }
     }
+    SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
+
+    if (profile) {
+      logProfileResults(searchResponse);
+    }
+
+    return searchResponse;
+  }
+
+  private SearchResponse executeSearch(final QueryBuilder query,
+                                       final List<AggregationBuilder> aggregations,
+                                       final String[] searchableIndexes,
+                                       @Nullable final QueryBuilder postFilter)
+  {
+    checkNotNull(query);
+    checkNotNull(aggregations);
+    checkNotNull(searchableIndexes);
+
+    SearchRequestBuilder searchRequestBuilder = client.get().prepareSearch(searchableIndexes)
+        .setTypes(TYPE)
+        .setQuery(query)
+        .setFrom(0)
+        .setSize(0)
+        .setProfile(profile)
+        .setTrackScores(true);
+
+    for (AggregationBuilder aggregation : aggregations) {
+      searchRequestBuilder.addAggregation(aggregation);
+    }
+
+    if (postFilter != null) {
+      searchRequestBuilder.setPostFilter(postFilter);
+    }
+
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
 
     if (profile) {

@@ -143,8 +143,9 @@ public class ComponentEntityAdapter
   {
     checkNotNull(name);
 
-    String whereClause = " where ci_name = :name";
-    StringBuilder query = new StringBuilder("select from indexvalues:" + I_CI_NAME_CASE_INSENSITIVE + whereClause);
+    String whereClause = " where (ci_name = :name)";
+    StringBuilder query = new StringBuilder("select from " + DB_CLASS + whereClause);
+
     addBucketConstraints(whereClause, buckets, query);
 
     if (querySuffix != null) {

@@ -39,6 +39,42 @@ Ext.define('NX.coreui.controller.SearchNpm', {
           fieldLabel: NX.I18n.get('SearchNpm_Scope_FieldLabel'),
           width: 250
         }
+      },
+      {
+        id: 'assets.attributes.npm.author',
+        group: NX.I18n.get('SearchNpm_Group'),
+        config: {
+          format: 'npm',
+          fieldLabel: NX.I18n.get('SearchNpm_Author_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.npm.description',
+        group: NX.I18n.get('SearchNpm_Group'),
+        config: {
+          format: 'npm',
+          fieldLabel: NX.I18n.get('SearchNpm_Description_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.npm.keywords',
+        group: NX.I18n.get('SearchNpm_Group'),
+        config: {
+          format: 'npm',
+          fieldLabel: NX.I18n.get('SearchNpm_Keywords_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.npm.license',
+        group: NX.I18n.get('SearchNpm_Group'),
+        config: {
+          format: 'npm',
+          fieldLabel: NX.I18n.get('SearchNpm_License_FieldLabel'),
+          width: 250
+        }
       }
     ], me);
 
@@ -52,7 +88,11 @@ Ext.define('NX.coreui.controller.SearchNpm', {
         { id: 'format', value: 'npm', hidden: true },
         { id: 'group' },
         { id: 'name.raw' },
-        { id: 'version' }
+        { id: 'version' },
+        { id: 'assets.attributes.npm.author' },
+        { id: 'assets.attributes.npm.description' },
+        { id: 'assets.attributes.npm.keywords' },
+        { id: 'assets.attributes.npm.license' }
       ]
     }, me);
   }

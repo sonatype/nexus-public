@@ -117,6 +117,8 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset'),
         scheduleFieldSet = me.down('nx-coreui-task-schedulefieldset');
 
+    this.resetTaskForm();
+
     this.callParent(arguments);
 
     if (taskTypeModel) {
@@ -124,6 +126,19 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       scheduleFieldSet.setRecurringDays(model.get('recurringDays'));
       scheduleFieldSet.setStartDate(model.get('startDate'));
     }
+  },
+
+  /**
+   * To Reset Task Form including Days to run checkboxes.
+   */
+  resetTaskForm: function() {
+    var me = this,
+        checkboxes = me.query('checkbox[recurringDayValue]');
+
+    Ext.Array.each(checkboxes, function(checkbox) {
+      checkbox.originalValue = false;
+    });
+    me.form.reset();
   },
 
   /**
