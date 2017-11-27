@@ -21,6 +21,9 @@ import java.util.Properties;
 
 import org.sonatype.goodies.common.FileReplacer;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,8 @@ public class PropertiesFile
 {
   private static final Logger log = LoggerFactory.getLogger(PropertiesFile.class);
 
+  private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSSZ");
+  
   private final File file;
 
   public PropertiesFile(final File file) {
@@ -50,10 +55,24 @@ public class PropertiesFile
   }
 
   public void store() throws IOException {
+    store(null);
+  }
+
+  /**
+   * Store the file with specific comments. If none are provided a timestamp will be added. This is done using
+   * the same pattern used in log files to ease reconciliation of timing across the system.
+   * @since 3.next
+   */
+  public void store(final String comments) throws IOException {
     log.debug("Storing: {}", file);
     FileReplacer replacer = new FileReplacer(file);
     replacer.setDeleteBackupFile(true);
-    replacer.replace(output -> store(output, null));
+    String comment = comments != null ? comments : timestamp();
+    replacer.replace(output -> store(output, comment));
+  }
+
+  private String timestamp() {
+    return new DateTime().toString(FORMATTER);
   }
 
   public File getFile() {

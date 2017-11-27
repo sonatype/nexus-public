@@ -15,6 +15,7 @@ package org.sonatype.nexus.upgrade.internal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -38,9 +39,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.maxBy;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Manages {@link Upgrade}s and {@link Checkpoint}s for the {@link UpgradeService}.
@@ -62,8 +65,32 @@ public class UpgradeManager
                         final boolean warnOnMissingDependencies)
   {
     this.managedCheckpoints = checkNotNull(managedCheckpoints);
-    this.managedUpgrades = checkNotNull(managedUpgrades);
+    this.managedUpgrades = verifyUniquenessOf(checkNotNull(managedUpgrades));
     this.warnOnMissingDependencies = warnOnMissingDependencies;
+  }
+
+  /**
+   * Enforce the assertion that that every tuple of (model, from version, to version) is unique amongst all the upgrades
+   *
+   * @return the same list as was passed in
+   */
+  private static List<Upgrade> verifyUniquenessOf(final List<Upgrade> managedUpgrades) {
+    Map<Upgrades, List<Upgrade>> duplicates = managedUpgrades.stream()
+        .collect(groupingBy(UpgradeManager::upgrades)).entrySet().stream()
+        .filter(e -> e.getValue().size() > 1)
+        .collect(toMap(Entry::getKey, Entry::getValue));
+
+    if (!duplicates.isEmpty()) {
+      throw new IllegalStateException("Duplicate upgrade steps found! " +
+          duplicates.entrySet().stream()
+              .map(e -> String.format("\"Upgrade of model: %s from: %s to: %s duplicated by classes: %s\"",
+                  e.getKey().model(), e.getKey().from(), e.getKey().to(),
+                  e.getValue().stream().map(u -> u.getClass().getCanonicalName()).collect(joining(","))))
+              .collect(joining(","))
+      );
+    }
+
+    return managedUpgrades;
   }
 
   public Set<String> getLocalModels() {

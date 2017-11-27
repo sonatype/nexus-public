@@ -39,7 +39,7 @@ import static org.sonatype.nexus.repository.browse.internal.AssetWhereClauseBuil
 @Named
 @Singleton
 public class BrowseAssetsSqlBuilder
-    extends BrowseSqlBuilderSupport
+    extends BrowseMetadataNodeSqlBuilderSupport
 {
   private final AssetEntityAdapter assetEntityAdapter;
 

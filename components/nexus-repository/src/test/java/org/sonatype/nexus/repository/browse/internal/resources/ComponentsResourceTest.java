@@ -17,6 +17,7 @@ import java.util.Collections;
 
 import javax.ws.rs.NotFoundException;
 
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.internal.ComponentContinuationTokenHelper;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.rest.Page;
 
@@ -106,6 +108,8 @@ public class ComponentsResourceTest
   @Mock
   MaintenanceService maintenanceService;
 
+  ContinuationTokenHelper continuationTokenHelper;
+
   Asset assetOne;
 
   Asset assetTwo;
@@ -136,8 +140,10 @@ public class ComponentsResourceTest
         .thenReturn(componentOneBrowseResults);
     when(componentTwoBrowseResults.getResults()).thenReturn(Collections.singletonList(assetTwo));
 
+    continuationTokenHelper = new ComponentContinuationTokenHelper(componentEntityAdapter);
+
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
-        maintenanceService);
+        maintenanceService, continuationTokenHelper);
   }
 
   private void configureComponent(Component component, String group, String name, String version) {

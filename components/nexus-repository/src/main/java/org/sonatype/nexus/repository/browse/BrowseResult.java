@@ -36,6 +36,10 @@ public class BrowseResult<T>
     this.results = checkNotNull(results);
   }
 
+  public BrowseResult(final QueryOptions queryOptions, final List<T> results) {
+    this(estimateCount(queryOptions, results), results);
+  }
+
   /**
    * Returns the total count of entries available, not just those returned by this particular query.
    */
@@ -49,4 +53,17 @@ public class BrowseResult<T>
   public List<T> getResults() {
     return results;
   }
+
+  private static long estimateCount(final QueryOptions queryOptions, final List<?> items) {
+    long count = items.size();
+    if (queryOptions.getStart() != null && queryOptions.getLimit() != null) {
+      count += queryOptions.getStart();
+      // estimate an additional page if the number of items returned was limited
+      if (items.size() == queryOptions.getLimit()) {
+        count += queryOptions.getLimit();
+      }
+    }
+    return count;
+  }
+
 }

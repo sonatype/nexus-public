@@ -67,7 +67,7 @@ public abstract class MetadataNode<T>
     return require(bucketId, P_BUCKET);
   }
 
-  T bucketId(final EntityId bucketId) {
+  public T bucketId(final EntityId bucketId) {
     this.bucketId = checkNotNull(bucketId);
     return self();
   }

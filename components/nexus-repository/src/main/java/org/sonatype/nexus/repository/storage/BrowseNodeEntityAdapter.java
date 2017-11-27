@@ -455,12 +455,14 @@ public class BrowseNodeEntityAdapter
     StringBuilder buf = new StringBuilder(select);
 
     if (!assetFilter.isEmpty()) {
+      buf.append(" and (").append(P_ASSET_ID);
       if (includeNonAssetNodes) {
-        buf.append(" and (").append(P_ASSET_ID).append(" is null or ").append(assetFilter).append(')');
+        buf.append(" is null or ");
       }
       else {
-        buf.append(" and ").append(assetFilter);
+        buf.append(" is not null and ");
       }
+      buf.append(assetFilter).append(')');
     }
 
     buf.append(" limit ").append(limit);

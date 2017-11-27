@@ -20,9 +20,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.storage.OrientAsyncHelper.QueueConsumingIterable;
 import org.sonatype.nexus.repository.storage.OrientAsyncHelper.QueueFeedingResultListener;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -38,12 +36,6 @@ public class OrientAsyncHelperTest
 
   private BlockingQueue<ODocument> newQueue(ODocument... elements) {
     return new ArrayBlockingQueue<>(Math.max(1, elements.length), false, asList(elements));
-  }
-
-  @BeforeClass
-  public static void setupClass() {
-    // restore OrientDB state that gets affected by other tests in the suite
-    ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
   }
 
   @Test

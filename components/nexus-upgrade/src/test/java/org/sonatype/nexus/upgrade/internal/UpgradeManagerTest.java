@@ -312,4 +312,19 @@ public class UpgradeManagerTest
     assertThat(upgradeManager.latestKnownModelVersions(),
         equalTo(ImmutableMap.of("bar", "1.1", "wibble", "2.0", "foo", "1.2")));
   }
+
+  @Test
+  public void testDuplicateUpgradesAreIllegal() {
+    List<Upgrade> upgrades = ImmutableList.of(
+        new org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_1(),
+        new org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_2(),
+        new org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_2_Duplicate(),
+        new org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_3()
+    );
+
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Duplicate upgrade steps found! \"Upgrade of model: foo from: 1.1 to: 1.2 duplicated by classes: org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_2,org.sonatype.nexus.upgrade.duplicate.UpgradeFoo_1_2_Duplicate\"");
+    new UpgradeManager(ImmutableList.of(), upgrades, false);
+  }
+
 }

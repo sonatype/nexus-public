@@ -26,7 +26,6 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -101,10 +100,6 @@ public class ContentExpressionFunctionTest
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
     underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager, contentAuthHelper);
-
-    // Copied from the ContentAuthTest, I didn't need this to run the tests locally, but seems CI does
-    ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 
   @Test

@@ -27,15 +27,10 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
-import org.sonatype.nexus.repository.search.SearchMapping;
-import org.sonatype.nexus.repository.search.SearchMappings;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.rest.Page;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -101,20 +96,12 @@ public class SearchResourceTest
 
   SearchResource underTest;
 
-  Map<String, SearchMappings> searchMappings = ImmutableMap.of(
-      "default", () -> ImmutableList.of(
-          new SearchMapping("sha1", "assets.attributes.checksum.sha1", ""),
-          new SearchMapping("sha256", "assets.attributes.checksum.sha256", "")
-      )
-  );
-
   @Before
   public void setup() {
     configureMockedRepository(repository, "test-repo", "http://localhost:8081/test");
     setupResponse();
 
-    underTest = new SearchResource(repositoryManagerRESTAdapter, browseService, searchService, new GroupType(),
-        new TokenEncoder(), searchMappings);
+    underTest = new SearchResource(searchUtils, browseService, searchService,  new TokenEncoder());
   }
 
   private void setupResponse() {
@@ -292,7 +279,7 @@ public class SearchResourceTest
         "&arbitrary.param=random" +
         "&sha256=" + //this one should be ignored because it is empty
         "&q=someKindOfStringQuery";
-    QueryBuilder actual = underTest.buildQuery(uriInfo(uri));
+    QueryBuilder actual = searchUtils.buildQuery(uriInfo(uri));
 
     assertThat(actual.toString(), is(expected.toString()));
   }
@@ -305,13 +292,13 @@ public class SearchResourceTest
 
     // put every single search param into the pam
     StringBuilder sb = new StringBuilder();
-    Set<String> allKeys = underTest.getSearchParams().keySet();
+    Set<String> allKeys = searchUtils.getSearchParameters().keySet();
     allKeys.forEach(s -> sb.append(s).append("=valueDoesNotMatter&"));
 
     // asert only assert params remain
     result = underTest.getAssetParams(uriInfo("?" + sb.toString()));
-    assertThat(result.size(), equalTo(underTest.getAssetSearchParams().size()));
-    assertThat(result.keySet(), equalTo(underTest.getAssetSearchParams().keySet()));
+    assertThat(result.size(), equalTo(searchUtils.getAssetSearchParameters().size()));
+    assertThat(result.keySet(), equalTo(searchUtils.getAssetSearchParameters().keySet()));
   }
 
   @Test

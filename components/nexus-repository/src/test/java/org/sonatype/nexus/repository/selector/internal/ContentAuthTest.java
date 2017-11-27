@@ -19,7 +19,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -90,10 +89,6 @@ public class ContentAuthTest
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
 
     underTest = new ContentAuth(contentAuthHelper);
-
-    // This feels odd...
-    ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 
   @Test

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.browse.internal.resources;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -22,6 +23,9 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseService;
+import org.sonatype.nexus.repository.search.SearchMapping;
+import org.sonatype.nexus.repository.search.SearchMappings;
+import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -60,6 +64,15 @@ public abstract class RepositoryResourceTestSupport
 
   String mavenReleasesId = "maven-releases";
 
+  Map<String, SearchMappings> searchMappings = ImmutableMap.of(
+      "default", () -> ImmutableList.of(
+          new SearchMapping("sha1", "assets.attributes.checksum.sha1", ""),
+          new SearchMapping("sha256", "assets.attributes.checksum.sha256", "")
+      )
+  );
+
+  SearchUtils searchUtils;
+
   @Before
   public void init() {
     configureMockedRepository(mavenReleases, mavenReleasesId, "http://localhost:8081/repository/maven-releases");
@@ -70,6 +83,7 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
+    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
   }
 
   protected void configureMockedRepository(Repository repository,

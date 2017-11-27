@@ -10,31 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
-
-import java.util.List;
-import java.util.Map;
+package org.sonatype.nexus.repository.browse;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.browse.QueryOptions;
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
+import org.sonatype.nexus.orient.entity.EntityAdapter;
 
 import static org.sonatype.nexus.repository.browse.internal.SuffixSqlBuilder.buildSuffix;
 
 /**
- * @since 3.4
+ * @since 3.7
  */
 public abstract class BrowseSqlBuilderSupport
     extends ComponentSupport
 {
-  /**
-   * Returns the SQL for performing the build query.
-   */
-  String buildBrowseSql(final List<String> bucketIds, final QueryOptions queryOptions) {
-    if (bucketIds.isEmpty()) {
-      return "";
-    }
+  protected abstract EntityAdapter<?> getEntityAdapter();
 
+  protected abstract String getBrowseIndex();
+
+  protected StringBuilder buildBase(QueryOptions queryOptions) {
     StringBuilder queryBuilder = new StringBuilder("SELECT FROM ");
 
     if ("id".equals(queryOptions.getSortProperty())) {
@@ -48,24 +41,10 @@ public abstract class BrowseSqlBuilderSupport
       queryBuilder.append(":").append(getBrowseIndex());
     }
 
-    queryBuilder.append(" WHERE ").append(buildWhereClause(bucketIds, queryOptions)).append(' ')
-        .append(buildQuerySuffix(queryOptions));
-
-    return queryBuilder.toString();
+    return queryBuilder;
   }
 
-  private String buildQuerySuffix(final QueryOptions queryOptions) {
+  protected String buildQuerySuffix(final QueryOptions queryOptions) {
     return buildSuffix(queryOptions);
   }
-
-  protected abstract MetadataNodeEntityAdapter<?> getEntityAdapter();
-
-  protected abstract String getBrowseIndex();
-
-  protected abstract String buildWhereClause(final List<String> bucketIds, final QueryOptions queryOptions);
-
-  /**
-   * Returns the SQL parameters for performing the browse query.
-   */
-  abstract Map<String, Object> buildSqlParams(final String repositoryName, final QueryOptions queryOptions);
 }

@@ -29,6 +29,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationTokenException;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
@@ -49,7 +51,6 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
@@ -77,16 +78,20 @@ public class AssetsResource
 
   private final MaintenanceService maintenanceService;
 
+  private final ContinuationTokenHelper continuationTokenHelper;
+
   @Inject
   public AssetsResource(final BrowseService browseService,
                         final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                         final AssetEntityAdapter assetEntityAdapter,
-                        final MaintenanceService maintenanceService)
+                        final MaintenanceService maintenanceService,
+                        @Named("asset") final ContinuationTokenHelper continuationTokenHelper)
   {
     this.browseService = checkNotNull(browseService);
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.continuationTokenHelper = checkNotNull(continuationTokenHelper);
   }
 
 
@@ -96,28 +101,24 @@ public class AssetsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    final String lastId = lastIdFromContinuationToken(continuationToken);
-
     BrowseResult<Asset> assetBrowseResult = browseService.browseAssets(
         repository,
-        new QueryOptions(null, "id", "asc", 0, 10, lastId));
+        new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
 
     List<AssetXO> assetXOs = assetBrowseResult.getResults().stream()
         .map(asset -> fromAsset(asset, repository))
         .collect(toList());
-
     return new Page<>(assetXOs, assetBrowseResult.getTotal() > assetBrowseResult.getResults().size() ?
-        id(getLast(assetBrowseResult.getResults())).getValue() : null);
+        continuationTokenHelper.getTokenFromId(getLast(assetBrowseResult.getResults())) : null);
   }
 
   @Nullable
   private String lastIdFromContinuationToken(final String continuationToken) {
     try {
-      return continuationToken != null ?
-          assetEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString() : null;
+      return continuationTokenHelper.getIdFromToken(continuationToken);
     }
-    catch (IllegalArgumentException e) {
-      log.debug("Caught exception parsing id from continuation token {}", continuationToken, e);
+    catch (ContinuationTokenException e) {
+      log.debug(e.getMessage(), e);
       throw new WebApplicationException(NOT_ACCEPTABLE);
     }
   }

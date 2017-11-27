@@ -136,7 +136,7 @@ public class BrowseServiceImpl
             browseComponentsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
             browseComponentsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
       }
-      return new BrowseResult<>(estimateCount(queryOptions, components), components);
+      return new BrowseResult<>(queryOptions, components);
     }
   }
 
@@ -147,18 +147,6 @@ public class BrowseServiceImpl
     Iterable<ODocument> docs = storageTx.browse(browseComponentsSqlBuilder.buildBrowseSql(bucketIds, adjustedOptions),
         browseComponentsSqlBuilder.buildSqlParams(repository.getName(), adjustedOptions));
     return docs.iterator().hasNext();
-  }
-
-  private long estimateCount(final QueryOptions queryOptions, final List<?> items) {
-    long count = items.size();
-    if (queryOptions.getStart() != null && queryOptions.getLimit() != null) {
-      count += queryOptions.getStart();
-      // estimate an additional page if the number of items returned was limited
-      if (items.size() == queryOptions.getLimit()) {
-        count += queryOptions.getLimit();
-      }
-    }
-    return count;
   }
 
   @Override
@@ -201,7 +189,7 @@ public class BrowseServiceImpl
             browseAssetsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
             browseAssetsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
       }
-      return new BrowseResult<>(estimateCount(queryOptions, assets), assets);
+      return new BrowseResult<>(queryOptions, assets);
     }
   }
 

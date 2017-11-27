@@ -35,23 +35,18 @@ import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.SearchResourceDoc;
-import org.sonatype.nexus.repository.group.GroupFacet;
-import org.sonatype.nexus.repository.search.SearchMapping;
-import org.sonatype.nexus.repository.search.SearchMappings;
 import org.sonatype.nexus.repository.search.SearchService;
-import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
@@ -60,12 +55,8 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.StreamSupport.stream;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.shiro.util.CollectionUtils.isEmpty;
-import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
-import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromElasicSearchMap;
 import static org.sonatype.nexus.repository.browse.internal.resources.AssetMapUtils.getValueFromAssetMap;
@@ -94,7 +85,7 @@ public class SearchResource
 
   public static final String SEARCH_AND_DOWNLOAD_URI = "/assets/download";
 
-  private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
+  private final SearchUtils searchUtils;
 
   private final BrowseService browseService;
 
@@ -102,41 +93,18 @@ public class SearchResource
 
   private static final int PAGE_SIZE = 50;
 
-  private final Type groupType;
-
   private final TokenEncoder tokenEncoder;
 
-  private final Map<String, String> searchParams;
-
-  private final Map<String, String> assetSearchParams;
-
   @Inject
-  public SearchResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
+  public SearchResource(final SearchUtils searchUtils,
                         final BrowseService browseService,
                         final SearchService searchService,
-                        @Named(GroupType.NAME) final Type groupType,
-                        final TokenEncoder tokenEncoder,
-                        final Map<String, SearchMappings> searchMappings)
+                        final TokenEncoder tokenEncoder)
   {
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+    this.searchUtils = checkNotNull(searchUtils);
     this.browseService = checkNotNull(browseService);
     this.searchService = checkNotNull(searchService);
-    this.groupType = checkNotNull(groupType);
     this.tokenEncoder = checkNotNull(tokenEncoder);
-    this.searchParams = checkNotNull(searchMappings).entrySet().stream()
-        .flatMap(e -> stream(e.getValue().get().spliterator(), true))
-        .collect(toMap(SearchMapping::getAlias, SearchMapping::getAttribute));
-    this.assetSearchParams = searchParams.entrySet().stream()
-        .filter(e -> e.getValue().startsWith("assets."))
-        .collect(toMap(Entry::getKey, Entry::getValue));
-  }
-
-  Map<String, String> getSearchParams() {
-    return searchParams;
-  }
-
-  Map<String, String> getAssetSearchParams() {
-    return assetSearchParams;
   }
 
   @GET
@@ -144,7 +112,7 @@ public class SearchResource
       @QueryParam("continuationToken") final String continuationToken,
       @Context final UriInfo uriInfo)
   {
-    QueryBuilder query = buildQuery(uriInfo);
+    QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
     SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
@@ -159,7 +127,7 @@ public class SearchResource
 
   private ComponentXO toComponent(final SearchHit hit) {
     Map<String, Object> source = checkNotNull(hit.getSource());
-    Repository repository = repositoryManagerRESTAdapter.getRepository((String) source.get(REPOSITORY_NAME));
+    Repository repository = searchUtils.getRepository((String) source.get(REPOSITORY_NAME));
     ComponentXO componentXO = new ComponentXO();
 
     componentXO
@@ -188,7 +156,7 @@ public class SearchResource
       @QueryParam("continuationToken") final String continuationToken,
       @Context final UriInfo uriInfo)
   {
-    QueryBuilder query = buildQuery(uriInfo);
+    QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
@@ -204,55 +172,11 @@ public class SearchResource
   @Path(SEARCH_AND_DOWNLOAD_URI)
   public Response searchAndDownloadAssets(@Context final UriInfo uriInfo)
   {
-    QueryBuilder query = buildQuery(uriInfo);
+    QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     List<AssetXO> assetXOs = retrieveAssets(query, uriInfo);
 
     return new AssetDownloadResponseProcessor(assetXOs).process();
-  }
-
-  /**
-   * Builds a {@link QueryBuilder} based on configured search parameters.
-   *
-   * @param uriInfo {@link UriInfo} to extract query parameters from
-   */
-  @VisibleForTesting
-  QueryBuilder buildQuery(final UriInfo uriInfo) {
-    BoolQueryBuilder query = boolQuery();
-
-    MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
-
-    if (queryParams.containsKey("q")) {
-      query.must(queryStringQuery(queryParams.getFirst("q")));
-    }
-
-    queryParams.forEach((key, value) -> {
-      if (value.isEmpty() || value.get(0).isEmpty()) {
-        // no value sent
-        return;
-      }
-      if ("q".equals(key)) {
-        // skip the keyword search
-        return;
-      }
-      if ("continuationToken".equals(key)) {
-        // skip the continuation token
-        return;
-      }
-      if ("repository".equals(key)) {
-        Repository repository = repositoryManagerRESTAdapter.getRepository(value.get(0));
-        if (groupType.equals(repository.getType())) {
-          repository.facet(GroupFacet.class).leafMembers().forEach(r ->
-              query.should(termQuery(searchParams.get(key), r.getName())));
-          query.minimumNumberShouldMatch(1);
-          return;
-        }
-      }
-      query.filter(termQuery(searchParams.getOrDefault(key, key), value.get(0)));
-    });
-
-    log.debug("Query: {}", query);
-    return query;
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo, final int from) {
@@ -275,7 +199,7 @@ public class SearchResource
                                         final MultivaluedMap<String, String> assetParams)
   {
     Map<String, Object> componentMap = checkNotNull(componentHit.getSource());
-    Repository repository = repositoryManagerRESTAdapter.getRepository((String) componentMap.get(REPOSITORY_NAME));
+    Repository repository = searchUtils.getRepository((String) componentMap.get(REPOSITORY_NAME));
 
     List<Map<String, Object>> assets = (List<Map<String, Object>>) componentMap.get("assets");
     if (assets == null) {
@@ -298,7 +222,7 @@ public class SearchResource
 
     // loop each asset specific http query parameter to filter out assets that do not apply
     assetParams.forEach((key, values) -> {
-      String assetParam = assetSearchParams.get(key);
+      String assetParam = searchUtils.getAssetSearchParameters().get(key);
 
       // does the assetMap contain the requested value?
       getValueFromAssetMap(assetMap, assetParam).ifPresent(assetValue -> {
@@ -315,7 +239,7 @@ public class SearchResource
   MultivaluedMap<String, String> getAssetParams(final UriInfo uriInfo) {
     return uriInfo.getQueryParameters()
         .entrySet().stream()
-        .filter(t -> assetSearchParams.containsKey(t.getKey()))
+        .filter(t -> searchUtils.getAssetSearchParameters().containsKey(t.getKey()))
         .collect(toMap(Entry::getKey, Entry::getValue, (u, v) -> {
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));

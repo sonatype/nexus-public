@@ -29,6 +29,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationTokenException;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
@@ -79,16 +81,20 @@ public class ComponentsResource
 
   private final MaintenanceService maintenanceService;
 
+  private final ContinuationTokenHelper continuationTokenHelper;
+
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
                             final ComponentEntityAdapter componentEntityAdapter,
-                            final MaintenanceService maintenanceService)
+                            final MaintenanceService maintenanceService,
+                            @Named("component") final ContinuationTokenHelper continuationTokenHelper)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.continuationTokenHelper = checkNotNull(continuationTokenHelper);
   }
 
   @GET
@@ -97,28 +103,26 @@ public class ComponentsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    final String lastId = lastIdFromContinuationToken(continuationToken);
-
     //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
     BrowseResult<Component> componentBrowseResult = browseService
-        .browseComponents(repository, new QueryOptions(null, "id", "asc", 0, 10, lastId));
+        .browseComponents(repository,
+            new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
 
     List<ComponentXO> componentXOs = componentBrowseResult.getResults().stream()
         .map(component -> fromComponent(component, repository))
         .collect(toList());
 
     return new Page<>(componentXOs, componentBrowseResult.getTotal() > componentBrowseResult.getResults().size() ?
-        id(getLast(componentBrowseResult.getResults())).getValue() : null);
+        continuationTokenHelper.getTokenFromId(getLast(componentBrowseResult.getResults())) : null);
   }
 
   @Nullable
   private String lastIdFromContinuationToken(final String continuationToken) {
     try {
-      return continuationToken != null ?
-          componentEntityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString() : null;
+      return continuationTokenHelper.getIdFromToken(continuationToken);
     }
-    catch (IllegalArgumentException e) {
-      log.debug("Caught exception parsing id from continuation token {}", continuationToken, e);
+    catch (ContinuationTokenException e) {
+      log.debug(e.getMessage(), e);
       throw new WebApplicationException(NOT_ACCEPTABLE);
     }
   }

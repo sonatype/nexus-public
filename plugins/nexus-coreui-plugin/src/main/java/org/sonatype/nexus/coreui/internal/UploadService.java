@@ -1,0 +1,177 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.coreui.internal;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.upload.AssetUpload;
+import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadDefinition;
+import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
+import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.WithUploadField;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.rest.ValidationErrorXO;
+import org.sonatype.nexus.rest.ValidationErrorsException;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
+import org.apache.commons.fileupload.FileItem;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+/**
+ * @since 3.next
+ */
+@Named
+@Singleton
+public class UploadService
+{
+  private UploadManager uploadManager;
+
+  private RepositoryManager repositoryManager;
+
+  @Inject
+  public UploadService(final RepositoryManager repositoryManager, final UploadManager uploadManager) {
+    this.uploadManager = checkNotNull(uploadManager);
+    this.repositoryManager = checkNotNull(repositoryManager);
+  }
+
+  /**
+   * Get a list of available definitions for upload.
+   */
+  public Collection<UploadDefinition> getAvailableDefinitions() {
+    return uploadManager.getAvailableDefinitions();
+  }
+
+  /**
+   * Perform an upload of assets
+   *
+   * @param params the form paramters
+   * @param files the files being uploaded
+   * @return the query term for results in search (depending on upload could show additional results)
+   * @throws IOException
+   */
+  public String upload(final Map<String, String> params, final Map<String, FileItem> files)
+      throws IOException
+  {
+    checkNotNull(params);
+    checkNotNull(files);
+
+    String repositoryName = checkNotNull(params.get("repositoryName"), "Missing repositoryName parameter");
+
+    Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
+
+    return createSearchTerm(uploadManager.handle(repository, createAndValidate(repository, params, files)));
+  }
+
+  private ComponentUpload createAndValidate(final Repository repository,
+                                            final Map<String, String> params,
+                                            final Map<String, FileItem> files)
+  {
+    ValidationErrorsException validation = new ValidationErrorsException();
+
+    ComponentUpload uc = new ComponentUpload();
+    UploadDefinition ud = uploadManager.getByFormat(repository.getFormat().toString());
+
+    // create component fields
+    createFields(uc, ud.getComponentFields(), "", "component", validation, params);
+
+    if (files.isEmpty()) {
+      validation.withErrors(new ValidationErrorXO("No assets found in upload"));
+    }
+
+    // create assets
+    for (Entry<String, FileItem> file : files.entrySet()) {
+      String suffix = file.getKey().substring("file".length());
+      AssetUpload ua = new AssetUpload();
+
+      createFields(ua, ud.getAssetFields(), suffix, "asset", validation, params);
+      final FileItem fileItem = file.getValue();
+      ua.setPayload(new StreamPayload(() -> fileItem.getInputStream(), fileItem.getSize(), fileItem.getContentType()));
+
+      uc.getAssetUploads().add(ua);
+    }
+
+    if (validation.hasValidationErrors()) {
+      throw validation;
+    }
+
+    return uc;
+  }
+
+  private void createFields(final WithUploadField item,
+                            final List<UploadFieldDefinition> fields,
+                            final String suffix,
+                            final String type,
+                            final ValidationErrorsException validation,
+                            final Map<String, String> params)
+  {
+    for (UploadFieldDefinition assetField : fields) {
+      String formField = assetField.getName() + suffix;
+      String value = params.get(formField);
+      if (!Strings2.isEmpty(value)) {
+        item.getFields().put(assetField.getName(), value);
+      }
+      else if (!assetField.isOptional()) {
+        validation.withErrors(new ValidationErrorXO(formField, "Missing required " + type + " field " + formField));
+      }
+    }
+  }
+
+  @VisibleForTesting
+  String createSearchTerm(final Collection<String> createdPaths) {
+    if (createdPaths.isEmpty()) {
+      return null;
+    }
+
+    String prefix = Iterables.getFirst(createdPaths, null);
+
+    for (String path : createdPaths) {
+      prefix = longestPrefix(prefix, path);
+    }
+
+    return elasticEscape(prefix);
+  }
+
+  private String removeLastSegment(final String path) {
+    int index = path.lastIndexOf('/');
+    if (index != -1) {
+      return path.substring(0, index);
+    }
+    return path;
+  }
+
+  private String elasticEscape(final String query) {
+    return query.replace("/", "\\/").replace(".", "\\.").replace("-", "\\-");
+  }
+
+  private String longestPrefix(final String prefix, final String path) {
+    String result = prefix;
+    while (result.length() > 0 && !path.startsWith(result)) {
+      result = removeLastSegment(result);
+    }
+    return result;
+  }
+}

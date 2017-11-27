@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class BrowseComponentsSqlBuilder
-    extends BrowseSqlBuilderSupport
+    extends BrowseMetadataNodeSqlBuilderSupport
 {
   private final MetadataNodeEntityAdapter<Component> componentEntityAdapter;
 

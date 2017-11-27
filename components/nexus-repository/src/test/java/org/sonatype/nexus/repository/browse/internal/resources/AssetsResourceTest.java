@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import javax.ws.rs.NotFoundException;
 
+import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.browse.BrowseResult;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.internal.AssetContinuationTokenHelper;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.rest.Page;
 
@@ -66,6 +68,8 @@ public class AssetsResourceTest
   @Mock
   MaintenanceService maintenanceService;
 
+  ContinuationTokenHelper continuationTokenHelper;
+
   @Mock
   ORID assetOneORID;
 
@@ -87,7 +91,10 @@ public class AssetsResourceTest
     assetOneXO = buildAssetXO("asset", "nameOne", "http://localhost:8081/repository/maven-releases/nameOne");
     assetTwoXO = buildAssetXO("assetTwo", "nameTwo", "http://localhost:8081/repository/maven-releases/nameTwo");
 
-    underTest = new AssetsResource(browseService, repositoryManagerRESTAdapter, assetEntityAdapter, maintenanceService);
+    continuationTokenHelper = new AssetContinuationTokenHelper(assetEntityAdapter);
+
+    underTest = new AssetsResource(browseService, repositoryManagerRESTAdapter, assetEntityAdapter, maintenanceService,
+        continuationTokenHelper);
   }
 
   AssetXO buildAssetXO(String id, String path, String downloadUrl) {
