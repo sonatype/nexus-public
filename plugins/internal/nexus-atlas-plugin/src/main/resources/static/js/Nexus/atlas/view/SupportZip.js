@@ -113,6 +113,13 @@ NX.define('Nexus.atlas.view.SupportZip', {
                       boxLabel: 'Metrics',
                       helpText: 'Includes system and component metrics',
                       checked: true
+                    },
+                    {
+                      xtype: 'checkbox',
+                      name: 'jmxinfo',
+                      boxLabel: 'JMX information',
+                      helpText: 'Includes JMX Bean information',
+                      checked: true
                     }
                   ]
                 },

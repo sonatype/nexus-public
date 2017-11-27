@@ -60,6 +60,11 @@ interface SupportZipGenerator
     boolean log
 
     /**
+     * Include jmx info.
+     */
+    boolean jmxinfo
+
+    /**
      * Limit the size of files included in the ZIP.
      */
     boolean limitFileSizes

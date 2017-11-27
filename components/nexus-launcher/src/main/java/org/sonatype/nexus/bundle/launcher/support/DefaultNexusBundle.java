@@ -720,6 +720,8 @@ public class DefaultNexusBundle
 
       nexusProperties.setProperty("application-port", String.valueOf(getPort()));
       nexusProperties.setProperty("application-port-ssl", String.valueOf(getSslPort()));
+      nexusProperties.setProperty(commandMonitorProperty(), String.valueOf(commandMonitorPort));
+      nexusProperties.setProperty(keepAliveProperty(), String.valueOf(keepAlivePort));
       if (getConfiguration().getContextPath() != null) {
         nexusProperties.setProperty("nexus-webapp-context-path", getConfiguration().getContextPath());
       }

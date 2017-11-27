@@ -32,6 +32,7 @@ import java.util.zip.ZipEntry
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static org.sonatype.nexus.atlas.SupportBundle.ContentSource.Type.CONFIG
+import static org.sonatype.nexus.atlas.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.atlas.SupportBundle.ContentSource.Type.LOG
 import static org.sonatype.nexus.atlas.SupportBundle.ContentSource.Type.METRICS
 import static org.sonatype.nexus.atlas.SupportBundle.ContentSource.Type.SECURITY
@@ -103,6 +104,9 @@ class SupportZipGeneratorImpl
     }
     if (request.log) {
       types << LOG
+    }
+    if (request.jmxinfo) {
+      types << JMX
     }
     return types
   }

@@ -34,14 +34,16 @@ public class SupportBundle
     /**
      * Support bundle content source inclusion type.
      */
-	public static enum Type
+    public static enum Type
     {
       SYSINFO,
       THREAD,
       METRICS,
       CONFIG,
       SECURITY,
-      LOG
+      LOG,
+      // @since 2.14.6
+      JMX
     }
 
     /**
