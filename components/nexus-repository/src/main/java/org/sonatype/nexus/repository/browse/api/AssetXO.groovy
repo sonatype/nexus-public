@@ -24,6 +24,8 @@ import groovy.transform.builder.Builder
 import static org.sonatype.nexus.common.entity.EntityHelper.id
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.ID
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
+import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES
 
 /**
  * Asset transfer object for REST APIs.
@@ -51,7 +53,7 @@ class AssetXO
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
     String internalId = id(asset).getValue()
 
-    Map checksum = asset.attributes().child(Asset.CHECKSUM).backing()
+    Map checksum = asset.attributes().child(CHECKSUM).backing()
 
     return builder()
         .path(asset.name())
@@ -63,15 +65,17 @@ class AssetXO
         .build()
   }
 
-  static AssetXO fromElasicSearchMap(final Map map, final Repository repository) {
+  static AssetXO fromElasticSearchMap(final Map map, final Repository repository) {
     String internalId = (String) map.get(ID)
+
+    Map checksum = (Map) map.get(P_ATTRIBUTES, [:])[CHECKSUM]
 
     return builder()
         .path((String) map.get(NAME))
         .downloadUrl(repository.url + '/' + (String) map.get(NAME))
         .id(new RepositoryItemIDXO(repository.name, internalId).value)
         .repository(repository.name)
-        .checksum(map.subMap(['attributes']).subMap([Asset.CHECKSUM]))
+        .checksum(checksum)
         .format(repository.format.value)
         .build()
   }

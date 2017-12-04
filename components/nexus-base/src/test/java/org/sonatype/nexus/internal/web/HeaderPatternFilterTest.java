@@ -59,66 +59,142 @@ public class HeaderPatternFilterTest
 
   @Test
   public void testFilter_badValue() throws Exception {
-    testHeaderValue("><script>alert(document.domain)</script>");
+    testHeaderHostValue("><script>alert(document.domain)</script>");
     verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
   }
 
   @Test
   public void testFilter_otherBadValue() throws Exception {
-    testHeaderValue("not a legit hostname");
+    testHeaderHostValue("not a legit hostname");
     verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
   }
 
   @Test
   public void testFilter_goodValue() throws Exception {
-    testHeaderValue("example.com");
+    testHeaderHostValue("example.com");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_localhost() throws Exception {
-    testHeaderValue("localhost");
+    testHeaderHostValue("localhost");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_nonroutableIp() throws Exception {
-    testHeaderValue("10.0.0.1");
+    testHeaderHostValue("10.0.0.1");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_localhostWithPort() throws Exception {
-    testHeaderValue("localhost:8080");
+    testHeaderHostValue("localhost:8080");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_goodValueWithPort() throws Exception {
-    testHeaderValue("example.com:8080");
+    testHeaderHostValue("example.com:8080");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_nonroutableWithPort() throws Exception {
-    testHeaderValue("10.0.0.1:8080");
+    testHeaderHostValue("10.0.0.1:8080");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_ipv6() throws Exception {
-    testHeaderValue("[1762:0:0:0:0:B03:1:AF18]");
+    testHeaderHostValue("[1762:0:0:0:0:B03:1:AF18]");
     verify(filterChain).doFilter(request, response);
   }
 
   @Test
   public void testFilter_ipv6WithPort() throws Exception {
-    testHeaderValue("[1762:0:0:0:0:B03:1:AF18]:8080");
+    testHeaderHostValue("[1762:0:0:0:0:B03:1:AF18]:8080");
     verify(filterChain).doFilter(request, response);
   }
 
-  private void testHeaderValue(String headerValue) throws Exception {
-    when(request.getHeaders("Host")).thenReturn(Collections.enumeration(Collections.singleton(headerValue)));
+  @Test
+  public void testFilter_JustProperProto() throws Exception {
+    testHeaderForwardedValue("proto=http");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_ProperProto() throws Exception {
+    testHeaderForwardedValue("for=192.0.2.60;proto=http;by=203.0.113.43");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_AcceptsQuotedProto() throws Exception {
+    testHeaderForwardedValue("for=192.0.2.60;proto=\"http\";by=203.0.113.43");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_NoProtoIP4() throws Exception {
+    testHeaderForwardedValue("for=192.0.2.43, for=198.51.100.17");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_NoProtoIP6() throws Exception {
+    testHeaderForwardedValue("For=\"[2001:db8:cafe::17]:4711\"");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_ProtoAtStart() throws Exception {
+    testHeaderForwardedValue("proto=http; by=203.0.113.43;for=192.0.2.60;");
+    verify(filterChain).doFilter(request, response);
+  }
+
+  @Test
+  public void testFilter_ProtoAtStartWithSpace() throws Exception {
+    testHeaderForwardedValue("  proto=https; by=203.0.113.43;for=192.0.2.60;");
+    verify(filterChain).doFilter(request, response);
+  }
+
+
+  @Test
+  public void testFilter_JustInvalidProto() throws Exception {
+    testHeaderForwardedValue("proto=<script>");
+    verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void testFilter_InvalidProtoAtStart() throws Exception {
+    testHeaderForwardedValue("proto=<script>; by=203.0.113.43;for=192.0.2.60;");
+    verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void testFilter_EnsureRegexPicksCompleteName() throws Exception {
+    testHeaderForwardedValue("for=192.0.2.60; appproto=http; proto=<script?>;by=203.0.113.43");
+    verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void testFilter_InvalidProto() throws Exception {
+    testHeaderForwardedValue("for=192.0.2.60;proto=<script?>;by=203.0.113.43");
+    verify(response).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+  }
+
+  private void testHeaderHostValue(String headerValue) throws Exception {
+    testHeaderValue("Host", headerValue);
+  }
+
+  private void testHeaderForwardedValue(String value) throws Exception {
+    testHeaderValue("Forwarded", value);
+  }
+
+  private void testHeaderValue(String name, String value) throws Exception {
+    when(request.getHeaders(name)).thenReturn(Collections.enumeration(Collections.singleton(value)));
+    when(request.getRemoteHost()).thenReturn("UnitTest");
     filter.doFilter(request, response, filterChain);
   }
 

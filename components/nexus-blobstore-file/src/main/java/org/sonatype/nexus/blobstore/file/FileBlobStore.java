@@ -924,4 +924,17 @@ public class FileBlobStore
   private FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
     return (FileBlobAttributes) getBlobAttributes(blobId);
   }
+
+  @Override
+  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
+    try {
+      FileBlobAttributes fileBlobAttributes = getFileBlobAttributes(blobId);
+      fileBlobAttributes.updateFrom(blobAttributes);
+      fileBlobAttributes.store();
+    }
+    catch (Exception e) {
+      log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
+          blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    }
+  }
 }

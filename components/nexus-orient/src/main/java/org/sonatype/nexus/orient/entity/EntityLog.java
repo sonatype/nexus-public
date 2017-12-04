@@ -130,23 +130,26 @@ public final class EntityLog
     }
 
     checkArgument(marker.compareTo(end) <= 0, "Sequence number cannot be after end");
-    OLogSequenceNumber start = checkNotNull(wal.next(marker), "Dangling sequence number");
+    OLogSequenceNumber firstChange = checkNotNull(wal.next(marker), "Dangling sequence number");
 
     AdapterIndex adapterIndex = new AdapterIndex(adapters);
 
-    wal.preventCutTill(start);
+    wal.addCutTillLimit(firstChange);
     try {
       Map<ORID, EntityAdapter> result = new HashMap<>();
-      for (OLogSequenceNumber n = start; n != null && n.compareTo(end) <= 0; n = wal.next(n)) {
-        OWALRecord record = wal.read(n);
+      // re-check position in case write-ahead-log was truncated before we could preserve it
+      OLogSequenceNumber lsn = checkNotNull(wal.next(marker), "Dangling sequence number");
+      while (lsn != null && lsn.compareTo(end) <= 0) {
+        OWALRecord record = wal.read(lsn);
         if (record instanceof OAtomicUnitEndRecord) {
           extractDelta((OAtomicUnitEndRecord) record).forEach(rid -> result.computeIfAbsent(rid, adapterIndex::lookup));
         }
+        lsn = wal.next(lsn);
       }
       return result;
     }
     finally {
-      wal.preventCutTill(null);
+      wal.removeCutTillLimit(firstChange);
     }
   }
 

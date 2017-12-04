@@ -23,7 +23,6 @@ import org.sonatype.nexus.orient.DatabaseServer;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 /**
  * Minimal {@link DatabaseServer}.
@@ -49,10 +48,6 @@ public class MinimalDatabaseServer
   @Override
   protected void doStop() throws Exception {
     Orient.instance().shutdown();
-
-    // shutdown nulls out this public static, which can randomly impact later tests that rely on it
-    // (for example those that create subclasses of OCoreException, which expects it to be non-null)
-    ODatabaseRecordThreadLocal.INSTANCE = new ODatabaseRecordThreadLocal();
   }
 
   @Override

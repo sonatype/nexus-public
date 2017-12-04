@@ -10,34 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
-
-import java.util.Map;
-import java.util.Properties;
+/*global Ext, NX*/
 
 /**
- * @since 3.4
+ * @since 3.next
  */
-public interface BlobAttributes
-{
-  Map<String, String> getHeaders();
+Ext.define('NX.coreui.store.UploadComponentDefinition', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.UploadComponentDefinition',
 
-  BlobMetrics getMetrics();
+  proxy: {
+    type: 'direct',
 
-  boolean isDeleted();
+    api: {
+      read: 'NX.direct.coreui_Upload.getUploadDefinitions'
+    },
 
-  void setDeleted(boolean deleted);
+    reader: {
+      type: 'json',
+      root: 'data',
+      successProperty: 'success'
+    }
+  },
 
-  void setDeletedReason(String deletedReason);
-
-  String getDeletedReason();
-
-  Properties getProperties();
-
-  /**
-   * Update attributes based on the {@link BlobAttributes} provided.
-   *
-   * @since 3.next
-   */
-  void updateFrom(BlobAttributes blobAttributes);
-}
+  sorters: { property: 'format', direction: 'ASC' }
+});

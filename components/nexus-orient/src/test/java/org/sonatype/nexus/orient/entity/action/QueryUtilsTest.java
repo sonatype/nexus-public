@@ -32,10 +32,12 @@ public class QueryUtilsTest
     QueryUtils.buildPredicate(new String[0]);
   }
 
+  @Test
   public void testBuildPredicate_SingleProperty() {
     assertThat(QueryUtils.buildPredicate("foo"), is("foo = ?"));
   }
 
+  @Test
   public void testBuildPredicate_MultipleProperties() {
     assertThat(QueryUtils.buildPredicate("foo", "bar", "baz"), is("foo = ? AND bar = ? AND baz = ?"));
   }

@@ -16,6 +16,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+/**
+ * Offers static helper methods related to network.
+ *
+ * @since 3.7.0
+ */
 public final class NetworkHelper
 {
   private NetworkHelper() {

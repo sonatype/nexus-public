@@ -234,7 +234,172 @@ public class BrowseNodeEntityAdapterTest
 
       assertThat(underTest.browse(db), is(emptyIterable()));
     }
-}
+  }
+
+  @Test
+  public void manageComponentRepeatedInTree() throws Exception {
+
+    // test that assets can have the same component at different paths in the tree if they want
+
+    Asset patchAsset = new Asset();
+    patchAsset.bucketId(EntityHelper.id(bucket));
+    patchAsset.componentId(EntityHelper.id(component));
+    patchAsset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+    patchAsset.format(FORMAT_NAME);
+    patchAsset.name("/org/foo/1.0/foo-1.0-1.jar");
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      assetEntityAdapter.addEntity(db, patchAsset);
+    }
+
+    List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
+    List<String> patchPath = Splitter.on('/').omitEmptyStrings().splitToList(patchAsset.name());
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, patchPath, component);
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("assetNameLowercase", nullValue()))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("assetNameLowercase", nullValue()))
+              ));
+
+      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, patchPath, patchAsset);
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", is(EntityHelper.id(patchAsset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+              ));
+
+      underTest.deleteAssetNode(db, EntityHelper.id(asset));
+      underTest.deleteAssetNode(db, EntityHelper.id(patchAsset));
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("assetNameLowercase", nullValue()))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("assetNameLowercase", nullValue()))
+              ));
+
+      underTest.deleteComponentNode(db, EntityHelper.id(component));
+
+      assertThat(underTest.browse(db), is(emptyIterable()));
+    }
+
+    // now try out-of-order to check partial delete still works
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, patchPath, patchAsset);
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(patchAsset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+              ));
+
+      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, patchPath, component);
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", is(EntityHelper.id(component))),
+                  hasProperty("assetId", is(EntityHelper.id(patchAsset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+              ));
+
+      underTest.deleteComponentNode(db, EntityHelper.id(component));
+
+      assertThat(underTest.browse(db),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(asset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/1.0/")),
+                  hasProperty("name", is("foo-1.0-1.jar")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(patchAsset))),
+                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+              ));
+
+      underTest.deleteAssetNode(db, EntityHelper.id(asset));
+      underTest.deleteAssetNode(db, EntityHelper.id(patchAsset));
+
+      assertThat(underTest.browse(db), is(emptyIterable()));
+    }
+  }
 
   @Test
   public void duplicateRequestsAreMerged() throws Exception {

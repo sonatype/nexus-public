@@ -32,6 +32,7 @@ import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -110,7 +111,7 @@ public class BrowseNodeEntityAdapter
       DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, SUBTREE_BOUNDARY, P_PARENT_PATH, BASE_BOUNDARY);
 
   private static final String FIND_BY_COMPONENT = String.format(
-      "select from %s where %s=:%s limit 1",
+      "select from %s where %s=:%s",
       DB_CLASS, P_COMPONENT_ID, P_COMPONENT_ID);
 
   private static final String FIND_BY_ASSET = String.format(
@@ -157,7 +158,7 @@ public class BrowseNodeEntityAdapter
 
     // save space and ignore nulls because we'll never query on a null component/asset id
     ODocument ignoreNullValues = db.newInstance().field("ignoreNullValues", true);
-    type.createIndex(I_COMPONENT_ID, INDEX_TYPE.UNIQUE.name(), null, ignoreNullValues, new String[] { P_COMPONENT_ID });
+    type.createIndex(I_COMPONENT_ID, INDEX_TYPE.NOTUNIQUE.name(), null, ignoreNullValues, new String[] { P_COMPONENT_ID });
     type.createIndex(I_ASSET_ID, INDEX_TYPE.UNIQUE.name(), null, ignoreNullValues, new String[] { P_ASSET_ID });
   }
 
@@ -220,10 +221,18 @@ public class BrowseNodeEntityAdapter
       node.setComponentId(EntityHelper.id(component));
       addEntity(db, node);
     }
-    else if (!document.containsField(P_COMPONENT_ID)) {
-      // shortcut: merge new information directly into existing record
-      document.field(P_COMPONENT_ID, componentEntityAdapter.recordIdentity(component));
-      document.save();
+    else {
+      ORID oldComponentId = document.field(P_COMPONENT_ID, ORID.class);
+      ORID newComponentId = componentEntityAdapter.recordIdentity(component);
+      if (oldComponentId == null) {
+        // shortcut: merge new information directly into existing record
+        document.field(P_COMPONENT_ID, newComponentId);
+        document.save();
+      }
+      else if (!oldComponentId.equals(newComponentId)) {
+        // retry in case this is due to an out-of-order delete event
+        throw new RetryUpsertException("Node already has a component");
+      }
     }
   }
 
@@ -243,11 +252,19 @@ public class BrowseNodeEntityAdapter
       node.setAssetNameLowercase(lower(asset.name()));
       addEntity(db, node);
     }
-    else if (!document.containsField(P_ASSET_ID)) {
-      // shortcut: merge new information directly into existing record
-      document.field(P_ASSET_ID, assetEntityAdapter.recordIdentity(asset));
-      document.field(P_ASSET_NAME_LOWERCASE, lower(asset.name()));
-      document.save();
+    else {
+      ORID oldAssetId = document.field(P_ASSET_ID, ORID.class);
+      ORID newAssetId = assetEntityAdapter.recordIdentity(asset);
+      if (oldAssetId == null) {
+        // shortcut: merge new information directly into existing record
+        document.field(P_ASSET_ID, newAssetId);
+        document.field(P_ASSET_NAME_LOWERCASE, lower(asset.name()));
+        document.save();
+      }
+      else if (!oldAssetId.equals(newAssetId)) {
+        // retry in case this is due to an out-of-order delete event
+        throw new RetryUpsertException("Node already has an asset");
+      }
     }
   }
 
@@ -277,14 +294,15 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * Removes the {@link BrowseNode} associated with the given component id.
+   * Removes any {@link BrowseNode}s associated with the given component id.
    */
   public void deleteComponentNode(final ODatabaseDocumentTx db, final EntityId componentId) {
-    ODocument document = getFirst(
+    // some formats have the same component appearing on different branches of the tree
+    Iterable<ODocument> documents =
         db.command(new OCommandSQL(FIND_BY_COMPONENT)).execute(
-            ImmutableMap.of(P_COMPONENT_ID, recordIdentity(componentId))), null);
+            ImmutableMap.of(P_COMPONENT_ID, recordIdentity(componentId)));
 
-    if (document != null) {
+    documents.forEach(document -> {
       if (document.containsField(P_ASSET_ID)) {
         // asset still exists, just remove component details
         document.removeField(P_COMPONENT_ID);
@@ -293,13 +311,14 @@ public class BrowseNodeEntityAdapter
       else {
         document.delete();
       }
-    }
+    });
   }
 
   /**
    * Removes the {@link BrowseNode} associated with the given asset id.
    */
   public void deleteAssetNode(final ODatabaseDocumentTx db, final EntityId assetId) {
+    // a given asset will only appear once in the tree
     ODocument document = getFirst(
         db.command(new OCommandSQL(FIND_BY_ASSET)).execute(
             ImmutableMap.of(P_ASSET_ID, recordIdentity(assetId))), null);
@@ -468,5 +487,16 @@ public class BrowseNodeEntityAdapter
     buf.append(" limit ").append(limit);
 
     return new OCommandSQL(buf.toString());
+  }
+
+  /**
+   * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode}.
+   */
+  private static class RetryUpsertException
+      extends ONeedRetryException
+  {
+    RetryUpsertException(final String message) {
+      super(message);
+    }
   }
 }

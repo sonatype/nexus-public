@@ -112,6 +112,31 @@ public class FileBlobAttributesTest
     verifyRoundtrip(original);
   }
 
+  @Test
+  public void testUpdateFrom() throws Exception {
+    Path originalPath = temporaryFolder.newFile().toPath();
+
+    Map<String, String> headers = ImmutableMap.of("hello", "world");
+    BlobMetrics metrics = new BlobMetrics(DateTime.now(), "0123456789ABCDEF", 42);
+    FileBlobAttributes original = new FileBlobAttributes(originalPath, headers, metrics);
+
+    Path updatedPath = temporaryFolder.newFile().toPath();
+
+    FileBlobAttributes updated = new FileBlobAttributes(updatedPath);
+    updated.updateFrom(original);
+    updated.store();
+
+    updated = new FileBlobAttributes(updatedPath);
+    updated.load();
+
+    assertThat(updated.getHeaders(), is(original.getHeaders()));
+    assertThat(updated.getMetrics().getCreationTime(), is(original.getMetrics().getCreationTime()));
+    assertThat(updated.getMetrics().getSha1Hash(), is(original.getMetrics().getSha1Hash()));
+    assertThat(updated.getMetrics().getContentSize(), is(original.getMetrics().getContentSize()));
+    assertThat(updated.isDeleted(), is(original.isDeleted()));
+    assertThat(updated.getDeletedReason(), is(original.getDeletedReason()));
+  }
+
   private static void verifyRoundtrip(final FileBlobAttributes original) throws IOException {
 
     original.store();

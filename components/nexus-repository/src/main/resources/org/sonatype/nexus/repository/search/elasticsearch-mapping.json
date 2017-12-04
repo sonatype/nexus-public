@@ -20,6 +20,10 @@
       "properties": {
         "assets": {
           "properties": {
+            "name": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
             "attributes": {
               "properties": {
                 "checksum": {

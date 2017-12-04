@@ -46,7 +46,9 @@ import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -115,13 +117,19 @@ public class BrowseNodeStoreImpl
   @Override
   @Guarded(by = STARTED)
   public void createComponentNode(final String repositoryName, final List<String> path, final Component component) {
-    inTxRetry(databaseInstance).run(db -> entityAdapter.createComponentNode(db, repositoryName, path, component));
+    inTxRetry(databaseInstance)
+        // handle case where assets try to create the exact same component-level path at once
+        .retryOn(ONeedRetryException.class, ORecordDuplicatedException.class)
+        .run(db -> entityAdapter.createComponentNode(db, repositoryName, path, component));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void createAssetNode(final String repositoryName, final List<String> path, final Asset asset) {
-    inTxRetry(databaseInstance).run(db -> entityAdapter.createAssetNode(db, repositoryName, path, asset));
+    inTxRetry(databaseInstance)
+        // handle case where an asset and its component try to create the exact same path at once
+        .retryOn(ONeedRetryException.class, ORecordDuplicatedException.class)
+        .run(db -> entityAdapter.createAssetNode(db, repositoryName, path, asset));
   }
 
   @Override

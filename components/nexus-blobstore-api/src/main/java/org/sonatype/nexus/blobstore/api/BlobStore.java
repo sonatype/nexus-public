@@ -168,4 +168,11 @@ public interface BlobStore
    * Get {@link BlobAttributes} for the {@link BlobId} provided.
    */
   BlobAttributes getBlobAttributes(BlobId blobId);
+
+  /**
+   * Set {@link BlobAttributes} for the {@link BlobId} provided.
+   *
+   * @since 3.next
+   */
+  void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes);
 }

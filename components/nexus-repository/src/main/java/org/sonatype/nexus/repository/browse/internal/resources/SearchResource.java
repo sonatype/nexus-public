@@ -58,7 +58,7 @@ import static java.util.stream.Collectors.toMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.shiro.util.CollectionUtils.isEmpty;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
-import static org.sonatype.nexus.repository.browse.api.AssetXO.fromElasicSearchMap;
+import static org.sonatype.nexus.repository.browse.api.AssetXO.fromElasticSearchMap;
 import static org.sonatype.nexus.repository.browse.internal.resources.AssetMapUtils.getValueFromAssetMap;
 import static org.sonatype.nexus.repository.browse.internal.resources.SearchResource.RESOURCE_URI;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
@@ -208,7 +208,7 @@ public class SearchResource
 
     return assets.stream()
         .filter(assetMap -> filterAsset(assetMap, assetParams))
-        .map(asset -> fromElasicSearchMap(asset, repository));
+        .map(asset -> fromElasticSearchMap(asset, repository));
   }
 
   @VisibleForTesting

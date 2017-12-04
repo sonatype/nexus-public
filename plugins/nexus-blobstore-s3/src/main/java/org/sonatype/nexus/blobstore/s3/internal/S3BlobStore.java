@@ -592,4 +592,17 @@ public class S3BlobStore
       return null;
     }
   }
+
+  @Override
+  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
+    try {
+      S3BlobAttributes s3BlobAttributes = (S3BlobAttributes) getBlobAttributes(blobId);
+      s3BlobAttributes.updateFrom(blobAttributes);
+      s3BlobAttributes.store();
+    }
+    catch (Exception e) {
+      log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
+          blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    }
+  }
 }

@@ -165,6 +165,23 @@ public class SearchResourceTest
   }
 
   @Test
+  public void testSearchWithChecksum() {
+    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
+
+    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
+            .thenReturn(searchResponse);
+
+    Page<AssetXO> assets = underTest.searchAssets(null, uriInfo("?format=npm"));
+
+    List<AssetXO> items = assets.getItems();
+
+    assertThat(items, hasSize(3));
+
+    AssetXO assetXO = items.stream().filter(item -> item.getPath().equals("bar.one")).findFirst().get();
+    assertThat(assetXO.getChecksum().get("sha1"), is("third-sha1"));
+  }
+
+  @Test
   public void testSearchAndDownload_NoAssetParams_WillReturnAll() {
     // mock Elastic is only returning npm
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});

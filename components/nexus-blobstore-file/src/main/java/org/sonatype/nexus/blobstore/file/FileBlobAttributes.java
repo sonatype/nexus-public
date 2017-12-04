@@ -123,6 +123,14 @@ public class FileBlobAttributes
     return new Properties(propertiesFile);
   }
 
+  @Override
+  public void updateFrom(final BlobAttributes blobAttributes) {
+    headers = blobAttributes.getHeaders();
+    metrics = blobAttributes.getMetrics();
+    deleted = blobAttributes.isDeleted();
+    deletedReason = blobAttributes.getDeletedReason();
+  }
+
   private void readFrom(Properties properties) {
     headers = new HashMap<>();
     for (Entry<Object, Object> property : properties.entrySet()) {

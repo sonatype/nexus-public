@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
@@ -37,6 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class BrowseNodeManager
+    extends ComponentSupport
 {
   private static final String DEFAULT_PATH_HANDLER = "default";
 
@@ -96,18 +98,23 @@ public class BrowseNodeManager
    * Creates an asset browse node and optional component browse node if the asset has a component.
    */
   private void createBrowseNodes(final String repositoryName, final BrowseNodeGenerator generator, final Asset asset) {
-    Component component = asset.componentId() != null ? componentStore.read(asset.componentId()) : null;
+    try {
+      Component component = asset.componentId() != null ? componentStore.read(asset.componentId()) : null;
 
-    List<String> assetPath = generator.computeAssetPath(asset, component);
-    if (!assetPath.isEmpty()) {
-      browseNodeStore.createAssetNode(repositoryName, assetPath, asset);
-    }
-
-    if (component != null) {
-      List<String> componentPath = generator.computeComponentPath(asset, component);
-      if (!componentPath.isEmpty()) {
-        browseNodeStore.createComponentNode(repositoryName, componentPath, component);
+      List<String> assetPath = generator.computeAssetPath(asset, component);
+      if (!assetPath.isEmpty()) {
+        browseNodeStore.createAssetNode(repositoryName, assetPath, asset);
       }
+
+      if (component != null) {
+        List<String> componentPath = generator.computeComponentPath(asset, component);
+        if (!componentPath.isEmpty()) {
+          browseNodeStore.createComponentNode(repositoryName, componentPath, component);
+        }
+      }
+    }
+    catch (RuntimeException e) {
+      log.warn("Problem generating browse nodes for {}", asset, e);
     }
   }
 

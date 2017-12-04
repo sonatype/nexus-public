@@ -10,34 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.repository.httpbridge;
 
-import java.util.Map;
-import java.util.Properties;
+import org.sonatype.nexus.repository.httpbridge.internal.LegacyViewServlet;
 
 /**
- * @since 3.4
+ * Legacy view contributor to {@link LegacyViewServlet}.
+ *
+ * @since 3.7
  */
-public interface BlobAttributes
+public interface LegacyViewContributor
 {
-  Map<String, String> getHeaders();
-
-  BlobMetrics getMetrics();
-
-  boolean isDeleted();
-
-  void setDeleted(boolean deleted);
-
-  void setDeletedReason(String deletedReason);
-
-  String getDeletedReason();
-
-  Properties getProperties();
-
-  /**
-   * Update attributes based on the {@link BlobAttributes} provided.
-   *
-   * @since 3.next
-   */
-  void updateFrom(BlobAttributes blobAttributes);
+  LegacyViewConfiguration contribute();
 }

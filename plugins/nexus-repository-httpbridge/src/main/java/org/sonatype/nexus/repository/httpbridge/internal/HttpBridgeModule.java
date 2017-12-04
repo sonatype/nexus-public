@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
@@ -35,9 +34,6 @@ public class HttpBridgeModule
 {
   public static final String MOUNT_POINT = "/repository";
 
-  static final boolean SUPPORT_LEGACY_CONTENT = SystemPropertiesHelper
-      .getBoolean(HttpBridgeModule.class.getName() + ".legacy", false);
-
   @Override
   protected void configure() {
     install(new ServletModule()
@@ -47,20 +43,6 @@ public class HttpBridgeModule
         bind(ViewServlet.class);
         serve(MOUNT_POINT + "/*").with(ViewServlet.class);
         bindViewFiltersFor(MOUNT_POINT + "/*");
-
-        if (SUPPORT_LEGACY_CONTENT) {
-          // this technically makes non-group repositories visible under /content/groups,
-          // but this is acceptable since their IDs are unique and it keeps things simple
-          serve("/content/groups/*", "/content/repositories/*").with(ViewServlet.class);
-          serve("/content/sites/*").with(RawRepositoryViewServlet.class);
-          bindViewFiltersFor("/content/groups/*", "/content/repositories/*", "/content/sites/*" );
-
-          // this makes /service/local/x/x available, as a view servlet. Note that we have to strip the last forward
-          // slash so that our first group would be "/service/local/x" without the forward slash. This is needed so that
-          // the following matcher group starts with the forward slash, which is needed for the NXRM to detect the endpoint.
-          serveRegex("/service/local/.*?(/.*)").with(ViewServlet.class);
-          bindViewFiltersRegexFor("/service/local/.*?(/.*)");
-        }
       }
 
       /**
@@ -68,13 +50,6 @@ public class HttpBridgeModule
        */
       private void bindViewFiltersFor(final String urlPattern, final String... morePatterns) {
         bindViewFilters(filter(urlPattern, morePatterns));
-      }
-
-      /**
-       * Helper to make sure view-related filters are bound in the correct order by regex filter.
-       */
-      private void bindViewFiltersRegexFor(final String urlPattern, final String... morePatterns) {
-        bindViewFilters(filterRegex(urlPattern, morePatterns));
       }
 
       private void bindViewFilters(FilterKeyBindingBuilder filter) {
@@ -91,18 +66,6 @@ public class HttpBridgeModule
             NexusAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
             AnonymousFilter.NAME);
-
-        if (SUPPORT_LEGACY_CONTENT) {
-          addFilterChain("/content/**",
-              NexusAuthenticationFilter.NAME,
-              ApiKeyAuthenticationFilter.NAME,
-              AnonymousFilter.NAME);
-
-          addFilterChain("/service/local/**",
-              NexusAuthenticationFilter.NAME,
-              ApiKeyAuthenticationFilter.NAME,
-              AnonymousFilter.NAME);
-        }
       }
     });
   }

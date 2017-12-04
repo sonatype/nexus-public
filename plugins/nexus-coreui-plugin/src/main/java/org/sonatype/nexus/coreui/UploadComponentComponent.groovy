@@ -31,6 +31,10 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectFormPostMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.commons.fileupload.FileItem
+import org.apache.shiro.authz.annotation.RequiresPermissions
+
+import javax.ws.rs.WebApplicationException
+import javax.ws.rs.core.Response
 
 /**
  * @since 3.next
@@ -60,7 +64,12 @@ class UploadComponentComponent
   @Timed
   @ExceptionMetered
   @Validate
+  @RequiresPermissions('nexus:component:add')
   String doUpload(final @NotNull Map<String, String> params, final @NotNull Map<String, FileItem> files) {
+    if (!configuration.enabled) {
+      throw new WebApplicationException(Response.Status.NOT_FOUND)
+    }
+
     return uploadService.upload(params, files)
   }
 

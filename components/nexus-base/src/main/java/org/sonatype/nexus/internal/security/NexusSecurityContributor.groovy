@@ -289,7 +289,19 @@ class NexusSecurityContributor
                     domain : 'userschangepw',
                     actions: 'create,read'
                 ]
-            )
+            ),
+
+            // nexus:component
+
+            new CPrivilege(
+                id: 'nx-component-upload',
+                description: 'Upload component permission',
+                type: 'application',
+                properties: [
+                    domain : 'component',
+                    actions: 'add'
+                ]
+            ),
         ],
 
         roles: [

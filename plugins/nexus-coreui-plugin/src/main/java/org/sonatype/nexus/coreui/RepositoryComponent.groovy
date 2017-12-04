@@ -325,9 +325,20 @@ class RepositoryComponent
     def repositories = repositoryManager.browse()
     if (parameters) {
       String format = parameters.getFilter('format')
-      repositories = filterIn(repositories, format, { Repository repository ->
-        repository.format.value
-      })
+      if (format && format.indexOf(",") > -1) {
+        def formats = format.split(",")
+        repositories = repositories.findResults { Repository repository ->
+          if (formats.contains(repository.format.value)) {
+            return repository
+          }
+        }
+      }
+      else {
+        repositories = filterIn(repositories, format, { Repository repository ->
+            repository.format.value
+          })
+      }
+
       String type = parameters.getFilter('type')
       repositories = filterIn(repositories, type, { Repository repository ->
         repository.type.value
