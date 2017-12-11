@@ -63,6 +63,8 @@ public class ScheduledTaskEventsTest
     eventManager.register(listener);
     // reset the latch
     SleeperTask.reset();
+
+    assertExecutedTaskCount(0);
   }
 
   @Test
@@ -79,6 +81,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -110,6 +113,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(2);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -138,6 +142,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
@@ -166,6 +171,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.FAILED));
 
@@ -197,6 +203,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.OK));
 
@@ -217,6 +224,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.DONE));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.CANCELED));
 
@@ -269,6 +277,7 @@ public class ScheduledTaskEventsTest
 
     // done
     assertRunningTaskCount(0);
+    assertExecutedTaskCount(1);
     assertThat(taskInfo.getCurrentState().getState(), equalTo(State.WAITING));
     assertThat(taskInfo.getLastRunState().getEndState(), equalTo(EndState.CANCELED));
 

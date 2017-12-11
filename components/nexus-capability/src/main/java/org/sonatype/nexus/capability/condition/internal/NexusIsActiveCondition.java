@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
 
 /**
  * A condition that is satisfied when nexus is active.
@@ -33,8 +33,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  * @since capabilities 2.0
  */
 @Named
-@ManagedLifecycle(phase = TASKS)
-@Priority(Integer.MAX_VALUE) // make sure this starts first
+@ManagedLifecycle(phase = CAPABILITIES)
+@Priority(Integer.MIN_VALUE) // nexus is considered active at the end of this phase
 @Singleton
 public class NexusIsActiveCondition
     extends ConditionSupport

@@ -67,7 +67,9 @@ public abstract class RepositoryResourceTestSupport
   Map<String, SearchMappings> searchMappings = ImmutableMap.of(
       "default", () -> ImmutableList.of(
           new SearchMapping("sha1", "assets.attributes.checksum.sha1", ""),
-          new SearchMapping("sha256", "assets.attributes.checksum.sha256", "")
+          new SearchMapping("sha256", "assets.attributes.checksum.sha256", ""),
+          new SearchMapping("maven.extension", "assets.attributes.maven2.extension", ""),
+          new SearchMapping("mvn.extension", "assets.attributes.maven2.extension", "")
       )
   );
 

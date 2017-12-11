@@ -32,7 +32,7 @@ public class LegacyUrlCapability
   private interface Messages
       extends MessageBundle
   {
-    @DefaultMessage("NX2 style urls enabled")
+    @DefaultMessage("NXRM2 style urls enabled")
     String description();
   }
 

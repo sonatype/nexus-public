@@ -76,6 +76,13 @@ public interface TaskScheduler
   int getRunningTaskCount();
 
   /**
+   * Returns the count of tasks executed so far.
+   *
+   * @since 3.7
+   */
+  int getExecutedTaskCount();
+
+  /**
    * Returns the state of a given task across the nodes in a clustered environment or {@code null} if clustering isn't
    * enabled.
    * 

@@ -14,6 +14,7 @@ package org.sonatype.nexus.scheduling.internal;
 
 import java.util.concurrent.Future;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -38,6 +39,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  */
 @Named
 @ManagedLifecycle(phase = TASKS)
+@Priority(Integer.MIN_VALUE) // start scheduler at the end of this phase
 @Singleton
 public class TaskActivation
     extends StateGuardLifecycleSupport

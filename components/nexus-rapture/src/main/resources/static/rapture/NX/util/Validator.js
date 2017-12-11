@@ -35,6 +35,8 @@ Ext.define('NX.util.Validator', {
   },
 
   /**
+   * Changes to this property should be sync'd in:
+   * components/nexus-validation/src/main/java/org/sonatype/nexus/validation/constraint/NamePatternConstants.java
    * @private
    */
   nxNameRegex : /^[a-zA-Z0-9\-]{1}[a-zA-Z0-9_\-\.]*$/,

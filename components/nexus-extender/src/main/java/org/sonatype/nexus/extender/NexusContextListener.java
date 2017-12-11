@@ -64,6 +64,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonMap;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
@@ -185,7 +186,7 @@ public class NexusContextListener
       // feature bundles have all been activated at this point
 
       try {
-        lifecycleManager.to(TASKS);
+        lifecycleManager.to(CAPABILITIES);
       }
       catch (final Exception e) {
         log.error("Failed to start nexus", e);
@@ -206,6 +207,13 @@ public class NexusContextListener
 
       if (HAS_PAX_EXAM) {
         registerLocatorWithPaxExam(injector.getProvider(BeanLocator.class));
+      }
+
+      try {
+        lifecycleManager.to(TASKS);
+      }
+      catch (final Exception e) {
+        log.warn("Scheduler did not start", e);
       }
     }
   }

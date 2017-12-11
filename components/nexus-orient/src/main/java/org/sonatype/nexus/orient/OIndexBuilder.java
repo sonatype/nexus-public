@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -47,6 +48,8 @@ public class OIndexBuilder
 
   private boolean caseInsensitive;
 
+  private boolean ignoreNullValues;
+
   public OIndexBuilder(final OClass type, final String name, final INDEX_TYPE indexType) {
     this.type = checkNotNull(type);
     this.name = checkNotNull(name);
@@ -64,6 +67,11 @@ public class OIndexBuilder
     return this;
   }
 
+  public OIndexBuilder ignoreNullValues() {
+    ignoreNullValues = true;
+    return this;
+  }
+
   public OIndex build(final ODatabaseDocumentTx db) {
     checkState(!propertyNames.isEmpty(), "At least one property is required");
     checkState(propertyTypes.size() == propertyNames.size(), "A type must be defined for each property");
@@ -73,11 +81,15 @@ public class OIndexBuilder
       collates = Lists.transform(propertyNames, n -> new OCaseInsensitiveCollate());
     }
 
+    ODocument metadata = new ODocument();
+    if (ignoreNullValues) {
+      metadata.field("ignoreNullValues", true);
+    }
+
     OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(type, propertyNames, propertyTypes,
         collates, indexType.name(), null);
 
-
     return db.getMetadata().getIndexManager().createIndex(name, indexType.name(), indexDefinition,
-        type.getPolymorphicClusterIds(), null, null);
+        type.getPolymorphicClusterIds(), null, metadata.fields() > 0 ? metadata : null);
   }
 }

@@ -129,4 +129,12 @@ public final class Strings2
   public static String encodeBase64(final String value) {
     return BaseEncoding.base64().encode(utf8(value));
   }
+
+  public static String capitalize(final String value) {
+    if (value == null || value.length() < 1) {
+      return value;
+    }
+
+    return Character.toTitleCase(value.charAt(0)) + value.substring(1);
+  }
 }

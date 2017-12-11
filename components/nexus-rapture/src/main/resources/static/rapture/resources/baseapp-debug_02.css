@@ -6210,6 +6210,10 @@
   border-top: 1px solid #dddddd;
 }
 
+.nx-repeated-row {
+  margin-bottom: 5px;
+}
+
 /**
  * @class Ext.form.field.Base
  */
@@ -15690,8 +15694,4 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=30);
   opacity: 0.3;
   background-position: 0 0;
-}
-
-.x-tab-nx-light-pressed .x-tab-close-btn {
-  background-position: -24px 0;
 }

@@ -49,7 +49,7 @@ public class BrowseNodeConfiguration
   private final Time queryTimeout;
 
   @Inject
-  public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.enabled:-false}") final boolean enabled,
+  public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.enabled:-true}") final boolean enabled,
                                  @Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
                                  @Named("${nexus.browse.component.tree.rebuildPageSize:-1000}") final int rebuildPageSize,
                                  @Named("${nexus.browse.component.tree.deletePageSize:-1000}") final int deletePageSize,

@@ -97,6 +97,11 @@ public class TaskSchedulerImpl
   }
 
   @Override
+  public int getExecutedTaskCount() {
+    return getScheduler().getExecutedTaskCount();
+  }
+
+  @Override
   public TaskConfiguration createTaskConfigurationInstance(final String typeId) {
     checkNotNull(typeId);
 

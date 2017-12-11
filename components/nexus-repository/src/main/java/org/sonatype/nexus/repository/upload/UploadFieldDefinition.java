@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.upload;
 
 import java.util.Objects;
 
+import org.sonatype.nexus.common.text.Strings2;
+
 /**
  * Description of a field used when uploading a component.
  *
@@ -26,6 +28,8 @@ public class UploadFieldDefinition
     BOOLEAN, STRING
   }
 
+  private String displayName;
+
   private String name;
 
   private boolean optional;
@@ -33,7 +37,12 @@ public class UploadFieldDefinition
   private Type type;
 
   public UploadFieldDefinition(final String name, final boolean optional, final Type type) {
+    this(name, Strings2.capitalize(name), optional, type);
+  }
+
+  public UploadFieldDefinition(final String name, final String displayName, final boolean optional, final Type type) {
     this.name = name;
+    this.displayName = displayName;
     this.optional = optional;
     this.type = type;
   }
@@ -43,6 +52,13 @@ public class UploadFieldDefinition
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * The name to be displayed in UI
+   */
+  public String getDisplayName() {
+    return this.displayName;
   }
 
   /**
@@ -68,7 +84,8 @@ public class UploadFieldDefinition
   public boolean equals(final Object obj) {
     if (obj instanceof UploadFieldDefinition) {
       UploadFieldDefinition other = (UploadFieldDefinition) obj;
-      return Objects.equals(name, other.name) && type == other.type && optional == other.optional;
+      return Objects.equals(name, other.name) && Objects.equals(displayName, other.displayName) && type == other.type
+          && optional == other.optional;
     }
 
     return false;

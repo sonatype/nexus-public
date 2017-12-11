@@ -1,3 +1,7 @@
+.x-tab-nx-light-pressed .x-tab-close-btn {
+  background-position: -24px 0;
+}
+
 .x-tab-nx-light-closable .x-tab-wrap {
   padding-right: 15px;
 }

@@ -79,4 +79,11 @@ public interface SchedulerSPI
    * Returns the count of currently running tasks.
    */
   int getRunningTaskCount();
+
+  /**
+   * Returns the count of tasks executed so far.
+   *
+   * @since 3.7
+   */
+  int getExecutedTaskCount();
 }

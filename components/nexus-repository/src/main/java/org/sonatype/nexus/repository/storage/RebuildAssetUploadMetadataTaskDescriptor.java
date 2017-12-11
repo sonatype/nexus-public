@@ -32,13 +32,14 @@ public class RebuildAssetUploadMetadataTaskDescriptor
   public static final String TYPE_ID = "rebuild.asset.uploadMetadata";
 
   @Inject
-  public RebuildAssetUploadMetadataTaskDescriptor(final NodeAccess nodeAccess) {
+  public RebuildAssetUploadMetadataTaskDescriptor(final NodeAccess nodeAccess,
+                                                  final RebuildAssetUploadMetadataConfiguration configuration) {
     super(
         TYPE_ID,
         RebuildAssetUploadMetadataTask.class,
         "Rebuild asset upload metadata",
-        NOT_VISIBLE,
-        NOT_EXPOSED,
+        configuration.isEnabled() ? VISIBLE : NOT_VISIBLE,
+        configuration.isEnabled() ? EXPOSED : NOT_EXPOSED,
         nodeAccess.isClustered() ? newLimitNodeFormField() : null);
   }
 }

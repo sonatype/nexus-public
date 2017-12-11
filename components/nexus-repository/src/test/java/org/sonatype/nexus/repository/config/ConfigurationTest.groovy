@@ -75,4 +75,18 @@ class ConfigurationTest
       original.attributes.httpclient.authorization.password == 'secret'
   }
 
+  def 'Obfuscates sensitive data'() {
+    String configStr
+    Configuration config = new Configuration(repositoryName: 'myrepo', recipeName: 'someRecipe', online: false,
+        attributes: [
+            allsecrets: [password: 'mask', secret: 'mask', applicationPassword: 'mask', systemPassword: 'mask'],
+            httpclient: [authorization: [password: 'mask']]
+        ])
+
+    when: 'Configuration toString is invoked'
+      configStr = config.toString()
+
+    then: 'All sensitive data has been masked'
+      !configStr.contains('mask')
+  }
 }

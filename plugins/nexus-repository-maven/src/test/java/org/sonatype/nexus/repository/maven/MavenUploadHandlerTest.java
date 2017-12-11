@@ -87,8 +87,10 @@ public class MavenUploadHandlerTest
     assertThat(def.isMultipleUpload(), is(true));
     // Order is important on fields as it affects the UI
     assertThat(def.getComponentFields(),
-        contains(field("groupId", false, STRING), field("artifactId", false, STRING), field("version", false, STRING)));
-    assertThat(def.getAssetFields(), contains(field("classifier", true, STRING), field("extension", false, STRING)));
+        contains(field("groupId", "Group ID", false, STRING), field("artifactId", "Artifact ID", false, STRING),
+            field("version", "Version", false, STRING)));
+    assertThat(def.getAssetFields(),
+        contains(field("classifier", "Classifier", true, STRING), field("extension", "Extension", false, STRING)));
   }
 
   @Test
@@ -149,8 +151,11 @@ public class MavenUploadHandlerTest
     assertNull(actual.getTimestamp());
   }
 
-
-  private UploadFieldDefinition field(final String name, final boolean optional, final Type type) {
-    return new UploadFieldDefinition(name, optional, type);
+  private UploadFieldDefinition field(final String name,
+                                      final String displayName,
+                                      final boolean optional,
+                                      final Type type)
+  {
+    return new UploadFieldDefinition(name, displayName, optional, type);
   }
 }

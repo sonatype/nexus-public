@@ -133,7 +133,7 @@ public class MavenFacetImpl
     super.doInit(configuration);
     mavenPathParser = checkNotNull(mavenPathParsers.get(getRepository().getFormat().getValue()));
     storageFacet = getRepository().facet(StorageFacet.class);
-    storageFacet.registerWritePolicySelector(new MavenWritePolicySelector(mavenPathParser));
+    storageFacet.registerWritePolicySelector(new MavenWritePolicySelector());
   }
 
   @Override

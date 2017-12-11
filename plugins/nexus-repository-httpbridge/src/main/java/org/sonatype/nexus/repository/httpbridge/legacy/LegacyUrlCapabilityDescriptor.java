@@ -51,7 +51,7 @@ public class LegacyUrlCapabilityDescriptor
 
   @Override
   public String name() {
-    return "NX2 style URLs";
+    return "NXRM2 style URLs";
   }
 
   @Override

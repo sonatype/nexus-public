@@ -19,7 +19,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
@@ -37,7 +36,6 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Range;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -312,8 +310,7 @@ public abstract class NexusPaxExamSupport
    * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
    */
   public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler) {
-    Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
-    return () -> taskScheduler.getRunningTaskCount() == 0;
+    return () -> taskScheduler.getExecutedTaskCount() > 0 && taskScheduler.getRunningTaskCount() == 0;
   }
 
   // -------------------------------------------------------------------------

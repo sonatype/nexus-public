@@ -23,7 +23,6 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
 import org.sonatype.nexus.scheduling.TaskInfo.RunState;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
-import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.junit.Before;
@@ -33,7 +32,6 @@ import org.mockito.Mock;
 import static java.util.Collections.emptyList;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -47,60 +45,29 @@ public class RebuildAssetUploadMetadataTaskManagerTest
   @Mock
   private TaskScheduler taskScheduler;
 
-  private RebuildAssetUploadMetadataConfiguration configuration = new RebuildAssetUploadMetadataConfiguration(true, 0);
-
   @Before
   public void injectMocks() {
-    manager = new RebuildAssetUploadMetadataTaskManager(taskScheduler, configuration);
+    manager = new RebuildAssetUploadMetadataTaskManager(taskScheduler);
   }
 
   @Test
-  public void doStartSchedulesNewTasks() throws Exception {
-    TaskConfiguration configuration = createTaskConfiguration();
+  public void doStartWithNoOldRebuildTasks() throws Exception {
     when(taskScheduler.listsTasks()).thenReturn(emptyList());
-    when(taskScheduler.createTaskConfigurationInstance(RebuildAssetUploadMetadataTaskDescriptor.TYPE_ID))
-        .thenReturn(configuration);
 
     manager.doStart();
 
-    verify(taskScheduler).submit(eq(configuration));
+    verify(taskScheduler, never()).scheduleTask(any(), any());
   }
 
   @Test
-  public void doStartReschedulesExistingTasks() throws Exception {
+  public void doStartRemovedOldTasks() throws Exception {
     TaskInfo existingTask = createMockTaskInfo(RebuildAssetUploadMetadataTaskDescriptor.TYPE_ID);
+
     when(taskScheduler.listsTasks()).thenReturn(asList(existingTask));
-    when(existingTask.getCurrentState()).thenReturn(createCurrentState(State.WAITING));
 
     manager.doStart();
 
-    verify(taskScheduler, never()).submit(any());
-    verify(existingTask).runNow();
-  }
-
-  @Test
-  public void doStartIgnoresRunningTasks() throws Exception {
-    TaskInfo existingTask = createMockTaskInfo(RebuildAssetUploadMetadataTaskDescriptor.TYPE_ID);
-    when(taskScheduler.listsTasks()).thenReturn(asList(existingTask));
-    when(existingTask.getCurrentState()).thenReturn(createCurrentState(State.RUNNING));
-
-    manager.doStart();
-
-    verify(taskScheduler, never()).submit(any());
-    verify(existingTask, never()).runNow();
-  }
-
-  @Test
-  public void doStartDoesNotScheduleNewTaskWhenExistingFailsToLaunch() throws Exception {
-    TaskInfo existingTask = createMockTaskInfo(RebuildAssetUploadMetadataTaskDescriptor.TYPE_ID);
-    when(taskScheduler.listsTasks()).thenReturn(asList(existingTask));
-    when(existingTask.getCurrentState()).thenReturn(createCurrentState(State.WAITING));
-    when(existingTask.runNow()).thenThrow(new TaskRemovedException(""));
-
-    manager.doStart();
-
-    verify(taskScheduler, never()).submit(any());
-    verify(existingTask).runNow();
+    verify(existingTask).remove();
   }
 
   private TaskConfiguration createTaskConfiguration() {

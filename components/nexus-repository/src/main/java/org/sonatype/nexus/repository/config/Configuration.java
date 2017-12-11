@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.config;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,10 +25,20 @@ import org.sonatype.nexus.common.collect.DetachingMap;
 import org.sonatype.nexus.common.collect.DetachingSet;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.text.Strings2.mask;
 
 /**
  * Repository configuration.
@@ -37,6 +49,17 @@ public class Configuration
     extends Entity
     implements Cloneable
 {
+  private static final List<String> SENSITIVE_FIELD_NAMES = newArrayList("applicationPassword", "password",
+      "systemPassword", "secret");
+
+  private static final TypeReference<Map<String, Map<String, Object>>> ATTRIBUTES_TYPE_REF = new TypeReference<Map<String, Map<String, Object>>>() { };
+
+  private static final ObjectWriter ATTRIBUTES_JSON_WRITER = new ObjectMapper().writerFor(ATTRIBUTES_TYPE_REF);
+
+  private static final ObjectReader ATTRIBUTES_JSON_READER = new ObjectMapper().readerFor(ATTRIBUTES_TYPE_REF);
+
+  private Logger log = LoggerFactory.getLogger(Configuration.class);
+
   private String repositoryName;
 
   private String recipeName;
@@ -105,8 +128,29 @@ public class Configuration
     return getClass().getSimpleName() + "{" +
         "repositoryName='" + repositoryName + '\'' +
         ", recipeName='" + recipeName + '\'' +
-        ", attributes=" + attributes +
+        ", attributes=" + obfuscatedAttributes() +
         '}';
+  }
+
+  /**
+   * @return string representation with sensitive data (passwords) obfuscated
+   * @since 3.7
+   */
+  private String obfuscatedAttributes() {
+    try (ByteArrayOutputStream obfuscatedAttrs = new ByteArrayOutputStream()) {
+      try (SanitizingJsonOutputStream sanitizer = new SanitizingJsonOutputStream(obfuscatedAttrs,
+          SENSITIVE_FIELD_NAMES,
+          mask("password"))) {
+        sanitizer.write(ATTRIBUTES_JSON_WRITER.writeValueAsBytes(attributes));
+      }
+
+      Object result = ATTRIBUTES_JSON_READER.readValue(obfuscatedAttrs.toByteArray());
+      return result != null ? result.toString() : "";
+    }
+    catch (IOException e) {
+      log.error("Error obfuscating attributes", e);
+      return format("<<Unable to obfuscate attributes. Exception was '%s'>>", e.getMessage());
+    }
   }
 
   /**

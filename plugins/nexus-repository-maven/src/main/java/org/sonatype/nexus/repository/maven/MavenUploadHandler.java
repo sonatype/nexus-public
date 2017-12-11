@@ -60,6 +60,10 @@ public class MavenUploadHandler
 
   private static final String GROUP_ID = "groupId";
 
+  private static final String ARTIFACT_ID_DISPLAY = "Artifact ID";
+
+  private static final String GROUP_ID_DISPLAY = "Group ID";
+
   private final Maven2MavenPathParser parser;
 
   private UploadDefinition definition;
@@ -115,8 +119,8 @@ public class MavenUploadHandler
   public UploadDefinition getDefinition() {
     if (definition == null) {
       List<UploadFieldDefinition> componentFields = Arrays.asList(
-          new UploadFieldDefinition(GROUP_ID, false, Type.STRING),
-          new UploadFieldDefinition(ARTIFACT_ID, false, Type.STRING),
+          new UploadFieldDefinition(GROUP_ID, GROUP_ID_DISPLAY, false, Type.STRING),
+          new UploadFieldDefinition(ARTIFACT_ID, ARTIFACT_ID_DISPLAY, false, Type.STRING),
           new UploadFieldDefinition(VERSION, false, Type.STRING));
 
       List<UploadFieldDefinition> assetFields = Arrays.asList(new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),

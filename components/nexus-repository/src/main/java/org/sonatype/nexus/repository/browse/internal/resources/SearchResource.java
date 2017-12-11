@@ -222,7 +222,8 @@ public class SearchResource
 
     // loop each asset specific http query parameter to filter out assets that do not apply
     assetParams.forEach((key, values) -> {
-      String assetParam = searchUtils.getAssetSearchParameters().get(key);
+      //short circuit if the uri contained the full attribute name (not just the alias)
+      String assetParam = searchUtils.isFullAssetAttributeName(key) ? key : searchUtils.getAssetSearchParameters().get(key);
 
       // does the assetMap contain the requested value?
       getValueFromAssetMap(assetMap, assetParam).ifPresent(assetValue -> {
@@ -239,7 +240,7 @@ public class SearchResource
   MultivaluedMap<String, String> getAssetParams(final UriInfo uriInfo) {
     return uriInfo.getQueryParameters()
         .entrySet().stream()
-        .filter(t -> searchUtils.getAssetSearchParameters().containsKey(t.getKey()))
+        .filter(t -> searchUtils.isAssetSearchParam(t.getKey()))
         .collect(toMap(Entry::getKey, Entry::getValue, (u, v) -> {
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));

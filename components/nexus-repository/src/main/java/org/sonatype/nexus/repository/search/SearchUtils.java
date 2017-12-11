@@ -49,6 +49,8 @@ public class SearchUtils
 
   private static final String CONTINUATION_TOKEN = "continuationToken";
 
+  private static final String ASSET_PREFIX = "assets.";
+
   private final RepositoryManagerRESTAdapter repoAdapter;
 
   private final Map<String, String> searchParams;
@@ -64,7 +66,7 @@ public class SearchUtils
         .flatMap(e -> stream(e.getValue().get().spliterator(), true))
         .collect(toMap(SearchMapping::getAlias, SearchMapping::getAttribute));
     this.assetSearchParams = searchParams.entrySet().stream()
-        .filter(e -> e.getValue().startsWith("assets."))
+        .filter(e -> e.getValue().startsWith(ASSET_PREFIX))
         .collect(toMap(Entry::getKey, Entry::getValue));
   }
 
@@ -125,5 +127,13 @@ public class SearchUtils
 
   private boolean isGroup(final Repository repository) {
     return GroupType.NAME.equals(repository.getType().getValue());
+  }
+
+  public boolean isAssetSearchParam(final String assetSearchParam) {
+    return assetSearchParams.containsKey(assetSearchParam) || isFullAssetAttributeName(assetSearchParam);
+  }
+
+  public boolean isFullAssetAttributeName(final String assetSearchParam) {
+    return assetSearchParam.startsWith(ASSET_PREFIX);
   }
 }

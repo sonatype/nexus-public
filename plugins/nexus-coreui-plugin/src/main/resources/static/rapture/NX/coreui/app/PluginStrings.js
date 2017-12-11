@@ -244,14 +244,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     FeatureGroups_Upload_Description: 'Upload content to the repository',
     FeatureGroups_Upload_Wait_Message: 'Uploading your components...',
     FeatureGroups_Upload_Successful: 'Components uploaded successfully',
-    FeatureGroups_Upload_Successful_Link_Text: 'View the uploaded components',
+    FeatureGroups_Upload_Successful_Link_Text: 'view it now.',
+    FeatureGroups_Upload_Successful_Text: 'Component uploaded to the {0} repository, ',
     FeatureGroups_Upload_Asset_Form_Title: 'Choose assets for this component',
     FeatureGroups_Upload_Asset_Form_File_Label: 'File',
     FeatureGroups_Upload_Asset_Form_Remove_Button: 'Remove',
     FeatureGroups_Upload_Asset_Form_Add_Asset_Button: 'Add another asset',
     FeatureGroups_Upload_Component_Form_Title: 'Component coordinates',
     FeatureGroups_Upload_Form_Upload_Button: 'Upload',
-    FeatureGroups_Upload_Form_Discard_Button: 'Discard',
+    FeatureGroups_Upload_Form_Discard_Button: 'Cancel',
     FeatureGroups_Upload_Form_Browse_Button: 'Browse',
 
     // Admin -> Repository

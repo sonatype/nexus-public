@@ -601,6 +601,12 @@ public class QuartzSchedulerSPI
     }
   }
 
+  @Override
+  @Guarded(by = STARTED)
+  public int getExecutedTaskCount() {
+    return quartzScheduler.numJobsExecuted();
+  }
+
   //
   // Internal
   //

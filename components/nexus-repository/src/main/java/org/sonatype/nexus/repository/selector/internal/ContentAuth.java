@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
-import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,7 +19,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -102,7 +99,7 @@ public class ContentAuth
     return NAME + "(<asset|component>, [jexlSelectorsOnly])";
   }
 
-  private List<ODocument> browseComponentAssets(final ODocument component) {
+  private Iterable<ODocument> browseComponentAssets(final ODocument component) {
     checkNotNull(component);
     OIdentifiable bucket = component.field(ComponentEntityAdapter.P_BUCKET, OIdentifiable.class);
     ODatabaseDocumentInternal db = component.getDatabase();
@@ -113,6 +110,6 @@ public class ContentAuth
                 .put("component", component.getIdentity())
                 .build()
         );
-    return Lists.newArrayList(results);
+    return results;
   }
 }

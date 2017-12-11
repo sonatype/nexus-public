@@ -34,6 +34,8 @@ public class SchedulerCapability
 {
   private final SchedulerSPI scheduler;
 
+  private boolean pausedByUs = false;
+
   @Inject
   public SchedulerCapability(final SchedulerSPI scheduler) {
     this.scheduler = checkNotNull(scheduler);
@@ -46,11 +48,15 @@ public class SchedulerCapability
 
   @Override
   protected void onActivate(final SchedulerCapabilityConfiguration config) throws Exception {
-    scheduler.resume();
+    if (pausedByUs) {
+      pausedByUs = false;
+      scheduler.resume();
+    }
   }
 
   @Override
   protected void onPassivate(final SchedulerCapabilityConfiguration config) throws Exception {
+    pausedByUs = true;
     scheduler.pause();
   }
 

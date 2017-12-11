@@ -36,6 +36,7 @@ import org.osgi.framework.BundleContext;
 
 import static com.google.common.collect.Lists.reverse;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
  * Manages any {@link Lifecycle} components annotated with {@link ManagedLifecycle}.
@@ -89,8 +90,9 @@ public class NexusLifecycleManager
     while (current < target) {
       Phase nextPhase = PHASES[++current];
       log.info("Start {}", nextPhase);
+      boolean propagateNonTaskErrors = !TASKS.equals(nextPhase);
       for (BeanEntry<Named, Lifecycle> entry : cachedIndex.get(nextPhase)) {
-        startComponent(nextPhase, entry.getValue(), true);
+        startComponent(nextPhase, entry.getValue(), propagateNonTaskErrors);
       }
       currentPhase = nextPhase;
     }

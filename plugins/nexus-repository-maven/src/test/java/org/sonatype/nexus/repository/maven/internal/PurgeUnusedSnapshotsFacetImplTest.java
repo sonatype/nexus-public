@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -240,7 +239,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
   private OCommandRequest getCommandRequest(final int total, final TestData... documents) {
     OCommandRequest oCommandRequest = mock(OCommandRequest.class);
-    OResultSet<ODocument> resultSet = new OBasicResultSet<>();
+    List<ODocument> resultSet = new ArrayList<>();
     when(oCommandRequest.execute()).thenReturn(resultSet);
 
     for (TestData testData : documents) {

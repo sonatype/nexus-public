@@ -12,13 +12,16 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPathParser;
+import java.util.Objects;
+
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.WritePolicy;
 import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
+import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW_ONCE;
 
 /**
  * Maven specific {@link WritePolicySelector} implementation.
@@ -28,21 +31,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MavenWritePolicySelector
     implements WritePolicySelector
 {
-  private final MavenPathParser mavenPathParser;
-
-  public MavenWritePolicySelector(final MavenPathParser mavenPathParser) {
-    this.mavenPathParser = checkNotNull(mavenPathParser);
-  }
-
   /**
-   * In case of {@link WritePolicy#ALLOW_ONCE}, write policy for non-artifacts is overridden to {@link WritePolicy#ALLOW}.
+   * In case of {@link WritePolicy#ALLOW_ONCE}, write policy for metadata file is overridden to {@link WritePolicy#ALLOW}.
    */
   @Override
   public WritePolicy select(final Asset asset, final WritePolicy configured) {
-    if (WritePolicy.ALLOW_ONCE == configured) {
-      final MavenPath mavenPath = mavenPathParser.parsePath(asset.name());
-      if (mavenPath.getCoordinates() == null) {
-        return WritePolicy.ALLOW;
+    if (ALLOW_ONCE == configured) {
+      final String assetKind = asset.formatAttributes().get(P_ASSET_KIND, String.class);
+      if (Objects.equals(REPOSITORY_METADATA.name(), assetKind)) {
+        return ALLOW;
       }
     }
     return configured;

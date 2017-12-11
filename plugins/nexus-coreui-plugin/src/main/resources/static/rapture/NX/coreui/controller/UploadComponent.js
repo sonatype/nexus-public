@@ -55,6 +55,10 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     'upload': {
       file: 'upload.png',
       variants: ['x16', 'x32']
+    },
+    'tick': {
+      file: 'tick.png',
+      variants: ['x16', 'x32']
     }
   },
 
@@ -99,7 +103,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
         'nx-coreui-upload-component button[action=upload]': {
           click: me.doUpload
         },
-        'nx-coreui-upload-component button[action=discard]': {
+        'nx-coreui-upload-component button[action=cancel]': {
           click: me.discardUpload
         },
         'nx-coreui-upload-component button[action=add_asset]': {
@@ -121,18 +125,12 @@ Ext.define('NX.coreui.controller.UploadComponent', {
    * When a list managed by this controller is clicked, route the event to the proper handler
    */
   onSelection: function(list, model) {
-    this.onRepositorySelection(model);
+    this.loadUploadPage(model);
   },
 
-  /**
-   * Load upload definition for selected repository.
-   *
-   * @private
-   * @param {NX.coreui.model.RepositoryReference} model selected repository
-   */
-  onRepositorySelection: function(model) {
-    var uploadComponentDefinition = this.getStore('UploadComponentDefinition').getById(model.get('format'));
-    this.getUploadComponent().loadRecord(uploadComponentDefinition, model);
+  loadUploadPage: function(repoModel) {
+    var uploadComponentDefinition = this.getStore('UploadComponentDefinition').getById(repoModel.get('format'));
+    this.getUploadComponent().loadRecord(uploadComponentDefinition, repoModel);
   },
 
   /**
@@ -141,6 +139,14 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   onNavigate: function() {
     if (this.getFeature()) {
       this.onBeforeRender();
+    }
+  },
+
+  loadView: function (index, animate, model) {
+    this.callParent(arguments);
+    if (model) {
+        //redraw the panel after visible, to get around issue where file field can be drawn at invalid size
+        this.loadUploadPage(model);
     }
   },
 
@@ -177,10 +183,9 @@ Ext.define('NX.coreui.controller.UploadComponent', {
             // Load the asset upload page
             if (list_ids[1]) {
                 repoModel = repoStore.getById(decodeURIComponent(list_ids[0]));
-                me.onModelChanged(0, repoModel);
-                me.onRepositorySelection(repoModel);
                 uploadComponent.getStore().load(function () {
-                    me.reselect();
+                    me.onModelChanged(0, repoModel);
+                    me.onSelection(undefined, repoModel);
                 });
             }
             // Load the asset list view or repository list view
@@ -199,15 +204,32 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     var me = this;
     var fp = button.up('form');
     if(fp.getForm().isValid()) {
+      me.setSuccessMessage();
       fp.getForm().submit({
         waitMsg: NX.I18n.get('FeatureGroups_Upload_Wait_Message'),
         success: function(form, action){
           NX.Messages.add({text: NX.I18n.get('FeatureGroups_Upload_Successful'), type: 'success'});
-          me.getSuccessMessage().update(NX.util.Url.asLink('#browse/search=' + encodeURIComponent('keyword="' + action.result.data + '"'),
-              NX.I18n.get('FeatureGroups_Upload_Successful_Link_Text'), '_self'));
+          me.setSuccessMessage(
+              NX.I18n.format('FeatureGroups_Upload_Successful_Text', form.getValues().repositoryName) +
+              NX.util.Url.asLink('#browse/search=' + encodeURIComponent('keyword="' + action.result.data + '"'),
+                  NX.I18n.get('FeatureGroups_Upload_Successful_Link_Text'), '_self'));
+          fp.getForm().reset();
         }
       });
     }
+  },
+
+  setSuccessMessage: function (message) {
+      var me = this,
+          successMessage = me.getSuccessMessage();
+
+      if (message) {
+          successMessage.setTitle(message);
+          successMessage.show();
+      }
+      else {
+          successMessage.hide();
+      }
   },
 
   discardUpload: function() {

@@ -27,7 +27,7 @@ import javax.inject.Provider;
 import org.sonatype.nexus.orient.DatabaseExternalizer;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
-import org.sonatype.nexus.supportzip.SanitizingJsonOutputStream;
+import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

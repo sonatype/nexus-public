@@ -94,6 +94,10 @@ public abstract class QuartzTestSupport
     await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getRunningTaskCount(), is(expectedCount));
   }
 
+  public void assertExecutedTaskCount(int expectedCount) {
+    await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getExecutedTaskCount(), is(expectedCount));
+  }
+
   public void assertTaskState(final TaskInfo taskInfo, final TaskInfo.State expectedState) {
     // unfortunately, a task's Future.get() returns before the task state is updated so polling is in order to be safe
     await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskInfo.getCurrentState().getState(), is(expectedState));

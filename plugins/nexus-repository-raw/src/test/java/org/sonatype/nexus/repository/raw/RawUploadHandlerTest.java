@@ -80,8 +80,8 @@ public class RawUploadHandlerTest
     UploadDefinition def = underTest.getDefinition();
 
     assertThat(def.isMultipleUpload(), is(true));
-    assertThat(def.getComponentFields(), contains(field("directory", false, STRING)));
-    assertThat(def.getAssetFields(), contains(field("filename", false, STRING)));
+    assertThat(def.getComponentFields(), contains(field("directory", "Directory", false, STRING)));
+    assertThat(def.getAssetFields(), contains(field("filename", "Filename", false, STRING)));
   }
 
   @Test
@@ -119,7 +119,11 @@ public class RawUploadHandlerTest
     assertThat(path, is("org/apache/maven/bar.jar"));
   }
 
-  private UploadFieldDefinition field(final String name, final boolean optional, final Type type) {
-    return new UploadFieldDefinition(name, optional, type);
+  private UploadFieldDefinition field(final String name,
+                                      final String displayName,
+                                      final boolean optional,
+                                      final Type type)
+  {
+    return new UploadFieldDefinition(name, displayName, optional, type);
   }
 }
