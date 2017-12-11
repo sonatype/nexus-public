@@ -13,9 +13,13 @@
 package com.bolyuba.nexus.plugin.npm.service;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.sonatype.nexus.proxy.item.FileContentLocator;
+import org.sonatype.security.SecuritySystem;
+import org.sonatype.security.usermanagement.User;
+import org.sonatype.security.usermanagement.UserNotFoundException;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
@@ -25,8 +29,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import org.apache.shiro.subject.Subject;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,6 +46,9 @@ import static org.mockito.Mockito.when;
 public class PackageRootTest
     extends TestSupport
 {
+  @Mock
+  private SecuritySystem securitySystem;
+
   private final ObjectMapper objectMapper;
 
   public PackageRootTest() {
@@ -96,7 +105,7 @@ public class PackageRootTest
 
     final File tmpDir = util.createTempDir();
 
-    final MetadataParser parser = new MetadataParser(tmpDir);
+    final MetadataParser parser = new MetadataParser(tmpDir, securitySystem);
     final PackageRoot root = parser
         .parsePackageRoot(npmRepository.getId(), new FileContentLocator(uploadRequest, NpmRepository.JSON_MIME_TYPE));
 
@@ -113,6 +122,41 @@ public class PackageRootTest
     onDisk.remove("_attachments"); // omit "attachments" as they are processed separately
     JSONObject onStore = new JSONObject(objectMapper.writeValueAsString(root.getRaw()));
     JSONAssert.assertEquals(onDisk, onStore, false);
+  }
+
+  @Test
+  public void whenPopulateWithRealUsername() throws Exception {
+    setupPublisher("admin");
+
+    final NpmRepository npmRepository = mock(NpmRepository.class);
+    when(npmRepository.getId()).thenReturn("repo");
+    final File uploadRequest = util.resolveFile("src/test/npm/ROOT_testproject.json");
+
+    final File tmpDir = util.createTempDir();
+
+    final MetadataParser parser = new MetadataParser(tmpDir, securitySystem);
+    final PackageRoot root = parser
+        .parsePackageRoot(npmRepository.getId(), new FileContentLocator(uploadRequest, NpmRepository.JSON_MIME_TYPE));
+
+    Map<String, Object> versions = (Map<String, Object>)root.getRaw().get("versions");
+    Map<String, Object> version = (Map<String, Object>) versions.get("0.0.0");
+    Map<String, String> npmUser = (Map<String, String>) version.get("_npmUser");
+    assertThat(npmUser.get("name"), is("admin"));
+
+    ArrayList<Map<String, String>> versionMaintainer = (ArrayList<Map<String, String>>) version.get("maintainers");
+    assertThat(versionMaintainer.get(0).get("name"), is("admin"));
+
+    ArrayList<Map<String, String>> maintainer = (ArrayList<Map<String, String>>) root.getRaw().get("maintainers");
+    assertThat(maintainer.get(0).get("name"), is("admin"));
+  }
+
+  private void setupPublisher(String username) throws UserNotFoundException {
+    User user = mock(User.class);
+    when(user.getUserId()).thenReturn(username);
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipal()).thenReturn(username);
+    when(securitySystem.getSubject()).thenReturn(subject);
+    when(securitySystem.getUser(username)).thenReturn(user);
   }
 
   @Test

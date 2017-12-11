@@ -28,7 +28,16 @@
         "modified": "2011-11-14T23:03:49.703Z"
     },
     "versions": {
-        "0.0.2": "latest"
+        "0.0.2": {
+          "name": "small",
+          "version": "0.0.2",
+          "description": "small",
+          "main": "index.js",
+          "dist": {
+            "shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+            "tarball": "http://localhost:8081/nexus/content/npm/npmhosted/testproject/-/small-0.0.2.tgz"
+          }
+        }
     }
   },
   "commonjs" : {
@@ -50,7 +59,16 @@
         "url": "git://github.com/Gozala/commonjs-node.git"
     },
     "versions": {
-        "0.0.2": "latest"
+        "0.0.2": {
+          "name": "small",
+          "version": "0.0.2",
+          "description": "small",
+          "main": "index.js",
+          "dist": {
+            "shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+            "tarball": "http://localhost:8081/nexus/content/npm/npmhosted/testproject/-/small-0.0.2.tgz"
+          }
+        }
     }    
   },
   "system" : {
@@ -83,7 +101,16 @@
         "modified": "2011-02-24T16:19:36.503Z"
     },
     "versions": {
-        "0.1.0": "latest"
+        "0.1.0": {
+          "name": "small",
+          "version": "0.1.0",
+          "description": "small",
+          "main": "index.js",
+          "dist": {
+            "shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+            "tarball": "http://localhost:8081/nexus/content/npm/npmhosted/testproject/-/small-0.1.0.tgz"
+          }
+        }
     }    
   },
   "test" : {
@@ -179,7 +206,16 @@
         "fgribreau": true
     },
     "versions": {
-        "0.6.0": "latest"
+        "0.6.0": {
+          "name": "small",
+          "version": "0.6.0",
+          "description": "small",
+          "main": "index.js",
+          "dist": {
+            "shasum": "92543e49605d8bb01aa8e174d04603656d462281",
+            "tarball": "http://localhost:8081/nexus/content/npm/npmhosted/testproject/-/small-0.6.0.tgz"
+          }
+        }
     }    
   }
 }

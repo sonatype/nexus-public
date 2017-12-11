@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.Map;
 
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
+import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
@@ -41,6 +42,9 @@ public class MetadataParserTest
   @Mock
   private ApplicationDirectories applicationDirectories;
 
+  @Mock
+  private SecuritySystem securitySystem;
+
   private MetadataParser metadataParser;
 
   private ObjectMapper objectMapper = new ObjectMapper();
@@ -50,7 +54,7 @@ public class MetadataParserTest
     tmpDir = util.createTempDir();
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(tmpDir);
     when(applicationDirectories.getTemporaryDirectory()).thenReturn(tmpDir);
-    metadataParser = new MetadataParser(applicationDirectories.getTemporaryDirectory());
+    metadataParser = new MetadataParser(applicationDirectories.getTemporaryDirectory(), securitySystem);
   }
 
   @Test
@@ -59,6 +63,7 @@ public class MetadataParserTest
     final JsonParser parser = objectMapper.getFactory()
         .createParser(
             "{\"first\":{\"stub\":true}, \"second\":{\"incomplete\":true}, \"third\":{\"content_type\":\"text/plain\",\"data\": \"VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIHRleHQ=\"}}");
+    parser.nextToken();
     metadataParser.parsePackageAttachments(parser, attachments);
 
     assertThat(attachments.entrySet(), hasSize(1));

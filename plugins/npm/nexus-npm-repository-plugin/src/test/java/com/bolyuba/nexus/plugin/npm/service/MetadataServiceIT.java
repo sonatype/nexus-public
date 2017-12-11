@@ -34,6 +34,7 @@ import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.storage.remote.RemoteStorageContext;
 import org.sonatype.nexus.proxy.storage.remote.httpclient.HttpClientManager;
 import org.sonatype.nexus.web.BaseUrlHolder;
+import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
@@ -110,6 +111,9 @@ public class MetadataServiceIT
   @Mock
   private HttpClientManager httpClientManager;
 
+  @Mock
+  private SecuritySystem securitySystem;
+
   private OrientMetadataStore metadataStore;
 
   private MetadataServiceFactoryImpl metadataService;
@@ -133,7 +137,7 @@ public class MetadataServiceIT
         httpClient);
 
     metadataStore = new OrientMetadataStore(applicationDirectories, 10, 100);
-    metadataParser = new MetadataParser(applicationDirectories.getTemporaryDirectory());
+    metadataParser = new MetadataParser(applicationDirectories.getTemporaryDirectory(), securitySystem);
     // proxy transport but without root fetch, to not harrass registry and make tests dead slow
     proxyMetadataTransport = new HttpProxyMetadataTransport(metadataParser, httpClientManager)
     {

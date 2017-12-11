@@ -15,7 +15,9 @@ package com.bolyuba.nexus.plugin.npm.service.internal;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,9 @@ import org.sonatype.nexus.proxy.item.AbstractContentLocator;
 import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.nexus.proxy.item.StringContentLocator;
 import org.sonatype.nexus.util.DigesterUtils;
+import org.sonatype.security.SecuritySystem;
+import org.sonatype.security.usermanagement.User;
+import org.sonatype.security.usermanagement.UserNotFoundException;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.bolyuba.nexus.plugin.npm.NpmRepository;
@@ -46,7 +51,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
+import org.apache.shiro.subject.Subject;
 
+import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
+import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
+import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,18 +68,33 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MetadataParser
     extends ComponentSupport
 {
+  private static final String VERSIONS_KEY = "versions";
+
+  private static final String ATTACHMENTS = "_attachments";
+
+  private static final String MAINTAINERS_KEY = "maintainers";
+
+  private static final String NPM_USER = "_npmUser";
+
+  private static final String NAME = "name";
+
   private final File temporaryDirectory;
+
+  private final SecuritySystem securitySystem;
 
   private final ObjectMapper objectMapper;
 
   @Inject
-  public MetadataParser(final ApplicationDirectories applicationDirectories) {
-    this(applicationDirectories.getTemporaryDirectory());
+  public MetadataParser(final ApplicationDirectories applicationDirectories,
+                        final SecuritySystem securitySystem) {
+    this(applicationDirectories.getTemporaryDirectory(), securitySystem);
   }
 
   @VisibleForTesting
-  public MetadataParser(final File temporaryDirectory) {
+  public MetadataParser(final File temporaryDirectory,
+                        final SecuritySystem securitySystem) {
     this.temporaryDirectory = checkNotNull(temporaryDirectory);
+    this.securitySystem = checkNotNull(securitySystem);
     this.objectMapper = new ObjectMapper(); // this parses registry JSON
   }
 
@@ -147,52 +171,22 @@ public class MetadataParser
   private PackageRoot parsePackageRoot(final String repositoryId, final JsonParser parser) throws IOException {
     final Map<String, Object> raw = Maps.newHashMap();
     final Map<String, NpmBlob> attachments = Maps.newHashMap();
+    final String currentUserId = getCurrentUserId();
     checkArgument(parser.nextToken() == JsonToken.START_OBJECT, "Unexpected input %s, expected %s",
         parser.getCurrentToken(), JsonToken.START_OBJECT);
-    while (parser.nextToken() == JsonToken.FIELD_NAME) {
-      final String fieldName = parser.getCurrentName();
-      if ("_attachments".equals(fieldName)) {
+    parser.nextToken();
+    while (!END_OBJECT.equals(parser.getCurrentToken())) {
+      final String fieldName = parseFieldName(parser);
+      if (ATTACHMENTS.equals(fieldName)) {
         parsePackageAttachments(parser, attachments);
-        continue;
-      }
-      final JsonToken token = parser.nextValue();
-      if (token == JsonToken.START_OBJECT) {
-        raw.put(fieldName, parser.readValueAs(new TypeReference<Map<String, Object>>() {}));
-      }
-      else if (token == JsonToken.START_ARRAY) {
-        raw.put(fieldName, parser.readValueAs(new TypeReference<List<Object>>() {}));
-      }
-      else {
-        switch (token) {
-          case VALUE_NULL: {
-            raw.put(fieldName, null);
-            break;
-          }
-          case VALUE_FALSE: {
-            raw.put(fieldName, Boolean.FALSE);
-            break;
-          }
-          case VALUE_TRUE: {
-            raw.put(fieldName, Boolean.TRUE);
-            break;
-          }
-          case VALUE_NUMBER_INT: {
-            raw.put(fieldName, parser.getValueAsInt());
-            break;
-          }
-          case VALUE_NUMBER_FLOAT: {
-            raw.put(fieldName, parser.getValueAsDouble());
-            break;
-          }
-          case VALUE_STRING: {
-            raw.put(fieldName, parser.getValueAsString());
-            break;
-          }
-          default: {
-            throw new IllegalArgumentException("Unexpected token: " + token);
-          }
-        }
-        raw.put(fieldName, parser.getValueAsString());
+      } else if (VERSIONS_KEY.equals(fieldName)) {
+        raw.put(fieldName, parseVersions(parser, currentUserId));
+      } else if (MAINTAINERS_KEY.equals(fieldName)) {
+        raw.put(fieldName, parseMaintainers(parser, currentUserId));
+      } else if (NPM_USER.equals(fieldName)) {
+        raw.put(fieldName, parseMaintainer(parser, currentUserId));
+      } else {
+        raw.put(fieldName, parseValue(parser));
       }
     }
     final PackageRoot result = new PackageRoot(repositoryId, raw);
@@ -202,11 +196,160 @@ public class MetadataParser
     return result;
   }
 
+  @Nullable
+  private String getCurrentUserId() {
+    Subject subject = securitySystem.getSubject();
+    if(subject == null) {
+      return null;
+    }
+
+    try {
+      User user = securitySystem.getUser(subject.getPrincipal().toString());
+      return user.getUserId();
+    }
+    catch (UserNotFoundException e) { // NOSONAR
+      log.debug("Unable to find current user");
+      return null;
+    }
+  }
+
+  private String parseFieldName(final JsonParser parser) throws IOException {
+    assert parser.getCurrentToken().equals(FIELD_NAME);
+    String currentName = parser.getCurrentName();
+    parser.nextToken();
+    return currentName;
+  }
+
+  private Object parseValue(final JsonParser parser)
+      throws IOException
+  {
+    switch (parser.getCurrentToken()) {
+      case START_OBJECT:
+        return parseObject(parser);
+      case START_ARRAY:
+        return parseArray(parser);
+      case VALUE_NULL: {
+        parser.nextToken();
+        return null;
+      }
+      case VALUE_FALSE: {
+        parser.nextToken();
+        return Boolean.FALSE;
+      }
+      case VALUE_TRUE: {
+        parser.nextToken();
+        return Boolean.TRUE;
+      }
+      case VALUE_NUMBER_INT: {
+        int value = parser.getValueAsInt();
+        parser.nextToken();
+        return value;
+      }
+      case VALUE_NUMBER_FLOAT: {
+        double value = parser.getValueAsDouble();
+        parser.nextToken();
+        return value;
+      }
+      case VALUE_STRING: {
+        String value = parser.getValueAsString();
+        parser.nextToken();
+        return value;
+      }
+      default: {
+        throw new IllegalArgumentException("Unexpected token: " + parser.getCurrentToken());
+      }
+    }
+  }
+
+  private Object parseArray(final JsonParser parser) throws IOException {
+    Object value = parser.readValueAs(new TypeReference<List<Object>>() { });
+    parser.nextToken();
+    return value;
+  }
+
+  private Object parseObject(final JsonParser parser) throws IOException {
+    Object value = parser.readValueAs(new TypeReference<Map<String, Object>>() { });
+    parser.nextToken();
+    return value;
+  }
+
+  /**
+   * Parses the versions object in JSON
+   */
+  private Object parseVersions(final JsonParser parser,
+                               @Nullable final String currentUserId) throws IOException {
+    parser.nextToken();
+    Map<String, Object> versions = new LinkedHashMap<>();
+    while (!END_OBJECT.equals(parser.getCurrentToken())) {
+      String name = parseFieldName(parser);
+      Map<String, Object> attachment = parseVersion(parser, currentUserId);
+      versions.put(name, attachment);
+    }
+    parser.nextToken();
+    return versions;
+  }
+
+  /**
+   * Parses the versions object and replaces maintainer and npmUser
+   * name elements with the currently logged in userId
+   */
+  private Map<String, Object> parseVersion(final JsonParser parser,
+                                           @Nullable final String currentUserId) throws IOException {
+    parser.nextToken();
+    Map<String, Object> version = new LinkedHashMap<>();
+    while (!END_OBJECT.equals(parser.getCurrentToken())) {
+      String name = parseFieldName(parser);
+      if (MAINTAINERS_KEY.equals(name)) {
+        version.put(name, parseMaintainers(parser, currentUserId));
+      } else if (NPM_USER.equals(name)) {
+        version.put(name, parseMaintainer(parser, currentUserId));
+      } else {
+        version.put(name, parseValue(parser));
+      }
+    }
+    parser.nextToken();
+    return version;
+  }
+
+  /**
+   * Parses the maintainers objects in the JSON
+   */
+  private List<Object> parseMaintainers(final JsonParser parser, @Nullable final String currentUserId) throws IOException {
+    parser.nextToken();
+    List<Object> entries = new ArrayList<>();
+    while (!END_ARRAY.equals(parser.getCurrentToken())) {
+      entries.add(parseMaintainer(parser, currentUserId));
+    }
+    parser.nextToken();
+    return entries;
+  }
+
+  /**
+   * Parses a maintainer object and overwrites the name element
+   * with the currently logged in user (i.e. publisher)
+   */
+  private Map<String, Object> parseMaintainer(final JsonParser parser, @Nullable final String currentUserId) throws IOException {
+    parser.nextToken();
+    Map<String, Object> entries = new LinkedHashMap<>();
+    while (!END_OBJECT.equals(parser.getCurrentToken())) {
+      String key = parseFieldName(parser);
+      if (currentUserId != null && !currentUserId.isEmpty() && NAME.equals(key)) {
+        entries.put(key, currentUserId);
+        parser.nextToken();
+      }
+      else {
+        entries.put(key, parseValue(parser));
+      }
+    }
+    parser.nextToken();
+    return entries;
+  }
+
   @VisibleForTesting
   void parsePackageAttachments(final JsonParser parser,
                                final Map<String, NpmBlob> attachments) throws IOException
   {
-    checkArgument(parser.nextToken() == JsonToken.START_OBJECT, "Unexpected input %s, expected %s",
+    checkArgument(parser.getCurrentToken() == JsonToken.START_OBJECT, "Unexpected input %s, expected %s",
         parser.getCurrentToken(), JsonToken.START_OBJECT);
     while (parser.nextToken() == JsonToken.FIELD_NAME) {
       final NpmBlob attachment = parsePackageAttachment(parser);
@@ -214,6 +357,7 @@ public class MetadataParser
         attachments.put(attachment.getName(), attachment);
       }
     }
+    parser.nextToken();
   }
 
   /**

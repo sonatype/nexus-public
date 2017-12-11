@@ -42,6 +42,7 @@ import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -134,7 +135,7 @@ public class DefaultCapabilityRegistryTest
         {
           @Override
           public CapabilityIdentity answer(final InvocationOnMock invocationOnMock) throws Throwable {
-            return capabilityIdentity(String.valueOf(System.currentTimeMillis()));
+            return capabilityIdentity(RandomStringUtils.randomAlphabetic(32));
           }
         }
     );
