@@ -29,7 +29,7 @@
 
   <properties>
     <siesta.version>1.7</siesta.version>
-    <jackson.version>2.3.1</jackson.version>
+    <jackson.version>2.8.5</jackson.version>
   </properties>
 
   <dependencyManagement>
@@ -149,10 +149,15 @@
 
       <dependency>
         <groupId>com.fasterxml.jackson.jaxrs</groupId>
-        <artifactId>jackson-jaxrs-smile-provider</artifactId>
-        <version>${jackson2.version}</version>
+        <artifactId>jackson-jaxrs-json-provider</artifactId>
+        <version>${jackson.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-jaxb-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
