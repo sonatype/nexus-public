@@ -53,7 +53,7 @@ public class TasksResourceTest
 
   def 'resource path is the expected value'() {
     expect:
-      TasksResource.RESOURCE_URI == '/rest/beta/tasks'
+      TasksResource.RESOURCE_URI == '/beta/tasks'
   }
 
   def 'getTasks gets list of scheduled tasks'() {

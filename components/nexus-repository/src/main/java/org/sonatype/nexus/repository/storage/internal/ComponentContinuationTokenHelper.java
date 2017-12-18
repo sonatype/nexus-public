@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 /**
  * {@link OrientContinuationTokenHelper} for the {@link ComponentEntityAdapter}
  *
- * @since 3.next
+ * @since 3.7
  */
 @Named("component")
 @Singleton

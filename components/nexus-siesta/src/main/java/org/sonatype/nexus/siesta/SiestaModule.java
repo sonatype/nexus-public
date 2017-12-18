@@ -36,9 +36,7 @@ public class SiestaModule
 {
   private static final Logger log = LoggerFactory.getLogger(SiestaModule.class);
 
-  private static final String SERVICE_NAME = "siesta";
-
-  private static final String MOUNT_POINT = "/service/" + SERVICE_NAME;
+  private static final String MOUNT_POINT = "/service/rest";
 
   public static final String SKIP_MODULE_CONFIGURATION = SiestaModule.class.getName() + ".skip";
 

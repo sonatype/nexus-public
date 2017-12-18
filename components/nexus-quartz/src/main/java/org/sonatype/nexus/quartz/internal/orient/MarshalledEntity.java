@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.quartz.internal.orient;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * Marshalled entity.
@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.0
  */
 public abstract class MarshalledEntity<T>
-  extends Entity
+    extends AbstractEntity
 {
   private T value;
 

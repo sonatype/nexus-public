@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 public class UploadConfiguration
 {

@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * A component being uploaded.
  *
- * @since 3.next
+ * @since 3.7
  */
 public class ComponentUpload
     implements WithUploadField

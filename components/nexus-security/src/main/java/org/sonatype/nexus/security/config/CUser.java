@@ -14,14 +14,14 @@ package org.sonatype.nexus.security.config;
 
 import java.io.Serializable;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.text.Strings2;
 
 /**
  * Persistent user.
  */
 public class CUser
-    extends Entity
+    extends AbstractEntity
     implements Serializable, Cloneable
 {
   public static final String STATUS_DISABLED = "disabled";

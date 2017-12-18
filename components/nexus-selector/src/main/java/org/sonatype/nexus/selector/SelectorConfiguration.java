@@ -15,7 +15,7 @@ package org.sonatype.nexus.selector;
 import java.util.Map;
 import java.util.Objects;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * {@link Selector} configuration.
@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.0
  */
 public class SelectorConfiguration
-    extends Entity
+    extends AbstractEntity
 {
   private String name;
 

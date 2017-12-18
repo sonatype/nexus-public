@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Describes the fields associated with a component, fields associated with an asset and whether the format supports
  * multiple asset uploads.
  *
- * @since 3.next
+ * @since 3.7
  */
 public class UploadDefinition
 {

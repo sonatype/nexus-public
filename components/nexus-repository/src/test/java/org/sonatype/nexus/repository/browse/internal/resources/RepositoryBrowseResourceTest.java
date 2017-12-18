@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
 public class RepositoryBrowseResourceTest
     extends TestSupport
 {
-  private static final String URL_PREFIX = "http://localhost:8888/service/siesta/repository/browse/";
+  private static final String URL_PREFIX = "http://localhost:8888/service/rest/repository/browse/";
 
   private static final String REPOSITORY_NAME = "testRepository";
 

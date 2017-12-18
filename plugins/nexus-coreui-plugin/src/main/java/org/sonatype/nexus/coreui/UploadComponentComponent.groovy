@@ -37,7 +37,7 @@ import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 @Named
 @Singleton

@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_SIZE;
  * @since 3.0
  */
 public class Asset
-    extends MetadataNode<Asset>
+    extends AbstractMetadataNode<Asset>
 {
   /**
    * Key of {@link Asset} nested map of blob content hashes (if asset has backing content).

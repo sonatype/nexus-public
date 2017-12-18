@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * Analytics event data.
@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.0
  */
 public class EventData
-  extends Entity
+    extends AbstractEntity
   implements Cloneable, Serializable
 {
   private static final long serialVersionUID = 1L;

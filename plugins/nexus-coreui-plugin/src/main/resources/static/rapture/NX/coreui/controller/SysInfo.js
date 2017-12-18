@@ -109,6 +109,6 @@ Ext.define('NX.coreui.controller.SysInfo', {
    * @private
    */
   download: function () {
-    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/siesta/atlas/system-information'));
+    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/rest/atlas/system-information'));
   }
 });

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * @since 3.0
  */
 public class Bucket
-    extends Entity
+    extends AbstractEntity
 {
   /**
    * An identifying name for disaster recovery purposes (which isn't required to be strictly unique)

@@ -180,7 +180,7 @@ public abstract class EntityAdapter<T extends Entity>
    * Indicates the number of clusters to initially create for the type. The default implementation returns {@code 0} to
    * consult the corresponding database configuration for the number.
    * 
-   * @since 3.next
+   * @since 3.7
    */
   protected int getMinimumClusters() {
     return 0;

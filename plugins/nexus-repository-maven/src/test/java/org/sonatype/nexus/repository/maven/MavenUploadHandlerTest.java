@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 
 import org.junit.Before;
@@ -61,10 +62,10 @@ public class MavenUploadHandlerTest
   MavenFacet mavenFacet;
 
   @Mock
-  Payload jarPayload;
+  PartPayload jarPayload;
 
   @Mock
-  Payload sourcesPayload;
+  PartPayload sourcesPayload;
 
   @Mock
   StorageTx storageTx;

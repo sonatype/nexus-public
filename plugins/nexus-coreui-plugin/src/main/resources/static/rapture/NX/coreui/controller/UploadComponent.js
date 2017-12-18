@@ -15,7 +15,7 @@
 /**
  * Upload controller.
  *
- * @since 3.next
+ * @since 3.7
  */
 Ext.define('NX.coreui.controller.UploadComponent', {
   extend: 'NX.controller.Drilldown',
@@ -201,19 +201,33 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   },
 
   doUpload: function(button) {
-    var me = this;
-    var fp = button.up('form');
+    var me = this,
+        fp = button.up('form');
+
     if(fp.getForm().isValid()) {
       me.setSuccessMessage();
+
       fp.getForm().submit({
         waitMsg: NX.I18n.get('FeatureGroups_Upload_Wait_Message'),
         success: function(form, action){
-          NX.Messages.add({text: NX.I18n.get('FeatureGroups_Upload_Successful'), type: 'success'});
-          me.setSuccessMessage(
-              NX.I18n.format('FeatureGroups_Upload_Successful_Text', form.getValues().repositoryName) +
-              NX.util.Url.asLink('#browse/search=' + encodeURIComponent('keyword="' + action.result.data + '"'),
-                  NX.I18n.get('FeatureGroups_Upload_Successful_Link_Text'), '_self'));
+          var message = NX.I18n.format('FeatureGroups_Upload_Successful_Text', form.getValues().repositoryName);
+          if (NX.Permissions.check('nexus:search:read')) {
+            message += ", " + NX.util.Url.asLink(
+                '#browse/search=' + encodeURIComponent('keyword="' + action.result.data + '"'),
+                NX.I18n.get('FeatureGroups_Upload_Successful_Link_Text'), '_self');
+          }
+          me.setSuccessMessage(message);
+
           fp.getForm().reset();
+
+          // remove extra rows
+          var removeButton;
+          while ((removeButton = fp.down('button[action=remove_upload_asset]')) !== null) {
+            me.removeUploadAsset(removeButton);
+          }
+
+          // clearOnSubmit prevents normal form reset from working...
+          fp.down('fileuploadfield').inputEl.dom.value = '';
         }
       });
     }
@@ -234,11 +248,14 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
   discardUpload: function() {
     var me = this;
-    me.showChild(0, true);
+    me.loadView(me.BROWSE_INDEX, true);
   },
 
   addAsset: function() {
-    var me = this;
-    me.getUploadComponent().addAssetRow();
+    var me = this,
+      uploadComponent = me.getUploadComponent();
+
+    uploadComponent.addAssetRow();
+    uploadComponent.down('form').isValid();
   }
 });

@@ -10,19 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
-
-import javax.annotation.Nullable;
+/*global Ext, NX*/
 
 /**
- * Entity.
+ * Repository "Settings" form for a Yum Hosted repository.
  *
- * @since 3.7
+ * @since 3.next
  */
-public interface Entity
-{
-  @Nullable
-  EntityMetadata getEntityMetadata();
+Ext.define('NX.coreui.view.repository.recipe.YumHosted', {
+  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
+  alias: 'widget.nx-coreui-repository-yum-hosted',
+  requires: [
+    'NX.coreui.view.repository.facet.StorageFacet',
+    'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.YumHostedFacet'
+  ],
 
-  void setEntityMetadata(@Nullable final EntityMetadata metadata);
-}
+  /**
+   * @override
+   */
+  initComponent: function() {
+    var me = this;
+
+    me.items = [
+      { xtype: 'nx-coreui-repository-yum-hosted-facet'},
+      { xtype: 'nx-coreui-repository-storage-facet'},
+      { xtype: 'nx-coreui-repository-storage-hosted-facet'}
+    ];
+
+    me.callParent();
+  }
+});

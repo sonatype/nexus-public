@@ -43,7 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Support for uploading components via UI & API
  *
- * @since 3.next
+ * @since 3.7
  */
 @Named(Maven2Format.NAME)
 @Singleton

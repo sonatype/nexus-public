@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -63,7 +63,7 @@ public class EntityHookTest
   EntityHook entityHook;
 
   static class TestEntity
-      extends Entity
+      extends AbstractEntity
   {
     String text;
   }

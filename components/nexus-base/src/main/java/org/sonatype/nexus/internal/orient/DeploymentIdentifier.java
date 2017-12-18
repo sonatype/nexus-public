@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.orient;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * Representation of a unique identifier for this NXRM deployment.
@@ -22,7 +22,7 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.6.1
  */
 class DeploymentIdentifier
-    extends Entity
+    extends AbstractEntity
 {
   private String id;
   private String alias;

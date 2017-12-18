@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.WithUploadField;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -42,7 +43,7 @@ import org.apache.commons.fileupload.FileItem;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 @Named
 @Singleton
@@ -109,7 +110,7 @@ public class UploadService
 
       createFields(ua, ud.getAssetFields(), suffix, "asset", validation, params);
       final FileItem fileItem = file.getValue();
-      ua.setPayload(new StreamPayload(() -> fileItem.getInputStream(), fileItem.getSize(), fileItem.getContentType()));
+      ua.setPayload(new FileItemPayload(fileItem));
 
       uc.getAssetUploads().add(ua);
     }
@@ -173,5 +174,45 @@ public class UploadService
       result = removeLastSegment(result);
     }
     return result;
+  }
+
+  private static class FileItemPayload implements PartPayload
+  {
+    private final FileItem fileItem;
+
+    FileItemPayload(final FileItem fileItem) {
+      this.fileItem = fileItem;
+    }
+
+    @Override
+    public InputStream openInputStream() throws IOException {
+      return fileItem.getInputStream();
+    }
+
+    @Override
+    public long getSize() {
+      return fileItem.getSize();
+    }
+
+    @Override
+    public String getContentType() {
+      return fileItem.getContentType();
+    }
+
+    @Override
+    public String getName() {
+      return fileItem.getName();
+    }
+
+    @Override
+    public String getFieldName() {
+      return fileItem.getFieldName();
+    }
+
+    @Override
+    public boolean isFormField() {
+      return true;
+    }
+
   }
 }

@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.upload.UploadHandler;
 /**
  * Support for uploading components via UI & API
  *
- * @since 3.next
+ * @since 3.7
  */
 @Named(RawFormat.NAME)
 @Singleton

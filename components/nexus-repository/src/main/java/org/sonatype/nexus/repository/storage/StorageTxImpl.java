@@ -479,7 +479,7 @@ public class StorageTxImpl
     checkNotNull(bucket);
     checkNotNull(format);
 
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.bucketId(id(bucket));
     component.format(format.toString());
     component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));

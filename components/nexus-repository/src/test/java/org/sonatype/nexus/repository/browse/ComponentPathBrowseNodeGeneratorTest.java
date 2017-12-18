@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
@@ -66,7 +67,7 @@ public class ComponentPathBrowseNodeGeneratorTest
   }
 
   private Component createComponent(final String name, final String group, final String version) {
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.name(name);
     component.group(group);
     component.version(version);

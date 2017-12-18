@@ -36,7 +36,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN
 @Consumes([APPLICATION_JSON])
 interface ScriptClient
 {
-  public static final String RESOURCE_URI = '/rest/v1/script'
+  public static final String RESOURCE_URI = '/v1/script'
   
   public static final String RUN_ACTION = 'run'
 

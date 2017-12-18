@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 public interface UploadManager
 {

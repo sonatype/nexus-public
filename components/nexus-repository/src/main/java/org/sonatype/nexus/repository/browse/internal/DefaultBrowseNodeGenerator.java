@@ -28,7 +28,7 @@ import com.google.inject.Singleton;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Component-led layout based on group, name, and version; places components one level above their assets.
+ * Component-led layout based on group, name, and version; places assets one level below their components.
  *
  * @since 3.6
  */

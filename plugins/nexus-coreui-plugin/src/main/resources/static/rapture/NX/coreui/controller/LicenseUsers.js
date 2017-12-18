@@ -101,7 +101,7 @@ Ext.define('NX.coreui.controller.LicenseUsers', {
    * Download active users in CSV format.
    */
   download: function () {
-    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/siesta/licensing/csv_access_data'));
+    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/rest/licensing/csv_access_data'));
   }
 
 });

@@ -25,7 +25,7 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 /**
  * Orient based implementation of {@link ContinuationTokenHelper}
  *
- * @since 3.next
+ * @since 3.7
  */
 public abstract class OrientContinuationTokenHelper
     implements ContinuationTokenHelper

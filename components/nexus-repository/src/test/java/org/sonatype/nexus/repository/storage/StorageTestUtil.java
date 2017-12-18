@@ -43,7 +43,7 @@ public class StorageTestUtil
                                           final String name,
                                           final String version)
   {
-    return new Component()
+    return new DefaultComponent()
         .bucketId(id(bucket))
         .format("format-id")
         .group(group)

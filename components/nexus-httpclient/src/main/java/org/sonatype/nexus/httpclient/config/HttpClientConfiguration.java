@@ -15,7 +15,7 @@ package org.sonatype.nexus.httpclient.config;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * HTTP-client configuration.
@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.entity.Entity;
  * @since 3.0
  */
 public class HttpClientConfiguration
-    extends Entity
+    extends AbstractEntity
     implements Cloneable
 {
   @Valid

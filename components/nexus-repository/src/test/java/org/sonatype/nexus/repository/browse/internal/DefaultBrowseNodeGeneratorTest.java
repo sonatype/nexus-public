@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
@@ -144,7 +145,7 @@ public class DefaultBrowseNodeGeneratorTest
                                     final String group,
                                     final String version)
   {
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.name(name);
     component.group(group);
     component.version(version);

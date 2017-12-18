@@ -130,10 +130,10 @@ Ext.define('NX.coreui.controller.Log', {
 
   /**
    * @private
-   * Opens a new browser window pointing to GET /service/siesta/logging/log.
+   * Opens a new browser window pointing to GET /service/rest/logging/log.
    */
   downloadLog: function () {
-    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/siesta/logging/log'));
+    NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf('service/rest/logging/log'));
   },
 
   /**
@@ -200,7 +200,7 @@ Ext.define('NX.coreui.controller.Log', {
 
   /**
    * @private
-   * Retrieves log from /service/internal/logs/nexus.log and shows it in log panel.
+   * Retrieves log from /service/rest/logging/log and shows it in log panel.
    */
   retrieveLog: function () {
     var me = this,
@@ -217,7 +217,7 @@ Ext.define('NX.coreui.controller.Log', {
       //</if>
 
       Ext.Ajax.request({
-        url: NX.util.Url.urlOf('service/siesta/logging/log'),
+        url: NX.util.Url.urlOf('service/rest/logging/log'),
         method: 'GET',
         headers: {
           'accept': 'text/plain'

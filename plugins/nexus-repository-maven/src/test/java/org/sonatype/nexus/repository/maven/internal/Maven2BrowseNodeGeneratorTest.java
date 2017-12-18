@@ -16,11 +16,12 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
-import org.sonatype.nexus.repository.maven.internal.Maven2BrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
+
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -43,7 +44,10 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeAssetPathForAssetWithComponent() {
     Asset asset = createAsset("com/sonatype/example/1.0.0/example-1.0.0.jar");
-    Component component = new Component();
+    Component component = new DefaultComponent();
+    component.group("com.sonatype");
+    component.name("example");
+    component.version("1.0.0");
 
     List<String> path = generator.computeAssetPath(asset, component);
 
@@ -51,9 +55,23 @@ public class Maven2BrowseNodeGeneratorTest
   }
 
   @Test
+  public void computeAssetPathForSnapshotAssetWithComponent() {
+    Asset asset = createAsset("org/foo/bar/example/1.0-SNAPSHOT/example-1.0-20171213.212030-158.jar");
+    Component component = new DefaultComponent();
+    component.group("org.foo.bar");
+    component.name("example");
+    component.version("1.0-20171213.212030-158");
+
+    List<String> path = generator.computeAssetPath(asset, component);
+
+    assertThat(path,
+        contains("org", "foo", "bar", "example", "1.0-20171213.212030-158", "example-1.0-20171213.212030-158.jar"));
+  }
+
+  @Test
   public void computeComponentPathNameOnly() {
     Asset asset = createAsset("name/name.jar");
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.name("name");
 
     List<String> path = generator.computeComponentPath(asset, component);
@@ -64,7 +82,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeComponentPathNoGroup() {
     Asset asset = createAsset("name/1.0.0/name-1.0.0.jar");
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.name("name");
     component.version("1.0.0");
 
@@ -76,7 +94,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeComponentPath() {
     Asset asset = createAsset("group/name/1.0.0/name-1.0.0.jar");
-    Component component = new Component();
+    Component component = new DefaultComponent();
     component.group("group");
     component.name("name");
     component.version("1.0.0");
@@ -86,6 +104,18 @@ public class Maven2BrowseNodeGeneratorTest
     assertThat(path, contains(component.group(), component.name(), component.version()));
   }
 
+  @Test
+  public void computeSnapshotComponentPath() {
+    Asset asset = createAsset("group/name/1.0.0-SNAPSHOT/name-1.0.0-20171213.212030-158.jar");
+    Component component = new DefaultComponent();
+    component.group("group");
+    component.name("name");
+    component.version("1.0.0-20171213.212030-158");
+
+    List<String> path = generator.computeComponentPath(asset, component);
+
+    assertThat(path, contains(component.group(), component.name(), component.version()));
+  }
 
   private Asset createAsset(String assetName) {
     Asset asset = mock(Asset.class);

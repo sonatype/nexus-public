@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public class ClusteredModelVersions
-    extends Entity
+    extends AbstractEntity
     implements Iterable<Map.Entry<String, String>>
 {
   private Map<String, String> modelVersions = new HashMap<>();

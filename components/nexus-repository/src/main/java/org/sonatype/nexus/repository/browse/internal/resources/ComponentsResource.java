@@ -99,7 +99,7 @@ public class ComponentsResource
 
   @GET
   public Page<ComponentXO> getComponents(@QueryParam("continuationToken") final String continuationToken,
-      @QueryParam("repositoryId") final String repositoryId)
+      @QueryParam("repository") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 

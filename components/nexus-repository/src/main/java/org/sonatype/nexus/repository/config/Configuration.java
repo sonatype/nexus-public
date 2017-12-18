@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.collect.DetachingList;
 import org.sonatype.nexus.common.collect.DetachingMap;
 import org.sonatype.nexus.common.collect.DetachingSet;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,7 +46,7 @@ import static org.sonatype.nexus.common.text.Strings2.mask;
  * @since 3.0
  */
 public class Configuration
-    extends Entity
+    extends AbstractEntity
     implements Cloneable
 {
   private static final List<String> SENSITIVE_FIELD_NAMES = newArrayList("applicationPassword", "password",

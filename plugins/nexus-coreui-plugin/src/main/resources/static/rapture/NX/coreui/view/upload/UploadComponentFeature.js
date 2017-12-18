@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 Ext.define('NX.coreui.view.upload.UploadComponentFeature', {
   extend: 'NX.view.drilldown.Drilldown',

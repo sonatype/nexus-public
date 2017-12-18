@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.text.Strings2;
 /**
  * Description of a field used when uploading a component.
  *
- * @since 3.next
+ * @since 3.7
  */
 public class UploadFieldDefinition
 {

@@ -37,7 +37,7 @@ public interface BlobAttributes
   /**
    * Update attributes based on the {@link BlobAttributes} provided.
    *
-   * @since 3.next
+   * @since 3.7
    */
   void updateFrom(BlobAttributes blobAttributes);
 }

@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 /**
  * {@link OrientContinuationTokenHelper} for the {@link AssetEntityAdapter}
  *
- * @since 3.next
+ * @since 3.7
  */
 @Named("asset")
 @Singleton

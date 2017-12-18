@@ -645,7 +645,7 @@ public class BrowseNodeEntityAdapterTest
     bucket.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
     bucketEntityAdapter.addEntity(db, bucket);
 
-    component = new Component();
+    component = new DefaultComponent();
     component.bucketId(EntityHelper.id(bucket));
     component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
     component.format(FORMAT_NAME);

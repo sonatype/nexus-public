@@ -373,6 +373,21 @@ public interface RepositoryApi
                             final String blobStoreName);
 
   /**
+   * Create a Yum hosted repository.
+   * @param name The name of the new Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @param writePolicy The {@link WritePolicy} for the Repository
+   * @param depth the repodata depth
+   * @return the newly created Repository
+   */
+  Repository createYumHosted(final String name,
+                             final String blobStoreName,
+                             final boolean strictContentTypeValidation,
+                             final WritePolicy writePolicy,
+                             final int depth);
+
+  /**
    * Create a Yum proxy repository.
    * @param name The name of the new Repository
    * @param remoteUrl The url of the external proxy for this Repository

@@ -97,7 +97,7 @@ public class AssetsResource
 
   @GET
   public Page<AssetXO> getAssets(@QueryParam("continuationToken") final String continuationToken,
-      @QueryParam("repositoryId") final String repositoryId)
+      @QueryParam("repository") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 

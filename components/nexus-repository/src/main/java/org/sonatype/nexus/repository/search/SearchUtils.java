@@ -38,7 +38,7 @@ import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 @Named
 @Singleton

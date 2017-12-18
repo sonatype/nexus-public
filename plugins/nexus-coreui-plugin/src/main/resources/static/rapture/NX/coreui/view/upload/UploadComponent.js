@@ -15,7 +15,7 @@
 /**
  * Upload Component View
  *
- * @since 3.next
+ * @since 3.7
  */
 Ext.define('NX.coreui.view.upload.UploadComponent', {
     extend: 'NX.view.AddPanel',
@@ -125,6 +125,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   cls: 'nx-float-left',
                   allowBlank: false,
                   submitValue: true,
+                  clearOnSubmit: false,
                   buttonText: NX.I18n.get('FeatureGroups_Upload_Form_Browse_Button'),
                   buttonConfig: {
                       glyph: 'xf016@FontAwesome' /* fa-file-o */

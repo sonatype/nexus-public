@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.anonymous;
 
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 
 /**
@@ -21,7 +21,7 @@ import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
  * @since 3.0
  */
 public class AnonymousConfiguration
-  extends Entity
+    extends AbstractEntity
   implements Cloneable
 {
   /**

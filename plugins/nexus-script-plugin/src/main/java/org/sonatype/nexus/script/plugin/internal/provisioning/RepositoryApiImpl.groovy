@@ -387,6 +387,18 @@ class RepositoryApiImpl
   }
 
   @Nonnull
+  Repository createYumHosted(final String name,
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                             final boolean strictContentTypeValidation = true,
+                             final WritePolicy writePolicy = WritePolicy.ALLOW,
+                             final int depth = 0)
+  {
+    def configuration = createHosted(name, 'yum-hosted', blobStoreName, writePolicy, strictContentTypeValidation)
+    configuration.attributes.yum = ['repodataDepth': depth] as Map
+    createRepository(configuration)
+  }
+
+  @Nonnull
   Repository createYumProxy(final String name,
                             final String remoteUrl,
                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,

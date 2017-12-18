@@ -16,13 +16,13 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
-import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
-import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Component
+import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.security.SecurityHelper
 
@@ -48,8 +48,8 @@ import static org.hamcrest.Matchers.arrayWithSize
 import static org.hamcrest.Matchers.contains
 import static org.mockito.Mockito.eq
 import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.when
 import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 
 class SearchServiceImplTest
@@ -141,7 +141,7 @@ class SearchServiceImplTest
     int requestCount = 50
     BiMap<String, Component> components = HashBiMap.create()
     for (int i = 0; i < requestCount; i++) {
-      components.put(UUID.randomUUID().toString(), new Component())
+      components.put(UUID.randomUUID().toString(), new DefaultComponent())
     }
 
     BiMap<Component, String> inverse = components.inverse()

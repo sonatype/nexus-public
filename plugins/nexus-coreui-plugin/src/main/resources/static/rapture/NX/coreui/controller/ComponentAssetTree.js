@@ -525,7 +525,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if (htmlViewLink && htmlViewLink.el && repositoryName) {
       htmlViewLink.el.select('a').set({
-        href: NX.util.Url.urlOf('/service/siesta/repository/browse/'+ encodeURIComponent(repositoryName))
+        href: NX.util.Url.urlOf('/service/rest/repository/browse/'+ encodeURIComponent(repositoryName))
       });
     }
   },

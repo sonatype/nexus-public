@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.capability.storage;
 import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.Entity;
+import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.entity.EntityId;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 // TODO: Rename CapabilityStorageItem -> StorageItem?
 
 public class CapabilityStorageItem
-  extends Entity
+    extends AbstractEntity
 {
   private int version;
 

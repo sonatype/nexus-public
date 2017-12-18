@@ -20,141 +20,76 @@ import org.sonatype.nexus.common.entity.EntityId;
 
 import org.joda.time.DateTime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_FORMAT;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_LAST_UPDATED;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
-
 /**
  * Wraps an {@code ODocument} to provide a simpler API for working with stored component and asset metadata.
  *
- * @since 3.0
+ * @since 3.7
  */
-public abstract class MetadataNode<T>
+public interface MetadataNode<T>
     extends Entity
 {
-  private boolean newEntity = true;
-
-  private EntityId bucketId;
-
-  private String name;
-
-  private DateTime lastUpdated;
-
-  private String format;
-
-  private NestedAttributesMap attributes;
-
   /**
    * Is this entity new as of this transaction?
    */
-  public boolean isNew() {
-    return newEntity;
-  }
+  boolean isNew();
 
-  T newEntity(final boolean newEntity) {
-    this.newEntity = newEntity;
-    return self();
-  }
+  T newEntity(final boolean newEntity);
 
   /**
    * Gets the bucket this is part of.
    */
-  public EntityId bucketId() {
-    return require(bucketId, P_BUCKET);
-  }
+  EntityId bucketId();
 
-  public T bucketId(final EntityId bucketId) {
-    this.bucketId = checkNotNull(bucketId);
-    return self();
-  }
+  T bucketId(final EntityId bucketId);
 
   /**
    * Gets the name.
    */
-  public String name() {
-    return require(name, P_NAME);
-  }
+  String name();
 
   /**
    * Sets the name.
    */
-  public T name(final String name) {
-    this.name = checkNotNull(name);
-    return self();
-  }
+  T name(final String name);
 
   /**
    * Gets the last updated date or {@code null} if undefined (the node has never been saved).
    */
   @Nullable
-  public DateTime lastUpdated() {
-    return lastUpdated;
-  }
+  DateTime lastUpdated();
 
   /**
    * Gets the last updated date or throws a runtime exception if undefined.
    */
-  public DateTime requireLastUpdated() {
-    return require(lastUpdated, P_LAST_UPDATED);
-  }
+  DateTime requireLastUpdated();
 
   /**
    * Sets the last updated date.
    */
-  T lastUpdated(final DateTime lastUpdated) {
-    this.lastUpdated = lastUpdated;
-    return self();
-  }
+  T lastUpdated(final DateTime lastUpdated);
 
   /**
    * Gets the format property, which is immutable.
    */
-  public String format() {
-    return require(format, P_FORMAT);
-  }
+  String format();
 
   /**
    * Sets the format.
    */
-  T format(final String format) {
-    this.format = format;
-    return self();
-  }
+  T format(final String format);
 
   /**
    * Gets the "attributes" property of this node, a map of maps that is possibly empty, but never {@code null}.
    */
-  public NestedAttributesMap attributes() {
-    return require(attributes, P_ATTRIBUTES);
-  }
+  NestedAttributesMap attributes();
 
   /**
    * Sets the attributes.
    */
-  T attributes(final NestedAttributesMap attributes) {
-    this.attributes = attributes;
-    return self();
-  }
+  T attributes(final NestedAttributesMap attributes);
 
   /**
    * Gets the format-specific attributes of this node ("attributes.formatName").
    */
-  public NestedAttributesMap formatAttributes() {
-    return attributes().child(format());
-  }
-
-  protected <V> V require(final V value, final String name) {
-    checkState(value != null, "Missing property: %s", name);
-    return value;
-  }
-
-  @SuppressWarnings("unchecked")
-  private T self() {
-    return (T) this;
-  }
-
+  NestedAttributesMap formatAttributes();
 }

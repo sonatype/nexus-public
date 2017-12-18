@@ -172,7 +172,7 @@ public interface BlobStore
   /**
    * Set {@link BlobAttributes} for the {@link BlobId} provided.
    *
-   * @since 3.next
+   * @since 3.7
    */
   void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes);
 }

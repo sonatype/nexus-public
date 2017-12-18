@@ -15,26 +15,26 @@ package org.sonatype.nexus.repository.upload;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.PartPayload;
 
 /**
  * An asset being uploaded.
  *
- * @since 3.next
+ * @since 3.7
  */
 public class AssetUpload
     implements WithUploadField
 {
   private Map<String, String> fields = new HashMap<>();
 
-  private Payload payload;
+  private PartPayload payload;
 
   @Override
   public Map<String, String> getFields() {
     return fields;
   }
 
-  public Payload getPayload() {
+  public PartPayload getPayload() {
     return payload;
   }
 
@@ -42,7 +42,7 @@ public class AssetUpload
     this.fields = fields;
   }
 
-  public void setPayload(final Payload payload) {
+  public void setPayload(final PartPayload payload) {
     this.payload = payload;
   }
 }

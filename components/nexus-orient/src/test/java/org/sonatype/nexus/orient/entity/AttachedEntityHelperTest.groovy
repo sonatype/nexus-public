@@ -13,7 +13,7 @@
 package org.sonatype.nexus.orient.entity
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.entity.Entity
+import org.sonatype.nexus.common.entity.AbstractEntity
 
 import com.orientechnologies.orient.core.id.ORID
 import com.orientechnologies.orient.core.id.ORecordId
@@ -32,7 +32,7 @@ class AttachedEntityHelperTest
 {
   @Test
   void 'entity with-out metadata'() {
-    def entity = new Entity() {};
+    def entity = new AbstractEntity() {};
 
     try {
       AttachedEntityHelper.metadata(entity)
@@ -77,7 +77,7 @@ class AttachedEntityHelperTest
 
   @Test
   void 'entity with metadata'() {
-    def entity = new Entity() {};
+    def entity = new AbstractEntity() {};
 
     ODocument doc = mock(ODocument.class)
 

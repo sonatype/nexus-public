@@ -61,7 +61,7 @@ public class PropertiesFile
   /**
    * Store the file with specific comments. If none are provided a timestamp will be added. This is done using
    * the same pattern used in log files to ease reconciliation of timing across the system.
-   * @since 3.next
+   * @since 3.7
    */
   public void store(final String comments) throws IOException {
     log.debug("Storing: {}", file);

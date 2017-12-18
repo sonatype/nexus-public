@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
-import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.PartPayload;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -57,10 +57,10 @@ public class RawUploadHandlerTest
   RawContentFacet rawFacet;
 
   @Mock
-  Payload jarPayload;
+  PartPayload jarPayload;
 
   @Mock
-  Payload sourcesPayload;
+  PartPayload sourcesPayload;
 
   @Mock
   StorageTx storageTx;
@@ -104,7 +104,7 @@ public class RawUploadHandlerTest
     assertThat(returnedPaths, contains("org/apache/maven/foo.jar", "org/apache/maven/bar.jar"));
 
     ArgumentCaptor<String> pathCapture = ArgumentCaptor.forClass(String.class);
-    verify(rawFacet, times(2)).put(pathCapture.capture(), any(Payload.class));
+    verify(rawFacet, times(2)).put(pathCapture.capture(), any(PartPayload.class));
 
     List<String> paths = pathCapture.getAllValues();
 

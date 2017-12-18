@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * @since 3.next
+ * @since 3.7
  */
 @Named
 @Singleton
