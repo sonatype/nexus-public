@@ -14,44 +14,75 @@ package org.sonatype.nexus.repository.storage;
 
 import javax.annotation.Nullable;
 
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
+
 /**
  * Metadata about a software component.
  *
- * @since 3.7
+ * @since 3.0
  */
-public interface Component
+public class Component
     extends MetadataNode<Component>
 {
+  private String group;
+
+  private String version;
+
   /**
    * Gets the group or {@code null} if undefined.
    */
   @Nullable
-  String group();
+  public String group() {
+    return group;
+  }
 
   /**
    * Gets the group or throws a runtime exception if undefined.
    */
-  String requireGroup();
+  public String requireGroup() {
+    return require(group, P_GROUP);
+  }
 
   /**
    * Sets the group to the given value, or {@code null} to un-define it.
    */
-  Component group(@Nullable final String group);
+  public Component group(@Nullable final String group) {
+    this.group = group;
+    return this;
+  }
 
   /**
    * Gets the version or {@code null} if undefined.
    */
   @Nullable
-  String version();
+  public String version() {
+    return version;
+  }
 
   /**
    * Gets the version or throws a runtime exception if undefined.
    */
-  String requireVersion();
+  public String requireVersion() {
+    return require(version, P_VERSION);
+  }
 
   /**
    * Sets the version to the given value, or {@code null} to un-define it.
    */
-  Component version(@Nullable final String version);
+  public Component version(@Nullable final String version) {
+    this.version = version;
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+        "metadata=" + getEntityMetadata() +
+        ", name=" + name() +
+        ", version=" + version() +
+        ", group=" + group() +
+        '}';
+  }
 
 }

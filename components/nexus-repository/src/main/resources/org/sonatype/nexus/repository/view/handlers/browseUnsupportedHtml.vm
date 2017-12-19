@@ -77,7 +77,7 @@
       #if($treeEnabled)
       <p>
         Please use the <a href="$nexusUrl/#browse/browse:${repository.name}">browse</a>
-        or <a href="$nexusUrl/service/rest/repository/browse/${repository.name}/">HTML index</a>
+        or <a href="$nexusUrl/service/siesta/repository/browse/${repository.name}/">HTML index</a>
         views to inspect the contents of this repository.
       </p>
       #else

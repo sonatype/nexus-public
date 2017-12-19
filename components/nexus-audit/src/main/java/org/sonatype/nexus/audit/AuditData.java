@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.node.NodeAccess;
 
@@ -28,7 +28,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
  * @since 3.1
  */
 public class AuditData
-    extends AbstractEntity
+    extends Entity
     implements Cloneable, Serializable
 {
   private static final long serialVersionUID = 1L;

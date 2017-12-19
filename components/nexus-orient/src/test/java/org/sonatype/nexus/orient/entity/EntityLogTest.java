@@ -13,7 +13,7 @@
 package org.sonatype.nexus.orient.entity;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.EntityLog.UnknownDeltaException;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -48,7 +48,7 @@ public class EntityLogTest
   TestEntityAdapter entityAdapter = new TestEntityAdapter();
 
   static class TestEntity
-      extends AbstractEntity
+      extends Entity
   {
     String text;
   }

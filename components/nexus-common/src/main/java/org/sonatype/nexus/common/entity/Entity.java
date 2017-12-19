@@ -14,15 +14,24 @@ package org.sonatype.nexus.common.entity;
 
 import javax.annotation.Nullable;
 
+// This class is intentionally uber-simple, DO NOT add more helpers to this implementation.
+
 /**
  * Entity.
  *
- * @since 3.7
+ * @see EntityHelper
+ * @since 3.0
  */
-public interface Entity
+public abstract class Entity
 {
-  @Nullable
-  EntityMetadata getEntityMetadata();
+  private transient volatile EntityMetadata metadata;
 
-  void setEntityMetadata(@Nullable final EntityMetadata metadata);
+  @Nullable
+  public EntityMetadata getEntityMetadata() {
+    return metadata;
+  }
+
+  public void setEntityMetadata(@Nullable final EntityMetadata metadata) {
+    this.metadata = metadata;
+  }
 }

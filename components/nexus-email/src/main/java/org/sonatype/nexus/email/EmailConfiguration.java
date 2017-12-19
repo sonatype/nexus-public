@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.email;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.text.Strings2;
 
 /**
@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.text.Strings2;
  * @since 3.0
  */
 public class EmailConfiguration
-    extends AbstractEntity
+  extends Entity
   implements Cloneable
 {
   private boolean enabled;

@@ -21,7 +21,6 @@ import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig
 import org.sonatype.nexus.repository.storage.Bucket
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
-import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.transaction.UnitOfWork
@@ -194,7 +193,7 @@ class RemoveSnapshotsFacetImplTest
     attributes.child(NAME).set(P_BASE_VERSION, baseVersion)
 
     // add five minutes to avoid timing issues with fast test executions where the timestamp might end up being the same
-    new DefaultComponent(group: group, version: version).name(name).attributes(attributes).
+    new Component(group: group, version: version).name(name).attributes(attributes).
         lastUpdated(DateTime.now().minusDays(lastUpdatedAge).minusMinutes(5))
   }
 

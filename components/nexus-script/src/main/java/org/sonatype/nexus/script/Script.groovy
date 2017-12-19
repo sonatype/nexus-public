@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.script
 
-import org.sonatype.nexus.common.entity.AbstractEntity
+import org.sonatype.nexus.common.entity.Entity
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
@@ -27,7 +27,7 @@ import groovy.transform.TupleConstructor
 @TupleConstructor
 @EqualsAndHashCode
 public class Script
-    extends AbstractEntity
+    extends Entity
 {
   String name
 

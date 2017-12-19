@@ -44,7 +44,6 @@ import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.security.user.UserUpdatedEvent;
 
-import com.google.common.collect.Sets;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.eclipse.sisu.Description;
 
@@ -301,44 +300,37 @@ public class UserManagerImpl
 
         eventManager.post(new UserRoleMappingDeletedEvent(userId, userSource));
       }
-      catch (NoSuchRoleMappingException e) { // NOSONAR
+      catch (NoSuchRoleMappingException e) {
         log.debug("User role mapping for user: {} source: {} could not be deleted because it does not exist.",
             userId, userSource);
       }
     }
     else {
+      CUserRoleMapping roleMapping = new CUserRoleMapping();
+      roleMapping.setUserId(userId);
+      roleMapping.setSource(userSource);
+
+      for (RoleIdentifier roleIdentifier : roleIdentifiers) {
+        // make sure we only save roles that we manage
+        // TODO: although we shouldn't need to worry about this.
+        if (getSource().equals(roleIdentifier.getSource())) {
+          roleMapping.addRole(roleIdentifier.getRoleId());
+        }
+      }
+
       // try to update first
       try {
-        CUserRoleMapping roleMapping = configuration.readUserRoleMapping(userId, userSource).clone();
-        roleMapping.setRoles(Sets.newHashSet());
-
-        updateRoles(roleMapping, roleIdentifiers);
-
         configuration.updateUserRoleMapping(roleMapping);
 
         eventManager.post(new UserRoleMappingUpdatedEvent(userId, userSource, roleMapping.getRoles()));
       }
-      catch (NoSuchRoleMappingException e) { // NOSONAR
-        CUserRoleMapping roleMapping = new CUserRoleMapping();
-        roleMapping.setUserId(userId);
-        roleMapping.setSource(userSource);
-
-        updateRoles(roleMapping, roleIdentifiers);
-
+      catch (NoSuchRoleMappingException e) {
         // update failed try create
         log.debug("Update of user role mapping for user: {} source: {} did not exist, creating new one.",
             userId, userSource);
         configuration.createUserRoleMapping(roleMapping);
 
         eventManager.post(new UserRoleMappingCreatedEvent(userId, userSource, roleMapping.getRoles()));
-      }
-    }
-  }
-
-  private void updateRoles(CUserRoleMapping roleMapping, final Set<RoleIdentifier> roleIdentifiers) {
-    for (RoleIdentifier roleIdentifier : roleIdentifiers) {
-      if (getSource().equals(roleIdentifier.getSource())) {
-        roleMapping.addRole(roleIdentifier.getRoleId());
       }
     }
   }

@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityId;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.6
  */
 public class BrowseNode
-    extends AbstractEntity
+    extends Entity
 {
   private String repositoryName;
 

@@ -181,7 +181,7 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
         {
           success: function (authToken) {
             NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf(
-                'service/rest/wonderland/download/' + fileName + '?t=' + NX.util.Base64.encode(authToken)
+                'service/siesta/wonderland/download/' + fileName + '?t=' + NX.util.Base64.encode(authToken)
             ));
             win.close();
           }

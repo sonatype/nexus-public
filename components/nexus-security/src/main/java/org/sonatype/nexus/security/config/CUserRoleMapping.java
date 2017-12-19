@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.config;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 
 import com.google.common.collect.Sets;
 
@@ -23,7 +23,7 @@ import com.google.common.collect.Sets;
  * Persistent user-role mapping.
  */
 public class CUserRoleMapping
-    extends AbstractEntity
+    extends Entity
     implements Serializable, Cloneable
 {
   private String userId;

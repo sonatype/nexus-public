@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.repository.assetdownloadcount.internal;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.repository.assetdownloadcount.DateType;
 
 import org.joda.time.DateTime;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -25,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.3
  */
 public class AssetDownloadCount
-    extends AbstractEntity
+    extends Entity
 {
   private String repositoryName;
 

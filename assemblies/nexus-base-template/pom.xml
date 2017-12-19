@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.7.0-04</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -281,7 +281,7 @@
                 <replace file="${project.build.directory}/assembly/public/swagger-ui/index.html">
                   <replacefilter token="swagger-ui.js" value="swagger-ui.min.js"/>
                   <!-- point to local documentation -->
-                  <replacefilter token="http://petstore.swagger.io/v2" value="../service/rest"/>
+                  <replacefilter token="http://petstore.swagger.io/v2" value="../service/siesta"/>
                   <!-- list operations, apply alpha sorting -->
                   <replacefilter token="docExpansion: &quot;none&quot;"
                                  value="docExpansion:'list', apisSorter:'alpha', operationsSorter:'alpha'"/>

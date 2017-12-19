@@ -12,7 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 
 /**
  * The persisted data of a named {@link java.security.KeyStore}.
@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.entity.AbstractEntity;
  * @since 3.1
  */
 public class KeyStoreData
-    extends AbstractEntity
+    extends Entity
 {
   private String name;
 

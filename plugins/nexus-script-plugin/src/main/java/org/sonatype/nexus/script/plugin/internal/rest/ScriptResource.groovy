@@ -64,7 +64,7 @@ class ScriptResource
     extends ComponentSupport
     implements ScriptClient, Resource
 {
-  public static final String RESOURCE_URI = '/v1/script'
+  public static final String RESOURCE_URI = '/rest/v1/script'
 
   @Inject
   ScriptManager scriptManager

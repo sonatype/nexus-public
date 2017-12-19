@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 import java.util.Map;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 
 import com.google.common.collect.Maps;
 
@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class BlobStoreConfiguration
-    extends AbstractEntity
+  extends Entity
 {
   private String name;
   

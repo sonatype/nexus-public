@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.security.apikey;
 
 import java.util.Arrays;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
@@ -24,7 +24,7 @@ import org.apache.shiro.subject.PrincipalCollection;
  * @since 3.0
  */
 public class ApiKey
-    extends AbstractEntity
+    extends Entity
 {
   private String domain;
 

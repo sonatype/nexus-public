@@ -32,14 +32,14 @@ public interface ComponentsResourceDoc
 {
   @ApiOperation("List components")
   @ApiResponses(value = {
-      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+      @ApiResponse(code = 422, message = "repositoryId is required")
   })
   Page<ComponentXO> getComponents(
       @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
       final String continuationToken,
 
-      @ApiParam(value = "Repository from which you would like to retrieve components", required = true)
-      final String repository);
+      @ApiParam(value = "ID of the repository from which you would like to retrieve components", required = true)
+      final String repositoryId);
 
   @ApiOperation("Get a single component")
   @ApiResponses(value = {

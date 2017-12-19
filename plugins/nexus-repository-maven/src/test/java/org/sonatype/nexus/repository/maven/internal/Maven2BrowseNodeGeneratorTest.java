@@ -18,7 +18,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
@@ -44,7 +43,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeAssetPathForAssetWithComponent() {
     Asset asset = createAsset("com/sonatype/example/1.0.0/example-1.0.0.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.group("com.sonatype");
     component.name("example");
     component.version("1.0.0");
@@ -57,7 +56,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeAssetPathForSnapshotAssetWithComponent() {
     Asset asset = createAsset("org/foo/bar/example/1.0-SNAPSHOT/example-1.0-20171213.212030-158.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.group("org.foo.bar");
     component.name("example");
     component.version("1.0-20171213.212030-158");
@@ -71,7 +70,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeComponentPathNameOnly() {
     Asset asset = createAsset("name/name.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.name("name");
 
     List<String> path = generator.computeComponentPath(asset, component);
@@ -82,7 +81,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeComponentPathNoGroup() {
     Asset asset = createAsset("name/1.0.0/name-1.0.0.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.name("name");
     component.version("1.0.0");
 
@@ -94,7 +93,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeComponentPath() {
     Asset asset = createAsset("group/name/1.0.0/name-1.0.0.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.group("group");
     component.name("name");
     component.version("1.0.0");
@@ -107,7 +106,7 @@ public class Maven2BrowseNodeGeneratorTest
   @Test
   public void computeSnapshotComponentPath() {
     Asset asset = createAsset("group/name/1.0.0-SNAPSHOT/name-1.0.0-20171213.212030-158.jar");
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.group("group");
     component.name("name");
     component.version("1.0.0-20171213.212030-158");

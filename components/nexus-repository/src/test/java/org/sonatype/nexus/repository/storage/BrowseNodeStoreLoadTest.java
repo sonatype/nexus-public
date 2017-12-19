@@ -83,7 +83,7 @@ public class BrowseNodeStoreLoadTest
       bucketEntityAdapter.addEntity(db, bucket);
 
       componentEntityAdapter.register(db);
-      component = new DefaultComponent()
+      component = new Component()
           .bucketId(EntityHelper.id(bucket))
           .format("test")
           .group("test-group")

@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.security.SecurityHelper
 
 import com.google.common.collect.ContiguousSet
@@ -129,7 +128,7 @@ class SearchServiceImplIT
     when(securityHelper.allPermitted(any())).thenReturn(true)
 
     for (int i = 0; i < TEST_COMPONENT_COUNT; i++) {
-      Component component = new DefaultComponent()
+      Component component = new Component()
       component.format('test-format')
       component.group('example')
       component.name("$i")

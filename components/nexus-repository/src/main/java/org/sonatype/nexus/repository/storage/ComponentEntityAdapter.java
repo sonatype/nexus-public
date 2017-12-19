@@ -159,7 +159,7 @@ public class ComponentEntityAdapter
 
   @Override
   protected Component newEntity() {
-    return new DefaultComponent();
+    return new Component();
   }
 
   @Override

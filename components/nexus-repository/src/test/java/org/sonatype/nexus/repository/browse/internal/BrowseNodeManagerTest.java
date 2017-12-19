@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -197,7 +196,7 @@ public class BrowseNodeManagerTest
     EntityMetadata metadata = mock(EntityMetadata.class);
     when(metadata.getId()).thenReturn(new DetachedEntityId(componentId));
 
-    Component component = new DefaultComponent();
+    Component component = new Component();
     component.name(name);
     component.group(group);
     component.version(version);

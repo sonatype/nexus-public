@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.config;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.Entity;
 
 import com.google.common.collect.Maps;
 
@@ -23,7 +23,7 @@ import com.google.common.collect.Maps;
  * Persistent privilege.
  */
 public class CPrivilege
-    extends AbstractEntity
+    extends Entity
     implements Serializable, Cloneable
 {
   private String id;

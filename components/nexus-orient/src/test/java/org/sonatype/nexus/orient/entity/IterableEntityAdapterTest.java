@@ -15,7 +15,6 @@ package org.sonatype.nexus.orient.entity;
 import java.util.Arrays;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.entity.Entity;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -74,7 +73,7 @@ public class IterableEntityAdapterTest
 
     @Override
     protected Entity newEntity() {
-      return new AbstractEntity()
+      return new Entity()
       {
         // empty
       };
