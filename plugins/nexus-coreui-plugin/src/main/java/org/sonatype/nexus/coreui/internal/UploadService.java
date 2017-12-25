@@ -33,8 +33,6 @@ import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.WithUploadField;
 import org.sonatype.nexus.repository.view.PartPayload;
-import org.sonatype.nexus.rest.ValidationErrorXO;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
@@ -91,32 +89,22 @@ public class UploadService
                                             final Map<String, String> params,
                                             final Map<String, FileItem> files)
   {
-    ValidationErrorsException validation = new ValidationErrorsException();
-
     ComponentUpload uc = new ComponentUpload();
     UploadDefinition ud = uploadManager.getByFormat(repository.getFormat().toString());
 
     // create component fields
-    createFields(uc, ud.getComponentFields(), "", "component", validation, params);
-
-    if (files.isEmpty()) {
-      validation.withErrors(new ValidationErrorXO("No assets found in upload"));
-    }
+    createFields(uc, ud.getComponentFields(), "", params);
 
     // create assets
     for (Entry<String, FileItem> file : files.entrySet()) {
       String suffix = file.getKey().substring("file".length());
       AssetUpload ua = new AssetUpload();
 
-      createFields(ua, ud.getAssetFields(), suffix, "asset", validation, params);
+      createFields(ua, ud.getAssetFields(), suffix, params);
       final FileItem fileItem = file.getValue();
       ua.setPayload(new FileItemPayload(fileItem));
 
       uc.getAssetUploads().add(ua);
-    }
-
-    if (validation.hasValidationErrors()) {
-      throw validation;
     }
 
     return uc;
@@ -125,8 +113,6 @@ public class UploadService
   private void createFields(final WithUploadField item,
                             final List<UploadFieldDefinition> fields,
                             final String suffix,
-                            final String type,
-                            final ValidationErrorsException validation,
                             final Map<String, String> params)
   {
     for (UploadFieldDefinition assetField : fields) {
@@ -134,9 +120,6 @@ public class UploadService
       String value = params.get(formField);
       if (!Strings2.isEmpty(value)) {
         item.getFields().put(assetField.getName(), value);
-      }
-      else if (!assetField.isOptional()) {
-        validation.withErrors(new ValidationErrorXO(formField, "Missing required " + type + " field " + formField));
       }
     }
   }

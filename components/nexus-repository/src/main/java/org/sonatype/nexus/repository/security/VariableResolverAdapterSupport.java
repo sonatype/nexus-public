@@ -37,11 +37,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class VariableResolverAdapterSupport
   implements VariableResolverAdapter
 {
-  private static final String PATH = "path";
-  private static final String FORMAT = "format";
+  protected static final String PATH = "path";
+  protected static final String FORMAT = "format";
 
   @Override
-  public VariableSource fromRequest(Request request, Repository repository) {
+  public VariableSource fromRequest(final Request request, final Repository repository) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(new ConstantVariableResolver(request.getPath(), PATH));
     builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
@@ -53,7 +53,7 @@ public abstract class VariableResolverAdapterSupport
   protected abstract void addFromRequest(VariableSourceBuilder builder, Request request);
 
   @Override
-  public VariableSource fromDocument(ODocument document) {
+  public VariableSource fromDocument(final ODocument document) {
     String path = document.field(AssetEntityAdapter.P_NAME, String.class);
     String format = document.field(AssetEntityAdapter.P_FORMAT, String.class);
 
@@ -68,7 +68,7 @@ public abstract class VariableResolverAdapterSupport
   protected abstract void addFromDocument(VariableSourceBuilder builder, ODocument document);
 
   @Override
-  public VariableSource fromAsset(Asset asset) {
+  public VariableSource fromAsset(final Asset asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(new ConstantVariableResolver('/' + asset.name(), PATH));
     builder.addResolver(new ConstantVariableResolver(asset.format(), FORMAT));
@@ -80,7 +80,17 @@ public abstract class VariableResolverAdapterSupport
   protected abstract void addFromAsset(VariableSourceBuilder builder, Asset asset);
 
   @Override
-  public VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset) {
+  public VariableSource fromCoordinates(final String format, final String path, final Map<String, String> coordinates) {
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver('/' + checkNotNull(path), PATH));
+    builder.addResolver(new ConstantVariableResolver(checkNotNull(format), FORMAT));
+
+    addCoordinates(builder, coordinates);
+    return builder.build();
+  }
+
+  @Override
+  public VariableSource fromSourceLookup(final SourceLookup sourceLookup, final Map<String, Object> asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(
         new ConstantVariableResolver('/' + checkNotNull((String) asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
@@ -95,7 +105,7 @@ public abstract class VariableResolverAdapterSupport
                                               SourceLookup sourceLookup,
                                               Map<String, Object> asset);
 
-  protected void addCoordinates(VariableSourceBuilder builder, Map<String, String> coordinates) {
+  protected void addCoordinates(final VariableSourceBuilder builder, final Map<String, String> coordinates) {
     builder.addResolver(new PropertiesResolver<>("coordinate", coordinates));
   }
 }

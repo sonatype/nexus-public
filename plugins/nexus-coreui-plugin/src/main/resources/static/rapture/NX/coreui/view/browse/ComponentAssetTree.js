@@ -52,6 +52,11 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
         xtype: 'nx-actions',
         dock: 'top',
         items: [{
+            xtype: 'button',
+            text: NX.I18n.get('Component_Asset_Tree_Upload_Component'),
+            glyph: 'xf093@FontAwesome' /* fa-upload */,
+            action: 'upload'
+          },{
             xtype: 'label',
             itemId: 'nx-coreui-component-asset-tree-html-view',
             html: NX.util.Url.asLink("", NX.I18n.get('Component_Asset_Tree_Html_View'), '_blank')

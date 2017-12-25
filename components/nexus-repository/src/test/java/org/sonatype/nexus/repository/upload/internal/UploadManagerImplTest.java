@@ -13,15 +13,22 @@
 package org.sonatype.nexus.repository.upload.internal;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
+import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
+import org.sonatype.nexus.rest.ValidationErrorXO;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,12 +37,14 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
 public class UploadManagerImplTest
     extends TestSupport
@@ -85,6 +94,7 @@ public class UploadManagerImplTest
     });
 
     ComponentUpload component = mock(ComponentUpload.class);
+    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
     underTest.handle(repository, component);
 
     verify(handlerA, times(1)).handle(repository, component);
@@ -92,6 +102,7 @@ public class UploadManagerImplTest
 
     // Try the other, to be sure!
     reset(handlerA, handlerB);
+    when(handlerB.getDefinition()).thenReturn(uploadB);
 
     when(repository.getFormat()).thenReturn(new Format("b")
     {
@@ -101,6 +112,75 @@ public class UploadManagerImplTest
 
     verify(handlerB, times(1)).handle(repository, component);
     verify(handlerA, never()).handle(repository, component);
+  }
 
+  @Test
+  public void testHandle_unsupportedRepositoryFormat() throws IOException {
+    ComponentUpload component = mock(ComponentUpload.class);
+    Repository repository = mock(Repository.class);
+    when(repository.getFormat()).thenReturn(new Format("c")
+    {
+    });
+
+    expectExceptionOnUpload(repository, component, "Uploading components to 'c' repositories is unsupported");
+  }
+
+  @Test
+  public void testHandle_missingAssets() throws IOException {
+    ComponentUpload component = mock(ComponentUpload.class);
+    Repository repository = mock(Repository.class);
+    when(repository.getFormat()).thenReturn(new Format("a")
+    {
+    });
+
+    expectExceptionOnUpload(repository, component, "No assets found in upload");
+  }
+
+  @Test
+  public void testHandle_missingAssetField() throws IOException {
+    Repository repository = mock(Repository.class);
+    when(repository.getFormat()).thenReturn(new Format("a")
+    {
+    });
+
+    when(uploadA.getAssetFields()).thenReturn(
+        Collections.singletonList(new UploadFieldDefinition("foo", false, STRING)));
+
+    ComponentUpload component = mock(ComponentUpload.class);
+    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
+
+    expectExceptionOnUpload(repository, component, "Missing required asset field 'foo'");
+  }
+
+  @Test
+  public void testHandle_missingComponentField() throws IOException {
+    Repository repository = mock(Repository.class);
+    when(repository.getFormat()).thenReturn(new Format("a")
+    {
+    });
+
+    when(uploadA.getComponentFields()).thenReturn(
+        Collections.singletonList(new UploadFieldDefinition("bar", false, STRING)));
+
+    ComponentUpload component = mock(ComponentUpload.class);
+    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
+
+    expectExceptionOnUpload(repository, component, "Missing required component field 'bar'");
+  }
+
+  private void expectExceptionOnUpload(final Repository repository,
+                                       final ComponentUpload component,
+                                       final String message) throws IOException
+  {
+    try {
+      underTest.handle(repository, component);
+      fail("Expected exception to be thrown");
+    }
+    catch (ValidationErrorsException exception) {
+      List<String> messages = exception.getValidationErrors().stream()
+          .map(ValidationErrorXO::getMessage)
+          .collect(Collectors.toList());
+      assertThat(messages, contains(message));
+    }
   }
 }

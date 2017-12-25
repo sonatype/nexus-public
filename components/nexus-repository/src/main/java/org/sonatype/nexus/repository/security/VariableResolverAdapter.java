@@ -38,4 +38,9 @@ public interface VariableResolverAdapter
    * Creates a {@link VariableSource} from an ES-indexed asset.
    */
   VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset);
+
+  /**
+   * @since 3.next
+   */
+  VariableSource fromCoordinates(String format, String path, Map<String, String> coordinates);
 }

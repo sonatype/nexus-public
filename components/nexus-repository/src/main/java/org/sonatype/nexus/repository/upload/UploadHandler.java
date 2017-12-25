@@ -14,9 +14,16 @@ package org.sonatype.nexus.repository.upload;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.selector.VariableSource;
+
+import org.apache.shiro.authz.AuthorizationException;
 
 /**
  * @since 3.7
@@ -38,4 +45,34 @@ public interface UploadHandler
    * The {@link UploadDefinition} used by this format.
    */
   UploadDefinition getDefinition();
+
+  /**
+   * The <code>VariableResolverAdapter</code> to use for <code>ensurePermitted</code>
+   */
+  VariableResolverAdapter getVariableResolverAdapter();
+
+  /**
+   * The <code>ContentPermissionChecker</code> to use for <code>ensurePermitted</code>
+   */
+  ContentPermissionChecker contentPermissionChecker();
+
+  /**
+   * Use the <code>ContentPermissionChecker</code> to verify the current user has EDIT permission for the repository,
+   * path and coordinates. An <code>AuthorizationException</code> will be thrown if the action is not permitted.
+   *
+   * @param repositoryName the name of the repository the asset is being uploaded to
+   * @param format the format name
+   * @param path the path within the repository that will represent the asset (should not be prefixed with a slash)
+   * @param coordinates a map containing the coordinate fields and their values
+   */
+  default void ensurePermitted(final String repositoryName,
+                               final String format,
+                               final String path,
+                               final Map<String, String> coordinates)
+  {
+    VariableSource variableSource = getVariableResolverAdapter().fromCoordinates(format, path, coordinates);
+    if (!contentPermissionChecker().isPermitted(repositoryName, format, BreadActions.EDIT, variableSource)) {
+      throw new AuthorizationException();
+    }
+  }
 }

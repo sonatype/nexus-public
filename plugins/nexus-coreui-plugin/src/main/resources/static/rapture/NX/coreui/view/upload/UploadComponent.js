@@ -104,7 +104,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       if (assetPanel) {
         var row = me.createRow(false),
             fields = row.items,
-            suffix = assetPanel.items.items.length / (1 + fields.length);
+            suffix = assetPanel.items.items.length;
 
         fields.forEach(function(field) {
           field.name += suffix;
@@ -132,7 +132,12 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   },
                   fieldLabel: firstRow ? NX.I18n.get('FeatureGroups_Upload_Asset_Form_File_Label') : undefined,
                   name: 'file',
-                  width: '150px'
+                  width: '150px',
+                  listeners: {
+                    change: function() {
+                      me.fileChange.apply(me, arguments);
+                    }
+                  }
               }]
           };
 
@@ -179,5 +184,28 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
         widget.xtype = 'checkbox';
       }
       return widget;
+    },
+
+    fileChange: function(fileField, value) {
+      var me = this,
+          regexMap = me.uploadDefinition.get('regexMap'),
+          filename, match, suffix;
+
+      if (regexMap && value) {
+        filename = value.substring(value.lastIndexOf(value.startsWith('/') ? '/' : '\\') + 1);
+        match = filename.match(regexMap.regex);
+
+        if (match) {
+          suffix = (fileField.name.match("file(\\d*)") || [])[1] || '';
+          regexMap.fieldList.forEach(function(field, index) {
+            if (field) {
+              var input = me.down('textfield[name=' + field + suffix + ']') || me.down('textfield[name=' + field + ']') ;
+              if (input) {
+                input.setValue(match[index + 1]);
+              }
+            }
+          });
+        }
+      }
     }
   });

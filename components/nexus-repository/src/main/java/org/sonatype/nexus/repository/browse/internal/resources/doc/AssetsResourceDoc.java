@@ -33,6 +33,7 @@ public interface AssetsResourceDoc
 {
   @ApiOperation("List assets")
   @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to list assets"),
       @ApiResponse(code = 422, message = "Parameter 'repository' is required")
   })
   Page<AssetXO> getAssets(
@@ -44,6 +45,7 @@ public interface AssetsResourceDoc
 
   @ApiOperation("Get a single asset")
   @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to get asset"),
       @ApiResponse(code = 404, message = "Asset not found"),
       @ApiResponse(code = 422, message = "Malformed ID")
   })

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.upload;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -34,15 +36,27 @@ public class UploadDefinition
 
   private final List<UploadFieldDefinition> assetFields;
 
+  private final UploadRegexMap regexMap;
+
   public UploadDefinition(final String format,
                           final boolean multipleUpload,
                           final List<UploadFieldDefinition> componentFields,
-                          final List<UploadFieldDefinition> assetFields)
+                          final List<UploadFieldDefinition> assetFields,
+                          final UploadRegexMap regexMap)
   {
     this.multipleUpload = multipleUpload;
     this.format = checkNotNull(format);
     this.componentFields = Collections.unmodifiableList(checkNotNull(componentFields));
     this.assetFields = Collections.unmodifiableList(checkNotNull(assetFields));
+    this.regexMap = regexMap;
+  }
+
+  public UploadDefinition(final String format,
+                          final boolean multipleUpload,
+                          final List<UploadFieldDefinition> componentFields,
+                          final List<UploadFieldDefinition> assetFields)
+  {
+    this(format, multipleUpload, componentFields, assetFields, null);
   }
 
   /**
@@ -71,5 +85,15 @@ public class UploadDefinition
    */
   public List<UploadFieldDefinition> getAssetFields() {
     return assetFields;
+  }
+
+  /**
+   * The mapper to use for file names.
+   * 
+   * @since 3.next
+   */
+  @Nullable
+  public UploadRegexMap getRegexMap() {
+    return regexMap;
   }
 }

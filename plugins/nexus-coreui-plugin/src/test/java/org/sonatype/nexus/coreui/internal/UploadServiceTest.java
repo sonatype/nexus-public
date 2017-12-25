@@ -19,9 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
@@ -35,7 +33,6 @@ import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.internal.UploadManagerImpl;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.IOUtils;
@@ -44,7 +41,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -111,28 +107,6 @@ public class UploadServiceTest
   }
 
   @Test
-  public void testUpload_missingFields() throws IOException {
-    try {
-      component.upload(map("repositoryName", REPO_NAME), map(mock(FileItem.class)));
-      fail("Expected exception to be thrown");
-    }
-    catch (ValidationErrorsException e) {
-      assertValidationError(e, "Missing required asset field e", "Missing required component field g");
-    }
-  }
-
-  @Test
-  public void testUpload_missingUploads() throws IOException {
-    try {
-      component.upload(map("repositoryName", REPO_NAME, "g", "foo"), Collections.emptyMap());
-      fail("Expected exception to be thrown");
-    }
-    catch (ValidationErrorsException e) {
-      assertValidationError(e, "No assets found in upload");
-    }
-  }
-
-  @Test
   public void testUpload() throws IOException {
     // component field 'v' and asset field 'c' are omitted to ensure optional fields don't trigger an error
     component.upload(map("repositoryName", REPO_NAME, "g", "foo", "e", "jar"),
@@ -183,15 +157,6 @@ public class UploadServiceTest
         .createSearchTerm(Arrays.asList("foo-x.z/bar/bar", "foo-x.z/bar/foo", "foo-x.z/bar/foo/bar"));
 
     assertThat(result, is("foo\\-x\\.z\\/bar"));
-  }
-
-
-  private static void assertValidationError(final ValidationErrorsException actual, final String... messages) {
-    assertNotNull(actual);
-    List<String> actualMessages = actual.getValidationErrors().stream().map(e -> e.getMessage())
-        .collect(Collectors.toList());
-
-    assertThat(actualMessages, containsInAnyOrder(messages));
   }
 
   private static void assertPayload(final Payload actual,

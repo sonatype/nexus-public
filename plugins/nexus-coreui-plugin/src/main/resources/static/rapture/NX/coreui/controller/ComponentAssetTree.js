@@ -31,13 +31,15 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   ],
   stores: [
     'Repository',
-    'ComponentAssetTree'
+    'ComponentAssetTree',
+    'UploadComponentDefinition'
   ],
   models: [
     'RepositoryReference',
     'ComponentAssetTree',
     'Component',
-    'Asset'
+    'Asset',
+    'UploadComponentDefinition'
   ],
 
   views: [
@@ -55,6 +57,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'componentAssetTreePanel', selector: 'nx-coreui-componentassettreefeature treepanel'},
     {ref: 'treeFilterBox', selector: 'nx-coreui-componentassettreefeature nx-searchbox'},
     {ref: 'advancedSearchLink', selector: 'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-advanced-search'},
+    {ref: 'uploadButton', selector: 'nx-coreui-componentassettreefeature button[action=upload]'},
     {ref: 'htmlViewLink', selector: 'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-html-view'},
     {ref: 'componentInfo', selector: 'nx-coreui-component-componentinfo'},
     {ref: 'componentAssetInfo', selector: 'nx-coreui-component-componentassetinfo'},
@@ -133,6 +136,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         },
         'nx-coreui-component-analyze-window combobox[name="asset"]': {
           select: me.selectedApplicationChanged
+        },
+        'nx-coreui-componentassettreefeature button[action=upload]': {
+          click: me.onClickUploadButton
         },
         'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-html-view': {
           render: function () { me.updateHtmlLink(); }
@@ -231,6 +237,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     // Update HTML View link
     me.updateHtmlLink(model);
+    me.updateUploadButton(model);
 
     me.reloadNodes();
 
@@ -515,6 +522,18 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   /**
    * @private
+   * Opens the Upload UI for current repository
+   */
+  onClickUploadButton: function() {
+    var me = this,
+        repository = me.getCurrentRepository(),
+        uploadUrl = '#browse/upload:' + encodeURIComponent(repository.get('name'));
+
+    window.open(uploadUrl, '_self');
+  },
+
+  /**
+   * @private
    * Updates the href for the HTML Tree view
    */
   updateHtmlLink: function(repository) {
@@ -527,6 +546,32 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       htmlViewLink.el.select('a').set({
         href: NX.util.Url.urlOf('/service/rest/repository/browse/'+ encodeURIComponent(repositoryName))
       });
+    }
+  },
+
+  /**
+   * @private
+   * Updates the visibility of the upload button.
+   */
+  updateUploadButton: function(repo) {
+    var me = this,
+        uploadButton = me.getUploadButton(),
+        store = me.getStore('UploadComponentDefinition'),
+        repository = repo || me.getCurrentRepository(),
+        format = repository.getData().format,
+        isHosted = repository.getData().type === 'hosted',
+        hasPermission = NX.Permissions.check('nexus:component:add');
+
+    if (hasPermission && isHosted) {
+      store.load(function(store, results) {
+        var isSupported = Ext.Array.some(results.getRecords(), function(item) {
+          return item.getData().format === format;
+        });
+        uploadButton.setVisible(isSupported);
+      });
+    }
+    else {
+      uploadButton.setVisible(false);
     }
   },
 

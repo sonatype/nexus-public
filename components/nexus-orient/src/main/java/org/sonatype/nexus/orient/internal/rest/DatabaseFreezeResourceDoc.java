@@ -33,7 +33,8 @@ public interface DatabaseFreezeResourceDoc
   @ApiOperation("Enable read-only")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = "System is now read-only"),
-      @ApiResponse(code = 404, message = "Task not found")
+      @ApiResponse(code = 403, message = "Authentication required"),
+      @ApiResponse(code = 404, message = "No change to read-only state")
   })
   void freeze();
 
@@ -42,7 +43,8 @@ public interface DatabaseFreezeResourceDoc
   )
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = "System is no longer read-only"),
-      @ApiResponse(code = 404, message = "No change to read-only state state")
+      @ApiResponse(code = 403, message = "Authentication required"),
+      @ApiResponse(code = 404, message = "No change to read-only state")
   })
   void release();
 
@@ -50,7 +52,8 @@ public interface DatabaseFreezeResourceDoc
     notes = "Forcibly release read-only status, including System initiated tasks. Warning: may result in data loss.")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = "System is no longer read-only"),
-      @ApiResponse(code = 404, message = "No change to read-only state state")
+      @ApiResponse(code = 403, message = "Authentication required"),
+      @ApiResponse(code = 404, message = "No change to read-only state")
   })
   void forceRelease();
 }

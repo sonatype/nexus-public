@@ -54,4 +54,15 @@ public interface Component
    */
   Component version(@Nullable final String version);
 
+  /**
+   * The default {@link #toString()} includes the metadata which can leak out internal data when used for an external
+   * use case where it is exposed to the end user. For example, in a rest call. This method can be used for those cases
+   * instead to not leak out this data.
+   */
+  default String toStringExternal() {
+    return "group=" + group() +
+        ", name=" + name() +
+        ", version=" + version() +
+        ", format=" + format();
+  }
 }

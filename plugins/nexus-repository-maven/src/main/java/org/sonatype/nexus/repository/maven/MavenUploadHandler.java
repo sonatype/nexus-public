@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +26,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.upload.AssetUpload;
@@ -35,6 +39,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadHandler;
+import org.sonatype.nexus.repository.upload.UploadRegexMap;
 
 import com.google.common.base.Joiner;
 
@@ -64,13 +69,23 @@ public class MavenUploadHandler
 
   private static final String GROUP_ID_DISPLAY = "Group ID";
 
+  private final ContentPermissionChecker contentPermissionChecker;
+
   private final Maven2MavenPathParser parser;
 
   private UploadDefinition definition;
 
+  private final VariableResolverAdapter variableResolverAdapter;
+
+
   @Inject
-  public MavenUploadHandler(final Maven2MavenPathParser parser) {
+  public MavenUploadHandler(final Maven2MavenPathParser parser,
+                            @Named(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,
+                            final ContentPermissionChecker contentPermissionChecker)
+  {
     this.parser = parser;
+    this.variableResolverAdapter = variableResolverAdapter;
+    this.contentPermissionChecker = contentPermissionChecker;
   }
 
   @Override
@@ -108,6 +123,10 @@ public class MavenUploadHandler
             path.append('.').append(asset.getFields().get(EXTENSION));
 
             MavenPath mavenPath = parser.parsePath(path.toString());
+
+            ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(),
+                toMap(mavenPath.getCoordinates()));
+
             facet.put(mavenPath, asset.getPayload());
             assets.add(mavenPath.getPath());
           }
@@ -126,8 +145,35 @@ public class MavenUploadHandler
       List<UploadFieldDefinition> assetFields = Arrays.asList(new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),
           new UploadFieldDefinition(EXTENSION, false, Type.STRING));
 
-      definition = new UploadDefinition(Maven2Format.NAME, true, componentFields, assetFields);
+      UploadRegexMap regexMap = new UploadRegexMap(
+          "-(?:(?:\\.?\\d)+)(?:-(?:SNAPSHOT|\\d+))?(?:-(\\w+))?\\.((?:\\.?\\w)+)$", CLASSIFIER, EXTENSION);
+
+      definition = new UploadDefinition(Maven2Format.NAME, true, componentFields, assetFields, regexMap);
     }
     return definition;
+  }
+
+  @Override
+  public VariableResolverAdapter getVariableResolverAdapter() {
+    return variableResolverAdapter;
+  }
+
+  @Override
+  public ContentPermissionChecker contentPermissionChecker() {
+    return contentPermissionChecker;
+  }
+
+  private Map<String, String> toMap(final Coordinates coordinates) {
+    Map<String, String> map = new HashMap<>();
+    map.put("groupId", coordinates.getGroupId());
+    map.put("artifactId", coordinates.getArtifactId());
+    map.put("version", coordinates.getVersion());
+    if (coordinates.getClassifier() != null) {
+      map.put("classifier", coordinates.getClassifier());
+    }
+    if (coordinates.getExtension() != null) {
+      map.put("extension", coordinates.getExtension());
+    }
+    return map;
   }
 }

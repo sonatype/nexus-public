@@ -10,19 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository.upload;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * @since 3.7
+ *
+ * @since 3.next
  */
-Ext.define('NX.coreui.model.UploadComponentDefinition', {
-  extend: 'Ext.data.Model',
-  idProperty: 'format',
-  fields: [
-    {name: 'multipleUpload', type: 'boolean', sortType: 'asUCText'},
-    {name: 'format', type: 'string', sortType: 'asUCText'},
-    {name: 'assetFields', type: 'auto' /*object*/},
-    {name: 'componentFields', type: 'auto' /*object*/},
-    {name: 'regexMap', type: 'auto' /*object*/}
-  ]
-});
+public class UploadRegexMap
+{
+  private final String regex;
+
+  private final List<String> fieldList;
+
+  public UploadRegexMap(final String regex, final String... fieldList) {
+    this.regex = regex;
+    this.fieldList = Arrays.asList(fieldList);
+  }
+
+  /**
+   * Regex to be used to match against the file input. Groups from the regex will be mapped to the field list.
+   */
+  public String getRegex() {
+    return regex;
+  }
+
+  /**
+   * List of fields to populate from regex groups. (Use <code>null</code> for unused regex groups)
+   */
+  public List<String> getFieldList() {
+    return fieldList;
+  }
+}

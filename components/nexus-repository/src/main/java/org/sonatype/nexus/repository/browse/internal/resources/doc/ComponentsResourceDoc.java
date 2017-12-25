@@ -12,15 +12,19 @@
  */
 package org.sonatype.nexus.repository.browse.internal.resources.doc;
 
+import java.io.IOException;
+
+import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.browse.internal.resources.ComponentsResource;
+import org.sonatype.nexus.rest.Page;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
-import org.sonatype.nexus.repository.browse.api.ComponentXO;
-import org.sonatype.nexus.repository.browse.internal.resources.ComponentsResource;
-import org.sonatype.nexus.rest.Page;
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 
 /**
  * Swagger documentation for {@link ComponentsResource}
@@ -32,6 +36,7 @@ public interface ComponentsResourceDoc
 {
   @ApiOperation("List components")
   @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to list components"),
       @ApiResponse(code = 422, message = "Parameter 'repository' is required")
   })
   Page<ComponentXO> getComponents(
@@ -43,6 +48,7 @@ public interface ComponentsResourceDoc
 
   @ApiOperation("Get a single component")
   @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to get component"),
       @ApiResponse(code = 404, message = "Component not found"),
       @ApiResponse(code = 422, message = "Malformed ID")
   })
@@ -55,4 +61,15 @@ public interface ComponentsResourceDoc
       @ApiResponse(code = 422, message = "Malformed ID")
   })
   void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
+
+  @ApiOperation(value = "Upload a single component")
+  @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),
+      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+  })
+  void uploadComponent(
+      @ApiParam(value = "Name of the repository to which you would like to upload the component", required = true)
+      final String repository,
+      @ApiParam(value = "Form containing the component") @MultipartForm MultipartInput multipartInput)
+      throws IOException;
 }
