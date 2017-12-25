@@ -572,7 +572,7 @@ NX.define('Sonatype.repoServer.ArtifactUploadPanel', {
           extensionField = this.find('name', 'extension')[0],
           classifier = classifierField.getValue(),
           extension = extensionField.getValue(),
-          nodeText = filenameField.getValue();
+          nodeText = Ext.util.Format.htmlEncode(filenameField.getValue());
 
     if (this.artifactWithClassifierAndExtensionExists(classifier, extension)) {
       Ext.Msg.show({

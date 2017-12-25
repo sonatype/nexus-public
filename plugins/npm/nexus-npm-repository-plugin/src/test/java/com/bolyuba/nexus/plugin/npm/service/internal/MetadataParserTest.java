@@ -13,9 +13,12 @@
 package com.bolyuba.nexus.plugin.npm.service.internal;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
+import org.sonatype.nexus.proxy.item.ContentLocator;
 import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
@@ -27,11 +30,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static com.bolyuba.nexus.plugin.npm.NpmRepository.JSON_MIME_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MetadataParserTest
@@ -70,5 +75,15 @@ public class MetadataParserTest
     assertThat(attachments, hasKey("third"));
     assertThat(attachments.get("third").getMimeType(), equalTo("text/plain"));
     assertThat(attachments.get("third").getLength(), equalTo(29L)); // "This is a base64 encoded text"
+  }
+
+  @Test
+  public void canFetchSimulatedAll() throws IOException {
+    InputStream stream = getClass().getResourceAsStream("/all.json");
+    ContentLocator content = mock(ContentLocator.class);
+
+    when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);
+    when(content.getContent()).thenReturn(stream);
+    metadataParser.parseRegistryRoot("repoId", content);
   }
 }

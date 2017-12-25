@@ -56,6 +56,7 @@ import org.apache.shiro.subject.Subject;
 import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
+import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -282,8 +283,12 @@ public class MetadataParser
     Map<String, Object> versions = new LinkedHashMap<>();
     while (!END_OBJECT.equals(parser.getCurrentToken())) {
       String name = parseFieldName(parser);
-      Map<String, Object> attachment = parseVersion(parser, currentUserId);
-      versions.put(name, attachment);
+      if(!START_OBJECT.equals(parser.getCurrentToken())) {
+        versions.put(name, parseValue(parser));
+      } else {
+        Map<String, Object> attachment = parseVersion(parser, currentUserId);
+        versions.put(name, attachment);
+      }
     }
     parser.nextToken();
     return versions;

@@ -146,7 +146,10 @@ NX.define('Sonatype.repoServer.UserEditPanel', {
           name : 'userId',
           sortType : Ext.data.SortTypes.asUCString,
           header : 'User ID',
-          width : 100
+          width : 100,
+          renderer: function(value, metaData, record, rowIndex, colIndex, store) {
+            return Ext.util.Format.htmlEncode(value);
+          }
         },
         {
           name : 'source',

@@ -74,15 +74,21 @@ public class DefaultObrPluginConfiguration
     return configMap;
   }
 
-  private static Map<String, String> loadConfiguration(final File file) {
+  private Map<String, String> loadConfiguration(final File file) {
     final Map<String, String> newConfig = new HashMap<String, String>();
 
-    final Properties properties = PropertyUtils.loadProperties(file);
-    for (final Entry<?, ?> e : properties.entrySet()) {
-      final String key = StringUtils.defaultString(e.getKey(), null);
-      if (key != null) {
-        newConfig.put(key, StringUtils.defaultString(e.getValue(), null));
+    try {
+      final Properties properties = PropertyUtils.loadProperties(file);
+      for (final Entry<?, ?> e : properties.entrySet()) {
+        final String key = StringUtils.defaultString(e.getKey(), null);
+        if (key != null) {
+          newConfig.put(key, StringUtils.defaultString(e.getValue(), null));
+        }
       }
+    }
+    catch (IOException e) {
+      log.warn("Could not load OBR plugin configuration from path " + file.getAbsolutePath(), e);
+      Throwables.propagate(e);
     }
 
     return newConfig;

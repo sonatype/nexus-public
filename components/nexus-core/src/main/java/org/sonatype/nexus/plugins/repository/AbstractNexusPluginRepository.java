@@ -49,7 +49,7 @@ abstract class AbstractNexusPluginRepository
 
   @Inject
   @Parameters
-  private Map<String, String> variables;
+  private Map<String, Object> variables;
 
   // ----------------------------------------------------------------------
   // Implementation methods

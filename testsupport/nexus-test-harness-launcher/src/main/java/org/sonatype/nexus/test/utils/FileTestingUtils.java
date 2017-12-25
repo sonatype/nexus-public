@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -175,7 +176,8 @@ public class FileTestingUtils
     }
 
     FileReader fileReader = new FileReader(from);
-    InterpolationFilterReader filterReader = new InterpolationFilterReader(fileReader, variables);
+    InterpolationFilterReader filterReader = new InterpolationFilterReader(fileReader,
+        ImmutableMap.<String, Object>copyOf(variables));
 
     FileWriter fos = new FileWriter(dest);
 
@@ -213,7 +215,8 @@ public class FileTestingUtils
       else {
         try (FileReader reader = new FileReader(sourceFile);
              FileWriter writer = new FileWriter(destFile)) {
-          InterpolationFilterReader filterReader = new InterpolationFilterReader(reader, variables);
+          InterpolationFilterReader filterReader = new InterpolationFilterReader(reader,
+              ImmutableMap.<String, Object>copyOf(variables));
           IOUtils.copy(filterReader, writer);
         }
       }

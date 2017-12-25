@@ -141,7 +141,7 @@ public abstract class LdapTestSupport
   private void interpolateLdapXml(InputStream inputStream, File outputFile)
       throws IOException
   {
-    HashMap<String, String> interpolationMap = new HashMap<String, String>();
+    HashMap<String, Object> interpolationMap = new HashMap<String, Object>();
     interpolationMap.put("port", Integer.toString(getLdapServer().getPort()));
 
     try (Reader reader = new InterpolationFilterReader(new InputStreamReader(inputStream), interpolationMap);
