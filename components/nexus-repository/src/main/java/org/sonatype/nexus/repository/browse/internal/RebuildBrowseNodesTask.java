@@ -139,10 +139,5 @@ public class RebuildBrowseNodesTask
       throw new TaskInterruptedException(String.format("Rebuilding browse nodes was cancelled for %s", repo.getName()),
           true);
     }
-    // Treat repositories put offline during walking as cancellation
-    if (!repo.getConfiguration().isOnline()) {
-      throw new TaskInterruptedException(String.format(
-          "Repository %s is offline, rebuilding browse nodes was cancelled", repo.getName()), false);
-    }
   }
 }

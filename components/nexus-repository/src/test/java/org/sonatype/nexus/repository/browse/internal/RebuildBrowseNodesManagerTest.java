@@ -38,8 +38,6 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskScheduler;
-import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.SelectorManager;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Before;
@@ -98,13 +96,7 @@ public class RebuildBrowseNodesManagerTest
   private CurrentState currentState2;
 
   @Mock
-  private SecurityHelper securityHelper;
-
-  @Mock
-  private SelectorManager selectorManager;
-
-  @Mock
-  BrowseNodeConfiguration configuration;
+  private BrowseNodeConfiguration configuration;
 
   @Before
   public void configure() throws Exception {
@@ -124,8 +116,8 @@ public class RebuildBrowseNodesManagerTest
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());
-    underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler,
-        repositoryManager, configuration);
+    underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler, configuration,
+        bucketEntityAdapter);
 
     bucketEntityAdapter.register(databaseInstanceRule.getInstance().acquire());
     componentEntityAdapter.register(databaseInstanceRule.getInstance().acquire());
@@ -233,8 +225,8 @@ public class RebuildBrowseNodesManagerTest
   @Test
   public void doStart_rebuildDisabled() throws Exception {
     when(configuration.isAutomaticRebuildEnabled()).thenReturn(false);
-    underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler,
-        repositoryManager, configuration);
+    underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler, configuration,
+        bucketEntityAdapter);
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     assetEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), createAsset("asset", "maven2", bucket));
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID)).thenReturn(
