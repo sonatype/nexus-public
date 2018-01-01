@@ -45,8 +45,7 @@ public class PasswordHelper
 
   @Nullable
   public String encrypt(@Nullable final String password, final String encoding) {
-    // check if the password is encrypted
-    if (mavenCipher.isPasswordCipher(password)) {
+    if (mavenCipher.isPasswordCipher(password, encoding)) {
       return password;
     }
     if (password != null) {
@@ -63,11 +62,6 @@ public class PasswordHelper
 
   @Nullable
   public String decrypt(@Nullable final String encodedPassword, final String encoding) {
-    // check if the password is encrypted
-    if (!mavenCipher.isPasswordCipher(encodedPassword)) {
-      return encodedPassword;
-    }
-
     if (encodedPassword != null) {
       return mavenCipher.decrypt(encodedPassword, encoding);
     }

@@ -27,6 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -62,7 +63,13 @@ public class PasswordHelperTest
 
   @Test
   public void testEncrypt_AlreadyEncryptedInput() throws Exception {
-    assertThat(helper.encrypt("{test}"), is("{test}"));
+    assertThat(helper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
+  }
+
+  @Test
+  public void testEncrypt_StringIncludingShields() throws Exception {
+    //check the resultant value is protected by braces and has been encrypted (not equal to the input string)
+    assertThat(helper.encrypt("{test}"), allOf(startsWith("{"), endsWith("}"), not("{test}")));
   }
 
   @Test

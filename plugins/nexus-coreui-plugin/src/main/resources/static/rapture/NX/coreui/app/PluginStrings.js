@@ -307,7 +307,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel: 'Disable to allow anonymous pull (Note: also requires Docker Bearer Token Realm to be activated)',
     Repository_Facet_YumHostedFacet_Title: 'Yum',
     Repository_Facet_YumHostedFacet_RepodataDepth_FieldLabel: 'Repodata Depth',
-    Repository_Facet_YumHostedFacet_RewritePackageUrls_HelpText: 'Specifies the repository depth where repodata folder(s) are created',
+    Repository_Facet_YumHostedFacet_RepodataDepth_HelpText: 'Specifies the repository depth where repodata folder(s) are created',
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',

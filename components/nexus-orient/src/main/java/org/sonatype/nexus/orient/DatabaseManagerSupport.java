@@ -22,6 +22,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,5 +259,16 @@ public abstract class DatabaseManagerSupport
     }
     Lifecycles.start(instance);
     return instance;
+  }
+
+  @Override
+  public void replaceStorage(final OStorage storage) {
+    DatabasePoolImpl pool;
+    synchronized (pools) {
+      pool = pools.get(storage.getName());
+    }
+    if (pool != null) {
+      pool.replaceStorage(storage);
+    }
   }
 }

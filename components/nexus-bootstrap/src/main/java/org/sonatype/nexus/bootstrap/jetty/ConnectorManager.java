@@ -113,7 +113,6 @@ public class ConnectorManager
     serverConnector.setIdleTimeout(connectorPrototype.getIdleTimeout());
     serverConnector.setSoLingerTime(connectorPrototype.getSoLingerTime());
     serverConnector.setAcceptorPriorityDelta(connectorPrototype.getAcceptorPriorityDelta());
-    serverConnector.setSelectorPriorityDelta(connectorPrototype.getSelectorPriorityDelta());
     serverConnector.setAcceptQueueSize(connectorPrototype.getAcceptQueueSize());
 
     managedConnectors.put(connectorConfiguration, serverConnector);

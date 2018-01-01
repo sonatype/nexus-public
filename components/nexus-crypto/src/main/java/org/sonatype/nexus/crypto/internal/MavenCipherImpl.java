@@ -13,28 +13,31 @@
 package org.sonatype.nexus.crypto.internal;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 
-import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Objects.isNull;
 
 /**
  * Default implementation of {@link MavenCipher}.
- * 
+ *
  * @since 3.0
  */
 @Named
 @Singleton
 public class MavenCipherImpl
+    extends ComponentSupport
     implements MavenCipher
 {
   private static final char SHIELD_BEGIN = '{';
@@ -61,33 +64,47 @@ public class MavenCipherImpl
   public String decrypt(final String str, final String passPhrase) {
     checkNotNull(str);
     checkNotNull(passPhrase);
-    String payload = peel(str);
-    checkArgument(payload != null, "Input string is not a password cipher");
-    return doDecrypt(payload, passPhrase);
+    return doCipherCheck(str, passPhrase).orElse(str);
   }
 
   private String doDecrypt(final String str, final String passPhrase) {
     return new String(passwordCipher.decrypt(str.getBytes(StandardCharsets.UTF_8), passPhrase), StandardCharsets.UTF_8);
   }
 
-  public boolean isPasswordCipher(final String str) {
-    return peel(str) != null;
+  public boolean isPasswordCipher(final String str, final String passPhrase) {
+    try {
+      return doCipherCheck(str, passPhrase).isPresent();
+    } catch (Exception ex) { // NOSONAR
+      log.debug("Unable to decrypt input string");
+      return false;
+    }
+  }
+
+  /**
+   * Helper to perform the peel and attempt a decrypt returning an empty optional or the
+   * result of a successful decrypt call
+   */
+  @VisibleForTesting
+  Optional<String> doCipherCheck(final String str, final String passPhrase) {
+    //checks for existence of shields in input string
+    return Optional.ofNullable(peel(str))
+        .map(payload -> doDecrypt(payload, passPhrase));
   }
 
   /**
    * Peels of the start and stop "shield" braces from payload if possible, otherwise returns {@code null} signaling that
    * input is invalid.
    */
-  @Nullable
   private String peel(final String str) {
-    if (Strings.isNullOrEmpty(str)) {
+    if (isNullOrEmpty(str)) {
       return null;
     }
     int start = str.indexOf(SHIELD_BEGIN);
-    int stop = str.indexOf(SHIELD_END);
-    if (start != -1 && stop != -1 && stop > start + 1) {
+    int stop = str.lastIndexOf(SHIELD_END);
+    if (start == 0 && stop == str.length()-1 && stop > start + 1) {
       return str.substring(start + 1, stop);
     }
+
     return null;
   }
 }

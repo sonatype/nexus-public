@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,9 +25,9 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -32,12 +35,17 @@ import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.stream;
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.orient.entity.AttachedEntityHelper.id;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 
 /**
@@ -50,63 +58,72 @@ public class RebuildBrowseNodesManager
     extends StateGuardLifecycleSupport
 {
   @VisibleForTesting
-  static final String ASSET_COUNT = "select count(*) from asset";
+  static final String SELECT_ANY_ASSET_BY_BUCKET = "select @rid from asset where bucket = :bucket limit 1";
 
   @VisibleForTesting
-  static final String BROWSE_NODE_COUNT = "select count(*) from browse_node";
-
-  private static final String COUNT = "count";
+  static final String SELECT_ANY_BROWSE_NODE_BY_BUCKET = "select @rid from browse_node where repository_name = :repositoryName limit 1";
 
   private final Provider<DatabaseInstance> componentDatabaseInstanceProvider;
 
   private final TaskScheduler taskScheduler;
 
-  private final RepositoryManager repositoryManager;
-
   private final boolean automaticRebuildEnabled;
+
+  private final BucketEntityAdapter bucketEntityAdapter;
 
   @Inject
   public RebuildBrowseNodesManager(@Named(ComponentDatabase.NAME)
                                    final Provider<DatabaseInstance> componentDatabaseInstanceProvider,
                                    final TaskScheduler taskScheduler,
-                                   final RepositoryManager repositoryManager,
-                                   final BrowseNodeConfiguration configuration)
+                                   final BrowseNodeConfiguration configuration,
+                                   final BucketEntityAdapter bucketEntityAdapter)
   {
     this.componentDatabaseInstanceProvider = checkNotNull(componentDatabaseInstanceProvider);
     this.taskScheduler = checkNotNull(taskScheduler);
-    this.repositoryManager = repositoryManager;
     this.automaticRebuildEnabled = checkNotNull(configuration).isAutomaticRebuildEnabled();
+    this.bucketEntityAdapter = bucketEntityAdapter;
   }
 
   @Override
-  protected void doStart() {
+  protected void doStart() { // NOSONAR
     if (!automaticRebuildEnabled) {
       return;
     }
-    try {
-      long assetCount = inTx(componentDatabaseInstanceProvider)
-          .call(db -> execute(db, ASSET_COUNT).get(0).field(COUNT));
-      long browseNodeCount = inTx(componentDatabaseInstanceProvider)
-          .call(db -> execute(db, BROWSE_NODE_COUNT).get(0).field(COUNT));
 
-      if (assetCount == 0 && browseNodeCount == 0) {
-        log.debug("browse_node table won't be populated as there are no assets");
-      }
-      else if ((assetCount == 0 && browseNodeCount > 0) || (assetCount > 0 && browseNodeCount == 0)) {
-        log.debug("browse_node table will be repopulated");
-        for (Repository repository : repositoryManager.browse()) {
-          if (!launchExistingTask(repository.getName())) {
-            launchNewTask(repository.getName());
+    Stopwatch sw = Stopwatch.createStarted();
+    try {
+      Collection<Bucket> buckets = inTx(componentDatabaseInstanceProvider).call(db -> {
+        return stream(bucketEntityAdapter.browse(db)).filter(bucket -> {
+          boolean hasAssets = !execute(db, SELECT_ANY_ASSET_BY_BUCKET, singletonMap("bucket", id(bucket)))
+              .isEmpty();
+          boolean hasBrowseNodes = !execute(db, SELECT_ANY_BROWSE_NODE_BY_BUCKET,
+              singletonMap("repositoryName", bucket.getRepositoryName()))
+              .isEmpty();
+
+          if (hasAssets ^ hasBrowseNodes) {
+            log.debug("browse_node table will be rebuilt for bucket={}", id(bucket));
+            return true;
           }
+          else if (!hasAssets) {
+            log.debug("browse_node table won't be populated as there are no assets for bucketId={}", id(bucket));
+          }
+          else {
+            log.debug("browse_node table already populated for bucketId={}", id(bucket));
+          }
+          return false;
+        }).collect(toList());
+      });
+
+      for (Bucket bucket : buckets) {
+        if (!launchExistingTask(bucket.getRepositoryName())) {
+          launchNewTask(bucket.getRepositoryName());
         }
       }
-      else {
-        log.debug("browse_node table already populated");
-      }
     }
-    catch (Exception e) { // NOSONAR
+    catch (Exception e) {
       log.error("Failed to determine if the browse nodes need to be rebuilt for any repositories", e);
     }
+    log.debug("scheduling rebuild browse nodes tasks took {} ms", sw.elapsed(TimeUnit.MILLISECONDS));
   }
 
   private boolean launchExistingTask(final String repositoryName) throws TaskRemovedException {
@@ -135,7 +152,10 @@ public class RebuildBrowseNodesManager
         .equals(taskInfo.getConfiguration().getString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID));
   }
 
-  private List<ODocument> execute(final ODatabaseDocumentTx db, final String query) {
-    return db.command(new OCommandSQL(query)).execute();
+  private List<ODocument> execute(final ODatabaseDocumentTx db, // NOSONAR
+                                  final String query,
+                                  final Map<String, Object> parameters)
+  {
+    return db.command(new OCommandSQL(query)).execute(parameters);
   }
 }

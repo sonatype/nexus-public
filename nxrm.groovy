@@ -72,6 +72,7 @@ testProjects = [':nexus-iq-testsupport', ':nexus-docker-testsupport', ':nexuspro
  Customize these by creating a .nxrm/nxrmrc.groovy. Sample contents:
    javaMaxMem="4g"
    directMaxMem="4g"
+   vmOptions="-XX:-MaxFDLimit"
    takari=true
    port=8082
    sslPort=8444
@@ -84,6 +85,7 @@ testProjects = [':nexus-iq-testsupport', ':nexus-docker-testsupport', ':nexuspro
 configDefaults = [
     javaMaxMem   : "2g",
     directMaxMem : "2g",
+    vmOptions    : "",
     port         : 8081,
     sslPort      : 8443,
     karafSshPort : 8022,
@@ -923,7 +925,7 @@ def checkPorts() {
   debug("Checking application ports")
 
   // Update nexus.properties (and default files)
-  List<String> files = new FileNameFinder().getFileNames("target", "**/nexus*.properties")
+  List<String> files = new FileNameFinder().getFileNames("target", "nexus*/etc/nexus*.properties sonatype-work/nexus3/etc/nexus*properties")
   files.each {
     ensurePresentInFile(new File(it), "application-port=${rcConfig.port}")
     ensurePresentInFile(new File(it), "application-port-ssl=${rcConfig.sslPort}")
@@ -962,6 +964,8 @@ def runNxrm() {
     processBuilder.environment().put('JAVA_MAX_MEM', rcConfig.javaMaxMem)
     processBuilder.environment().put('DIRECT_MAX_MEM', rcConfig.directMaxMem)
     processBuilder.environment().put('JAVA_DEBUG_PORT', Integer.toString(rcConfig.javaDebugPort))
+    processBuilder.environment().put('EXTRA_JAVA_OPTS', rcConfig.vmOptions)
+
     def process = processBuilder.start()
     process.inputStream.eachLine {
       // print to console

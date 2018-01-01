@@ -41,7 +41,7 @@ Ext.define('NX.coreui.view.repository.facet.YumHostedFacet', {
             xtype: 'combo',
             name: 'attributes.yum.repodataDepth',
             fieldLabel: NX.I18n.get('Repository_Facet_YumHostedFacet_RepodataDepth_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_YumHostedFacet_RewritePackageUrls_HelpText'),
+            helpText: NX.I18n.get('Repository_Facet_YumHostedFacet_RepodataDepth_HelpText'),
             forceSelection: true,
             editable: false,
             allowBlank: false,

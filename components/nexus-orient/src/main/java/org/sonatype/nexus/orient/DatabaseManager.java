@@ -13,6 +13,7 @@
 package org.sonatype.nexus.orient;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Database manager.
@@ -52,4 +53,14 @@ public interface DatabaseManager
    * If the instance does not already exist it will be created.
    */
   DatabaseInstance instance(String name);
+
+  /**
+   * Updates local pooled connections to use the given storage.
+   *
+   * @since 3.next
+   *
+   * @deprecated temporary workaround for https://www.prjhub.com/#/issues/9594
+   */
+  @Deprecated
+  void replaceStorage(OStorage storage);
 }

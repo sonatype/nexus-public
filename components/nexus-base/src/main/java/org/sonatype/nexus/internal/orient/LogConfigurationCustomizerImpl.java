@@ -45,9 +45,5 @@ public class LogConfigurationCustomizerImpl
 
     // OLocalPaginatedStorage produces too much output if the ROOT logger is switched to DEBUG
     config.setLoggerLevel(OLocalPaginatedStorage.class.getName(), INFO);
-
-    // TEMP: workaround https://www.prjhub.com/#/issues/9584 by turning off logging for pooled and non-pooled connections
-    config.setLoggerLevel("com.orientechnologies.orient.core.db.OPartitionedDatabasePool$DatabaseDocumentTxPooled", OFF);
-    config.setLoggerLevel("com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx", OFF);
   }
 }
