@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
-import org.sonatype.nexus.blobstore.LocationStrategy
+import org.sonatype.nexus.blobstore.BlobIdLocationResolver
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
@@ -36,15 +36,13 @@ class S3BlobStoreTest
 
   AmazonS3Factory amazonS3Factory = Mock()
 
-  LocationStrategy permanentLocationStrategy = Mock()
-
-  LocationStrategy temporaryLocationStrategy =  Mock()
+  BlobIdLocationResolver locationResolver = Mock()
 
   S3BlobStoreMetricsStore storeMetrics = Mock()
 
   AmazonS3 s3 = Mock()
 
-  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, permanentLocationStrategy, temporaryLocationStrategy, storeMetrics)
+  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, storeMetrics)
 
   def config = new BlobStoreConfiguration()
 
@@ -60,7 +58,7 @@ class S3BlobStoreTest
       """.stripMargin()
 
   def setup() {
-    permanentLocationStrategy.location(_) >> { args -> args[0].toString() }
+    locationResolver.getLocation(_) >> { args -> args[0].toString() }
     amazonS3Factory.create(_) >> s3
     config.attributes = [s3: [bucket: 'mybucket']]
   }

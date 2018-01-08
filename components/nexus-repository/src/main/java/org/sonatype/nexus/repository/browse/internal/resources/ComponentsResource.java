@@ -40,12 +40,14 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.browse.api.DefaultComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.ComponentsResourceDoc;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
@@ -64,6 +66,8 @@ import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemID
 import static org.sonatype.nexus.repository.browse.internal.resources.ComponentUploadUtils.createComponentUpload;
 import static org.sonatype.nexus.repository.browse.internal.resources.ComponentsResource.RESOURCE_URI;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
+import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
@@ -93,13 +97,16 @@ public class ComponentsResource
 
   private final UploadManager uploadManager;
 
+  private final UploadConfiguration uploadConfiguration;
+
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
                             final ComponentEntityAdapter componentEntityAdapter,
                             final MaintenanceService maintenanceService,
                             @Named("component") final ContinuationTokenHelper continuationTokenHelper,
-                            final UploadManager uploadManager)
+                            final UploadManager uploadManager,
+                            final UploadConfiguration uploadConfiguration)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
@@ -107,6 +114,7 @@ public class ComponentsResource
     this.maintenanceService = checkNotNull(maintenanceService);
     this.continuationTokenHelper = checkNotNull(continuationTokenHelper);
     this.uploadManager = checkNotNull(uploadManager);
+    this.uploadConfiguration = checkNotNull(uploadConfiguration);
   }
 
   @GET
@@ -142,8 +150,7 @@ public class ComponentsResource
   private ComponentXO fromComponent(Component component, Repository repository) {
     String internalId = id(component).getValue();
 
-    ComponentXO componentXO = new ComponentXO();
-
+    ComponentXO componentXO = new DefaultComponentXO();
 
     componentXO
         .setAssets(browseService.browseComponentAssets(repository, component.getEntityMetadata().getId().getValue())
@@ -183,10 +190,9 @@ public class ComponentsResource
           () -> new NotFoundException("Unable to locate component with id " + repositoryItemIDXO.getValue()));
     }
     catch (IllegalArgumentException e) {
-      log.debug("IllegalArgumentException caught retrieving component with id {}, converting to NotFoundException",
-          repositoryItemIDXO.getId(), e);
-      throw new WebApplicationException(format("Unable to locate component with id %s", repositoryItemIDXO.getId()),
-          NOT_ACCEPTABLE);
+      log.debug("IllegalArgumentException caught retrieving component with id {}", repositoryItemIDXO.getId(), e);
+      throw new WebApplicationException(format("Unable to process component with id %s", repositoryItemIDXO.getId()),
+          UNPROCESSABLE_ENTITY);
     }
   }
 
@@ -210,6 +216,10 @@ public class ComponentsResource
   public void uploadComponent(@QueryParam("repository") final String repositoryId, final MultipartInput multipartInput)
       throws IOException
   {
+    if (!uploadConfiguration.isEnabled()) {
+      throw new WebApplicationException(NOT_FOUND);
+    }
+
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
     ComponentUpload componentUpload = createComponentUpload(multipartInput);
     uploadManager.handle(repository, componentUpload);

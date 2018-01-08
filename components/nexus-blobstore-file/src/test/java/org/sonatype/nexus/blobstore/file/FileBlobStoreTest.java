@@ -19,9 +19,10 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.TemporaryLocationStrategy;
+import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -68,7 +70,7 @@ public class FileBlobStoreTest
     extends TestSupport
 {
   @Mock
-  private TemporaryLocationStrategy temporaryLocationStrategy;
+  private BlobIdLocationResolver blobIdLocationResolver;
 
   @Mock
   private FileOperations fileOperations;
@@ -125,8 +127,18 @@ public class FileBlobStoreTest
 
     configuration.setAttributes(attributes);
 
+    when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
+      BlobId blobId = (BlobId) invocation.getArguments()[0];
+      if (blobId == null) {
+        return null;
+      }
+      return blobId.asUniqueString();
+    });
+    when(blobIdLocationResolver.fromHeaders(any(Map.class)))
+        .thenAnswer(invocation -> new BlobId(UUID.randomUUID().toString()));
+
     underTest = new FileBlobStore(util.createTempDir().toPath(),
-        blobId -> blobId.asUniqueString(), temporaryLocationStrategy, fileOperations, metrics, configuration,
+        blobIdLocationResolver, fileOperations, metrics, configuration,
         appDirs, nodeAccess, dryRunPrefix);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
@@ -327,5 +339,24 @@ public class FileBlobStoreTest
 
     verify(fileOperations).delete(propertiesPath);
     verify(fileOperations).delete(bytesPath);
+  }
+
+  /**
+   * This test guarantees we are returning unix-style paths for {@link BlobId}s returned by
+   * {@link FileBlobStore#getDirectPathBlobIdStream(String)}.
+   * This test would fail on Windows if {@link FileBlobStore#toBlobName(Path)} wasn't implemented correctly.
+   */
+  @Test
+  public void toBlobName() {
+    // /full/path/on/disk/to/content/directpath/some/direct/path/file.txt.properties
+    Path absolute = underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.txt.properties");
+    assertThat(underTest.toBlobName(absolute), is("some/direct/path/file.txt"));
+  }
+
+  @Test
+  public void toBlobNamePropertiesSuffix() {
+    // /full/path/on/disk/to/content/directpath/some/direct/path/file.properties.properties
+    Path absolute = underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
+    assertThat(underTest.toBlobName(absolute), is("some/direct/path/file.properties"));
   }
 }

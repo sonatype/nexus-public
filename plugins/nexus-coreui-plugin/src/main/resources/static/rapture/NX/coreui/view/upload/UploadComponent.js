@@ -41,51 +41,55 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       me.repository = repository;
 
       me.removeAll(true);
-      me.add([{
-          xtype: 'nx-settingsform',
-          api: {
+      me.add(
+        {
+          xtype: 'panel',
+          ui: 'nx-inset',
+          items: [{
+            xtype: 'nx-settingsform',
+            api: {
               submit: 'NX.direct.coreui_Upload.doUpload'
-          },
-          buttons: [{
+            },
+            buttons: [{
               text: NX.I18n.get('FeatureGroups_Upload_Form_Upload_Button'),
               action: 'upload',
               formBind: true,
               ui: 'nx-primary'
-          }, {
+            }, {
               text: NX.I18n.get('FeatureGroups_Upload_Form_Discard_Button'),
               action: 'cancel'
-          }],
-          items: [{
+            }],
+            items: [{
               xtype: 'fieldcontainer',
               width: 700,
               items: [{
-                  xtype: 'fieldset',
-                  cls: 'nx-form-section',
-                  itemId: 'nx-coreui-upload-component-assets',
-                  title: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Title'),
-                  items: [me.createRow(true), {
-                      xtype: 'button',
-                      text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
-                      action: 'add_asset',
-                      hidden: !me.uploadDefinition.get('multipleUpload')
-                  }]
-              },{
-                  xtype: 'fieldset',
-                  cls: 'nx-form-section',
-                  layout: {
-                      type: 'vbox',
-                      align: 'stretch'
-                  },
-                  title: NX.I18n.get('FeatureGroups_Upload_Component_Form_Title'),
-                  items: me.uploadDefinition.get('componentFields').map(me.createComponentField, this),
-                  hidden: me.uploadDefinition.get('componentFields').length === 0
-              },{
-                  xtype: 'hidden',
-                  name: 'repositoryName',
-                  value: repository.get('name')
+                xtype: 'fieldset',
+                cls: 'nx-form-section',
+                itemId: 'nx-coreui-upload-component-assets',
+                title: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Title'),
+                items: [me.createRow(true), {
+                  xtype: 'button',
+                  text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
+                  action: 'add_asset',
+                  hidden: !me.uploadDefinition.get('multipleUpload')
+                }]
+              }, {
+                xtype: 'fieldset',
+                cls: 'nx-form-section',
+                layout: {
+                  type: 'vbox',
+                  align: 'stretch'
+                },
+                title: NX.I18n.get('FeatureGroups_Upload_Component_Form_Title'),
+                items: me.uploadDefinition.get('componentFields').map(me.createComponentField, this),
+                hidden: me.uploadDefinition.get('componentFields').length === 0
+              }, {
+                xtype: 'hidden',
+                name: 'repositoryName',
+                value: repository.get('name')
               }]
-          }],
-          dockedItems: [{
+            }],
+            dockedItems: [{
               xtype: 'panel',
               itemId: 'nx-coreui-upload-success-message',
               ui: 'nx-drilldown-message',
@@ -93,8 +97,10 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
               iconCls: NX.Icons.cls('tick', 'x16'),
               hidden: true,
               dock: 'bottom'
+            }]
           }]
-      }]);
+        }
+      );
     },
 
     addAssetRow: function() {

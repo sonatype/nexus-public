@@ -26,9 +26,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
+import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
-import org.sonatype.nexus.blobstore.TemporaryLocationStrategy;
-import org.sonatype.nexus.blobstore.VolumeChapterLocationStrategy;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -98,8 +97,7 @@ public class FileBlobStoreConcurrencyIT
     metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
 
     this.underTest = new FileBlobStore(content,
-        new VolumeChapterLocationStrategy(),
-        new TemporaryLocationStrategy(),
+        new DefaultBlobIdLocationResolver(),
         new SimpleFileOperations(),
         metricsStore,
         config,

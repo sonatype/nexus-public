@@ -18,13 +18,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
@@ -37,7 +37,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 
 /**
@@ -49,21 +48,37 @@ class ComponentUploadUtils
 {
   private static final Pattern FIELD_NAME_PATTERN = Pattern.compile(".*\\sname\\s*=[\'\"\\s]?([^\'\";]+).*");
 
+  private static final Pattern FILENAME_PATTERN = Pattern.compile(".*\\sfilename\\s*=[\'\"\\s]?([^\'\";]+).*");
+
   private ComponentUploadUtils() {
     // empty
   }
 
   /**
-   * Extract the value from 'name' parameter from the Content Disposition header
-   * Example: Content-Disposition: form-data; name="fieldName"; filename="filename.jpg" - will return fieldName
+   * Extract the value from using given pattern from the Content Disposition header
+   * Example: Content-Disposition: form-data; name="fieldName"; filename="filename.jpg"
+   * with a pattern of .*\sfilename\s*=['"\s]?([^'";]+).* will return filename.jpg
    *
-   * @param header Content Disposition header
+   * @param header       Content Disposition header
+   * @param fieldPattern Regex pattern to find the field
    * @return value of the 'name' parameter
    */
-  private static String extractFieldName(final String header) {
-    Matcher matcher = FIELD_NAME_PATTERN.matcher(header);
-    matcher.matches();
-    return matcher.group(1);
+  private static Optional<String> extractValue(final String header, final Pattern fieldPattern) {
+    Matcher matcher = fieldPattern.matcher(header);
+    if (matcher.matches()) {
+      return Optional.of(matcher.group(1));
+    }
+    else {
+      return Optional.empty();
+    }
+  }
+
+  private static Optional<String> extractFieldName(final String header) {
+    return extractValue(header, FIELD_NAME_PATTERN);
+  }
+
+  private static Optional<String> extractFilename(final String header) {
+    return extractValue(header, FILENAME_PATTERN);
   }
 
   static ComponentUpload createComponentUpload(final MultipartInput multipartInput) throws IOException
@@ -109,7 +124,7 @@ class ComponentUploadUtils
                                                final Map<String, String> formFields)
   {
     Map<String, String> assetFields = formFields.entrySet().stream()
-        .filter(field -> field.getKey().startsWith(assetName))
+        .filter(field -> field.getKey().startsWith(assetName) && (field.getKey().length() > assetName.length() + 2))
         .collect(Collectors.toMap(field -> field.getKey().substring(assetName.length() + 1), Entry::getValue));
 
     AssetUpload assetUpload = new AssetUpload();
@@ -118,18 +133,17 @@ class ComponentUploadUtils
     return assetUpload;
   }
 
-  private static List<InputPart> getPartByMediaType(final MultipartInput multipartInput, final MediaType mediaType) {
-    return multipartInput.getParts().stream()
-        .filter(part -> mediaType.isCompatible(part.getMediaType()))
-        .collect(toList());
-  }
-
   private static Map<String, String> getTextFormFields(final MultipartInput multipartInput) throws IOException {
     Map<String, String> fields = new HashMap<>();
-    List<InputPart> fieldsParts = getPartByMediaType(multipartInput, TEXT_PLAIN_TYPE);
+    List<InputPart> fieldsParts = multipartInput.getParts().stream()
+        .filter(part -> TEXT_PLAIN_TYPE.isCompatible(part.getMediaType()))
+        .collect(toList());
+
     for (InputPart inputPart : fieldsParts) {
-      String name = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
-      fields.put(name, inputPart.getBodyAsString());
+      Optional<String> maybeFieldName = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
+      if (maybeFieldName.isPresent()) {
+        fields.put(maybeFieldName.get(), inputPart.getBodyAsString());
+      }
     }
     return fields;
   }
@@ -138,11 +152,14 @@ class ComponentUploadUtils
       throws IOException
   {
     Map<String, InputStreamPartPayload> payloads = new HashMap<>();
-    List<InputPart> streamParts = getPartByMediaType(multipartInput, APPLICATION_OCTET_STREAM_TYPE);
-    for (InputPart inputPart : streamParts) {
-      String name = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
-      InputStream inputStream = inputPart.getBody(InputStream.class, null);
-      payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+    for (InputPart inputPart : multipartInput.getParts()) {
+      String contentDisposition = inputPart.getHeaders().getFirst(CONTENT_DISPOSITION);
+      Optional<String> filename = extractFilename(contentDisposition);
+      if (filename.isPresent()) {
+        String name = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION)).orElse(filename.get());
+        InputStream inputStream = inputPart.getBody(InputStream.class, null);
+        payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+      }
     }
     return payloads;
   }

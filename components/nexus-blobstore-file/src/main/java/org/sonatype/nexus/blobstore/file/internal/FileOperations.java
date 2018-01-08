@@ -60,6 +60,20 @@ public interface FileOperations
   void moveAtomic(Path source, Path target) throws IOException;
 
   /**
+   * Overwrites a file without any guarantee of atomicity.
+   *
+   * @since 3.next
+   */
+  void overwrite(Path source, Path target) throws IOException;
+
+  /**
+   * Overwrites a file atomically, throwing <code>AtomicMoveNotSupportedException</code> if not supported.
+   *
+   * @since 3.next
+   */
+  void overwriteAtomic(Path source, Path target) throws IOException;
+
+  /**
    * Moves a file, falling back on copy/delete if a <code>FileSystemException</code> is thrown.
    *
    * @since 3.5

@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,8 +34,8 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobSupport;
-import org.sonatype.nexus.blobstore.LocationStrategy;
 import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -63,6 +62,7 @@ import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
@@ -71,8 +71,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
+import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.nio.file.Files.exists;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
+import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -118,9 +123,6 @@ public class FileBlobStore
   @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
 
-  @VisibleForTesting
-  public static final String TEMPORARY_BLOB_ID_PREFIX = "tmp$";
-
   private static final boolean RETRY_ON_COLLISION =
       SystemPropertiesHelper.getBoolean("nexus.blobstore.retryOnCollision", true);
 
@@ -129,9 +131,7 @@ public class FileBlobStore
 
   private Path contentDir;
 
-  private final LocationStrategy permanentLocationStrategy;
-
-  private final LocationStrategy temporaryLocationStrategy;
+  private final BlobIdLocationResolver blobIdLocationResolver;
 
   private final FileOperations fileOperations;
 
@@ -154,16 +154,14 @@ public class FileBlobStore
   private final DryRunPrefix dryRunPrefix;
 
   @Inject
-  public FileBlobStore(@Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
-                       @Named("temporary") final LocationStrategy temporaryLocationStrategy,
+  public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final ApplicationDirectories directories,
                        final BlobStoreMetricsStore storeMetrics,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix)
   {
-    this.permanentLocationStrategy = checkNotNull(permanentLocationStrategy);
-    this.temporaryLocationStrategy = checkNotNull(temporaryLocationStrategy);
+    this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
     this.fileOperations = checkNotNull(fileOperations);
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
     this.storeMetrics = checkNotNull(storeMetrics);
@@ -175,8 +173,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   public FileBlobStore(final Path contentDir, //NOSONAR
-                       @Named("volume-chapter") final LocationStrategy permanentLocationStrategy,
-                       @Named("temporary") final LocationStrategy temporaryLocationStrategy,
+                       final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final BlobStoreMetricsStore storeMetrics,
                        final BlobStoreConfiguration configuration,
@@ -184,8 +181,7 @@ public class FileBlobStore
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix)
   {
-    this(permanentLocationStrategy, temporaryLocationStrategy, fileOperations, directories, storeMetrics, nodeAccess,
-        dryRunPrefix);
+    this(blobIdLocationResolver, fileOperations, directories, storeMetrics, nodeAccess, dryRunPrefix);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -256,7 +252,7 @@ public class FileBlobStore
    */
   @VisibleForTesting
   Path contentPath(final BlobId id) {
-    return contentDir.resolve(getLocation(id) + BLOB_CONTENT_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_CONTENT_SUFFIX);
   }
 
   /**
@@ -264,31 +260,21 @@ public class FileBlobStore
    */
   @VisibleForTesting
   Path attributePath(final BlobId id) {
-    return contentDir.resolve(getLocation(id) + BLOB_ATTRIBUTE_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getLocation(id) + BLOB_ATTRIBUTE_SUFFIX);
   }
 
   /**
    * Returns a path for a temporary blob-id content file relative to root directory.
    */
   private Path temporaryContentPath(final BlobId id, final UUID suffix) {
-    return contentDir.resolve(temporaryLocationStrategy.location(id) + "." + suffix + BLOB_CONTENT_SUFFIX);
+    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_CONTENT_SUFFIX);
   }
 
   /**
    * Returns path for a temporary blob-id attribute file relative to root directory.
    */
   private Path temporaryAttributePath(final BlobId id, final UUID suffix) {
-    return contentDir.resolve(temporaryLocationStrategy.location(id) + "." + suffix + BLOB_ATTRIBUTE_SUFFIX);
-  }
-
-  /**
-   * Returns the location for a blob ID based on whether or not the blob ID is for a temporary or permanent blob.
-   */
-  private String getLocation(final BlobId id) {
-    if (id.asUniqueString().startsWith(TEMPORARY_BLOB_ID_PREFIX)) {
-      return temporaryLocationStrategy.location(id);
-    }
-    return permanentLocationStrategy.location(id);
+    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_ATTRIBUTE_SUFFIX);
   }
 
   @Override
@@ -332,15 +318,9 @@ public class FileBlobStore
   }
 
   private Blob tryCreate(final Map<String, String> headers, final BlobIngester ingester) {
-
-    // Generate a new blobId
-    BlobId blobId;
-    if (headers.containsKey(TEMPORARY_BLOB_HEADER)) {
-      blobId = new BlobId(TEMPORARY_BLOB_ID_PREFIX + UUID.randomUUID().toString());
-    }
-    else {
-      blobId = new BlobId(UUID.randomUUID().toString());
-    }
+    final BlobId blobId = blobIdLocationResolver.fromHeaders(headers);
+    final boolean isDirectPath = Boolean.parseBoolean(headers.getOrDefault(DIRECT_PATH_BLOB_HEADER, "false"));
+    final Long existingSize = isDirectPath ? getContentSizeForDeletion(blobId) : null;
 
     final Path blobPath = contentPath(blobId);
     final Path attributePath = attributePath(blobId);
@@ -353,7 +333,9 @@ public class FileBlobStore
 
     Lock lock = blob.lock();
     try {
-      if (RETRY_ON_COLLISION && fileOperations.exists(blobPath)) {
+      final boolean wouldCollide = fileOperations.exists(blobPath);
+
+      if (RETRY_ON_COLLISION && wouldCollide && !isDirectPath) {
         throw new BlobCollisionException(blobId);
       }
       try {
@@ -368,8 +350,16 @@ public class FileBlobStore
         blobAttributes.store();
 
         // Move the temporary files into their final location
-        move(temporaryBlobPath, blobPath);
-        move(temporaryAttributePath, attributePath);
+        // existing size being not-null also implies isDirectPath is true
+        if (existingSize != null) {
+          overwrite(temporaryBlobPath, blobPath);
+          overwrite(temporaryAttributePath, attributePath);
+          storeMetrics.recordDeletion(existingSize);
+        }
+        else {
+          move(temporaryBlobPath, blobPath);
+          move(temporaryAttributePath, attributePath);
+        }
 
         storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
 
@@ -706,6 +696,22 @@ public class FileBlobStore
     fileOperations.copyIfLocked(source, target, fileOperations::move);
   }
 
+  private void overwrite(final Path source, final Path target) throws IOException {
+    if (supportsAtomicMove) {
+      try {
+        fileOperations.copyIfLocked(source, target, fileOperations::overwriteAtomic);
+        return;
+      }
+      catch (AtomicMoveNotSupportedException e) { // NOSONAR
+        supportsAtomicMove = false;
+        log.warn("Disabling atomic moves for blob store {}, could not overwrite {} with {}, reason deleted: {}",
+            blobStoreConfiguration.getName(), source, target, e.getReason());
+      }
+    }
+    log.trace("Using normal overwrite for blob store {}, overwriting {} with {}", blobStoreConfiguration.getName(), source, target);
+    fileOperations.copyIfLocked(source, target, fileOperations::overwrite);
+  }
+
   private void setConfiguredBlobStorePath(final Path path) {
     blobStoreConfiguration.attributes(CONFIG_KEY).set(PATH_KEY, path.toString());
   }
@@ -830,7 +836,15 @@ public class FileBlobStore
   }
 
   private Stream<Path> getAttributeFilePaths() throws IOException {
-    return Files.walk(contentDir, FileVisitOption.FOLLOW_LINKS).filter(this::isNonTemporaryAttributeFile);
+    return getAttributeFilePaths(EMPTY);
+  }
+
+  private Stream<Path> getAttributeFilePaths(final String prefix) throws IOException {
+    Path parent = contentDir.resolve(prefix);
+    if (!parent.toFile().exists()) {
+      return Stream.empty();
+    }
+    return Files.walk(parent, FOLLOW_LINKS).filter(this::isNonTemporaryAttributeFile);
   }
 
   private boolean isNonTemporaryAttributeFile(final Path path) {
@@ -905,6 +919,48 @@ public class FileBlobStore
     }
   }
 
+  @Override
+  public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
+    checkArgument(!prefix.contains(".."), "path traversal not allowed");
+    try {
+      return getAttributeFilePaths(DIRECT_PATH_ROOT + "/" + prefix)
+          .map(this::toBlobName)
+          .filter(Objects::nonNull)
+          .map(this::toBlobId);
+    }
+    catch (IOException e) {
+      log.error("Caught IOException during getDirectPathBlobIdStream for {}", prefix, e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @VisibleForTesting
+  Path getContentDir() {
+    return contentDir;
+  }
+
+  /**
+   * Converts a direct path {@link Path} to the value for {@link #BLOB_NAME_HEADER} that created it.
+   *
+   * @param path the {@link Path} to the direct path blob
+   * @return the correct form for the corresponding {@link #BLOB_NAME_HEADER} or null if the file is no longer available
+   */
+  @VisibleForTesting
+  @Nullable
+  String toBlobName(final Path path) {
+    try {
+      String pathStr = contentDir.resolve(DIRECT_PATH_ROOT)
+          .relativize(path) // just the relative path part under DIRECT_PATH_ROOT
+          .toString().replace(File.separatorChar, '/'); // guarantee we return unix-style paths
+      return removeEnd(pathStr, BLOB_ATTRIBUTE_SUFFIX); // drop the .properties suffix
+    }
+    catch (Exception ex) {
+      // file is no longer available
+      log.debug("Attempting to create blob name from path {}, but caught Exception", path, ex);
+      return null;
+    }
+  }
+
   @Nullable
   @Override
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
@@ -923,6 +979,20 @@ public class FileBlobStore
   @Nullable
   private FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
     return (FileBlobAttributes) getBlobAttributes(blobId);
+  }
+
+  /**
+   * Used by {@link #getDirectPathBlobIdStream(String)} to convert a blob "name" ({@link #toBlobName(Path)}) to
+   * a {@link BlobId}.
+   *
+   * @see BlobIdLocationResolver
+   */
+  private BlobId toBlobId(String blobName) {
+    Map<String, String> headers = ImmutableMap.of(
+        BLOB_NAME_HEADER, blobName,
+        DIRECT_PATH_BLOB_HEADER, "true"
+    );
+    return blobIdLocationResolver.fromHeaders(headers);
   }
 
   @Override

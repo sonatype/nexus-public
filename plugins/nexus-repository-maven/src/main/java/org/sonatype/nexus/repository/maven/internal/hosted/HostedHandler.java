@@ -21,10 +21,11 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
-import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -81,7 +82,8 @@ public class HostedHandler
       throws IOException
   {
     if (mavenFacet.layoutPolicy() == LayoutPolicy.STRICT
-        && path.getCoordinates() == null && !mavenFacet.getMavenPathParser().isRepositoryMetadata(path)) {
+        && isValidSnapshot(path.getCoordinates())
+        && !mavenFacet.getMavenPathParser().isRepositoryMetadata(path)) {
       throw new IllegalOperationException("Invalid path for a Maven 2 repository");
     }
     mavenFacet.put(path, context.getRequest().getPayload());
@@ -94,5 +96,11 @@ public class HostedHandler
       return HttpResponses.notFound(path.getPath());
     }
     return HttpResponses.noContent();
+  }
+
+  private boolean isValidSnapshot(Coordinates coordinates) {
+    return coordinates == null || (coordinates.isSnapshot() &&
+        !coordinates.getVersion().equals(coordinates.getBaseVersion()) &&
+        (coordinates.getTimestamp() == null || coordinates.getBuildNumber() == null));
   }
 }

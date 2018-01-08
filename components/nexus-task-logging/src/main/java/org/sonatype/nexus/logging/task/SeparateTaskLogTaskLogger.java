@@ -45,7 +45,7 @@ public class SeparateTaskLogTaskLogger
 
     // Set per-thread logback property via MDC (see logback.xml)
     taskLogIdentifier = format("%s-%s", taskLogInfo.getTypeId(),
-        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS")));
     MDC.put(LOGBACK_TASK_DISCRIMINATOR_ID, taskLogIdentifier);
   }
 

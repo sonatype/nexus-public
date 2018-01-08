@@ -10,23 +10,47 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore;
+package org.sonatype.nexus.repository.browse.api
 
-import org.sonatype.nexus.blobstore.api.BlobId;
+import groovy.transform.CompileStatic
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
+import groovy.transform.builder.Builder
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyMap
 
 /**
- * Stores temporary blobs in a single directory separate from the blobs holding actual saved content.
+ * Component transfer object for REST APIs.
  *
- * @since 3.1
+ * @since 3.next
  */
-public class TemporaryLocationStrategy
-    extends LocationStrategySupport
+@CompileStatic
+@Builder
+@ToString(includePackage = false, includeNames = true)
+@EqualsAndHashCode(includes = ['id'])
+class DefaultComponentXO
+  implements ComponentXO
 {
+  String id
+
+  String group
+
+  String name
+
+  String version
+
+  String repository
+
+  String format
+
+  List<AssetXO> assets
+
+  /**
+   * Provides extra attributes for the JSON payload. Implementers must use @JsonAnyGetter.
+   * @since 3.next
+   */
   @Override
-  public String location(final BlobId blobId) {
-    checkNotNull(blobId);
-    return String.format("tmp/%s", escapeFilename(blobId.asUniqueString()));
+  Map<String, Object> getExtraJsonAttributes() {
+    return emptyMap()
   }
 }

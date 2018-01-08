@@ -27,6 +27,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
 
 /**
  * UT for {@link Maven2MavenPathParser}
@@ -363,7 +364,8 @@ public class Maven2MavenPathParserTest
     mavenPath =
         pathParser.parsePath(
             "/org/apache/maven/plugins/maven-dependency-plugin/2.0-SNAPSHOT/maven-dependency-plugin-2.0-alpha-1-20070109.165112-13.jar");
-    assertThat(mavenPath.getCoordinates(), nullValue()); // baseVersion != version mismatch
+    assertThat(mavenPath.getCoordinates(), notNullValue()); // baseVersion != version mismatch
+    assertFalse(mavenPath.getCoordinates().getBaseVersion().startsWith("2.0-alpha"));
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/");
@@ -534,5 +536,39 @@ public class Maven2MavenPathParserTest
     assertThat(mavenPath.getCoordinates().getVersion(), equalTo("1.0.20100111.064938-1"));
     assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.0.SNAPSHOT"));
     assertThat(mavenPath.getCoordinates().isSnapshot(), equalTo(true));
+  }
+
+  @Test
+  public void snapshot_validFormat() throws Exception
+  {
+    MavenPath mavenPath = pathParser.parsePath(
+        "org/sonatype/nexus/nexus-webapp/1.0.0-beta-5-SNAPSHOT/nexus-webapp-1.0.0-beta-5-20171208.202054-1.tar.gz");
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("tar.gz"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), nullValue());
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("1.0.0-beta-5-20171208.202054-1"));
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.0.0-beta-5-SNAPSHOT"));
+    assertThat(mavenPath.getCoordinates().isSnapshot(), equalTo(true));
+    assertThat(mavenPath.getCoordinates().getTimestamp(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getBuildNumber(), notNullValue());
+  }
+
+  @Test
+  public void snapshot_invalidFormat() throws Exception
+  {
+    MavenPath mavenPath = pathParser.parsePath(
+        "org/sonatype/nexus/nexus-webapp/1.0.0-beta-5-SNAPSHOT/nexus-webapp-1.0.0-beta-5-20171208-test.tar.gz");
+    assertThat(mavenPath, notNullValue());
+    assertThat(mavenPath.getPath(), equalTo(
+        "org/sonatype/nexus/nexus-webapp/1.0.0-beta-5-SNAPSHOT/nexus-webapp-1.0.0-beta-5-20171208-test.tar.gz"));
+    assertThat(mavenPath.getFileName(), equalTo("nexus-webapp-1.0.0-beta-5-20171208-test.tar.gz"));
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getClassifier(), nullValue());
+    assertThat(mavenPath.getCoordinates().getVersion(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.0.0-beta-5-SNAPSHOT"));
+    assertThat(mavenPath.getCoordinates().isSnapshot(), equalTo(true));
+    assertThat(mavenPath.getCoordinates().getTimestamp(), nullValue());
+    assertThat(mavenPath.getCoordinates().getBuildNumber(), nullValue());
   }
 }

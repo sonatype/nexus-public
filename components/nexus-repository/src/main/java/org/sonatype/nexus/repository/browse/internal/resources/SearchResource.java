@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.browse.api.DefaultComponentXO;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.SearchResourceDoc;
 import org.sonatype.nexus.repository.search.SearchService;
@@ -128,7 +129,7 @@ public class SearchResource
   private ComponentXO toComponent(final SearchHit hit) {
     Map<String, Object> source = checkNotNull(hit.getSource());
     Repository repository = searchUtils.getRepository((String) source.get(REPOSITORY_NAME));
-    ComponentXO componentXO = new ComponentXO();
+    ComponentXO componentXO = new DefaultComponentXO();
 
     componentXO
         .setAssets(browseService.browseComponentAssets(repository, hit.getId())

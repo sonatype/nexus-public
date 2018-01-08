@@ -39,10 +39,12 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.internal.ComponentContinuationTokenHelper;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Page;
 
 import com.orientechnologies.orient.core.id.ORID;
+import org.hamcrest.CoreMatchers;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 import org.junit.Before;
@@ -61,15 +63,14 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 public class ComponentsResourceTest
     extends RepositoryResourceTestSupport
@@ -127,6 +128,9 @@ public class ComponentsResourceTest
   @Mock
   private UploadManager uploadManager;
 
+  @Mock
+  private UploadConfiguration uploadConfiguration;
+
   @Captor
   private ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
@@ -164,8 +168,10 @@ public class ComponentsResourceTest
 
     continuationTokenHelper = new ComponentContinuationTokenHelper(componentEntityAdapter);
 
+    when(uploadConfiguration.isEnabled()).thenReturn(true);
+
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
-        maintenanceService, continuationTokenHelper, uploadManager);
+        maintenanceService, continuationTokenHelper, uploadManager, uploadConfiguration);
   }
 
   private void configureComponent(Component component, String group, String name, String version) {
@@ -246,7 +252,7 @@ public class ComponentsResourceTest
     doThrow(new IllegalArgumentException()).when(componentEntityAdapter)
         .recordIdentity(new DetachedEntityId(repositoryItemXOID.getId()));
 
-    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
+    thrown.expect(hasProperty("response", hasProperty("status", is(UNPROCESSABLE_ENTITY))));
     underTest.getComponentById(repositoryItemXOID.getValue());
   }
 
@@ -290,6 +296,9 @@ public class ComponentsResourceTest
   public void uploadComponent() throws Exception {
     MultipartInput multipart = mock(MultipartInput.class);
     InputPart filePart = mockStreamInputPart("asset", "content");
+    MultivaluedMap<String, String> fileHeaders = mock(MultivaluedMap.class);
+    when(filePart.getHeaders()).thenReturn(fileHeaders);
+    when(fileHeaders.getFirst("Content-Disposition")).thenReturn("form-data; name=asset; filename=foo-0.42.jar");
     InputPart groupPart = mockTextInputPart("groupId", "com.example");
     InputPart artifactPart = mockTextInputPart("artifactId", "foo");
     InputPart versionPart = mockTextInputPart("version", "0.42");
@@ -302,6 +311,20 @@ public class ComponentsResourceTest
     assertThat(componentUploadCaptor.getValue().getFields().size(), is(3));
     assertThat(componentUploadCaptor.getValue().getAssetUploads().size(), is(1));
     assertThat(componentUploadCaptor.getValue().getAssetUploads().get(0).getFields().size(), is(1));
+  }
+
+  @Test
+  public void uploadComponentIsHiddenWhenFeatureFlagIsNotEnabled() throws Exception {
+    when(uploadConfiguration.isEnabled()).thenReturn(false);
+
+    try {
+      underTest.uploadComponent(mavenReleasesId, null);
+      fail("Expected a WebApplicationException(NOT_FOUND) to be thrown");
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse(), is(CoreMatchers.notNullValue()));
+      assertThat(e.getResponse().getStatus(), is(404));
+    }
   }
 
   private static InputPart mockTextInputPart(String name, String value) throws IOException {

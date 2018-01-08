@@ -14,35 +14,27 @@ package org.sonatype.nexus.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
- * Stores blobs in a two-deep directory tree.
+ * {@link LocationStrategy} for resolving locations to
+ * {@link org.sonatype.nexus.blobstore.api.BlobStore#DIRECT_PATH_BLOB_HEADER} blobs.
  *
- * The first layer, {@code vol}, having {@link #TIER_1_MODULO} directories,
- * and the second {@code chap} having {@link #TIER_2_MODULO}.
- *
- * @since 3.0
+ * @since 3.next
  */
-public class VolumeChapterLocationStrategy
-    extends LocationStrategySupport
+public class DirectPathLocationStrategy
+  extends LocationStrategySupport
 {
-  private static final int TIER_1_MODULO = 43;
+  public static final String DIRECT_PATH_ROOT = "directpath";
 
-  private static final int TIER_2_MODULO = 47;
+  public static final String DIRECT_PATH_PREFIX = "path$";
 
   @Override
   public String location(final BlobId blobId) {
     checkNotNull(blobId);
-
-    return String.format("vol-%02d/chap-%02d/%s",
-        tier(blobId, TIER_1_MODULO),
-        tier(blobId, TIER_2_MODULO),
-        escapeFilename(blobId.asUniqueString())
-    );
-  }
-
-  private int tier(final BlobId blobId, final int modulo) {
-    return Math.abs(blobId.hashCode() % modulo) + 1;
+    checkArgument(!blobId.asUniqueString().contains(".."), "Traversal not allowed with direct blobs");
+    return format("%s/%s", DIRECT_PATH_ROOT, blobId.asUniqueString().replace(DIRECT_PATH_PREFIX, ""));
   }
 }

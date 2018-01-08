@@ -64,12 +64,36 @@ public interface BlobStore
   String TEMPORARY_BLOB_HEADER = "BlobStore.temporary-blob";
 
   /**
+   * Header that indicates this blob uses "direct paths." A direct path blob is blob that has a computable, predictable
+   * {@link BlobId} reflecting a path like structure. If the create methods in this class are called with a header with
+   * this key and a value of "true", the blob will be stored in the blob store using a direct file system path, using
+   * {@link #BLOB_NAME_HEADER} header for the tail.
+   *
+   * For example, if the {@link #BLOB_NAME_HEADER} contains a value like "path/to/index.html", the blob will be stored
+   * on disk within the blob store at a path that terminates in "path/to/index.html.bytes". Note: direct-path
+   * blobs only use the unix-style path separator ('/'), even if the underlying filesystem is not.
+   *
+   * Use this feature for Blobs that:
+   *
+   * <ul>
+   *   <li>will not or cannot have a database table mapping generated {@link BlobId} to paths</li>
+   *   <li>can be overwritten on "disk" without side effects</li>
+   * </ul>
+   *
+   * @since 3.next
+   */
+  String DIRECT_PATH_BLOB_HEADER = "BlobStore.direct-path";
+
+  /**
    * Creates a new blob. The header map must contain at least two keys:
    *
    * <ul>
    * <li>{@link #BLOB_NAME_HEADER}</li>
    * <li>{@link #CREATED_BY_HEADER}</li>
    * </ul>
+   *
+   * Note: if headers contains an entry with key {@link #DIRECT_PATH_BLOB_HEADER} and value true, and the
+   * {@link #BLOB_NAME_HEADER} matches a direct-path blob that already exists, the blob will be overwritten.
    *
    * @throws BlobStoreException       (or a subclass) if the input stream can't be read correctly
    * @throws IllegalArgumentException if mandatory headers are missing
@@ -163,6 +187,11 @@ public interface BlobStore
    * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store.
    */
   Stream<BlobId> getBlobIdStream();
+
+  /**
+   * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.
+   */
+  Stream<BlobId> getDirectPathBlobIdStream(String prefix);
 
   /**
    * Get {@link BlobAttributes} for the {@link BlobId} provided.

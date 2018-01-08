@@ -50,6 +50,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 public class AssetsResourceTest
     extends RepositoryResourceTestSupport
@@ -178,7 +179,7 @@ public class AssetsResourceTest
     doThrow(new IllegalArgumentException()).when(assetEntityAdapter)
         .recordIdentity(new DetachedEntityId(repositoryItemIDXO.getId()));
 
-    thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
+    thrown.expect(hasProperty("response", hasProperty("status", is(UNPROCESSABLE_ENTITY))));
     underTest.getAssetById(repositoryItemIDXO.getValue());
   }
 

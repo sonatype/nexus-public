@@ -54,6 +54,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.browse.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
@@ -156,9 +157,8 @@ public class AssetsResource
           .orElseThrow(() -> new NotFoundException("Unable to locate asset with id " + id));
     }
     catch (IllegalArgumentException e) {
-      log.debug("IllegalArgumentException caught retrieving asset with id {}, converting to NotFoundException",
-          entityId, e);
-      throw new WebApplicationException(format("Unable to locate component with id %s", entityId), NOT_ACCEPTABLE);
+      log.debug("IllegalArgumentException caught retrieving asset with id {}", entityId, e);
+      throw new WebApplicationException(format("Unable to process asset with id %s", entityId), UNPROCESSABLE_ENTITY);
     }
   }
 }

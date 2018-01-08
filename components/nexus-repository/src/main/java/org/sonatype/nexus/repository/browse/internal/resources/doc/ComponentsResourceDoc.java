@@ -56,13 +56,21 @@ public interface ComponentsResourceDoc
 
   @ApiOperation(value = "Delete a single component")
   @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Component was successfully deleted"),
       @ApiResponse(code = 403, message = "Insufficient permissions to delete component"),
       @ApiResponse(code = 404, message = "Component not found"),
       @ApiResponse(code = 422, message = "Malformed ID")
   })
   void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
 
-  @ApiOperation(value = "Upload a single component")
+  @ApiOperation(value = "Upload a single component",
+      notes = "This API takes a multi-part form whose schema varies by repository type, therefore it's virtually " +
+          "impossible to be described by the generated documentation. Instead, here's a couple of examples using curl.\n\n" +
+          "curl -X POST http://nexus.local/service/rest/beta/components?repository=raw -F directory=example -F asset=@README.md -F asset.filename=readme.md\n\n" +
+          "curl -X POST http://nexus.local/service/rest/beta/components?repository=nuget -F asset=@nunit.3.9.0.nupkg\n\n" +
+          "curl -X POST http://nexus.local/service/rest/beta/components?repository=maven -F file=@aopalliance-1.0.jar -F file.extension=jar -F groupId=aopalliance -F artifactId=aopalliance -F version=1.0\n\n" +
+          "curl -X POST http://nexus.local/service/rest/beta/components?repository=maven -F pom=@aopalliance-1.0.pom -F pom.extension=pom -F sources=@aopalliance-1.0-sources.jar -F sources.classifier=sources -F sources.extension=jar -F asset=aopalliance-1.0.jar -F asset.extension=jar\n\n"
+  )
   @ApiResponses(value = {
       @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),
       @ApiResponse(code = 422, message = "Parameter 'repository' is required")

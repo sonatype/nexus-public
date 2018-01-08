@@ -12,21 +12,32 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.io.InputStream;
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.BlobId;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * Stores temporary blobs in a single directory separate from the blobs holding actual saved content.
+ * Interface providing operations to resolve {@link BlobId}s to locations and vice versa.
  *
- * @since 3.1
+ * @since 3.next
  */
-public class TemporaryLocationStrategy
-    extends LocationStrategySupport
+public interface BlobIdLocationResolver
 {
-  @Override
-  public String location(final BlobId blobId) {
-    checkNotNull(blobId);
-    return String.format("tmp/%s", escapeFilename(blobId.asUniqueString()));
-  }
+  /**
+   * Resolves a {@link BlobId} to path-like {@link String}.
+   */
+  String getLocation(BlobId blobId);
+
+  /**
+   * Special use case to resolve a temporary location, even for non-temporary {@link BlobId}s.
+   * Prefer {@link #getLocation(BlobId)}.
+   */
+  String getTemporaryLocation(BlobId id);
+
+  /**
+   * Safely constructs a {@link BlobId} from the {@link Map} argument to
+   * {@link org.sonatype.nexus.blobstore.api.BlobStore#create(InputStream, Map)}.
+   */
+  BlobId fromHeaders(Map<String, String> headers);
 }

@@ -113,6 +113,27 @@ public class SimpleFileOperations
   }
 
   @Override
+  public void overwrite(final Path source, final Path target) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    DirectoryHelper.mkdir(target.getParent());
+    Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  @Override
+  public void overwriteAtomic(final Path source, final Path target) throws IOException {
+    checkNotNull(source);
+    checkNotNull(target);
+    DirectoryHelper.mkdir(target.getParent());
+    try {
+      Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+    catch (UnsupportedOperationException e) { // NOSONAR
+      throw new AtomicMoveNotSupportedException(source.toString(), target.toString(), e.getMessage());
+    }
+  }
+
+  @Override
   public void copyIfLocked(final Path source, final Path target, final Mover mover) throws IOException {
     checkNotNull(source);
     checkNotNull(target);

@@ -12,33 +12,49 @@
  */
 package org.sonatype.nexus.repository.browse.api
 
-import groovy.transform.CompileStatic
-import groovy.transform.EqualsAndHashCode
-import groovy.transform.ToString
-import groovy.transform.builder.Builder
+import com.fasterxml.jackson.annotation.JsonAnyGetter
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 /**
- * Component transfer object for REST APIs.
- * 
- * @since 3.4
+ * @since 3.next
  */
-@CompileStatic
-@Builder
-@ToString(includePackage = false, includeNames = true)
-@EqualsAndHashCode(includes = ['id'])
-class ComponentXO
+@JsonPropertyOrder(["id", "repository", "format", "group", "name", "version", "assets"])
+@JsonDeserialize(as = DefaultComponentXO)
+interface ComponentXO
 {
-  String id
+  String getId()
 
-  String group
+  void setId(String id)
 
-  String name
+  String getGroup()
 
-  String version
+  void setGroup(String group)
 
-  String repository
+  String getName()
 
-  String format
+  void setName(String name)
 
-  List<AssetXO> assets
+  String getVersion()
+
+  void setVersion(String version)
+
+  String getRepository()
+
+  void setRepository(String repository)
+
+  String getFormat()
+
+  void setFormat(String format)
+
+  List<AssetXO> getAssets()
+
+  void setAssets(List<AssetXO> assets)
+
+  /**
+   * Attributes to add the JSON payload
+   * @return
+   */
+  @JsonAnyGetter
+  Map<String, Object> getExtraJsonAttributes()
 }

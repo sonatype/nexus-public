@@ -53,6 +53,7 @@ public interface AssetsResourceDoc
 
   @ApiOperation(value = "Delete a single asset")
   @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Asset was successfully deleted"),
       @ApiResponse(code = 403, message = "Insufficient permissions to delete asset"),
       @ApiResponse(code = 404, message = "Asset not found"),
       @ApiResponse(code = 422, message = "Malformed ID")

@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -35,6 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Named(Maven2Format.NAME)
 public class Maven2MavenPathParser
+    extends ComponentSupport
     implements MavenPathParser
 {
   @Nonnull
@@ -135,7 +137,7 @@ public class Maven2MavenPathParser
                 snapshotTimestampedVersion.toString()).getMillis();
           }
           catch (IllegalArgumentException e) {
-            // skip it
+            log.trace("metadata dotted timestamp failed parsing to millis {}", snapshotTimestampedVersion.toString());
           }
 
           // add the dash between timestamp and buildNo
@@ -148,14 +150,11 @@ public class Maven2MavenPathParser
             bnr.append(str.charAt(buildNumberPos));
             buildNumberPos++;
           }
-          if (bnr.length() == 0) {
-            return null;
-          }
           try {
             buildNumber = Integer.parseInt(bnr.toString());
           }
           catch (NumberFormatException e) {
-            // skip it
+            log.trace("build number failed parsing {}", bnr);
           }
           int n = baseVersion.length() > 8 ? baseVersion.length() - 8 : 0;
           tail = str.substring(artifactId.length() + n + snapshotTimestampedVersion.length() + 1);
