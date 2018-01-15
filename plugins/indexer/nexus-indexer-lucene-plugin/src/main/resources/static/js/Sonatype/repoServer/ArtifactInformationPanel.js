@@ -110,7 +110,12 @@ define('Sonatype/repoServer/ArtifactInformationPanel', function() {
                 name : 'uploader',
                 anchor : Sonatype.view.FIELD_OFFSET_WITH_SCROLL,
                 allowBlank : true,
-                readOnly : true
+                readOnly : true,
+                formatter : function(value) {
+                  if (value) {
+                    return Ext.util.Format.htmlEncode(value);
+                  }
+                }
               }, {
                 xtype : 'byteDisplayField',
                 fieldLabel : 'Size',

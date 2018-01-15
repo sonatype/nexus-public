@@ -134,7 +134,7 @@ NX.define('Nexus.timeline.FeedGrid', {
   applyRowClass : function(record, rowIndex, p, ds) {
     if (this.showPreview) {
       var xf = Ext.util.Format;
-      p.body = '<p>' + xf.ellipsis(xf.stripTags(record.data.description), 400) + '</p>';
+      p.body = '<p>' + Ext.util.Format.htmlEncode(xf.ellipsis(xf.stripTags(record.data.description)), 400) + '</p>';
       return 'x-grid3-row-expanded';
     }
     return 'x-grid3-row-collapsed';

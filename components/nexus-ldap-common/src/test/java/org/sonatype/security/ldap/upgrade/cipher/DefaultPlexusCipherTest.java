@@ -34,7 +34,7 @@ public class DefaultPlexusCipherTest
 
   String str = "my testing phrase";
 
-  String encStr = "CFUju8n8eKQHj8u0HI9uQMRmKQALtoXH7lY=";
+  String encStr = "CHRaWVGel+ddVuw2Sw2eiJJzNcFfeExDWCA=";
 
   PlexusCipher pc;
 
@@ -82,6 +82,28 @@ public class DefaultPlexusCipherTest
   {
     String res = pc.decrypt(encStr, passPhrase);
     Assert.assertEquals("Decryption did not produce desired result", str, res);
+  }
+
+  @Test
+  public void testLegacyDecrypt()
+      throws Exception
+  {
+    String res = pc.decrypt("CPubXm6RkQvCfOhsBeHnRZXZeVXHYL5xXWk=", "CMMDwoV");
+    Assert.assertEquals("Decryption did not produce desired result", str, res);
+  }
+
+  @Test
+  public void testCustomIterationCount()
+      throws Exception
+  {
+    try {
+      System.setProperty("plexusCipher.iterationCount", "1234");
+      String res = new DefaultPlexusCipher().decrypt("CCViAz+JFzUNSmRn4A9+HQV8BfktlIyQpLY=", "CMMDwoV");
+      Assert.assertEquals("Decryption did not produce desired result", str, res);
+    }
+    finally {
+      System.clearProperty("plexusCipher.iterationCount");
+    }
   }
 
   @Test

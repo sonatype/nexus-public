@@ -160,13 +160,19 @@ NX.define('Sonatype.repoServer.UserEditPanel', {
           name : 'firstName',
           sortType : Ext.data.SortTypes.asUCString,
           header : 'First Name',
-          width : 175
+          width : 175,
+          renderer: function(value) {
+            return Ext.util.Format.htmlEncode(value);
+          }
         },
         {
           name : 'lastName',
           sortType : Ext.data.SortTypes.asUCString,
           header : 'Last Name',
-          width : 175
+          width : 175,
+          renderer: function(value) {
+            return Ext.util.Format.htmlEncode(value);
+          }
         },
         {
           name : 'email',

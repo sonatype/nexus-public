@@ -13,12 +13,12 @@
 package org.sonatype.security.ldap.realms.persist;
 
 import org.sonatype.nexus.test.PlexusTestCaseSupport;
+import org.sonatype.security.ldap.upgrade.cipher.DefaultPlexusCipher;
 import org.sonatype.security.ldap.upgrade.cipher.PlexusCipherException;
 
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.PlexusConstants;
-
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class PasswordHelperTest
@@ -80,4 +80,59 @@ public class PasswordHelperTest
 
   }
 
+  public PasswordHelper newPasswordHelper() {
+    return new DefaultPasswordHelper(new DefaultPlexusCipher());
+  }
+
+  @Test
+  public void testCustomMasterPhrase()
+      throws Exception
+  {
+    String password = "clear-text-password";
+    String encodedPass;
+
+    try {
+      System.setProperty("nexus.security.masterPhrase", "terces");
+      encodedPass = newPasswordHelper().encrypt(password);
+    }
+    finally {
+      System.clearProperty("nexus.security.masterPhrase");
+    }
+
+    try
+    {
+      newPasswordHelper().decrypt(encodedPass);
+      Assert.fail("Expected PlexusCipherException");
+    }
+    catch (PlexusCipherException e) {
+      // expected: default phrase should not work here
+    }
+
+    try {
+      System.setProperty("nexus.security.masterPhrase", "terces");
+      Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
+    }
+    finally {
+      System.clearProperty("nexus.security.masterPhrase");
+    }
+  }
+
+  @Test
+  public void testLegacyPhraseFallback()
+      throws Exception
+  {
+    String password = "clear-text-password";
+    String encodedPass = newPasswordHelper().encrypt(password);
+
+    Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
+
+    try {
+      System.setProperty("nexus.security.masterPhrase", "terces");
+      // should still work by falling back to legacy pass-phrase
+      Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
+    }
+    finally {
+      System.clearProperty("nexus.security.masterPhrase");
+    }
+  }
 }

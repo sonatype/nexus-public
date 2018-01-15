@@ -46,6 +46,8 @@ public class DefaultPlexusCipher
 
   private static final String STRING_ENCODING = "UTF8";
 
+  private static final String LEGACY_PHRASE = "CMMDwoV";
+
   /**
    * Encryption algorithm to use by this instance. Needs protected scope for tests
    */
@@ -56,18 +58,27 @@ public class DefaultPlexusCipher
    */
   private final int iterationCount;
 
+  private final boolean customCount;
+
   private final BouncyCastleProvider bouncyCastleProvider;
 
   public DefaultPlexusCipher() {
     this( new BouncyCastleProvider(),
     SystemPropertiesHelper.getString("plexusCipher.algorithm", "PBEWithSHAAnd128BitRC4"),
-    SystemPropertiesHelper.getInteger("plexusCipher.iterationCount", 23));
+    SystemPropertiesHelper.getInteger("plexusCipher.iterationCount", -1));
   }
 
   public DefaultPlexusCipher(final BouncyCastleProvider bouncyCastleProvider, final String algorithm, final int iterationCount) {
     this.bouncyCastleProvider = checkNotNull(bouncyCastleProvider);
     this.algorithm = checkNotNull(algorithm);
-    this.iterationCount = iterationCount;
+    if (iterationCount > 0) {
+      this.iterationCount = iterationCount;
+      this.customCount = true;
+    }
+    else {
+      this.iterationCount = 1000;
+      this.customCount = false;
+    }
   }
 
   // /**
@@ -89,7 +100,13 @@ public class DefaultPlexusCipher
       SecretKey key = SecretKeyFactory.getInstance(algorithm, bouncyCastleProvider).generateSecret(keySpec);
       Cipher cipher = Cipher.getInstance(algorithm, bouncyCastleProvider);
 
-      PBEParameterSpec paramSpec = new PBEParameterSpec(salt, iterationCount);
+      PBEParameterSpec paramSpec;
+      if (customCount || !LEGACY_PHRASE.equals(passPhrase)) {
+        paramSpec = new PBEParameterSpec(salt, iterationCount);
+      }
+      else {
+        paramSpec = new PBEParameterSpec(salt, 23);
+      }
 
       cipher.init(mode, key, paramSpec);
       return cipher;

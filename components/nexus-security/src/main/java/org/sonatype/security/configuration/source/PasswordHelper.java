@@ -33,6 +33,8 @@ public class PasswordHelper
 
   private final PlexusCipher plexusCipher;
 
+  private final String masterPhrase = System.getProperty("nexus.security.masterPhrase", ENC);
+
   @Inject
   public PasswordHelper(PlexusCipher plexusCipher) {
     this.plexusCipher = plexusCipher;
@@ -41,14 +43,16 @@ public class PasswordHelper
   public String encrypt(String password)
       throws PlexusCipherException
   {
-    return encrypt(password, ENC);
+    return encrypt(password, masterPhrase);
   }
 
   public String encrypt(String password, String encoding)
       throws PlexusCipherException
   {
     if (password != null) {
-      return plexusCipher.encryptAndDecorate(password, encoding);
+      String result = plexusCipher.encryptAndDecorate(password, encoding);
+      // decorated with braces; decryptDecorated ignores anything outside
+      return ENC.equals(encoding) ? result : '~' + result + '~';
     }
 
     return null;
@@ -57,6 +61,9 @@ public class PasswordHelper
   public String decrypt(String encodedPassword)
       throws PlexusCipherException
   {
+    if (encodedPassword != null && encodedPassword.contains("~{")) {
+      return decrypt(encodedPassword, masterPhrase);
+    }
     return decrypt(encodedPassword, ENC);
   }
 
