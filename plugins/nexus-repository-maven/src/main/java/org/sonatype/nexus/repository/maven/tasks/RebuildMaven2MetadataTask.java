@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.scheduling.Cancelable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
@@ -37,6 +38,7 @@ import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTas
 @Named
 public class RebuildMaven2MetadataTask
     extends RepositoryTaskSupport
+    implements Cancelable
 {
 
   private final Type hostedType;

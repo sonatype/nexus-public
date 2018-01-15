@@ -14,13 +14,11 @@ package org.sonatype.nexus.repository.browse.api
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 /**
  * @since 3.next
  */
 @JsonPropertyOrder(["id", "repository", "format", "group", "name", "version", "assets"])
-@JsonDeserialize(as = DefaultComponentXO)
 interface ComponentXO
 {
   String getId()

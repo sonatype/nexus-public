@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
-import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -44,7 +43,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
 public class UploadManagerImplTest
     extends TestSupport
@@ -125,48 +123,6 @@ public class UploadManagerImplTest
     expectExceptionOnUpload(repository, component, "Uploading components to 'c' repositories is unsupported");
   }
 
-  @Test
-  public void testHandle_missingAssets() throws IOException {
-    ComponentUpload component = mock(ComponentUpload.class);
-    Repository repository = mock(Repository.class);
-    when(repository.getFormat()).thenReturn(new Format("a")
-    {
-    });
-
-    expectExceptionOnUpload(repository, component, "No assets found in upload");
-  }
-
-  @Test
-  public void testHandle_missingAssetField() throws IOException {
-    Repository repository = mock(Repository.class);
-    when(repository.getFormat()).thenReturn(new Format("a")
-    {
-    });
-
-    when(uploadA.getAssetFields()).thenReturn(
-        Collections.singletonList(new UploadFieldDefinition("foo", false, STRING)));
-
-    ComponentUpload component = mock(ComponentUpload.class);
-    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
-
-    expectExceptionOnUpload(repository, component, "Missing required asset field 'foo'");
-  }
-
-  @Test
-  public void testHandle_missingComponentField() throws IOException {
-    Repository repository = mock(Repository.class);
-    when(repository.getFormat()).thenReturn(new Format("a")
-    {
-    });
-
-    when(uploadA.getComponentFields()).thenReturn(
-        Collections.singletonList(new UploadFieldDefinition("bar", false, STRING)));
-
-    ComponentUpload component = mock(ComponentUpload.class);
-    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
-
-    expectExceptionOnUpload(repository, component, "Missing required component field 'bar'");
-  }
 
   private void expectExceptionOnUpload(final Repository repository,
                                        final ComponentUpload component,

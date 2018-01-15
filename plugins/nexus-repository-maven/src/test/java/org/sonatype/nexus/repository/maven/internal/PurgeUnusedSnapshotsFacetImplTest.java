@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.ComponentFactory;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -49,6 +50,7 @@ import org.mockito.Mock;
 
 import static java.lang.String.format;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -80,7 +82,10 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
   final BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
 
-  final ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+  final ComponentFactory componentFactory = new ComponentFactory(emptySet());
+
+  final ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter,
+      componentFactory, emptySet());
 
   @Mock
   MetadataRebuilder metaRebuilder;

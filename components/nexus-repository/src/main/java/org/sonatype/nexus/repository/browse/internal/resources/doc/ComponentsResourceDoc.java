@@ -64,6 +64,8 @@ public interface ComponentsResourceDoc
   void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
 
   @ApiOperation(value = "Upload a single component",
+      //TODO: NEXUS-15443 remove this parameter when ready to ship with ui upload enabled
+      hidden = true,
       notes = "This API takes a multi-part form whose schema varies by repository type, therefore it's virtually " +
           "impossible to be described by the generated documentation. Instead, here's a couple of examples using curl.\n\n" +
           "curl -X POST http://nexus.local/service/rest/beta/components?repository=raw -F directory=example -F asset=@README.md -F asset.filename=readme.md\n\n" +

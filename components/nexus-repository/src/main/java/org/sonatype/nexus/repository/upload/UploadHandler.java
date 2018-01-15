@@ -15,15 +15,20 @@ package org.sonatype.nexus.repository.upload;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.apache.shiro.authz.AuthorizationException;
+
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
  * @since 3.7
@@ -73,6 +78,43 @@ public interface UploadHandler
     VariableSource variableSource = getVariableResolverAdapter().fromCoordinates(format, path, coordinates);
     if (!contentPermissionChecker().isPermitted(repositoryName, format, BreadActions.EDIT, variableSource)) {
       throw new AuthorizationException();
+    }
+  }
+
+  /**
+   * Simple validation of upload which ensures that non-optional fields are not missing.
+   */
+  default void validate(final ComponentUpload componentUpload) {
+    ValidationErrorsException exception = new ValidationErrorsException();
+
+    if (componentUpload.getAssetUploads().isEmpty()) {
+      exception.withError("No assets found in upload");
+    }
+
+    getDefinition().getComponentFields().stream()
+        .filter(field -> !field.isOptional())
+        .filter(field -> isBlank(componentUpload.getField(field.getName())))
+        .forEach(field -> exception.withError(field.getName(),
+            format("Missing required component field '%s'", field.getDisplayName())));
+
+    AtomicInteger assetCounter = new AtomicInteger();
+    componentUpload.getAssetUploads().stream()
+        .forEachOrdered(asset -> {
+          int assetCount = assetCounter.incrementAndGet();
+
+          if (asset.getPayload() == null) {
+            exception.withError("file", format("Missing file on asset '%s'", assetCount));
+          }
+
+          getDefinition().getAssetFields().stream()
+              .filter(field -> !field.isOptional())
+              .filter(field -> isBlank(asset.getField(field.getName())))
+              .forEach(field -> exception.withError(field.getName(),
+                  format("Missing required asset field '%s' on '%s'", field.getDisplayName(), assetCount)));
+        });
+
+    if (!exception.getValidationErrors().isEmpty()) {
+      throw exception;
     }
   }
 }

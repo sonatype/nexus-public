@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Collections.emptySet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -53,7 +54,9 @@ public class AssetStoreImplTest
   @Before
   public void setUp() {
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
-    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory,
+        emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
     underTest = new AssetStoreImpl(database.getInstanceProvider(), assetEntityAdapter);

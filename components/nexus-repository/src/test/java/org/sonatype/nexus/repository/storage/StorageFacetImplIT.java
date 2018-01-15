@@ -25,7 +25,6 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityVersion;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
@@ -53,6 +52,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -101,9 +101,11 @@ public class StorageFacetImplIT
   @Before
   public void setUp() throws Exception {
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
     HexRecordIdObfuscator recordIdObfuscator = new HexRecordIdObfuscator();
     bucketEntityAdapter.enableObfuscation(recordIdObfuscator);
-    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory,
+        emptySet());
     componentEntityAdapter.enableObfuscation(recordIdObfuscator);
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     assetEntityAdapter.enableObfuscation(recordIdObfuscator);
@@ -797,7 +799,9 @@ public class StorageFacetImplIT
     // in an HA environment another node's StorageFacetImpl can make
     // changes to the underlying database
     BucketEntityAdapter otherBucketEntityAdapter = new BucketEntityAdapter();
-    ComponentEntityAdapter otherComponentEntityAdapter = new ComponentEntityAdapter(otherBucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    ComponentEntityAdapter otherComponentEntityAdapter = new ComponentEntityAdapter(otherBucketEntityAdapter,
+        componentFactory, emptySet());
     AssetEntityAdapter otherAssetEntityAdapter =
         new AssetEntityAdapter(otherBucketEntityAdapter, otherComponentEntityAdapter);
     StorageFacetImpl otherNodeStorageFacetImpl = storageFacetImpl("otherNodeId",
@@ -832,6 +836,7 @@ public class StorageFacetImplIT
         new ContentValidatorSelector(Collections.emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
     MimeRulesSourceSelector mimeRulesSourceSelector = new MimeRulesSourceSelector(Collections.emptyMap());
     StorageFacetManager storageFacetManager = mock(StorageFacetManager.class);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
     StorageFacetImpl storageFacetImpl = new StorageFacetImpl(
         mockNodeAccess,
         mockBlobStoreManager,
@@ -842,8 +847,8 @@ public class StorageFacetImplIT
         mock(ClientInfoProvider.class),
         contentValidatorSelector,
         mimeRulesSourceSelector,
-        storageFacetManager
-    );
+        storageFacetManager,
+        componentFactory);
     storageFacetImpl.installDependencies(mock(EventManager.class));
 
     storageFacetImpl.attach(repository);

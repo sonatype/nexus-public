@@ -96,8 +96,9 @@ public class RawUploadHandlerTest
     UploadDefinition def = underTest.getDefinition();
 
     assertThat(def.isMultipleUpload(), is(true));
-    assertThat(def.getComponentFields(), contains(field("directory", "Directory", false, STRING)));
-    assertThat(def.getAssetFields(), contains(field("filename", "Filename", false, STRING)));
+    assertThat(def.getComponentFields(), contains(field("directory", "Directory",
+        "Destination for uploaded files (e.g. /path/to/files/)", false, STRING)));
+    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING)));
   }
 
   @Test
@@ -166,9 +167,10 @@ public class RawUploadHandlerTest
 
   private UploadFieldDefinition field(final String name,
                                       final String displayName,
+                                      final String helpText,
                                       final boolean optional,
                                       final Type type)
   {
-    return new UploadFieldDefinition(name, displayName, optional, type);
+    return new UploadFieldDefinition(name, displayName, helpText, optional, type);
   }
 }

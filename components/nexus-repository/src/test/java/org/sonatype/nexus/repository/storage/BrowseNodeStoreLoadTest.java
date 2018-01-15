@@ -36,6 +36,7 @@ import org.mockito.Mock;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
 import static org.sonatype.goodies.common.Time.seconds;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
@@ -70,7 +71,9 @@ public class BrowseNodeStoreLoadTest
     BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0));
 
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
-    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory,
+        emptySet());
     AssetEntityAdapter assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
     BrowseNodeEntityAdapter browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, configuration);

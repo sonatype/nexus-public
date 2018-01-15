@@ -12,28 +12,50 @@
  */
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.scheduling.CancelableHelper;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runners.model.MultipleFailureException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static com.google.common.collect.Sets.newHashSet;
+import static java.lang.Thread.sleep;
 import static java.util.Collections.emptyList;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +67,9 @@ public class MetadataRebuilderTest
 
   @Mock
   private MavenFacet mavenFacet;
+
+  @Mock
+  private MavenPathParser mavenPathParser;
 
   @Mock
   private Repository repository;
@@ -70,6 +95,8 @@ public class MetadataRebuilderTest
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(mavenFacet.getMavenPathParser()).thenReturn(mavenPathParser);
+    when(mavenPathParser.parsePath(anyString())).thenReturn(mock(MavenPath.class));
   }
 
   @Test
@@ -86,5 +113,58 @@ public class MetadataRebuilderTest
 
     assertThat(bufferSizeCaptor.getValue(), equalTo(10));
     assertThat(timeoutSecondsCaptor.getValue(), equalTo(20L));
+  }
+
+  @Test
+  public void rebuildIsCancelable() throws Exception {
+    ODocument doc = mock(ODocument.class);
+    when(doc.field("groupId", OType.STRING)).thenReturn("group");
+    when(doc.field("artifactId", OType.STRING)).thenReturn("artifact");
+    when(doc.field("baseVersions", OType.EMBEDDEDSET)).thenReturn(newHashSet("version"));
+
+    Component component = mock(Component.class);
+    doReturn(mock(NestedAttributesMap.class)).when(component).formatAttributes();
+    doReturn(infiniteIterator(doc)).when(storageTx).browse(anyString(), anyMapOf(String.class, Object.class), anyInt(), anyLong());
+    doReturn(infiniteIterator(component)).when(storageTx).findComponents(anyString(), anyMap(), any(Iterable.class), anyString());
+    doReturn(infiniteIterator(mock(Asset.class))).when(storageTx).browseAssets(any(Component.class));
+
+    final AtomicBoolean canceled = new AtomicBoolean(false);
+    final List<Throwable> uncaught = new ArrayList<>();
+    Thread taskThread = new Thread(() -> {
+      CancelableHelper.set(canceled);
+
+      new MetadataRebuilder(10, 20).rebuild(repository, true, false, "group", "artifact", "version");
+    });
+    taskThread.setUncaughtExceptionHandler((t, e) -> {
+      if (e instanceof TaskInterruptedException) {
+        return;
+      }
+
+      uncaught.add(e);
+    });
+    taskThread.start();
+
+    sleep((long) (Math.random() * 1000)); // sleep for up to a second (emulate task running)
+    canceled.set(true); // cancel the task
+    taskThread.join(5000); // ensure task thread ends
+
+    if (taskThread.isAlive()) {
+      fail("Task did not cancel");
+    }
+
+    if (uncaught.size() > 0) {
+      throw new MultipleFailureException(uncaught);
+    }
+  }
+
+  private Iterable infiniteIterator(Object returnItem) {
+    Iterable iterable = mock(Iterable.class);
+    Iterator iterator = mock(Iterator.class);
+
+    when(iterable.iterator()).thenReturn(iterator);
+    when(iterator.hasNext()).thenReturn(true);
+    when(iterator.next()).thenReturn(returnItem);
+
+    return iterable;
   }
 }

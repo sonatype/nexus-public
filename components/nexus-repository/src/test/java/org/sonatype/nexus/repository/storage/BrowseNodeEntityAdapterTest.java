@@ -29,6 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -67,7 +68,8 @@ public class BrowseNodeEntityAdapterTest
   public void setUp() throws Exception {
 
     bucketEntityAdapter = new BucketEntityAdapter();
-    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
     underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());

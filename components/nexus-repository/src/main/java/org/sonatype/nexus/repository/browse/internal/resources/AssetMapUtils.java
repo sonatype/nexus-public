@@ -38,7 +38,7 @@ class AssetMapUtils
    * an identifier such as this, this method will attempt to pull the nested value out.
    *
    * @param assetMap the Map containing all the asset attributes
-   * @param identifier a value from {@link SearchResource#ASSET_SEARCH_PARAMS}
+   * @param identifier an attribute identifier
    * @return Value, if found
    */
   @SuppressWarnings("unchecked")

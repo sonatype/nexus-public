@@ -24,6 +24,7 @@ Ext.define('NX.coreui.model.RepositoryReference', {
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
     {name: 'format', type: 'string', sortType: 'asUCText'},
+    {name: 'versionPolicy', type: 'string', sortType: 'asUCText'},
     {name: 'status', type: 'auto' /*object*/},
     {name: 'url', type: 'string', sortType: 'asUCText'},
     {name: 'sortOrder', sortType: 'asInt'}

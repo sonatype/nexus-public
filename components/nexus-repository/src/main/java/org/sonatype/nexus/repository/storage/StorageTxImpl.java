@@ -112,6 +112,8 @@ public class StorageTxImpl
 
   private final MimeRulesSource mimeRulesSource;
 
+  private final ComponentFactory componentFactory;
+
   private int retries = 0;
 
   private NumberSequence retryDelay;
@@ -128,7 +130,8 @@ public class StorageTxImpl
                        final AssetEntityAdapter assetEntityAdapter,
                        final boolean strictContentValidation,
                        final ContentValidator contentValidator,
-                       final MimeRulesSource mimeRulesSource)
+                       final MimeRulesSource mimeRulesSource,
+                       final ComponentFactory componentFactory)
   {
     this.createdBy = checkNotNull(createdBy);
     this.createdByIp = checkNotNull(createdByIp);
@@ -143,6 +146,7 @@ public class StorageTxImpl
     this.strictContentValidation = strictContentValidation;
     this.contentValidator = checkNotNull(contentValidator);
     this.mimeRulesSource = checkNotNull(mimeRulesSource);
+    this.componentFactory = checkNotNull(componentFactory);
 
     // This is only here for now to yell in case of nested TX
     // To be discussed in future, or at the point when we will have need for nested TX
@@ -382,6 +386,16 @@ public class StorageTxImpl
     return countAssets(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
   }
 
+  @Override
+  @Guarded(by = ACTIVE)
+  public boolean componentExists(@Nullable final String group,
+                                 final String name,
+                                 @Nullable final String version,
+                                 final Repository repository)
+  {
+    return componentEntityAdapter.exists(db, group, name, version, bucketOf(repository.getName()));
+  }
+
   @Nullable
   @Override
   @Guarded(by = ACTIVE)
@@ -479,7 +493,7 @@ public class StorageTxImpl
     checkNotNull(bucket);
     checkNotNull(format);
 
-    Component component = new DefaultComponent();
+    Component component = componentFactory.createComponent();
     component.bucketId(id(bucket));
     component.format(format.toString());
     component.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));

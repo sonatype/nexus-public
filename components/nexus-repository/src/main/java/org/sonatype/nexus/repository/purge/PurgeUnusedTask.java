@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.scheduling.Cancelable;
 
 /**
  * Task to purge unused components/assets of given repository.
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.RepositoryTaskSupport;
 @Named
 public class PurgeUnusedTask
     extends RepositoryTaskSupport
+    implements Cancelable
 {
   public static final String LAST_USED_FIELD_ID = "lastUsed";
 

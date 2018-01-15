@@ -52,8 +52,10 @@ public class RawUploadHandler
 
   private static final String DIRECTORY = "directory";
 
+  private static final String DIRECTORY_HELP_TEXT = "Destination for uploaded files (e.g. /path/to/files/)";
+
   private final UploadDefinition definition = new UploadDefinition(RawFormat.NAME, true,
-      singletonList(new UploadFieldDefinition(DIRECTORY, false, Type.STRING)),
+      singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING)),
       singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)), new UploadRegexMap("(.*)", FILENAME));
 
   private final ContentPermissionChecker contentPermissionChecker;

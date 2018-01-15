@@ -1,3 +1,9 @@
+.x-tab-nx-light-disabled .x-tab-close-btn {
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=30);
+  opacity: 0.3;
+  background-position: 0 0;
+}
+
 .x-tab-nx-light-pressed .x-tab-close-btn {
   background-position: -24px 0;
 }
@@ -296,6 +302,11 @@
 }
 .nx-optionalfieldset .nx-optionalfieldset .x-fieldset-body {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.nx-mask-without-spinner .x-mask-msg-text {
+  background: transparent !important;
+  padding: 5px !important;
 }
 
 /**
@@ -2431,6 +2442,10 @@
 .x-panel-nx-drilldown-message.nx-drilldown-info .x-panel-header {
   border-color: #2476c3 !important;
   background-color: #f4f4f4;
+}
+
+.x-docked-top.nx-drilldown-info {
+  padding: 10px 0 0 0;
 }
 
 /**

@@ -21,8 +21,8 @@ Ext.define('NX.coreui.model.LicenseUser', {
   extend: 'Ext.data.Model',
   fields: [
     {name: 'ip', type: 'string', sortType: 'asUCText'},
-    {name: 'userId', type: 'string', sortType: 'asUCText'},
-    {name: 'userAgent', type: 'string', sortType: 'asUCText'},
-    {name: 'timestamp', type: 'date', dateFormat: 'c'}
+    {name: 'userId', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode },
+    {name: 'userAgent', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode },
+    {name: 'timestamp', type: 'date', dateFormat: 'c' }
   ]
 });

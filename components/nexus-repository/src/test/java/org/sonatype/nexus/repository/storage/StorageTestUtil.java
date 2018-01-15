@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -29,11 +30,14 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 public class StorageTestUtil
 {
+  private static AtomicInteger VERSION_INCREMENTER = new AtomicInteger(1);
+
   public static Bucket createBucket(final String repositoryName)
   {
     Bucket bucket = new Bucket()
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
-    bucket.setEntityMetadata(new DetachedEntityMetadata(new DetachedEntityId("a"), new DetachedEntityVersion("1")));
+    bucket.setEntityMetadata(
+        new DetachedEntityMetadata(new DetachedEntityId("a"), new DetachedEntityVersion(getNextVersion())));
     bucket.setRepositoryName(repositoryName);
     return bucket;
   }
@@ -52,6 +56,17 @@ public class StorageTestUtil
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
   }
 
+  public static Component createDetachedComponent(final Bucket bucket,
+                                                  final String group,
+                                                  final String name,
+                                                  final String version)
+  {
+    Component component = createComponent(bucket, group, name, version);
+    component.setEntityMetadata(
+        new DetachedEntityMetadata(new DetachedEntityId("b"), new DetachedEntityVersion(getNextVersion())));
+    return component;
+  }
+
   public static Asset createAsset(final Bucket bucket, final String name, final Component component) {
     return new Asset()
         .bucketId(id(bucket))
@@ -59,5 +74,16 @@ public class StorageTestUtil
         .name(name)
         .componentId(id(component))
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+  }
+
+  public static Asset createDetachedAsset(final Bucket bucket, final String name, final Component component) {
+    Asset asset = createAsset(bucket, name, component);
+    asset.setEntityMetadata(
+        new DetachedEntityMetadata(new DetachedEntityId("c"), new DetachedEntityVersion(getNextVersion())));
+    return asset;
+  }
+
+  private static String getNextVersion() {
+    return Integer.toString(VERSION_INCREMENTER.addAndGet(1));
   }
 }

@@ -69,6 +69,8 @@ extends TestSupport
   @Mock
   private AssetEntityAdapter assetEntityAdapter
   @Mock
+  private ComponentFactory componentFactory
+  @Mock
   private Asset asset
   @Mock
   private EntityMetadata entityMetadata;
@@ -110,7 +112,9 @@ extends TestSupport
   @Test
   void 'deleting assets fails when DENY write policy'() {
     when(asset.blobRef()).thenReturn(mock(BlobRef))
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     try {
       underTest.deleteAsset(asset)
       assertThat 'Expected IllegalOperationException', false
@@ -131,7 +135,9 @@ extends TestSupport
    */
   @Test
   void 'deleting assets pass when DENY write policy without blob'() {
-    new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP).deleteAsset(asset)
+    new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY, WritePolicySelector.DEFAULT,
+        bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator,
+        MimeRulesSource.NOOP, componentFactory).deleteAsset(asset)
     verify(assetEntityAdapter, times(1)).deleteEntity(db, asset)
   }
 
@@ -168,7 +174,9 @@ extends TestSupport
   void deleteAssetWhenWritePolicy(final WritePolicy writePolicy) {
     def blobRef = mock(BlobRef)
     when(asset.blobRef()).thenReturn(blobRef)
-    new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', writePolicy, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP).deleteAsset(asset)
+    new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', writePolicy, WritePolicySelector.DEFAULT,
+        bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator,
+        MimeRulesSource.NOOP, componentFactory).deleteAsset(asset)
     verify(blobTx, times(1)).delete(eq(blobRef), any(String))
     verify(assetEntityAdapter, times(1)).deleteEntity(db, asset)
   }
@@ -191,7 +199,9 @@ extends TestSupport
     def asssetBlob = mock(AssetBlob)
     when(asssetBlob.getBlobRef()).thenReturn(blobRef)
     when(asset.blobRef()).thenReturn(blobRef)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     try {
       underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
       assertThat 'Expected IllegalOperationException', false
@@ -215,7 +225,9 @@ extends TestSupport
    */
   @Test
   void 'setting blob fails on asset without blob when DENY write policy'() {
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     try {
       underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
       assertThat 'Expected IllegalOperationException', false
@@ -245,7 +257,9 @@ extends TestSupport
     when(assetBlob.getBlobRef()).thenReturn(blobRef)
     when(asset.blobRef()).thenReturn(blobRef)
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), anyString())).thenReturn(assetBlob)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW_ONCE, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW_ONCE,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     try {
       underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
       assertThat 'Expected IllegalOperationException', false
@@ -277,7 +291,9 @@ extends TestSupport
     when(assetBlob.getBlob()).thenReturn(blob)
     when(assetBlob.getBlobRef()).thenReturn(newBlobRef)
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), anyString())).thenReturn(assetBlob)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW_ONCE, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW_ONCE,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, "text/plain", false)
     verify(blobTx, times(1)).create(any(InputStream), eq(expectedHeaders), eq(hashAlgorithms), eq('text/plain'))
     verify(asset, times(1)).blobRef(newBlobRef)
@@ -310,7 +326,9 @@ extends TestSupport
     when(newAssetBlob.getBlob()).thenReturn(blob)
     when(newAssetBlob.getBlobRef()).thenReturn(newBlobRef)
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), eq(ContentTypes.TEXT_PLAIN))).thenReturn(newAssetBlob)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
     verify(blobTx, times(1)).delete(eq(blobRef), any(String))
     verify(blobTx, times(1)).create(any(InputStream), eq(expectedHeaders), any(Iterable), eq(ContentTypes.TEXT_PLAIN))
@@ -338,7 +356,9 @@ extends TestSupport
     when(assetBlob.getBlob()).thenReturn(blob)
     when(assetBlob.getBlobRef()).thenReturn(newBlobRef)
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), anyString())).thenReturn(assetBlob)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, 'text/plain', false)
     verify(blobTx, times(1)).create(any(InputStream), eq(expectedHeaders), eq(hashAlgorithms), eq('text/plain'))
     verify(asset, times(1)).blobRef(newBlobRef)
@@ -351,7 +371,9 @@ extends TestSupport
     def assetBlob = mock(AssetBlob)
     when(assetBlob.getBlobRef()).thenReturn(newBlobRef)
     when(blobTx.create(any(InputStream), any(Map), any(Iterable), anyString())).thenReturn(assetBlob)
-    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW, WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false, defaultContentValidator, MimeRulesSource.NOOP)
+    def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
+        defaultContentValidator, MimeRulesSource.NOOP, componentFactory)
     underTest.setBlob(asset, 'testBlob.txt', supplier, hashAlgorithms, headers, null, true)
   }
 
@@ -415,7 +437,8 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP,
+        componentFactory)
     underTest.attachBlob(asset, assetBlob)
     verify(checksum, times(1)).set(SHA1.name(), hashCode)
     verify(provenance, times(1)).set(HASHES_NOT_VERIFIED, !hashesVerified)
@@ -446,7 +469,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
     underTest.requireBlob(blobRef)
   }
 
@@ -481,7 +504,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
     underTest.attachBlob(asset, assetBlob)
     verify(asset).blobCreated(any(DateTime))
     verify(asset).blobUpdated(any(DateTime))
@@ -525,7 +548,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
     underTest.attachBlob(asset, assetBlob)
     verify(asset, never()).blobCreated(any(DateTime))
     verify(asset).blobUpdated(any(DateTime))
@@ -568,7 +591,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
     underTest.attachBlob(asset, assetBlob)
     verify(asset, never()).blobCreated(any(DateTime))
     verify(asset, never()).blobUpdated(any(DateTime))
@@ -608,7 +631,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
     underTest.attachBlob(asset, assetBlob)
     verify(asset, never()).blobCreated(any(DateTime))
     verify(asset).blobUpdated(any(DateTime))
@@ -632,7 +655,7 @@ extends TestSupport
         assetEntityAdapter,
         false,
         defaultContentValidator,
-        MimeRulesSource.NOOP)
+        MimeRulesSource.NOOP, componentFactory)
 
     assertThat underTest.findAsset(assetId), is(asset)
   }

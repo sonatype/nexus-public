@@ -25,12 +25,15 @@ import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
+import org.sonatype.nexus.repository.browse.SearchResourceExtension;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
+import org.sonatype.nexus.repository.browse.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.rest.Page;
 
+import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -43,11 +46,14 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.stubbing.Answer;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -58,8 +64,11 @@ import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createAsset;
 import static org.sonatype.nexus.repository.browse.internal.resources.ResourcesTestUtils.createComponent;
@@ -94,6 +103,9 @@ public class SearchResourceTest
   @Mock
   BrowseResult<Asset> browseResult;
 
+  @Spy
+  SearchResourceExtension searchResourceExtension = new TestSearchResourceExtension();
+
   SearchResource underTest;
 
   @Before
@@ -101,7 +113,8 @@ public class SearchResourceTest
     configureMockedRepository(repository, "test-repo", "http://localhost:8081/test");
     setupResponse();
 
-    underTest = new SearchResource(searchUtils, browseService, searchService,  new TokenEncoder());
+    underTest = new SearchResource(searchUtils, browseService, searchService, new TokenEncoder(),
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension));
   }
 
   private void setupResponse() {
@@ -162,6 +175,7 @@ public class SearchResourceTest
     assertThat(componentXO1.getAssets().get(0).getChecksum().get("sha1"), is("87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
 
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
+    verify(searchResourceExtension, times(2)).updateComponentXO(any(ComponentXO.class), any(SearchHit.class));
   }
 
   @Test
@@ -432,4 +446,12 @@ public class SearchResourceTest
     return new ResteasyUriInfo(URI.create(uri));
   }
 
+  private class TestSearchResourceExtension
+      implements SearchResourceExtension
+  {
+    @Override
+    public ComponentXO updateComponentXO(final ComponentXO componentXO, final SearchHit hit) {
+      return componentXO;
+    }
+  }
 }

@@ -56,7 +56,7 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
             text: NX.I18n.get('Component_Asset_Tree_Upload_Component'),
             glyph: 'xf093@FontAwesome' /* fa-upload */,
             action: 'upload',
-            hidden: !NX.State.getValue('upload')
+            hidden: true
           },{
             xtype: 'label',
             itemId: 'nx-coreui-component-asset-tree-html-view',

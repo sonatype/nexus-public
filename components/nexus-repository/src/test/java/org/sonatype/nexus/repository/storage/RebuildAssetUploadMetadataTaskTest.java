@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptySet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -76,7 +77,9 @@ public class RebuildAssetUploadMetadataTaskTest
   @Before
   public void setUp() {
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
-    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory,
+        emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {

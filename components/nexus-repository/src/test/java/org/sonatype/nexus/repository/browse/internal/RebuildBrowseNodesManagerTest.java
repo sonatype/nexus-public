@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.ComponentFactory;
 import org.sonatype.nexus.repository.storage.MetadataNode;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -46,6 +47,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -73,6 +75,9 @@ public class RebuildBrowseNodesManagerTest
   private Bucket bucket;
 
   private BrowseNodeEntityAdapter browseNodeEntityAdapter;
+
+  @Mock
+  private ComponentFactory componentFactory;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -113,7 +118,7 @@ public class RebuildBrowseNodesManagerTest
 
   private void initializeDatabase() throws Exception {
     bucketEntityAdapter = new BucketEntityAdapter();
-    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());
     underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler, configuration,

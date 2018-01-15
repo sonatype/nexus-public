@@ -66,16 +66,22 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                 xtype: 'fieldset',
                 cls: 'nx-form-section',
                 itemId: 'nx-coreui-upload-component-assets',
+                nextSuffix: 0,
                 title: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Title'),
-                items: [me.createRow(true), {
-                  xtype: 'button',
-                  text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
-                  action: 'add_asset',
-                  hidden: !me.uploadDefinition.get('multipleUpload')
-                }]
+                items: [
+                  me.createHeader(),
+                  me.createRow(),
+                  {
+                    xtype: 'button',
+                    text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
+                    action: 'add_asset',
+                    hidden: !me.uploadDefinition.get('multipleUpload')
+                  }
+                ]
               }, {
                 xtype: 'fieldset',
                 cls: 'nx-form-section',
+                itemId: 'nx-coreui-upload-component-fields',
                 layout: {
                   type: 'vbox',
                   align: 'stretch'
@@ -96,11 +102,15 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
               cls: 'nx-drilldown-info',
               iconCls: NX.Icons.cls('tick', 'x16'),
               hidden: true,
-              dock: 'bottom'
+              dock: 'top'
             }]
           }]
         }
       );
+
+      if (me.repository.get('format') === 'maven2') {
+        me.down('textfield[name=packaging]').setDisabled(true);
+      }
     },
 
     addAssetRow: function() {
@@ -108,9 +118,9 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           assetPanel = me.down('#nx-coreui-upload-component-assets');
 
       if (assetPanel) {
-        var row = me.createRow(false),
+        var row = me.createRow(),
             fields = row.items,
-            suffix = assetPanel.items.items.length;
+            suffix = assetPanel.nextSuffix++;
 
         fields.forEach(function(field) {
           field.name += suffix;
@@ -120,7 +130,40 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       }
     },
 
-    createRow: function(firstRow) {
+    createHeader: function() {
+      var me = this,
+          header = {
+            xtype: 'container',
+            layout: {
+              type: 'hbox',
+              align: 'stretch'
+            },
+            items: [
+              {
+                xtype: 'text',
+                text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_File_Label'),
+                cls: 'nx-table-header-label',
+                width: 305,
+                height: 25
+              }
+            ]
+          },
+          assetFields = me.uploadDefinition.get('assetFields');
+
+      assetFields.forEach(function(assetField) {
+        header.items.push({
+          xtype: 'text',
+          text: assetField.displayName,
+          cls: 'nx-table-header-label',
+          width: 145,
+          height: 25
+        });
+      });
+
+      return header;
+    },
+
+    createRow: function() {
       var me = this,
           row = {
               xtype: 'panel',
@@ -136,7 +179,6 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   buttonConfig: {
                       glyph: 'xf016@FontAwesome' /* fa-file-o */
                   },
-                  fieldLabel: firstRow ? NX.I18n.get('FeatureGroups_Upload_Asset_Form_File_Label') : undefined,
                   name: 'file',
                   width: '150px',
                   listeners: {
@@ -150,16 +192,15 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       var assetFields = me.uploadDefinition.get('assetFields');
 
       assetFields.forEach(function(assetField) {
-          row.items.push(me.createAssetField(assetField, !firstRow));
+          row.items.push(me.createAssetField(assetField));
       });
 
-      if (!firstRow) {
-          row.items.push({
-              xtype: 'button',
-              text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Remove_Button'),
-              action: 'remove_upload_asset'
-          });
-      }
+      row.items.push({
+        xtype: 'button',
+        text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Remove_Button'),
+        action: 'remove_upload_asset',
+        hidden: true
+      });
 
       return row;
     },
@@ -169,25 +210,33 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       return me.createField(field, false);
     },
 
-    createAssetField: function(field, hideLabel) {
+    createAssetField: function(field) {
       var me = this;
-      return me.createField(field, hideLabel, '100px', 'nx-float-left');
+      return me.createField(field, true, '100px', 'nx-float-left', me.validateUniqueAsset);
     },
 
-    createField: function (field, hideLabel, width, cls) {
+    createField: function (field, hideLabel, width, cls, validator) {
       var widget = {
         allowBlank: field.optional,
         name: field.name,
-        fieldLabel: hideLabel ? undefined : field.displayName,
         width: width,
-        cls: cls
+        cls: cls,
+        validator: validator,
+        listeners: {
+          change: function() {
+            this.up('form').isValid();
+          }
+        }
       };
 
       if (field.type === 'STRING') {
         widget.xtype = 'textfield';
+        widget.fieldLabel = hideLabel ? undefined : field.displayName;
+        widget.helpText = field.helpText || undefined;
       }
       else if (field.type === 'BOOLEAN') {
         widget.xtype = 'checkbox';
+        widget.boxLabel = field.displayName;
       }
       return widget;
     },
@@ -213,5 +262,28 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           });
         }
       }
+    },
+
+    validateUniqueAsset: function() {
+      var me = this,
+          assetRow = me.up(),
+          assetValue = {},
+          assetRows = Ext.Array.difference(assetRow.up().query('panel'), [assetRow]);
+
+      assetRow.query('field').forEach(function(field) {
+        assetValue[field.name.replace(/[0-9]/g, '')] = field.value;
+      });
+
+      var duplicate = Ext.Array.findBy(assetRows, function(row) {
+        var isDuplicate = true;
+        Object.keys(assetValue).forEach(function(fieldName) {
+          isDuplicate = isDuplicate &&
+              (row.query('field[name^=' + fieldName + ']')[0].value === assetValue[fieldName]);
+        });
+        return isDuplicate;
+      });
+
+      return (duplicate === null) || NX.I18n.get('FeatureGroups_Upload_Asset_Form_Not_Unique_Error_Message');
     }
+
   });

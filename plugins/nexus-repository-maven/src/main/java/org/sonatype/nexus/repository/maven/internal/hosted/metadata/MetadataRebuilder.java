@@ -65,6 +65,7 @@ import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GRO
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Maven 2 repository metadata re-builder.
@@ -287,8 +288,10 @@ public class MetadataRebuilder
      */
     public void rebuildMetadata()
     {
+      checkCancellation();
       String currentGroupId = null;
       for (ODocument doc : browseGAVs()) {
+        checkCancellation();
         final String groupId = doc.field("groupId", OType.STRING);
         final String artifactId = doc.field("artifactId", OType.STRING);
         final Set<String> baseVersions = doc.field("baseVersions", OType.EMBEDDEDSET);
@@ -331,6 +334,7 @@ public class MetadataRebuilder
 
       metadataBuilder.onEnterArtifactId(artifactId);
       for (final String baseVersion : baseVersions) {
+        checkCancellation();
         metadataBuilder.onEnterBaseVersion(baseVersion);
 
         TransactionalStoreBlob.operation.call(() -> {
@@ -347,7 +351,10 @@ public class MetadataRebuilder
           );
 
           for (Component component : components) {
+            checkCancellation();
+
             for (Asset asset : tx.browseAssets(component)) {
+              checkCancellation();
               final MavenPath mavenPath = mavenPathParser.parsePath(asset.name());
               if (mavenPath.isSubordinate()) {
                 continue;

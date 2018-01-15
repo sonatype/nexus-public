@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -36,9 +37,10 @@ import javax.ws.rs.core.UriInfo;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseService;
+import org.sonatype.nexus.repository.browse.SearchResourceExtension;
 import org.sonatype.nexus.repository.browse.api.AssetXO;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
-import org.sonatype.nexus.repository.browse.api.DefaultComponentXO;
+import org.sonatype.nexus.repository.browse.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.SearchResourceDoc;
 import org.sonatype.nexus.repository.search.SearchService;
@@ -96,16 +98,24 @@ public class SearchResource
 
   private final TokenEncoder tokenEncoder;
 
+  private final ComponentXOFactory componentXOFactory;
+
+  private final Set<SearchResourceExtension> searchResourceExtensions;
+
   @Inject
   public SearchResource(final SearchUtils searchUtils,
                         final BrowseService browseService,
                         final SearchService searchService,
-                        final TokenEncoder tokenEncoder)
+                        final TokenEncoder tokenEncoder,
+                        final ComponentXOFactory componentXOFactory,
+                        final Set<SearchResourceExtension> searchResourceExtensions)
   {
     this.searchUtils = checkNotNull(searchUtils);
     this.browseService = checkNotNull(browseService);
     this.searchService = checkNotNull(searchService);
     this.tokenEncoder = checkNotNull(tokenEncoder);
+    this.componentXOFactory = checkNotNull(componentXOFactory);
+    this.searchResourceExtensions = checkNotNull(searchResourceExtensions);
   }
 
   @GET
@@ -129,7 +139,8 @@ public class SearchResource
   private ComponentXO toComponent(final SearchHit hit) {
     Map<String, Object> source = checkNotNull(hit.getSource());
     Repository repository = searchUtils.getRepository((String) source.get(REPOSITORY_NAME));
-    ComponentXO componentXO = new DefaultComponentXO();
+
+    ComponentXO componentXO = componentXOFactory.createComponentXO();
 
     componentXO
         .setAssets(browseService.browseComponentAssets(repository, hit.getId())
@@ -144,6 +155,10 @@ public class SearchResource
     componentXO.setId(new RepositoryItemIDXO(repository.getName(), hit.getId()).getValue());
     componentXO.setRepository(repository.getName());
     componentXO.setFormat(repository.getFormat().getValue());
+
+    for (SearchResourceExtension searchResourceExtension : searchResourceExtensions) {
+      componentXO = searchResourceExtension.updateComponentXO(componentXO, hit);
+    }
 
     return componentXO;
   }

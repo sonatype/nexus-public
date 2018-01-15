@@ -428,7 +428,6 @@ public class FileBlobStore
         if (blob.isStale()) {
           FileBlobAttributes blobAttributes = getFileBlobAttributes(blobId);
           if (blobAttributes == null) {
-            log.warn("Attempt to access non-existent blob {} ({})", blobId, attributePath(blobId));
             return null;
           }
 
@@ -967,7 +966,13 @@ public class FileBlobStore
     Path blobPath = attributePath(blobId);
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
-      return blobAttributes.load() ? blobAttributes : null;
+      if (!blobAttributes.load()) {
+        log.warn("Attempt to access non-existent blob {} ({})", blobId, attributePath(blobId));
+        return null;
+      }
+      else {
+        return blobAttributes;
+      }
     }
     catch (Exception e) {
         log.error("Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}",

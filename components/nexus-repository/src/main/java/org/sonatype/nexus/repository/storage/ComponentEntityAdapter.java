@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -28,6 +29,8 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,8 +38,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 
 /**
@@ -49,7 +55,7 @@ import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSI
 public class ComponentEntityAdapter
     extends MetadataNodeEntityAdapter<Component>
 {
-  private static final String DB_CLASS = new OClassNameBuilder()
+  public static final String DB_CLASS = new OClassNameBuilder()
       .type("component")
       .build();
 
@@ -97,9 +103,25 @@ public class ComponentEntityAdapter
       .caseInsensitive()
       .build();
 
+  private static final String EXISTS_QUERY_STRING =
+      format("select from index:%1$s where key = [:%2$s, :%3$s, :%4$s, :%5$s]",
+          I_BUCKET_GROUP_NAME_VERSION, P_BUCKET, P_GROUP, P_NAME, P_VERSION);
+
+
+  private static final OSQLSynchQuery<ODocument> EXISTS_QUERY = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
+
+  private final ComponentFactory componentFactory;
+
+  private final Set<ComponentEntityAdapterExtension> componentEntityAdapterExtensions;
+
   @Inject
-  public ComponentEntityAdapter(final BucketEntityAdapter bucketEntityAdapter) {
+  public ComponentEntityAdapter(final BucketEntityAdapter bucketEntityAdapter,
+                                final ComponentFactory componentFactory,
+                                final Set<ComponentEntityAdapterExtension> componentEntityAdapterExtensions)
+  {
     super(DB_CLASS, bucketEntityAdapter);
+    this.componentFactory = componentFactory;
+    this.componentEntityAdapterExtensions = checkNotNull(componentEntityAdapterExtensions);
   }
 
   @Override
@@ -134,6 +156,8 @@ public class ComponentEntityAdapter
         .property(P_CI_NAME, OType.STRING)
         .caseInsensitive()
         .build(db);
+
+    componentEntityAdapterExtensions.forEach(d -> d.defineType(db, type));
   }
 
   public Iterable<Component> browseByNameCaseInsensitive(final ODatabaseDocumentTx db,
@@ -157,9 +181,28 @@ public class ComponentEntityAdapter
     return transform(db.command(new OCommandSQL(query.toString())).execute(parameters));
   }
 
+  /**
+   * Check for the existence of a component with {@code group}, {@code name}, and {@code version} in {@code bucket}.
+   *
+   * @since 3.next
+   */
+  public boolean exists(final ODatabaseDocumentTx db,
+                        @Nullable final String group,
+                        final String name,
+                        @Nullable final String version,
+                        final Bucket bucket)
+  {
+    Map<String, Object> params = Maps.newHashMap();
+    params.put(P_GROUP, group);
+    params.put(P_NAME, checkNotNull(name));
+    params.put(P_VERSION, version);
+    params.put(P_BUCKET, recordIdentity(id(checkNotNull(bucket))));
+    return !Iterables.isEmpty(db.command(EXISTS_QUERY).<Iterable<ODocument>>execute(params));
+  }
+
   @Override
   protected Component newEntity() {
-    return new DefaultComponent();
+    return componentFactory.createComponent();
   }
 
   @Override
@@ -173,6 +216,8 @@ public class ComponentEntityAdapter
     entity.group(group);
     entity.name(name);
     entity.version(version);
+
+    componentEntityAdapterExtensions.forEach(d -> d.readFields(document, entity));
   }
 
   @Override
@@ -187,6 +232,8 @@ public class ComponentEntityAdapter
     // indirect queries against CI fields when another table is involved lose their case-insensitiveness, so we store
     // as lowercase to permit those kinds of queries to query on lowercase as a workaround for now.
     document.field(P_CI_NAME, entity.name().toLowerCase(Locale.ENGLISH));
+
+    componentEntityAdapterExtensions.forEach(d -> d.writeFields(document, entity));
   }
 
   @Override

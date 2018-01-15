@@ -23,10 +23,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
-import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -34,7 +32,6 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static org.sonatype.nexus.common.text.Strings2.isEmpty;
 
 /**
  * @since 3.7
@@ -62,14 +59,14 @@ public class UploadManagerImpl
   }
 
   @Override
-  public Collection<String> handle(final Repository repository, final ComponentUpload upload) throws IOException {
+  public Collection<String> handle(final Repository repository, final ComponentUpload upload)
+      throws IOException
+  {
     checkNotNull(repository);
     checkNotNull(upload);
 
     UploadHandler uploadHandler = getUploadHandler(repository);
-    UploadDefinition uploadDefinition = uploadHandler.getDefinition();
-    validateFields(uploadDefinition, upload);
-
+    uploadHandler.validate(upload);
     return uploadHandler.handle(repository, upload);
   }
 
@@ -94,58 +91,4 @@ public class UploadManagerImpl
     return uploadHandler;
   }
 
-  private void validateFields(final UploadDefinition uploadDefinition, final ComponentUpload componentUpload)
-  {
-    ValidationErrorsException validation = new ValidationErrorsException();
-
-    validateComponentFields(uploadDefinition, componentUpload, validation);
-    validateAssets(componentUpload, validation);
-    validateAssetFields(uploadDefinition, componentUpload, validation);
-
-    if (validation.hasValidationErrors()) {
-      throw validation;
-    }
-  }
-
-  private void validateComponentFields(final UploadDefinition uploadDefinition,
-                                       final ComponentUpload componentUpload,
-                                       final ValidationErrorsException validation)
-  {
-    for (UploadFieldDefinition componentField : uploadDefinition.getComponentFields()) {
-      if (!componentField.isOptional()) {
-        String componentFieldName = componentField.getName();
-        String componentFieldValue = componentUpload.getFields().get(componentFieldName);
-
-        if (isEmpty(componentFieldValue)) {
-          validation.withError(componentFieldName, format("Missing required component field '%s'", componentFieldName));
-        }
-      }
-    }
-  }
-
-  private void validateAssets(final ComponentUpload componentUpload, final ValidationErrorsException validation)
-  {
-    if (componentUpload.getAssetUploads().isEmpty()) {
-      validation.withError("No assets found in upload");
-    }
-  }
-
-  private void validateAssetFields(final UploadDefinition uploadDefinition,
-                                   final ComponentUpload componentUpload,
-                                   final ValidationErrorsException validation)
-  {
-    for (UploadFieldDefinition assetFieldDefinition : uploadDefinition.getAssetFields()) {
-      if (!assetFieldDefinition.isOptional()) {
-        String assetFieldName = assetFieldDefinition.getName();
-
-        for (AssetUpload assetUpload : componentUpload.getAssetUploads()) {
-          String assetFieldValue = assetUpload.getFields().get(assetFieldName);
-
-          if (isEmpty(assetFieldValue)) {
-            validation.withError(assetFieldName, format("Missing required asset field '%s'", assetFieldName));
-          }
-        }
-      }
-    }
-  }
 }

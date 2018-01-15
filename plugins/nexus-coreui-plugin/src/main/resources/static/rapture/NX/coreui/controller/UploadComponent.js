@@ -108,6 +108,12 @@ Ext.define('NX.coreui.controller.UploadComponent', {
         },
         'nx-coreui-upload-component button[action=add_asset]': {
           click: me.addAsset
+        },
+        'nx-coreui-upload-component textfield[name^=extension]': {
+          change: me.onExtensionChange
+        },
+        'nx-coreui-upload-component checkbox[name=generate-pom]' : {
+          change: me.onGeneratePomChange
         }
       }
     });
@@ -178,7 +184,16 @@ Ext.define('NX.coreui.controller.UploadComponent', {
             formats += record.get('format');
         });
 
-        repoStore.addFilter([{property: 'format', value: formats},{property: 'type', value: 'hosted'}]);
+        repoStore.addFilter([{
+          property: 'format',
+          value: formats
+        }, {
+          property: 'type',
+          value: 'hosted'
+        }, {
+          property: 'versionPolicies',
+          value: '!SNAPSHOT'
+        }]);
         repoStore.load(function () {
             // Load the asset upload page
             if (list_ids[1]) {
@@ -196,13 +211,18 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     });
   },
 
-  removeUploadAsset: function(button) {
-    button.up('#nx-coreui-upload-component-assets').remove(button.up());
+  removeUploadAsset: function(fileUploadField) {
+    var me = this;
+
+    fileUploadField.up('#nx-coreui-upload-component-assets').remove(fileUploadField.up());
+    me.refreshRemoveButtonState();
+    me.updatePomFileState();
   },
 
   doUpload: function(button) {
     var me = this,
-        fp = button.up('form');
+        fp = button.up('form'),
+        fileUploadField;
 
     if(fp.getForm().isValid()) {
       me.setSuccessMessage();
@@ -220,11 +240,13 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
           fp.getForm().reset();
 
-          // remove extra rows
-          var removeButton;
-          while ((removeButton = fp.down('button[action=remove_upload_asset]')) !== null) {
-            me.removeUploadAsset(removeButton);
-          }
+          // remove rows
+          fp.query('fileuploadfield').forEach(function(fileUploadField) {
+            me.removeUploadAsset(fileUploadField);
+          });
+
+          // create new row
+          me.addAsset();
 
           // clearOnSubmit prevents normal form reset from working...
           fp.down('fileuploadfield').inputEl.dom.value = '';
@@ -253,9 +275,54 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
   addAsset: function() {
     var me = this,
-      uploadComponent = me.getUploadComponent();
+        uploadComponent = me.getUploadComponent(),
+        form = uploadComponent.down('form');
 
     uploadComponent.addAssetRow();
-    uploadComponent.down('form').isValid();
+    me.refreshRemoveButtonState();
+    me.updatePomFileState();
+    form.isValid();
+  },
+
+  onExtensionChange: function() {
+    var me = this;
+    me.updatePomFileState();
+  },
+
+  updatePomFileState: function() {
+    var me = this,
+        form = me.getUploadComponent().down('form'),
+        componentFieldset = form.down('fieldset#nx-coreui-upload-component-fields'),
+        isPomFilePresent = form.query('textfield[name^=extension][value=pom]').length !== 0;
+
+    componentFieldset.setDisabled(isPomFilePresent);
+    if (isPomFilePresent) {
+      componentFieldset.mask(NX.I18n.get('FeatureGroups_Upload_Form_DetailsFromPom_Mask'), 'nx-mask-without-spinner');
+    }
+    else {
+      componentFieldset.unmask();
+    }
+  },
+
+  /**
+   * @private
+   * Hide remove buttons if there is only one asset displayed
+   */
+  refreshRemoveButtonState: function() {
+    var me = this,
+        buttons = me.getUploadComponent().query('button[action=remove_upload_asset]'),
+        hidden = (buttons.length === 1);
+
+    buttons.forEach(function(button) {
+      button.setVisible(!hidden);
+    });
+  },
+
+  /**
+   * @private
+   * Change disabled state of packaging field based on generate pom checkbox
+   */
+  onGeneratePomChange: function(element) {
+    element.up('form').down('textfield[name=packaging]').setDisabled(!element.getValue());
   }
 });

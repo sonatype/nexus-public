@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse.internal.resources;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -38,9 +39,10 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
+import org.sonatype.nexus.repository.browse.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.browse.api.ComponentXO;
-import org.sonatype.nexus.repository.browse.api.DefaultComponentXO;
+import org.sonatype.nexus.repository.browse.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.browse.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.browse.internal.resources.doc.ComponentsResourceDoc;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
@@ -99,6 +101,10 @@ public class ComponentsResource
 
   private final UploadConfiguration uploadConfiguration;
 
+  private final ComponentXOFactory componentXOFactory;
+
+  private final Set<ComponentsResourceExtension> componentsResourceExtensions;
+
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
@@ -106,7 +112,10 @@ public class ComponentsResource
                             final MaintenanceService maintenanceService,
                             @Named("component") final ContinuationTokenHelper continuationTokenHelper,
                             final UploadManager uploadManager,
-                            final UploadConfiguration uploadConfiguration)
+                            final UploadConfiguration uploadConfiguration,
+                            final ComponentXOFactory componentXOFactory,
+                            final Set<ComponentsResourceExtension> componentsResourceExtensions
+  )
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
@@ -115,6 +124,8 @@ public class ComponentsResource
     this.continuationTokenHelper = checkNotNull(continuationTokenHelper);
     this.uploadManager = checkNotNull(uploadManager);
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
+    this.componentXOFactory = checkNotNull(componentXOFactory);
+    this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
   }
 
   @GET
@@ -150,7 +161,7 @@ public class ComponentsResource
   private ComponentXO fromComponent(Component component, Repository repository) {
     String internalId = id(component).getValue();
 
-    ComponentXO componentXO = new DefaultComponentXO();
+    ComponentXO componentXO = componentXOFactory.createComponentXO();
 
     componentXO
         .setAssets(browseService.browseComponentAssets(repository, component.getEntityMetadata().getId().getValue())
@@ -165,6 +176,10 @@ public class ComponentsResource
     componentXO.setId(new RepositoryItemIDXO(repository.getName(), internalId).getValue());
     componentXO.setRepository(repository.getName());
     componentXO.setFormat(repository.getFormat().getValue());
+
+    for (ComponentsResourceExtension componentsResourceExtension : componentsResourceExtensions) {
+      componentXO = componentsResourceExtension.updateComponentXO(componentXO, component);
+    }
 
     return componentXO;
   }

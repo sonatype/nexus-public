@@ -874,12 +874,6 @@ def checkSSH() {
     ant.replaceregexp(file: it, match: "sshPort = 8022", replace: "sshPort = ${rcConfig.karafSshPort}")
   }
 
-  // Add VM option
-  files = new FileNameFinder().getFileNames("target", "nexus*/bin/nexus")
-  files.each {
-    def file = new File(new File(it).getParent(), "nexus.vmoptions")
-    ensurePresentInFile(file, '-Dkaraf.startRemoteShell=true')
-  }
 }
 
 def checkOrient() {

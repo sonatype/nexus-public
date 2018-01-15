@@ -14524,6 +14524,13 @@
 }
 
 /**
+ * @class Ext.draw.Text
+ */
+.nx-table-header-label {
+  font-weight: bold;
+}
+
+/**
  * @class Ext.form.CheckboxGroup
  */
 .x-form-checkboxgroup-body {
@@ -15688,10 +15695,4 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 .x-tab-nx-light .x-tab-close-btn {
   top: 2px;
   right: 2px;
-}
-
-.x-tab-nx-light-disabled .x-tab-close-btn {
-  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=30);
-  opacity: 0.3;
-  background-position: 0 0;
 }

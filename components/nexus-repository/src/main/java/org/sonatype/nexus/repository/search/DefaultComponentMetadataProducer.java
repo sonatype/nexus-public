@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -57,6 +59,13 @@ public class DefaultComponentMetadataProducer
 
   public static final String ID = "id";
 
+  private final Set<ComponentMetadataProducerExtension> componentMetadataProducerExtensions;
+
+  @Inject
+  public DefaultComponentMetadataProducer(final Set<ComponentMetadataProducerExtension> componentMetadataProducerExtensions) {
+    this.componentMetadataProducerExtensions = checkNotNull(componentMetadataProducerExtensions);
+  }
+
   @Override
   public String getMetadata(final Component component,
                             final Iterable<Asset> assets,
@@ -85,6 +94,10 @@ public class DefaultComponentMetadataProducer
     }
     if (!allAssetMetadata.isEmpty()) {
       metadata.put(ASSETS, allAssetMetadata);
+    }
+
+    for (ComponentMetadataProducerExtension componentMetadataProducerExtension : componentMetadataProducerExtensions) {
+      metadata.putAll(componentMetadataProducerExtension.getComponentMetadata(component));
     }
 
     metadata.putAll(additional);

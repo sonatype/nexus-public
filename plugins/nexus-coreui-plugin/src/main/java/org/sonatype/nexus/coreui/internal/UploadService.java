@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
+import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.WithUploadField;
 import org.sonatype.nexus.repository.view.PartPayload;
@@ -119,7 +120,12 @@ public class UploadService
       String formField = assetField.getName() + suffix;
       String value = params.get(formField);
       if (!Strings2.isEmpty(value)) {
-        item.getFields().put(assetField.getName(), value);
+        if (Type.BOOLEAN.equals(assetField.getType())) {
+          item.getFields().put(assetField.getName(), "on".equals(value) ? "true" : "false");
+        }
+        else {
+          item.getFields().put(assetField.getName(), value);
+        }
       }
     }
   }

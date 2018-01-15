@@ -47,6 +47,8 @@ import org.mockito.Mock;
 
 import static java.nio.file.Files.write;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -69,6 +71,16 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 public class FileBlobStoreTest
     extends TestSupport
 {
+  private static final byte[] VALID_BLOB_STORE_PROPERTIES = ("@BlobStore.created-by = admin\n" +
+      "size = 40\n" +
+      "@Bucket.repo-name = maven-releases\n" +
+      "creationTime = 1486679665325\n" +
+      "@BlobStore.blob-name = com/sonatype/training/nxs301/03-implicit-staging/maven-metadata.xml.sha1\n" +
+      "@BlobStore.content-type = text/plain\n" +
+      "sha1 = cbd5bce1c926e6b55b6b4037ce691b8f9e5dea0f").getBytes(StandardCharsets.ISO_8859_1);
+
+  private static final byte[] EMPTY_BLOB_STORE_PROPERTIES = ("").getBytes(StandardCharsets.ISO_8859_1);
+
   @Mock
   private BlobIdLocationResolver blobIdLocationResolver;
 
@@ -323,8 +335,6 @@ public class FileBlobStoreTest
     verify(fileOperations, times(2)).delete(any());
   }
 
-  byte[] emptyBlobStoreProperties = ("").getBytes(StandardCharsets.ISO_8859_1);
-
   @Test
   public void testDeleteWithCorruptAttributes() throws Exception {
     when(nodeAccess.isOldestNode()).thenReturn(true);
@@ -333,7 +343,7 @@ public class FileBlobStoreTest
     Path contentPath = underTest.getAbsoluteBlobDir().resolve("content");
     Path bytesPath = contentPath.resolve("test-blob.bytes");
     Path propertiesPath = contentPath.resolve("test-blob.properties");
-    write(propertiesPath, emptyBlobStoreProperties);
+    write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
     underTest.delete(new BlobId("test-blob"), "deleting");
 
@@ -358,5 +368,26 @@ public class FileBlobStoreTest
     // /full/path/on/disk/to/content/directpath/some/direct/path/file.properties.properties
     Path absolute = underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
     assertThat(underTest.toBlobName(absolute), is("some/direct/path/file.properties"));
+  }
+
+  @Test
+  public void getBlobAttributes() throws Exception {
+    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties");
+    write(propertiesPath, VALID_BLOB_STORE_PROPERTIES);
+
+    assertNotNull(underTest.getBlobAttributes(new BlobId("test-blob")));
+  }
+
+  @Test
+  public void getBlobAttributesReturnsNullWhenPropertiesFileIsNonExistent() {
+    assertNull(underTest.getBlobAttributes(new BlobId("non-existent-blob")));
+  }
+
+  @Test
+  public void getBlobAttributesReturnsNullWhenExceptionIsThrown() throws Exception {
+    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties");
+    write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
+
+    assertNull(underTest.getBlobAttributes(new BlobId("test-blob")));
   }
 }

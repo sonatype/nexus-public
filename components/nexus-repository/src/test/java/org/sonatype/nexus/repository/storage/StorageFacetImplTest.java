@@ -125,6 +125,9 @@ public class StorageFacetImplTest
   @Mock
   private Payload payload;
 
+  @Mock
+  private ComponentFactory componentFactory;
+
   @Captor
   private ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
@@ -154,8 +157,8 @@ public class StorageFacetImplTest
         clientInfoProvider,
         contentValidatorSelector,
         mimeRulesSourceSelector,
-        storageFacetManager
-    );
+        storageFacetManager,
+        componentFactory);
     underTest.attach(repository);
   }
 

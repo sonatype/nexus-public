@@ -115,6 +115,34 @@ public class RebuildBrowseNodesTaskTest
   }
 
   @Test
+  public void executeWithOfflineRepository() {
+    ORID bucketId = AttachedEntityHelper.id(bucket);
+
+    Asset asset1 = createMockAsset("#1:1");
+    Asset asset2 = createMockAsset("#1:2");
+    Asset asset3 = createMockAsset("#2:1");
+
+    List<Entry<Object, EntityId>> page = asList(
+        createIndexEntry(bucketId, EntityHelper.id(asset1)),
+        createIndexEntry(bucketId, EntityHelper.id(asset2)),
+        createIndexEntry(bucketId, EntityHelper.id(asset3)));
+
+    when(config.isOnline()).thenReturn(false);
+
+    when(assetStore.countAssets(any())).thenReturn(3L);
+    when(assetStore.getNextPage(any(), eq(REBUILD_PAGE_SIZE))).thenReturn(page, emptyList());
+    when(assetStore.getById(EntityHelper.id(asset1))).thenReturn(asset1);
+    when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
+    when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
+
+    underTest.execute(repository);
+
+    verify(assetStore, times(2)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
+
+    verify(browseNodeManager).createFromAssets(eq(repository), eq(asList(asset1, asset2, asset3)));
+  }
+
+  @Test
   public void executeTruncatesNodesForNoAssets() {
     when(assetStore.countAssets(any())).thenReturn(0L);
 

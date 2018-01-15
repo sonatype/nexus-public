@@ -105,6 +105,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       controller: {
         '#Refresh': {
           refresh: me.loadStores
+        },
+        '#State': {
+          changed: me.stateChanged
         }
       },
       component: {
@@ -341,6 +344,11 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
+  stateChanged: function() {
+    var me = this;
+    me.updateUploadButton();
+  },
+
   bookmarkNode: function(nodeId) {
     var baseUrl = '#browse/browse:' + encodeURIComponent(this.getCurrentRepository().get('name')),
         encodedId = nodeId ? encodeURIComponent(nodeId) : null;
@@ -557,21 +565,23 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var me = this,
         uploadButton = me.getUploadButton(),
         store = me.getStore('UploadComponentDefinition'),
-        repository = repo || me.getCurrentRepository(),
-        format = repository.getData().format,
-        isHosted = repository.getData().type === 'hosted',
-        hasPermission = NX.Permissions.check('nexus:component:add');
+        repository = repo || me.getCurrentRepository();
 
-    if (hasPermission && isHosted) {
-      store.load(function(store, results) {
-        var isSupported = Ext.Array.some(results.getRecords(), function(item) {
-          return item.getData().format === format;
+    if (uploadButton && repository) {
+      if (NX.State.getValue('upload') &&
+          NX.Permissions.check('nexus:component:add') &&
+          repository.getData().type === 'hosted' &&
+          repository.getData().versionPolicy !== 'SNAPSHOT') {
+        store.load(function (store, results) {
+          var isSupported = Ext.Array.some(results.getRecords(), function (item) {
+            return item.getData().format === repository.getData().format;
+          });
+          uploadButton.setVisible(isSupported);
         });
-        uploadButton.setVisible(isSupported);
-      });
-    }
-    else {
-      uploadButton.setVisible(false);
+      }
+      else {
+        uploadButton.setVisible(false);
+      }
     }
   },
 

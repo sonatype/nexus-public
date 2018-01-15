@@ -26,6 +26,7 @@ class RepositoryReferenceXO
 {
   String type
   String format
+  String versionPolicy
   String url
   RepositoryStatusXO status
   /**

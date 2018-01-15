@@ -41,6 +41,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_LAST_DOWNLOADED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * {@link PurgeUnusedFacet} implementation.
@@ -86,6 +87,7 @@ public class PurgeUnusedFacetImpl
     StorageTx tx = UnitOfWork.currentTx();
 
     for (Component component : findUnusedComponents(tx, olderThan)) {
+      checkCancellation();
       log.debug("Deleting unused component {}", component);
       tx.deleteComponent(component); // TODO: commit in batches
     }
@@ -99,6 +101,7 @@ public class PurgeUnusedFacetImpl
     StorageTx tx = UnitOfWork.currentTx();
 
     for (Asset asset : findUnusedAssets(tx, olderThan)) {
+      checkCancellation();
       log.debug("Deleting unused asset {}", asset);
       tx.deleteAsset(asset); // TODO: commit in batches
     }
@@ -121,6 +124,7 @@ public class PurgeUnusedFacetImpl
         "olderThan", olderThan
     );
 
+    checkCancellation();
     return Iterables.transform(tx.browse(sql, sqlParams),
         (doc) -> componentEntityAdapter.readEntity(doc.field(P_COMPONENT)));
   }
@@ -132,6 +136,7 @@ public class PurgeUnusedFacetImpl
     String whereClause = String.format("%s IS NULL AND %s < :olderThan", P_COMPONENT, P_LAST_DOWNLOADED);
     Map<String, Object> sqlParams = ImmutableMap.of("olderThan", olderThan);
 
+    checkCancellation();
     return tx.findAssets(whereClause, sqlParams, ImmutableList.of(getRepository()), null);
   }
 }

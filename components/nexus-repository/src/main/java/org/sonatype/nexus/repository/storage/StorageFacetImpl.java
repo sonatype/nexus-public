@@ -87,6 +87,8 @@ public class StorageFacetImpl
 
   private final StorageFacetManager storageFacetManager;
 
+  private final ComponentFactory componentFactory;
+
   @VisibleForTesting
   static final String CONFIG_KEY = "storage";
 
@@ -126,7 +128,8 @@ public class StorageFacetImpl
                           final ClientInfoProvider clientInfoProvider,
                           final ContentValidatorSelector contentValidatorSelector,
                           final MimeRulesSourceSelector mimeRulesSourceSelector,
-                          final StorageFacetManager storageFacetManager)
+                          final StorageFacetManager storageFacetManager,
+                          final ComponentFactory componentFactory)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -139,6 +142,7 @@ public class StorageFacetImpl
     this.contentValidatorSelector = checkNotNull(contentValidatorSelector);
     this.mimeRulesSourceSelector = checkNotNull(mimeRulesSourceSelector);
     this.storageFacetManager = checkNotNull(storageFacetManager);
+    this.componentFactory = checkNotNull(componentFactory);
 
     this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
@@ -271,8 +275,8 @@ public class StorageFacetImpl
             assetEntityAdapter,
             config.strictContentTypeValidation,
             contentValidatorSelector.validator(getRepository()),
-            mimeRulesSourceSelector.ruleSource(getRepository())
-        )
+            mimeRulesSourceSelector.ruleSource(getRepository()),
+            componentFactory)
     );
   }
 }

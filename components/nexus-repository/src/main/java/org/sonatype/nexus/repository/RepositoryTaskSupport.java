@@ -21,6 +21,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.base.Strings;
@@ -64,16 +65,27 @@ public abstract class RepositoryTaskSupport
     processedRepositories = Sets.newHashSet();
     MultipleFailures failures = new MultipleFailures();
     for (Repository repository : findRepositories()) {
-      if (!isCanceled()) {
-        try {
-          execute(repository);
-        }
-        catch (Exception e) {
-          log.error("Failed to run task '{}' on repository '{}'", getMessage(), repository.getName(), e);
-          failures.add(e);
-        }
+      if (isCanceled()) {
+        break;
+      }
+
+      try {
+        execute(repository);
+      }
+      catch (TaskInterruptedException e) { // NOSONAR
+        cancel(); // potentially redundant call to ensure loop exits
+        break;
+      }
+      catch (Exception e) {
+        log.error("Failed to run task '{}' on repository '{}'", getMessage(), repository.getName(), e);
+        failures.add(e);
       }
     }
+
+    if (isCanceled()) {
+      log.warn("Task '{}' was canceled", getMessage());
+    }
+
     failures.maybePropagate(String.format("Failed to run task '%s'", getMessage()));
     return null;
   }

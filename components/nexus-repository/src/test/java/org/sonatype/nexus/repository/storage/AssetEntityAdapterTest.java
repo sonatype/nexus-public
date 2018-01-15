@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,7 +49,8 @@ public class AssetEntityAdapterTest
   @Before
   public void setUp() {
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
-    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter);
+    ComponentFactory componentFactory = new ComponentFactory(emptySet());
+    componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       bucketEntityAdapter.register(db);

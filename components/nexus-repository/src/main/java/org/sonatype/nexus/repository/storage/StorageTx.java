@@ -217,6 +217,15 @@ public interface StorageTx
   long countAssets(Query query, @Nullable Iterable<Repository> repositories);
 
   /**
+   * Check for the existence of a component with {@code group}, {@code name}, and {@code version} in {@code repository}.
+   *
+   * @since 3.next
+   */
+  boolean componentExists(@Nullable final String group,
+                          final String name,
+                          @Nullable final String version,
+                          final Repository repository);
+  /**
    * Gets a component by id, owned by the specified bucket, or {@code null} if not found.
    */
   @Nullable

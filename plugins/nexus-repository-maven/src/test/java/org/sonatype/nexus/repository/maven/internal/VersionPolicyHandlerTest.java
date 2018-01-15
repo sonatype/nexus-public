@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -50,9 +51,16 @@ public class VersionPolicyHandlerTest
   @Mock
   private Response proceeded;
 
+  private VersionPolicyValidator versionPolicyValidator = new VersionPolicyValidator();
+
   private MavenPathParser mavenPathParser = new Maven2MavenPathParser();
 
-  private VersionPolicyHandler underTest = new VersionPolicyHandler();
+  private VersionPolicyHandler underTest;
+
+  @Before
+  public void setup() {
+    underTest = new VersionPolicyHandler(versionPolicyValidator);
+  }
 
   private void testScenario(VersionPolicy policy, String path, boolean shouldProceed) throws Exception {
     when(context.getRepository()).thenReturn(repository);

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -20,14 +21,10 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
-
-import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
-import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 
 /**
  * Maven version policy handler.
@@ -40,8 +37,12 @@ public class VersionPolicyHandler
     extends ComponentSupport
     implements Handler
 {
+  private final VersionPolicyValidator versionPolicyValidator;
 
-  private static final String METADATA_SNAPSHOT_PATH_SUFFIX = SNAPSHOT_VERSION_SUFFIX + "/" + METADATA_FILENAME;
+  @Inject
+  public VersionPolicyHandler(VersionPolicyValidator versionPolicyValidator) {
+    this.versionPolicyValidator = versionPolicyValidator;
+  }
 
   @Nonnull
   @Override
@@ -49,33 +50,14 @@ public class VersionPolicyHandler
     final MavenPath path = context.getAttributes().require(MavenPath.class);
     final MavenFacet mavenFacet = context.getRepository().facet(MavenFacet.class);
     final VersionPolicy versionPolicy = mavenFacet.getVersionPolicy();
-    if (path.getCoordinates() != null && !allowsArtifactRepositoryPath(versionPolicy, path.getCoordinates())) {
+    if (path.getCoordinates() != null && !versionPolicyValidator.validArtifactPath(versionPolicy, path.getCoordinates())) {
       return HttpResponses.badRequest("Repository version policy: " + versionPolicy + " does not allow version: " +
           path.getCoordinates().getVersion());
     }
-    if (!allowsMetadataRepositoryPath(versionPolicy, path.main().getPath())) {
+    if (!versionPolicyValidator.validMetadataPath(versionPolicy, path.main().getPath())) {
       return HttpResponses.badRequest("Repository version policy: " + versionPolicy +
           " does not allow metadata in path: " + path.getPath());
     }
     return context.proceed();
   }
-
-  private boolean allowsArtifactRepositoryPath(final VersionPolicy versionPolicy, final Coordinates coordinates) {
-    if (versionPolicy == VersionPolicy.SNAPSHOT) {
-      return coordinates.isSnapshot();
-    }
-    if (versionPolicy == VersionPolicy.RELEASE) {
-      return !coordinates.isSnapshot();
-    }
-    return true;
-  }
-
-  private boolean allowsMetadataRepositoryPath(final VersionPolicy versionPolicy, final String path) {
-    boolean isMetadataSnapshot = path.endsWith(METADATA_SNAPSHOT_PATH_SUFFIX);
-    if (isMetadataSnapshot && versionPolicy == VersionPolicy.RELEASE) {
-      return false;
-    }
-    return true;
-  }
-
 }

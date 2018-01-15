@@ -157,6 +157,7 @@ class RepositoryComponent
           name: repository.name,
           type: repository.type.toString(),
           format: repository.format.toString(),
+          versionPolicy: repository.configuration.attributes.maven?.versionPolicy,
           status: buildStatus(repository),
           url: "${BaseUrlHolder.get()}/repository/${repository.name}/" // trailing slash is important
       )
