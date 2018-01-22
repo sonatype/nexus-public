@@ -185,14 +185,15 @@ public class CselAssetSqlBuilder
    */
   @Override
   protected Object visit(final ASTStringLiteral node, final Object data) {
-    CselAssetSql cselAssetSql = (CselAssetSql) data;
-    StringBuilder result = cselAssetSql.getSqlBuilder();
+    return appendStringParameter((CselAssetSql) data, node.getLiteral());
+  }
 
+  private StringBuilder appendStringParameter(final CselAssetSql cselAssetSql, final String string) {
     String parameterName = cselAssetSql.getNextParameterName();
 
-    cselAssetSql.getSqlParameters().put(parameterName, node.getLiteral());
+    cselAssetSql.getSqlParameters().put(parameterName, string);
 
-    return result.append(':' + parameterName);
+    return cselAssetSql.getSqlBuilder().append(':' + parameterName);
   }
 
   /**
@@ -220,7 +221,19 @@ public class CselAssetSqlBuilder
 
     result.append(' ').append(operator).append(' ');
 
-    rightChild.jjtAccept(this, data);
+    if (leftChild instanceof ASTIdentifier && rightChild instanceof ASTStringLiteral
+        && "path".equals(((ASTIdentifier) leftChild).getName())) {
+      String literal = ((ASTStringLiteral) rightChild).getLiteral();
+      if (literal.startsWith("/")) {
+        appendStringParameter(cselAssetSql, literal.substring(1));
+      }
+      else {
+        rightChild.jjtAccept(this, data);
+      }
+    }
+    else {
+      rightChild.jjtAccept(this, data);
+    }
 
     return result;
   }

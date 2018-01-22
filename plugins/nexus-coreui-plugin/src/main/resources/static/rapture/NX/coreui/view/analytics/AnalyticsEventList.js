@@ -86,7 +86,8 @@ Ext.define('NX.coreui.view.analytics.AnalyticsEventList', {
           header: NX.I18n.get('Analytics_AnalyticsEventList_User_Header'),
           dataIndex: 'userId',
           stateId: 'userId',
-          flex: 1
+          flex: 1,
+          renderer: Ext.htmlEncode
         },
         {
           header: "node",

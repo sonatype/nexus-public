@@ -25,6 +25,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -74,9 +75,10 @@ public class TasksResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:tasks:read")
-  public Page<TaskXO> getTasks() {
+  public Page<TaskXO> getTasks(@QueryParam("type") final String type) {
     List<TaskXO> taskXOs = taskScheduler.listsTasks().stream()
         .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
+        .filter(taskInfo -> typeParameterMatches(type, taskInfo))
         .map(TaskXO::fromTaskInfo)
         .collect(toList());
 
@@ -136,5 +138,9 @@ public class TasksResource
     return ofNullable(taskScheduler.getTaskById(id))
         .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
         .orElseThrow(() -> new NotFoundException("Unable to locate task with id " + id));
+  }
+
+  private static boolean typeParameterMatches(final String type, final TaskInfo taskInfo) {
+    return type == null || type.isEmpty() || type.equals(taskInfo.getTypeId());
   }
 }

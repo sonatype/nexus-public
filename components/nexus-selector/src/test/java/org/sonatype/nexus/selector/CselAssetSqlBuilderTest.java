@@ -102,4 +102,13 @@ public class CselAssetSqlBuilderTest
     assertThat(whereClause.getSqlParameters().get("a1"), is(".*"));
     assertThat(whereClause.getSqlParameters().get("a2"), is("com.sonatype"));
   }
+
+  @Test
+  public void buildWhereClauseHandlesPathLeadingSlash() throws Exception {
+    CselAssetSql whereClause = builder.buildWhereClause("format == \"a\" || path == '/bar/foo'", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("format = :a0 or name = :a1"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("a"));
+    assertThat(whereClause.getSqlParameters().get("a1"), is("bar/foo"));
+  }
 }

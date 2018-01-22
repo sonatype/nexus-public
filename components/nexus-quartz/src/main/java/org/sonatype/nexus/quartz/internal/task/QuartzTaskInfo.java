@@ -169,6 +169,11 @@ public class QuartzTaskInfo
   }
 
   @Override
+  public String getTypeId() {
+    return getConfiguration().getTypeId();
+  }
+
+  @Override
   public String getMessage() {
     return getConfiguration().getMessage();
   }

@@ -26,7 +26,7 @@ Ext.define('NX.coreui.audit.AuditModel', {
   fields: [
     {name: 'domain', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
-    {name: 'context', type: 'string', sortType: 'asUCText'},
+    {name: 'context', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode},
     {name: 'timestamp', type: 'date'},
     {name: 'nodeId', type: 'string', sortType: 'asUCText'},
     {name: 'initiator', type: 'string', sortType: 'asUCText'},

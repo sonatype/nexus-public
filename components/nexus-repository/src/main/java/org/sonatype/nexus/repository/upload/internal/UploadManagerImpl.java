@@ -23,6 +23,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
@@ -80,6 +81,12 @@ public class UploadManagerImpl
 
   private UploadHandler getUploadHandler(final Repository repository)
   {
+    if (!(repository.getType() instanceof HostedType)) {
+      throw new ValidationErrorsException(
+          format("Uploading components to a '%s' type repository is unsupported, must be '%s'",
+              repository.getType().getValue(), HostedType.NAME));
+    }
+
     String repositoryFormat = repository.getFormat().toString();
     UploadHandler uploadHandler = uploadHandlers.get(repositoryFormat);
 

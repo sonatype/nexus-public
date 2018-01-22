@@ -39,12 +39,15 @@ public class TasksResourceTest
   def invisibleConfig = new TaskConfiguration(visible: false)
 
   def testTasks = [
-    new TestTaskInfo(id: 'task0', name: 'Invisible task', currentState: new TestCurrentState(state: WAITING), configuration: invisibleConfig),
-    new TestTaskInfo(id: 'task1', name: 'Task 1', currentState: new TestCurrentState(state: WAITING), configuration: visibleConfig),
-    new TestTaskInfo(id: 'task2', name: 'Task 2', currentState: new TestCurrentState(state: RUNNING,
-        runStarted: new Date(), future: new CompletableFuture()), configuration: visibleConfig),
-    new TestTaskInfo(id: 'task3', name: 'Task 3', currentState: new TestCurrentState(state: DONE,
-        runStarted: new Date(), future: CompletableFuture.completedFuture(null)), configuration: visibleConfig)
+      new TestTaskInfo(id: 'task0', name: 'Invisible task', typeId: 'aType',
+          currentState: new TestCurrentState(state: WAITING), configuration: invisibleConfig),
+      new TestTaskInfo(id: 'task1', name: 'Task 1', typeId: 'anotherType',
+          currentState: new TestCurrentState(state: WAITING), configuration: visibleConfig),
+      new TestTaskInfo(id: 'task2', name: 'Task 2', typeId: 'aType', currentState: new TestCurrentState(state: RUNNING,
+          runStarted: new Date(), future: new CompletableFuture()), configuration: visibleConfig),
+      new TestTaskInfo(id: 'task3', name: 'Task 3', typeId: 'anotherType',
+          currentState: new TestCurrentState(state: DONE, runStarted: new Date(),
+              future: CompletableFuture.completedFuture(null)), configuration: visibleConfig)
   ]
 
   def setup() {
@@ -63,7 +66,20 @@ public class TasksResourceTest
     then:
       1 * taskScheduler.listsTasks() >> testTasks
       page.items.size() == 3
+      page.items*.id == ['task1', 'task2', 'task3']
       page.items*.name == ['Task 1', 'Task 2', 'Task 3']
+      page.items*.type == ['anotherType', 'aType', 'anotherType']
+      page.items*.currentState == [WAITING.toString(), RUNNING.toString(), DONE.toString()]
+  }
+
+  def 'getTasks filters on task type'() {
+    when:
+      def page = tasksResource.getTasks('anotherType')
+
+    then:
+      1 * taskScheduler.listsTasks() >> testTasks
+      page.items.size() == 2
+      page.items*.id == ['task1', 'task3']
   }
 
   def 'getTaskById gets tasks by id'() {
@@ -73,6 +89,9 @@ public class TasksResourceTest
     then: 'expected task is returned'
       1 * taskScheduler.getTaskById(_) >> { String id -> testTasks.find { it.id == id } }
       validTaskXO.id == 'task1'
+      validTaskXO.name == 'Task 1'
+      validTaskXO.type == 'anotherType'
+      validTaskXO.currentState == WAITING.toString()
 
     when: 'getTaskById called with invalid id'
       def invalidTaskXO = tasksResource.getTaskById('nosuchtask')
@@ -153,6 +172,7 @@ public class TasksResourceTest
   class TestTaskInfo implements TaskInfo {
     String id
     String name
+    String typeId
     String message
     String triggerSource
     TaskInfo.CurrentState currentState

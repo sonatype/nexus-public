@@ -43,10 +43,10 @@ Ext.define('NX.coreui.view.user.UserList', {
             return 'user-default';
           }
         },
-        { header: NX.I18n.get('User_UserList_ID_Header'), dataIndex: 'userId', stateId: 'userId', flex: 2 },
+        { header: NX.I18n.get('User_UserList_ID_Header'), dataIndex: 'userId', stateId: 'userId', flex: 2, renderer: Ext.htmlEncode },
         { header: NX.I18n.get('User_UserList_Realm_Header'), dataIndex: 'realm', stateId: 'realm' },
-        { header: NX.I18n.get('User_UserList_FirstName_Header'), dataIndex: 'firstName', stateId: 'firstName', flex: 2 },
-        { header: NX.I18n.get('User_UserList_LastName_Header'), dataIndex: 'lastName', stateId: 'lastName', flex: 2 },
+        { header: NX.I18n.get('User_UserList_FirstName_Header'), dataIndex: 'firstName', stateId: 'firstName', flex: 2, renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('User_UserList_LastName_Header'), dataIndex: 'lastName', stateId: 'lastName', flex: 2, renderer: Ext.htmlEncode },
         { header: NX.I18n.get('User_UserList_Email_Header'), dataIndex: 'email', stateId: 'email', flex: 2 },
         { header: NX.I18n.get('User_UserList_Status_Header'), dataIndex: 'status', stateId: 'status' }
       ],

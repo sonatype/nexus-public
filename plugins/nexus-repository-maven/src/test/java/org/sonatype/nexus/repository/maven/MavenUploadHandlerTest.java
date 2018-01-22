@@ -284,7 +284,7 @@ public class MavenUploadHandlerTest
   }
 
   @Test
-  public void testHandle_releaseToSnapshot() throws Exception {
+  public void testHandle_snapshot_not_supported() throws Exception {
     when(mavenFacet.getVersionPolicy()).thenReturn(VersionPolicy.SNAPSHOT);
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
 
@@ -305,7 +305,7 @@ public class MavenUploadHandlerTest
     }
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
-      assertThat(e.getValidationErrors().get(0).getMessage(), is("Version policy mismatch, cannot upload RELEASE content to SNAPSHOT repositories for file '0'"));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Upload to snapshot repositories not supported, use the maven client."));
     }
   }
 

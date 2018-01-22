@@ -30,7 +30,7 @@ import org.sonatype.nexus.rest.Page;
 public interface TasksResourceDoc
 {
   @ApiOperation("List tasks")
-  Page<TaskXO> getTasks();
+  Page<TaskXO> getTasks(@ApiParam(value = "Type of the tasks to get") final String type);
 
   @ApiOperation("Get a single task by id")
   @ApiResponses(value = {

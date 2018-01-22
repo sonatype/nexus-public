@@ -797,63 +797,37 @@ Ext.define('NX.controller.Drilldown', {
 
   /*
    * @private
-   * Reduce the width of a set of buttons, longest first, to a specified width
+   * Reduce the width of a set of buttons to fit a specified target width. The buttons are processed in
+   * ascending order by width until the first button with a width > the remaining target width / remaining buttons
+   * (i.e. equalPartsButtonWidth) is found. The equalPartsButtonWidth is then applied to all remaining buttons.
    *
    * @param buttons The list of buttons to resize
-   * @param width The desired resize width (sum of all buttons)
-   * @param minPerButton The minimum to resize each button (until all buttons are at this minimum)
+   * @param targetWidth The desired resize width (sum of all buttons)
    */
-  reduceButtonWidth: function(buttons, width, minPerButton) {
-    var me = this,
-      currentWidth = 0,
-      setToWidth;
+  reduceButtonWidth: function(buttons, targetWidth) {
+    var currentButtonWidth,
+        equalPartsButtonWidth,
+        adjustedButtonWidth,
+        totalButtons = buttons.length,
+        byWidthAscending = function(button, anotherButton) {
+          return button.getWidth() - anotherButton.getWidth();
+        };
 
-    // Sort the buttons by width
-    buttons = buttons.sort(function(a,b) {
-      return b.getWidth() - a.getWidth();
+    buttons.sort(byWidthAscending).forEach(function(button, buttonIndex) {
+      if (adjustedButtonWidth) {
+        button.setWidth(adjustedButtonWidth);
+        return;
+      }
+
+      equalPartsButtonWidth = Math.floor(targetWidth / (totalButtons - buttonIndex));
+      currentButtonWidth = button.getWidth();
+      targetWidth -= currentButtonWidth;
+
+      if (equalPartsButtonWidth < currentButtonWidth) {
+        adjustedButtonWidth = equalPartsButtonWidth;
+        button.setWidth(adjustedButtonWidth);
+      }
     });
-
-    // Calculate the current width of the buttons
-    for (var i = 0; i < buttons.length; ++i) {
-      currentWidth += buttons[i].getWidth();
-    }
-
-    // Find the next button to resize
-    for (var i = 0; i < buttons.length; ++i) {
-
-      // Shorten the longest button
-      if (i < buttons.length - 1 && buttons[i].getWidth() > buttons[i+1].getWidth()) {
-
-        // Will resizing this button make it fit?
-        if (currentWidth - (buttons[i].getWidth() - buttons[i+1].getWidth()) <= width) {
-
-          // Yes.
-          setToWidth = width;
-          for (var j = i + 1; j < buttons.length; ++j) {
-            setToWidth -= buttons[j].getWidth();
-          }
-          buttons[i].setWidth(setToWidth);
-
-          // Exit the algorithm
-          break;
-        }
-        else {
-          // No. Set the width of this button to that of the next button, and re-run the algorithm.
-          buttons[i].setWidth(buttons[i+1].getWidth());
-          me.reduceButtonWidth(buttons, width, minPerButton);
-        }
-      }
-      else {
-        // All buttons are the same length, shorten all by the same length
-        setToWidth = Math.floor(width / buttons.length);
-        for (var j = 0; j < buttons.length; ++j) {
-          buttons[j].setWidth(setToWidth);
-        }
-
-        // Exit the algorithm
-        break;
-      }
-    }
   },
 
   /**

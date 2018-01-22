@@ -68,7 +68,7 @@ public class UploadService
   /**
    * Perform an upload of assets
    *
-   * @param params the form paramters
+   * @param params the form parameters
    * @param files the files being uploaded
    * @return the query term for results in search (depending on upload could show additional results)
    * @throws IOException

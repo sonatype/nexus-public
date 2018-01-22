@@ -52,6 +52,15 @@ public interface TaskInfo
   String getName();
 
   /**
+   * Returns a type id of the task instance.
+   *
+   * Shorthand method for {@link #getConfiguration()#getTypeId()}
+   *
+   * @since 3.next
+   */
+  String getTypeId();
+
+  /**
    * Returns a message of the task instance.
    *
    * Shorthand method for {@link #getConfiguration()#getMessage()}

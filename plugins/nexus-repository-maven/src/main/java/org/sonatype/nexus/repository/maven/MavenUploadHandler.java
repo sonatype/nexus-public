@@ -133,6 +133,11 @@ public class MavenUploadHandler
 
   private List<String> doUpload(final Repository repository, final ComponentUpload componentUpload) throws IOException {
     MavenFacet facet = repository.facet(MavenFacet.class);
+
+    if (VersionPolicy.SNAPSHOT.equals(facet.getVersionPolicy())) {
+      throw new ValidationErrorsException("Upload to snapshot repositories not supported, use the maven client.");
+    }
+
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     return TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(() -> {

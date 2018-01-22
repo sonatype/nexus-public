@@ -46,6 +46,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -163,6 +164,44 @@ public class RawUploadHandlerTest
     component.getAssetUploads().add(asset);
 
     underTest.handle(repository, component);
+  }
+
+  @Test
+  public void testHandle_normalizePath() throws IOException {
+    testNormalizePath("/foo", "goo.jar");
+    testNormalizePath("/foo", "/goo.jar");
+
+    testNormalizePath("/foo/", "goo.jar");
+    testNormalizePath("/foo/", "/goo.jar");
+
+    testNormalizePath("foo/", "goo.jar");
+    testNormalizePath("foo/", "/goo.jar");
+
+    testNormalizePath("foo", "goo.jar");
+    testNormalizePath("foo", "/goo.jar");
+
+    testNormalizePath("  foo  ", "  goo.jar  ");
+  }
+
+  private void testNormalizePath(String directory, String file) throws IOException {
+    reset(rawFacet);
+    ComponentUpload component = new ComponentUpload();
+
+    component.getFields().put("directory", directory);
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", file);
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    underTest.handle(repository, component);
+
+    ArgumentCaptor<String> pathCapture = ArgumentCaptor.forClass(String.class);
+    verify(rawFacet).put(pathCapture.capture(), any(PartPayload.class));
+
+    String path = pathCapture.getValue();
+    assertNotNull(path);
+    assertThat(path, is("foo/goo.jar"));
   }
 
   private UploadFieldDefinition field(final String name,

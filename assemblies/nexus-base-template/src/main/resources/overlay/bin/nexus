@@ -269,6 +269,11 @@ setupDefaults() {
 
     DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/log/jvm.log -XX:-OmitStackTraceInFastThrow  "
 
+    if [ "$darwin" = "true" ] && [ "$JVM_VENDOR" = "SUN" ] && [ `ulimit -n` -gt 10240 ]; then
+        # NEXUS-14184 - Open up OSX file descriptor limit
+        DEFAULT_JAVA_OPTS="$DEFAULT_JAVA_OPTS -XX:-MaxFDLimit "
+    fi
+
     #Set the JVM_VENDOR specific JVM flags
     if [ "$JVM_VENDOR" = "SUN" ]; then
         # SONATYPE: removed -XX:PermSize and -XX:MaxPermSize

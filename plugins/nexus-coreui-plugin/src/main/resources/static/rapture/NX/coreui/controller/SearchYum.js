@@ -32,7 +32,7 @@ Ext.define('NX.coreui.controller.SearchYum', {
 
     search.registerCriteria([
       {
-        id: 'attributes.yum.architecture',
+        id: 'assets.attributes.yum.architecture',
         group: NX.I18n.get('SearchYum_Group'),
         config: {
           format: 'yum',
@@ -61,7 +61,7 @@ Ext.define('NX.coreui.controller.SearchYum', {
         { id: 'format', value: 'yum', hidden: true },
         { id: 'attributes.yum.name' },
         { id: 'version' },
-        { id: 'attributes.yum.architecture' }
+        { id: 'assets.attributes.yum.architecture' }
       ]
     }, me);
   }

@@ -33,7 +33,7 @@ Ext.define('NX.coreui.view.user.UserSettingsForm', {
     var me = this;
 
     me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
-      return NX.I18n.get('User_UserSettingsForm_Update_Success') + data['userId'];
+      return NX.I18n.get('User_UserSettingsForm_Update_Success') + Ext.htmlEncode(data['userId']);
     };
 
     me.editableMarker = NX.I18n.get('User_UserSettingsForm_Update_Error');

@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.repository.types.VirtualType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -61,10 +65,18 @@ public class UploadManagerImplTest
   @Mock
   UploadDefinition uploadB;
 
+  @Mock
+  Repository repository;
+
   @Before
   public void setup() {
     when(handlerA.getDefinition()).thenReturn(uploadA);
     when(handlerB.getDefinition()).thenReturn(uploadB);
+
+    when(repository.getFormat()).thenReturn(new Format("a")
+    {
+    });
+    when(repository.getType()).thenReturn(new HostedType());
 
     Map<String, UploadHandler> handlers = new HashMap<>();
     handlers.put("a", handlerA);
@@ -86,11 +98,6 @@ public class UploadManagerImplTest
 
   @Test
   public void testHandle() throws IOException {
-    Repository repository = mock(Repository.class);
-    when(repository.getFormat()).thenReturn(new Format("a")
-    {
-    });
-
     ComponentUpload component = mock(ComponentUpload.class);
     when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
     underTest.handle(repository, component);
@@ -115,12 +122,32 @@ public class UploadManagerImplTest
   @Test
   public void testHandle_unsupportedRepositoryFormat() throws IOException {
     ComponentUpload component = mock(ComponentUpload.class);
-    Repository repository = mock(Repository.class);
     when(repository.getFormat()).thenReturn(new Format("c")
     {
     });
 
     expectExceptionOnUpload(repository, component, "Uploading components to 'c' repositories is unsupported");
+  }
+
+  @Test
+  public void testHandle_unsupportedRepositoryGroupType() throws IOException {
+    when(repository.getType()).thenReturn(new GroupType());
+    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+        "Uploading components to a 'group' type repository is unsupported, must be 'hosted'");
+  }
+
+  @Test
+  public void testHandle_unsupportedRepositoryProxyType() throws IOException {
+    when(repository.getType()).thenReturn(new ProxyType());
+    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+        "Uploading components to a 'proxy' type repository is unsupported, must be 'hosted'");
+  }
+
+  @Test
+  public void testHandle_unsupportedRepositoryVirtualType() throws IOException {
+    when(repository.getType()).thenReturn(new VirtualType());
+    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+        "Uploading components to a 'virtual' type repository is unsupported, must be 'hosted'");
   }
 
 

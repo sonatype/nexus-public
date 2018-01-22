@@ -11,12 +11,19 @@
 @REM Eclipse Foundation. All other trademarks are the property of their respective owners.
 @REM
 
+@REM Backup nexus.properties
+copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
+
 call mvn clean install -Dmaven.test.skip=true -T 4
 
 set KARAF_DEBUG=true
 
-REM Set NEXUS_RESOURCE_DIRS for UI development
+@REM Set NEXUS_RESOURCE_DIRS for UI development
 for /f "usebackq tokens=*" %%a in (`powershell "(Get-ChildItem -Recurse |  Where-Object { $_.FullName -match '((src\\main\\resources\\static)|(src\\test\\ft-resources))$' } | ForEach-Object { $_.parent.FullName }) -join ','"`) do set NEXUS_RESOURCE_DIRS=%%a
+
+@REM Restore nexus.properties
+mkdir private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\
+move nexus.properties private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties
 
 cd private\assemblies\nexus-pro\target
 

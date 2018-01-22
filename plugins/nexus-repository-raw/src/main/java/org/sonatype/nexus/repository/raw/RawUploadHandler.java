@@ -74,13 +74,13 @@ public class RawUploadHandler
   public Collection<String> handle(final Repository repository, final ComponentUpload upload) throws IOException {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
 
-    String basePath = normalize(upload.getFields().get(DIRECTORY));
+    String basePath = normalizeBasePath(upload.getFields().get(DIRECTORY));
 
     List<String> paths = new ArrayList<>();
     TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
         .throwing(IOException.class).run(() -> {
           for (AssetUpload asset : upload.getAssetUploads()) {
-            String path = basePath + asset.getFields().get(FILENAME);
+            String path = basePath + normalize(asset.getFields().get(FILENAME));
 
             ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
             facet.put(path, asset.getPayload());
@@ -90,15 +90,23 @@ public class RawUploadHandler
     return paths;
   }
 
-  private String normalize(final String basePath) {
-    String path = basePath;
-    if (!path.endsWith("/")) {
-      path += "/";
+  private String normalizeBasePath(final String basePath) {
+    String result = normalize(basePath);
+
+    if (!result.endsWith("/")) {
+      result += "/";
     }
-    if (path.startsWith("/")) {
-      path = basePath.substring(1);
+
+    return result;
+  }
+
+  private String normalize(final String string) {
+    String result = string.trim();
+
+    if (result.startsWith("/")) {
+      return result.substring(1);
     }
-    return path;
+    return result;
   }
 
   @Override

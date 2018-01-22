@@ -25,6 +25,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -73,6 +74,7 @@ public class UploadServiceTest
     when(repo.getFormat()).thenReturn(new Format("m2")
     {
     });
+    when(repo.getType()).thenReturn(new HostedType());
     when(repositoryManager.get(REPO_NAME)).thenReturn(repo);
 
     UploadDefinition ud = new UploadDefinition("m2", true,

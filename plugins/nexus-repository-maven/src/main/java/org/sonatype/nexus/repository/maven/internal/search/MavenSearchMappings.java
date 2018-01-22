@@ -18,8 +18,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.search.SearchMapping;
-import org.sonatype.nexus.repository.search.SearchMappings;
+import org.sonatype.nexus.repository.rest.SearchMapping;
+import org.sonatype.nexus.repository.rest.SearchMappings;
 
 import com.google.common.collect.ImmutableList;
 

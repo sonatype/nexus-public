@@ -143,14 +143,14 @@ Ext.define('NX.coreui.audit.AuditList', {
                 var result = [
                   { name: NX.I18n.render(me, 'Domain'), value: values.domain },
                   { name: NX.I18n.render(me, 'Type'), value: values.type },
-                  { name: NX.I18n.render(me, 'Context'), value: values.context },
+                  { name: NX.I18n.render(me, 'Context'), value: Ext.htmlEncode(values.context) },
                   { name: NX.I18n.render(me, 'Timestamp'), value: NX.util.DateFormat.timestamp(values.timestamp) },
                   { name: NX.I18n.render(me, 'NodeId'), value: values.nodeId },
                   { name: NX.I18n.render(me, 'Initiator'), value: values.initiator }
                 ];
 
                 Ext.iterate(values.attributes, function (name, value) {
-                  result.push({ name: NX.I18n.render(me, 'Attribute', name), value: value });
+                  result.push({ name: NX.I18n.render(me, 'Attribute', name), value: Ext.htmlEncode(value) });
                 });
 
                 return result;

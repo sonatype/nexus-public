@@ -32,6 +32,8 @@ class TaskXO
 
   String name
 
+  String type
+
   String message
 
   String currentState
@@ -47,6 +49,7 @@ class TaskXO
 
     taskXO.id = taskInfo.id
     taskXO.name = taskInfo.name
+    taskXO.type = taskInfo.typeId
     taskXO.message = taskInfo.message
     taskXO.currentState = taskInfo.currentState.state.toString()
     taskXO.nextRun = taskInfo.currentState.nextRun

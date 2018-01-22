@@ -46,6 +46,19 @@ Ext.define('NX.coreui.view.repository.facet.YumHostedFacet', {
             editable: false,
             allowBlank: false,
             store : [0, 1, 2, 3, 4, 5]
+          },
+          {
+            xtype: 'combo',
+            name: 'attributes.yum.deployPolicy',
+            fieldLabel: NX.I18n.get('Repository_Facet_YumHostedFacet_DeployPolicy_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_YumHostedFacet_DeployPolicy_HelpText'),
+            emptyText: NX.I18n.get('Repository_Facet_YumHostedFacet_DeployPolicy_EmptyText'),
+            editable: false,
+            store: [
+              ['STRICT', NX.I18n.get('Repository_Facet_YumHostedFacet_DeployPolicy_StrictItem')],
+              ['PERMISSIVE', NX.I18n.get('Repository_Facet_YumHostedFacet_DeployPolicy_PermissiveItem')]
+            ],
+            value: 'STRICT'
           }
         ]
       }
