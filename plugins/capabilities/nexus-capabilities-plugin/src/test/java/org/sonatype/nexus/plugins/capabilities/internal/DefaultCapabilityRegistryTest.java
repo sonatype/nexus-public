@@ -68,6 +68,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.plugins.capabilities.CapabilityIdentity.capabilityIdentity;
 import static org.sonatype.nexus.plugins.capabilities.CapabilityType.capabilityType;
+import static org.sonatype.security.configuration.source.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * {@link DefaultCapabilityRegistry} UTs.
@@ -148,7 +149,7 @@ public class DefaultCapabilityRegistryTest
         eventBus,
         achf,
         vchf,
-        passwordHelper = new PasswordHelper(new DefaultPlexusCipher())
+        passwordHelper = new PasswordHelper(new DefaultPlexusCipher(), LEGACY_PHRASE_SERVICE)
     );
 
     rec = ArgumentCaptor.forClass(CapabilityEvent.class);

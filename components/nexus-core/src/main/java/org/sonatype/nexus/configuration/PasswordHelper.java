@@ -18,8 +18,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.plexus.components.cipher.PlexusCipher;
 import org.sonatype.plexus.components.cipher.PlexusCipherException;
+import org.sonatype.security.configuration.source.PhraseService;
 
-import com.google.common.base.Preconditions;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Singleton
 @Named
@@ -30,17 +31,18 @@ public class PasswordHelper
 
   private final PlexusCipher plexusCipher;
 
-  private final String masterPhrase = System.getProperty("nexus.security.masterPhrase", ENC);
+  private final PhraseService phraseService;
 
   @Inject
-  public PasswordHelper(final PlexusCipher plexusCipher) {
-    this.plexusCipher = Preconditions.checkNotNull(plexusCipher, "plexusCipher");
+  public PasswordHelper(final PlexusCipher plexusCipher, final PhraseService phraseService) {
+    this.plexusCipher = checkNotNull(plexusCipher);
+    this.phraseService = checkNotNull(phraseService);
   }
 
   public String encrypt(String password)
       throws PlexusCipherException
   {
-    return encrypt(password, masterPhrase);
+    return phraseService.mark(encrypt(password, phraseService.getPhrase(ENC)));
   }
 
   public String encrypt(String password, String encoding)
@@ -53,9 +55,7 @@ public class PasswordHelper
 
     if (password != null) {
       synchronized (plexusCipher) {
-        String result = plexusCipher.encryptAndDecorate(password, encoding);
-        // decorated with braces; decryptDecorated ignores anything outside
-        return ENC.equals(encoding) ? result : '~' + result + '~';
+        return plexusCipher.encryptAndDecorate(password, encoding);
       }
     }
 
@@ -65,10 +65,10 @@ public class PasswordHelper
   public String decrypt(String encodedPassword)
       throws PlexusCipherException
   {
-    if (encodedPassword != null && encodedPassword.contains("~{")) {
-      return decrypt(encodedPassword, masterPhrase);
+    if (phraseService.usesLegacyEncoding(encodedPassword)) {
+      return decrypt(encodedPassword, ENC);
     }
-    return decrypt(encodedPassword, ENC);
+    return decrypt(encodedPassword, phraseService.getPhrase(ENC));
   }
 
   public String decrypt(String encodedPassword, String encoding)
@@ -85,5 +85,9 @@ public class PasswordHelper
       }
     }
     return null;
+  }
+
+  public boolean foundLegacyEncoding() {
+    return phraseService.foundLegacyEncoding();
   }
 }

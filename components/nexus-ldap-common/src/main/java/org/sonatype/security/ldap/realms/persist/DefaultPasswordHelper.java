@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.security.configuration.source.PhraseService;
 import org.sonatype.security.ldap.upgrade.cipher.PlexusCipher;
 import org.sonatype.security.ldap.upgrade.cipher.PlexusCipherException;
 
@@ -32,33 +33,39 @@ public class DefaultPasswordHelper
 
   private final PlexusCipher plexusCipher;
 
-  private final String masterPhrase = System.getProperty("nexus.security.masterPhrase", ENC);
+  private final PhraseService phraseService;
 
   @Inject
-  public DefaultPasswordHelper(final PlexusCipher plexusCipher) {
+  public DefaultPasswordHelper(final PlexusCipher plexusCipher, final PhraseService phraseService) {
     this.plexusCipher = checkNotNull(plexusCipher);
+    this.phraseService = checkNotNull(phraseService);
   }
 
+  @Override
   public String encrypt(String password)
       throws PlexusCipherException
   {
     if (password != null) {
-      String result = plexusCipher.encrypt(password, masterPhrase);
-      // decryptDecorated will ignore anything outside these braces
-      return ENC.equals(masterPhrase) ? result : "~{" + result + "}~";
+      return phraseService.mark(plexusCipher.encrypt(password, phraseService.getPhrase(ENC)));
     }
     return null;
   }
 
+  @Override
   public String decrypt(String encodedPassword)
       throws PlexusCipherException
   {
     if (encodedPassword != null) {
-      if (!ENC.equals(masterPhrase) && encodedPassword.contains("~{")) {
-        return plexusCipher.decryptDecorated(encodedPassword, masterPhrase);
+      if (phraseService.usesLegacyEncoding(encodedPassword)) {
+        return plexusCipher.decrypt(encodedPassword, ENC);
       }
-      return plexusCipher.decrypt(encodedPassword, ENC);
+      return plexusCipher.decryptDecorated(encodedPassword, phraseService.getPhrase(ENC));
     }
     return null;
+  }
+
+  @Override
+  public boolean foundLegacyEncoding() {
+    return phraseService.foundLegacyEncoding();
   }
 }

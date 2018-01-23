@@ -60,6 +60,11 @@ public class DefaultConfigurationHelper
     return copy;
   }
 
+  @Override
+  public boolean foundLegacyEncoding() {
+    return passwordHelper.foundLegacyEncoding();
+  }
+
   protected Configuration clone(final Configuration config) {
     // use Xstream
     return (Configuration) xstream.fromXML(xstream.toXML(config));

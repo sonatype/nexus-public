@@ -129,6 +129,14 @@ public class FileSecurityConfigurationSource
 
       loadConfiguration(getConfigurationFile());
     }
+    else {
+      // was able to load configuration w/o upgrading it
+
+      if (passwordHelper.foundLegacyEncoding()) {
+        getLogger().info("Re-encoding entries using new master phrase");
+        saveConfiguration(getConfigurationFile());
+      }
+    }
 
     return getConfiguration();
   }

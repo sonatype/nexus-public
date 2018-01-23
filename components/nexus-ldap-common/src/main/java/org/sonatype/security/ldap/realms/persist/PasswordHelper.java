@@ -23,4 +23,6 @@ public interface PasswordHelper
   public String decrypt(String encodedPassword)
       throws PlexusCipherException;
 
+  public boolean foundLegacyEncoding();
+
 }

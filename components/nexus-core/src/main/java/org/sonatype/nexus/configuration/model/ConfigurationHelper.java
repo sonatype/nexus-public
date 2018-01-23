@@ -21,4 +21,6 @@ public interface ConfigurationHelper
    */
   Configuration encryptDecryptPasswords(Configuration config, boolean encrypt);
 
+  boolean foundLegacyEncoding();
+
 }

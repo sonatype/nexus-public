@@ -12,15 +12,20 @@
  */
 package org.sonatype.security.configuration.source;
 
+import java.io.FileNotFoundException;
+
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.cipher.PlexusCipherException;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.sonatype.security.configuration.source.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * UT for {@link PasswordHelper}.
@@ -28,59 +33,72 @@ import static org.junit.Assert.fail;
 public class PasswordHelperTest
     extends TestSupport
 {
-  public PasswordHelper newPasswordHelper() throws PlexusCipherException {
-    return new PasswordHelper(new DefaultPlexusCipher());
+  private PasswordHelper legacyPasswordHelper;
+
+  private PasswordHelper customPasswordHelper;
+
+  @Before
+  public void setUp() throws Exception {
+    legacyPasswordHelper = new PasswordHelper(new DefaultPlexusCipher(), LEGACY_PHRASE_SERVICE);
+    customPasswordHelper = new PasswordHelper(new DefaultPlexusCipher(), new AbstractPhraseService(true)
+    {
+      @Override
+      protected String getMasterPhrase() {
+        return "sterces, sterces, sterces";
+      }
+    });
   }
 
   @Test
-  public void testCustomMasterPhrase()
-      throws Exception
-  {
+  public void testCustomMasterPhrase() throws Exception {
     String password = "clear-text-password";
-    String encodedPass;
+    String encodedPass = customPasswordHelper.encrypt(password);
 
     try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      encodedPass = newPasswordHelper().encrypt(password);
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
-
-    try
-    {
-      newPasswordHelper().decrypt(encodedPass);
+      legacyPasswordHelper.decrypt(encodedPass);
       fail("Expected PlexusCipherException");
     }
     catch (PlexusCipherException e) {
       // expected: default phrase should not work here
     }
 
-    try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
+    assertThat(password, is(customPasswordHelper.decrypt(encodedPass)));
   }
 
   @Test
-  public void testLegacyPhraseFallback()
-      throws Exception
-  {
+  public void testLegacyPhraseFallback() throws Exception {
     String password = "clear-text-password";
-    String encodedPass = newPasswordHelper().encrypt(password);
+    String encodedPass = legacyPasswordHelper.encrypt(password);
 
-    assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
+    assertThat(password, is(legacyPasswordHelper.decrypt(encodedPass)));
 
+    // should still work by falling back to legacy pass-phrase
+    assertThat(password, is(customPasswordHelper.decrypt(encodedPass)));
+  }
+
+  @Test
+  public void testCustomPhraseFile() throws Exception {
+    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/custom.enc"));
+    PasswordHelper underTest = new PasswordHelper(new DefaultPlexusCipher(), phraseService);
+
+    String password = "clear-text-password";
+    String encodedPass = underTest.encrypt(password);
+
+    assertThat(password, is(underTest.decrypt(encodedPass)));
+  }
+
+  @Test
+  public void testMissingPhraseFile() throws Exception {
+    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/missing.enc"));
+    PasswordHelper underTest = new PasswordHelper(new DefaultPlexusCipher(), phraseService);
+
+    String password = "clear-text-password";
     try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      // should still work by falling back to legacy pass-phrase
-      assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
+      underTest.encrypt(password);
+      fail("Expected RuntimeException wrapping FileNotFoundException");
     }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
+    catch (RuntimeException e) {
+      assertThat(e.getCause(), is(instanceOf(FileNotFoundException.class)));
     }
   }
 }

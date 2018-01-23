@@ -12,36 +12,37 @@
  */
 package org.sonatype.security.ldap.realms.persist;
 
-import org.sonatype.nexus.test.PlexusTestCaseSupport;
+import org.sonatype.security.configuration.source.AbstractPhraseService;
 import org.sonatype.security.ldap.upgrade.cipher.DefaultPlexusCipher;
 import org.sonatype.security.ldap.upgrade.cipher.PlexusCipherException;
 
-import org.codehaus.plexus.ContainerConfiguration;
-import org.codehaus.plexus.PlexusConstants;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
+import static org.sonatype.security.configuration.source.PhraseService.LEGACY_PHRASE_SERVICE;
+
 public class PasswordHelperTest
-    extends PlexusTestCaseSupport
 {
+  private PasswordHelper legacyPasswordHelper;
 
-  @Override
-  protected void customizeContainerConfiguration(final ContainerConfiguration containerConfiguration) {
-    super.customizeContainerConfiguration(containerConfiguration);
-    containerConfiguration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
-  }
+  private PasswordHelper customPasswordHelper;
 
-  public PasswordHelper getPasswordHelper()
-      throws Exception
-  {
-    return (PasswordHelper) this.lookup(PasswordHelper.class);
+  @Before
+  public void setUp() throws Exception {
+    legacyPasswordHelper = new DefaultPasswordHelper(new DefaultPlexusCipher(), LEGACY_PHRASE_SERVICE);
+    customPasswordHelper = new DefaultPasswordHelper(new DefaultPlexusCipher(), new AbstractPhraseService(true)
+    {
+      @Override
+      protected String getMasterPhrase() {
+        return "sterces, sterces, sterces";
+      }
+    });
   }
 
   @Test
-  public void testValidPass()
-      throws Exception
-  {
-    PasswordHelper ph = this.getPasswordHelper();
+  public void testValidPass() throws Exception {
+    PasswordHelper ph = legacyPasswordHelper;
 
     String password = "PASSWORD";
     String encodedPass = ph.encrypt(password);
@@ -49,26 +50,20 @@ public class PasswordHelperTest
   }
 
   @Test
-  public void testNullEncrypt()
-      throws Exception
-  {
-    PasswordHelper ph = this.getPasswordHelper();
+  public void testNullEncrypt() throws Exception {
+    PasswordHelper ph = legacyPasswordHelper;
     Assert.assertNull(ph.encrypt(null));
   }
 
   @Test
-  public void testNullDecrypt()
-      throws Exception
-  {
-    PasswordHelper ph = this.getPasswordHelper();
+  public void testNullDecrypt() throws Exception {
+    PasswordHelper ph = legacyPasswordHelper;
     Assert.assertNull(ph.decrypt(null));
   }
 
   @Test
-  public void testDecryptNonEncyprtedPassword()
-      throws Exception
-  {
-    PasswordHelper ph = this.getPasswordHelper();
+  public void testDecryptNonEncyprtedPassword() throws Exception {
+    PasswordHelper ph = legacyPasswordHelper;
 
     try {
       ph.decrypt("clear-text-password");
@@ -80,59 +75,30 @@ public class PasswordHelperTest
 
   }
 
-  public PasswordHelper newPasswordHelper() {
-    return new DefaultPasswordHelper(new DefaultPlexusCipher());
-  }
-
   @Test
-  public void testCustomMasterPhrase()
-      throws Exception
-  {
+  public void testCustomMasterPhrase() throws Exception {
     String password = "clear-text-password";
-    String encodedPass;
+    String encodedPass = customPasswordHelper.encrypt(password);
 
     try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      encodedPass = newPasswordHelper().encrypt(password);
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
-
-    try
-    {
-      newPasswordHelper().decrypt(encodedPass);
+      legacyPasswordHelper.decrypt(encodedPass);
       Assert.fail("Expected PlexusCipherException");
     }
     catch (PlexusCipherException e) {
       // expected: default phrase should not work here
     }
 
-    try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
+    Assert.assertEquals(password, customPasswordHelper.decrypt(encodedPass));
   }
 
   @Test
-  public void testLegacyPhraseFallback()
-      throws Exception
-  {
+  public void testLegacyPhraseFallback() throws Exception {
     String password = "clear-text-password";
-    String encodedPass = newPasswordHelper().encrypt(password);
+    String encodedPass = legacyPasswordHelper.encrypt(password);
 
-    Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
+    Assert.assertEquals(password, legacyPasswordHelper.decrypt(encodedPass));
 
-    try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      // should still work by falling back to legacy pass-phrase
-      Assert.assertEquals(password, newPasswordHelper().decrypt(encodedPass));
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
+    // should still work by falling back to legacy pass-phrase
+    Assert.assertEquals(password, customPasswordHelper.decrypt(encodedPass));
   }
 }

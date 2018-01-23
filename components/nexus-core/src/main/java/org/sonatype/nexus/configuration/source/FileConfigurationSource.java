@@ -157,6 +157,11 @@ public class FileConfigurationSource
 
       // was able to load configuration w/o upgrading it
       setConfigurationUpgraded(false);
+
+      if (configHelper.foundLegacyEncoding()) {
+        log.info("Re-encoding entries using new master phrase");
+        saveConfiguration(getConfigurationFile());
+      }
     }
     catch (ConfigurationException e) {
       log.info("Configuration file is outdated, begin upgrade");

@@ -356,6 +356,14 @@ public class DefaultCapabilityRegistry
         );
       }
 
+      if (passwordHelper.foundLegacyEncoding()) {
+        log.info("Re-encoding entries using new master phrase");
+        Map<String, String> encryptedProperties = encryptValuesIfNeeded(descriptor, properties);
+        capabilityStorage.update(id, new CapabilityStorageItem(
+            descriptor.version(), item.getType(), item.isEnabled(), item.getNotes(), encryptedProperties)
+        );
+      }
+
       final DefaultCapabilityReference reference = create(id, capabilityType(item.getType()), descriptor);
 
       reference.setNotes(item.getNotes());

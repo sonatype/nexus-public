@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.cipher.PlexusCipherException;
+import org.sonatype.security.configuration.source.AbstractPhraseService;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.google.common.base.Throwables;
@@ -25,6 +26,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.sonatype.security.configuration.source.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * UT for {@link PasswordHelper}.
@@ -34,11 +36,20 @@ import static org.junit.Assert.fail;
 public class PasswordHelperTest
     extends TestSupport
 {
-  private PasswordHelper helper;
+  private PasswordHelper legacyPasswordHelper;
+
+  private PasswordHelper customPasswordHelper;
 
   @Before
-  public void init() throws Exception {
-    helper = new PasswordHelper(new DefaultPlexusCipher());
+  public void setUp() throws Exception {
+    legacyPasswordHelper = new PasswordHelper(new DefaultPlexusCipher(), LEGACY_PHRASE_SERVICE);
+    customPasswordHelper = new PasswordHelper(new DefaultPlexusCipher(), new AbstractPhraseService(true)
+    {
+      @Override
+      protected String getMasterPhrase() {
+        return "sterces, sterces, sterces";
+      }
+    });
   }
 
   @Test
@@ -53,7 +64,7 @@ public class PasswordHelperTest
         public void run() {
           for (int i = 0; i < 20; i++) {
             try {
-              assertThat(helper.decrypt(helper.encrypt(password)), is(password));
+              assertThat(legacyPasswordHelper.decrypt(legacyPasswordHelper.encrypt(password)), is(password));
             }
             catch (Throwable e) {
               error.compareAndSet(null, e);
@@ -73,59 +84,30 @@ public class PasswordHelperTest
     }
   }
 
-  public PasswordHelper newPasswordHelper() throws PlexusCipherException {
-    return new PasswordHelper(new DefaultPlexusCipher());
-  }
-
   @Test
-  public void testCustomMasterPhrase()
-      throws Exception
-  {
+  public void testCustomMasterPhrase() throws Exception {
     String password = "clear-text-password";
-    String encodedPass;
+    String encodedPass = customPasswordHelper.encrypt(password);
 
     try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      encodedPass = newPasswordHelper().encrypt(password);
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
-
-    try
-    {
-      newPasswordHelper().decrypt(encodedPass);
+      legacyPasswordHelper.decrypt(encodedPass);
       fail("Expected PlexusCipherException");
     }
     catch (PlexusCipherException e) {
       // expected: default phrase should not work here
     }
 
-    try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
+    assertThat(password, is(customPasswordHelper.decrypt(encodedPass)));
   }
 
   @Test
-  public void testLegacyPhraseFallback()
-      throws Exception
-  {
+  public void testLegacyPhraseFallback() throws Exception {
     String password = "clear-text-password";
-    String encodedPass = newPasswordHelper().encrypt(password);
+    String encodedPass = legacyPasswordHelper.encrypt(password);
 
-    assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
+    assertThat(password, is(legacyPasswordHelper.decrypt(encodedPass)));
 
-    try {
-      System.setProperty("nexus.security.masterPhrase", "terces");
-      // should still work by falling back to legacy pass-phrase
-      assertThat(password, is(newPasswordHelper().decrypt(encodedPass)));
-    }
-    finally {
-      System.clearProperty("nexus.security.masterPhrase");
-    }
+    // should still work by falling back to legacy pass-phrase
+    assertThat(password, is(customPasswordHelper.decrypt(encodedPass)));
   }
 }

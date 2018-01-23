@@ -44,6 +44,8 @@ public class DefaultPlexusCipher
 {
   private static final int SALT_SIZE = 8;
 
+  private static final int MAX_KEY_SIZE = 7;
+
   private static final String STRING_ENCODING = "UTF8";
 
   private static final String LEGACY_PHRASE = "CMMDwoV";
@@ -96,7 +98,8 @@ public class DefaultPlexusCipher
   {
     int mode = encrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
     try {
-      KeySpec keySpec = new PBEKeySpec(passPhrase.toCharArray());
+      int keySize = Math.min(passPhrase.length(), MAX_KEY_SIZE);
+      KeySpec keySpec = new PBEKeySpec(passPhrase.substring(0, keySize).toCharArray());
       SecretKey key = SecretKeyFactory.getInstance(algorithm, bouncyCastleProvider).generateSecret(keySpec);
       Cipher cipher = Cipher.getInstance(algorithm, bouncyCastleProvider);
 

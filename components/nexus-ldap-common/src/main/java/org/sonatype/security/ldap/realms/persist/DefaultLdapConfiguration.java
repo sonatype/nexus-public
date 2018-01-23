@@ -37,6 +37,11 @@ public class DefaultLdapConfiguration
   {
     super(applicationConfiguration, validator, passwordHelper);
     this.eventBus = checkNotNull(eventBus);
+
+    if (passwordHelper.foundLegacyEncoding()) {
+      log.info("Re-encoding entries using new master phrase");
+      save();
+    }
   }
 
   @Override
