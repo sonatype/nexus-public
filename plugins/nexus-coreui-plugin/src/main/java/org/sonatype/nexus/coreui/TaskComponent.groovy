@@ -470,4 +470,18 @@ class TaskComponent
       throw e
     }
   }
+
+  /**
+   * Retrieve a list of versions used for the purge of maven releases
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:tasks:read')
+  List<TaskOptionPurgeXO> readOptionsPurgeTask()
+  {
+        return [
+                new TaskOptionPurgeXO(name:  'version', description :"Version"),
+                new TaskOptionPurgeXO(name : 'dateRelease', description:  "Release date")]
+  }
 }
