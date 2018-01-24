@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.raw.internal
 
+import org.sonatype.nexus.repository.sizeassetcount.SizeAssetCountAttributesFacet
+
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
@@ -82,6 +84,9 @@ class RawHostedRecipe
   Provider<SearchFacet> searchFacet
 
   @Inject
+  Provider<SizeAssetCountAttributesFacet> sizeAssetCountAttributesfacet
+
+  @Inject
   ExceptionHandler exceptionHandler
 
   @Inject
@@ -127,6 +132,7 @@ class RawHostedRecipe
     repository.attach(attributesFacet.get())
     repository.attach(componentMaintenance.get())
     repository.attach(searchFacet.get());
+    repository.attach(sizeAssetCountAttributesfacet.get())
   }
 
   /**
