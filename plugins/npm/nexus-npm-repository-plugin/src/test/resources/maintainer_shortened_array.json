@@ -1,0 +1,1377 @@
+{
+  "_id": "dateformat",
+  "_rev": "155-485a7ac2838cfb131d6f0cb24e124b66",
+  "name": "dateformat",
+  "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+  "dist-tags": {
+    "latest": "3.0.2"
+  },
+  "versions": {
+    "0.9.0-1.2.3": {
+      "name": "dateformat",
+      "description": "A commonjs port of Steven Levithan's dateFormat function.",
+      "maintainers": "Felix Geisendörfer <felix@debuggable.com>",
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "version": "0.9.0-1.2.3",
+      "main": "./lib/dateformat",
+      "_id": "dateformat@0.9.0-1.2.3",
+      "engines": {
+        "node": "*"
+      },
+      "_engineSupported": true,
+      "_npmVersion": "0.3.15",
+      "_nodeVersion": "v0.4.2",
+      "directories": {
+        "lib": "./lib"
+      },
+      "files": [
+        ""
+      ],
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "ae779067d225240d8bd5ca33718a2c4980bdd8be",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-0.9.0-1.2.3.tgz"
+      }
+    },
+    "1.0.0-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": ["Felix Geisendörfer <felix@debuggable.com>", "someone else"],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "version": "1.0.0-1.2.3",
+      "main": "./lib/dateformat",
+      "_id": "dateformat@1.0.0-1.2.3",
+      "engines": {
+        "node": "*"
+      },
+      "_engineSupported": true,
+      "_npmVersion": "0.3.15",
+      "_nodeVersion": "v0.4.2",
+      "directories": {
+        "lib": "./lib"
+      },
+      "files": [
+        ""
+      ],
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "dec87d759f2cf83f581459b1bed3b631784991e7",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.0-1.2.3.tgz"
+      }
+    },
+    "1.0.1-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": "Felix Geisendörfer <felix@debuggable.com>",
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "version": "1.0.1-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_id": "dateformat@1.0.1-1.2.3",
+      "_engineSupported": true,
+      "_npmVersion": "1.0.1rc9",
+      "_nodeVersion": "v0.4.7-pre",
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "2e5d03039eca89f9d8797f99389de5fb0f4aa2fc",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.1-1.2.3.tgz"
+      },
+      "directories": {}
+    },
+    "1.0.2-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "version": "1.0.2-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_npmJsonOpts": {
+        "file": "/Users/felix/.npm/dateformat/1.0.2-1.2.3/package/package.json",
+        "wscript": false,
+        "contributors": false,
+        "serverjs": false
+      },
+      "_id": "dateformat@1.0.2-1.2.3",
+      "_engineSupported": true,
+      "_npmVersion": "1.0.26",
+      "_nodeVersion": "v0.4.10-pre",
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "b0220c02de98617433b72851cf47de3df2cdbee9",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.2-1.2.3.tgz"
+      },
+      "scripts": {},
+      "directories": {}
+    },
+    "1.0.3-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.3-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "_id": "dateformat@1.0.3-1.2.3",
+      "optionalDependencies": {},
+      "_engineSupported": true,
+      "_npmVersion": "1.1.12",
+      "_nodeVersion": "v0.6.14",
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "ab11b3ce0274c4c6da7d8a716fb062610dab9f40",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.3-1.2.3.tgz"
+      },
+      "directories": {}
+    },
+    "1.0.4-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.4-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "_id": "dateformat@1.0.4-1.2.3",
+      "optionalDependencies": {},
+      "_engineSupported": true,
+      "_npmVersion": "1.1.12",
+      "_nodeVersion": "v0.6.14",
+      "_defaultsLoaded": true,
+      "dist": {
+        "shasum": "4c12b101bddbb8880c2356da6e454459a5eb8b75",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.4-1.2.3.tgz"
+      },
+      "directories": {}
+    },
+    "1.0.5-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.5-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_id": "dateformat@1.0.5-1.2.3",
+      "dist": {
+        "shasum": "f020b523df34cad3cd843f556f61f6d97c87b16e",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.5-1.2.3.tgz"
+      },
+      "_npmVersion": "1.2.0",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.6-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.6-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "_id": "dateformat@1.0.6-1.2.3",
+      "dist": {
+        "shasum": "6b3de9f974f698d8b2d3ff9094bbaac8d696c16b",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.6-1.2.3.tgz"
+      },
+      "_npmVersion": "1.2.0",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.7-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.7-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "_id": "dateformat@1.0.7-1.2.3",
+      "dist": {
+        "shasum": "ebb561bb7214ee57a8dc2687adab1d555de9419c",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.7-1.2.3.tgz"
+      },
+      "_npmVersion": "1.2.0",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.8-1.2.3": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.8-1.2.3",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.8-1.2.3",
+      "dist": {
+        "shasum": "5d60c5d574dc778a7f98139156c6cfc9d851d1e7",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.8-1.2.3.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.3.24",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.8": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.8",
+      "main": "./lib/dateformat",
+      "dependencies": {},
+      "devDependencies": {},
+      "engines": {
+        "node": "*"
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.8",
+      "dist": {
+        "shasum": "87799a3de21bffbf028bdd7ad044981327ac0a26",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.8.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.4.3",
+      "_npmUser": {
+        "name": "felixge",
+        "email": "felix@debuggable.com"
+      },
+      "directories": {}
+    },
+    "1.0.9": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.9",
+      "licenses": {
+        "type": "MIT",
+        "url": "https://raw.githubusercontent.com/felixge/node-dateformat/master/LICENSE"
+      },
+      "main": "lib/dateformat",
+      "bin": {
+        "dateformat": "bin/cli.js"
+      },
+      "dependencies": {
+        "get-stdin": "*",
+        "meow": "*"
+      },
+      "devDependencies": {
+        "for-own": "^0.1.2",
+        "mocha": "^2.0.1",
+        "should": "^4.0.4"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha test/test.js --require should "
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.9",
+      "dist": {
+        "shasum": "51cd7e33de43500c8cc0f7030af248d36c73ab15",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.9.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.4.3",
+      "_npmUser": {
+        "name": "felixge",
+        "email": "felix@debuggable.com"
+      },
+      "directories": {}
+    },
+    "1.0.10": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.10",
+      "licenses": {
+        "type": "MIT",
+        "url": "https://raw.githubusercontent.com/felixge/node-dateformat/master/LICENSE"
+      },
+      "main": "lib/dateformat",
+      "bin": {
+        "dateformat": "bin/cli.js"
+      },
+      "dependencies": {
+        "get-stdin": "*",
+        "meow": "*"
+      },
+      "devDependencies": {
+        "for-own": "^0.1.2",
+        "mocha": "^2.0.1",
+        "should": "^4.0.4"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha test/test.js --require should "
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.10",
+      "dist": {
+        "shasum": "12a020a4694d68dcea307a762cbdcad54148783c",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.10.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.3.24",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.11": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.11",
+      "licenses": {
+        "type": "MIT",
+        "url": "https://raw.githubusercontent.com/felixge/node-dateformat/master/LICENSE"
+      },
+      "main": "lib/dateformat",
+      "bin": {
+        "dateformat": "bin/cli.js"
+      },
+      "dependencies": {
+        "get-stdin": "*",
+        "meow": "*"
+      },
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/felixge/node-dateformat.git"
+      },
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.11",
+      "dist": {
+        "shasum": "f27cbee7a012bbfb82ea051562d3977f6093dbb1",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.11.tgz"
+      },
+      "_from": ".",
+      "_npmVersion": "1.3.24",
+      "_npmUser": {
+        "name": "ctavan",
+        "email": "dev@tavan.de"
+      },
+      "directories": {}
+    },
+    "1.0.12": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        }
+      ],
+      "version": "1.0.12",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "bin": {
+        "dateformat": "bin/cli.js"
+      },
+      "dependencies": {
+        "get-stdin": "^4.0.1",
+        "meow": "^3.3.0"
+      },
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "17364d40e61c06f6de228ab94f3660a27f357f01",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@1.0.12",
+      "_shasum": "9f124b67594c937ff706932e4a642cca8dbbfee9",
+      "_from": ".",
+      "_npmVersion": "2.11.3",
+      "_nodeVersion": "0.12.7",
+      "_npmUser": {
+        "name": "felixge",
+        "email": "felix@debuggable.com"
+      },
+      "dist": {
+        "shasum": "9f124b67594c937ff706932e4a642cca8dbbfee9",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.12.tgz"
+      },
+      "directories": {}
+    },
+    "2.0.0": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "name": "ctavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "felixge",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "jonschlinkert",
+          "email": "github@sellside.com"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "Jon Schlinkert",
+          "url": "https://github.com/jonschlinkert"
+        }
+      ],
+      "version": "2.0.0",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "8802071cfc5e67095dec689ee2fa464b451e20d3",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@2.0.0",
+      "_shasum": "2743e3abb5c3fc2462e527dca445e04e9f4dee17",
+      "_from": ".",
+      "_npmVersion": "3.10.3",
+      "_nodeVersion": "6.7.0",
+      "_npmUser": {
+        "name": "jonschlinkert",
+        "email": "github@sellside.com"
+      },
+      "dist": {
+        "shasum": "2743e3abb5c3fc2462e527dca445e04e9f4dee17",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-2.0.0.tgz"
+      },
+      "_npmOperationalInternal": {
+        "host": "packages-18-east.internal.npmjs.com",
+        "tmp": "tmp/dateformat-2.0.0.tgz_1480054524476_0.4571065616328269"
+      },
+      "directories": {}
+    },
+    "3.0.0": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "email": "fpintos.npm@outlook.com",
+          "name": "fpintos"
+        },
+        {
+          "email": "github@sellside.com",
+          "name": "jonschlinkert"
+        },
+        {
+          "email": "dev@tavan.de",
+          "name": "ctavan"
+        },
+        {
+          "email": "felix@debuggable.com",
+          "name": "felixge"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "Jon Schlinkert",
+          "url": "https://github.com/jonschlinkert"
+        }
+      ],
+      "version": "3.0.0",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "4944c41a7de958cdac5a33834d2fe64ed051cece",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@3.0.0",
+      "_shasum": "a42a1ab816ff3170e238a3d7188f9aa3d287542a",
+      "_from": ".",
+      "_npmVersion": "3.10.3",
+      "_nodeVersion": "6.7.0",
+      "_npmUser": {
+        "name": "fpintos",
+        "email": "fpintos.npm@outlook.com"
+      },
+      "dist": {
+        "shasum": "a42a1ab816ff3170e238a3d7188f9aa3d287542a",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-3.0.0.tgz"
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages",
+        "tmp": "tmp/dateformat-3.0.0.tgz_1505858243567_0.9413763522170484"
+      },
+      "directories": {}
+    },
+    "2.2.0": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "email": "fpintos.npm@outlook.com",
+          "name": "fpintos"
+        },
+        {
+          "email": "github@sellside.com",
+          "name": "jonschlinkert"
+        },
+        {
+          "email": "dev@tavan.de",
+          "name": "ctavan"
+        },
+        {
+          "email": "felix@debuggable.com",
+          "name": "felixge"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "Jon Schlinkert",
+          "url": "https://github.com/jonschlinkert"
+        }
+      ],
+      "version": "2.2.0",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "849ecab04ac9337cc96564c081382aed981aa961",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@2.2.0",
+      "_shasum": "4065e2013cf9fb916ddfd82efb506ad4c6769062",
+      "_from": ".",
+      "_npmVersion": "3.10.3",
+      "_nodeVersion": "6.7.0",
+      "_npmUser": {
+        "name": "fpintos",
+        "email": "fpintos.npm@outlook.com"
+      },
+      "dist": {
+        "shasum": "4065e2013cf9fb916ddfd82efb506ad4c6769062",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-2.2.0.tgz"
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages",
+        "tmp": "tmp/dateformat-2.2.0.tgz_1505980201538_0.9515526841860265"
+      },
+      "directories": {}
+    },
+    "3.0.1": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "email": "fpintos.npm@outlook.com",
+          "name": "fpintos"
+        },
+        {
+          "email": "github@sellside.com",
+          "name": "jonschlinkert"
+        },
+        {
+          "email": "dev@tavan.de",
+          "name": "ctavan"
+        },
+        {
+          "email": "felix@debuggable.com",
+          "name": "felixge"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "Jon Schlinkert",
+          "url": "https://github.com/jonschlinkert"
+        }
+      ],
+      "version": "3.0.1",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "4c44bbf1f095760ad6809a903cb26a5767a161a6",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@3.0.1",
+      "_shasum": "96f54d7e81b0c971334b385b0711abf23842cf6e",
+      "_from": ".",
+      "_npmVersion": "3.10.3",
+      "_nodeVersion": "6.7.0",
+      "_npmUser": {
+        "name": "fpintos",
+        "email": "fpintos.npm@outlook.com"
+      },
+      "dist": {
+        "shasum": "96f54d7e81b0c971334b385b0711abf23842cf6e",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-3.0.1.tgz"
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages",
+        "tmp": "tmp/dateformat-3.0.1.tgz_1505980929174_0.05883005680516362"
+      },
+      "directories": {}
+    },
+    "3.0.2": {
+      "name": "dateformat",
+      "description": "A node.js package for Steven Levithan's excellent dateFormat() function.",
+      "maintainers": [
+        {
+          "email": "fpintos.npm@outlook.com",
+          "name": "fpintos"
+        },
+        {
+          "email": "github@sellside.com",
+          "name": "jonschlinkert"
+        },
+        {
+          "email": "dev@tavan.de",
+          "name": "ctavan"
+        },
+        {
+          "email": "felix@debuggable.com",
+          "name": "felixge"
+        }
+      ],
+      "homepage": "https://github.com/felixge/node-dateformat",
+      "author": {
+        "name": "Steven Levithan"
+      },
+      "contributors": [
+        {
+          "name": "Steven Levithan"
+        },
+        {
+          "name": "Felix Geisendörfer",
+          "email": "felix@debuggable.com"
+        },
+        {
+          "name": "Christoph Tavan",
+          "email": "dev@tavan.de"
+        },
+        {
+          "name": "Jon Schlinkert",
+          "url": "https://github.com/jonschlinkert"
+        }
+      ],
+      "version": "3.0.2",
+      "license": "MIT",
+      "main": "lib/dateformat",
+      "devDependencies": {
+        "underscore": "1.7.0",
+        "mocha": "2.0.1"
+      },
+      "engines": {
+        "node": "*"
+      },
+      "scripts": {
+        "test": "mocha"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/felixge/node-dateformat.git"
+      },
+      "gitHead": "3bbc26effac3136104a978a034aca25a2a29fe15",
+      "bugs": {
+        "url": "https://github.com/felixge/node-dateformat/issues"
+      },
+      "_id": "dateformat@3.0.2",
+      "_shasum": "9a4df4bff158ac2f34bc637abdb15471607e1659",
+      "_from": ".",
+      "_npmVersion": "3.10.3",
+      "_nodeVersion": "6.7.0",
+      "_npmUser": {
+        "name": "fpintos",
+        "email": "fpintos.npm@outlook.com"
+      },
+      "dist": {
+        "shasum": "9a4df4bff158ac2f34bc637abdb15471607e1659",
+        "tarball": "https://registry.npmjs.org/dateformat/-/dateformat-3.0.2.tgz"
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages",
+        "tmp": "tmp/dateformat-3.0.2.tgz_1505982245130_0.77148751122877"
+      },
+      "directories": {}
+    }
+  },
+  "maintainers": [
+    {
+      "email": "fpintos.npm@outlook.com",
+      "name": "fpintos"
+    },
+    {
+      "email": "github@sellside.com",
+      "name": "jonschlinkert"
+    },
+    {
+      "email": "dev@tavan.de",
+      "name": "ctavan"
+    },
+    {
+      "email": "felix@debuggable.com",
+      "name": "felixge"
+    }
+  ],
+  "time": {
+    "modified": "2018-01-20T20:43:36.191Z",
+    "created": "2011-03-13T16:29:39.060Z",
+    "0.9.0-1.2.3": "2011-03-13T16:29:39.454Z",
+    "1.0.0-1.2.3": "2011-03-13T16:32:25.648Z",
+    "1.0.1-1.2.3": "2011-04-25T15:30:05.199Z",
+    "1.0.2-1.2.3": "2011-09-28T11:06:44.207Z",
+    "1.0.3-1.2.3": "2012-11-12T20:54:22.207Z",
+    "1.0.4-1.2.3": "2012-12-19T20:59:40.128Z",
+    "1.0.5-1.2.3": "2013-03-11T15:07:14.196Z",
+    "1.0.6-1.2.3": "2013-03-11T15:12:34.491Z",
+    "1.0.7-1.2.3": "2013-12-11T07:20:15.000Z",
+    "1.0.8-1.2.3": "2014-05-20T11:22:52.635Z",
+    "1.0.8": "2014-09-16T07:06:24.567Z",
+    "1.0.9": "2014-11-27T10:07:34.969Z",
+    "1.0.10": "2014-11-28T08:13:40.438Z",
+    "1.0.11": "2014-11-28T18:47:24.164Z",
+    "1.0.12": "2015-11-19T06:40:26.966Z",
+    "2.0.0": "2016-11-25T06:15:25.073Z",
+    "2.1.0": "2017-09-19T21:15:55.382Z",
+    "3.0.0": "2017-09-19T21:57:23.645Z",
+    "2.2.0": "2017-09-21T07:50:01.775Z",
+    "3.0.1": "2017-09-21T08:02:09.288Z",
+    "3.0.2": "2017-09-21T08:24:05.341Z"
+  },
+  "author": {
+    "name": "Steven Levithan"
+  },
+  "users": {
+    "fgribreau": true,
+    "konklone": true,
+    "simonvwade": true,
+    "starak": true,
+    "shen-weizhong": true,
+    "bdream": true,
+    "inhji": true,
+    "kulakowka": true,
+    "iamveen": true,
+    "weijarz": true,
+    "amirmehmood": true,
+    "alexcoady": true,
+    "itonyyo": true,
+    "mrmartineau": true,
+    "skarface": true,
+    "smallhelm": true,
+    "aslezak": true,
+    "xiaokaike": true,
+    "antouank": true,
+    "honzajde": true,
+    "wzbg": true,
+    "japh": true,
+    "pandao": true,
+    "josejaguirre": true,
+    "superpaintman": true,
+    "nickeltobias": true,
+    "davidnyhuis": true,
+    "skullmasher": true,
+    "tommyzzm": true,
+    "tobiasnickel": true,
+    "silva23": true,
+    "elmorec": true,
+    "lardconcepts": true,
+    "evanyeung": true,
+    "leobakerhytch": true,
+    "chris-me": true,
+    "thebespokepixel": true,
+    "ghkddbguse": true,
+    "thisiskun": true,
+    "vasz": true,
+    "valentinbrclz": true,
+    "runjinz": true,
+    "whotheheck": true,
+    "fabrianibrahim": true,
+    "meeshter": true,
+    "jcowgar": true,
+    "f124275809": true,
+    "rbecheras": true,
+    "sternelee": true,
+    "nichoth": true,
+    "knownasilya": true,
+    "ivan.marquez": true,
+    "amrn86": true,
+    "ken27": true,
+    "neo1": true,
+    "axelrindle": true,
+    "tdmalone": true,
+    "henryhuang": true,
+    "jian263994241": true,
+    "sharpie": true,
+    "dburdese": true,
+    "raojs": true,
+    "iuykza": true,
+    "joaquin.briceno": true,
+    "sajithm": true,
+    "manxisuo": true,
+    "olonam": true,
+    "ognjen.jevremovic": true,
+    "xueboren": true,
+    "tsxuehu": true,
+    "zanner": true,
+    "fxkraus": true,
+    "zeroknight": true,
+    "ninozhang": true,
+    "larrychen": true,
+    "bengi": true,
+    "xudaolong": true,
+    "456wyc": true,
+    "jiezhiyou": true,
+    "bmccallion": true,
+    "shuoshubao": true,
+    "chrisanderss0n": true,
+    "duartemendes": true,
+    "ngobw": true,
+    "michalskuza": true,
+    "hcontreras": true,
+    "yousoff92": true,
+    "bumsuk": true,
+    "humingchun": true,
+    "springy": true,
+    "toddliu": true,
+    "piecioshka": true,
+    "enhezzz": true,
+    "nguyenvanhoang26041994": true,
+    "alex-cory": true,
+    "j3rrywan9": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felixge/node-dateformat.git"
+  },
+  "readme": "# dateformat\r\n\r\nA node.js package for Steven Levithan's excellent [dateFormat()][dateformat] function.\r\n\r\n[![Build Status](https://travis-ci.org/felixge/node-dateformat.svg)](https://travis-ci.org/felixge/node-dateformat)\r\n\r\n## Modifications\r\n\r\n* Removed the `Date.prototype.format` method. Sorry folks, but extending native prototypes is for suckers.\r\n* Added a `module.exports = dateFormat;` statement at the bottom\r\n* Added the placeholder `N` to get the ISO 8601 numeric representation of the day of the week\r\n\r\n## Installation\r\n\r\n```bash\r\n$ npm install dateformat\r\n$ dateformat --help\r\n```\r\n\r\n## Usage\r\n\r\nAs taken from Steven's post, modified to match the Modifications listed above:\r\n```js\r\nvar dateFormat = require('dateformat');\r\nvar now = new Date();\r\n\r\n// Basic usage\r\ndateFormat(now, \"dddd, mmmm dS, yyyy, h:MM:ss TT\");\r\n// Saturday, June 9th, 2007, 5:46:21 PM\r\n\r\n// You can use one of several named masks\r\ndateFormat(now, \"isoDateTime\");\r\n// 2007-06-09T17:46:21\r\n\r\n// ...Or add your own\r\ndateFormat.masks.hammerTime = 'HH:MM! \"Can\\'t touch this!\"';\r\ndateFormat(now, \"hammerTime\");\r\n// 17:46! Can't touch this!\r\n\r\n// You can also provide the date as a string\r\ndateFormat(\"Jun 9 2007\", \"fullDate\");\r\n// Saturday, June 9, 2007\r\n\r\n// Note that if you don't include the mask argument,\r\n// dateFormat.masks.default is used\r\ndateFormat(now);\r\n// Sat Jun 09 2007 17:46:21\r\n\r\n// And if you don't include the date argument,\r\n// the current date and time is used\r\ndateFormat();\r\n// Sat Jun 09 2007 17:46:22\r\n\r\n// You can also skip the date argument (as long as your mask doesn't\r\n// contain any numbers), in which case the current date/time is used\r\ndateFormat(\"longTime\");\r\n// 5:46:22 PM EST\r\n\r\n// And finally, you can convert local time to UTC time. Simply pass in\r\n// true as an additional argument (no argument skipping allowed in this case):\r\ndateFormat(now, \"longTime\", true);\r\n// 10:46:21 PM UTC\r\n\r\n// ...Or add the prefix \"UTC:\" or \"GMT:\" to your mask.\r\ndateFormat(now, \"UTC:h:MM:ss TT Z\");\r\n// 10:46:21 PM UTC\r\n\r\n// You can also get the ISO 8601 week of the year:\r\ndateFormat(now, \"W\");\r\n// 42\r\n\r\n// and also get the ISO 8601 numeric representation of the day of the week:\r\ndateFormat(now,\"N\");\r\n// 6\r\n```\r\n\r\n### Mask options\r\n\r\nMask | Description\r\n---- | -----------\r\n`d` | Day of the month as digits; no leading zero for single-digit days.\r\n`dd` | Day of the month as digits; leading zero for single-digit days.\r\n`ddd` | Day of the week as a three-letter abbreviation.\r\n`dddd` | Day of the week as its full name.\r\n`m` | Month as digits; no leading zero for single-digit months.\r\n`mm` | Month as digits; leading zero for single-digit months.\r\n`mmm` | Month as a three-letter abbreviation.\r\n`mmmm` | Month as its full name.\r\n`yy` | Year as last two digits; leading zero for years less than 10.\r\n`yyyy` | Year represented by four digits.\r\n`h` | Hours; no leading zero for single-digit hours (12-hour clock).\r\n`hh` | Hours; leading zero for single-digit hours (12-hour clock).\r\n`H` | Hours; no leading zero for single-digit hours (24-hour clock).\r\n`HH` | Hours; leading zero for single-digit hours (24-hour clock).\r\n`M` | Minutes; no leading zero for single-digit minutes.\r\n`MM` | Minutes; leading zero for single-digit minutes.\r\n`N` | ISO 8601 numeric representation of the day of the week.\r\n`o` | GMT/UTC timezone offset, e.g. -0500 or +0230.\r\n`s` | Seconds; no leading zero for single-digit seconds.\r\n`ss` | Seconds; leading zero for single-digit seconds.\r\n`S` | The date's ordinal suffix (st, nd, rd, or th). Works well with `d`.\r\n`l` |  Milliseconds; gives 3 digits.\r\n`L` | Milliseconds; gives 2 digits.\r\n`t`\t| Lowercase, single-character time marker string: a or p.\r\n`tt` | Lowercase, two-character time marker string: am or pm.\r\n`T` | Uppercase, single-character time marker string: A or P.\r\n`TT` | Uppercase, two-character time marker string: AM or PM.\r\n`W` | ISO 8601 week number of the year, e.g. 42\r\n`Z` | US timezone abbreviation, e.g. EST or MDT. With non-US timezones or in the\r\n`'...'`, `\"...\"` | Literal character sequence. Surrounding quotes are removed.\r\n`UTC:` |\tMust be the first four characters of the mask. Converts the date from local time to UTC/GMT/Zulu time before applying the mask. The \"UTC:\" prefix is removed.\r\n\r\n### Named Formats\r\n\r\nName | Mask | Example\r\n---- | ---- | -------\r\n`default` | `ddd mmm dd yyyy HH:MM:ss` | Sat Jun 09 2007 17:46:21\r\n`shortDate` | `m/d/yy` | 6/9/07\r\n`mediumDate` | `mmm d, yyyy` | Jun 9, 2007\r\n`longDate` | `mmmm d, yyyy` | June 9, 2007\r\n`fullDate` | `dddd, mmmm d, yyyy` | Saturday, June 9, 2007\r\n`shortTime` | `h:MM TT` | 5:46 PM\r\n`mediumTime` | `h:MM:ss TT` | 5:46:21 PM\r\n`longTime` | `h:MM:ss TT Z` | 5:46:21 PM EST\r\n`isoDate` | `yyyy-mm-dd` | 2007-06-09\r\n`isoTime` | `HH:MM:ss` | 17:46:21\r\n`isoDateTime` | `yyyy-mm-dd'T'HH:MM:ss` | 2007-06-09T17:46:21\r\n`isoUtcDateTime` | `UTC:yyyy-mm-dd'T'HH:MM:ss'Z'` | 2007-06-09T22:46:21Z\r\n\r\n### Localization\r\nDay names, month names and the AM/PM indicators can be localized by\r\npassing an object with the necessary strings. For example:\r\n```js\r\nvar dateFormat = require('dateformat');\r\ndateFormat.i18n = {\r\n    dayNames: [\r\n        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',\r\n        'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'\r\n    ],\r\n    monthNames: [\r\n        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',\r\n        'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'\r\n    ],\r\n    timeNames: [\r\n        'a', 'p', 'am', 'pm', 'A', 'P', 'AM', 'PM'\r\n    ]\r\n};\r\n```\r\n> Notice that only one language is supported at a time and all strings\r\n> *must* be present in the new value.\r\n\r\n### Breaking change in 2.1.0\r\n- 2.1.0 was published with a breaking change, for those using localized strings.\r\n- 2.2.0 has been published without the change, to keep packages refering to ^2.0.0 to continue working. This is now branch v2_2.\r\n- 3.0.* contains the localized AM/PM change.\r\n\r\n## License\r\n\r\n(c) 2007-2009 Steven Levithan [stevenlevithan.com][stevenlevithan], MIT license.\r\n\r\n[dateformat]: http://blog.stevenlevithan.com/archives/date-time-format\r\n[stevenlevithan]: http://stevenlevithan.com/\r\n",
+  "homepage": "https://github.com/felixge/node-dateformat",
+  "contributors": [
+    {
+      "name": "Steven Levithan"
+    },
+    {
+      "name": "Felix Geisendörfer",
+      "email": "felix@debuggable.com"
+    },
+    {
+      "name": "Christoph Tavan",
+      "email": "dev@tavan.de"
+    },
+    {
+      "name": "Jon Schlinkert",
+      "url": "https://github.com/jonschlinkert"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/felixge/node-dateformat/issues"
+  },
+  "readmeFilename": "Readme.md",
+  "license": "MIT",
+  "_attachments": {}
+}

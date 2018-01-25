@@ -56,6 +56,7 @@ import org.apache.shiro.subject.Subject;
 import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
+import static com.fasterxml.jackson.core.JsonToken.START_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -320,10 +321,35 @@ public class MetadataParser
    * Parses the maintainers objects in the JSON
    */
   private List<Object> parseMaintainers(final JsonParser parser, @Nullable final String currentUserId) throws IOException {
-    parser.nextToken();
+    if(START_ARRAY.equals(parser.getCurrentToken())) {
+      return parseMaintainersAsArray(parser, currentUserId);
+    } else {
+      List<Object> entries = new ArrayList<>();
+      entries.add(parseStringMaintainer(parser, currentUserId));
+      return entries;
+    }
+  }
+
+  private Object parseStringMaintainer(final JsonParser parser, final String currentUserId) throws IOException {
+    if (currentUserId != null && !currentUserId.isEmpty()) {
+      parser.nextToken();
+      return currentUserId;
+    } else {
+      return parseValue(parser);
+    }
+  }
+
+  private List<Object> parseMaintainersAsArray(final JsonParser parser,
+                                               @Nullable final String currentUserId) throws IOException
+  {
     List<Object> entries = new ArrayList<>();
+    parser.nextToken();
     while (!END_ARRAY.equals(parser.getCurrentToken())) {
-      entries.add(parseMaintainer(parser, currentUserId));
+      if(START_OBJECT.equals(parser.getCurrentToken())) {
+        entries.add(parseMaintainer(parser, currentUserId));
+      } else {
+        entries.add(parseStringMaintainer(parser, currentUserId));
+      }
     }
     parser.nextToken();
     return entries;

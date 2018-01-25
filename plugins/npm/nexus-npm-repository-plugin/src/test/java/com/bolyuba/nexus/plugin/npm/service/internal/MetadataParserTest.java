@@ -23,6 +23,7 @@ import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
+import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
@@ -31,10 +32,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.bolyuba.nexus.plugin.npm.NpmRepository.JSON_MIME_TYPE;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -85,5 +88,25 @@ public class MetadataParserTest
     when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);
     when(content.getContent()).thenReturn(stream);
     metadataParser.parseRegistryRoot("repoId", content);
+  }
+
+  @Test //NEXUS-15720
+  public void canParseWithMaintainerNotAnArray() throws Exception {
+    InputStream stream = getClass().getResourceAsStream("/maintainer_not_array.json");
+    ContentLocator content = mock(ContentLocator.class);
+
+    when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);
+    when(content.getContent()).thenReturn(stream);
+    metadataParser.parsePackageRoot("repoId", content);
+  }
+
+  @Test //NEXUS-15720
+  public void canParseWithMaintainerAsShortenedArray() throws Exception {
+    InputStream stream = getClass().getResourceAsStream("/maintainer_shortened_array.json");
+    ContentLocator content = mock(ContentLocator.class);
+
+    when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);
+    when(content.getContent()).thenReturn(stream);
+    metadataParser.parsePackageRoot("repoId", content);
   }
 }
