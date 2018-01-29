@@ -22,7 +22,7 @@ Ext.define('NX.coreui.model.ComponentAssetTree', {
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
-    {name: 'text', type: 'string', sortType: 'asUCText'},
+    {name: 'text', type: 'string', convert: Ext.util.Format.htmlEncode},
     {name: 'iconCls', type: 'string', convert: function(value, record){
       return record.computeIconClass();
     }},

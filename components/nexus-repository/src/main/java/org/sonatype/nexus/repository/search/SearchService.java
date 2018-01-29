@@ -18,14 +18,12 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Component;
 
 import com.google.common.base.Function;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.sort.SortBuilder;
 
 /**
@@ -66,9 +64,9 @@ public interface SearchService
    *
    * @since 3.4
    */
-  void bulkPut(Repository repository, Iterable<Component> components,
-               Function<Component, String> identifierProducer,
-               Function<Component, String> jsonDocumentProducer);
+  <T> void bulkPut(Repository repository, Iterable<T> components,
+                   Function<T, String> identifierProducer,
+                   Function<T, String> jsonDocumentProducer);
 
   /**
    * Removes data with given identifier from index of given repository.

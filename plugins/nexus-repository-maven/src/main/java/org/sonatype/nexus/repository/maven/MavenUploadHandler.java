@@ -190,6 +190,11 @@ public class MavenUploadHandler
 
       MavenPath mavenPath = parser.parsePath(path.toString());
 
+      if (mavenPath.getCoordinates() == null) {
+        throw new ValidationErrorsException(
+            format("Cannot generate maven coordinate from assembled path '%s'", mavenPath.getPath()));
+      }
+
       if (!versionPolicyValidator.validArtifactPath(facet.getVersionPolicy(), mavenPath.getCoordinates())) {
         throw new ValidationErrorsException(
             format("Version policy mismatch, cannot upload %s content to %s repositories for file '%s'",
@@ -315,6 +320,18 @@ public class MavenUploadHandler
           .forEach(field -> exception.withError(field.getName(),
               format("Missing required component field '%s'", field.getDisplayName())));
 
+    }
+
+    int i = 1;
+    int length = componentUpload.getAssetUploads().size();
+    for (AssetUpload assetUpload : componentUpload.getAssetUploads()) {
+      int otherIndex = i;
+      for (AssetUpload other : componentUpload.getAssetUploads().subList(i++, length)) {
+        if (assetUpload.getFields().equals(other.getFields())) {
+          exception.withError(String.format("The assets %s and %s have identical coordinates", i - 1, otherIndex + 1));
+        }
+        otherIndex++;
+      }
     }
 
     if (!exception.getValidationErrors().isEmpty()) {

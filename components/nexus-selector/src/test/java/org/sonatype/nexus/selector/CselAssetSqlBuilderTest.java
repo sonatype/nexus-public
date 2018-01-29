@@ -110,5 +110,11 @@ public class CselAssetSqlBuilderTest
     assertThat(whereClause.getSql(), is("format = :a0 or name = :a1"));
     assertThat(whereClause.getSqlParameters().get("a0"), is("a"));
     assertThat(whereClause.getSqlParameters().get("a1"), is("bar/foo"));
+
+    whereClause = builder.buildWhereClause("format == \"a\" || '/bar/foo' == path", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("format = :a0 or name = :a1"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("a"));
+    assertThat(whereClause.getSqlParameters().get("a1"), is("bar/foo"));
   }
 }

@@ -45,7 +45,8 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
       {
         name: 'name',
         itemId: 'name',
-        fieldLabel: NX.I18n.get('LdapServersConnectionFieldSet_Name_FieldLabel')
+        fieldLabel: NX.I18n.get('LdapServersConnectionFieldSet_Name_FieldLabel'),
+        transformRawValue: Ext.htmlDecode
       },
       {
         xtype: 'label',

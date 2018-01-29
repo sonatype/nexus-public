@@ -25,8 +25,10 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {Object} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  add: function (message) {
+  add: function (message, encoded) {
+    message.text = encoded ? message.text : Ext.util.Format.htmlEncode(message.text);
     NX.getApplication().getMessageController().addMessage(message);
   },
 
@@ -48,9 +50,10 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {string} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  notice: function (message) {
-    this.add({type: 'default', text: message});
+  notice: function (message, encoded) {
+    this.add({type: 'default', text: message}, encoded);
   },
 
   /**
@@ -58,9 +61,10 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {string} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  info: function (message) {
-    this.add({type: 'primary', text: message});
+  info: function (message, encoded) {
+    this.add({type: 'primary', text: message}, encoded);
   },
 
   /**
@@ -68,9 +72,10 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {string} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  error: function (message) {
-    this.add({type: 'danger', text: message});
+  error: function (message, encoded) {
+    this.add({type: 'danger', text: message}, encoded);
   },
 
   /**
@@ -78,9 +83,10 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {string} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  warning: function (message) {
-    this.add({type: 'warning', text: message});
+  warning: function (message, encoded) {
+    this.add({type: 'warning', text: message}, encoded);
   },
 
   /**
@@ -88,8 +94,9 @@ Ext.define('NX.Messages', {
    *
    * @public
    * @param {string} message
+   * @param {boolean} indicates that the message is already encoded
    */
-  success: function (message) {
-    this.add({type: 'success', text: message});
+  success: function (message, encoded) {
+    this.add({type: 'success', text: message}, encoded);
   }
 });

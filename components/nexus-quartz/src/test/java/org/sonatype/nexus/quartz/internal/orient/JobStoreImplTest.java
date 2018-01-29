@@ -33,6 +33,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -41,6 +42,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.quartz.internal.orient.TriggerEntity.State;
 
+import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -84,6 +86,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.quartz.JobBuilder.newJob;
+import static org.quartz.TriggerBuilder.newTrigger;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 
 /**
@@ -101,9 +106,14 @@ public class JobStoreImplTest
 
   private TriggerEntityAdapter triggerEntityAdapter;
 
+  private NodeAccess nodeAccess;
+
   @Before
   public void setUp() throws Exception {
     ClassLoadHelper loadHelper = new CascadingClassLoadHelper();
+
+    nodeAccess = mock(NodeAccess.class);
+
     loadHelper.initialize();
     this.jobStore = createJobStore();
     this.jobStore.start();
@@ -137,8 +147,75 @@ public class JobStoreImplTest
         jobDetailEntityAdapter,
         triggerEntityAdapter,
         calendarEntityAdapter,
-        mock(NodeAccess.class)
+        nodeAccess
     );
+  }
+
+  @Test
+  public void testJobsAreAcquiredCorrectly() throws Exception {
+    testTriggerAcquiredCorrectly(State.ACQUIRED, false, false);
+    testTriggerAcquiredCorrectly(State.BLOCKED, false, false);
+    testTriggerAcquiredCorrectly(State.COMPLETE, false, false);
+    testTriggerAcquiredCorrectly(State.ERROR, false, false);
+    testTriggerAcquiredCorrectly(State.PAUSED, false, false);
+    testTriggerAcquiredCorrectly(State.PAUSED_BLOCKED, false, false);
+    testTriggerAcquiredCorrectly(State.WAITING, false, true);
+
+    testTriggerAcquiredCorrectly(State.ACQUIRED, true, true);
+    testTriggerAcquiredCorrectly(State.BLOCKED, true, true);
+    testTriggerAcquiredCorrectly(State.COMPLETE, true, false);
+    testTriggerAcquiredCorrectly(State.ERROR, true, false);
+    testTriggerAcquiredCorrectly(State.PAUSED, true, false);
+    testTriggerAcquiredCorrectly(State.PAUSED_BLOCKED, true, false);
+    testTriggerAcquiredCorrectly(State.WAITING, true, true);
+  }
+
+  private void testTriggerAcquiredCorrectly(State initialState, boolean isOrphaned, boolean shouldBeAcquired) throws Exception  {
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.getId()).thenReturn(isOrphaned ? "C" : "A");
+    when(nodeAccess.getMemberIds()).thenReturn(Sets.newHashSet("A", "B"));
+
+    JobDetail orphanedJob = newJob()
+        .ofType(MyJob.class)
+        .withIdentity("jobName1", "jobGroup1")
+        .build();
+
+    OperableTrigger orphanedTrigger = (OperableTrigger) newTrigger()
+        .forJob(orphanedJob)
+        .withIdentity("orphan:" + isOrphaned, "state:" + initialState.name())
+        .startNow()
+        .build();
+
+    orphanedTrigger.computeFirstFireTime(null);
+
+    this.jobStore.storeTrigger(orphanedTrigger, false);
+
+    Iterator<TriggerEntity> triggerEntities = inTx(database.getInstanceProvider())
+        .throwing(JobPersistenceException.class)
+        .call(db -> triggerEntityAdapter.browseByJobKey(db, orphanedJob.getKey())).iterator();
+
+    assertTrue(triggerEntities.hasNext());
+    TriggerEntity entity = triggerEntities.next();
+    entity.setState(initialState);
+
+    inTx(database.getInstanceProvider())
+        .throwing(JobPersistenceException.class)
+        .call(db -> triggerEntityAdapter.editEntity(db, entity));
+
+    long firstFireTime = orphanedTrigger.getNextFireTime().getTime();
+
+    when(nodeAccess.getId()).thenReturn("A");
+
+    List<OperableTrigger> acquiredTriggers = this.jobStore.acquireNextTriggers(firstFireTime + 10000, 10, 1L);
+
+    if (shouldBeAcquired) {
+      assertEquals(1 , acquiredTriggers.size());
+      assertTrue(orphanedTrigger.equals(acquiredTriggers.get(0)));
+    } else {
+      assertEquals(0, acquiredTriggers.size());
+    }
+
+    jobStore.removeJob(orphanedJob.getKey());
   }
 
   @Test

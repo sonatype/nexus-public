@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.quartz.internal.orient;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -25,6 +26,7 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
+import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyInSetAction;
 import org.sonatype.nexus.orient.entity.action.BrowseEntitiesWithPredicateAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
@@ -98,6 +100,9 @@ public class TriggerEntityAdapter
 
   public final BrowseEntitiesByPropertyAction<TriggerEntity> browseByState =
       new BrowseEntitiesByPropertyAction<>(this, P_STATE);
+
+  public final BrowseEntitiesByPropertyInSetAction<TriggerEntity> browseByStates =
+      new BrowseEntitiesByPropertyInSetAction<>(this, P_STATE);
   
   private final BrowseEntitiesByPropertyAction<TriggerEntity> browseByGroup =
       new BrowseEntitiesByPropertyAction<>(this, P_GROUP);
@@ -209,11 +214,20 @@ public class TriggerEntityAdapter
 
   /**
    * Browse all entities which have a matching state property.
-   * 
+   *
    * @since 3.1
    */
   public Iterable<TriggerEntity> browseByState(final ODatabaseDocumentTx db, final Object state) {
     return browseByState.execute(db, state);
+  }
+
+  /**
+   * Browse all entities which have a state that matches one of the argument states.
+   *
+   * @since 3.next
+   */
+  public Iterable<TriggerEntity> browseByStates(final ODatabaseDocumentTx db, final Collection<? extends Object> states) {
+    return browseByStates.execute(db, states);
   }
 
   /**

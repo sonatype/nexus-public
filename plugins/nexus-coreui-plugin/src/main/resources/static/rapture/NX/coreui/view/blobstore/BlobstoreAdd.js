@@ -63,7 +63,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreAdd', {
     var typeCombo = me.down('#type');
     typeCombo.setReadOnly(false);
     typeCombo.on({
-      afterrender: function() {
+      beforerender: function() {
         var me = this;
         me.setValue(me.getStore('BlobstoreType').first().data.id);
       }

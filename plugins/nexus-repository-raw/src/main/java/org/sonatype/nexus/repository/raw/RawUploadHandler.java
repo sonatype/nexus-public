@@ -80,7 +80,7 @@ public class RawUploadHandler
     TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
         .throwing(IOException.class).run(() -> {
           for (AssetUpload asset : upload.getAssetUploads()) {
-            String path = basePath + normalize(asset.getFields().get(FILENAME));
+            String path = basePath + normalizeFilename(asset.getFields().get(FILENAME));
 
             ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
             facet.put(path, asset.getPayload());
@@ -100,8 +100,18 @@ public class RawUploadHandler
     return result;
   }
 
+  private String normalizeFilename(final String filename) {
+    String result = normalize(filename);
+
+    if (result.endsWith("/")) {
+      result = result.substring(0, result.length() - 1);
+    }
+
+    return result;
+  }
+
   private String normalize(final String string) {
-    String result = string.trim();
+    String result = string.trim().replaceAll("/+", "/");
 
     if (result.startsWith("/")) {
       return result.substring(1);

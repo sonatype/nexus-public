@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
+import com.google.common.net.HttpHeaders;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -89,7 +90,7 @@ public class ViewServletTest
     underTest = spy(new ViewServlet(mock(RepositoryManager.class),
         new HttpResponseSenderSelector(Collections.<String, HttpResponseSender>emptyMap(), defaultResponseSender),
         mock(DescriptionHelper.class),
-        descriptionRenderer
+        descriptionRenderer, true
     ));
 
     when(request.getPath()).thenReturn("/test");
@@ -176,6 +177,16 @@ public class ViewServletTest
     when(httpServletRequest.getPathInfo()).thenThrow(new BadRequestException(message));
     underTest.service(httpServletRequest, servletResponse);
     verify(servletResponse).sendError(SC_BAD_REQUEST, message);
+  }
+
+  @Test
+  public void responseHasContentSecurityPolicy() throws Exception {
+    underTest.service(httpServletRequest, servletResponse);
+
+    verify(servletResponse).setHeader(HttpHeaders.CONTENT_SECURITY_POLICY,
+        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
+    verify(servletResponse).setHeader(HttpHeaders.X_CONTENT_SECURITY_POLICY,
+        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

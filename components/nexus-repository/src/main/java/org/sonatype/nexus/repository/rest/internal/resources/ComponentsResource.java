@@ -236,7 +236,8 @@ public class ComponentsResource
     }
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
-    ComponentUpload componentUpload = createComponentUpload(multipartInput);
+    String format = repository.getFormat().getValue();
+    ComponentUpload componentUpload = createComponentUpload(format, multipartInput);
     uploadManager.handle(repository, componentUpload);
   }
 }

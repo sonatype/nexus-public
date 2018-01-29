@@ -15,10 +15,10 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>${groupId}</groupId>
-  <artifactId>${artifactId}</artifactId>
-  <version>${version}</version>
+  <groupId>$esc.xml(${groupId})</groupId>
+  <artifactId>$esc.xml(${artifactId})</artifactId>
+  <version>$esc.xml(${version})</version>
 #if ($packaging)
-  <packaging>${packaging}</packaging>
+  <packaging>$esc.xml(${packaging})</packaging>
 #end
 </project>

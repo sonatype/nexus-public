@@ -157,7 +157,7 @@ public class LegacyViewServletTest
 
   private LegacyViewServlet buildServlet() {
     return new LegacyViewServlet(repositoryManager, httpResponseSenderSelector,
-        descriptionHelper, descriptionRenderer, legacyViewContributors);
+        descriptionHelper, descriptionRenderer, legacyViewContributors, true);
   }
 
   private void mockNames() {

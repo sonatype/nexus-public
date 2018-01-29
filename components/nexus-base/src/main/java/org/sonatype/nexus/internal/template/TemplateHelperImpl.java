@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 
@@ -65,6 +66,7 @@ public class TemplateHelperImpl
     params.set("nexusBrandedEditionAndVersion", applicationVersion.getBrandedEditionAndVersion());
     params.set("nexusUrl", BaseUrlHolder.get());
     params.set("urlSuffix", applicationVersion.getVersion()); // for cache busting
+    params.set("esc", new EscapeHelper());
     return params;
   }
 

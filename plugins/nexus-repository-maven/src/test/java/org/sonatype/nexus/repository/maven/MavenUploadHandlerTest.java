@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +45,9 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
-import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -238,7 +239,7 @@ public class MavenUploadHandlerTest
     verify(mavenPomGenerator).generatePom("org.apache.maven", "tomcat", "5.0.28", "eclipse-plugin");
   }
 
-  @Test(expected = AuthorizationException.class)
+  @Test
   public void testHandle_unauthorized() throws IOException {
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(Maven2Format.NAME), eq(BreadActions.EDIT), any()))
         .thenReturn(false);
@@ -254,7 +255,14 @@ public class MavenUploadHandlerTest
     assetUpload.setPayload(jarPayload);
     componentUpload.getAssetUploads().add(assetUpload);
 
-    underTest.handle(repository, componentUpload);
+    try {
+      underTest.handle(repository, componentUpload);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Not authorized for requested path 'org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar'"));
+    }
   }
 
   @Test
@@ -328,6 +336,33 @@ public class MavenUploadHandlerTest
     assertNotNull(path);
     assertThat(path.getPath(), is("aParentGroupId/anArtifactId/2.0/anArtifactId-2.0.pom"));
     assertCoordinates(path.getCoordinates(), "aParentGroupId", "anArtifactId", "2.0", null, "pom");
+  }
+
+  @Test
+  public void testHandle_nullCoordinates() throws Exception {
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    //note the slashes here are causing the MavenPathParser to choke
+    componentUpload.getFields().put("groupId", "a</groupId>");
+    componentUpload.getFields().put("artifactId", "a</artifactId>");
+    componentUpload.getFields().put("version", "a</version>");
+    componentUpload.getFields().put("packaging", "a</packaging>");
+    componentUpload.getFields().put("generate-pom", "true");
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("extension", "jar");
+    assetUpload.setPayload(jarPayload);
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, componentUpload);
+      fail("Expected invalid coordinates exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Cannot generate maven coordinate from assembled path 'a</groupId>/a</artifactId>/a</version>/a</artifactId>-a</version>.jar'"));
+    }
   }
 
   @Test
@@ -476,6 +511,34 @@ public class MavenUploadHandlerTest
     model.setGroupId("testGroup");
     model.setVersion("${aProperty}");
     underTest.validatePom(model);
+  }
+
+  @Test
+  public void testValidate_duplicates() {
+    AssetUpload assetUploadOne = new AssetUpload();
+    assetUploadOne.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
+    assetUploadOne.setPayload(mock(PartPayload.class));
+
+    AssetUpload assetUploadTwo = new AssetUpload();
+    assetUploadTwo.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
+    assetUploadTwo.setPayload(mock(PartPayload.class));
+
+    AssetUpload assetUploadThree = new AssetUpload();
+    assetUploadThree.getFields().putAll(ImmutableMap.of("extension", "x"));
+    assetUploadThree.setPayload(mock(PartPayload.class));
+
+    ComponentUpload componentUpload = new ComponentUpload();
+    componentUpload.getFields().putAll(ImmutableMap.of("groupId", "g", "artifactId", "a", "version", "1"));
+    componentUpload.getAssetUploads().addAll(Arrays.asList(assetUploadOne, assetUploadTwo, assetUploadThree));
+
+    try {
+      underTest.validate(componentUpload);
+      fail("Expected exception to be thrown");
+    }
+    catch (ValidationErrorsException exception) {
+      assertThat(exception.getValidationErrors(), hasSize(1));
+      assertThat(exception.getMessage(), is("The assets 1 and 2 have identical coordinates"));
+    }
   }
 
   private static void assertVariableSource(final VariableSource source,

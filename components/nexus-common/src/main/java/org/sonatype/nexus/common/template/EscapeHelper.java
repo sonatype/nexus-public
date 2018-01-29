@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.httpbridge.internal.describe;
+package org.sonatype.nexus.common.template;
 
-import org.sonatype.nexus.common.template.TemplateAccessible;
+import org.sonatype.nexus.common.encoding.EncodingUtil;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
@@ -30,5 +30,21 @@ public class EscapeHelper
 
   public String html(final Object value) {
     return html(String.valueOf(value));
+  }
+
+  public String url(final String value) {
+    return EncodingUtil.urlEncode(value);
+  }
+
+  public String url(final Object value) {
+    return url(String.valueOf(value));
+  }
+
+  public String xml(final String value) {
+    return StringEscapeUtils.escapeXml(value);
+  }
+
+  public String xml(final Object value) {
+    return xml(String.valueOf(value));
   }
 }

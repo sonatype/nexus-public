@@ -98,7 +98,8 @@ Ext.define('NX.coreui.view.capability.CapabilitySummary', {
               helpText: NX.I18n.get('Capability_CapabilitySummary_Notes_HelpText'),
               name: 'notes',
               allowBlank: true,
-              anchor: '100%'
+              anchor: '100%',
+              transformRawValue: Ext.htmlDecode
             }
           ]
         }

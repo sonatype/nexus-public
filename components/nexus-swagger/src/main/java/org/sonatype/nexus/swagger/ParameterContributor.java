@@ -24,18 +24,18 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
-import io.swagger.models.parameters.QueryParameter;
+import io.swagger.models.parameters.AbstractSerializableParameter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
- * A custom {@link SwaggerContributor} that contributes query parameters to the {@link Swagger}
+ * A custom {@link SwaggerContributor} that contributes parameters to the {@link Swagger}
  * definition for a given {@link HttpMethod} for all the paths provided.
  *
  * @since 3.7
  */
-public abstract class QueryParameterContributor
+public abstract class ParameterContributor<T extends AbstractSerializableParameter>
     extends ComponentSupport
     implements SwaggerContributor
 {
@@ -43,15 +43,15 @@ public abstract class QueryParameterContributor
 
   private final Collection<String> paths;
 
-  private final Collection<QueryParameter> params;
+  private final Collection<T> params;
 
   private final Map<String, Boolean> contributed;
 
   private boolean allContributed;
 
-  public QueryParameterContributor(final HttpMethod httpMethod,
-                                   final Collection<String> paths,
-                                   final Collection<QueryParameter> params)
+  public ParameterContributor(final HttpMethod httpMethod,
+                              final Collection<String> paths,
+                              final Collection<T> params)
   {
     this.httpMethod = checkNotNull(httpMethod);
     this.paths = checkNotNull(paths);
@@ -77,16 +77,17 @@ public abstract class QueryParameterContributor
   private boolean contributeGetParameters(final Swagger swagger,
                                           final HttpMethod httpMethod,
                                           final String path,
-                                          final Collection<QueryParameter> queryParams)
+                                          final Collection<T> parameters)
   {
     boolean contrib = false;
     Optional<Operation> operation = getOperation(swagger, httpMethod, path);
     if (operation.isPresent()) {
       final Operation op = operation.get();
-      queryParams.forEach(qp -> {
-        if (!op.getParameters().contains(qp)) {
-          log.debug("adding query parameter, method: {}, path: {}, parameter: {}", httpMethod, path, qp.getName());
-          op.addParameter(qp);
+      parameters.forEach(param -> {
+        if (!op.getParameters().contains(param)) {
+          log.debug("adding {}, method: {}, path: {}, parameter: {}",
+              param.getClass().getSimpleName(), httpMethod, path, param.getName());
+          op.addParameter(param);
         }
       });
       contrib = true;

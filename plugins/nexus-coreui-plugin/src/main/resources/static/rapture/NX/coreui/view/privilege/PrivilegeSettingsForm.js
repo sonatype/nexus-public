@@ -56,7 +56,8 @@ Ext.define('NX.coreui.view.privilege.PrivilegeSettingsForm', {
               xtype: 'textfield',
               fieldLabel: NX.I18n.get('Privilege_PrivilegeSettingsForm_Description_FieldLabel'),
               name: 'description',
-              allowBlank: true
+              allowBlank: true,
+              transformRawValue: Ext.htmlDecode
             },
             {
               xtype: 'nx-coreui-formfield-settingsfieldset'

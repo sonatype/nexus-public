@@ -408,6 +408,24 @@ public class RepositoryBrowseResourceTest
     assertThat(listItems.get(0).isCollection(), is(true));
   }
 
+  @Test
+  public void validateAssetUriIsUrlEscapedToPreventXss() {
+    BrowseNode browseNode = browseNode("<img src=\"foo\">");
+    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .thenReturn(asList(browseNode));
+
+    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+
+    ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
+    verify(templateHelper).render(any(), argument.capture());
+
+    List<BrowseListItem> listItems = (List<BrowseListItem>) argument.getValue().get().get("listItems");
+    assertThat(listItems.size(), is(1));
+
+    assertThat(listItems.get(0).getName(), is("<img src=\"foo\">"));
+    assertThat(listItems.get(0).getResourceUri(), is("%3Cimg+src%3D%22foo%22%3E/"));
+  }
+
   private BrowseNode browseNode(final String name) {
     BrowseNode node = new BrowseNode();
     node.setRepositoryName(REPOSITORY_NAME);

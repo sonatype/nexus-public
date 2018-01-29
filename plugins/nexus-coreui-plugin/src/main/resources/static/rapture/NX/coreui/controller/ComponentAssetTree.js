@@ -653,7 +653,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
               selectedRecord.set('iconCls', selectedRecord.computeIconClass());
             }
             me.removeSideContent();
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
+            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'}, true);
           }
         });
       });

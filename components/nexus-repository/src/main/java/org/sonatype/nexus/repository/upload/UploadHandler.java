@@ -25,8 +25,6 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
-import org.apache.shiro.authz.AuthorizationException;
-
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
@@ -77,7 +75,7 @@ public interface UploadHandler
   {
     VariableSource variableSource = getVariableResolverAdapter().fromCoordinates(format, path, coordinates);
     if (!contentPermissionChecker().isPermitted(repositoryName, format, BreadActions.EDIT, variableSource)) {
-      throw new AuthorizationException();
+      throw new ValidationErrorsException(format("Not authorized for requested path '%s'", path));
     }
   }
 
@@ -112,6 +110,18 @@ public interface UploadHandler
               .forEach(field -> exception.withError(field.getName(),
                   format("Missing required asset field '%s' on '%s'", field.getDisplayName(), assetCount)));
         });
+
+    int i = 1;
+    int length = componentUpload.getAssetUploads().size();
+    for (AssetUpload assetUpload : componentUpload.getAssetUploads()) {
+      int otherIndex = i;
+      for (AssetUpload other : componentUpload.getAssetUploads().subList(i++, length)) {
+        if (assetUpload.getFields().equals(other.getFields())) {
+          exception.withError(String.format("The assets %s and %s have identical coordinates", i - 1, otherIndex + 1));
+        }
+        otherIndex++;
+      }
+    }
 
     if (!exception.getValidationErrors().isEmpty()) {
       throw exception;

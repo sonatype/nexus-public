@@ -67,6 +67,14 @@ public class ConcurrentProxyTest
 
   private static final int NUM_PATHS = 10;
 
+  private static final int DOWNLOAD_DELAY_MILLIS = 1000;
+
+  private static final int RANDOM_DELAY_MILLIS = 500;
+
+  private static final Time PASSIVE_TIMEOUT = Time.seconds(60);
+
+  private static final Time ACTIVE_TIMEOUT = Time.millis((DOWNLOAD_DELAY_MILLIS + RANDOM_DELAY_MILLIS) * 2);
+
   private static final String META_PREFIX = "meta/";
 
   private static final String ASSET_PREFIX = "asset/";
@@ -153,7 +161,7 @@ public class ConcurrentProxyTest
       upstreamRequests.add(url);
 
       // mimic I/O time taken to download content
-      LockSupport.parkNanos(Time.millis(200 + random.nextInt(300)).toNanos());
+      LockSupport.parkNanos(Time.millis(DOWNLOAD_DELAY_MILLIS + random.nextInt(RANDOM_DELAY_MILLIS)).toNanos());
 
       if (url.startsWith(META_PREFIX)) {
         return metaContent;
@@ -239,7 +247,7 @@ public class ConcurrentProxyTest
   public void downloadCooperation() throws Exception {
     int iterations = 2;
 
-    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(1), 2 * NUM_CLIENTS);
+    underTest.configureCooperation(true, PASSIVE_TIMEOUT, ACTIVE_TIMEOUT, 2 * NUM_CLIENTS);
 
     ConcurrentRunner runner = new ConcurrentRunner(iterations, 60);
     runner.addTask(NUM_CLIENTS, this::verifyValidGet);
@@ -268,7 +276,7 @@ public class ConcurrentProxyTest
   public void limitCooperatingThreads() throws Exception {
     int threadLimit = 10;
 
-    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(1), threadLimit);
+    underTest.configureCooperation(true, PASSIVE_TIMEOUT, ACTIVE_TIMEOUT, threadLimit);
 
     Request request = new Request.Builder().action(GET).path("some/fixed/path").build();
 

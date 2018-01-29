@@ -40,7 +40,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistration;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
-import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -73,7 +72,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -272,9 +270,9 @@ public class SearchServiceImpl
   }
 
   @Override
-  public void bulkPut(final Repository repository, final Iterable<Component> components,
-                      final Function<Component, String> identifierProducer,
-                      final Function<Component, String> jsonDocumentProducer) {
+  public <T> void bulkPut(final Repository repository, final Iterable<T> components,
+                          final Function<T, String> identifierProducer,
+                          final Function<T, String> jsonDocumentProducer) {
     checkNotNull(repository);
     checkNotNull(components);
     String indexName = repositoryNameMapping.get(repository.getName());
@@ -285,11 +283,13 @@ public class SearchServiceImpl
     components.forEach(component -> {
       String identifier = identifierProducer.apply(component);
       String json = jsonDocumentProducer.apply(component);
-      bulkProcessor.add(
-          client.get()
-              .prepareIndex(indexName, TYPE, identifier)
-              .setSource(json).request()
-      );
+      if (json != null) {
+        bulkProcessor.add(
+            client.get()
+                .prepareIndex(indexName, TYPE, identifier)
+                .setSource(json).request()
+        );
+      }
     });
 
     if (!periodicFlush) {

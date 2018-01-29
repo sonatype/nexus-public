@@ -36,7 +36,7 @@ Ext.define('NX.coreui.view.role.RoleAdd', {
         submit: 'NX.direct.coreui_Role.create'
       },
       settingsFormSuccessMessage: function(data) {
-        return NX.I18n.get('Role_RoleAdd_Create_Success') + data['name'];
+        return NX.I18n.get('Role_RoleAdd_Create_Success') + Ext.htmlEncode(data['name']);
       },
       editableCondition: NX.Conditions.isPermitted('nexus:roles:create'),
       editableMarker: NX.I18n.get('Role_RoleAdd_Create_Error'),

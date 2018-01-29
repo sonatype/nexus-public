@@ -44,6 +44,7 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -69,6 +70,9 @@ import org.quartz.spi.TriggerFiredResult;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Sets.immutableEnumSet;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.emptyList;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.log.ExceptionSummarizer.sameType;
 import static org.sonatype.nexus.common.log.ExceptionSummarizer.summarize;
@@ -96,6 +100,12 @@ public class JobStoreImpl
     extends LifecycleSupport
     implements JobStore
 {
+  private static final Set<TriggerEntity.State> ACQUIRABLE_ORPHAN_STATES = immutableEnumSet(ACQUIRED, BLOCKED, WAITING);
+
+  private static final Set<TriggerEntity.State> ACQUIRABLE_LOCAL_STATES = immutableEnumSet(WAITING);
+
+  private static final Set<TriggerEntity.State> ALL_ACQUIRABLE_STATES = union(ACQUIRABLE_LOCAL_STATES, ACQUIRABLE_ORPHAN_STATES).immutableCopy();
+
   private static final String NODE_ID = "node.identity";
 
   private final Provider<DatabaseInstance> databaseInstance;
@@ -578,7 +588,7 @@ public class JobStoreImpl
       throws JobPersistenceException
   {
     TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
-    
+
     if (entity == null) {
       log.debug("No matching Trigger to remove for key: {}", triggerKey);
       return false;
@@ -922,6 +932,31 @@ public class JobStoreImpl
     }
   }
 
+
+
+  private List<TriggerEntity> getAcquirableEntities(final ODatabaseDocumentTx db,
+                                                     final long noLaterThan,
+                                                     final long timeWindow)
+  {
+    long noEarlierThan = getMisfireTime();
+    List<TriggerEntity> possibleEntities = new ArrayList<>();
+    List<TriggerEntity> acquirableEntities = new ArrayList<>();
+
+    triggerEntityAdapter.browseByStates(db, ALL_ACQUIRABLE_STATES).forEach(possibleEntities::add);
+
+    possibleEntities.stream()
+        .filter(this::isLocalOrOrphaned)
+        .filter(entity -> canBeAcquired(entity, db, noEarlierThan, noLaterThan + timeWindow))
+        .forEach(acquirableEntities::add);
+
+    return acquirableEntities;
+  }
+
+  private boolean isLocalOrOrphaned(TriggerEntity entity) {
+    return (isOrphaned(entity) && ACQUIRABLE_ORPHAN_STATES.contains(entity.getState())) ||
+        (isLocal(entity) && ACQUIRABLE_LOCAL_STATES.contains(entity.getState()));
+  }
+
   private List<OperableTrigger> doAcquireNextTriggers(final ODatabaseDocumentTx db,
                                                       final long noLaterThan,
                                                       final int maxCount,
@@ -929,58 +964,20 @@ public class JobStoreImpl
   {
     log.debug("Acquire next triggers: noLaterThan={}, maxCount={}, timeWindow={}", noLaterThan, maxCount, timeWindow);
 
-    // find all local triggers in WAITING state
-    Iterator<TriggerEntity> matches = local(triggerEntityAdapter.browseByState(db, WAITING)).iterator();
+    List<TriggerEntity> acquirableEntities = getAcquirableEntities(db, noLaterThan, timeWindow);
 
     // short-circuit if no matches
-    if (!matches.hasNext()) {
-      return Collections.emptyList();
-    }
-
-    long noEarlierThan = getMisfireTime();
-    List<TriggerEntity> resultEntities = new ArrayList<>();
-
-    while (matches.hasNext()) {
-      TriggerEntity entity = matches.next();
-      OperableTrigger trigger = entity.getValue();
-
-      // skip triggers which have no next fire time
-      if (trigger.getNextFireTime() == null) {
-        continue;
-      }
-
-      // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
-      if (applyMisfire(db, entity) && trigger.getNextFireTime() == null) {
-        continue;
-      }
-
-      // skip triggers which fire outside of requested window
-      if (trigger.getNextFireTime().getTime() > noLaterThan + timeWindow) {
-        continue;
-      }
-
-      // skip triggers which fire outside of requested window
-      if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
-          trigger.getNextFireTime().getTime() < noEarlierThan) {
-        continue;
-      }
-
-      // check after misfire logic to avoid repeated log-spam
-      if (isClustered() && isLimitedToMissingNode(trigger)) {
-        continue;
-      }
-
-      // track result
-      resultEntities.add(entity);
+    if (acquirableEntities.isEmpty()) {
+      return emptyList();
     }
 
     // sort candidates
-    Collections.sort(resultEntities, TRIGGER_COMPARATOR);
+    Collections.sort(acquirableEntities, TRIGGER_COMPARATOR);
 
     // cope with jobs which have disallowed concurrent execution
     // gather set of job-keys acquired which have concurrent execution disabled and eliminate dupe triggers
     Set<JobKey> jobsAcquired = new HashSet<>();
-    Iterator<TriggerEntity> triggerEntityIterator = resultEntities.iterator();
+    Iterator<TriggerEntity> triggerEntityIterator = acquirableEntities.iterator();
     while (triggerEntityIterator.hasNext()) {
       TriggerEntity triggerEntity = triggerEntityIterator.next();
       OperableTrigger trigger = triggerEntity.getValue();
@@ -998,13 +995,13 @@ public class JobStoreImpl
     }
 
     // limit result set if needed
-    if (!resultEntities.isEmpty() && maxCount < resultEntities.size()) {
-      resultEntities = resultEntities.subList(0, maxCount);
+    if (!acquirableEntities.isEmpty() && maxCount < acquirableEntities.size()) {
+      acquirableEntities = acquirableEntities.subList(0, maxCount);
     }
 
     // set state on selected ones
     List<OperableTrigger> result = new ArrayList<>();
-    for (TriggerEntity entity : resultEntities) {
+    for (TriggerEntity entity : acquirableEntities) {
       OperableTrigger trigger = entity.getValue();
       // TODO: Sort out if this is needed, maybe set to entity-id.value?
       // TODO: JDBC store impl uses this to do some validation on triggersFired()
@@ -1448,28 +1445,84 @@ public class JobStoreImpl
    */
   private Iterable<TriggerEntity> local(final Iterable<TriggerEntity> triggers) {
     if (isClustered()) {
-      String localId = nodeAccess.getId();
-      Set<String> memberIds = nodeAccess.getMemberIds();
-
-      return Iterables.filter(triggers, (entity) -> {
-        JobDataMap triggerDetail = entity.getValue().getJobDataMap();
-        if (triggerDetail.containsKey(LIMIT_NODE_KEY)) {
-          // filter limited triggers to those limited to run on this node, or orphaned
-          String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);
-          return localId.equals(limitedNodeId) || !memberIds.contains(limitedNodeId);
-        }
-        // filter all other triggers to those "owned" by this node, or orphaned
-        String owner = triggerDetail.getString(NODE_ID);
-        return localId.equals(owner) || !memberIds.contains(owner);
-      });
+      return Iterables.filter(triggers, (entity) -> isLocal(entity) || isOrphaned(entity));
     }
     return triggers;
+  }
+
+  private boolean canBeAcquired(final TriggerEntity entity,
+                                final ODatabaseDocumentTx db,
+                                final long timeWindowStart,
+                                final long timeWindowEnd)
+  {
+    OperableTrigger trigger = entity.getValue();
+
+    // skip triggers which have no next fire time
+    if (trigger.getNextFireTime() == null) {
+      return false;
+    }
+
+    // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
+    if (applyMisfire(db, entity)) {
+      return false;
+    }
+
+    // skip triggers which fire outside of requested window
+    if (trigger.getNextFireTime().getTime() > timeWindowEnd) {
+      return false;
+    }
+
+    // skip triggers which fire outside of requested window
+    if (trigger.getMisfireInstruction() != Trigger.MISFIRE_INSTRUCTION_IGNORE_MISFIRE_POLICY &&
+        trigger.getNextFireTime().getTime() < timeWindowStart) {
+      return false;
+    }
+
+    // check after misfire logic to avoid repeated log-spam
+    if (isClustered() && isLimitedToMissingNode(entity)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isLocal(final TriggerEntity entity) {
+    if (isClustered()) {
+      String localId = nodeAccess.getId();
+
+      JobDataMap triggerDetail = entity.getValue().getJobDataMap();
+      if (triggerDetail.containsKey(LIMIT_NODE_KEY)) {
+        // filter limited triggers to those limited to run on this node
+        String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);
+        return localId.equals(limitedNodeId);
+      }
+      // filter all other triggers to those "owned" by this node
+      String owner = triggerDetail.getString(NODE_ID);
+      return localId.equals(owner);
+    }
+    return true;
+  }
+
+  /**
+   * A {@link TriggerEntity} is orphaned if it's owner isn't in the cluster OR it's limited to a node not in the cluster
+   * If there is no cluster, it's never orphaned
+   */
+  private boolean isOrphaned(final TriggerEntity entity) {
+    if (isClustered()) {
+      Set<String> memberIds = nodeAccess.getMemberIds();
+      JobDataMap triggerDetail = entity.getValue().getJobDataMap();
+      String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);
+      String owner = triggerDetail.getString(NODE_ID);
+      return limitedNodeId != null ? !memberIds.contains(limitedNodeId) : !memberIds.contains(owner);
+    }
+    return false;
   }
 
   /**
    * Helper to warn when a limited trigger won't fire because its node is missing.
    */
-  private boolean isLimitedToMissingNode(final OperableTrigger trigger) {
+  private boolean isLimitedToMissingNode(final TriggerEntity entity) {
+    OperableTrigger trigger = entity.getValue();
     JobDataMap triggerDetail = trigger.getJobDataMap();
     if (triggerDetail.containsKey(LIMIT_NODE_KEY)) {
       String limitedNodeId = triggerDetail.getString(LIMIT_NODE_KEY);

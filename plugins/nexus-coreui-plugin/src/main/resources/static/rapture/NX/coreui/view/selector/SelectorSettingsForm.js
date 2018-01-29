@@ -78,7 +78,8 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
             {
               name: 'description',
               allowBlank: true,
-              fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Description_FieldLabel')
+              fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Description_FieldLabel'),
+              transformRawValue: Ext.htmlDecode
             }
           ]
         }

@@ -30,9 +30,9 @@ import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
 import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 
-import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,6 +43,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -145,7 +146,7 @@ public class RawUploadHandlerTest
     assertThat(path, is("org/apache/maven/bar.jar"));
   }
 
-  @Test(expected = AuthorizationException.class)
+  @Test
   public void testHandle_unauthorized() throws IOException {
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(RawFormat.NAME), eq(BreadActions.EDIT), any()))
         .thenReturn(false);
@@ -163,27 +164,35 @@ public class RawUploadHandlerTest
     asset.setPayload(sourcesPayload);
     component.getAssetUploads().add(asset);
 
-    underTest.handle(repository, component);
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Not authorized for requested path 'org/apache/maven/foo.jar'"));
+    }
   }
 
   @Test
   public void testHandle_normalizePath() throws IOException {
-    testNormalizePath("/foo", "goo.jar");
-    testNormalizePath("/foo", "/goo.jar");
+    testNormalizePath("/foo", "goo.jar", "foo/goo.jar");
+    testNormalizePath("/foo", "/goo.jar", "foo/goo.jar");
+    testNormalizePath("/foo/", "goo.jar", "foo/goo.jar");
+    testNormalizePath("/foo/", "/goo.jar", "foo/goo.jar");
+    testNormalizePath("foo/", "goo.jar", "foo/goo.jar");
+    testNormalizePath("foo/", "/goo.jar", "foo/goo.jar");
+    testNormalizePath("foo", "goo.jar", "foo/goo.jar");
+    testNormalizePath("foo", "/goo.jar", "foo/goo.jar");
+    testNormalizePath("//foo//", "//goo.jar", "foo/goo.jar");
+    testNormalizePath("//////foo///////", "//////goo.jar//////", "foo/goo.jar");
+    testNormalizePath("  foo  ", "  goo.jar  ", "foo/goo.jar");
 
-    testNormalizePath("/foo/", "goo.jar");
-    testNormalizePath("/foo/", "/goo.jar");
-
-    testNormalizePath("foo/", "goo.jar");
-    testNormalizePath("foo/", "/goo.jar");
-
-    testNormalizePath("foo", "goo.jar");
-    testNormalizePath("foo", "/goo.jar");
-
-    testNormalizePath("  foo  ", "  goo.jar  ");
+    testNormalizePath("foo", "bar/goo.jar", "foo/bar/goo.jar");
+    testNormalizePath("foo/bar", "car/goo.jar", "foo/bar/car/goo.jar");
   }
 
-  private void testNormalizePath(String directory, String file) throws IOException {
+  private void testNormalizePath(String directory, String file, String expectedPath) throws IOException {
     reset(rawFacet);
     ComponentUpload component = new ComponentUpload();
 
@@ -201,7 +210,7 @@ public class RawUploadHandlerTest
 
     String path = pathCapture.getValue();
     assertNotNull(path);
-    assertThat(path, is("foo/goo.jar"));
+    assertThat(path, is(expectedPath));
   }
 
   private UploadFieldDefinition field(final String name,

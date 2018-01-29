@@ -54,9 +54,10 @@ public class LegacyViewServlet
                            final HttpResponseSenderSelector httpResponseSenderSelector,
                            final DescriptionHelper descriptionHelper,
                            final DescriptionRenderer descriptionRenderer,
-                           final List<LegacyViewContributor> legacyViewContributors)
+                           final List<LegacyViewContributor> legacyViewContributors,
+                           @Named("${nexus.repository.sandbox.enable:-true}") final boolean sandboxEnabled)
   {
-    super(repositoryManager, httpResponseSenderSelector, descriptionHelper, descriptionRenderer);
+    super(repositoryManager, httpResponseSenderSelector, descriptionHelper, descriptionRenderer, sandboxEnabled);
     this.legacyViewContributors = checkNotNull(legacyViewContributors);
     this.repositoryManager = repositoryManager;
   }

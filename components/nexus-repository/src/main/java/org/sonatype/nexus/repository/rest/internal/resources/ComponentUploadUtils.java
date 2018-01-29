@@ -61,30 +61,36 @@ class ComponentUploadUtils
    *
    * @param header       Content Disposition header
    * @param fieldPattern Regex pattern to find the field
+   * @param formatPrefix Format name used as a prefix that shall be removed
    * @return value of the 'name' parameter
    */
-  private static Optional<String> extractValue(final String header, final Pattern fieldPattern) {
+  private static Optional<String> extractValue(final String header, final Pattern fieldPattern, final Optional<String> formatPrefix) {
     Matcher matcher = fieldPattern.matcher(header);
     if (matcher.matches()) {
-      return Optional.of(matcher.group(1));
+      String value = matcher.group(1);
+      if (formatPrefix.isPresent()) {
+        value = value.replaceFirst("^" + formatPrefix.get() + "\\.", "");
+      }
+      return Optional.of(value);
     }
     else {
       return Optional.empty();
     }
   }
 
-  private static Optional<String> extractFieldName(final String header) {
-    return extractValue(header, FIELD_NAME_PATTERN);
+  private static Optional<String> extractFieldName(final String format, final String header) {
+    return extractValue(header, FIELD_NAME_PATTERN, Optional.of(format));
   }
 
   private static Optional<String> extractFilename(final String header) {
-    return extractValue(header, FILENAME_PATTERN);
+    return extractValue(header, FILENAME_PATTERN, Optional.empty());
   }
 
-  static ComponentUpload createComponentUpload(final MultipartInput multipartInput) throws IOException
+  static ComponentUpload createComponentUpload(final String format, final MultipartInput multipartInput)
+      throws IOException
   {
-    Map<String, String> textFormFields = getTextFormFields(multipartInput);
-    List<AssetUpload> assetUploads = getAssetsPayloads(multipartInput).entrySet().stream()
+    Map<String, String> textFormFields = getTextFormFields(format, multipartInput);
+    List<AssetUpload> assetUploads = getAssetsPayloads(format, multipartInput).entrySet().stream()
         .map(asset -> createAssetUpload(asset.getKey(), asset.getValue(), textFormFields))
         .collect(Collectors.toList());
 
@@ -133,14 +139,16 @@ class ComponentUploadUtils
     return assetUpload;
   }
 
-  private static Map<String, String> getTextFormFields(final MultipartInput multipartInput) throws IOException {
+  private static Map<String, String> getTextFormFields(final String format, final MultipartInput multipartInput)
+      throws IOException
+  {
     Map<String, String> fields = new HashMap<>();
     List<InputPart> fieldsParts = multipartInput.getParts().stream()
         .filter(part -> TEXT_PLAIN_TYPE.isCompatible(part.getMediaType()))
         .collect(toList());
 
     for (InputPart inputPart : fieldsParts) {
-      Optional<String> maybeFieldName = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
+      Optional<String> maybeFieldName = extractFieldName(format, inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
       if (maybeFieldName.isPresent()) {
         fields.put(maybeFieldName.get(), inputPart.getBodyAsString());
       }
@@ -148,7 +156,8 @@ class ComponentUploadUtils
     return fields;
   }
 
-  private static Map<String, InputStreamPartPayload> getAssetsPayloads(final MultipartInput multipartInput)
+  private static Map<String, InputStreamPartPayload> getAssetsPayloads(final String format,
+                                                                       final MultipartInput multipartInput)
       throws IOException
   {
     Map<String, InputStreamPartPayload> payloads = new HashMap<>();
@@ -156,7 +165,7 @@ class ComponentUploadUtils
       String contentDisposition = inputPart.getHeaders().getFirst(CONTENT_DISPOSITION);
       Optional<String> filename = extractFilename(contentDisposition);
       if (filename.isPresent()) {
-        String name = extractFieldName(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION)).orElse(filename.get());
+        String name = extractFieldName(format, inputPart.getHeaders().getFirst(CONTENT_DISPOSITION)).orElse(filename.get());
         InputStream inputStream = inputPart.getBody(InputStream.class, null);
         payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
       }

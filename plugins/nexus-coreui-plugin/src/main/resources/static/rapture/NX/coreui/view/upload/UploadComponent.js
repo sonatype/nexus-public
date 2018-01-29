@@ -270,15 +270,19 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           assetValue = {},
           assetRows = Ext.Array.difference(assetRow.up().query('panel'), [assetRow]);
 
-      assetRow.query('field').forEach(function(field) {
-        assetValue[field.name.replace(/[0-9]/g, '')] = field.value;
+      function trim(val) {
+        return val ? val.trim() : val;
+      }
+
+      assetRow.query('textfield,checkboxfield').forEach(function(field) {
+        assetValue[field.name.replace(/[0-9]/g, '')] = trim(field.value);
       });
 
       var duplicate = Ext.Array.findBy(assetRows, function(row) {
         var isDuplicate = true;
         Object.keys(assetValue).forEach(function(fieldName) {
           isDuplicate = isDuplicate &&
-              (row.query('field[name^=' + fieldName + ']')[0].value === assetValue[fieldName]);
+              (trim(row.query('field[name^=' + fieldName + ']')[0].value) === assetValue[fieldName]);
         });
         return isDuplicate;
       });

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.upload;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -134,6 +136,29 @@ public class UploadHandlerTest
     catch (ValidationErrorsException e) {
       fail(format("Unexpected validation exception thrown '%s'", e));
     }
+  }
+
+  @Test
+  public void testValidate_duplicates() {
+    when(uploadDefinition.getAssetFields()).thenReturn(Arrays.asList(new UploadFieldDefinition("field1", true, STRING),
+        new UploadFieldDefinition("field2", true, STRING)));
+
+    AssetUpload assetUploadOne = new AssetUpload();
+    assetUploadOne.getFields().putAll(ImmutableMap.of("field1", "x", "field2", "y"));
+    assetUploadOne.setPayload(mock(PartPayload.class));
+
+    AssetUpload assetUploadTwo = new AssetUpload();
+    assetUploadTwo.getFields().putAll(ImmutableMap.of("field1", "x", "field2", "y"));
+    assetUploadTwo.setPayload(mock(PartPayload.class));
+
+    AssetUpload assetUploadThree = new AssetUpload();
+    assetUploadThree.getFields().putAll(ImmutableMap.of("field1", "x"));
+    assetUploadThree.setPayload(mock(PartPayload.class));
+
+    ComponentUpload componentUpload = new ComponentUpload();
+    componentUpload.getAssetUploads().addAll(Arrays.asList(assetUploadOne, assetUploadTwo, assetUploadThree));
+
+    expectExceptionOnValidate(componentUpload, "The assets 1 and 2 have identical coordinates");
   }
 
   private void expectExceptionOnValidate(final ComponentUpload component, final String message)

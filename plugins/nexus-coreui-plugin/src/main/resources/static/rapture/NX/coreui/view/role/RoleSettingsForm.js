@@ -36,7 +36,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         roleStore = Ext.create('NX.coreui.store.Role');
 
     me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
-      return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + data['name'];
+      return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + Ext.String.htmlEncode(data['name']);
     };
 
     me.editableMarker = NX.I18n.get('Role_RoleSettingsForm_Update_Error');
@@ -88,12 +88,14 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
       idField,
       {
         name: 'name',
-        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_Name_FieldLabel')
+        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_Name_FieldLabel'),
+        transformRawValue: Ext.htmlDecode
       },
       {
         name: 'description',
         allowBlank: true,
-        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_Description_FieldLabel')
+        fieldLabel: NX.I18n.get('Role_RoleSettingsForm_Description_FieldLabel'),
+        transformRawValue: Ext.htmlDecode
       },
       {
         xtype: 'nx-itemselector',

@@ -49,6 +49,8 @@ public class CselAssetSqlBuilder
 {
   private static final String FORMAT_PLACEHOLDER = "${format}";
 
+  private static final String PATH = "path";
+
   private static final int LEFT = 0;
   private static final int RIGHT = 1;
 
@@ -170,7 +172,7 @@ public class CselAssetSqlBuilder
     CselAssetSql cselAssetSql = (CselAssetSql) data;
     StringBuilder result = cselAssetSql.getSqlBuilder();
 
-    if (Objects.equals("path", node.getName())) { // Assets store the path in the name attribute
+    if (Objects.equals(PATH, node.getName())) { // Assets store the path in the name attribute
       result.append(cselAssetSql.getFieldPrefix()).append("name");
     }
     else if (Objects.equals("format", node.getName())) {
@@ -217,24 +219,46 @@ public class CselAssetSqlBuilder
     JexlNode leftChild = node.jjtGetChild(LEFT);
     JexlNode rightChild = node.jjtGetChild(RIGHT);
 
-    leftChild.jjtAccept(this, data);
-
-    result.append(' ').append(operator).append(' ');
-
-    if (leftChild instanceof ASTIdentifier && rightChild instanceof ASTStringLiteral
-        && "path".equals(((ASTIdentifier) leftChild).getName())) {
-      String literal = ((ASTStringLiteral) rightChild).getLiteral();
-      if (literal.startsWith("/")) {
-        appendStringParameter(cselAssetSql, literal.substring(1));
-      }
-      else {
-        rightChild.jjtAccept(this, data);
-      }
+    if (isPathNode(leftChild, rightChild) || isPathNode(rightChild, leftChild)) {
+      visitPath(cselAssetSql, leftChild, rightChild, operator);
     }
     else {
+      leftChild.jjtAccept(this, data);
+
+      result.append(' ').append(operator).append(' ');
+
       rightChild.jjtAccept(this, data);
     }
 
     return result;
+  }
+
+  private Object visitPath(final CselAssetSql cselAssetSql,
+                           final JexlNode left,
+                           final JexlNode right,
+                           final String operator)
+  {
+    StringBuilder result = cselAssetSql.getSqlBuilder();
+    JexlNode identifier = left instanceof ASTIdentifier ? left : right;
+    ASTStringLiteral string = (ASTStringLiteral) (right instanceof ASTStringLiteral ? right : left);
+
+    identifier.jjtAccept(this, cselAssetSql);
+
+    result.append(' ').append(operator).append(' ');
+
+    String literal = string.getLiteral();
+    if (literal.startsWith("/")) {
+      appendStringParameter(cselAssetSql, literal.substring(1));
+    }
+    else {
+      string.jjtAccept(this, cselAssetSql);
+    }
+
+    return result;
+  }
+
+  private boolean isPathNode(final JexlNode identifier, final JexlNode literal) {
+    return identifier instanceof ASTIdentifier && literal instanceof ASTStringLiteral
+        && PATH.equals(((ASTIdentifier) identifier).getName());
   }
 }

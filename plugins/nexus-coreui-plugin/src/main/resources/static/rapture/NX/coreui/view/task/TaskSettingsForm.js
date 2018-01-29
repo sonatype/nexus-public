@@ -52,7 +52,8 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       {
         name: 'name',
         fieldLabel: NX.I18n.get('Task_TaskSettingsForm_Name_FieldLabel'),
-        helpText: NX.I18n.get('Task_TaskSettingsForm_Name_HelpText')
+        helpText: NX.I18n.get('Task_TaskSettingsForm_Name_HelpText'),
+        transformRawValue: Ext.htmlDecode
       },
       {
         xtype: 'nx-email',

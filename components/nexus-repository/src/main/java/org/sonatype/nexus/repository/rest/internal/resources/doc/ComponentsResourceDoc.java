@@ -65,13 +65,7 @@ public interface ComponentsResourceDoc
 
   @ApiOperation(value = "Upload a single component",
       //TODO: NEXUS-15443 remove this parameter when ready to ship with ui upload enabled
-      hidden = true,
-      notes = "This API takes a multi-part form whose schema varies by repository type, therefore it's virtually " +
-          "impossible to be described by the generated documentation. Instead, here's a couple of examples using curl.\n\n" +
-          "curl -X POST http://nexus.local/service/rest/beta/components?repository=raw -F directory=example -F asset=@README.md -F asset.filename=readme.md\n\n" +
-          "curl -X POST http://nexus.local/service/rest/beta/components?repository=nuget -F asset=@nunit.3.9.0.nupkg\n\n" +
-          "curl -X POST http://nexus.local/service/rest/beta/components?repository=maven -F file=@aopalliance-1.0.jar -F file.extension=jar -F groupId=aopalliance -F artifactId=aopalliance -F version=1.0\n\n" +
-          "curl -X POST http://nexus.local/service/rest/beta/components?repository=maven -F pom=@aopalliance-1.0.pom -F pom.extension=pom -F sources=@aopalliance-1.0-sources.jar -F sources.classifier=sources -F sources.extension=jar -F asset=aopalliance-1.0.jar -F asset.extension=jar\n\n"
+      hidden = true
   )
   @ApiResponses(value = {
       @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),
@@ -80,6 +74,6 @@ public interface ComponentsResourceDoc
   void uploadComponent(
       @ApiParam(value = "Name of the repository to which you would like to upload the component", required = true)
       final String repository,
-      @ApiParam(value = "Form containing the component") @MultipartForm MultipartInput multipartInput)
+      @ApiParam(hidden = true) @MultipartForm MultipartInput multipartInput)
       throws IOException;
 }

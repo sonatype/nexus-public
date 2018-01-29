@@ -40,14 +40,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!--
-    Needed for StringEscapeUtils for ?describe
-    -->
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>commons-fileupload</groupId>
       <artifactId>commons-fileupload</artifactId>

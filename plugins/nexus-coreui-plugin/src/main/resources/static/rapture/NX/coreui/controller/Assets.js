@@ -432,7 +432,7 @@ Ext.define('NX.coreui.controller.Assets', {
             var assetStore = assetList.getStore();
             assetStore.remove(assetStore.findRecord('id', asset.getId()));
             me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
+            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'}, true);
           }
         });
       });

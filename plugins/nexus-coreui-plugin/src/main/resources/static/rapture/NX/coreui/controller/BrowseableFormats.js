@@ -34,6 +34,8 @@ Ext.define('NX.coreui.controller.BrowseableFormats', {
   init: function () {
     var me = this;
 
+    me.primeInitialFormats();
+
     me.listen({
       controller: {
         '#State': {
@@ -62,11 +64,9 @@ Ext.define('NX.coreui.controller.BrowseableFormats', {
   },
 
   /**
-   * Prime initial set of formats.
-   *
-   * @override
+   * @private
    */
-  onLaunch: function () {
+  primeInitialFormats: function () {
     var me = this,
         rawData = NX.State.getValue('browseableformats');
 

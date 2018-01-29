@@ -20,10 +20,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappingsService;
-import org.sonatype.nexus.swagger.QueryParameterContributor;
+import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
+import org.sonatype.nexus.swagger.ParameterContributor;
 
 import com.google.common.collect.ImmutableList;
 import io.swagger.models.parameters.QueryParameter;
@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
 @Named
 @Singleton
 public class SearchParameterContributor
-    extends QueryParameterContributor
+    extends ParameterContributor<QueryParameter>
 {
   private static final List<String> PATHS = ImmutableList.of(
       SearchResource.RESOURCE_URI,

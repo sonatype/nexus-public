@@ -21,9 +21,9 @@ Ext.define('NX.coreui.model.LdapServer', {
   extend: 'Ext.data.Model',
   fields: [
     {name: 'id', type: 'string'},
-    {name: 'name', type: 'string', sortType: 'asUCText'},
+    {name: 'name', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode},
     {name: 'order', type: 'int'},
-    {name: 'url', type: 'string'},
+    {name: 'url', type: 'string', convert: Ext.htmlEncode},
 
     {name: 'protocol', type: 'auto' /*object*/},
     {name: 'host', type: 'string'},
