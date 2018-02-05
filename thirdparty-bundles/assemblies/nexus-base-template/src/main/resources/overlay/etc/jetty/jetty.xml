@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+
+  <Arg name="threadpool">
+    <New id="threadpool" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedQueuedThreadPool"/>
+  </Arg>
+
+  <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler">
+    <Arg>
+      <New id="NexusWebAppContext" class="org.eclipse.jetty.webapp.WebAppContext">
+        <Set name="descriptor"><Property name="jetty.etc"/>/nexus-web.xml</Set>
+        <Set name="resourceBase"><Property name="karaf.base"/>/public</Set>
+        <Set name="contextPath"><Property name="nexus-context-path"/></Set>
+        <Set name="throwUnavailableOnStartupException">true</Set>
+        <Set name="configurationClasses">
+          <Array type="java.lang.String">
+            <Item>org.eclipse.jetty.webapp.WebXmlConfiguration</Item>
+          </Array>
+        </Set>
+      </New>
+    </Arg>
+  </New>
+
+  <Set name="handler">
+    <New id="Handlers" class="org.eclipse.jetty.server.handler.HandlerCollection">
+      <Set name="handlers">
+        <Array type="org.eclipse.jetty.server.Handler">
+          <Item>
+            <Ref refid="NexusHandler"/>
+          </Item>
+        </Array>
+      </Set>
+    </New>
+  </Set>
+
+  <Set name="stopAtShutdown">true</Set>
+  <Set name="stopTimeout"><Property name="jetty.stop.timeout" default="5000"/></Set>
+  <Set name="dumpAfterStart"><Property name="jetty.dump.start" default="false"/></Set>
+  <Set name="dumpBeforeStop"><Property name="jetty.dump.stop" default="false"/></Set>
+
+  <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+    <Set name="outputBufferSize"><Property name="jetty.output.buffer.size" default="32768"/></Set>
+    <Set name="outputAggregationSize"><Property name="jetty.output.aggregation.size" default="8192"/></Set>
+    <Set name="requestHeaderSize"><Property name="jetty.request.header.size" default="8192"/></Set>
+    <Set name="responseHeaderSize"><Property name="jetty.response.header.size" default="8192"/></Set>
+    <Set name="sendServerVersion"><Property name="jetty.send.server.version" default="true"/></Set>
+    <Set name="sendDateHeader"><Property name="jetty.send.date.header" default="true"/></Set>
+    <Set name="headerCacheSize">512</Set>
+    <Set name="delayDispatchUntilContent"><Property name="jetty.delayDispatchUntilContent" default="false"/></Set>
+    <Call name="addCustomizer">
+      <Arg><New class="org.eclipse.jetty.server.ForwardedRequestCustomizer"/></Arg>
+    </Call>
+  </New>
+
+</Configure>

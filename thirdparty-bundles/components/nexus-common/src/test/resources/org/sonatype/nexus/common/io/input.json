@@ -1,0 +1,45 @@
+{
+  "a": 10,
+  "b": [
+    {
+      "m": "foo",
+      "n": 3.1416,
+      "o": {
+        "x": true,
+        "y": false,
+        "z": null
+      },
+      "A": "some string",
+      "B": 3.1416,
+      "C": 123,
+      "D": true,
+      "E": false,
+      "F": {},
+      "G": [],
+      "H": {
+        "I": "foo"
+      },
+      "J": [ "foo" ],
+      "K": {
+        "L" : "foo"
+      },
+      "M" : "foo"
+    }
+  ],
+  "c": "foo",
+  "A": "some string",
+  "B": 3.1416,
+  "C": 123,
+  "D": true,
+  "E": false,
+  "F": {},
+  "G": [],
+  "H": {
+    "I": "foo"
+  },
+  "J": [ "foo" ],
+  "K": {
+    "L" : "foo"
+  },
+  "M" : "foo"
+}

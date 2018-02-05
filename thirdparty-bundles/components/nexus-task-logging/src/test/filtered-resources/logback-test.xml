@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <encoder>
+      <pattern>%date %level [%thread%X{DC}] %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="tasklogfile" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <discriminator>
+      <key>taskIdAndDate</key>
+      <defaultValue>unknown</defaultValue>
+    </discriminator>
+    <sift>
+      <appender name="taskAppender" class="ch.qos.logback.core.FileAppender">
+        <file>${project.build.directory}/test/log/tasks/${taskIdAndDate}.log</file>
+        <encoder>
+          <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+        </encoder>
+      </appender>
+    </sift>
+  </appender>
+
+  <logger name="org.sonatype.nexus.common" level="DEBUG"/>
+
+  <root level="${test.log.level:-INFO}">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="tasklogfile"/>
+  </root>
+
+</configuration>

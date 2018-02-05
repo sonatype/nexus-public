@@ -1,0 +1,94 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Index of ${requestPath}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+#* START favicon links and meta
+ * favicon set for multiple browsers, OS shortcuts, etc.
+ * Generated at Real Favicon Generator, https://realfavicongenerator.net/
+ *
+ * Associated files not referenced explicitly in link or meta tags:
+ *    mstile-*.png      - Win8+ desktop support
+ *    browserconfig.xml - Win8+ desktop support
+ *    apple-touch-icon.png  - OSX Safari desktop support
+*#
+## IE, early versions (comment required)
+    <!--[if lt IE 9]>
+    <script>(new Image).src="$nexusUrl/favicon.ico?$urlSuffix"</script>
+    <![endif]-->
+## Safari on MacOS and iOS
+    <link rel="icon" type="image/png" href="$nexusUrl/favicon-32x32.png?$urlSuffix" sizes="32x32">
+    <link rel="mask-icon" href="$nexusUrl/safari-pinned-tab.svg?$urlSuffix" color="#5bbad5">
+## classic favicon, shown in browser tabs
+    <link rel="icon" type="image/png" href="$nexusUrl/favicon-16x16.png?$urlSuffix" sizes="16x16">
+## IE, later versions
+    <link rel="shortcut icon" href="$nexusUrl/favicon.ico?$urlSuffix">
+## Win8+
+    <meta name="msapplication-TileImage" content="$nexusUrl/mstile-144x144.png?$urlSuffix">
+    <meta name="msapplication-TileColor" content="#00a300">
+## END favicon links
+
+    <link rel="stylesheet" type="text/css" href="$nexusUrl/static/css/nexus-content.css?$urlSuffix"/>
+</head>
+<body class="htmlIndex">
+<h1>Index of ${requestPath}</h1>
+
+#if($showMoreContentWarning)
+<h3>
+  There may be additional items to display.
+</h3>
+<p>
+  If you need to script against the full list of items in the database, try using the rest api.
+  You may also try adding a ?filter= parameter to the url.
+</p>
+#end
+
+<table cellspacing="10">
+    <tr>
+        <th align="left">Name</th>
+        <th>Last Modified</th>
+        <th>Size</th>
+        <th>Description</th>
+    </tr>
+    #if(! $root)
+        <tr>
+            <td><a href="../">Parent Directory</a></td>
+        </tr>
+    #end
+    #foreach( $listItem in $listItems )
+        <tr>
+            <td><a href="$esc.html($listItem.resourceUri)">$esc.html($listItem.name)</a></td>
+            <td>
+                #if( $listItem.collection )
+                    &nbsp;
+                #else
+                    $listItem.lastModified
+                #end
+            </td>
+            <td align="right">
+                #if( $listItem.collection )
+                    &nbsp;
+                #else
+                    $listItem.size
+                #end
+            </td>
+            <td>$listItem.description</td>
+        </tr>
+    #end
+</table>
+</body>
+</html>

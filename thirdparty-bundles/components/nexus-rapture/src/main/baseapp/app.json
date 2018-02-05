@@ -1,0 +1,12 @@
+{
+  "name": "baseapp",
+
+  "requires": [
+    // FIXME: this does not resolve in Ext <5, here for note about upgrade
+    // "ext-ux",
+    "font-awesome",
+    "rapture-theme"
+  ],
+
+  "id": "7ab894a2-c860-4858-81fe-e27ac87611e2"
+}

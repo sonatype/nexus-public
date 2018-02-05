@@ -1,0 +1,21 @@
+/**
+ * @class NX.ext.form.OptionalFieldSet
+ */
+
+.nx-optionalfieldset {
+  margin: 10px 25px 0 0;
+
+  .x-fieldset-body {
+    background-color: $color-light-smoke;
+    border: 1px solid $color-light-gray;
+    padding: 5px 20px 10px 20px;
+    position: relative;
+    margin-left: 25px;
+    width: auto !important;
+  }
+
+  // Give child elements a background opacity instead of a color
+  .nx-optionalfieldset .x-fieldset-body {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}

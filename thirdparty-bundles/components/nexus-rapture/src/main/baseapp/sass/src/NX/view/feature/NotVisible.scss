@@ -1,0 +1,19 @@
+/**
+ * @class NX.view.feature.NotVisible
+ */
+
+.nx-feature-notvisible {
+  background-color: $color-light-smoke;
+
+  .title {
+    color: $color-night-rider;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .description {
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,53 @@
+/**
+ * @class NX.view.feature.Content
+ */
+
+@include extjs-panel-ui(
+    $ui: 'nx-feature-content',
+    $ui-header-padding: 10px 8px 10px 10px,
+    $ui-header-background-color: $color-white,
+    $ui-body-background-color: $color-light-smoke,
+    $ui-header-icon-height: 32px,
+    $ui-header-icon-width: 32px,
+    $ui-wrap-border-width: 0,
+    $ui-header-text-transform: $panel-light-header-text-transform,
+    $ui-tool-background-image: $panel-light-tool-background-image
+);
+
+.nx-feature-content {
+  .nx-feature-group {
+    border-top: 1px $color-gainsboro solid !important;
+    margin: 0 !important;
+  }
+}
+
+.nx-feature-content .x-panel-body .x-toolbar {
+  padding: 12px 8px 0 0;
+  /*.x-toolbar-item {
+    margin: 100px 8px 0 0;
+  }*/
+  &.x-toolbar-footer {
+    background-color: $color-white;
+  }
+}
+
+.nx-feature-content .x-panel-body .x-panel-nx-subsection-framed > div + .x-toolbar,
+.nx-feature-content .x-panel-body .nx-actions.x-toolbar {
+  padding: 0 8px 0 0;
+  .x-toolbar-item {
+    margin: 6px 0 6px 8px;
+  }
+}
+
+.nx-feature-name {
+  font-size: $font-size-h2;
+  font-weight: $font-weight-h2;
+}
+
+.nx-feature-description {
+  font-size: $font-size-body;
+  font-weight: $font-weight-body;
+  top: 12px !important;
+  padding-left: 7px;
+}
+

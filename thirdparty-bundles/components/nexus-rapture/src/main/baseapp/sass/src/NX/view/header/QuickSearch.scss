@@ -1,0 +1,28 @@
+/**
+ * @class NX.view.header.QuickSearch
+ */
+
+/**
+ * Style for the main header search field.
+ */
+.nx-quicksearch .x-form-trigger-wrap {
+  border-radius: 11px;
+  padding-left: 3px;
+  padding-right: 0px;
+  background-color: $color-charcoal;
+  border-color: $color-night-rider;
+
+  input.x-form-field,
+  .x-trigger-cell,
+  .x-form-trigger,
+  .x-form-trigger-input-cell {
+    background-color: $color-none;
+  }
+
+  input.x-form-field,
+  .x-trigger-cell,
+  .x-form-trigger,
+  .x-form-text {
+    color: $color-white;
+  }
+}

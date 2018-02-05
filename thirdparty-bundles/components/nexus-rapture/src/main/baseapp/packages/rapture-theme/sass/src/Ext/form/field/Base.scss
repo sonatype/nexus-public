@@ -1,0 +1,67 @@
+/**
+ * @class Ext.form.field.Base
+ */
+
+/**
+ * Style for read-only fields
+ *
+ * cls: 'x-form-readonly'
+ */
+
+@mixin nx-form-field-readonly {
+  color: $color-dark-gray;
+  background-color: $color-smoke;
+  opacity: 1;  
+}
+
+.x-form-field[readonly].x-form-field:not([role="combobox"]) {
+  @include nx-form-field-readonly;
+}
+
+/**
+  * editable = false on a combo sets readonly already, so use a custom class to achieve the same effect
+  */
+.nx-combo-disabled {
+  input {
+    @include nx-form-field-readonly;
+  }
+}
+
+.x-form-fieldcontainer .x-mask {
+  background-color: $color-gainsboro;
+  opacity: 0.6;
+}
+
+/**
+ * Styles which allow for horizontal alignment of form fields
+ */
+
+.nx-float-left {
+  position: relative;
+  float: left !important;
+  margin-right: 5px;
+}
+
+.nx-interstitial-label {
+  font-size: 13px;
+  padding-top: 5px;
+}
+
+.nx-clear-both {
+  clear: both;
+}
+
+/**
+ * Styling for the boxlabel of form fields
+ */
+.x-field .nx-boxlabel {
+  font-size: $font-size-utility;
+}
+
+/**
+ * IE10 adds a second 'x' icon to text fields. Hide this.
+ */
+::-ms-clear {
+  width: 0;
+  height: 0;
+}

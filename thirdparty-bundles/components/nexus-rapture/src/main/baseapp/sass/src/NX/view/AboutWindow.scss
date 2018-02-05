@@ -1,0 +1,17 @@
+/**
+ * @class NX.view.AboutWindow
+ */
+
+.nx-aboutwindow {
+  .x-window {
+    padding: 0;
+  }
+
+  .summary {
+    background-color: $color-light-smoke;
+  }
+
+  .logo {
+    margin: 10px;
+  }
+}

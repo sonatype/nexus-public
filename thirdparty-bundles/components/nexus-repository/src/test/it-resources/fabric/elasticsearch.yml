@@ -1,0 +1,20 @@
+cluster.name: nexus
+
+path:
+  home: ${testdir}
+  conf: ${testdir}/etc
+  data: ${testdir}/data
+  logs: ${testdir}/log
+  work: ${testdir}/tmp
+
+node.data: true
+node.master: true
+
+# Disable groovy script integration
+script.groovy.sandbox.enabled: false
+
+# Disable networking
+node.local: true
+http.enabled: false
+discovery.zen.ping.multicast.enabled: false
+

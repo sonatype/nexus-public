@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+
+  <Call name="addConnector">
+    <Arg>
+      <New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector">
+        <Arg name="server"><Ref refid="Server"/></Arg>
+        <Arg name="acceptors" type="int"><Property name="jetty.http.acceptors" default="-1"/></Arg>
+        <Arg name="selectors" type="int"><Property name="jetty.http.selectors" default="-1"/></Arg>
+        <Arg name="factories">
+          <Array type="org.eclipse.jetty.server.ConnectionFactory">
+            <!-- uncomment to support proxy protocol
+            <Item>
+              <New class="org.eclipse.jetty.server.ProxyConnectionFactory"/>
+            </Item>-->
+            <Item>
+              <New class="org.sonatype.nexus.bootstrap.jetty.InstrumentedConnectionFactory">
+                <Arg>
+                  <New class="org.eclipse.jetty.server.HttpConnectionFactory">
+                    <Arg name="config">
+                      <Ref refid="httpConfig"/>
+                    </Arg>
+                  </New>
+                </Arg>
+              </New>
+            </Item>
+          </Array>
+        </Arg>
+        <Set name="host"><Property name="application-host" /></Set>
+        <Set name="port"><Property name="application-port"/></Set>
+        <Set name="idleTimeout"><Property name="jetty.http.timeout" default="30000"/></Set>
+        <Set name="soLingerTime"><Property name="jetty.http.soLingerTime" default="-1"/></Set>
+        <Set name="acceptorPriorityDelta"><Property name="jetty.http.acceptorPriorityDelta" default="0"/></Set>
+        <Set name="acceptQueueSize"><Property name="jetty.http.acceptQueueSize" default="0"/></Set>
+      </New>
+    </Arg>
+  </Call>
+
+</Configure>

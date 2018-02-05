@@ -1,0 +1,16 @@
+/**
+ * @class NX.coreui.view.search.SearchFeature
+ */
+
+.nx-coreui-searchfeature {
+  .criteria {
+    background-color: $color-white;
+
+    padding: 0 0 10px 10px;
+
+    // FIXME: find a saner way to get 'more criteria' button to line up with criteria input fields
+    .more-criteria {
+      margin: 26px 0 0 0;
+    }
+  }
+}

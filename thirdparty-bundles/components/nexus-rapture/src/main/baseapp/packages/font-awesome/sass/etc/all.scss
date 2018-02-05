@@ -1,0 +1,23 @@
+$fa-font-path: 'font-awesome';
+
+// The "x-fa" class should be used in Ext JS applications instead
+// of "fa".  The "fa" class sets some properties that may collide
+// with theme properties, whereas "x-fa" sets only the font-family.
+.x-fa:before {
+  font-family: FontAwesome;
+}
+
+//@import "_variables";
+//@import "_mixins";
+//@import "_path";
+//@import "_core";
+//@import "_larger";
+//@import "_fixed-width";
+//@import "_list";
+//@import "_bordered-pulled";
+//@import "_animated";
+//@import "_rotated-flipped";
+//@import "_stacked";
+//@import "_icons";
+
+@import "font-awesome";

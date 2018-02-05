@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "paths": {
+          "tokenizer": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "component": {
+      "dynamic_templates": [
+        {
+          "attributes.maven2": {
+            "path_match": "attributes.maven2.*",
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        },
+        {
+          "assets.attributes.maven2": {
+            "path_match": "assets.attributes.maven2.*",
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "assets": {
+          "properties": {
+            "attributes": {
+              "properties": {
+                "maven2": {
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "index": "not_analyzed",
+                      "fields": {
+                        "tree": {
+                          "type": "string",
+                          "analyzer": "paths"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

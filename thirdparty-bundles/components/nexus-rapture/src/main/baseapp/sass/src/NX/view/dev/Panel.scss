@@ -1,0 +1,363 @@
+/**
+ * @class NX.view.dev.Panel
+ */
+
+/**
+ * ui: 'nx-developer'
+ */
+@include extjs-panel-ui(
+    $ui: 'nx-developer',
+    $ui-header-padding: 4px,
+    $ui-header-color: $color-white,
+    $ui-header-background-color: $color-smalt,
+    $ui-body-background-color: $color-white
+);
+
+.x-panel-nx-developer {
+  // Let the developer panes scroll as needed
+  .x-panel-body .x-tabpanel-child .x-box-inner {
+    overflow-y: auto;
+  }
+
+  /*
+   * Meta styles for the visual style sheet
+   */
+
+  .nx-hbox {
+    float: left;
+    margin-right: 20px;
+  }
+
+  .nx-vbox {
+    margin-bottom: 20px;
+  }
+
+  .nx-section-header {
+    font-size: $font-size-h5;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  table thead th {
+    font-size: $font-size-h5;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  table tbody tr .nx-color {
+    height: 10px;
+    width: 10px;
+  }
+
+  /*
+   * Visual style sheet fonts
+   */
+
+  .nx-proxima-nova-regular {
+    font-family: $font-regular;
+  }
+
+  .nx-proxima-nova-bold {
+    font-family: $font-regular;
+    font-weight: bold;
+  }
+
+  .nx-courier-new-regular {
+    font-family: $font-monospace;
+  }
+
+  /*
+   * Visual style sheet type styles
+   */
+
+  .nx-sample-h1 {
+    font-size: $font-size-h1;
+    font-weight: $font-weight-h1;
+  }
+
+  .nx-sample-h2 {
+    font-size: $font-size-h2;
+    font-weight: $font-weight-h2;
+  }
+
+  .nx-sample-h3 {
+    font-size: $font-size-h3;
+    font-weight: $font-weight-h3;
+  }
+
+  .nx-sample-h4 {
+    font-size: $font-size-h4;
+    font-weight: $font-weight-h4;
+  }
+
+  .nx-sample-h5 {
+    font-size: $font-size-h5;
+    font-weight: $font-weight-h5;
+  }
+
+  .nx-sample-body {
+    font-size: $font-size-body;
+    font-weight: $font-weight-body;
+  }
+
+  .nx-sample-code {
+    font-size: $font-size-code;
+    font-weight: $font-weight-code;
+    font-family: $font-monospace;
+  }
+
+  .nx-sample-utility {
+    font-size: $font-size-utility;
+    font-weight: $font-weight-utility;
+  }
+
+  /*
+   * Visual style sheet colors
+   */
+
+  .nx-color {
+    border: 1px $color-gainsboro solid;
+    margin: 0 3px 3px 0 !important;
+    height: 40px;
+    width: 80px;
+
+    // Shell colors
+    &.black {
+      background-color: $color-black;
+    }
+
+    &.night-rider {
+      background-color: $color-night-rider;
+    }
+
+    &.charcoal {
+      background-color: $color-charcoal;
+    }
+
+    &.dark-gray {
+      background-color: $color-dark-gray;
+    }
+
+    &.gray {
+      background-color: $color-gray;
+    }
+
+    &.light-gray {
+      background-color: $color-light-gray;
+    }
+
+    &.gainsboro {
+      background-color: $color-gainsboro;
+    }
+
+    &.smoke {
+      background-color: $color-smoke;
+    }
+
+    &.light-smoke {
+      background-color: $color-light-smoke;
+    }
+
+    // Severity
+
+    &.cerise {
+      background-color: $color-cerise;
+    }
+
+    &.sun {
+      background-color: $color-sun;
+    }
+
+    &.energy-yellow {
+      background-color: $color-energy-yellow;
+    }
+
+    &.cobalt {
+      background-color: $color-cobalt;
+    }
+
+    &.cerulean-blue {
+      background-color: $color-cerulean-blue;
+    }
+
+    // Forms
+
+    &.citrus {
+      background-color: $color-citrus;
+    }
+
+    &.free-speech-red {
+      background-color: $color-free-speech-red;
+    }
+
+    // Tooltips
+
+    &.energy-yellow {
+      background-color: $color-energy-yellow;
+    }
+
+    &.floral-white {
+      background-color: $color-floral-white;
+    }
+
+    // Dashboard
+
+    &.pigment-green {
+      background-color: $color-pigment-green;
+    }
+
+    &.madang {
+      background-color: $color-madang;
+    }
+
+    &.venetian-red {
+      background-color: $color-venetian-red;
+    }
+
+    &.beauty-bush {
+      background-color: $color-beauty-bush;
+    }
+
+    &.navy-blue {
+      background-color: $color-navy-blue;
+    }
+
+    &.cornflower {
+      background-color: $color-cornflower;
+    }
+
+    &.affair {
+      background-color: $color-affair;
+    }
+
+    &.east-side {
+      background-color: $color-east-side;
+    }
+
+    &.blue-chalk {
+      background-color: $color-blue-chalk;
+    }
+
+    // Buttons
+
+    &.white {
+      background-color: $color-white;
+    }
+
+    &.light-gainsboro {
+      background-color: $color-light-gainsboro;
+    }
+
+    &.light-gray {
+      background-color: $color-light-gray;
+    }
+
+    &.silver {
+      background-color: $color-silver;
+    }
+
+    &.suva-gray {
+      background-color: $color-suva-gray;
+    }
+
+    &.gray {
+      background-color: $color-gray;
+    }
+
+    &.denim {
+      background-color: $color-denim;
+    }
+
+    &.light-cobalt {
+      background-color: $color-light-cobalt;
+    }
+
+    &.dark-denim {
+      background-color: $color-smalt;
+    }
+
+    &.smalt {
+      background-color: $color-dark-cerulean;
+    }
+
+    &.dark-cerulean {
+      background-color: $color-dark-cerulean;
+    }
+
+    &.prussian-blue {
+      background-color: $color-prussian-blue;
+    }
+
+    &.light-cerise {
+      background-color: $color-light-cerise;
+    }
+
+    &.brick-red {
+      background-color: $color-brick-red;
+    }
+
+    &.old-rose {
+      background-color: $color-old-rose;
+    }
+
+    &.fire-brick {
+      background-color: $color-fire-brick;
+    }
+
+    &.shiraz {
+      background-color: $color-shiraz;
+    }
+
+    &.falu-red {
+      background-color: $color-falu-red;
+    }
+
+    &.sea-buckthorn {
+      background-color: $color-sea-buckthorn;
+    }
+
+    &.tahiti-gold {
+      background-color: $color-tahiti-gold;
+    }
+
+    &.zest {
+      background-color: $color-zest;
+    }
+
+    &.rich-gold {
+      background-color: $color-rich-gold;
+    }
+
+    &.afghan-tan {
+      background-color: $color-afghan-tan;
+    }
+
+    &.russet {
+      background-color: $color-russet;
+    }
+
+    &.elf-green {
+      background-color: $color-elf-green;
+    }
+
+    &.dark-pigment-green {
+      background-color: $color-dark-pigment-green;
+    }
+
+    &.salem {
+      background-color: $color-salem;
+    }
+
+    &.jewel {
+      background-color: $color-jewel;
+    }
+
+    &.fun-green {
+      background-color: $color-fun-green;
+    }
+
+    &.dark-jewel {
+      background-color: $color-dark-jewel;
+    }
+  }
+}

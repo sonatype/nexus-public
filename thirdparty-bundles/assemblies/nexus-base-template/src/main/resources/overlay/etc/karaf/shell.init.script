@@ -1,0 +1,15 @@
+//
+// This script is run each time a shell is created.
+// You can define here closures or variables that will be available
+// in each session.
+//
+ld = { log:display $args } ;
+lde = { log:exception-display $args } ;
+la = { bundle:list -t 0 $args } ;
+ls = { service:list $args } ;
+cl = { config:list "(service.pid=$args)" } ;
+halt = { system:shutdown -h -f $args } ;
+help = { *:help $args | more } ;
+man = { help $args } ;
+log:list = { log:get ALL } ;
+service:get = { $.context getService ($.context getServiceReference $args) };

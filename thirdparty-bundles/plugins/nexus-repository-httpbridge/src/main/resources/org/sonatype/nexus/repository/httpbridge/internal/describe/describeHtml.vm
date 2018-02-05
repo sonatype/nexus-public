@@ -1,0 +1,118 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Describe $path - Nexus Repository Manager</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+#* START favicon links and meta
+ * favicon set for multiple browsers, OS shortcuts, etc.
+ * Generated at Real Favicon Generator, https://realfavicongenerator.net/
+ *
+ * Associated files not referenced explicitly in link or meta tags:
+ *    mstile-*.png      - Win8+ desktop support
+ *    browserconfig.xml - Win8+ desktop support
+ *    apple-touch-icon.png  - OSX Safari desktop support
+*#
+## IE, early versions (comment required)
+  <!--[if lt IE 9]>
+  <script>(new Image).src="$nexusUrl/favicon.ico?$urlSuffix"</script>
+  <![endif]-->
+## Safari on MacOS and iOS
+  <link rel="icon" type="image/png" href="$nexusUrl/favicon-32x32.png?$urlSuffix" sizes="32x32">
+  <link rel="mask-icon" href="$nexusUrl/safari-pinned-tab.svg?$urlSuffix" color="#5bbad5">
+## classic favicon, shown in browser tabs
+  <link rel="icon" type="image/png" href="$nexusUrl/favicon-16x16.png?$urlSuffix" sizes="16x16">
+## IE, later versions
+  <link rel="shortcut icon" href="$nexusUrl/favicon.ico?$urlSuffix">
+## Win8+
+  <meta name="msapplication-TileImage" content="$nexusUrl/mstile-144x144.png?$urlSuffix">
+  <meta name="msapplication-TileColor" content="#00a300">
+## END favicon links
+
+
+  <link rel="stylesheet" type="text/css" href="$nexusUrl/static/css/nexus-content.css?$urlSuffix"/>
+
+  #macro(table $map)
+    #if($map.isEmpty())
+      <p>No entries</p>
+    #else
+      <table>
+        <thead>
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+          #foreach ($entry in $map.entrySet())
+          <tr>
+            <td>$entry.key</td>
+            <td>$esc.html($entry.value)</td>
+          </tr>
+          #end
+        </tbody>
+      </table>
+    #end
+  #end
+</head>
+<body>
+<div class="nexus-header">
+  <a href="$nexusUrl">
+    <div class="product-logo">
+      <img src="$nexusUrl/static/images/nexus.png?$urlSuffix"/>
+    </div>
+    <div class="product-id">
+      <div class="product-id__line-1">
+        <span class="product-name">Nexus Repository Manager</span>
+      </div>
+      <div class="product-id__line-2">
+        <span class="product-spec">$nexusBrandedEditionAndVersion</span>
+      </div>
+    </div>
+  </a>
+</div>
+
+<div class="nexus-body">
+  <div class="content-header">
+    <img src="$nexusUrl/static/rapture/resources/icons/x32/bug.png?$urlSuffix"/>
+    <span class="title">Describe</span>
+    <span class="description">$path</span>
+  </div>
+
+  <div class="content-body">
+    <div class="content-section">
+      This page describes the processing of a request made by external client,
+      using information from the request, retrieved item (or exception if not item was retrieved)
+      and some intermittent processing states.
+    </div>
+
+    <div class="content-section">
+      #foreach ($item in $items)
+        #if($item.type == "topic")
+          <h2>$item.name</h2>
+        #elseif($item.type == "string")
+          <h3>$item.name</h3>
+          <p>$esc.html($item.value)</p>
+        #elseif($item.type == "table")
+          <h3>$item.name</h3>
+          #table($item.value)
+        #end
+      #end
+    </div>
+  </div>
+</body>
+</html>

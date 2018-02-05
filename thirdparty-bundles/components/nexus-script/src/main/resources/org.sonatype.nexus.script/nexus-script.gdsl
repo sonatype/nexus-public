@@ -1,0 +1,13 @@
+package org.sonatype.nexus.script
+
+// Create context for Groovy script files to allow completion for known apis.
+def context = context(filetypes: ['groovy'], scope: scriptScope())
+
+contributor(context) {
+  property name: 'security', type: 'org.sonatype.nexus.security.internal.SecurityApiImpl'
+  property name: 'core', type: 'org.sonatype.nexus.internal.provisioning.CoreApiImpl'
+  property name: 'repository', type: 'org.sonatype.nexus.script.plugin.internal.provisioning.RepositoryApiImpl'
+  property name: 'blobStore', type: 'org.sonatype.nexus.internal.provisioning.BlobStoreApiImpl'
+  property name: 'container', type: 'org.sonatype.nexus.common.app.GlobalComponentLookupHelper', doc: 'Nexus Repository Manager Internal (subject to change without notice)'
+  property name: 'beanLocator', type: 'org.eclipse.sisu.inject.BeanLocator', doc: 'Nexus Repository Manager Internal (subject to change without notice)'
+}

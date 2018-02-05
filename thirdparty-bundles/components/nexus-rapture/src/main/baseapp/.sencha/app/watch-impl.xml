@@ -1,0 +1,53 @@
+<project name="watch-impl">
+
+    <target name="-watch-impl">
+        <x-ant-call target="${build.trigger.targets}"/>
+    </target>
+
+    <target name="-watch-compiler">
+        <x-watch compilerRef="${compiler.ref.id}" targets="-watch-impl"/>
+    </target>
+
+    <target name="-watch-theme-package-css">
+        <x-compass-watch
+            rubyPath="${build.ruby.path}"
+            dir="${compass.working.dir}"
+            trace="${compass.compile.trace}"
+            boring="${compass.compile.boring}"
+            force="${compass.compile.force}"
+            sassdir="${compass.sass.dir}"
+            cssdir="${compass.css.dir}"
+            config="${compass.config.file}"
+            fork="true"/>
+    </target>
+
+    <macrodef name="x-run-compass-watch">
+        <attribute name="directory"/>
+        <sequential>
+            <x-compass-watch
+                rubyPath="${build.ruby.path}"
+                dir="@{directory}"
+                trace="${compass.compile.trace}"
+                boring="${compass.compile.boring}"
+                force="${compass.compile.force}"
+                fork="true"/>
+        </sequential>
+    </macrodef>
+
+    <target name="-watch-sass-dir">
+        <x-run-compass-watch directory="${app.sass.dir}"/>
+    </target>
+
+    <target name="-watch-theme-dir">
+        <local name="watch.sass.dir"/>
+        <property name="watch.sass.dir"
+                  value="${app.theme.dir}/${watch.theme.name}/sass"/>
+        <x-run-compass-watch directory="${watch.sass.dir}"/>
+    </target>
+
+    <target name="-before-watch" depends="init"/>
+    <target name="-watch" depends="app-build-impl.build">
+        <x-ant-call target="${build.watcher.targets}"/>
+    </target>
+    <target name="-after-watch" depends="init"/>
+</project>

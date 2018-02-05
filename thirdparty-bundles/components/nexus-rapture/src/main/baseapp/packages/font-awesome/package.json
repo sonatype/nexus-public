@@ -1,0 +1,12 @@
+{
+    "name": "font-awesome",
+    "type": "code",
+    "creator": "Sonatype",
+    "summary": "Font-Awesome",
+    "detailedDescription": "Font-Awesome http://fortawesome.github.io/Font-Awesome/",
+    "version": "4.5.0",
+    "compatVersion": "4.5.0",
+    "format": "1",
+    "local": true,
+    "requires": []
+}

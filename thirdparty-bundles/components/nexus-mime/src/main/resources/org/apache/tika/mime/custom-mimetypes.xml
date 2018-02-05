@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<mime-info>
+
+  <mime-type type="application/font-woff">
+    <!-- Source is http://www.w3.org/TR/2011/CR-WOFF-20110804/#WOFFHeader
+         Note that this could be more detailed, covering different versions etc. -->
+    <!-- OSX UTI org.w3c.woff -->
+    <_comment>WOFF File Format</_comment>
+    <magic priority="50">
+      <match value="0x774F4646" type="string" offset="0"/>
+    </magic>
+    <glob pattern="*.woff"/>
+  </mime-type>
+
+  <!-- Override tika's default behavior for GNU tar detection because nobody calls a GNU tar a .gtar -->
+  <mime-type type="application/x-tar">
+    <_comment>GNU tar Compressed File Archive (GNU Tape Archive)</_comment>
+    <magic priority="60">
+      <!-- GNU tar archive -->
+      <match value="ustar  \0" type="string" offset="257"/>
+    </magic>
+    <glob pattern="*.tar"/>
+  </mime-type>
+
+</mime-info>
