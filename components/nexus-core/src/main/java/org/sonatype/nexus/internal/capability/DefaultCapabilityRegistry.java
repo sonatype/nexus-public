@@ -529,7 +529,7 @@ public class DefaultCapabilityRegistry
           String value = decrypted.get(formField.getId());
           if (value != null) {
             try {
-              decrypted.put(formField.getId(), passwordHelper.decrypt(value));
+              decrypted.put(formField.getId(), passwordHelper.tryDecrypt(value));
             }
             catch (Exception e) {
               throw new RuntimeException(

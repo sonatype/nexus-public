@@ -56,7 +56,7 @@ public interface TaskInfo
    *
    * Shorthand method for {@link #getConfiguration()#getTypeId()}
    *
-   * @since 3.next
+   * @since 3.8
    */
   String getTypeId();
 

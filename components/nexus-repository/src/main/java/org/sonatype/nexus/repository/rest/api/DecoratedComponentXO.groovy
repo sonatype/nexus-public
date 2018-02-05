@@ -23,7 +23,7 @@ import groovy.transform.builder.Builder
 /**
  * Base abstract decorator for the {@link ComponentXO} class
  *
- * @since 3.next
+ * @since 3.8
  */
 @CompileStatic
 @Builder
@@ -46,7 +46,8 @@ abstract class DecoratedComponentXO
   }
 
   /**
-   * Get the additional attributes from this decorated object to add to the json payload
+   * Get the additional attributes from this decorated object to add to the json payload. Variables in the extending
+   * class should have the @JsonIgnore annotation and expose the data via this method.
    * @return
    */
   @JsonIgnore

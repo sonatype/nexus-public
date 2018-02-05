@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.Arrays;
+
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
@@ -42,11 +44,37 @@ import static org.sonatype.nexus.security.BreadActions.READ;
 public class RepositoryManagerRESTAdapterImplTest
     extends TestSupport
 {
+  private static final String REPOSITORY_NAME = "repoName";
+
+  private static final String REPOSITORY_NAME_2 = "repoNameTwo";
+
+  private static final String REPOSITORY_NAME_3 = "repoNameThree";
+
+  private static final String REPOSITORY_FORMAT = "repoFormat";
+
+  private static final String REPOSITORY_FORMAT_2 = "repoFormatTwo";
+
+  private static final String REPOSITORY_FORMAT_3 = "repoFormatThree";
+
+  private static final boolean PERMIT_BROWSE = true;
+
+  private static final boolean PERMIT_READ = true;
+
+  private static final boolean IGNORED_PERMIT_READ = false;
+
+  private static final boolean PERMIT_VIA_CONTENT_SELECTOR = true;
+
   @Mock
   RepositoryManager repositoryManager;
 
   @Mock
   Repository repository;
+
+  @Mock
+  Repository repository2;
+
+  @Mock
+  Repository repository3;
 
   @Mock
   SecurityHelper securityHelper;
@@ -61,52 +89,63 @@ public class RepositoryManagerRESTAdapterImplTest
   Format repositoryFormat;
 
   @Mock
+  Format repositoryFormat2;
+
+  @Mock
+  Format repositoryFormat3;
+
+  @Mock
   SelectorConfiguration selectorConfiguration;
 
   @Mock
   SelectorManager selectorManager;
-
-  final String REPOSITORY_NAME = "test";
 
   RepositoryManagerRESTAdapterImpl underTest;
 
   @Before
   public void setUp() throws Exception {
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
+    when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2, repository3));
 
     when(repository.getFormat()).thenReturn(repositoryFormat);
+    when(repository2.getFormat()).thenReturn(repositoryFormat2);
+    when(repository3.getFormat()).thenReturn(repositoryFormat3);
 
     when(selectorManager.browse()).thenReturn(singletonList(selectorConfiguration));
     when(selectorConfiguration.getName()).thenReturn("selector");
 
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
+    when(repository2.getName()).thenReturn(REPOSITORY_NAME_2);
+    when(repository3.getName()).thenReturn(REPOSITORY_NAME_3);
 
-    when(repositoryFormat.getValue()).thenReturn("m2");
+    when(repositoryFormat.getValue()).thenReturn(REPOSITORY_FORMAT);
+    when(repositoryFormat2.getValue()).thenReturn(REPOSITORY_FORMAT_2);
+    when(repositoryFormat3.getValue()).thenReturn(REPOSITORY_FORMAT_3);
 
     underTest = new RepositoryManagerRESTAdapterImpl(repositoryManager, securityHelper, selectorManager);
   }
 
   @Test
   public void getRepository_allPermissions() throws Exception {
-    configurePermissions(true, true, true);
+    configurePermissions(repository, PERMIT_BROWSE, PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_browseOnly() throws Exception {
-    configurePermissions(true, false, false);
+    configurePermissions(repository, PERMIT_BROWSE, !PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_contentSelectorOnly() throws Exception {
-    configurePermissions(false, false, true);
+    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_readOnlyReturnsForbidden() throws Exception {
-    configurePermissions(false, true, false);
+    configurePermissions(repository, !PERMIT_BROWSE, PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
 
     try {
       underTest.getRepository(REPOSITORY_NAME);
@@ -119,11 +158,12 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test(expected = NotFoundException.class)
   public void getRepository_notFoundWithNoPermissions() {
-    configurePermissions(false, false, false);
+    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
     underTest.getRepository(REPOSITORY_NAME);
   }
 
-  private void configurePermissions(final boolean permitBrowse,
+  private void configurePermissions(final Repository repository,
+                                    final boolean permitBrowse,
                                     final boolean permitRead,
                                     final boolean permitViaContentSelector)
   {
@@ -157,5 +197,14 @@ public class RepositoryManagerRESTAdapterImplTest
     catch (WebApplicationException e) {
       assertThat(e.getResponse().getStatus(), is(422));
     }
+  }
+
+  @Test
+  public void getRepositories() {
+    configurePermissions(repository, !PERMIT_BROWSE, IGNORED_PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository2, PERMIT_BROWSE, IGNORED_PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository3, !PERMIT_BROWSE, IGNORED_PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
+
+    assertThat(underTest.getRepositories(), is(Arrays.asList(repository, repository2)));
   }
 }

@@ -36,7 +36,7 @@ public class UnpublishMavenIndexTaskDescriptor
   public UnpublishMavenIndexTaskDescriptor() {
     super(TYPE_ID,
         UnpublishMavenIndexTask.class,
-        "Remove Maven indexes",
+        "Maven - Unpublish Maven Indexer files",
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(

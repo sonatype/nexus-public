@@ -12,25 +12,32 @@
  */
 package org.sonatype.nexus.internal.security.apikey
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
 import org.sonatype.nexus.crypto.internal.RandomBytesGeneratorImpl
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
+import org.sonatype.nexus.scheduling.CancelableHelper
+import org.sonatype.nexus.scheduling.TaskInterruptedException
 import org.sonatype.nexus.security.UserPrincipalsHelper
+import org.sonatype.nexus.security.user.UserNotFoundException
+import org.sonatype.nexus.security.user.UserStatus
 
 import com.google.common.collect.Maps
 import org.apache.shiro.subject.PrincipalCollection
 import org.apache.shiro.subject.SimplePrincipalCollection
-import org.hamcrest.MatcherAssert
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mock
 
-import static MatcherAssert.assertThat
+import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.nullValue
-import static org.mockito.Mockito.mock
+import static org.junit.Assert.fail
+import static org.mockito.Mockito.when
 
 /**
  * Tests {@link ApiKeyStoreImpl}
@@ -38,17 +45,35 @@ import static org.mockito.Mockito.mock
 class ApiKeyStoreImplTest
     extends TestSupport
 {
+  private static final String PRINCIPAL_A_NAME = 'name-a'
+
+  private static final String PRINCIPAL_A_DOMAIN = 'foo'
+
+  private static final String PRINCIPAL_B_NAME = 'name-b'
+
+  private static final String PRINCIPAL_B_DOMAIN = 'bar'
+
+  private static final UserStatus USER_STATUS = UserStatus.disabled
+
+  private static final boolean CANCELLED = true
+
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
+
+  @Mock
+  private UserPrincipalsHelper principalsHelper
+
+  private AtomicBoolean cancelled = new AtomicBoolean(!CANCELLED)
 
   private ApiKeyStoreImpl underTest
 
   @Before
   void setup() {
+    CancelableHelper.set(cancelled)
     underTest = new ApiKeyStoreImpl(
         database.instanceProvider,
         new ApiKeyEntityAdapter(ClassLoader.getSystemClassLoader()),
-        mock(UserPrincipalsHelper.class),
+        principalsHelper,
         Maps.newHashMap(),
         new DefaultApiKeyFactory(new RandomBytesGeneratorImpl(new CryptoHelperImpl()))
     )
@@ -61,6 +86,7 @@ class ApiKeyStoreImplTest
       underTest.stop()
       underTest = null
     }
+    CancelableHelper.remove()
   }
 
   @Test
@@ -144,6 +170,47 @@ class ApiKeyStoreImplTest
     def key2 = underTest.createApiKey('foo', principalA)
 
     assertThat(key2, equalTo(key));
+  }
+
+  @Test
+  void 'Can purge orphaned API keys'() {
+    PrincipalCollection principalA = makePrincipals(PRINCIPAL_A_NAME)
+    PrincipalCollection principalB = makePrincipals(PRINCIPAL_B_NAME)
+    char[] apiKeyForPrincipalA = underTest.createApiKey(PRINCIPAL_A_DOMAIN, principalA)
+    underTest.createApiKey(PRINCIPAL_B_NAME, principalB)
+    when(principalsHelper.getUserStatus(principalA)).thenReturn(USER_STATUS)
+    when(principalsHelper.getUserStatus(principalB)).
+        thenThrow(new UserNotFoundException(principalB.getPrimaryPrincipal()))
+
+    underTest.purgeApiKeys()
+
+    //Verify that api keys that belong to non-existent users are purged
+    assertThat(underTest.getApiKey(PRINCIPAL_A_DOMAIN, principalA), equalTo(apiKeyForPrincipalA))
+    assertThat(underTest.getApiKey(PRINCIPAL_B_DOMAIN, principalB), nullValue())
+  }
+
+  @Test
+  void 'Purge orphaned API keys is cancelable'() {
+    PrincipalCollection principalA = makePrincipals(PRINCIPAL_A_NAME)
+    PrincipalCollection principalB = makePrincipals(PRINCIPAL_B_NAME)
+    char[] apiKeyForPrincipalA = underTest.createApiKey(PRINCIPAL_A_DOMAIN, principalA)
+    char[] apiKeyForPrincipalB = underTest.createApiKey(PRINCIPAL_B_DOMAIN, principalB)
+    when(principalsHelper.getUserStatus(principalA)).
+        thenThrow(new UserNotFoundException(principalA.getPrimaryPrincipal()))
+    when(principalsHelper.getUserStatus(principalB)).
+        thenThrow(new UserNotFoundException(principalB.getPrimaryPrincipal()))
+    cancelled.set(CANCELLED)
+
+    try {
+      underTest.purgeApiKeys()
+      fail("Expected exception to be thrown")
+    }
+    catch (TaskInterruptedException expected) {
+    }
+
+    //Verify that no api keys were purged even though they belong to non-existent users
+    assertThat(underTest.getApiKey(PRINCIPAL_A_DOMAIN, principalA), equalTo(apiKeyForPrincipalA))
+    assertThat(underTest.getApiKey(PRINCIPAL_B_DOMAIN, principalB), equalTo(apiKeyForPrincipalB))
   }
 
   private PrincipalCollection makePrincipals(String name) {

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * Extension point for the {@link ComponentXODeserializer}
  *
- * @since 3.next
+ * @since 3.8
  */
 public interface ComponentXODeserializerExtension
 {

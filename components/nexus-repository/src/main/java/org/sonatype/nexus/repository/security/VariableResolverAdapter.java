@@ -40,7 +40,7 @@ public interface VariableResolverAdapter
   VariableSource fromSourceLookup(SourceLookup sourceLookup, Map<String, Object> asset);
 
   /**
-   * @since 3.next
+   * @since 3.8
    */
   VariableSource fromCoordinates(String format, String path, Map<String, String> coordinates);
 }

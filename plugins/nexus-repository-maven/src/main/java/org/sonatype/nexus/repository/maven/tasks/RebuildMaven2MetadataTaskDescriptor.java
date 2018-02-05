@@ -49,7 +49,7 @@ public class RebuildMaven2MetadataTaskDescriptor
   public RebuildMaven2MetadataTaskDescriptor() {
     super(TYPE_ID,
         RebuildMaven2MetadataTask.class,
-        "Rebuild Maven repository metadata",
+        "Repair - Rebuild Maven repository metadata (maven-metadata.xml)",
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(

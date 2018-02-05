@@ -42,7 +42,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 /**
  * Utility for processing component upload data.
  *
- * @since 3.next
+ * @since 3.8
  */
 class ComponentUploadUtils
 {
@@ -89,13 +89,15 @@ class ComponentUploadUtils
   static ComponentUpload createComponentUpload(final String format, final MultipartInput multipartInput)
       throws IOException
   {
-    Map<String, String> textFormFields = getTextFormFields(format, multipartInput);
-    List<AssetUpload> assetUploads = getAssetsPayloads(format, multipartInput).entrySet().stream()
-        .map(asset -> createAssetUpload(asset.getKey(), asset.getValue(), textFormFields))
+    Map<String, InputStreamPartPayload> assetsPayloads = getAssetsPayloads(format, multipartInput);
+    Map<String, String> formFields = getTextFormFields(format, multipartInput, assetsPayloads.keySet());
+
+    List<AssetUpload> assetUploads = assetsPayloads.entrySet().stream()
+        .map(asset -> createAssetUpload(asset.getKey(), asset.getValue(), formFields))
         .collect(Collectors.toList());
 
     ComponentUpload componentUpload = new ComponentUpload();
-    componentUpload.setFields(getComponentFields(textFormFields, assetUploads));
+    componentUpload.setFields(getComponentFields(formFields, assetUploads));
     componentUpload.setAssetUploads(assetUploads);
     return componentUpload;
   }
@@ -139,7 +141,7 @@ class ComponentUploadUtils
     return assetUpload;
   }
 
-  private static Map<String, String> getTextFormFields(final String format, final MultipartInput multipartInput)
+  private static Map<String, String> getTextFormFields(final String format, final MultipartInput multipartInput, final Set<String> assetNames)
       throws IOException
   {
     Map<String, String> fields = new HashMap<>();
@@ -149,7 +151,7 @@ class ComponentUploadUtils
 
     for (InputPart inputPart : fieldsParts) {
       Optional<String> maybeFieldName = extractFieldName(format, inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
-      if (maybeFieldName.isPresent()) {
+      if (maybeFieldName.isPresent() && !assetNames.contains(maybeFieldName.get())) {
         fields.put(maybeFieldName.get(), inputPart.getBodyAsString());
       }
     }

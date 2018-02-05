@@ -25,5 +25,5 @@ public interface MavenCipher
 
   String decrypt(String str, String passPhrase);
 
-  boolean isPasswordCipher(String str, String passPhrase);
+  boolean isPasswordCipher(String str);
 }

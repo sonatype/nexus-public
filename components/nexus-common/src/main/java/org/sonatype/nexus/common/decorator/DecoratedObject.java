@@ -17,7 +17,7 @@ package org.sonatype.nexus.common.decorator;
  * being able to access a particular type within the chain of decorator objects.
  *
  * @see DecoratorUtils
- * @since 3.next
+ * @since 3.8
  */
 public interface DecoratedObject<T>
 {

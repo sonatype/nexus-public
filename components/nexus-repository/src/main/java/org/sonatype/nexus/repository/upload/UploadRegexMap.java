@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  *
- * @since 3.next
+ * @since 3.8
  */
 public class UploadRegexMap
 {

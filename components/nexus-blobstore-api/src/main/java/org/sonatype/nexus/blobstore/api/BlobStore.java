@@ -80,7 +80,7 @@ public interface BlobStore
    *   <li>can be overwritten on "disk" without side effects</li>
    * </ul>
    *
-   * @since 3.next
+   * @since 3.8
    */
   String DIRECT_PATH_BLOB_HEADER = "BlobStore.direct-path";
 

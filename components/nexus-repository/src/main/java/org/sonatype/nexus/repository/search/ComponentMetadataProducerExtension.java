@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.storage.Component;
 /**
  * Extension point for {@link ComponentMetadataProducer} to add additional fields to the Elasticsearch index
  *
- * @since 3.next
+ * @since 3.8
  *
  */
 public interface ComponentMetadataProducerExtension

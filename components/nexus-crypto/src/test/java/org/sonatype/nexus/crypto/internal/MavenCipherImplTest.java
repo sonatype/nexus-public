@@ -13,7 +13,6 @@
 package org.sonatype.nexus.crypto.internal;
 
 import java.security.Security;
-import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
@@ -68,26 +67,20 @@ public class MavenCipherImplTest
 
   @Test
   public void payloadDetection() throws Exception {
-    assertThat(testSubject.isPasswordCipher(plaintext, passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher("", passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher("{}", passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(null, passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(encrypted, null), is(false));
-    assertThat(testSubject.isPasswordCipher(encrypted, passPhrase), is(true));
-    assertThat(testSubject.isPasswordCipher("{ }", passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher("{ {} }", passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_special_char, passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_spec_char_xtrabracket, passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_mixed, passPhrase), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext, passPhrase),is(false));
-  }
-
-  @Test
-  public void cipherCheck() throws Exception {
-    assertThat(testSubject.doCipherCheck(plaintext, passPhrase).isPresent(), is(false));
-    Optional<String> response = testSubject.doCipherCheck(encrypted, passPhrase);
-    assertThat(response.isPresent(), is(true));
-    assertThat(response.get(), is(plaintext));
+    assertThat(testSubject.isPasswordCipher(null), is(false));
+    assertThat(testSubject.isPasswordCipher(""), is(false));
+    assertThat(testSubject.isPasswordCipher("{}"), is(false));
+    assertThat(testSubject.isPasswordCipher("{ }"), is(false));
+    assertThat(testSubject.isPasswordCipher("{ {} }"), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext_mixed), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext_spec_char_xtrabracket), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext_random), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext_special_char), is(false));
+    assertThat(testSubject.isPasswordCipher(plaintext_one_bracket), is(false));
+    assertThat(testSubject.isPasswordCipher(encrypted), is(true));
+    assertThat(testSubject.isPasswordCipher(plaintext_mixed_encrypted), is(true));
+    assertThat(testSubject.isPasswordCipher(plaintext_special_encrypted), is(true));
   }
 
   @Test
@@ -124,7 +117,7 @@ public class MavenCipherImplTest
     assertThat(minimalCase, equalTo(plaintext_special_char));
   }
 
-  @Test (expected = NegativeArraySizeException.class)
+  @Test (expected = IllegalArgumentException.class)
   public void decrypt_NonEncrypted_with_Brackets() throws Exception {
     testSubject.decrypt(plaintext_mixed, passPhrase);
   }
@@ -135,10 +128,9 @@ public class MavenCipherImplTest
     assertThat(dec, equalTo(plaintext));
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void decryptCorruptedMissingEnd() throws Exception {
-    String decryptedResponse = testSubject.decrypt(plaintext_one_bracket, passPhrase);
-    assertThat(decryptedResponse, equalTo(plaintext_one_bracket));
+    testSubject.decrypt(plaintext_one_bracket, passPhrase);
   }
 
   @Test(expected = NullPointerException.class)

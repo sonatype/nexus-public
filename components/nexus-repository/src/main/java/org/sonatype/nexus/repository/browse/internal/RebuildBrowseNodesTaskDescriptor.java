@@ -38,7 +38,7 @@ public class RebuildBrowseNodesTaskDescriptor
 
   @Inject
   public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess, BrowseNodeConfiguration configuration) {
-    super(TYPE_ID, RebuildBrowseNodesTask.class, "Rebuild repository browse tree",
+    super(TYPE_ID, RebuildBrowseNodesTask.class, "Repair - Rebuild repository browse",
         configuration.isEnabled() ? VISIBLE : NOT_VISIBLE, configuration.isEnabled() ? EXPOSED : NOT_EXPOSED,
         new RepositoryCombobox(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository to rebuild browse tree",
             true).excludingAnyOfTypes(GroupType.NAME).includeAnEntryForAllRepositories(),

@@ -39,10 +39,18 @@ public class DefaultComponentMaintenanceImpl
    */
   @Override
   public void deleteComponent(final EntityId componentId) {
+    deleteComponent(componentId, true);
+  }
+
+  /**
+   * Deletes the component directly, with no additional bookkeeping.
+   */
+  @Override
+  public void deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
     checkNotNull(componentId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      deleteComponentTx(componentId);
+      deleteComponentTx(componentId, deleteBlobs);
     }
     finally {
       UnitOfWork.end();
@@ -50,14 +58,14 @@ public class DefaultComponentMaintenanceImpl
   }
 
   @TransactionalDeleteBlob
-  protected void deleteComponentTx(final EntityId componentId) {
+  protected void deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
       return;
     }
     log.info("Deleting component: {}", component);
-    tx.deleteComponent(component);
+    tx.deleteComponent(component, deleteBlobs);
   }
 
   /**
@@ -66,10 +74,16 @@ public class DefaultComponentMaintenanceImpl
   @Override
   @Guarded(by = STARTED)
   public void deleteAsset(final EntityId assetId) {
+    deleteAsset(assetId, true);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void deleteAsset(final EntityId assetId, final boolean deleteBlob) {
     checkNotNull(assetId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      deleteAssetTx(assetId);
+      deleteAssetTx(assetId, deleteBlob);
     }
     finally {
       UnitOfWork.end();
@@ -77,13 +91,13 @@ public class DefaultComponentMaintenanceImpl
   }
 
   @TransactionalDeleteBlob
-  protected void deleteAssetTx(final EntityId assetId) {
+  protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     if (asset == null) {
       return;
     }
     log.info("Deleting asset: {}", asset);
-    tx.deleteAsset(asset);
+    tx.deleteAsset(asset, deleteBlob);
   }
 }

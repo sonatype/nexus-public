@@ -67,8 +67,7 @@ public class UploadManagerImpl
     checkNotNull(upload);
 
     UploadHandler uploadHandler = getUploadHandler(repository);
-    uploadHandler.validate(upload);
-    return uploadHandler.handle(repository, upload);
+    return uploadHandler.handle(repository, uploadHandler.getValidatingComponentUpload(upload).getComponentUpload());
   }
 
   @Override

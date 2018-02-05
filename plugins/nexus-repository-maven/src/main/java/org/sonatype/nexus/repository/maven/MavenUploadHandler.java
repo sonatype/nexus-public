@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -45,6 +44,7 @@ import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
@@ -289,54 +289,8 @@ public class MavenUploadHandler
   }
 
   @Override
-  public void validate(final ComponentUpload componentUpload) {
-    ValidationErrorsException exception = new ValidationErrorsException();
-
-    if (componentUpload.getAssetUploads().isEmpty()) {
-      exception.withError("No assets found in upload");
-    }
-
-    AtomicInteger assetCounter = new AtomicInteger();
-    componentUpload.getAssetUploads().stream()
-        .forEachOrdered(asset -> {
-          int assetCount = assetCounter.incrementAndGet();
-
-          if (asset.getPayload() == null) {
-            exception.withError("file", format("Missing file on asset '%s'", assetCount));
-          }
-
-          getDefinition().getAssetFields().stream()
-              .filter(field -> !field.isOptional())
-              .filter(field -> isBlank(asset.getField(field.getName())))
-              .forEach(field -> exception.withError(field.getName(),
-                  format("Missing required asset field '%s' on '%s'", field.getDisplayName(), assetCount)));
-        });
-
-    Optional<AssetUpload> pomAsset = findPomAsset(componentUpload);
-    if (!pomAsset.isPresent()) {
-      getDefinition().getComponentFields().stream()
-          .filter(field -> !field.isOptional())
-          .filter(field -> isBlank(componentUpload.getField(field.getName())))
-          .forEach(field -> exception.withError(field.getName(),
-              format("Missing required component field '%s'", field.getDisplayName())));
-
-    }
-
-    int i = 1;
-    int length = componentUpload.getAssetUploads().size();
-    for (AssetUpload assetUpload : componentUpload.getAssetUploads()) {
-      int otherIndex = i;
-      for (AssetUpload other : componentUpload.getAssetUploads().subList(i++, length)) {
-        if (assetUpload.getFields().equals(other.getFields())) {
-          exception.withError(String.format("The assets %s and %s have identical coordinates", i - 1, otherIndex + 1));
-        }
-        otherIndex++;
-      }
-    }
-
-    if (!exception.getValidationErrors().isEmpty()) {
-      throw exception;
-    }
+  public ValidatingComponentUpload getValidatingComponentUpload(final ComponentUpload componentUpload) {
+    return new MavenValidatingComponentUpload(getDefinition(), componentUpload);
   }
 
   private Optional<AssetUpload> findPomAsset(final ComponentUpload componentUpload) {

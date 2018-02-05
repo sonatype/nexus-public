@@ -22,7 +22,7 @@ import static java.lang.String.format;
  * {@link LocationStrategy} for resolving locations to
  * {@link org.sonatype.nexus.blobstore.api.BlobStore#DIRECT_PATH_BLOB_HEADER} blobs.
  *
- * @since 3.next
+ * @since 3.8
  */
 public class DirectPathLocationStrategy
   extends LocationStrategySupport

@@ -530,31 +530,48 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
-  public void deleteComponent(Component component) {
+  public void deleteComponent(final Component component) {
     deleteComponent(component, true);
   }
 
-  private void deleteComponent(final Component component, final boolean checkWritePolicy) {
+  @Override
+  @Guarded(by = ACTIVE)
+  public void deleteComponent(final Component component, final boolean deleteBlobs) {
+    deleteComponent(component, true, deleteBlobs);
+  }
+
+  private void deleteComponent(final Component component, final boolean checkWritePolicy, final boolean deleteBlobs) {
     checkNotNull(component);
 
     for (Asset asset : browseAssets(component)) {
-      deleteAsset(asset, checkWritePolicy ? writePolicySelector.select(asset, writePolicy) : null);
+      deleteAsset(asset, checkWritePolicy ? writePolicySelector.select(asset, writePolicy) : null, deleteBlobs);
     }
     componentEntityAdapter.deleteEntity(db, component);
   }
 
   @Override
   @Guarded(by = ACTIVE)
-  public void deleteAsset(Asset asset) {
-    deleteAsset(asset, writePolicySelector.select(asset, writePolicy));
+  public void deleteAsset(final Asset asset) {
+    deleteAsset(asset, true);
   }
 
-  private void deleteAsset(final Asset asset, @Nullable final WritePolicy effectiveWritePolicy) {
+  @Override
+  @Guarded(by = ACTIVE)
+  public void deleteAsset(final Asset asset, final boolean deleteBlob) {
+    deleteAsset(asset, writePolicySelector.select(asset, writePolicy), deleteBlob);
+  }
+
+  private void deleteAsset(final Asset asset,
+                           @Nullable final WritePolicy effectiveWritePolicy,
+                           final boolean deleteBlob)
+  {
     checkNotNull(asset);
 
-    BlobRef blobRef = asset.blobRef();
-    if (blobRef != null) {
-      deleteBlob(blobRef, effectiveWritePolicy, format("Deleting asset %s", EntityHelper.id(asset)));
+    if (deleteBlob) {
+      BlobRef blobRef = asset.blobRef();
+      if (blobRef != null) {
+        deleteBlob(blobRef, effectiveWritePolicy, format("Deleting asset %s", EntityHelper.id(asset)));
+      }
     }
     assetEntityAdapter.deleteEntity(db, asset);
   }

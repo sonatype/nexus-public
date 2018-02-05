@@ -45,7 +45,7 @@ public class RestoreMetadataTaskDescriptor
   static final String DRY_RUN = "dryRun";
 
   private interface Messages extends MessageBundle {
-    @DefaultMessage("Restore Asset/Component metadata from Blob Store")
+    @DefaultMessage("Repair - Reconcile component database from blob store")
     String name();
 
     @DefaultMessage("Blob store")

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.upload;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -26,7 +25,6 @@ import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
 import static java.lang.String.format;
-import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
  * @since 3.7
@@ -80,51 +78,10 @@ public interface UploadHandler
   }
 
   /**
-   * Simple validation of upload which ensures that non-optional fields are not missing.
+   * @return a ComponentUpload that can validate it's own fields
+   * @since 3.8
    */
-  default void validate(final ComponentUpload componentUpload) {
-    ValidationErrorsException exception = new ValidationErrorsException();
-
-    if (componentUpload.getAssetUploads().isEmpty()) {
-      exception.withError("No assets found in upload");
-    }
-
-    getDefinition().getComponentFields().stream()
-        .filter(field -> !field.isOptional())
-        .filter(field -> isBlank(componentUpload.getField(field.getName())))
-        .forEach(field -> exception.withError(field.getName(),
-            format("Missing required component field '%s'", field.getDisplayName())));
-
-    AtomicInteger assetCounter = new AtomicInteger();
-    componentUpload.getAssetUploads().stream()
-        .forEachOrdered(asset -> {
-          int assetCount = assetCounter.incrementAndGet();
-
-          if (asset.getPayload() == null) {
-            exception.withError("file", format("Missing file on asset '%s'", assetCount));
-          }
-
-          getDefinition().getAssetFields().stream()
-              .filter(field -> !field.isOptional())
-              .filter(field -> isBlank(asset.getField(field.getName())))
-              .forEach(field -> exception.withError(field.getName(),
-                  format("Missing required asset field '%s' on '%s'", field.getDisplayName(), assetCount)));
-        });
-
-    int i = 1;
-    int length = componentUpload.getAssetUploads().size();
-    for (AssetUpload assetUpload : componentUpload.getAssetUploads()) {
-      int otherIndex = i;
-      for (AssetUpload other : componentUpload.getAssetUploads().subList(i++, length)) {
-        if (assetUpload.getFields().equals(other.getFields())) {
-          exception.withError(String.format("The assets %s and %s have identical coordinates", i - 1, otherIndex + 1));
-        }
-        otherIndex++;
-      }
-    }
-
-    if (!exception.getValidationErrors().isEmpty()) {
-      throw exception;
-    }
+  default ValidatingComponentUpload getValidatingComponentUpload(final ComponentUpload componentUpload) {
+    return new ValidatingComponentUpload(getDefinition(), componentUpload);
   }
 }

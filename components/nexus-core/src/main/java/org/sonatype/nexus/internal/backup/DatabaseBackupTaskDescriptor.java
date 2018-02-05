@@ -35,7 +35,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 public class DatabaseBackupTaskDescriptor
     extends TaskDescriptorSupport
 {
-  public static final String MSG = "Export configuration & metadata for backup";
+  public static final String MSG = "Admin - Export databases for backup";
 
   public static final String TYPE_ID = "db.backup";
 

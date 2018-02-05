@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -29,4 +31,9 @@ public interface RepositoryManagerRESTAdapter
    * supplied id exists.
    */
   Repository getRepository(String repositoryId);
+
+  /**
+   * Retrieve all repositories that the user access to.
+   */
+  List<Repository> getRepositories();
 }

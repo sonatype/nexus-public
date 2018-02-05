@@ -22,7 +22,7 @@ import static java.util.Collections.emptyMap
 /**
  * Component transfer object for REST APIs.
  *
- * @since 3.next
+ * @since 3.8
  */
 @CompileStatic
 @Builder
@@ -47,7 +47,7 @@ class DefaultComponentXO
 
   /**
    * Provides extra attributes for the JSON payload. Implementers must use @JsonAnyGetter.
-   * @since 3.next
+   * @since 3.8
    */
   @Override
   Map<String, Object> getExtraJsonAttributes() {

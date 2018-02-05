@@ -39,7 +39,7 @@ public class RebuildIndexTask
 
   @Override
   public String getMessage() {
-    return "Rebuilding index of " + getRepositoryField();
+    return "Rebuilding search index of " + getRepositoryField();
   }
 
 }

@@ -26,23 +26,26 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.swagger.ParameterContributor;
 
 import com.google.common.collect.ImmutableList;
+import io.swagger.models.HttpMethod;
 import io.swagger.models.parameters.FormParameter;
 
 import static io.swagger.models.HttpMethod.POST;
 
 /**
- * @since 3.uiUpload
+ * @since 3.8
  */
 @Named
 @Singleton
 public class ComponentUploadParameterContributor
     extends ParameterContributor<FormParameter>
 {
+  private static final List<HttpMethod> HTTP_METHODS = ImmutableList.of(POST);
+
   private static final List<String> PATHS = ImmutableList.of(ComponentsResource.RESOURCE_URI);
 
   @Inject
   public ComponentUploadParameterContributor(final UploadManager uploadManager) {
-    super(POST, PATHS, transformUploadDefinitions(uploadManager.getAvailableDefinitions()));
+    super(HTTP_METHODS, PATHS, transformUploadDefinitions(uploadManager.getAvailableDefinitions()));
   }
 
   private static Collection<FormParameter> transformUploadDefinitions(final Collection<UploadDefinition> uploadDefinitions) {

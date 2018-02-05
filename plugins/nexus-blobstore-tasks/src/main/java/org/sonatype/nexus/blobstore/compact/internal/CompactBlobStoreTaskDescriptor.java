@@ -40,7 +40,7 @@ public class CompactBlobStoreTaskDescriptor
   public CompactBlobStoreTaskDescriptor() {
     super(TYPE_ID,
         CompactBlobStoreTask.class,
-        "Compact blob store",
+        "Admin - Compact blob store",
         VISIBLE,
         EXPOSED,
         new ComboboxFormField<String>(

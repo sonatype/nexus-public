@@ -30,7 +30,27 @@ public interface ComponentMaintenance
   void deleteComponent(EntityId componentId);
 
   /**
+   * Deletes a component and maybe the associated blobs.
+   *
+   * @param componentId entity id of the component to delete
+   * @param deleteBlobs should blob deletion be requested
+   *
+   * @since 3.next
+   */
+  void deleteComponent(EntityId componentId, boolean deleteBlobs);
+
+  /**
    * Deletes an asset from storage.
    */
   void deleteAsset(EntityId assetId);
+
+  /**
+   * Deletes an asset and maybe the associated blob.
+   *
+   * @param assetId entity id of the asset to delete
+   * @param deleteBlob should blob deletion be requested
+   *
+   * @since 3.next
+   */
+  void deleteAsset(EntityId assetId, boolean deleteBlob);
 }

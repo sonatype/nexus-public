@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
+import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -41,6 +42,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -68,10 +70,15 @@ public class UploadManagerImplTest
   @Mock
   Repository repository;
 
+  @Mock
+  ValidatingComponentUpload validatingComponentUpload;
+
   @Before
   public void setup() {
     when(handlerA.getDefinition()).thenReturn(uploadA);
     when(handlerB.getDefinition()).thenReturn(uploadB);
+    when(handlerA.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+    when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
 
     when(repository.getFormat()).thenReturn(new Format("a")
     {
@@ -100,6 +107,7 @@ public class UploadManagerImplTest
   public void testHandle() throws IOException {
     ComponentUpload component = mock(ComponentUpload.class);
     when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
+    when(validatingComponentUpload.getComponentUpload()).thenReturn(component);
     underTest.handle(repository, component);
 
     verify(handlerA, times(1)).handle(repository, component);
@@ -108,6 +116,7 @@ public class UploadManagerImplTest
     // Try the other, to be sure!
     reset(handlerA, handlerB);
     when(handlerB.getDefinition()).thenReturn(uploadB);
+    when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
 
     when(repository.getFormat()).thenReturn(new Format("b")
     {

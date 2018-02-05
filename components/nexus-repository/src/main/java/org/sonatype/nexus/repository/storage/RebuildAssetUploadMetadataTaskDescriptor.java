@@ -37,7 +37,7 @@ public class RebuildAssetUploadMetadataTaskDescriptor
     super(
         TYPE_ID,
         RebuildAssetUploadMetadataTask.class,
-        "Rebuild asset upload metadata",
+        "Repair - Reconcile date metadata from blob store",
         configuration.isEnabled() ? VISIBLE : NOT_VISIBLE,
         configuration.isEnabled() ? EXPOSED : NOT_EXPOSED,
         nodeAccess.isClustered() ? newLimitNodeFormField() : null);

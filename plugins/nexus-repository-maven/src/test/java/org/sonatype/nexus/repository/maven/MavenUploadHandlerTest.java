@@ -13,12 +13,10 @@
 package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -40,12 +38,10 @@ import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.junit.Before;
@@ -366,66 +362,6 @@ public class MavenUploadHandlerTest
   }
 
   @Test
-  public void testValidate_missingField() {
-    ComponentUpload componentUpload = new ComponentUpload();
-
-    AssetUpload assetUpload = new AssetUpload();
-    assetUpload.getFields().put("extension", "jar");
-    assetUpload.setPayload(jarPayload);
-    componentUpload.getAssetUploads().add(assetUpload);
-
-    try {
-      underTest.validate(componentUpload);
-      fail("Expected exception to be thrown");
-    }
-    catch (ValidationErrorsException exception) {
-      List<String> messages = exception.getValidationErrors().stream()
-          .map(ValidationErrorXO::getMessage)
-          .collect(Collectors.toList());
-      assertThat(messages, contains(
-          "Missing required component field 'Group ID'",
-          "Missing required component field 'Artifact ID'",
-          "Missing required component field 'Version'"));
-    }
-  }
-
-  @Test
-  public void testValidate_missingAssetField() {
-    ComponentUpload componentUpload = new ComponentUpload();
-
-    AssetUpload assetUpload = new AssetUpload();
-    assetUpload.setPayload(jarPayload);
-    componentUpload.getAssetUploads().add(assetUpload);
-
-    componentUpload.getFields().put("groupId", "org.apache.maven");
-    componentUpload.getFields().put("artifactId", "tomcat");
-    componentUpload.getFields().put("version", "5.0.28");
-
-    try {
-      underTest.validate(componentUpload);
-      fail("Expected exception to be thrown");
-    }
-    catch (ValidationErrorsException exception) {
-      List<String> messages = exception.getValidationErrors().stream()
-          .map(ValidationErrorXO::getMessage)
-          .collect(Collectors.toList());
-      assertThat(messages, contains("Missing required asset field 'Extension' on '1'"));
-    }
-  }
-
-  @Test
-  public void testValidate_allowMissingComponentFieldsWhenPomAssetIsPresent() {
-    ComponentUpload componentUpload = new ComponentUpload();
-
-    AssetUpload assetUpload = new AssetUpload();
-    assetUpload.setPayload(jarPayload);
-    assetUpload.setFields(Collections.singletonMap("extension", "pom"));
-    componentUpload.getAssetUploads().add(assetUpload);
-
-    underTest.validate(componentUpload);
-  }
-
-  @Test
   public void testValidatPom() {
     Model model = new Model();
     model.setGroupId("testGroup");
@@ -511,34 +447,6 @@ public class MavenUploadHandlerTest
     model.setGroupId("testGroup");
     model.setVersion("${aProperty}");
     underTest.validatePom(model);
-  }
-
-  @Test
-  public void testValidate_duplicates() {
-    AssetUpload assetUploadOne = new AssetUpload();
-    assetUploadOne.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadOne.setPayload(mock(PartPayload.class));
-
-    AssetUpload assetUploadTwo = new AssetUpload();
-    assetUploadTwo.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadTwo.setPayload(mock(PartPayload.class));
-
-    AssetUpload assetUploadThree = new AssetUpload();
-    assetUploadThree.getFields().putAll(ImmutableMap.of("extension", "x"));
-    assetUploadThree.setPayload(mock(PartPayload.class));
-
-    ComponentUpload componentUpload = new ComponentUpload();
-    componentUpload.getFields().putAll(ImmutableMap.of("groupId", "g", "artifactId", "a", "version", "1"));
-    componentUpload.getAssetUploads().addAll(Arrays.asList(assetUploadOne, assetUploadTwo, assetUploadThree));
-
-    try {
-      underTest.validate(componentUpload);
-      fail("Expected exception to be thrown");
-    }
-    catch (ValidationErrorsException exception) {
-      assertThat(exception.getValidationErrors(), hasSize(1));
-      assertThat(exception.getMessage(), is("The assets 1 and 2 have identical coordinates"));
-    }
   }
 
   private static void assertVariableSource(final VariableSource source,

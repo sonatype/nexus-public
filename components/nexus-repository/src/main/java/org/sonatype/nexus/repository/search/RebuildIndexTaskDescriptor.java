@@ -38,7 +38,7 @@ public class RebuildIndexTaskDescriptor
   public RebuildIndexTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
         RebuildIndexTask.class,
-        "Rebuild repository index",
+        "Repair - Rebuild repository search",
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(

@@ -39,7 +39,7 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
     extends ComponentSupport
     implements SwaggerContributor
 {
-  private final HttpMethod httpMethod;
+  private final Collection<HttpMethod> httpMethods;
 
   private final Collection<String> paths;
 
@@ -49,11 +49,11 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
 
   private boolean allContributed;
 
-  public ParameterContributor(final HttpMethod httpMethod,
+  public ParameterContributor(final Collection<HttpMethod> httpMethods,
                               final Collection<String> paths,
                               final Collection<T> params)
   {
-    this.httpMethod = checkNotNull(httpMethod);
+    this.httpMethods = checkNotNull(httpMethods);
     this.paths = checkNotNull(paths);
     this.params = checkNotNull(params);
     this.contributed = paths.stream().collect(toMap(p -> p, p -> false));
@@ -65,10 +65,12 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
       return;
     }
 
-    paths.forEach(p -> {
-      if (!contributed.get(p) && contributeGetParameters(swagger, httpMethod, p, params)) {
-        contributed.put(p, true);
-      }
+    httpMethods.forEach(httpMethod -> {
+      paths.forEach(p -> {
+        if (!contributed.get(p) && contributeGetParameters(swagger, httpMethod, p, params)) {
+          contributed.put(p, true);
+        }
+      });
     });
 
     allContributed = contributed.entrySet().stream().allMatch(Entry::getValue);

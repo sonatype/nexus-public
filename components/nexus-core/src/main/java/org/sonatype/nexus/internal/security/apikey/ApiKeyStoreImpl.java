@@ -46,6 +46,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * OrientDB impl of {@link ApiKeyStore}.
@@ -176,9 +177,11 @@ public class ApiKeyStoreImpl
   @Override
   @Guarded(by = STARTED)
   public void purgeApiKeys() {
+    checkCancellation();
     inTxRetry(databaseInstance).run(db -> {
       List<ApiKey> delete = new ArrayList<>();
       for (ApiKey entity : entityAdapter.browse(db)) {
+        checkCancellation();
         try {
           principalsHelper.getUserStatus(entity.getPrincipals());
         }
@@ -188,6 +191,7 @@ public class ApiKeyStoreImpl
         }
       }
       for (ApiKey entity : delete) {
+        checkCancellation();
         entityAdapter.deleteEntity(db, entity);
       }
     });

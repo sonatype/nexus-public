@@ -47,7 +47,7 @@ public class RemoveSnapshotsTaskDescriptor
   {
     super(TYPE_ID,
         RemoveSnapshotsTask.class,
-        "Remove snapshots from Maven repository",
+        "Maven - Delete SNAPSHOT",
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(REPOSITORY_NAME_FIELD_ID,
@@ -62,14 +62,14 @@ public class RemoveSnapshotsTaskDescriptor
             true).withInitialValue(1).withMinimumValue(-1),
         new NumberTextFormField(SNAPSHOT_RETENTION_DAYS,
             "Snapshot retention (days)",
-            "Purge all snapshots older than this, provided we still keep the minimum number specified.",
+            "Delete all snapshots older than this, provided we still keep the minimum number specified.",
             true).withInitialValue(30).withMinimumValue(0),
         new CheckboxFormField(REMOVE_IF_RELEASED,
             "Remove if released",
-            "Purge all snapshots that have a corresponding release", false),
+            "Delete all snapshots that have a corresponding release", false),
         new NumberTextFormField(GRACE_PERIOD,
             "Grace period after release (days)",
-            "The grace period during which snapshots with an associated release will not be purged.",
+            "The grace period during which snapshots with an associated release will not be deleted.",
             false).withMinimumValue(0));
   }
 }

@@ -44,7 +44,7 @@ class ConfigurationEntityAdapterTest
   @Before
   void setUp() {
     when(passwordHelper.encrypt('s1mpl3')).thenReturn('******')
-    when(passwordHelper.decrypt('******')).thenReturn('s1mpl3')
+    when(passwordHelper.tryDecrypt('******')).thenReturn('s1mpl3')
 
     underTest = new ConfigurationEntityAdapter(passwordHelper)
     underTest.enableObfuscation(new HexRecordIdObfuscator())

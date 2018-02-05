@@ -43,7 +43,7 @@ import static org.sonatype.nexus.thread.NexusExecutorService.forFixedSubject;
  * your own {@link ExecutorService} to the {@link #StreamCopier(Consumer, Function, ExecutorService)} constructor or
  * change the property "nexus.streamcopier.poolSize" to a desired integer number.
  *
- * @since 3.next
+ * @since 3.8
  */
 public class StreamCopier<T>
     extends ComponentSupport

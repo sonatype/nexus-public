@@ -105,7 +105,7 @@ public class DefaultCapabilityRegistryTest
   @Before
   public final void setUpCapabilityRegistry() throws Exception {
     when(passwordHelper.encrypt(anyString())).thenAnswer(invoc -> "encrypted:" + invoc.getArguments()[0]);
-    when(passwordHelper.decrypt(anyString()))
+    when(passwordHelper.tryDecrypt(anyString()))
         .thenAnswer(invoc -> invoc.getArguments()[0].toString().startsWith("encrypted:")
             ? invoc.getArguments()[0].toString().substring(10) : invoc.getArguments()[0]);
     final CapabilityFactory factory = mock(CapabilityFactory.class);

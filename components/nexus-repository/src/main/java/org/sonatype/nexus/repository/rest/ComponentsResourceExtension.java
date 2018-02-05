@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.storage.Component;
 /**
  * Extension point for the {@link ComponentsResource} class
  *
- * @since 3.next
+ * @since 3.8
  */
 public interface ComponentsResourceExtension
 {

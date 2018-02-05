@@ -36,13 +36,13 @@ public class PublishMavenIndexTaskDescriptor
   public PublishMavenIndexTaskDescriptor() {
     super(TYPE_ID,
         PublishMavenIndexTask.class,
-        "Publish Maven indexes",
+        "Maven - Publish Maven Indexer files",
         VISIBLE,
         EXPOSED,
         new RepositoryCombobox(
             REPOSITORY_NAME_FIELD_ID,
             "Repository",
-            "Select the Maven repository to publish indexes for",
+            "Select the Maven repository to publish indexer files for",
             true
         ).includingAnyOfFormats(Maven2Format.NAME).includeAnEntryForAllRepositories()
     );

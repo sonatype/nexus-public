@@ -42,7 +42,7 @@ class AuthenticationConfigurationDeserializerTest
   @Before
   void setUp() {
     when(passwordHelper.encrypt(anyString())).then({ it.arguments[0] != null ? 'encrypted:' + it.arguments[0] : null })
-    when(passwordHelper.decrypt(anyString())).then({ it.arguments[0] ==~ /encrypted:.*/ ? it.arguments[0].substring(10) : it.arguments[0] })
+    when(passwordHelper.tryDecrypt(anyString())).then({ it.arguments[0] ==~ /encrypted:.*/ ? it.arguments[0].substring(10) : it.arguments[0] })
     objectMapper = new ObjectMapper().registerModule(
         new SimpleModule().addSerializer(
             Time.class,

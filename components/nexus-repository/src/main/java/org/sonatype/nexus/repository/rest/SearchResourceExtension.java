@@ -20,7 +20,7 @@ import org.elasticsearch.search.SearchHit;
 /**
  * Extension point for the {@link SearchResource} class
  *
- * @since 3.next
+ * @since 3.8
  */
 public interface SearchResourceExtension
 {

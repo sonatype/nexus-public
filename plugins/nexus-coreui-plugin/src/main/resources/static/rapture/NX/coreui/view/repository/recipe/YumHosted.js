@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for a Yum Hosted repository.
  *
- * @since 3.next
+ * @since 3.8
  */
 Ext.define('NX.coreui.view.repository.recipe.YumHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

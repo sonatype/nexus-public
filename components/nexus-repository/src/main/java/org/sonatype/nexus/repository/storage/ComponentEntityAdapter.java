@@ -184,7 +184,7 @@ public class ComponentEntityAdapter
   /**
    * Check for the existence of a component with {@code group}, {@code name}, and {@code version} in {@code bucket}.
    *
-   * @since 3.next
+   * @since 3.8
    */
   public boolean exists(final ODatabaseDocumentTx db,
                         @Nullable final String group,

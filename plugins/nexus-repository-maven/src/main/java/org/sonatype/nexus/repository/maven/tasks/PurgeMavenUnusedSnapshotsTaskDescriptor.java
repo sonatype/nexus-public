@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.maven.tasks.PurgeMavenUnusedSnapshot
 public class PurgeMavenUnusedSnapshotsTaskDescriptor
     extends TaskDescriptorSupport
 {
-  public static final String TASK_NAME = "Purge unused Maven snapshot versions";
+  public static final String TASK_NAME = "Maven - Delete unused SNAPSHOT";
 
   public static final String TYPE_ID = "repository.maven.purge-unused-snapshots";
 
@@ -51,13 +51,13 @@ public class PurgeMavenUnusedSnapshotsTaskDescriptor
         new RepositoryCombobox(
             REPOSITORY_NAME_FIELD_ID,
             "Repository",
-            "Select the repository to purge unused snapshot versions from",
+            "Select the repository to delete unused snapshot versions from",
             FormField.MANDATORY
         ).includingAnyOfFacets(PurgeUnusedSnapshotsFacet.class).includeAnEntryForAllRepositories(),
         new NumberTextFormField(
             LAST_USED_FIELD_ID,
             "Last used in days",
-            "Purge all snapshots that were last used before given number of days",
+            "Delete all snapshots that were last used before given number of days",
             FormField.MANDATORY
         ).withInitialValue(LAST_USED_INIT_VALUE).withMinimumValue(LAST_USED_MIN_VALUE)
     );

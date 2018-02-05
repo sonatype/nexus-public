@@ -20,7 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 /**
  * Interface providing operations to resolve {@link BlobId}s to locations and vice versa.
  *
- * @since 3.next
+ * @since 3.8
  */
 public interface BlobIdLocationResolver
 {

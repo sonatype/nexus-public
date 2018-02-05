@@ -117,7 +117,7 @@ public class EmailConfigurationEntityAdapter
     entity.setHost(host);
     entity.setPort(port);
     entity.setUsername(username);
-    entity.setPassword(passwordHelper.decrypt(password));
+    entity.setPassword(passwordHelper.tryDecrypt(password));
     entity.setFromAddress(fromAddress);
     entity.setSubjectPrefix(subjectPrefix);
     entity.setStartTlsEnabled(startTlsEnabled);

@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.joining;
 /**
  * Browse entities based on one or more properties.
  *
- * @since 3.next
+ * @since 3.8
  */
 public class BrowseEntitiesByPropertyInSetAction<T extends Entity>
     extends ComponentSupport

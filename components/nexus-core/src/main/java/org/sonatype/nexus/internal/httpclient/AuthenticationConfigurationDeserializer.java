@@ -57,12 +57,12 @@ public class AuthenticationConfigurationDeserializer
     if (UsernameAuthenticationConfiguration.class.equals(type)) {
       UsernameAuthenticationConfiguration upc = (UsernameAuthenticationConfiguration) configuration;
       upc.setUsername(upc.getUsername());
-      upc.setPassword(passwordHelper.decrypt(upc.getPassword()));
+      upc.setPassword(passwordHelper.tryDecrypt(upc.getPassword()));
     }
     else if (NtlmAuthenticationConfiguration.class.equals(type)) {
       NtlmAuthenticationConfiguration ntc = (NtlmAuthenticationConfiguration) configuration;
       ntc.setUsername(ntc.getUsername());
-      ntc.setPassword(passwordHelper.decrypt(ntc.getPassword()));
+      ntc.setPassword(passwordHelper.tryDecrypt(ntc.getPassword()));
       ntc.setDomain(ntc.getDomain());
       ntc.setHost(ntc.getHost());
     }

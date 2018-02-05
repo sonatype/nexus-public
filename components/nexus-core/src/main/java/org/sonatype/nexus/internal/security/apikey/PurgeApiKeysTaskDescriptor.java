@@ -32,7 +32,7 @@ public class PurgeApiKeysTaskDescriptor
   public PurgeApiKeysTaskDescriptor() {
     super(TYPE_ID,
         PurgeApiKeysTask.class,
-        "Purge orphaned API keys",
+        "Admin - Delete orphaned API keys",
         VISIBLE,
         EXPOSED
     );

@@ -32,7 +32,7 @@ public class SingleAssetComponentMaintenance
    * Deletes both the asset and its component.
    */
   @TransactionalDeleteBlob
-  protected void deleteAssetTx(final EntityId assetId) {
+  protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     if (asset == null) {
@@ -41,11 +41,11 @@ public class SingleAssetComponentMaintenance
     final EntityId componentId = asset.componentId();
     if (componentId == null) {
       // Assets without components should be deleted on their own
-      super.deleteAssetTx(assetId);
+      super.deleteAssetTx(assetId, deleteBlob);
     }
     else {
       // Otherwise, delete the component, which in turn cascades down to the asset
-      deleteComponentTx(componentId);
+      deleteComponentTx(componentId, deleteBlob);
     }
   }
 }

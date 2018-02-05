@@ -43,7 +43,7 @@ class QueryUtils
 
   /**
    * Build an Orient 'IN' style query based on the set of values
-   * @since 3.next
+   * @since 3.8
    */
   public static String buildIn(final Set<?> values) {
     checkArgument(!values.isEmpty(), "At least one value is required");

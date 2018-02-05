@@ -43,7 +43,7 @@ public class ScriptTaskDescriptor
   private interface Messages
       extends MessageBundle
   {
-    @DefaultMessage("Execute script")
+    @DefaultMessage("Admin - Execute script")
     String name();
 
     @DefaultMessage("Language")

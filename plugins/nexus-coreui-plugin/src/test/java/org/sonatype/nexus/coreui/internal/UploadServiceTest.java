@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
-import org.sonatype.nexus.repository.upload.internal.UploadManagerImpl;
+import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Payload;
 
 import org.apache.commons.fileupload.FileItem;
@@ -40,6 +40,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -47,6 +49,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -61,16 +64,26 @@ public class UploadServiceTest
 
   private UploadService component;
 
+  @Mock
   private UploadManager uploadManager;
 
-  private final RepositoryManager repositoryManager = mock(RepositoryManager.class);
+  @Mock
+  private RepositoryManager repositoryManager;
 
-  private final UploadHandler handler = mock(UploadHandler.class);
+  @Mock
+  private UploadHandler handler;
 
-  private final Repository repo = mock(Repository.class);
+  @Mock
+  private ValidatingComponentUpload validatingComponentUpload;
+
+  @Mock
+  private Repository repo;
+
+  @Captor
+  ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     when(repo.getFormat()).thenReturn(new Format("m2")
     {
     });
@@ -81,7 +94,10 @@ public class UploadServiceTest
         Arrays.asList(new UploadFieldDefinition("g", false, STRING), new UploadFieldDefinition("v", true, STRING)),
         Arrays.asList(new UploadFieldDefinition("e", false, STRING), new UploadFieldDefinition("c", true, STRING)));
     when(handler.getDefinition()).thenReturn(ud);
-    uploadManager = new UploadManagerImpl(Collections.singletonMap("m2", handler));
+    when(handler.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+    when(uploadManager.getAvailableDefinitions()).thenReturn(Collections.singletonList(ud));
+    when(uploadManager.getByFormat("m2")).thenReturn(ud);
+    when(uploadManager.handle(eq(repo), componentUploadCaptor.capture())).thenAnswer(invocationOnMock -> handler.handle(repo, componentUploadCaptor.getValue()));
 
     component = new UploadService(repositoryManager, uploadManager);
   }
@@ -113,11 +129,9 @@ public class UploadServiceTest
     // component field 'v' and asset field 'c' are omitted to ensure optional fields don't trigger an error
     component.upload(map("repositoryName", REPO_NAME, "g", "foo", "e", "jar"),
         map(mockFile("text/plain", 3L, "stuff")));
+    verify(handler, times(1)).handle(eq(repo), componentUploadCaptor.capture());
 
-    ArgumentCaptor<ComponentUpload> captor = ArgumentCaptor.forClass(ComponentUpload.class);
-    verify(handler, times(1)).handle(eq(repo), captor.capture());
-
-    ComponentUpload uc = captor.getValue();
+    ComponentUpload uc = componentUploadCaptor.getValue();
     assertThat(uc.getFields(), hasEntry("g", "foo"));
 
     assertThat(uc.getAssetUploads(), hasSize(1));

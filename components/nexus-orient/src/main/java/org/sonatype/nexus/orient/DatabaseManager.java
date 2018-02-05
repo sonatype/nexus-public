@@ -57,7 +57,7 @@ public interface DatabaseManager
   /**
    * Updates local pooled connections to use the given storage.
    *
-   * @since 3.next
+   * @since 3.8
    *
    * @deprecated temporary workaround for https://www.prjhub.com/#/issues/9594
    */

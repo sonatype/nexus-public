@@ -26,7 +26,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
 /**
  * Default {@link BlobIdLocationResolver}.
  *
- * @since 3.next
+ * @since 3.8
  */
 @Named
 public class DefaultBlobIdLocationResolver

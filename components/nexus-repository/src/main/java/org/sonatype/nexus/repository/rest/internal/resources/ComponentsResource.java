@@ -31,11 +31,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationTokenException;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
@@ -53,6 +55,7 @@ import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 
@@ -224,7 +227,7 @@ public class ComponentsResource
   }
 
   /**
-   * @since 3.next
+   * @since 3.8
    */
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -238,6 +241,11 @@ public class ComponentsResource
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
     String format = repository.getFormat().getValue();
     ComponentUpload componentUpload = createComponentUpload(format, multipartInput);
-    uploadManager.handle(repository, componentUpload);
+
+    try {
+      uploadManager.handle(repository, componentUpload);
+    } catch (IllegalOperationException e) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());
+    }
   }
 }

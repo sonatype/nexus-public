@@ -38,7 +38,7 @@ public class MavenHostedComponentMaintenanceFacet
     extends DefaultComponentMaintenanceImpl
 {
   @Override
-  public void deleteComponent(final EntityId componentId) {
+  public void deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
     String[] coordinates = Transactional.operation
         .withDb(getRepository().facet(StorageFacet.class).txSupplier())
         .call(() -> {
@@ -53,7 +53,7 @@ public class MavenHostedComponentMaintenanceFacet
           }
           return null;
         });
-    super.deleteComponent(componentId);
+    super.deleteComponent(componentId, deleteBlobs);
     if (coordinates != null) {
       getRepository().facet(MavenHostedFacet.class)
           .deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);

@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 import org.sonatype.nexus.swagger.ParameterContributor;
 
 import com.google.common.collect.ImmutableList;
+import io.swagger.models.HttpMethod;
 import io.swagger.models.parameters.QueryParameter;
 
 import static io.swagger.models.HttpMethod.GET;
@@ -39,6 +40,8 @@ import static java.util.stream.Collectors.toList;
 public class SearchParameterContributor
     extends ParameterContributor<QueryParameter>
 {
+  private static final List<HttpMethod> HTTP_METHODS = ImmutableList.of(GET);
+
   private static final List<String> PATHS = ImmutableList.of(
       SearchResource.RESOURCE_URI,
       SearchResource.RESOURCE_URI + SearchResource.SEARCH_ASSET_URI,
@@ -47,7 +50,7 @@ public class SearchParameterContributor
 
   @Inject
   public SearchParameterContributor(final SearchMappingsService searchMappings) {
-    super(GET, PATHS, transformMappings(searchMappings.getAllMappings()));
+    super(HTTP_METHODS, PATHS, transformMappings(searchMappings.getAllMappings()));
   }
 
   private static Collection<QueryParameter> transformMappings(final Iterable<SearchMapping> searchMappings) { // NOSONAR

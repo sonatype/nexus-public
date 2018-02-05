@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.decorator;
 import javax.annotation.Nullable;
 
 /**
- * @since 3.next
+ * @since 3.8
  */
 public class DecoratorUtils
 {

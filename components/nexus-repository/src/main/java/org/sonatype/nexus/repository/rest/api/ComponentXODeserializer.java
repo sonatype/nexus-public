@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Custom {@link JsonDeserializer} for the {@link ComponentXO} to handle the decorator approach
  *
- * @since 3.next
+ * @since 3.8
  */
 public class ComponentXODeserializer
     extends JsonDeserializer<ComponentXO>

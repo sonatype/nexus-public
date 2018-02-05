@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.purge.PurgeUnusedTask.REPOSITORY_NAM
 public class PurgeUnusedTaskDescriptor
     extends TaskDescriptorSupport
 {
-  public static final String TASK_NAME = "Purge unused components and assets";
+  public static final String TASK_NAME = "Repository - Delete unused components";
 
   public static final String TYPE_ID = "repository.purge-unused";
 

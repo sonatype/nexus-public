@@ -12,16 +12,11 @@
  */
 package org.sonatype.nexus.repository.upload;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -42,12 +37,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
-public class UploadHandlerTest
+public class ValidatingComponentUploadTest
     extends TestSupport
 {
-  @Mock
-  private UploadHandler uploadHandler;
-
   @Mock
   private UploadDefinition uploadDefinition;
 
@@ -59,29 +51,6 @@ public class UploadHandlerTest
 
   @Before
   public void setup() {
-    uploadHandler = new UploadHandler()
-    {
-      @Override
-      public Collection<String> handle(final Repository repository, final ComponentUpload upload) throws IOException {
-        return null;
-      }
-
-      @Override
-      public UploadDefinition getDefinition() {
-        return uploadDefinition;
-      }
-
-      @Override
-      public VariableResolverAdapter getVariableResolverAdapter() {
-        return null;
-      }
-
-      @Override
-      public ContentPermissionChecker contentPermissionChecker() {
-        return null;
-      }
-    };
-
     when(uploadDefinition.getComponentFields()).thenReturn(emptyList());
     when(uploadDefinition.getAssetFields()).thenReturn(emptyList());
   }
@@ -131,7 +100,8 @@ public class UploadHandlerTest
     when(componentUpload.getField("bar")).thenReturn("barValue");
 
     try {
-      uploadHandler.validate((componentUpload));
+      ValidatingComponentUpload validated = new ValidatingComponentUpload(uploadDefinition, componentUpload);
+      validated.getComponentUpload();
     }
     catch (ValidationErrorsException e) {
       fail(format("Unexpected validation exception thrown '%s'", e));
@@ -161,10 +131,28 @@ public class UploadHandlerTest
     expectExceptionOnValidate(componentUpload, "The assets 1 and 2 have identical coordinates");
   }
 
-  private void expectExceptionOnValidate(final ComponentUpload component, final String message)
+  @Test
+  public void testValidate_unknownField() {
+    when(uploadDefinition.getAssetFields()).thenReturn(emptyList());
+    when(uploadDefinition.getComponentFields()).thenReturn(emptyList());
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("foo", "foo");
+    assetUpload.setPayload(mock(PartPayload.class));
+
+    ComponentUpload componentUpload = new ComponentUpload();
+    componentUpload.getFields().put("bar", "bar");
+    componentUpload.getAssetUploads().addAll(Collections.singletonList(assetUpload));
+
+    expectExceptionOnValidate(componentUpload,
+        "Unknown component field 'bar'", "Unknown field 'foo' on asset '1'");
+  }
+
+  private void expectExceptionOnValidate(final ComponentUpload component, final String... message)
   {
     try {
-      uploadHandler.validate(component);
+      ValidatingComponentUpload validated = new ValidatingComponentUpload(uploadDefinition, component);
+      validated.getComponentUpload();
       fail("Expected exception to be thrown");
     }
     catch (ValidationErrorsException exception) {

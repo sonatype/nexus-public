@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 
 /**
- * @since 3.next
+ * @since 3.8
  */
 public class MavenPomGenerator
 {

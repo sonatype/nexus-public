@@ -90,7 +90,7 @@ public class UploadDefinition
   /**
    * The mapper to use for file names.
    * 
-   * @since 3.next
+   * @since 3.8
    */
   @Nullable
   public UploadRegexMap getRegexMap() {

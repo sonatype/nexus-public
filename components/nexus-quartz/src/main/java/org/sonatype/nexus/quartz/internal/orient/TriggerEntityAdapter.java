@@ -224,7 +224,7 @@ public class TriggerEntityAdapter
   /**
    * Browse all entities which have a state that matches one of the argument states.
    *
-   * @since 3.next
+   * @since 3.8
    */
   public Iterable<TriggerEntity> browseByStates(final ODatabaseDocumentTx db, final Collection<? extends Object> states) {
     return browseByStates.execute(db, states);

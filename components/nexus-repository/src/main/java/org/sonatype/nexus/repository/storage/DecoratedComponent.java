@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 /**
  * Base abstract decorator for the {@link Component} class
  *
- * @since 3.next
+ * @since 3.8
  */
 public abstract class DecoratedComponent
     implements Component, DecoratedObject<Component>

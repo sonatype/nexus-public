@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Extension point for the {@link ComponentEntityAdapter} to define/read/write additional fields to Orient on a {@link
  * Component}  instance
  *
- * @since 3.next
+ * @since 3.8
  */
 public interface ComponentEntityAdapterExtension
 {

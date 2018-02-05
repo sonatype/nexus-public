@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
 
 /**
- * @since 3.next
+ * @since 3.8
  */
 @JsonPropertyOrder(["id", "repository", "format", "group", "name", "version", "assets"])
 interface ComponentXO

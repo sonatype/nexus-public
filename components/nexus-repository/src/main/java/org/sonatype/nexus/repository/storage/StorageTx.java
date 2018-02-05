@@ -219,7 +219,7 @@ public interface StorageTx
   /**
    * Check for the existence of a component with {@code group}, {@code name}, and {@code version} in {@code repository}.
    *
-   * @since 3.next
+   * @since 3.8
    */
   boolean componentExists(@Nullable final String group,
                           final String name,
@@ -333,9 +333,29 @@ public interface StorageTx
   void deleteComponent(Component component);
 
   /**
+   * Deletes an existing component, all constituent assets, and maybe requests deletion of the asset blobs.
+   *
+   * @param component to be deleted
+   * @param deleteBlobs should asset blob deletion be requested
+   *
+   * @since 3.next
+   */
+  void deleteComponent(Component component, boolean deleteBlobs);
+
+  /**
    * Deletes an existing asset and requests the blob to be deleted.
    */
   void deleteAsset(Asset asset);
+
+  /**
+   * Deletes an existing asset and maybe requests the blob be deleted.
+   *
+   * @param asset to be deleted
+   * @param deleteBlob should blob deletion be requested
+   *
+   * @since 3.next
+   */
+  void deleteAsset(Asset asset, boolean deleteBlob);
 
   /**
    * Creates a new Blob and updates the given asset with a reference to it, hash metadata, size, and content type.

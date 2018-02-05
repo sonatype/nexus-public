@@ -35,7 +35,7 @@ import static org.sonatype.nexus.orient.entity.action.QueryUtils.buildIn;
 /**
  * Read entity based on a single property for an IN style query
  *
- * @since 3.next
+ * @since 3.8
  */
 public class ReadEntitiesByPropertyAction<T extends Entity>
     extends ComponentSupport

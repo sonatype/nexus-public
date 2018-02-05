@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security;
 
+import java.io.FileNotFoundException;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -26,10 +28,13 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.fail;
+import static org.sonatype.nexus.security.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * UT for {@link PasswordHelper}.
@@ -39,57 +44,75 @@ import static org.hamcrest.Matchers.startsWith;
 public class PasswordHelperTest
     extends TestSupport
 {
-  private PasswordHelper helper;
+  private PasswordHelper legacyPasswordHelper;
+
+  private PasswordHelper customPasswordHelper;
 
   @Before
   public void init() throws Exception {
-    helper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()));
+    legacyPasswordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()), LEGACY_PHRASE_SERVICE);
+    customPasswordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()), new AbstractPhraseService(true)
+    {
+      @Override
+      protected String getMasterPhrase() {
+        return "sterces, sterces, sterces";
+      }
+    });
   }
 
   @Test
   public void testEncrypt_NullInput() throws Exception {
-    assertThat(helper.encrypt(null), is(nullValue()));
+    assertThat(legacyPasswordHelper.encrypt(null), is(nullValue()));
+    assertThat(customPasswordHelper.encrypt(null), is(nullValue()));
   }
 
   @Test
   public void testEncrypt_EmptyInput() throws Exception {
-    assertThat(helper.encrypt(""), allOf(startsWith("{"), endsWith("}")));
+    assertThat(legacyPasswordHelper.encrypt(""), allOf(startsWith("{"), endsWith("}")));
+    assertThat(customPasswordHelper.encrypt(""), allOf(startsWith("~{"), endsWith("}~")));
   }
 
   @Test
   public void testEncrypt_PlainInput() throws Exception {
-    assertThat(helper.encrypt("test"), allOf(startsWith("{"), endsWith("}")));
+    assertThat(legacyPasswordHelper.encrypt("test"), allOf(startsWith("{"), endsWith("}")));
+    assertThat(customPasswordHelper.encrypt("test"), allOf(startsWith("~{"), endsWith("}~")));
   }
 
   @Test
   public void testEncrypt_AlreadyEncryptedInput() throws Exception {
-    assertThat(helper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
+    assertThat(legacyPasswordHelper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
+    assertThat(customPasswordHelper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
   }
 
   @Test
   public void testEncrypt_StringIncludingShields() throws Exception {
     //check the resultant value is protected by braces and has been encrypted (not equal to the input string)
-    assertThat(helper.encrypt("{test}"), allOf(startsWith("{"), endsWith("}"), not("{test}")));
+    assertThat(legacyPasswordHelper.encrypt("{test}"), allOf(startsWith("{"), endsWith("}"), not("{test}")));
+    assertThat(customPasswordHelper.encrypt("{test}"), allOf(startsWith("~{"), endsWith("}~"), not("~{test}~")));
   }
 
   @Test
   public void testDecrypt_NullInput() throws Exception {
-    assertThat(helper.decrypt(null), is(nullValue()));
+    assertThat(legacyPasswordHelper.decrypt(null), is(nullValue()));
+    assertThat(customPasswordHelper.decrypt(null), is(nullValue()));
   }
 
   @Test
   public void testDecrypt_EmptyInput() throws Exception {
-    assertThat(helper.decrypt(""), is(""));
+    assertThat(legacyPasswordHelper.decrypt(""), is(""));
+    assertThat(customPasswordHelper.decrypt(""), is(""));
   }
 
   @Test
   public void testDecrypt_EncryptedInput() throws Exception {
-    assertThat(helper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
+    assertThat(legacyPasswordHelper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
+    assertThat(customPasswordHelper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
   }
 
   @Test
   public void testDecrypt_AlreadyDecryptedInput() throws Exception {
-    assertThat(helper.decrypt("test"), is("test"));
+    assertThat(legacyPasswordHelper.decrypt("test"), is("test"));
+    assertThat(customPasswordHelper.decrypt("test"), is("test"));
   }
 
   @Test
@@ -104,7 +127,8 @@ public class PasswordHelperTest
         public void run() {
           for (int i = 0; i < 20; i++) {
             try {
-              MatcherAssert.assertThat(helper.decrypt(helper.encrypt(password)), is(password));
+              MatcherAssert.assertThat(legacyPasswordHelper.decrypt(legacyPasswordHelper.encrypt(password)), is(password));
+              MatcherAssert.assertThat(customPasswordHelper.decrypt(customPasswordHelper.encrypt(password)), is(password));
             }
             catch (Throwable e) {
               error.compareAndSet(null, e);
@@ -122,6 +146,59 @@ public class PasswordHelperTest
     if (error.get() != null) {
       Throwables.throwIfUnchecked(error.get());
       throw new RuntimeException(error.get());
+    }
+  }
+
+  @Test
+  public void testCustomMasterPhrase() throws Exception {
+    String password = "clear-text-password";
+    String encodedPass = customPasswordHelper.encrypt(password);
+
+    try {
+      legacyPasswordHelper.decrypt(encodedPass);
+      fail("Expected RuntimeException wrapping GeneralSecurityException");
+    }
+    catch (RuntimeException e) {
+      assertThat(e.getCause(), is(instanceOf(GeneralSecurityException.class)));
+    }
+
+    assertThat(customPasswordHelper.decrypt(encodedPass), is(password));
+  }
+
+  @Test
+  public void testLegacyPhraseFallback() throws Exception {
+    String password = "clear-text-password";
+    String encodedPass = legacyPasswordHelper.encrypt(password);
+
+    assertThat(legacyPasswordHelper.decrypt(encodedPass), is(password));
+
+    // should still work by falling back to legacy pass-phrase
+    assertThat(customPasswordHelper.decrypt(encodedPass), is(password));
+  }
+
+  @Test
+  public void testCustomPhraseFile() throws Exception {
+    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/custom.enc"));
+    PasswordHelper underTest = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()), phraseService);
+
+    String password = "clear-text-password";
+    String encodedPass = underTest.encrypt(password);
+
+    assertThat(underTest.decrypt(encodedPass), is(password));
+  }
+
+  @Test
+  public void testMissingPhraseFile() throws Exception {
+    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/missing.enc"));
+    PasswordHelper underTest = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()), phraseService);
+
+    String password = "clear-text-password";
+    try {
+      underTest.encrypt(password);
+      fail("Expected RuntimeException wrapping FileNotFoundException");
+    }
+    catch (RuntimeException e) {
+      assertThat(e.getCause(), is(instanceOf(FileNotFoundException.class)));
     }
   }
 }

@@ -15,7 +15,7 @@
 /**
  * Configuration for Yum hosted repodata level.
  *
- * @since 3.next
+ * @since 3.8
  */
 Ext.define('NX.coreui.view.repository.facet.YumHostedFacet', {
   extend: 'Ext.form.FieldContainer',

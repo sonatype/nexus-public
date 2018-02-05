@@ -62,14 +62,14 @@ public interface FileOperations
   /**
    * Overwrites a file without any guarantee of atomicity.
    *
-   * @since 3.next
+   * @since 3.8
    */
   void overwrite(Path source, Path target) throws IOException;
 
   /**
    * Overwrites a file atomically, throwing <code>AtomicMoveNotSupportedException</code> if not supported.
    *
-   * @since 3.next
+   * @since 3.8
    */
   void overwriteAtomic(Path source, Path target) throws IOException;
 

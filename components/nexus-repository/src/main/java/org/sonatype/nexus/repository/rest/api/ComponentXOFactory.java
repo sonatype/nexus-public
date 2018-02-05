@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Factory for creating {@link ComponentXO} instances.
  *
- * @since 3.next
+ * @since 3.8
  */
 @Singleton
 @Named

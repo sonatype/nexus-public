@@ -113,7 +113,7 @@ public class ConfigurationEntityAdapter
    * Returns a copy of the attributes with sensitive data decrypted.
    */
   private Map<String, Map<String, Object>> decrypt(Map<String, Map<String, Object>> attributes) {
-    return process(attributes, passwordHelper::decrypt);
+    return process(attributes, passwordHelper::tryDecrypt);
   }
 
   @Override

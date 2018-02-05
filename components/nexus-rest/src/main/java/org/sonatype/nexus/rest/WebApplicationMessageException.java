@@ -22,7 +22,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 /**
  * {@link WebApplicationException} with {@link Status} and a text message.
  *
- * @since 3.next
+ * @since 3.8
  */
 public class WebApplicationMessageException
     extends WebApplicationException
