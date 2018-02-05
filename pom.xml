@@ -671,11 +671,30 @@
                 </requireMavenVersion>
 
                 <!--
-                Require Java 7+
+                Require Java 7+ for building
                 -->
                 <requireJavaVersion>
                   <version>[1.7,)</version>
                 </requireJavaVersion>
+
+                <!--
+                Check all bytecode (both compiled and via dependencies) targets Java 7 or below
+                -->
+                <enforceBytecodeVersion>
+                  <maxJdkVersion>1.7</maxJdkVersion>
+                  <ignoreClasses>
+                    <!-- these optional classes are never loaded on Java7, xstream only loads them on Java8 -->
+                    <ignoreClass>*.thoughtworks.xstream.mapper.LambdaMapper</ignoreClass>
+                    <ignoreClass>*.thoughtworks.xstream.converters.reflection.LambdaConverter</ignoreClass>
+                    <ignoreClass>*.thoughtworks.xstream.converters.time.*</ignoreClass>
+                    <ignoreClass>*.thoughtworks.xstream.core.util.ISO8601JavaTimeConverter</ignoreClass>
+                  </ignoreClasses>
+                  <ignoredScopes>
+                    <ignoredScope>system</ignoredScope>
+                    <ignoredScope>provided</ignoredScope>
+                    <ignoredScope>test</ignoredScope>
+                  </ignoredScopes>
+                </enforceBytecodeVersion>
               </rules>
             </configuration>
           </execution>
@@ -817,6 +836,13 @@
             </configuration>
           </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>extra-enforcer-rules</artifactId>
+            <version>1.0-beta-3</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <plugin>
