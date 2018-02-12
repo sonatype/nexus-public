@@ -92,6 +92,10 @@ public abstract class TaskSupport
     try {
       return execute();
     }
+    catch (TaskInterruptedException e) {
+      log.warn(TASK_LOG_ONLY, "Task '{}' was canceled", getMessage());
+      throw e;
+    }
     catch (Exception e) {
       log.error(TASK_LOG_ONLY, "Failed to run task '{}'", getMessage(), e);
       throw e;

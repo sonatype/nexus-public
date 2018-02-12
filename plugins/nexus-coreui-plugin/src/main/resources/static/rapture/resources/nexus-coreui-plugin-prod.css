@@ -27,3 +27,105 @@
 .healthcheck-bad-downloads {
     color: #DB2852;
 }
+
+.nx-clm-status-message {
+    padding-bottom: 5px;
+    border-bottom: solid 1px #d0d0d0;
+    margin-bottom: 5px;
+}
+
+.nx-firewall-chiclet {
+    display: inline-block;
+    text-align: center;
+    font-family: Helvetica, Arial, sans-serif;
+    font-weight: bold;
+    color: #FFF;
+    vertical-align: middle;
+}
+.nx-firewall-chiclet {
+    width: 24px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    font-size: 10px;
+}
+
+.nx-firewall-chiclet.critical {
+    background-color: #bc012f;
+}
+.nx-firewall-chiclet.severe {
+    background-color: #f4861d;
+}
+.nx-firewall-chiclet.moderate {
+    color: #444;
+    background-color: #f5c648;
+}
+.nx-firewall-container {
+    line-height: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+.nx-firewall-chiclet {
+    padding: 2px;
+    margin: 1px;
+    line-height: 10px;
+    float: left;
+    cursor: pointer;
+}
+.nx-firewall-quarantine-icon {
+    background: url(images/glyphicons-200-ban.png)  no-repeat;
+    height: 16px;
+    width: 16px;
+    float: left;
+    margin-left: 10px;
+    background-size: 12px 12px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+.nx-firewall-quarantine-count {
+    float: left;
+    cursor: pointer;
+}
+.nx-firewall-iq-error-icon {
+    background: url(images/exclamation.png)  no-repeat;
+    height: 16px;
+    width: 16px;
+    float: left;
+    margin-left: 10px;
+    background-size: 12px 12px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+.nx-external-link {
+    background: url(images/glyphicons-152-new-window.png)  no-repeat;
+    background-size: 12px 12px;
+    background-position: right top;
+    padding-right: 16px;
+}
+.nx-firewall-container .nx-external-link {
+    margin-left: 6px;
+    padding-bottom: 3px;
+    height: 16px;
+    float: left;
+    cursor: pointer;
+}
+.nx-firewall-container:hover .nx-external-link {
+    border-bottom: 1px solid #1E4176;
+}
+.nx-firewall-error-icon {
+    vertical-align: middle;
+}
+.nx-firewall-error {
+    color: #C0272B;
+    text-overflow: ellipsis;
+    padding-left: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.nx-firewall-iq-mismatch-error {
+    font-weight: bold;
+    color: #C0272B;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}

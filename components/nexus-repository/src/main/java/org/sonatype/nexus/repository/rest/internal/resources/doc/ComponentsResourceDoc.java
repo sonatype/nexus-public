@@ -63,10 +63,7 @@ public interface ComponentsResourceDoc
   })
   void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
 
-  @ApiOperation(value = "Upload a single component",
-      //TODO: NEXUS-15443 remove this parameter when ready to ship with ui upload enabled
-      hidden = true
-  )
+  @ApiOperation(value = "Upload a single component")
   @ApiResponses(value = {
       @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),
       @ApiResponse(code = 422, message = "Parameter 'repository' is required")

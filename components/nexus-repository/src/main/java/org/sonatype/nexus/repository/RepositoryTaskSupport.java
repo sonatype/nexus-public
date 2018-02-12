@@ -73,17 +73,12 @@ public abstract class RepositoryTaskSupport
         execute(repository);
       }
       catch (TaskInterruptedException e) { // NOSONAR
-        cancel(); // potentially redundant call to ensure loop exits
-        break;
+        throw e;
       }
       catch (Exception e) {
         log.error("Failed to run task '{}' on repository '{}'", getMessage(), repository.getName(), e);
         failures.add(e);
       }
-    }
-
-    if (isCanceled()) {
-      log.warn("Task '{}' was canceled", getMessage());
     }
 
     failures.maybePropagate(String.format("Failed to run task '%s'", getMessage()));

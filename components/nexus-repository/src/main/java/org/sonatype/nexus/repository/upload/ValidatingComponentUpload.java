@@ -13,9 +13,11 @@
 package org.sonatype.nexus.repository.upload;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -126,7 +128,8 @@ public class ValidatingComponentUpload
   private Collection<String> collectNotAllowedFields(final Map<String, String> fields,
                                                      final Collection<String> allowedFields)
   {
-    return fields.keySet().stream().filter(field -> !allowedFields.contains(field)).collect(Collectors.toList());
+    Set<String> keys = Optional.ofNullable(fields).map(Map::keySet).orElse(Collections.emptySet());
+    return keys.stream().filter(field -> !allowedFields.contains(field)).collect(Collectors.toList());
   }
 
   private Set<String> getAllowedAssetFields() {

@@ -360,6 +360,9 @@ public class BrowseServiceImpl
     checkNotNull(asset);
     String repositoryName = bucketStore.getById(asset.bucketId()).getRepositoryName();
 
-    return assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name());
+    if (assetDownloadCountStore.isEnabled()) {
+      return assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name());
+    }
+    return 0;
   }
 }

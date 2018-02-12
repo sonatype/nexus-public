@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
@@ -27,6 +28,7 @@ import io.swagger.models.Swagger;
 import io.swagger.models.parameters.AbstractSerializableParameter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -45,7 +47,8 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
 
   private final Collection<T> params;
 
-  private final Map<String, Boolean> contributed;
+  @VisibleForTesting
+  final Map<String, Boolean> contributed;
 
   private boolean allContributed;
 
@@ -56,7 +59,9 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
     this.httpMethods = checkNotNull(httpMethods);
     this.paths = checkNotNull(paths);
     this.params = checkNotNull(params);
-    this.contributed = paths.stream().collect(toMap(p -> p, p -> false));
+    this.contributed = httpMethods.stream()
+        .flatMap(httpMethod -> paths.stream().map(path -> getKey(httpMethod, path)))
+        .collect(toMap(p -> (String) p, p -> false));
   }
 
   @Override
@@ -65,13 +70,12 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
       return;
     }
 
-    httpMethods.forEach(httpMethod -> {
-      paths.forEach(p -> {
-        if (!contributed.get(p) && contributeGetParameters(swagger, httpMethod, p, params)) {
-          contributed.put(p, true);
-        }
-      });
-    });
+    for (HttpMethod httpMethod : httpMethods) {
+      for (String path : paths) {
+        contributed.compute(getKey(httpMethod, path),
+            (key, value) -> value || contributeGetParameters(swagger, httpMethod, path, params));
+      }
+    }
 
     allContributed = contributed.entrySet().stream().allMatch(Entry::getValue);
   }
@@ -106,5 +110,9 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
         .map(Entry::getValue)
         .map(Path::getOperationMap)
         .map(m -> m.get(httpMethod));
+  }
+
+  private static String getKey(final HttpMethod httpMethod, final String path) {
+    return format("%s-%s", httpMethod.name(), path);
   }
 }

@@ -28,7 +28,7 @@ public class UploadConfiguration
   private final boolean enabled;
 
   @Inject
-  public UploadConfiguration(@Named("${" + ENABLED + ":-false}") final boolean enabled) {
+  public UploadConfiguration(@Named("${" + ENABLED + ":-true}") final boolean enabled) {
     this.enabled = enabled;
   }
 

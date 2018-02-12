@@ -117,20 +117,38 @@ public class Maven2MavenPathParser
       String version = baseVersion;
       Long timestamp = null;
       Integer buildNumber = null;
-      String tail;
+      String tail = null;
       if (snapshot) {
-        int vSnapshotStart = artifactId.length() + baseVersion.length() - 10 + 3;
-        version = str.substring(vSnapshotStart, vSnapshotStart + 8);
+        int vSnapshotStart = artifactId.length() + 1 + baseVersion.length() - Constants.SNAPSHOT_VERSION_SUFFIX.length();
+        version = str.substring(vSnapshotStart, vSnapshotStart + Constants.SNAPSHOT_VERSION_SUFFIX.length());
+
         if (Constants.SNAPSHOT_VERSION_SUFFIX.equals(version)) {
+          int vTimestampStart = vSnapshotStart + version.length() + 1;
+
+          //this would be expected in most cases
           version = baseVersion; // reset it
-          int nTailPos = artifactId.length() + baseVersion.length() + 1;
-          tail = str.substring(nTailPos);
+          tail = str.substring(artifactId.length() + baseVersion.length() + 1);
+
+          //check if we have something hokey like SNAPSHOT-20180101.121212
+          if (str.length() > vTimestampStart + Constants.DOTTED_TIMESTAMP_VERSION_FORMAT.length()) {
+            try { //NOSONAR not extracting to method as many variables external to the method need to be updated
+              Constants.METADATA_DOTTED_TIMESTAMP.parseDateTime(
+                  str.substring(vTimestampStart, vTimestampStart + Constants.DOTTED_TIMESTAMP_VERSION_FORMAT.length()))
+                  .getMillis();
+              version = str.substring(vTimestampStart, vTimestampStart + Constants.SNAPSHOT_VERSION_SUFFIX.length());
+              vSnapshotStart = vTimestampStart;
+              tail = null;
+            }
+            catch (IllegalArgumentException e) { //NOSONAR
+              //usually expected
+            }
+          }
         }
-        else {
+
+        if (tail == null) {
           final StringBuilder snapshotTimestampedVersion = new StringBuilder(version);
-          snapshotTimestampedVersion.append(
-              str.substring(vSnapshotStart + version.length(), vSnapshotStart + version.length() + 7)
-          );
+          snapshotTimestampedVersion.append(str.substring(vSnapshotStart + version.length(),
+              vSnapshotStart + version.length() + Constants.SNAPSHOT_VERSION_SUFFIX.length() - 1));
 
           try {
             timestamp = Constants.METADATA_DOTTED_TIMESTAMP.parseDateTime(
@@ -156,9 +174,9 @@ public class Maven2MavenPathParser
           catch (NumberFormatException e) {
             log.trace("build number failed parsing {}", bnr);
           }
-          int n = baseVersion.length() > 8 ? baseVersion.length() - 8 : 0;
-          tail = str.substring(artifactId.length() + n + snapshotTimestampedVersion.length() + 1);
-          version = baseVersion.substring(0, baseVersion.length() - 8) + snapshotTimestampedVersion;
+          tail = str.substring(vSnapshotStart + snapshotTimestampedVersion.length());
+          version = baseVersion.substring(0, baseVersion.length() - Constants.SNAPSHOT_VERSION_SUFFIX.length())
+              + snapshotTimestampedVersion;
         }
       }
       else {

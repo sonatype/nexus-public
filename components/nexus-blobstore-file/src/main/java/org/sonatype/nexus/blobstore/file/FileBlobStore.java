@@ -58,6 +58,7 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -83,6 +84,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * A {@link BlobStore} that stores its content on the file system.
@@ -555,6 +557,7 @@ public class FileBlobStore
       // only process each blob once (in-use blobs may be re-added to the index)
       ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
       for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
+        checkCancellation();
         byte[] bytes = deletedBlobIndex.peek();
         if (bytes == null) {
           return;
@@ -574,7 +577,7 @@ public class FileBlobStore
       }
       progressLogger.flush();
     }
-    catch (BlobStoreException e) {
+    catch (BlobStoreException | TaskInterruptedException e) {
       throw e;
     }
     catch (Exception e) {

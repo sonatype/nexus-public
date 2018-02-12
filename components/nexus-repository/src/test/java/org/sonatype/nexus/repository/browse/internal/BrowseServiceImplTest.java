@@ -333,7 +333,13 @@ public class BrowseServiceImplTest
     when(bucketStore.getById(bucketId)).thenReturn(bucket);
     when(bucket.getRepositoryName()).thenReturn("last-thirty-repo");
     when(assetDownloadCountStore.getLastThirtyDays("last-thirty-repo", "/foo/one")).thenReturn(99L);
+    when(assetDownloadCountStore.isEnabled()).thenReturn(true);
 
     assertThat(underTest.getLastThirtyDays(assetOne), is(99L));
+
+    when(assetDownloadCountStore.isEnabled()).thenReturn(false);
+
+    assertThat(underTest.getLastThirtyDays(assetOne), is(0L));
+
   }
 }

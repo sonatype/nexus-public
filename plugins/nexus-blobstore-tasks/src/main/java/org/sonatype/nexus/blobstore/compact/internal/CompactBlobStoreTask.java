@@ -18,6 +18,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,6 +32,7 @@ import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTask
 @Named
 public class CompactBlobStoreTask
     extends TaskSupport
+    implements Cancelable
 {
   private final BlobStoreManager blobStoreManager;
 

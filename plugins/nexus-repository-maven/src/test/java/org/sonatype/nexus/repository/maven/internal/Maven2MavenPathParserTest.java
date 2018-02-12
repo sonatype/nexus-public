@@ -325,6 +325,28 @@ public class Maven2MavenPathParserTest
   }
 
   @Test
+  public void badlyBuiltSnapshot() throws Exception {
+    MavenPath mavenPath = pathParser
+        .parsePath("/org/jruby/jruby/1.0RC1-SNAPSHOT/jruby-1.0RC1-SNAPSHOT-20070504.160758-25-javadoc.jar");
+    assertThat(mavenPath, notNullValue());
+    assertThat(mavenPath.getPath(), equalTo(
+        "org/jruby/jruby/1.0RC1-SNAPSHOT/jruby-1.0RC1-SNAPSHOT-20070504.160758-25-javadoc.jar"));
+    assertThat(mavenPath.getFileName(), equalTo("jruby-1.0RC1-SNAPSHOT-20070504.160758-25-javadoc.jar"));
+    assertThat(mavenPath.getHashType(), nullValue());
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getGroupId(), equalTo("org.jruby"));
+    assertThat(mavenPath.getCoordinates().getArtifactId(), equalTo("jruby"));
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.0RC1-SNAPSHOT"));
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("1.0RC1-20070504.160758-25"));
+    assertThat(mavenPath.getCoordinates().getTimestamp(), equalTo(parseTimestamp("20070504.160758")));
+    assertThat(mavenPath.getCoordinates().getBuildNumber(), equalTo(25));
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.0RC1-SNAPSHOT"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), equalTo("javadoc"));
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("jar"));
+    assertThat(mavenPath.getCoordinates().getSignatureType(), nullValue());
+  }
+
+  @Test
   public void metadata() throws Exception
   {
     MavenPath mavenPath;

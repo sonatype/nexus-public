@@ -1257,7 +1257,45 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Licensing_LicenseUserList_Date_Header: 'Date',
     Licensing_LicenseUserList_User_Header: 'User',
     Licensing_LicenseUserList_Agent_Header: 'User agent',
-    Licensing_LicenseUserList_EmptyText: 'No active users in the last 7 days.'
+    Licensing_LicenseUserList_EmptyText: 'No active users in the last 7 days.',
+
+    //Nexus Lifecycle -> Server
+    Clm_ClmSettings_Permission_Error: 'You do not have permission to configure IQ Server',
+    Clm_Text: 'Server',
+    Clm_Description: 'Manage IQ Server configuration',
+    Clm_Connection_Success: 'Connection to IQ Server verified: {0}',
+    Clm_Dashboard_Title: 'Dashboard',
+    Clm_Dashboard_Description : 'Open IQ Server Dashboard',
+    ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
+      'can evaluate application and organization policies.</p>' +
+      '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
+
+    Clm_SettingsTestResults_Title: 'Applications',
+    Clm_SettingsTestResults_EmptyText: 'No applications found',
+    Clm_SettingsTestResults_Id_Header: 'Id',
+    Clm_SettingsTestResults_Name_Header: 'Name',
+
+    ClmSettings_Enable_FieldLabel: 'Enable IQ Server',
+    ClmSettings_Enable_HelpText: 'Whether to use IQ Server',
+    ClmSettings_URL_FieldLabel: 'IQ Server URL',
+    ClmSettings_URL_HelpText: 'The address of your IQ Server',
+    ClmSettings_URL_EmptyText: 'enter a URL',
+    ClmSettings_AuthenticationType_FieldLabel: 'Authentication Method',
+    ClmSettings_AuthenticationType_Pki: 'PKI Authentication',
+    ClmSettings_AuthenticationType_User: 'User Authentication',
+    ClmSettings_Username_FieldLabel: 'Username',
+    ClmSettings_Username_HelpText: 'User with access to IQ Server',
+    ClmSettings_Username_EmptyText: 'enter a name',
+    ClmSettings_Password_FieldLabel: 'Password',
+    ClmSettings_Password_HelpText: 'Credentials for the IQ Server User',
+    ClmSettings_Password_EmptyText: 'enter a password',
+    ClmSettings_ConnectionTimeout_FieldLabel: 'Connection Timeout',
+    ClmSettings_ConnectionTimeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection. Leave blank to use the globally defined HTTP timeout.',
+    ClmSettings_ConnectionTimeout_EmptyText: 'enter a timeout',
+    ClmSettings_Properties_FieldLabel: 'Properties',
+    ClmSettings_Properties_HelpText: 'Additional properties to configure for IQ Server',
+    ClmSettings_Properties_EmptyText: 'enter properties',
+    ClmSettings_Properties_Verify_Button: 'Verify connection'
   },
 
   /**

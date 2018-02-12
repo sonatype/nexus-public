@@ -79,7 +79,7 @@ public interface BrowseService
   Map<EntityId, String> getRepositoryBucketNames(final Repository repository);
 
   /**
-   * Returns the number of downloads in the last 30-days (if enabled)
+   * @return number of downloads in the last 30-days, or zero (0) if the information is not available
    */
   long getLastThirtyDays(Asset asset);
 }

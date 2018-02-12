@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
@@ -34,11 +35,14 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.scheduling.CancelableHelper;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,6 +85,8 @@ public class FileBlobStoreTest
 
   private static final byte[] EMPTY_BLOB_STORE_PROPERTIES = ("").getBytes(StandardCharsets.ISO_8859_1);
 
+  private AtomicBoolean cancelled = new AtomicBoolean(false);
+
   @Mock
   private BlobIdLocationResolver blobIdLocationResolver;
 
@@ -121,6 +127,7 @@ public class FileBlobStoreTest
 
   @Before
   public void initBlobStore() {
+    CancelableHelper.set(cancelled);
     when(nodeAccess.getId()).thenReturn("test");
     when(dryRunPrefix.get()).thenReturn("");
     when(appDirs.getWorkDirectory(any())).thenReturn(util.createTempDir());
@@ -157,6 +164,11 @@ public class FileBlobStoreTest
 
     underTest.init(configuration);
     underTest.setLiveBlobs(loadingCache);
+  }
+
+  @After
+  public void tearDown() {
+    CancelableHelper.remove();
   }
 
   @Test(expected = BlobStoreException.class)
@@ -333,6 +345,27 @@ public class FileBlobStoreTest
     underTest.compact();
 
     verify(fileOperations, times(2)).delete(any());
+  }
+
+  @Test
+  public void testCompactIsCancelable() throws Exception {
+    when(nodeAccess.isOldestNode()).thenReturn(true);
+    underTest.doStart();
+
+    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+        deletedBlobStoreProperties);
+
+    setRebuildMetadataToTrue();
+    cancelled.set(true);
+
+    try {
+      underTest.compact();
+      fail("Expected exception to be thrown");
+    }
+    catch (TaskInterruptedException expected) {
+    }
+
+    verify(fileOperations, never()).delete(any());
   }
 
   @Test

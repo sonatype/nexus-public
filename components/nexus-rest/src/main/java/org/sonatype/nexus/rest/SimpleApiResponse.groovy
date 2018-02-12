@@ -13,12 +13,18 @@
 package org.sonatype.nexus.rest
 
 import javax.ws.rs.core.Response
+import javax.ws.rs.core.Response.Status
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST
+import static javax.ws.rs.core.Response.Status.NOT_FOUND
 import static javax.ws.rs.core.Response.Status.OK
+import static javax.ws.rs.core.Response.Status.UNAUTHORIZED
 
 /**
  * Simple API response object. Contains attributes for HTTP status, message, and a data map
@@ -33,13 +39,46 @@ class SimpleApiResponse
 
   String message
 
+  @JsonInclude(NON_NULL)
   Map<String, ?> data
 
+  static Response ok(final String message) {
+    return ok(message, null)
+  }
+
   static Response ok(final String message, final Map<String, ?> data) {
-    final SimpleApiResponse ok = new SimpleApiResponse()
-    ok.setStatus(OK.getStatusCode())
-    ok.setMessage(message)
-    ok.setData(data)
-    return Response.status(OK).entity(ok).type(APPLICATION_JSON).build()
+    return response(OK, message, data)
+  }
+
+  static Response notFound(final String message) {
+    return notFound(message, null)
+  }
+
+  static Response notFound(final String message, final Map<String, ?> data) {
+    return response(NOT_FOUND, message, data)
+  }
+
+  static Response badRequest(final String message) {
+    return badRequest(message, null)
+  }
+
+  static Response badRequest(final String message, final Map<String, ?> data) {
+    return response(BAD_REQUEST, message, data)
+  }
+
+  static Response unauthorized(final String message) {
+    return unauthorized(message, null)
+  }
+
+  static Response unauthorized(final String message, final Map<String, ?> data) {
+    return response(UNAUTHORIZED, message, data)
+  }
+
+  private static Response response(final Status status, final String message, final Map<String, ?> data) {
+    final SimpleApiResponse response = new SimpleApiResponse()
+    response.setStatus(status.getStatusCode())
+    response.setMessage(message)
+    response.setData(data)
+    return Response.status(status).entity(response).type(APPLICATION_JSON).build()
   }
 }

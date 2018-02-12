@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,8 +33,6 @@ import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 
@@ -91,50 +88,36 @@ class ComponentUploadUtils
   {
     Map<String, InputStreamPartPayload> assetsPayloads = getAssetsPayloads(format, multipartInput);
     Map<String, String> formFields = getTextFormFields(format, multipartInput, assetsPayloads.keySet());
+    Map<String, Map<String, String>> assetFields = new HashMap<>();
+    Map<String, String> componentFields = new HashMap<>();
+
+    formFields.forEach((key, value) -> {
+      int indexOfDot = key.indexOf('.');
+      boolean isAssetField = (indexOfDot != -1) && (key.length() > indexOfDot + 2) &&
+          assetsPayloads.containsKey(key.substring(0, indexOfDot));
+      if (isAssetField) {
+        String assetName = key.substring(0, indexOfDot);
+        assetFields.putIfAbsent(assetName, new HashMap<>());
+        assetFields.get(assetName).put(key.substring(indexOfDot + 1), value);
+      }
+      else {
+        componentFields.put(key, value);
+      }
+    });
 
     List<AssetUpload> assetUploads = assetsPayloads.entrySet().stream()
-        .map(asset -> createAssetUpload(asset.getKey(), asset.getValue(), formFields))
+        .map(asset -> createAssetUpload(asset.getValue(), assetFields.get(asset.getKey())))
         .collect(Collectors.toList());
 
     ComponentUpload componentUpload = new ComponentUpload();
-    componentUpload.setFields(getComponentFields(formFields, assetUploads));
+    componentUpload.setFields(componentFields);
     componentUpload.setAssetUploads(assetUploads);
     return componentUpload;
   }
 
-  /**
-   * Computes component fields by filtering out asset fields out of all form fields.
-   */
-  private static Map<String, String> getComponentFields(final Map<String, String> formFields,
-                                                        final List<AssetUpload> assetUploads)
+  private static AssetUpload createAssetUpload(final InputStreamPartPayload assetPayload,
+                                               final Map<String, String> assetFields)
   {
-    Set assetFieldNames = assetUploads.stream()
-        .flatMap(asset -> asset.getFields().keySet().stream()
-            .map(assetField -> String.format("%s.%s", asset.getPayload().getFieldName(), assetField)))
-        .collect(toSet());
-
-    return formFields.entrySet().stream()
-        .filter(field -> !assetFieldNames.contains(field.getKey()))
-        .collect(toMap(Entry::getKey, Entry::getValue));
-  }
-
-  /**
-   * Creates an {@link AssetUpload} object with provided {@link InputStreamPartPayload} and fields extracted from the
-   * multi-part form. The asset fields must be prefixed with the assetName followed by any delimiter character.
-   *
-   * @param assetName    Name of the asset
-   * @param assetPayload PartPayload of the asset
-   * @param formFields   All text fields of the form
-   * @return {@link AssetUpload} to be passed to the {@link org.sonatype.nexus.repository.upload.UploadManager}
-   */
-  private static AssetUpload createAssetUpload(final String assetName,
-                                               final InputStreamPartPayload assetPayload,
-                                               final Map<String, String> formFields)
-  {
-    Map<String, String> assetFields = formFields.entrySet().stream()
-        .filter(field -> field.getKey().startsWith(assetName) && (field.getKey().length() > assetName.length() + 2))
-        .collect(Collectors.toMap(field -> field.getKey().substring(assetName.length() + 1), Entry::getValue));
-
     AssetUpload assetUpload = new AssetUpload();
     assetUpload.setPayload(assetPayload);
     assetUpload.setFields(assetFields);
@@ -150,12 +133,19 @@ class ComponentUploadUtils
         .collect(toList());
 
     for (InputPart inputPart : fieldsParts) {
-      Optional<String> maybeFieldName = extractFieldName(format, inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
-      if (maybeFieldName.isPresent() && !assetNames.contains(maybeFieldName.get())) {
-        fields.put(maybeFieldName.get(), inputPart.getBodyAsString());
+      Optional<String> maybeContentDisposition = getContentDisposition(inputPart);
+      if (maybeContentDisposition.isPresent()) {
+        Optional<String> maybeFieldName = extractFieldName(format, maybeContentDisposition.get());
+        if (maybeFieldName.isPresent() && !assetNames.contains(maybeFieldName.get())) {
+          fields.put(maybeFieldName.get(), inputPart.getBodyAsString());
+        }
       }
     }
     return fields;
+  }
+
+  private static Optional<String> getContentDisposition(final InputPart inputPart) {
+    return Optional.ofNullable(inputPart.getHeaders().getFirst(CONTENT_DISPOSITION));
   }
 
   private static Map<String, InputStreamPartPayload> getAssetsPayloads(final String format,
@@ -164,12 +154,15 @@ class ComponentUploadUtils
   {
     Map<String, InputStreamPartPayload> payloads = new HashMap<>();
     for (InputPart inputPart : multipartInput.getParts()) {
-      String contentDisposition = inputPart.getHeaders().getFirst(CONTENT_DISPOSITION);
-      Optional<String> filename = extractFilename(contentDisposition);
-      if (filename.isPresent()) {
-        String name = extractFieldName(format, inputPart.getHeaders().getFirst(CONTENT_DISPOSITION)).orElse(filename.get());
-        InputStream inputStream = inputPart.getBody(InputStream.class, null);
-        payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+      Optional<String> maybeContentDisposition = getContentDisposition(inputPart);
+      if (maybeContentDisposition.isPresent()) {
+        String contentDisposition = maybeContentDisposition.get();
+        Optional<String> maybeFilename = extractFilename(contentDisposition);
+        if (maybeFilename.isPresent()) {
+          String name = extractFieldName(format, contentDisposition).orElse(maybeFilename.get());
+          InputStream inputStream = inputPart.getBody(InputStream.class, null);
+          payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+        }
       }
     }
     return payloads;
