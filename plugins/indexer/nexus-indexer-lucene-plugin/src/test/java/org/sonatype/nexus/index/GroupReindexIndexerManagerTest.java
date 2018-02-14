@@ -37,6 +37,9 @@ public class GroupReindexIndexerManagerTest
     File indexFile = new File(index, "nexus-maven-repository-index.gz");
     File incrementalIndexFile = new File(index, "nexus-maven-repository-index.1.gz");
 
+    indexFile.delete();
+    incrementalIndexFile.delete();
+
     assertFalse("No index .gz file should exist.", indexFile.exists());
     assertFalse("No incremental chunk should exists.", incrementalIndexFile.exists());
 
