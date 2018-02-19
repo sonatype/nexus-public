@@ -46,7 +46,7 @@ public abstract class DatabaseManagerSupport
 
   private final Map<String,DatabasePoolImpl> pools = Maps.newHashMap();
 
-  private final Map<String,DatabaseInstanceImpl> instances = Maps.newHashMap();
+  private final Map<String,DatabaseInstanceImpl> instances = Maps.newConcurrentMap();
 
   @Override
   protected void doStart() throws Exception {
@@ -228,15 +228,7 @@ public abstract class DatabaseManagerSupport
     checkNotNull(name);
     ensureStarted();
 
-    synchronized (instances) {
-      DatabaseInstanceImpl instance = instances.get(name);
-      if (instance == null) {
-        instance = createInstance(name);
-        log.debug("Created database instance: {}", instance);
-        instances.put(name, instance);
-      }
-      return instance;
-    }
+    return instances.computeIfAbsent(name, this::createInstance);
   }
 
   private DatabaseInstanceImpl createInstance(final String name) {
@@ -258,6 +250,7 @@ public abstract class DatabaseManagerSupport
       instance = new DatabaseInstanceImpl(this, name);
     }
     Lifecycles.start(instance);
+    log.debug("Created database instance: {}", instance);
     return instance;
   }
 

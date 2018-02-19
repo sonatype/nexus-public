@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.scheduling.Cancelable;
 
 /**
  * Internal task to rebuild index of given repository.
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.RepositoryTaskSupport;
 @Named
 public class RebuildIndexTask
     extends RepositoryTaskSupport
+    implements Cancelable
 {
 
   @Override

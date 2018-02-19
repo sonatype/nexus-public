@@ -79,6 +79,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
@@ -281,6 +282,7 @@ public class SearchServiceImpl
     }
 
     components.forEach(component -> {
+      checkCancellation();
       String identifier = identifierProducer.apply(component);
       String json = jsonDocumentProducer.apply(component);
       if (json != null) {

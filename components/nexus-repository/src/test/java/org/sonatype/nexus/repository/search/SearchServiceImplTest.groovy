@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.search
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
@@ -24,6 +26,8 @@ import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.repository.types.HostedType
+import org.sonatype.nexus.scheduling.CancelableHelper
+import org.sonatype.nexus.scheduling.TaskInterruptedException
 import org.sonatype.nexus.security.SecurityHelper
 
 import com.google.common.base.Function
@@ -38,6 +42,7 @@ import org.elasticsearch.client.AdminClient
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.IndicesAdminClient
 import org.elasticsearch.common.settings.Settings
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -46,8 +51,10 @@ import org.mockito.Mock
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.arrayWithSize
 import static org.hamcrest.Matchers.contains
+import static org.junit.Assert.fail
 import static org.mockito.Mockito.eq
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
@@ -55,6 +62,9 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 class SearchServiceImplTest
     extends TestSupport
 {
+  private static final Function<Component, String> NEVER_CALLED_ID_PRODUCER = null
+
+  private static final Function<Component, String> NEVER_CALLED_JSON_DOC_PRODUCER = null
 
   @Mock
   Provider<Client> clientProvider
@@ -95,12 +105,15 @@ class SearchServiceImplTest
   @Mock
   BulkProcessor bulkProcessor
 
+  AtomicBoolean cancelled = new AtomicBoolean(false)
+
   Settings settings = Settings.EMPTY
 
   SearchServiceImpl searchService
 
   @Before
   public void setup() {
+    CancelableHelper.set(cancelled)
     when(clientProvider.get()).thenReturn(client)
     when(client.admin()).thenReturn(adminClient)
     when(adminClient.indices()).thenReturn(indicesAdminClient)
@@ -109,6 +122,11 @@ class SearchServiceImplTest
     searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
         indexSettingsContributors, false, 1000, 0, 0)
     searchService.bulkProcessor = bulkProcessor
+  }
+
+  @After
+  void tearDown() {
+    CancelableHelper.remove()
   }
 
   @Test
@@ -171,6 +189,25 @@ class SearchServiceImplTest
     // because BulkProcessor#add is overloaded, each variant taking a single argument of the same supertype
     // mockito is unable to resolve the invoked method (fails with 'wanted, but not invoked error')
     verify(bulkProcessor).flush()
+  }
+
+  @Test
+  void testBulkPutCancellation() {
+    def components = [new DefaultComponent()]
+    Repository repository = repository(SearchServiceImpl.TYPE)
+    captureRepoNameArg()
+    searchService.createIndex(repository)
+
+    cancelled.set(true)
+
+    try {
+      searchService.bulkPut(repository, components, NEVER_CALLED_ID_PRODUCER, NEVER_CALLED_JSON_DOC_PRODUCER)
+      fail('Expected exception')
+    }
+    catch (TaskInterruptedException expected) {
+    }
+
+    verify(bulkProcessor, never()).flush()
   }
 
   @Test

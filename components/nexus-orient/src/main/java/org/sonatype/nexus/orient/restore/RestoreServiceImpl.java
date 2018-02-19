@@ -73,7 +73,7 @@ public class RestoreServiceImpl
 
     log.debug("passed all restore tests, restore state: " + pending);
     // let this class create/and register instances for DATABASE_NAMES; will trigger create and restore (if necessary)
-    DATABASE_NAMES.forEach(databaseManager::instance);
+    DATABASE_NAMES.parallelStream().forEach(databaseManager::instance);
   }
 
   /**

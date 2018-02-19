@@ -64,7 +64,7 @@ public class DefaultComponentMaintenanceImpl
     if (component == null) {
       return;
     }
-    log.info("Deleting component: {}", component);
+    log.debug("Deleting component: {}", component.toStringExternal());
     tx.deleteComponent(component, deleteBlobs);
   }
 
