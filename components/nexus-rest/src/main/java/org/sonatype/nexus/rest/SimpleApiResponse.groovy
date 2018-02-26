@@ -27,9 +27,9 @@ import static javax.ws.rs.core.Response.Status.OK
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED
 
 /**
- * Simple API response object. Contains attributes for HTTP status, message, and a data map
+ * Simple API response object. Contains attributes for HTTP status, message, and a data object
  *
- * @since 3.next
+ * @since 3.9
  */
 @CompileStatic
 @ToString(includePackage = false, includeNames = true)
@@ -40,13 +40,13 @@ class SimpleApiResponse
   String message
 
   @JsonInclude(NON_NULL)
-  Map<String, ?> data
+  Object data
 
   static Response ok(final String message) {
     return ok(message, null)
   }
 
-  static Response ok(final String message, final Map<String, ?> data) {
+  static Response ok(final String message, final Object data) {
     return response(OK, message, data)
   }
 
@@ -54,7 +54,7 @@ class SimpleApiResponse
     return notFound(message, null)
   }
 
-  static Response notFound(final String message, final Map<String, ?> data) {
+  static Response notFound(final String message, final Object data) {
     return response(NOT_FOUND, message, data)
   }
 
@@ -62,7 +62,7 @@ class SimpleApiResponse
     return badRequest(message, null)
   }
 
-  static Response badRequest(final String message, final Map<String, ?> data) {
+  static Response badRequest(final String message, final Object data) {
     return response(BAD_REQUEST, message, data)
   }
 
@@ -70,11 +70,11 @@ class SimpleApiResponse
     return unauthorized(message, null)
   }
 
-  static Response unauthorized(final String message, final Map<String, ?> data) {
+  static Response unauthorized(final String message, final Object data) {
     return response(UNAUTHORIZED, message, data)
   }
 
-  private static Response response(final Status status, final String message, final Map<String, ?> data) {
+  private static Response response(final Status status, final String message, final Object data) {
     final SimpleApiResponse response = new SimpleApiResponse()
     response.setStatus(status.getStatusCode())
     response.setMessage(message)

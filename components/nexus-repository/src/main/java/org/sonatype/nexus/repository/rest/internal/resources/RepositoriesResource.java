@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.rest.internal.resources.Repositories
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.9
  */
 @Named
 @Singleton

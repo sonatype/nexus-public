@@ -807,6 +807,14 @@ public class StorageFacetImplIT
     StorageFacetImpl otherNodeStorageFacetImpl = storageFacetImpl("otherNodeId",
         otherBucketEntityAdapter, otherComponentEntityAdapter, otherAssetEntityAdapter, testRepository1);
 
+    ComponentSchemaRegistration otherSchemaRegistration = new ComponentSchemaRegistration(
+        database.getInstanceProvider(),
+        otherBucketEntityAdapter,
+        otherComponentEntityAdapter,
+        otherAssetEntityAdapter);
+
+    otherSchemaRegistration.start();
+
     AttributesFacetImpl attributesFacet = attributesFacetImpl(testRepository1);
 
     // access attributes through underTest
@@ -821,6 +829,8 @@ public class StorageFacetImplIT
     // retrieve updated attributes through underTest
     when(testRepository1.facet(StorageFacet.class)).thenReturn(underTest);
     assertThat(attributesFacet.getAttributes().require("foo", String.class), equalTo("updated"));
+
+    otherSchemaRegistration.stop();
   }
 
   private StorageFacetImpl storageFacetImpl(final String nodeId,

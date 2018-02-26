@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiOperation;
 /**
  * Swagger documentation for {@link RepositoriesResource}
  *
- * @since 3.next
+ * @since 3.9
  */
 @Api(value = "repositories")
 public interface RepositoriesResourceDoc

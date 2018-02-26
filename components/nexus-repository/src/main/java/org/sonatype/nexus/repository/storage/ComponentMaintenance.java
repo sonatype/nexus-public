@@ -35,7 +35,7 @@ public interface ComponentMaintenance
    * @param componentId entity id of the component to delete
    * @param deleteBlobs should blob deletion be requested
    *
-   * @since 3.next
+   * @since 3.9
    */
   void deleteComponent(EntityId componentId, boolean deleteBlobs);
 
@@ -50,7 +50,7 @@ public interface ComponentMaintenance
    * @param assetId entity id of the asset to delete
    * @param deleteBlob should blob deletion be requested
    *
-   * @since 3.next
+   * @since 3.9
    */
   void deleteAsset(EntityId assetId, boolean deleteBlob);
 }

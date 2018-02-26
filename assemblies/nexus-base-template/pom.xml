@@ -288,6 +288,9 @@
                   <!-- remove unused API selector form -->
                   <replacefilter token="&lt;div id='header'"
                                  value="&lt;div id='header' style='display: none;'"/>
+                  <!-- disable the remote validation -->
+                  <replacefilter token="new SwaggerUi({"
+                                value="new SwaggerUi({validatorUrl:null,"/>
                 </replace>
 
                 <!--

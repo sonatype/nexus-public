@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 /**
  * Utils for working with {@link Component} responses in the REST API.
  *
- * @since 3.next
+ * @since 3.9
  */
 public class ComponentResponseUtils
 {

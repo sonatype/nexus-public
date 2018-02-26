@@ -92,7 +92,7 @@ public class BucketEntityAdapter
     Map<String, Object> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
 
     entity.setRepositoryName(repositoryName);
-    entity.attributes(new NestedAttributesMap(P_ATTRIBUTES, attributes));
+    entity.attributes(new NestedAttributesMap(P_ATTRIBUTES, detachable(attributes)));
   }
 
   @Override

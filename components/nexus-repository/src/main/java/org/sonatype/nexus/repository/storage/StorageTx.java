@@ -338,7 +338,7 @@ public interface StorageTx
    * @param component to be deleted
    * @param deleteBlobs should asset blob deletion be requested
    *
-   * @since 3.next
+   * @since 3.9
    */
   void deleteComponent(Component component, boolean deleteBlobs);
 
@@ -353,7 +353,7 @@ public interface StorageTx
    * @param asset to be deleted
    * @param deleteBlob should blob deletion be requested
    *
-   * @since 3.next
+   * @since 3.9
    */
   void deleteAsset(Asset asset, boolean deleteBlob);
 

@@ -22,7 +22,7 @@ import groovy.transform.builder.Builder
 /**
  * Repository transfer object for REST APIs.
  *
- * @since 3.next
+ * @since 3.9
  */
 @CompileStatic
 @Builder
