@@ -73,15 +73,11 @@ testProjects = [':nexus-iq-testsupport', ':nexus-docker-testsupport', ':nexuspro
    javaMaxMem="4g"
    directMaxMem="4g"
    vmOptions="-XX:-MaxFDLimit"
+   takari=true
    port=8082
    sslPort=8444
    karafSshPort=8023
    javaDebugPort=5006
-   ssl=true
-   orient=true
-   elastic=false
-   takari=false
-   deploy=true
    //tests="custom Maven test arguments here"
    //assemblies="custom Maven assembly arguments here"
    //sources="custom Maven sources arguments here"
@@ -94,11 +90,11 @@ configDefaults = [
     sslPort      : 8443,
     karafSshPort : 8022,
     javaDebugPort: 5005,
-    ssl          : true,   // SSL is enabled by default
-    orient       : true,   // Orient access (binary/Studio) is enabled by default
-    elastic      : false,  // Elastic is disabled by default
-    takari       : false,  // Takari is disabled by default
-    deploy       : true,   // Deployment is performed by default
+    ssl          : true,
+    orient       : true,
+    elastic      : false,
+    takari       : false,
+    noDeploy     : false,
     builder      : "-T 1C", // default one thread per core
 ]
 
@@ -199,25 +195,14 @@ ConfigObject processRcConfigFile() {
   config.karafSshPort = cliOptions.'karaf-ssh-port' ?: config.karafSshPort
   config.javaDebugPort = cliOptions.'java-debug-port' ?: config.javaDebugPort
 
-  config.ssl = assign('ssl', 'no-ssl', config.ssl)
-  config.orient = assign('orient', 'no-orient', config.orient)
-  config.elastic = assign('elastic', 'no-elastic', config.elastic)
-  config.takari = assign('takari', 'no-takari', config.takari)
-  config.deploy = assign('deploy', 'no-deploy', config.deploy)
+  config.ssl = cliOptions.'no-ssl' ? false : true
+  config.orient = cliOptions.'no-orient' ? false : true
+  config.noDeploy = cliOptions.'no-deploy' ? false : true
+  config.elastic = cliOptions.'elastic' ? true : false // note Elastic is false by default
 
   debug("config read from RC and merged with defaults: ${config}")
 
   return config
-}
-
-def assign(def trueOption, def falseOption, def defaultValue){
-  debug("assign(${trueOption}, ${falseOption}, ${defaultValue})")
-  if(cliOptions[trueOption])
-    return true
-  else if(cliOptions[falseOption])
-    return false
-  else
-    return defaultValue
 }
 
 static ConfigObject processLastBuild() {
@@ -328,21 +313,15 @@ def processCliOptions(args) {
     s longOpt: 'sources', args: 1, '''Control building of sources. Options:
                              skip: Skip all source creation [default]
                              all: Build all sources'''
-    n longOpt: 'deploy', 'Enable automatic deployment for incremental builds (if disabled by config). Note this will enable SSH on Karaf.'
-    n longOpt: 'no-deploy', 'Disable automatic deployment for incremental builds (enabled by default)'
+    n longOpt: 'no-deploy', 'Disable default of automatically deploying incremental builds. Note that default will enable SSH on Karaf.'
     // run mode options
     p longOpt: 'port', args: 1, 'Set NXRM port. Defaults to 8081'
     _ longOpt: 'ssl-port', args: 1, 'Set NXRM SSL port. Defaults to 8443'
     _ longOpt: 'karaf-ssh-port', args: 1, 'Set Karaf SSH port. Defaults to 8022'
     _ longOpt: 'java-debug-port', args: 1, 'Set JDWP debug port. Defaults to 5005'
-    _ longOpt: 'ssl', 'Enable SSL (if disabled by config)'
-    _ longOpt: 'no-ssl', 'Disable SSL (enabled by default)'
-    _ longOpt: 'orient', 'Enable Orient (if disabled by config)'
-    _ longOpt: 'no-orient', 'Disable Orient (enabled by default)'
-    _ longOpt: 'elastic', 'Enable Elastic plugins (disabled by default)'
-    _ longOpt: 'no-elastic', 'Disable Elastic plugins (if enabled by config)'
-    _ longOpt: 'takari', 'Enable Takari (disabled by default)'
-    _ longOpt: 'no-takari', 'Disable Takari (if enabled by config)'
+    _ longOpt: 'no-ssl', 'Disable SSL. Enabled by default'
+    _ longOpt: 'no-orient', 'Disable Orient. Enabled by default'
+    _ longOpt: 'elastic', 'Enable Elastic plugins. Disabled by default'
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
   }
@@ -749,8 +728,8 @@ def runDeploy() {
     // only extract the assemblies on full builds
     deploy()
   }
-  else if (!rcConfig.deploy) {
-    info("Skipping deployment (no-deploy=true)")
+  else if (cliOptions.n) {
+    info("Skipping deployment (noDeploy=true)")
   }
   else if (!((new File(LOCK_FILE)).exists())) {
     info("No lock file detected at $LOCK_FILE. Performing regular deployment.")
@@ -874,7 +853,7 @@ def ensurePresentInFile(File file, String line) {
 }
 
 def checkSSH() {
-  if (!rcConfig.'deploy') {
+  if (cliOptions.'no-deploy') {
     debug("TODO no deploy")
     return
   }

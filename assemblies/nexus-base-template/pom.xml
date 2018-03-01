@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.9.0-SNAPSHOT</version>
+    <version>3.9.0-01</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -288,9 +288,6 @@
                   <!-- remove unused API selector form -->
                   <replacefilter token="&lt;div id='header'"
                                  value="&lt;div id='header' style='display: none;'"/>
-                  <!-- disable the remote validation -->
-                  <replacefilter token="new SwaggerUi({"
-                                value="new SwaggerUi({validatorUrl:null,"/>
                 </replace>
 
                 <!--
