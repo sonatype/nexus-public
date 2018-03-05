@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttributes;
 
 /**
  * View router.
@@ -72,11 +73,7 @@ public class Router
   {
     Context context = new Context(repository, request);
 
-    if (existingContext != null) {
-      existingContext.getAttributes().keys().stream()
-          .filter(key -> !key.startsWith(LOCAL_ATTRIBUTE_PREFIX))
-          .forEach(key -> context.getAttributes().set(key, existingContext.getAttributes().get(key)));
-    }
+    copyLocalContextAttributes(existingContext, context);
 
     return context;
   }

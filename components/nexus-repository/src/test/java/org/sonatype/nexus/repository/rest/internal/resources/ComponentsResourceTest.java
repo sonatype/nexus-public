@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.rest.ComponentsResourceExtension;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.repository.storage.internal.ComponentContinuationToken
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.Page;
 
 import com.google.common.collect.ImmutableSet;
@@ -60,6 +62,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasProperty;
@@ -82,6 +85,8 @@ import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY
 public class ComponentsResourceTest
     extends RepositoryResourceTestSupport
 {
+  private static final String COMPONENT_ID = "newId";
+
   private ComponentsResource underTest;
 
   @Rule
@@ -141,6 +146,9 @@ public class ComponentsResourceTest
   @Captor
   private ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
+  @Mock
+  private ComponentUploadExtension componentUploadExtension;
+
   @Spy
   private ComponentsResourceExtension componentsResourceExtension = new TestComponentsResourceExtension();
 
@@ -191,7 +199,8 @@ public class ComponentsResourceTest
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
         maintenanceService, continuationTokenHelper, uploadManager, uploadConfiguration,
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension));
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension),
+        ImmutableSet.of(componentUploadExtension));
   }
 
   @Test
@@ -282,9 +291,15 @@ public class ComponentsResourceTest
     InputPart extensionPart = mockTextInputPart("asset.extension", "jar");
     when(multipart.getParts()).thenReturn(Arrays.asList(filePart, groupPart, artifactPart, versionPart, extensionPart));
 
+    UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId(COMPONENT_ID), emptyList());
+    when(uploadManager.handle(eq(mavenReleases), any(ComponentUpload.class))).thenReturn(uploadResponse);
     underTest.uploadComponent(mavenReleasesId, multipart);
 
+    verify(componentUploadExtension, times(1)).validate(any());
     verify(uploadManager).handle(eq(mavenReleases), componentUploadCaptor.capture());
+    verify(componentUploadExtension, times(1)).apply(mavenReleases,
+        componentUploadCaptor.getValue(), uploadResponse.getComponentId());
+
     assertThat(componentUploadCaptor.getValue().getFields().size(), is(3));
     assertThat(componentUploadCaptor.getValue().getAssetUploads().size(), is(1));
     assertThat(componentUploadCaptor.getValue().getAssetUploads().get(0).getFields().size(), is(1));

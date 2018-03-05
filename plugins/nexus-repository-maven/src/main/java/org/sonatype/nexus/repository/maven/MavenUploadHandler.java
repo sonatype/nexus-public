@@ -14,20 +14,18 @@ package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -37,19 +35,22 @@ import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.MavenPomGenerator;
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
+import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
-import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
@@ -72,8 +73,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
 @Named(Maven2Format.NAME)
 @Singleton
 public class MavenUploadHandler
-    extends ComponentSupport
-    implements UploadHandler
+    extends UploadHandlerSupport
 {
   private static final String GENERATE_POM_DISPLAY = "Generate a POM file with these coordinates";
 
@@ -114,8 +114,10 @@ public class MavenUploadHandler
                             @Named(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,
                             final ContentPermissionChecker contentPermissionChecker,
                             final VersionPolicyValidator versionPolicyValidator,
-                            final MavenPomGenerator mavenPomGenerator)
+                            final MavenPomGenerator mavenPomGenerator,
+                            final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
+    super(uploadDefinitionExtensions);
     this.parser = parser;
     this.variableResolverAdapter = variableResolverAdapter;
     this.contentPermissionChecker = contentPermissionChecker;
@@ -124,14 +126,14 @@ public class MavenUploadHandler
   }
 
   @Override
-  public Collection<String> handle(final Repository repository, final ComponentUpload upload) throws IOException {
+  public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     checkNotNull(repository);
     checkNotNull(upload);
 
     return doUpload(repository, upload);
   }
 
-  private List<String> doUpload(final Repository repository, final ComponentUpload componentUpload) throws IOException {
+  private UploadResponse doUpload(final Repository repository, final ComponentUpload componentUpload) throws IOException {
     MavenFacet facet = repository.facet(MavenFacet.class);
 
     if (VersionPolicy.SNAPSHOT.equals(facet.getVersionPolicy())) {
@@ -148,7 +150,8 @@ public class MavenUploadHandler
         try (TempBlob pom = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
           pomAsset.get().setPayload(new TempBlobPartPayload(payload, pom));
           return createAssets(repository.getName(), facet, createBasePathFromPom(pom),
-              componentUpload.getAssetUploads());
+              componentUpload.getAssetUploads()).uploadResponse();
+
         }
       }
       else {
@@ -156,28 +159,28 @@ public class MavenUploadHandler
         String basePath = createBasePath(componentFields.get(GROUP_ID), componentFields.get(ARTIFACT_ID),
             componentFields.get(VERSION));
 
-        List<String> assetPaths = createAssets(repository.getName(), facet, basePath,
+        ContentAndAssetPathResponseData responseData = createAssets(repository.getName(), facet, basePath,
             componentUpload.getAssetUploads());
 
         if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
           String pomPath = generatePom(facet, basePath, componentFields.get(GROUP_ID),
               componentFields.get(ARTIFACT_ID), componentFields.get(VERSION), componentFields.get(PACKAGING));
 
-          assetPaths.add(pomPath);
+          responseData.addAssetPath(pomPath);
         }
 
-        return assetPaths;
+        return new UploadResponse(responseData.getContent(), responseData.getAssetPaths());
       }
     });
   }
 
-  private List<String> createAssets(final String repositoryName,
+  private ContentAndAssetPathResponseData createAssets(final String repositoryName,
                                     final MavenFacet facet,
                                     final String basePath,
                                     final List<AssetUpload> assetUploads)
       throws IOException
   {
-    List<String> assets = new ArrayList<>();
+    ContentAndAssetPathResponseData responseData = new ContentAndAssetPathResponseData();
 
     for (AssetUpload asset : assetUploads) {
       StringBuilder path = new StringBuilder(basePath);
@@ -200,16 +203,20 @@ public class MavenUploadHandler
             format("Version policy mismatch, cannot upload %s content to %s repositories for file '%s'",
                 facet.getVersionPolicy().equals(VersionPolicy.RELEASE) ? VersionPolicy.SNAPSHOT.name() : VersionPolicy.RELEASE.name(),
                 facet.getVersionPolicy().name(),
-                assets.size()));
+                responseData.getAssetPaths().size()));
       }
 
       ensurePermitted(repositoryName, Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
 
-      facet.put(mavenPath, asset.getPayload());
-      assets.add(mavenPath.getPath());
-    }
+      Content content = facet.put(mavenPath, asset.getPayload());
 
-    return assets;
+      //We only need to set the component id one time
+      if(responseData.getContent() == null) {
+        responseData.setContent(content);
+      }
+      responseData.addAssetPath(mavenPath.getPath());
+    }
+    return responseData;
   }
 
   private String createBasePath(final String groupId, final String artifactId, final String version) {
@@ -259,7 +266,7 @@ public class MavenUploadHandler
       UploadRegexMap regexMap = new UploadRegexMap(
           "-(?:(?:\\.?\\d)+)(?:-(?:SNAPSHOT|\\d+))?(?:-(\\w+))?\\.((?:\\.?\\w)+)$", CLASSIFIER, EXTENSION);
 
-      definition = new UploadDefinition(Maven2Format.NAME, true, componentFields, assetFields, regexMap);
+      definition = getDefinition(Maven2Format.NAME, true, componentFields, assetFields, regexMap);
     }
     return definition;
   }
@@ -337,5 +344,30 @@ public class MavenUploadHandler
       version = model.getParent().getVersion();
     }
     return version;
+  }
+
+  /**
+   * Simple data carrier used to collect data needed
+   * to populate the {@link UploadResponse}
+   */
+  private static class ContentAndAssetPathResponseData {
+    Content content;
+    List<String> assetPaths = newArrayList();
+
+    public void setContent(final Content content) {
+      this.content = content;
+    }
+
+    public void addAssetPath(final String assetPath) {
+      this.assetPaths.add(assetPath);
+    }
+
+    public Content getContent() {return this.content;}
+
+    public List<String> getAssetPaths() { return this.assetPaths;}
+
+    public UploadResponse uploadResponse() {
+      return new UploadResponse(content, assetPaths);
+    }
   }
 }

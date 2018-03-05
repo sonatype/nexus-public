@@ -13,9 +13,8 @@
 package org.sonatype.nexus.repository.raw;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,17 +22,22 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
+import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
-import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
+import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
+
+import com.google.common.collect.Lists;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -46,7 +50,7 @@ import static java.util.Collections.singletonList;
 @Named(RawFormat.NAME)
 @Singleton
 public class RawUploadHandler
-    implements UploadHandler
+    extends UploadHandlerSupport
 {
   private static final String FILENAME = "filename";
 
@@ -54,9 +58,7 @@ public class RawUploadHandler
 
   private static final String DIRECTORY_HELP_TEXT = "Destination for uploaded files (e.g. /path/to/files/)";
 
-  private final UploadDefinition definition = new UploadDefinition(RawFormat.NAME, true,
-      singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING)),
-      singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)), new UploadRegexMap("(.*)", FILENAME));
+  private UploadDefinition definition;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
@@ -64,30 +66,44 @@ public class RawUploadHandler
 
   @Inject
   public RawUploadHandler(final ContentPermissionChecker contentPermissionChecker,
-                          @Named("simple") final VariableResolverAdapter variableResolverAdapter)
+                          @Named("simple") final VariableResolverAdapter variableResolverAdapter,
+                          final Set<UploadDefinitionExtension> uploadDefinitionExtensions)
   {
+    super(uploadDefinitionExtensions);
     this.contentPermissionChecker = contentPermissionChecker;
     this.variableResolverAdapter = variableResolverAdapter;
   }
 
   @Override
-  public Collection<String> handle(final Repository repository, final ComponentUpload upload) throws IOException {
+  public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
 
     String basePath = normalizeBasePath(upload.getFields().get(DIRECTORY));
 
-    List<String> paths = new ArrayList<>();
-    TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
-        .throwing(IOException.class).run(() -> {
+    return TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
+        .throwing(IOException.class).call(() -> {
+
+          //Data holders for populating the UploadResponse
+          Content responseContent = null;
+          List<String> assetPaths = Lists.newArrayList();
+
           for (AssetUpload asset : upload.getAssetUploads()) {
             String path = basePath + normalizeFilename(asset.getFields().get(FILENAME));
 
             ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
-            facet.put(path, asset.getPayload());
-            paths.add(path);
+
+            Content content = facet.put(path, asset.getPayload());
+
+            //We only need to set this one time, it provides the component id which
+            //is the same for all assets upload for a component
+            if (responseContent == null) {
+              responseContent = content;
+            }
+            assetPaths.add(path);
           }
+
+          return new UploadResponse(responseContent, assetPaths);
         });
-    return paths;
   }
 
   private String normalizeBasePath(final String basePath) {
@@ -121,6 +137,11 @@ public class RawUploadHandler
 
   @Override
   public UploadDefinition getDefinition() {
+    if (definition == null) {
+      definition = getDefinition(RawFormat.NAME, true,
+          singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING)),
+          singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)), new UploadRegexMap("(.*)", FILENAME));
+    }
     return definition;
   }
 

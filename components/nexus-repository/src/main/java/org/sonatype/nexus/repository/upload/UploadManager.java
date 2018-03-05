@@ -44,5 +44,5 @@ public interface UploadManager
    * @param upload the upload
    * @return the {@link Asset Assets} created by the operation
    */
-  Collection<String> handle(Repository repository, ComponentUpload upload) throws IOException;
+  UploadResponse handle(Repository repository, ComponentUpload upload) throws IOException;
 }

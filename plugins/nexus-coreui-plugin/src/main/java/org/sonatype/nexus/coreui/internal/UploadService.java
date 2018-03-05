@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.WithUploadField;
 import org.sonatype.nexus.repository.view.PartPayload;
 
@@ -83,7 +84,8 @@ public class UploadService
 
     Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
-    return createSearchTerm(uploadManager.handle(repository, createAndValidate(repository, params, files)));
+    UploadResponse uploadResponse = uploadManager.handle(repository, createAndValidate(repository, params, files));
+    return createSearchTerm(uploadResponse.getAssetPaths());
   }
 
   private ComponentUpload createAndValidate(final Repository repository,

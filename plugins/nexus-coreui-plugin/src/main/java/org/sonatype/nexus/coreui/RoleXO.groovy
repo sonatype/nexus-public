@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.security.privilege.PrivilegesExist
+import org.sonatype.nexus.security.role.RoleNotContainSelf
 import org.sonatype.nexus.security.role.RolesExist
 import org.sonatype.nexus.security.role.UniqueRoleId
 import org.sonatype.nexus.validation.group.Create
@@ -20,7 +21,6 @@ import org.sonatype.nexus.validation.group.Update
 
 import groovy.transform.ToString
 import org.hibernate.validator.constraints.NotEmpty
-import org.hibernate.validator.constraints.ScriptAssert
 
 /**
  * Role exchange object.
@@ -28,7 +28,7 @@ import org.hibernate.validator.constraints.ScriptAssert
  * @since 3.0
  */
 @ToString(includePackage = false, includeNames = true)
-@ScriptAssert(lang = 'groovy', script = '!_this.roles?.contains(_this.id)', message = 'A Role cannot contain itself')
+@RoleNotContainSelf(id="getId", roleIds="getRoles")
 class RoleXO
 {
   @NotEmpty

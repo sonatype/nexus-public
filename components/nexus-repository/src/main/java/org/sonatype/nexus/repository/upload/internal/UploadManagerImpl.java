@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -60,7 +61,7 @@ public class UploadManagerImpl
   }
 
   @Override
-  public Collection<String> handle(final Repository repository, final ComponentUpload upload)
+  public UploadResponse handle(final Repository repository, final ComponentUpload upload)
       throws IOException
   {
     checkNotNull(repository);

@@ -13,14 +13,18 @@
 package org.sonatype.nexus.repository.raw;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
+import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.internal.SimpleVariableResolverAdapter;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.upload.AssetUpload;
@@ -29,6 +33,8 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
+import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
@@ -38,6 +44,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -57,6 +65,15 @@ public class RawUploadHandlerTest
     extends TestSupport
 {
   private RawUploadHandler underTest;
+
+  @Mock
+  Content content;
+
+  @Mock
+  AttributesMap attributesMap;
+
+  @Mock
+  Asset assetPayload;
 
   @Mock
   Repository repository;
@@ -79,11 +96,11 @@ public class RawUploadHandlerTest
   private String REPO_NAME = "raw-hosted";
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(RawFormat.NAME), eq(BreadActions.EDIT), any()))
         .thenReturn(true);
 
-    underTest = new RawUploadHandler(contentPermissionChecker, new SimpleVariableResolverAdapter());
+    underTest = new RawUploadHandler(contentPermissionChecker, new SimpleVariableResolverAdapter(), emptySet());
     when(repository.getFormat()).thenReturn(new RawFormat());
     when(repository.facet(RawContentFacet.class)).thenReturn(rawFacet);
     when(repository.getName()).thenReturn(REPO_NAME);
@@ -100,6 +117,18 @@ public class RawUploadHandlerTest
     assertThat(def.isMultipleUpload(), is(true));
     assertThat(def.getComponentFields(), contains(field("directory", "Directory",
         "Destination for uploaded files (e.g. /path/to/files/)", false, STRING)));
+    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING)));
+  }
+
+  @Test
+  public void testGetDefinitionWithExtensionContributions() {
+    //Rebuilding the uploadhandler to provide a set of definition extensions
+    underTest = new RawUploadHandler(contentPermissionChecker, new SimpleVariableResolverAdapter(), getDefinitionExtensions());
+    UploadDefinition def = underTest.getDefinition();
+
+    assertThat(def.getComponentFields(),
+        contains(field("directory", "Directory", "Destination for uploaded files (e.g. /path/to/files/)", false, STRING),
+            field("foo", "Foo", null, true, STRING)));
     assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING)));
   }
 
@@ -127,8 +156,13 @@ public class RawUploadHandlerTest
     asset.setPayload(sourcesPayload);
     component.getAssetUploads().add(asset);
 
-    Collection<String> returnedPaths = underTest.handle(repository, component);
-    assertThat(returnedPaths, contains("org/apache/maven/foo.jar", "org/apache/maven/bar.jar"));
+    when(assetPayload.componentId()).thenReturn(new DetachedEntityId("foo"));
+    when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(rawFacet.put(any(), any())).thenReturn(content);
+    UploadResponse uploadResponse = underTest.handle(repository, component);
+    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/foo.jar", "org/apache/maven/bar.jar"));
+    assertThat(uploadResponse.getComponentId().getValue(), is("foo"));
 
     ArgumentCaptor<String> pathCapture = ArgumentCaptor.forClass(String.class);
     verify(rawFacet, times(2)).put(pathCapture.capture(), any(PartPayload.class));
@@ -203,6 +237,10 @@ public class RawUploadHandlerTest
     asset.setPayload(jarPayload);
     component.getAssetUploads().add(asset);
 
+    when(assetPayload.componentId()).thenReturn(new DetachedEntityId("foo"));
+    when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(rawFacet.put(any(), any())).thenReturn(content);
     underTest.handle(repository, component);
 
     ArgumentCaptor<String> pathCapture = ArgumentCaptor.forClass(String.class);
@@ -220,5 +258,17 @@ public class RawUploadHandlerTest
                                       final Type type)
   {
     return new UploadFieldDefinition(name, displayName, helpText, optional, type);
+  }
+
+  private Set<UploadDefinitionExtension> getDefinitionExtensions() {
+    return singleton(new TestUploadDefinitionExtension());
+  }
+
+  private class TestUploadDefinitionExtension implements UploadDefinitionExtension {
+
+    @Override
+    public UploadFieldDefinition contribute() {
+      return new UploadFieldDefinition("foo", "Foo", null, true, Type.STRING);
+    }
   }
 }

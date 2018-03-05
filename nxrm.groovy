@@ -26,6 +26,7 @@
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
 @Grab(group = 'org.ajoberstar', module = 'grgit', version = '2.0.1')
 @Grab(group = 'org.apache.commons', module = 'commons-compress', version = '1.15')
+@Grab(group = 'commons-io', module = 'commons-io', version = '2.6')
 @Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')
 @Grab(group = 'org.rauschig', module = 'jarchivelib', version = '0.7.1')
 
@@ -33,6 +34,7 @@ import com.caseyscarborough.colorizer.Colorizer
 import org.ajoberstar.grgit.*
 import org.ajoberstar.grgit.operation.*
 import org.ajoberstar.grgit.service.*
+import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.rauschig.jarchivelib.ArchiveFormat
@@ -54,6 +56,8 @@ ant.project.buildListeners[0].messageOutputLevel = 0
 
 HR = "".padRight(jline.TerminalFactory.get().getWidth() - 7, '-') // terminal line width
 LOCK_FILE = "target/sonatype-work/nexus3/lock"
+SONATYPE_WORK = "target/sonatype-work"
+SONATYPE_WORK_BACKUP = System.getProperty("java.io.tmpdir") + "/nxrm-sonatype-work"
 TAKARI_SMART_BUILD_VERSION = "0.5.0"
 TAKARI_LOCAL_REPO_VERSION = "0.11.2"
 TAKARI_FILE_MANAGER_VERSION = "0.8.3"
@@ -66,7 +70,7 @@ positionalOptions = null
 buildLog = new File("build.log")
 
 // test projects - generated with command: for i in `find -name pom.xml`; do cd `dirname $i`; xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml; cd -; done 
-testProjects = [':nexus-iq-testsupport', ':nexus-docker-testsupport', ':nexuspro-migration-testsuite', ':nexus-testlm-edition', ':nexus-stress-master-instance', ':nexuspro-testsuite', ':nexus-testsuite-data', ':testplugin', ':simple-it', ':nexuspro-fabric-testsuite', ':nexus-fabric-testsupport', ':functional-testsuite', ':pax-exam-spock', ':nexus-migration-testsupport', ':nexus-upgrade-testsupport', ':nexuspro-modern-testsuite', ':nexus-stress-testsuite', ':nexus-repository-testsupport', ':nexus-contributedhandler-testsupport', ':nexuspro-performance-testsuite' ]
+testProjects = [':nexus-insight-testsupport', ':nexus-docker-testsupport', ':nexuspro-migration-testsuite', ':nexus-testlm-edition', ':nexus-stress-master-instance', ':nexuspro-testsuite', ':nexus-testsuite-data', ':testplugin', ':simple-it', ':nexuspro-fabric-testsuite', ':nexus-fabric-testsupport', ':functional-testsuite', ':pax-exam-spock', ':nexus-migration-testsupport', ':nexus-upgrade-testsupport', ':nexuspro-modern-testsuite', ':nexus-stress-testsuite', ':nexus-repository-testsupport', ':nexus-contributedhandler-testsupport', ':nexuspro-performance-testsuite' ]
 
 /**
  Customize these by creating a .nxrm/nxrmrc.groovy. Sample contents:
@@ -82,6 +86,8 @@ testProjects = [':nexus-iq-testsupport', ':nexus-docker-testsupport', ':nexuspro
    elastic=false
    takari=false
    deploy=true
+   //backup=false
+   //restore=false
    //tests="custom Maven test arguments here"
    //assemblies="custom Maven assembly arguments here"
    //sources="custom Maven sources arguments here"
@@ -99,6 +105,8 @@ configDefaults = [
     elastic      : false,  // Elastic is disabled by default
     takari       : false,  // Takari is disabled by default
     deploy       : true,   // Deployment is performed by default
+    backup       : false,   // Backup sonatype-work disabled by default
+    restore      : false,   // Restore backup of sonatype-work disabled by default
     builder      : "-T 1C", // default one thread per core
 ]
 
@@ -204,6 +212,8 @@ ConfigObject processRcConfigFile() {
   config.elastic = assign('elastic', 'no-elastic', config.elastic)
   config.takari = assign('takari', 'no-takari', config.takari)
   config.deploy = assign('deploy', 'no-deploy', config.deploy)
+  config.backup = assign('backup', 'no-backup', config.backup)
+  config.restore = assign('restore', 'no-restore', config.restore)
 
   debug("config read from RC and merged with defaults: ${config}")
 
@@ -330,6 +340,8 @@ def processCliOptions(args) {
                              all: Build all sources'''
     n longOpt: 'deploy', 'Enable automatic deployment for incremental builds (if disabled by config). Note this will enable SSH on Karaf.'
     n longOpt: 'no-deploy', 'Disable automatic deployment for incremental builds (enabled by default)'
+    _ longOpt: 'backup', "Enable backup of any existing target/sonatype-work folder to ${SONATYPE_WORK_BACKUP} (if disabled by config)"
+    _ longOpt: 'no-backup', "Disable backup (if enabled by config)"
     // run mode options
     p longOpt: 'port', args: 1, 'Set NXRM port. Defaults to 8081'
     _ longOpt: 'ssl-port', args: 1, 'Set NXRM SSL port. Defaults to 8443'
@@ -343,6 +355,8 @@ def processCliOptions(args) {
     _ longOpt: 'no-elastic', 'Disable Elastic plugins (if enabled by config)'
     _ longOpt: 'takari', 'Enable Takari (disabled by default)'
     _ longOpt: 'no-takari', 'Disable Takari (if enabled by config)'
+    _ longOpt: 'restore', "Enable restore of backup from ${SONATYPE_WORK_BACKUP} to target/sonatype-work (disabled by default)"
+    _ longOpt: 'no-restore', "Disable restore of backup (if enabled by config)"
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
   }
@@ -706,14 +720,34 @@ def runBuild() {
   if (buildOptions.buildMode == "full" && isNxrmRunning()) {
     // Full mode means Maven clean which nukes target folder which kills Nexus
     warn("Shutting down NXRM due to full build")
-	try {
-		remoteSession(getSshHost(), trustUnknownHosts = true) {
-		  exec 'system:shutdown -f'
-		}
-	} catch (com.jcraft.jsch.JSchException e) {
-		e.printStackTrace()
-		error("Unable to connect to NXRM to shut it down. Attempting to continue.")
-	}
+    try {
+      remoteSession(getSshHost(), trustUnknownHosts = true) {
+        exec 'system:shutdown -f'
+      }
+    } catch (com.jcraft.jsch.JSchException e) {
+      e.printStackTrace()
+      error("Unable to connect to NXRM to shut it down. Attempting to continue.")
+    }
+  }
+
+  if (buildOptions.buildMode == "full" && rcConfig.backup) {
+    // perform backup (if enabled) on full build only due to 'clean'
+    File sonatypeWork = new File(SONATYPE_WORK)
+    if ((sonatypeWork).exists()) {
+      def backupFolder = new File(SONATYPE_WORK_BACKUP)
+      info("Backing up ${sonatypeWork.getCanonicalPath()} to ${backupFolder.getCanonicalPath()}")
+
+      if (backupFolder.exists()) {
+        def newName = new File(SONATYPE_WORK_BACKUP + new Date().format('-yyyyMMddHHmm'))
+        info("Moving existing backup to ${newName.getCanonicalPath()}")
+        FileUtils.moveDirectory(backupFolder, newName)
+      }
+
+      FileUtils.moveDirectory(sonatypeWork, backupFolder)
+    }
+    else {
+      info("No target/sonatype-work to backup!")
+    }
   }
 
   // execute command
@@ -947,10 +981,33 @@ def checkPorts() {
   }
 }
 
+def checkRestore() {
+  if (rcConfig.restore) {
+    def backupFolder = new File(SONATYPE_WORK_BACKUP)
+    if (backupFolder.exists()) {
+      def sonatypeWork = new File(SONATYPE_WORK)
+      info("Restoring from ${backupFolder.getCanonicalPath()} to ${sonatypeWork.getCanonicalPath()}")
+
+      // move any existing sonatype-work out of the way
+      if (sonatypeWork.exists()) {
+        def newName = new File(SONATYPE_WORK_BACKUP + new Date().format('-yyyyMMddHHmm'))
+        info("Moving existing sonatype-work to ${newName.getCanonicalPath()}")
+        FileUtils.moveDirectory(sonatypeWork, newName)
+      }
+
+      FileUtils.moveDirectory(backupFolder, sonatypeWork)
+    }
+    else {
+      info("No backup to restore in ${SONATYPE_WORK_BACKUP}!")
+    }
+  }
+}
+
 def runNxrm() {
   info("Starting Nexus on ${rcConfig.port}/${rcConfig.sslPort} (JDWP debug port: ${rcConfig.javaDebugPort})")
 
   // pre-flight checks
+  checkRestore()
   checkSSL()
   checkSSH()
   checkOrient()

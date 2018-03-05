@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.rest.ComponentsResourceExtension;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO;
@@ -53,6 +54,7 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -108,6 +110,8 @@ public class ComponentsResource
 
   private final Set<ComponentsResourceExtension> componentsResourceExtensions;
 
+  private final Set<ComponentUploadExtension> componentUploadExtensions;
+
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
@@ -117,8 +121,8 @@ public class ComponentsResource
                             final UploadManager uploadManager,
                             final UploadConfiguration uploadConfiguration,
                             final ComponentXOFactory componentXOFactory,
-                            final Set<ComponentsResourceExtension> componentsResourceExtensions
-  )
+                            final Set<ComponentsResourceExtension> componentsResourceExtensions,
+                            final Set<ComponentUploadExtension> componentsUploadExtensions)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
@@ -129,6 +133,7 @@ public class ComponentsResource
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
+    this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
   }
 
   @GET
@@ -242,8 +247,16 @@ public class ComponentsResource
     String format = repository.getFormat().getValue();
     ComponentUpload componentUpload = createComponentUpload(format, multipartInput);
 
+    for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
+      componentUploadExtension.validate(componentUpload);
+    }
+
     try {
-      uploadManager.handle(repository, componentUpload);
+      UploadResponse uploadResponse = uploadManager.handle(repository, componentUpload);
+
+      for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
+        componentUploadExtension.apply(repository, componentUpload, uploadResponse.getComponentId());
+      }
     } catch (IllegalOperationException e) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());
     }

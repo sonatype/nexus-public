@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.9.0-SNAPSHOT</version>
+    <version>3.10.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-internal</artifactId>
@@ -144,7 +144,7 @@
         <version>${insight-brain.version}</version>
         <exclusions>
           <!--
-          Banned dependencies are excluded at the nexus-iq-testsupport module!
+          Banned dependencies are excluded at the nexus-insight-testsupport module!
           -->
           <exclusion>
             <groupId>junit</groupId>

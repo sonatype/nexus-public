@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -43,12 +45,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -95,6 +99,9 @@ public class UploadServiceTest
         Arrays.asList(new UploadFieldDefinition("e", false, STRING), new UploadFieldDefinition("c", true, STRING)));
     when(handler.getDefinition()).thenReturn(ud);
     when(handler.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+
+    UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId("newId"), emptyList());
+    when(handler.handle(any(), any())).thenReturn(uploadResponse);
     when(uploadManager.getAvailableDefinitions()).thenReturn(Collections.singletonList(ud));
     when(uploadManager.getByFormat("m2")).thenReturn(ud);
     when(uploadManager.handle(eq(repo), componentUploadCaptor.capture())).thenAnswer(invocationOnMock -> handler.handle(repo, componentUploadCaptor.getValue()));

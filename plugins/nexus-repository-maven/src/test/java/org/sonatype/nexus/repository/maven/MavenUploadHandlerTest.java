@@ -13,12 +13,14 @@
 package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -26,7 +28,9 @@ import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.MavenPomGenerator;
 import org.sonatype.nexus.repository.maven.internal.MavenVariableResolverAdapter;
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
+import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
@@ -36,6 +40,8 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
+import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -50,6 +56,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -105,7 +113,7 @@ public class MavenUploadHandlerTest
   private ArgumentCaptor<VariableSource> captor;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(true);
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(Maven2Format.NAME), eq(BreadActions.EDIT), any()))
         .thenReturn(true);
@@ -114,7 +122,7 @@ public class MavenUploadHandlerTest
 
     Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
     underTest = new MavenUploadHandler(pathParser, new MavenVariableResolverAdapter(pathParser),
-        contentPermissionChecker, versionPolicyValidator, mavenPomGenerator);
+        contentPermissionChecker, versionPolicyValidator, mavenPomGenerator, emptySet());
 
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
@@ -126,6 +134,14 @@ public class MavenUploadHandlerTest
     when(storageFacet.createTempBlob(any(Payload.class), any())).thenReturn(tempBlob);
 
     when(mavenFacet.getVersionPolicy()).thenReturn(VersionPolicy.RELEASE);
+
+    Content content = mock(Content.class);
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    Asset assetPayload = mock(Asset.class);
+    when(assetPayload.componentId()).thenReturn(new DetachedEntityId("nuId"));
+    when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(mavenFacet.put(any(), any())).thenReturn(content);
   }
 
   @Test
@@ -139,6 +155,27 @@ public class MavenUploadHandlerTest
             field("version", "Version", null, false, STRING),
             field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN),
             field("packaging", "Packaging", null, true, STRING)));
+    assertThat(def.getAssetFields(),
+        contains(field("classifier", "Classifier", null, true, STRING), field("extension", "Extension", null, false, STRING)));
+  }
+
+  @Test
+  public void testGetDefinitionWithExtensionContributions() {
+    //Rebuilding the uploadhandler to provide a set of definition extensions
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+    underTest = new MavenUploadHandler(pathParser, new MavenVariableResolverAdapter(pathParser),
+        contentPermissionChecker, versionPolicyValidator, mavenPomGenerator, getDefinitionExtensions());
+    UploadDefinition def = underTest.getDefinition();
+
+    assertThat(def.isMultipleUpload(), is(true));
+    // Order is important on fields as it affects the UI
+    assertThat(def.getComponentFields(),
+        contains(field("groupId", "Group ID", null, false, STRING), field("artifactId", "Artifact ID", null, false, STRING),
+            field("version", "Version", null, false, STRING),
+            field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN),
+            field("packaging", "Packaging", null, true, STRING),
+            field("foo", "Foo", null, true, STRING)));
+
     assertThat(def.getAssetFields(),
         contains(field("classifier", "Classifier", null, true, STRING), field("extension", "Extension", null, false, STRING)));
   }
@@ -170,9 +207,10 @@ public class MavenUploadHandlerTest
     assetUpload.setPayload(sourcesPayload);
     componentUpload.getAssetUploads().add(assetUpload);
 
-    Collection<String> createdPaths = underTest.handle(repository, componentUpload);
-    assertThat(createdPaths, contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
+    UploadResponse uploadResponse = underTest.handle(repository, componentUpload);
+    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
         "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar"));
+    assertThat(uploadResponse.getComponentId().getValue(), is("nuId"));
 
     ArgumentCaptor<MavenPath> pathCapture = ArgumentCaptor.forClass(MavenPath.class);
     verify(mavenFacet, times(2)).put(pathCapture.capture(), any(Payload.class));
@@ -216,8 +254,8 @@ public class MavenUploadHandlerTest
     assetUpload.setPayload(jarPayload);
     componentUpload.getAssetUploads().add(assetUpload);
 
-    Collection<String> createdPaths = underTest.handle(repository, componentUpload);
-    assertThat(createdPaths, contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
+    UploadResponse uploadResponse = underTest.handle(repository, componentUpload);
+    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar",
         "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom"));
 
     ArgumentCaptor<MavenPath> paths = ArgumentCaptor.forClass(MavenPath.class);
@@ -495,5 +533,17 @@ public class MavenUploadHandlerTest
                                       final Type type)
   {
     return new UploadFieldDefinition(name, displayName, helpText, optional, type);
+  }
+
+  private Set<UploadDefinitionExtension> getDefinitionExtensions() {
+    return singleton(new TestUploadDefinitionExtension());
+  }
+
+  private class TestUploadDefinitionExtension implements UploadDefinitionExtension {
+
+    @Override
+    public UploadFieldDefinition contribute() {
+      return new UploadFieldDefinition("foo", "Foo", null, true, STRING);
+    }
   }
 }

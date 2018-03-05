@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.upload;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
@@ -40,7 +39,7 @@ public interface UploadHandler
    * @param upload the upload
    * @return the {@link Asset Assets} created by the operation
    */
-  Collection<String> handle(Repository repository, ComponentUpload upload) throws IOException;
+  UploadResponse handle(Repository repository, ComponentUpload upload) throws IOException;
 
   /**
    * The {@link UploadDefinition} used by this format.
