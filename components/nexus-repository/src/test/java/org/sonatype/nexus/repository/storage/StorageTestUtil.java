@@ -37,7 +37,7 @@ public class StorageTestUtil
     Bucket bucket = new Bucket()
         .attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
     bucket.setEntityMetadata(
-        new DetachedEntityMetadata(new DetachedEntityId("a"), new DetachedEntityVersion(getNextVersion())));
+        new DetachedEntityMetadata(new DetachedEntityId(repositoryName), new DetachedEntityVersion(getNextVersion())));
     bucket.setRepositoryName(repositoryName);
     return bucket;
   }
@@ -63,7 +63,7 @@ public class StorageTestUtil
   {
     Component component = createComponent(bucket, group, name, version);
     component.setEntityMetadata(
-        new DetachedEntityMetadata(new DetachedEntityId("b"), new DetachedEntityVersion(getNextVersion())));
+        new DetachedEntityMetadata(new DetachedEntityId(name), new DetachedEntityVersion(getNextVersion())));
     return component;
   }
 
@@ -79,7 +79,7 @@ public class StorageTestUtil
   public static Asset createDetachedAsset(final Bucket bucket, final String name, final Component component) {
     Asset asset = createAsset(bucket, name, component);
     asset.setEntityMetadata(
-        new DetachedEntityMetadata(new DetachedEntityId("c"), new DetachedEntityVersion(getNextVersion())));
+        new DetachedEntityMetadata(new DetachedEntityId(name), new DetachedEntityVersion(getNextVersion())));
     return asset;
   }
 

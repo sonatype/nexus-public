@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.proxy;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -507,5 +508,13 @@ public abstract class ProxyFacetSupport
     }
     final CacheInfo cacheInfo = content.getAttributes().get(CacheInfo.class);
     return cacheInfo == null || getCacheController(context).isStale(cacheInfo);
+  }
+
+  /**
+   * @return number of threads cooperating per request-key.
+   */
+  @VisibleForTesting
+  Map<String, Integer> getThreadCooperationPerRequest() {
+    return contentCooperation.getThreadCountPerKey();
   }
 }

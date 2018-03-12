@@ -10,37 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.script.plugin.internal.security
+package org.sonatype.nexus.repository.raw.internal;
 
-import org.sonatype.nexus.security.authz.WildcardPermission2
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import com.google.common.collect.ImmutableList
-import groovy.transform.CompileStatic
-
-import static com.google.common.base.Preconditions.checkNotNull
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentDirector;
 
 /**
- * Script permission.
- * Allows for fine-grained permissions on Scripts based on their name.
- * 
- * @since 3.0
+ * @since 3.stage.move
  */
-@CompileStatic
-class ScriptPermission
-    extends WildcardPermission2
+@Named("raw")
+@Singleton
+public class RawComponentDirector
+    implements ComponentDirector
 {
-  public static final String SYSTEM = 'nexus'
-  
-  public static final String DOMAIN = 'script'
-  
-  final String name
-  
-  final List<String> actions 
-  
-  ScriptPermission(String name, List<String> actions) {
-    this.name = checkNotNull(name)
-    this.actions = checkNotNull(actions)
+  @Override
+  public boolean allowMoveTo(final Repository destination) {
+    return true;
+  }
 
-    setParts(ImmutableList.of(SYSTEM, DOMAIN, name), actions)
+  @Override
+  public boolean allowMoveTo(final Component component, final Repository destination) {
+    return true;
+  }
+
+  @Override
+  public boolean allowMoveFrom(final Repository source) {
+    return true;
   }
 }
+

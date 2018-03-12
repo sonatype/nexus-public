@@ -12,10 +12,16 @@
  */
 package org.sonatype.nexus.security.authz;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.authz.permission.WildcardPermission;
+
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 /**
  * {@link WildcardPermission} which caches {@link #hashCode} for improved performance.
@@ -25,6 +31,8 @@ import org.apache.shiro.authz.permission.WildcardPermission;
 public class WildcardPermission2
   extends WildcardPermission
 {
+  private static final boolean CASE_SENSITIVE = true;
+
   private int cachedHash;
 
   protected WildcardPermission2() {
@@ -46,6 +54,34 @@ public class WildcardPermission2
   protected void setParts(final String wildcardString, final boolean caseSensitive) {
     super.setParts(wildcardString, caseSensitive);
     this.cachedHash = super.hashCode();
+  }
+
+  protected void setParts(final List<String> subParts, final List<String> actions) {
+    setParts(subParts, actions, !CASE_SENSITIVE);
+  }
+
+  protected void setParts(final List<String> subParts, final List<String> actions, final boolean caseSensitive) {
+    List<Set<String>> parts = new ArrayList<>();
+    subParts.forEach(subPart -> parts.add(toPart(subPart, caseSensitive)));
+    parts.add(toPart(actions, caseSensitive));
+    setParts(parts);
+    this.cachedHash = super.hashCode();
+  }
+
+  @VisibleForTesting
+  protected List<Set<String>> getParts() {
+    return super.getParts();
+  }
+
+  private static Set<String> toPart(final String subpart, final boolean caseSensitive) {
+    return ImmutableSet.of(caseSensitive ? subpart : subpart.toLowerCase());
+  }
+
+  private static Set<String> toPart(final List<String> actions, final boolean caseSensitive) {
+    if (actions.size() == 1) {
+      return toPart(actions.get(0), caseSensitive);
+    }
+    return actions.stream().map(action -> caseSensitive ? action : action.toLowerCase()).collect(toImmutableSet());
   }
 
   @Override

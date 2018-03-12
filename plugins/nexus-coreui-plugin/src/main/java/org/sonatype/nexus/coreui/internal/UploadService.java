@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,6 +27,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -53,10 +55,16 @@ public class UploadService
 
   private RepositoryManager repositoryManager;
 
+  private final Set<ComponentUploadExtension> componentUploadExtensions;
+
   @Inject
-  public UploadService(final RepositoryManager repositoryManager, final UploadManager uploadManager) {
+  public UploadService(final RepositoryManager repositoryManager,
+                       final UploadManager uploadManager,
+                       final Set<ComponentUploadExtension> componentsUploadExtensions)
+  {
     this.uploadManager = checkNotNull(uploadManager);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
   }
 
   /**
@@ -84,7 +92,18 @@ public class UploadService
 
     Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
-    UploadResponse uploadResponse = uploadManager.handle(repository, createAndValidate(repository, params, files));
+    ComponentUpload componentUpload = createAndValidate(repository, params, files);
+
+    for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
+      componentUploadExtension.validate(componentUpload);
+    }
+
+    UploadResponse uploadResponse = uploadManager.handle(repository, componentUpload);
+
+    for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
+      componentUploadExtension.apply(repository, componentUpload, uploadResponse.getComponentId());
+    }
+
     return createSearchTerm(uploadResponse.getAssetPaths());
   }
 

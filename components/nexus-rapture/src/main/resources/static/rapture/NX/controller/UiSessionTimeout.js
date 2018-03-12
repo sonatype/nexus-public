@@ -25,7 +25,8 @@ Ext.define('NX.controller.UiSessionTimeout', {
     'NX.Security',
     'NX.State',
     'NX.I18n',
-    'NX.State'
+    'NX.State',
+    'NX.util.Window'
   ],
 
   views: [
@@ -61,6 +62,7 @@ Ext.define('NX.controller.UiSessionTimeout', {
       },
       component: {
         'nx-expire-session': {
+          beforerender: NX.util.Window.closeWindows,
           afterrender: me.startTicking
         },
         'nx-expire-session button[action=cancel]': {

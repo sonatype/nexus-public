@@ -133,6 +133,12 @@ public final class EntityHook
     if (!startRecording(db)) {
       pendingDbs.add(db);
     }
+    // reload metadata when (re-)opening a DB connection if old schema is gone
+    // (can be removed after upgrading to OrientDB 2.2.33 as it does it for us)
+    if (db.getMetadata().getSchema().countClasses() == 0) {
+      log.debug("Reloading metadata for {} as storage has changed", db.getName());
+      db.getMetadata().reload();
+    }
   }
 
   @Override

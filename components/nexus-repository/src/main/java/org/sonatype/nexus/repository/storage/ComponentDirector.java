@@ -10,37 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.script.plugin.internal.security
+package org.sonatype.nexus.repository.storage;
 
-import org.sonatype.nexus.security.authz.WildcardPermission2
+import java.util.List;
+import java.util.Map;
 
-import com.google.common.collect.ImmutableList
-import groovy.transform.CompileStatic
-
-import static com.google.common.base.Preconditions.checkNotNull
+import org.sonatype.nexus.repository.Repository;
 
 /**
- * Script permission.
- * Allows for fine-grained permissions on Scripts based on their name.
- * 
- * @since 3.0
+ * Component management director.
+ *
+ * @since 3.stage.move
  */
-@CompileStatic
-class ScriptPermission
-    extends WildcardPermission2
+public interface ComponentDirector
 {
-  public static final String SYSTEM = 'nexus'
-  
-  public static final String DOMAIN = 'script'
-  
-  final String name
-  
-  final List<String> actions 
-  
-  ScriptPermission(String name, List<String> actions) {
-    this.name = checkNotNull(name)
-    this.actions = checkNotNull(actions)
+  default Component afterMove(final Component component, final Repository destination) {
+    return component;
+  }
 
-    setParts(ImmutableList.of(SYSTEM, DOMAIN, name), actions)
+  default boolean allowMoveTo(final Repository destination) {
+    return false;
+  }
+
+  default boolean allowMoveTo(final Component component, final Repository destination) {
+    return false;
+  }
+
+  default boolean allowMoveFrom(final Repository source) {
+    return false;
+  }
+
+  default void afterMove(final List<Map<String, String>> components, final Repository destination) {
+    // no-op
   }
 }

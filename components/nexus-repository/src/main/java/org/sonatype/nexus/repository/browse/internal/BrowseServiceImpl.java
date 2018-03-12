@@ -226,10 +226,14 @@ public class BrowseServiceImpl
           jexlExpression,
           queryOptions,
           getRepoToContainedGroupMap(repositories));
+
+      String whereClause = String.format("and (%s)", builder.buildWhereClause());
+
+      //The whereClause is passed in as the querySuffix so that contentExpression will run after repository filtering
       return new BrowseResult<>(
-          storageTx.countAssets(builder.buildWhereClause(), builder.buildSqlParams(), previewRepositories, null),
-          Lists.newArrayList(storageTx.findAssets(builder.buildWhereClause(), builder.buildSqlParams(),
-              previewRepositories, builder.buildQuerySuffix()))
+          storageTx.countAssets(null, builder.buildSqlParams(), previewRepositories, whereClause),
+          Lists.newArrayList(storageTx.findAssets(null, builder.buildSqlParams(),
+              previewRepositories, whereClause + builder.buildQuerySuffix()))
       );
     }
   }

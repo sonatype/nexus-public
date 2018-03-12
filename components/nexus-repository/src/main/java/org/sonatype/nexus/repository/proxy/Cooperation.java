@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,12 +25,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.sonatype.goodies.common.Time;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagateIfPossible;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Manages cooperation between multiple threads to avoid duplicated I/O.
@@ -204,7 +207,7 @@ public class Cooperation<T>
   {
     private final AtomicLong staggerTimeMillis = new AtomicLong(System.currentTimeMillis());
 
-    private final AtomicInteger cooperationCount = new AtomicInteger(1);
+    private final AtomicInteger threadCount = new AtomicInteger(1);
 
     private final String key;
 
@@ -219,7 +222,7 @@ public class Cooperation<T>
      */
     public void increaseCooperation(final int limit) {
       // try to avoid depleting entire request pool with waiting threads
-      cooperationCount.getAndUpdate(count -> {
+      threadCount.getAndUpdate(count -> {
         if (count >= limit) {
           log.debug("Thread cooperation maxed for {}", this);
           throw new CooperationException("Thread cooperation maxed for " + this);
@@ -232,7 +235,7 @@ public class Cooperation<T>
      * Decreases the cooperation count by one.
      */
     public void decreaseCooperation() {
-      cooperationCount.decrementAndGet();
+      threadCount.decrementAndGet();
     }
 
     /**
@@ -263,7 +266,26 @@ public class Cooperation<T>
 
     @Override
     public String toString() {
-      return key + " (" + cooperationCount.get() + " threads cooperating)";
+      return key + " (" + threadCount.get() + " threads cooperating)";
     }
+
+    @VisibleForTesting
+    String getKey() {
+      return key;
+    }
+
+    @VisibleForTesting
+    int getThreadCount() {
+      return threadCount.get();
+    }
+  }
+
+  /**
+   * @return number of threads cooperating per request-key.
+   */
+  @VisibleForTesting
+  Map<String, Integer> getThreadCountPerKey() {
+    return futureValues.values().stream().collect(
+        toMap(CooperatingFuture::getKey, CooperatingFuture::getThreadCount));
   }
 }

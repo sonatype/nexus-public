@@ -170,6 +170,18 @@ public class AssetMapUtilsTest
   }
 
   @Test
+  public void testFilterAsset_MultipleAssetParams() {
+    when(searchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
+    when(searchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
+    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
+    assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "sources");
+    assetParams.add(EXTENSION_ATTRIBUTE_NAME, "jar");
+
+    assertTrue(underTest.filterAsset(assetMapWithClassifier, assetParams));
+    assertFalse(underTest.filterAsset(assetMap, assetParams));
+  }
+
+  @Test
   public void testFilterAsset_GetEmptyAssetParams() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(any(String.class));
     List<String> emptyAssetParamsList = underTest.getEmptyAssetParams(getPopulatedMultiValueMap());

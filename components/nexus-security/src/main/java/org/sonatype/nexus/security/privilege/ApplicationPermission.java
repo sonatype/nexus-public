@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
-import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -39,11 +39,7 @@ public class ApplicationPermission
     this.domain = checkNotNull(domain);
     this.actions = checkNotNull(actions);
 
-    setParts(Joiner.on(':').join(
-        SYSTEM,
-        domain,
-        Joiner.on(',').join(actions)
-    ));
+    setParts(ImmutableList.of(SYSTEM, domain), actions);
   }
 
   public ApplicationPermission(final String domain, final String... actions) {

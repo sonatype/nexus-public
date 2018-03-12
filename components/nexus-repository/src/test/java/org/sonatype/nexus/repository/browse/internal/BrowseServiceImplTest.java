@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -37,6 +39,8 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.google.common.base.Supplier;
 import com.orientechnologies.orient.core.id.ORID;
@@ -65,6 +69,8 @@ import static org.mockito.Mockito.when;
 public class BrowseServiceImplTest
     extends TestSupport
 {
+  private static final String NO_WHERE = null;
+
   @Mock
   ComponentEntityAdapter componentEntityAdapter;
 
@@ -118,6 +124,12 @@ public class BrowseServiceImplTest
 
   @Mock
   BucketStore bucketStore;
+
+  @Mock
+  RepositorySelector repositorySelector;
+
+  @Mock
+  GroupFacet groupFacet;
 
   BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
 
@@ -201,6 +213,100 @@ public class BrowseServiceImplTest
       List<String> splitNames = Arrays.asList(repoNames.split(","));
       assertThat(splitNames, contains("releases"));
     });
+  }
+
+  @Test
+  public void testPreviewAssets() {
+    Repository proxyRepository = mock(Repository.class);
+    when(proxyRepository.getType()).thenReturn(new ProxyType());
+    when(proxyRepository.getName()).thenReturn("proxy-repository");
+    when(proxyRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    when(proxyRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+
+    Repository hostedRepository = mock(Repository.class);
+    when(hostedRepository.getType()).thenReturn(new HostedType());
+    when(hostedRepository.getName()).thenReturn("hosted-repository");
+    when(hostedRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(new GroupType());
+    when(groupRepository.getName()).thenReturn("group-repository");
+    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+
+    List<Repository> groupRepositoryLeafMembers = asList(hostedRepository);
+    when(groupFacet.leafMembers()).thenReturn(groupRepositoryLeafMembers);
+
+    List<Repository> repositories = asList(proxyRepository, hostedRepository, groupRepository);
+
+    Map<String, List<String>> expectedRepoToContainedGroupMap = new HashMap<>();
+    expectedRepoToContainedGroupMap.put("proxy-repository", asList("proxy-repository"));
+    expectedRepoToContainedGroupMap.put("hosted-repository", asList("hosted-repository", "group-repository"));
+    expectedRepoToContainedGroupMap.put("group-repository", asList("group-repository"));
+
+    Map<String, Object> expectedQueryParams = new HashMap<>();
+    expectedQueryParams.put("repositorySelector", "toSelectorResult");
+    expectedQueryParams.put("jexlExpression", "myExpression");
+    expectedQueryParams.put("repoToContainedGroupMap", expectedRepoToContainedGroupMap);
+
+    String expectedCountQuerySuffix =
+        "and (contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true)";
+    String expectedFindQuerySuffix =
+        "and (contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true) " +
+        "SKIP 0 LIMIT 0";
+
+    when(repositorySelector.toSelector()).thenReturn("toSelectorResult");
+    when(storageTx.countAssets(NO_WHERE, expectedQueryParams, repositories, expectedCountQuerySuffix)).thenReturn(2L);
+    when(storageTx.findAssets(NO_WHERE, expectedQueryParams, repositories, expectedFindQuerySuffix)).thenReturn(results);
+
+    BrowseResult<Asset> browseResult =
+        underTest.previewAssets(repositorySelector, repositories, "myExpression", queryOptions);
+    assertThat(browseResult.getTotal(), is(2L));
+    assertThat(browseResult.getResults(), is(results));
+  }
+
+  @Test
+  public void testPreviewAssetsWithSingleGroupRepository() {
+    Repository groupRepositoryLeafMember = mock(Repository.class);
+    when(groupRepositoryLeafMember.getType()).thenReturn(new HostedType());
+    when(groupRepositoryLeafMember.getName()).thenReturn("group-repository-leaf-member");
+    when(groupRepositoryLeafMember.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
+
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(new GroupType());
+    when(groupRepository.getName()).thenReturn("group-repository");
+    when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+
+    List<Repository> groupRepositoryLeafMembers = asList(groupRepositoryLeafMember);
+    when(groupFacet.leafMembers()).thenReturn(groupRepositoryLeafMembers);
+
+    List<Repository> repositories = asList(groupRepository);
+
+    Map<String, List<String>> expectedRepoToContainedGroupMap = new HashMap<>();
+    expectedRepoToContainedGroupMap.put("group-repository", asList("group-repository"));
+
+    Map<String, Object> expectedQueryParams = new HashMap<>();
+    expectedQueryParams.put("repositorySelector", "toSelectorResult");
+    expectedQueryParams.put("jexlExpression", "myExpression");
+    expectedQueryParams.put("repoToContainedGroupMap", expectedRepoToContainedGroupMap);
+
+    String expectedCountQuerySuffix =
+        "and (contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true)";
+    String expectedFindQuerySuffix =
+        "and (contentExpression(@this, :jexlExpression, :repositorySelector, :repoToContainedGroupMap) == true) " +
+            "SKIP 0 LIMIT 0";
+
+    when(repositorySelector.toSelector()).thenReturn("toSelectorResult");
+    when(storageTx.countAssets(NO_WHERE, expectedQueryParams, groupRepositoryLeafMembers, expectedCountQuerySuffix))
+        .thenReturn(57L);
+    when(storageTx.findAssets(NO_WHERE, expectedQueryParams, groupRepositoryLeafMembers, expectedFindQuerySuffix))
+        .thenReturn(results);
+
+    BrowseResult<Asset> browseResult =
+        underTest.previewAssets(repositorySelector, repositories, "myExpression", queryOptions);
+    assertThat(browseResult.getTotal(), is(57L));
+    assertThat(browseResult.getResults(), is(results));
   }
 
   @Captor

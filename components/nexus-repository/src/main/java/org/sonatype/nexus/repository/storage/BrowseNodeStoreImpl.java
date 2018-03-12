@@ -242,7 +242,7 @@ public class BrowseNodeStoreImpl
   {
     StringBuilder filterBuilder = new StringBuilder();
     if (keyword != null) {
-      appendKeywordFilter(filterBuilder, keyword);
+      appendKeywordFilter(filterBuilder, keyword, filterParameters);
     }
     if (!selectors.isEmpty()) {
       if (filterBuilder.length() > 0) {
@@ -263,8 +263,12 @@ public class BrowseNodeStoreImpl
   /**
    * Appends a keyword filter in SQL.
    */
-  private void appendKeywordFilter(final StringBuilder filterBuilder, final String keyword) {
-    filterBuilder.append(P_ASSET_NAME_LOWERCASE).append(" like '%").append(Strings2.lower(keyword)).append("%'");
+  private void appendKeywordFilter(final StringBuilder filterBuilder,
+                                   final String keyword,
+                                   final Map<String, Object> filterParameters)
+  {
+    filterBuilder.append(P_ASSET_NAME_LOWERCASE).append(" like :keyword_filter");
+    filterParameters.put("keyword_filter", '%' + Strings2.lower(keyword) + '%');
   }
 
   /**

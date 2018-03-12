@@ -18,7 +18,7 @@ import java.util.List;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
-import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,13 +45,7 @@ public class RepositoryViewPermission
     this.name = checkNotNull(name);
     this.actions = checkNotNull(actions);
 
-    setParts(Joiner.on(':').join(
-        SYSTEM,
-        DOMAIN,
-        format,
-        name,
-        Joiner.on(',').join(actions)
-    ));
+    setParts(ImmutableList.of(SYSTEM, DOMAIN, format, name), actions);
   }
 
   public RepositoryViewPermission(final String format, final String name, final String... actions) {

@@ -130,7 +130,7 @@ public class SearchResourceTest
     when(searchHitMaven.getId()).thenReturn("id1");
 
     List<?> mulitple_assets = newArrayList(
-        createAsset("antlr-fooz.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "fooz")),
+        createAsset("antlr-fooz.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "fooz", "version", "2.0")),
         createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
         createAsset("antlr.pom", "maven2", "first-sha1", of("extension", "pom"))
     );

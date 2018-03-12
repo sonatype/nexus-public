@@ -121,10 +121,7 @@ class AssetMapUtils
 
     // loop each asset specific http query parameter to filter out assets that do not apply
     return assetParamsWithValues.entrySet().stream()
-        .map(entry -> keepAsset(assetMap, entry.getKey(), entry.getValue()))
-        .filter(b->b)
-        .findFirst()
-        .orElse(false);
+        .allMatch(entry -> keepAsset(assetMap, entry.getKey(), entry.getValue()));
   }
 
   /**
@@ -135,10 +132,7 @@ class AssetMapUtils
    */
    static boolean excludeAsset(final Map<String, Object> assetMap, final List<String> paramFilters) {
     return paramFilters.stream()
-        .map(filter -> getValueFromAssetMap(assetMap, filter).isPresent())
-        .filter(b -> b)
-        .findFirst()
-        .orElse(false);
+        .anyMatch(filter -> getValueFromAssetMap(assetMap, filter).isPresent());
   }
 
   /**

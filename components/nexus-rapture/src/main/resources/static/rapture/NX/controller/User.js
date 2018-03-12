@@ -24,7 +24,8 @@ Ext.define('NX.controller.User', {
     'NX.Messages',
     'NX.State',
     'NX.I18n',
-    'NX.view.header.Mode'
+    'NX.view.header.Mode',
+    'NX.util.Window'
   ],
 
   views: [
@@ -92,6 +93,9 @@ Ext.define('NX.controller.User', {
         },
         'nx-signin button[action=signin]': {
           click: me.signIn
+        },
+        'nx-authenticate': {
+          beforerender: NX.util.Window.closeWindows
         },
         'nx-authenticate button[action=authenticate]': {
           click: me.doAuthenticateAction

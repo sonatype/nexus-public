@@ -23,9 +23,11 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
@@ -37,6 +39,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Payload;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -86,6 +89,11 @@ public class UploadServiceTest
   @Captor
   ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
+  @Mock
+  private ComponentUploadExtension componentUploadExtension;
+
+  private EntityId newId = new DetachedEntityId("newId");
+
   @Before
   public void setup() throws IOException {
     when(repo.getFormat()).thenReturn(new Format("m2")
@@ -100,13 +108,13 @@ public class UploadServiceTest
     when(handler.getDefinition()).thenReturn(ud);
     when(handler.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
 
-    UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId("newId"), emptyList());
+    UploadResponse uploadResponse = new UploadResponse(newId, emptyList());
     when(handler.handle(any(), any())).thenReturn(uploadResponse);
     when(uploadManager.getAvailableDefinitions()).thenReturn(Collections.singletonList(ud));
     when(uploadManager.getByFormat("m2")).thenReturn(ud);
     when(uploadManager.handle(eq(repo), componentUploadCaptor.capture())).thenAnswer(invocationOnMock -> handler.handle(repo, componentUploadCaptor.getValue()));
 
-    component = new UploadService(repositoryManager, uploadManager);
+    component = new UploadService(repositoryManager, uploadManager, ImmutableSet.of(componentUploadExtension));
   }
 
   @Test
@@ -137,6 +145,8 @@ public class UploadServiceTest
     component.upload(map("repositoryName", REPO_NAME, "g", "foo", "e", "jar"),
         map(mockFile("text/plain", 3L, "stuff")));
     verify(handler, times(1)).handle(eq(repo), componentUploadCaptor.capture());
+    verify(componentUploadExtension, times(1)).validate(any());
+    verify(componentUploadExtension, times(1)).apply(repo, componentUploadCaptor.getValue(), newId);
 
     ComponentUpload uc = componentUploadCaptor.getValue();
     assertThat(uc.getFields(), hasEntry("g", "foo"));

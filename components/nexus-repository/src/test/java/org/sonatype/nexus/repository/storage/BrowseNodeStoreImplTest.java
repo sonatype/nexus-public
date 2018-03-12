@@ -213,7 +213,7 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like '%wibble%'", emptyMap());
+        "asset_name_lowercase like :keyword_filter", ImmutableMap.of("keyword_filter", "%wibble%"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -273,8 +273,8 @@ public class BrowseNodeStoreImplTest
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like '%wibble%' and (asset_id.attributes.test-format.groupId = :s0p0)",
-        ImmutableMap.of("s0p0", "org.sonatype"));
+        "asset_name_lowercase like :keyword_filter and (asset_id.attributes.test-format.groupId = :s0p0)",
+        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -309,9 +309,9 @@ public class BrowseNodeStoreImplTest
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like '%wibble%' and"
+        "asset_name_lowercase like :keyword_filter and"
             + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0))",
-        ImmutableMap.of("s0p0", "org.sonatype", "s1p0", "2.1"));
+        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype", "s1p0", "2.1"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -347,10 +347,10 @@ public class BrowseNodeStoreImplTest
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like '%wibble%' and"
+        "asset_name_lowercase like :keyword_filter and"
             + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0)"
             + " or contentAuth(@this.asset_id, :authz_repository_name, true) = true)",
-        ImmutableMap.of("s0p0", "org.sonatype", "s1p0", "2.1", "authz_repository_name", "test-repo"));
+        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype", "s1p0", "2.1", "authz_repository_name", "test-repo"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -383,8 +383,8 @@ public class BrowseNodeStoreImplTest
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like '%wibble%' and contentAuth(@this.asset_id, :authz_repository_name, true) = true",
-        ImmutableMap.of("authz_repository_name", REPOSITORY_NAME));
+        "asset_name_lowercase like :keyword_filter and contentAuth(@this.asset_id, :authz_repository_name, true) = true",
+        ImmutableMap.of("keyword_filter", "%wibble%", "authz_repository_name", REPOSITORY_NAME));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -445,6 +445,21 @@ public class BrowseNodeStoreImplTest
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     // merging of results should be lazy: only the first member should have been consulted
     verify(browseNodeEntityAdapter).getByPath(db, MEMBER_A, queryPath, 1, "", emptyMap());
+    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
+  }
+
+
+  @Test
+  public void keywordQueryWithSingleQuote() throws Exception {
+    List<String> queryPath = asList("org", "foo");
+
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+
+    underTest.getByPath(repository, queryPath, MAX_NODES, "'");
+
+    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
+    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
+        "asset_name_lowercase like :keyword_filter", ImmutableMap.of("keyword_filter", "%'%"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
