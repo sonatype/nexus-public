@@ -222,7 +222,7 @@ public interface RepositoryApi
    * @param v1Enabled Whether or not this Repository supports Docker V1 format
    * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
    * @param writePolicy The {@link WritePolicy} for the Repository
-   * @param forceBasicAuth whether or not this Repository should support anonymous pull
+   * @param forceBasicAuth whether to force basic auth. False is required to enable token auth which can be used for anonymous access
    * @return the newly created Repository
    */
   Repository createDockerHosted(final String name,
