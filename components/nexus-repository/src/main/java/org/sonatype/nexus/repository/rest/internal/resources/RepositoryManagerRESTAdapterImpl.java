@@ -22,20 +22,14 @@ import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission;
-import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import com.google.common.collect.Streams;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
-import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * An implementation of the {@link RepositoryManagerRESTAdapter}
@@ -48,18 +42,14 @@ public class RepositoryManagerRESTAdapterImpl
 {
   private final RepositoryManager repositoryManager;
 
-  private final SecurityHelper securityHelper;
-
-  private final SelectorManager selectorManager;
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Inject
   public RepositoryManagerRESTAdapterImpl(final RepositoryManager repositoryManager,
-                                          final SecurityHelper securityHelper,
-                                          final SelectorManager selectorManager)
+                                          final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.selectorManager = checkNotNull(selectorManager);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
   }
 
   @Override
@@ -70,11 +60,11 @@ public class RepositoryManagerRESTAdapterImpl
     Repository repository = ofNullable(repositoryManager.get(repositoryId))
         .orElseThrow(() -> new NotFoundException("Unable to locate repository with id " + repositoryId));
 
-    if (userCanBrowseRepository(repository)) {
+    if (repositoryPermissionChecker.userCanBrowseRepository(repository)) {
       //browse implies complete access to the repository.
       return repository;
     }
-    else if (userCanViewRepository(repository)) {
+    else if (repositoryPermissionChecker.userCanViewRepository(repository)) {
       //user knows the repository exists but does not have the appropriate permission to browse, return a 403
       throw new WebApplicationException(FORBIDDEN);
     }
@@ -87,31 +77,7 @@ public class RepositoryManagerRESTAdapterImpl
   @Override
   public List<Repository> getRepositories() {
     return Streams.stream(repositoryManager.browse())
-        .filter(this::userCanBrowseRepository)
+        .filter(repositoryPermissionChecker::userCanBrowseRepository)
         .collect(Collectors.toList());
-  }
-
-  private boolean userCanViewRepository(final Repository repository) {
-    return userHasReadPermission(repository) || userHasAnyContentSelectorAccess(repository);
-  }
-
-  private boolean userCanBrowseRepository(final Repository repository) {
-    return userHasBrowsePermissions(repository) || userHasAnyContentSelectorAccess(repository);
-  }
-
-  private boolean userHasBrowsePermissions(final Repository repository) {
-    return securityHelper.anyPermitted(
-        new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BROWSE));
-  }
-
-  private boolean userHasReadPermission(final Repository repository) {
-    return securityHelper.anyPermitted(
-        new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), READ));
-  }
-
-  private boolean userHasAnyContentSelectorAccess(final Repository repository) {
-    return selectorManager.browse().stream().anyMatch(sc -> securityHelper.anyPermitted(
-        new RepositoryContentSelectorPermission(sc.getName(), repository.getFormat().getValue(), repository.getName(),
-            singletonList(BROWSE))));
   }
 }

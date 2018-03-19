@@ -64,7 +64,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Singleton
 public class DatabaseFreezeServiceImpl
     extends StateGuardLifecycleSupport
-    implements DatabaseFreezeService, EventAware
+    implements DatabaseFreezeService, EventAware, EventAware.Asynchronous
 {
 
   public static final String SERVER_NAME = "*";
@@ -269,6 +269,7 @@ public class DatabaseFreezeServiceImpl
       log.info("Updating server role of {} database to {}", database, serverRole);
       distributedServerManager.executeInDistributedDatabaseLock(database, 0l, null, distributedConfiguration -> {
         distributedConfiguration.setServerRole(SERVER_NAME, serverRole);
+        log.info("Updated server role of {} database to {}", database, serverRole);
         return null;
       });
     }

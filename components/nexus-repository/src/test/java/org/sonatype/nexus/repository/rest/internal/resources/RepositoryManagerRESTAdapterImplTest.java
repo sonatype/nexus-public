@@ -21,25 +21,16 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission;
-import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.SelectorConfiguration;
-import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 
-import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
-import static org.sonatype.nexus.security.BreadActions.READ;
 
 public class RepositoryManagerRESTAdapterImplTest
     extends TestSupport
@@ -60,10 +51,6 @@ public class RepositoryManagerRESTAdapterImplTest
 
   private static final boolean PERMIT_READ = true;
 
-  private static final boolean IGNORED_PERMIT_READ = false;
-
-  private static final boolean PERMIT_VIA_CONTENT_SELECTOR = true;
-
   @Mock
   RepositoryManager repositoryManager;
 
@@ -77,15 +64,6 @@ public class RepositoryManagerRESTAdapterImplTest
   Repository repository3;
 
   @Mock
-  SecurityHelper securityHelper;
-
-  @Captor
-  ArgumentCaptor<RepositoryViewPermission> repositoryViewPermissionArgumentCaptor;
-
-  @Captor
-  ArgumentCaptor<RepositoryContentSelectorPermission> repositoryContentSelectorPermissionArgumentCaptor;
-
-  @Mock
   Format repositoryFormat;
 
   @Mock
@@ -95,10 +73,7 @@ public class RepositoryManagerRESTAdapterImplTest
   Format repositoryFormat3;
 
   @Mock
-  SelectorConfiguration selectorConfiguration;
-
-  @Mock
-  SelectorManager selectorManager;
+  RepositoryPermissionChecker repositoryPermissionChecker;
 
   RepositoryManagerRESTAdapterImpl underTest;
 
@@ -111,9 +86,6 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repository2.getFormat()).thenReturn(repositoryFormat2);
     when(repository3.getFormat()).thenReturn(repositoryFormat3);
 
-    when(selectorManager.browse()).thenReturn(singletonList(selectorConfiguration));
-    when(selectorConfiguration.getName()).thenReturn("selector");
-
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository2.getName()).thenReturn(REPOSITORY_NAME_2);
     when(repository3.getName()).thenReturn(REPOSITORY_NAME_3);
@@ -122,30 +94,24 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repositoryFormat2.getValue()).thenReturn(REPOSITORY_FORMAT_2);
     when(repositoryFormat3.getValue()).thenReturn(REPOSITORY_FORMAT_3);
 
-    underTest = new RepositoryManagerRESTAdapterImpl(repositoryManager, securityHelper, selectorManager);
+    underTest = new RepositoryManagerRESTAdapterImpl(repositoryManager, repositoryPermissionChecker);
   }
 
   @Test
   public void getRepository_allPermissions() throws Exception {
-    configurePermissions(repository, PERMIT_BROWSE, PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository, PERMIT_BROWSE, PERMIT_READ);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_browseOnly() throws Exception {
-    configurePermissions(repository, PERMIT_BROWSE, !PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
-    assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
-  }
-
-  @Test
-  public void getRepository_contentSelectorOnly() throws Exception {
-    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository, PERMIT_BROWSE, !PERMIT_READ);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_readOnlyReturnsForbidden() throws Exception {
-    configurePermissions(repository, !PERMIT_BROWSE, PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository, !PERMIT_BROWSE, PERMIT_READ);
 
     try {
       underTest.getRepository(REPOSITORY_NAME);
@@ -158,30 +124,14 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test(expected = NotFoundException.class)
   public void getRepository_notFoundWithNoPermissions() {
-    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
+    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ);
     underTest.getRepository(REPOSITORY_NAME);
   }
 
-  private void configurePermissions(final Repository repository,
-                                    final boolean permitBrowse,
-                                    final boolean permitRead,
-                                    final boolean permitViaContentSelector)
-  {
-    when(securityHelper
-        .anyPermitted(new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BROWSE)))
-        .thenReturn(permitBrowse);
-
-    when(securityHelper
-        .anyPermitted(new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), READ)))
-        .thenReturn(permitRead);
-
-    when(securityHelper.anyPermitted(
-        new RepositoryContentSelectorPermission(selectorConfiguration.getName(), repository.getFormat().getValue(),
-            repository.getName(),
-            singletonList(BROWSE))))
-        .thenReturn(permitViaContentSelector);
+  private void configurePermissions(final Repository repository, final boolean permitBrowse, final boolean permitRead) {
+    when(repositoryPermissionChecker.userCanBrowseRepository(repository)).thenReturn(permitBrowse);
+    when(repositoryPermissionChecker.userCanViewRepository(repository)).thenReturn(permitRead);
   }
-
 
   @Test(expected = NotFoundException.class)
   public void getRepository_notFound() {
@@ -201,9 +151,9 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepositories() {
-    configurePermissions(repository, !PERMIT_BROWSE, IGNORED_PERMIT_READ, PERMIT_VIA_CONTENT_SELECTOR);
-    configurePermissions(repository2, PERMIT_BROWSE, IGNORED_PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
-    configurePermissions(repository3, !PERMIT_BROWSE, IGNORED_PERMIT_READ, !PERMIT_VIA_CONTENT_SELECTOR);
+    when(repositoryPermissionChecker.userCanBrowseRepository(repository)).thenReturn(true);
+    when(repositoryPermissionChecker.userCanBrowseRepository(repository2)).thenReturn(true);
+    when(repositoryPermissionChecker.userCanBrowseRepository(repository3)).thenReturn(false);
 
     assertThat(underTest.getRepositories(), is(Arrays.asList(repository, repository2)));
   }

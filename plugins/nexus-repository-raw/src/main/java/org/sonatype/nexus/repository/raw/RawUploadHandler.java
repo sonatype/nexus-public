@@ -27,12 +27,12 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
-import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
@@ -78,7 +78,7 @@ public class RawUploadHandler
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
 
-    String basePath = normalizeBasePath(upload.getFields().get(DIRECTORY));
+    String basePath = upload.getFields().get(DIRECTORY).trim();
 
     return TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
         .throwing(IOException.class).call(() -> {
@@ -88,7 +88,7 @@ public class RawUploadHandler
           List<String> assetPaths = Lists.newArrayList();
 
           for (AssetUpload asset : upload.getAssetUploads()) {
-            String path = basePath + normalizeFilename(asset.getFields().get(FILENAME));
+            String path = normalizePath(basePath + '/' + asset.getFields().get(FILENAME).trim());
 
             ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
 
@@ -106,32 +106,17 @@ public class RawUploadHandler
         });
   }
 
-  private String normalizeBasePath(final String basePath) {
-    String result = normalize(basePath);
+  private String normalizePath(final String path) {
+    String result = path.replaceAll("/+", "/");
 
-    if (!result.endsWith("/")) {
-      result += "/";
+    if (result.startsWith("/")) {
+      result = result.substring(1);
     }
-
-    return result;
-  }
-
-  private String normalizeFilename(final String filename) {
-    String result = normalize(filename);
 
     if (result.endsWith("/")) {
       result = result.substring(0, result.length() - 1);
     }
 
-    return result;
-  }
-
-  private String normalize(final String string) {
-    String result = string.trim().replaceAll("/+", "/");
-
-    if (result.startsWith("/")) {
-      return result.substring(1);
-    }
     return result;
   }
 

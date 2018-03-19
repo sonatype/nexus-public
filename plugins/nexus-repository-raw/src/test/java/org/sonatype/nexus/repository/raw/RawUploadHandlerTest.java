@@ -210,6 +210,7 @@ public class RawUploadHandlerTest
 
   @Test
   public void testHandle_normalizePath() throws IOException {
+    testNormalizePath("/", "goo.jar", "goo.jar");
     testNormalizePath("/foo", "goo.jar", "foo/goo.jar");
     testNormalizePath("/foo", "/goo.jar", "foo/goo.jar");
     testNormalizePath("/foo/", "goo.jar", "foo/goo.jar");

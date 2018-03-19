@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import java.security.Permission
-
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
@@ -22,15 +20,13 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.repository.types.HostedType
-import org.sonatype.nexus.security.SecurityHelper
-import org.sonatype.nexus.selector.SelectorManager
 
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.mockito.Matchers.any
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
@@ -42,9 +38,6 @@ class RepositoryComponentTest
     extends TestSupport
 {
   @Mock
-  SecurityHelper securityHelper
-
-  @Mock
   Format format
 
   @Mock
@@ -54,31 +47,34 @@ class RepositoryComponentTest
   RepositoryManager repositoryManager
 
   @Mock
-  SelectorManager selectorManager
+  RepositoryPermissionChecker repositoryPermissionChecker
+
+  Repository repository
 
   RepositoryComponent underTest
 
   @Before
   void setup() {
+    repository = repository();
+
     when(format.getValue()).thenReturn('format')
-    when(repositoryManager.browse()).thenReturn([repository()])
+    when(repositoryManager.browse()).thenReturn([repository])
 
     underTest = new RepositoryComponent()
-    underTest.securityHelper = securityHelper
     underTest.repositoryManager = repositoryManager
-    underTest.selectorManager = selectorManager
+    underTest.repositoryPermissionChecker = repositoryPermissionChecker
   }
 
   @Test
   void checkUserPermissionsOnFilter() {
     underTest.filter(applyPermissions(true))
-    verify(securityHelper).anyPermitted(any(Permission.class))
+    verify(repositoryPermissionChecker).userCanBrowseRepository(repository)
   }
 
   @Test
   void doNotCheckPermissionsWhenNotApplied() {
     underTest.filter(applyPermissions(false))
-    verify(securityHelper, never()).anyPermitted(any(Permission.class))
+    verify(repositoryPermissionChecker, never()).userCanBrowseRepository(repository)
   }
 
   StoreLoadParameters applyPermissions(boolean apply) {

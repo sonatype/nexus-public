@@ -247,7 +247,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           filename, match, suffix;
 
       if (regexMap && value) {
-        filename = value.substring(value.lastIndexOf(value.startsWith('/') ? '/' : '\\') + 1);
+        filename = value.substring(value.lastIndexOf((value.indexOf('/') === 0) ? '/' : '\\') + 1);
         match = filename.match(regexMap.regex);
 
         if (match) {
