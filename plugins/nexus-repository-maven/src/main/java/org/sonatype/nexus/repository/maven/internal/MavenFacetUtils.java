@@ -27,12 +27,14 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -47,10 +49,13 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashingOutputStream;
 import org.joda.time.DateTime;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.app.VersionComparator.version;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
@@ -218,5 +223,28 @@ public final class MavenFacetUtils
       paths.add(mavenPath.main().hash(hashType));
     }
     return mavenFacet.delete(paths.toArray(new MavenPath[paths.size()]));
+  }
+
+  public static String deleteComponent(final StorageTx tx,
+                                      MavenFacet facet,
+                                      Component component) {
+    tx.deleteComponent(component);
+
+    NestedAttributesMap attributes = component.formatAttributes();
+    String groupId = attributes.get(P_GROUP_ID, String.class);
+    String artifactId = attributes.get(P_ARTIFACT_ID, String.class);
+    String baseVersion = attributes.get(P_BASE_VERSION, String.class);
+
+    try {
+      // We have to delete all metadata through GAV levels and rebuild in the next step, as the MetadataRebuilder
+      // isn't meant to remove metadata that has been orphaned by the deletion of a component
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, baseVersion));
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, null));
+      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return groupId;
   }
 }

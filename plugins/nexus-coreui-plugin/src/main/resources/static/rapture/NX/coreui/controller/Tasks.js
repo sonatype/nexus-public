@@ -33,7 +33,8 @@ Ext.define('NX.coreui.controller.Tasks', {
   ],
   stores: [
     'Task',
-    'TaskType'
+    'TaskType',
+      'TaskOptionPurge'
   ],
   models: [
     'Task'

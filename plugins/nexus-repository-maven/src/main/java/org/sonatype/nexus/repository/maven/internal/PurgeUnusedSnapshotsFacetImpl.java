@@ -263,25 +263,8 @@ public class PurgeUnusedSnapshotsFacetImpl
 
   private String deleteComponent(final Component component) {
     log.debug("Deleting unused snapshot component {}", component);
-    MavenFacet facet = facet(MavenFacet.class);
     final StorageTx tx = UnitOfWork.currentTx();
-    tx.deleteComponent(component);
-
-    NestedAttributesMap attributes = component.formatAttributes();
-    String groupId = attributes.get(P_GROUP_ID, String.class);
-    String artifactId = attributes.get(P_ARTIFACT_ID, String.class);
-    String baseVersion = attributes.get(P_BASE_VERSION, String.class);
-
-    try {
-      // We have to delete all metadata through GAV levels and rebuild in the next step, as the MetadataRebuilder
-      // isn't meant to remove metadata that has been orphaned by the deletion of a component
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, baseVersion));
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, null));
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    String groupId = MavenFacetUtils.deleteComponent(tx, facet(MavenFacet.class), component);
     return groupId;
   }
 
