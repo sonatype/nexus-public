@@ -126,17 +126,13 @@ public class UploadDefinitionResourceTest
 
     assertThat(actual.getAssetFields().size(), is(expected.getAssetFields().size() + 1));
     for (int i = 0; i < expected.getAssetFields().size(); i++) {
-      assertXO(expected.getAssetFields().get(i), actual.getAssetFields().get(i), "asset.");
+      assertXO(expected.getAssetFields().get(i), actual.getAssetFields().get(i));
     }
     assertFileXO(actual.getAssetFields().get(actual.getAssetFields().size() - 1));
   }
 
   private void assertXO(UploadFieldDefinition expected, UploadFieldDefinitionXO actual) {
-    assertXO(expected, actual, "");
-  }
-
-  private void assertXO(UploadFieldDefinition expected, UploadFieldDefinitionXO actual, String prefix) {
-    assertThat(actual.getName(), is(prefix + expected.getName()));
+    assertThat(actual.getName(), is(expected.getName()));
     assertThat(actual.getType(), is(expected.getType().name()));
     assertThat(actual.isOptional(), is(expected.isOptional()));
     assertThat(actual.getDescription(), is(expected.getHelpText()));

@@ -14,13 +14,13 @@ package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -31,8 +31,6 @@ import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.Constants;
-import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
-import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.view.Content;
 
@@ -55,46 +53,47 @@ public class RepositoryMetadataMerger
     extends ComponentSupport
 {
   /**
-   * Merges the contents of passed in metadata and returns the {@link Content} of the resulting merge. The content
-   * returned by this method is kept in memory, and is reusable.
-   *
-   * @return {@code null} if no merge possible for various reasons (ie. corrupted metadata). If non-null is returned,
-   * the {@link Content} contains merged metadata and is reusable.
+   * Merges the contents of passed in metadata.
    */
-  @Nullable
-  public Content merge(final Path path,
-      final MavenPath mavenPath,
-      final Map<Repository, Content> contents) throws IOException
+  public void merge(final OutputStream outputStream,
+                    final MavenPath mavenPath,
+                    final Map<Repository, Content> contents)
   {
     log.debug("Merge metadata for {}", mavenPath.getPath());
-    ArrayList<Envelope> metadatas = new ArrayList<>(contents.size());
-    for (Map.Entry<Repository, Content> entry : contents.entrySet()) {
-      final String origin = entry.getKey().getName() + " @ " + mavenPath.getPath();
-      try {
-        final Metadata metadata = MavenModels.readMetadata(entry.getValue().openInputStream());
-        if (metadata == null) {
-          log.debug("Corrupted repository metadata: {}, source: {}", origin, entry.getValue());
-          continue;
-        }
-        metadatas.add(new Envelope(origin, metadata));
+    List<Envelope> metadatas = new ArrayList<>(contents.size());
+    try {
+      for (Map.Entry<Repository, Content> entry : contents.entrySet()) {
+        addReadMetadata(mavenPath, metadatas, entry);
       }
-      catch (IOException e) {
-        log.debug("Error downloading repository metadata: {}, source: {}", origin, entry.getValue());
-        throw new IOException("Error downloading repository metadata for " + origin + ": " + e.getMessage(), e);
-      }
-    }
 
-    final Metadata mergedMetadata = merge(metadatas);
-    if (mergedMetadata == null) {
-      return null;
+      final Metadata mergedMetadata = merge(metadatas);
+      if (mergedMetadata == null) {
+        return;
+      }
+      MavenModels.writeMetadata(outputStream, mergedMetadata);
     }
-    return MavenFacetUtils.createTempContent(
-        path,
-        MavenMimeRulesSource.METADATA_TYPE,
-        (OutputStream outputStream) -> {
-          MavenModels.writeMetadata(outputStream, mergedMetadata);
-        }
-    );
+    catch (IOException e) {
+      log.error("Unable to merge {}", mavenPath, e);
+    }
+  }
+
+  private void addReadMetadata(final MavenPath mavenPath,
+                               final List<Envelope> metadatas,
+                               final Entry<Repository, Content> entry) throws IOException
+  {
+    final String origin = entry.getKey().getName() + " @ " + mavenPath.getPath();
+    try {
+      final Metadata metadata = MavenModels.readMetadata(entry.getValue().openInputStream());
+      if (metadata == null) {
+        log.debug("Corrupted repository metadata: {}, source: {}", origin, entry.getValue());
+        return;
+      }
+      metadatas.add(new Envelope(origin, metadata));
+    }
+    catch (IOException e) {
+      log.debug("Error downloading repository metadata: {}, source: {}", origin, entry.getValue());
+      throw new IOException("Error downloading repository metadata for " + origin + ": " + e.getMessage(), e);
+    }
   }
 
   /**

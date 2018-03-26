@@ -12,18 +12,32 @@
  */
 package org.sonatype.nexus.pax.exam.internal;
 
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.eclipse.equinox.region.Region;
 import org.eclipse.equinox.region.RegionDigraph;
 import org.ops4j.pax.exam.ProbeInvoker;
 import org.ops4j.pax.exam.ProbeInvokerFactory;
 import org.ops4j.pax.exam.TestContainerException;
 import org.ops4j.pax.exam.util.Injector;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.hooks.bundle.EventHook;
+import org.osgi.framework.hooks.service.EventListenerHook;
+import org.osgi.framework.hooks.service.FindHook;
 import org.osgi.util.tracker.ServiceTracker;
 
+import static java.util.Collections.singletonMap;
+import static org.osgi.framework.Constants.SERVICE_RANKING;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_INVOKER_DEFAULT;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_INVOKER_KEY;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_TIMEOUT_DEFAULT;
@@ -37,43 +51,50 @@ import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PAX_EXAM_TIM
 public class DelayedProbeInvokerFactory
     implements ProbeInvokerFactory
 {
+  private static final Logger log = Logger.getLogger(DelayedProbeInvokerFactory.class.getName());
+
   private final long examTimeout;
 
   private final String examInvoker;
+
+  private final RegionDigraph regionDigraph;
 
   private final ServiceTracker<?, ProbeInvokerFactory> probeFactoryTracker;
 
   private final ServiceTracker<?, Injector> nexusInjectorTracker;
 
-  private final ServiceTracker<?, RegionDigraph> regionDigraphTracker;
-
   public DelayedProbeInvokerFactory(final BundleContext context) {
     examTimeout = getExamTimeout(context);
     examInvoker = getExamInvoker(context);
 
+    regionDigraph = context.getService(context.getServiceReference(RegionDigraph.class));
+
     probeFactoryTracker = new ServiceTracker<>(context, probeInvokerFilter(), null);
     nexusInjectorTracker = new ServiceTracker<>(context, nexusInjectorFilter(), null);
-    regionDigraphTracker = new ServiceTracker<>(context, RegionDigraph.class, null);
 
     probeFactoryTracker.open();
     nexusInjectorTracker.open();
-    regionDigraphTracker.open();
+
+    // workaround https://issues.apache.org/jira/browse/KARAF-4899
+    installRegionWorkaround(context);
   }
 
+  @Override
   public ProbeInvoker createProbeInvoker(final Object context, final String expr) {
+    return new DelegatingProbeInvoker(() -> doCreateProbeInvoker(context, expr));
+  }
+
+  private ProbeInvoker doCreateProbeInvoker(final Object context, final String expr) {
     try {
       // wait for Nexus to start and register its Pax-Exam injector
       if (nexusInjectorTracker.waitForService(examTimeout) != null) {
-
-        // include the generated pax-exam test-probe bundle in the root region so it can see our service
-        regionDigraphTracker.getService().getRegion("root").addBundle(((BundleContext) context).getBundle());
 
         // use the real Pax-Exam invoker factory to supply the testsuite invoker
         return probeFactoryTracker.getService().createProbeInvoker(context, expr);
       }
       throw new TestContainerException("Nexus failed to start after " + examTimeout + "ms");
     }
-    catch (final InterruptedException|BundleException e) {
+    catch (final InterruptedException e) {
       throw new TestContainerException("Nexus failed to start after " + examTimeout + "ms", e);
     }
   }
@@ -128,6 +149,57 @@ public class DelayedProbeInvokerFactory
     }
     catch (final InvalidSyntaxException e) {
       throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * Workaround https://issues.apache.org/jira/browse/KARAF-4899 by
+   * re-adding probe bundle to root region before any service lookup
+   * (avoids spurious service lookup issues due to region filtering)
+   */
+  private void installRegionWorkaround(final BundleContext context) {
+    Map<String, ?> maxRanking = singletonMap(SERVICE_RANKING, Integer.MAX_VALUE);
+
+    // add probe to root region on install
+    context.registerService(EventHook.class,
+        (event, contexts) -> {
+          if (event.getType() == BundleEvent.INSTALLED) {
+            fixProbeRegion(event.getBundle());
+          }
+        }, new Hashtable<>(maxRanking));
+
+    // add probe to root region whenever a service it's listening to changes
+    context.registerService(EventListenerHook.class,
+        (event, listeners) -> {
+          if (((String[]) event.getServiceReference().getProperty(Constants.OBJECTCLASS))[0].contains("pax.exam")) {
+            listeners.keySet().stream().map(BundleContext::getBundle).forEach(this::fixProbeRegion);
+          }
+        }, new Hashtable<>(maxRanking));
+
+    // add probe to root region whenever it's directly looking up a service
+    context.registerService(FindHook.class,
+        (findContext, name, filter, allServices, references) -> {
+          if ((name != null && name.contains("pax.exam")) || (filter != null && filter.contains("pax.exam"))) {
+            fixProbeRegion(findContext.getBundle());
+          }
+        }, new Hashtable<>(maxRanking));
+  }
+
+  /**
+   * If given bundle is the probe then make sure it's associated with the current root region.
+   */
+  private void fixProbeRegion(final Bundle bundle) {
+    if (bundle.getSymbolicName().startsWith("PAXEXAM-PROBE")) {
+      Region rootRegion = regionDigraph.getRegion("root");
+      try {
+        if (!rootRegion.contains(bundle)) {
+          log.info("Adding bundle " + bundle + " to root region");
+          rootRegion.addBundle(bundle);
+        }
+      }
+      catch (final BundleException e) {
+        log.log(Level.WARNING, "Unable to add bundle " + bundle + " to root region", e);
+      }
     }
   }
 }

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class RepositoryMetadataMergerTest
   public ExpectedException exception = ExpectedException.none();
 
   @Mock
-  Path path;
+  OutputStream outputStream;
 
   @Mock
   MavenPath mavenPath;
@@ -246,22 +246,6 @@ public class RepositoryMetadataMergerTest
       }
     }));
     assertThat(prefixes, containsInAnyOrder("foo-maven-plugin", "bar-maven-plugin"));
-  }
-
-  @Test
-  public void ioExceptionIncludesMetadataOrigin() throws Exception {
-    IOException cause = new IOException("original-message");
-
-    when(mavenPath.getPath()).thenReturn("/some/path");
-    when(repository.getName()).thenReturn("repository-name");
-    when(content.openInputStream()).thenThrow(cause);
-
-    exception.expectMessage("/some/path");
-    exception.expectMessage("repository-name");
-    exception.expectMessage("original-message");
-    exception.expectCause(is(cause));
-
-    merger.merge(path, mavenPath, ImmutableMap.of(repository, content));
   }
 
   /**

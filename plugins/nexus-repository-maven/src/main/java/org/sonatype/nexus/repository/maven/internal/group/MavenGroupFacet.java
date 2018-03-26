@@ -13,15 +13,18 @@
 package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -31,13 +34,18 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
+import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
@@ -46,6 +54,9 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.mayAddETag;
 
 /**
  * Maven2 specific implementation of {@link GroupFacetImpl}: metadata merge and archetype catalog merge is handled.
@@ -118,25 +129,54 @@ public class MavenGroupFacet
       log.trace("No 200 OK responses to merge");
       return null;
     }
-    final Path path = Files.createTempFile("group-merged-content", "tmp");
-    Content content = null;
+
+    TempBlob tempBlob = null;
+
     try {
+      String contentType = null;
+
       if (mavenFacet.getMavenPathParser().isRepositoryMetadata(mavenPath)) {
-        content = repositoryMetadataMerger.merge(path, mavenPath, contents);
+        tempBlob = merge(repositoryMetadataMerger::merge, mavenPath, contents);
+        contentType = MavenMimeRulesSource.METADATA_TYPE;
       }
       else if (mavenPath.getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME)) {
-        content = archetypeCatalogMerger.merge(path, mavenPath, contents);
+        tempBlob = merge(archetypeCatalogMerger::merge, mavenPath, contents);
+        contentType = ContentTypes.APPLICATION_XML;
       }
-      if (content == null) {
+
+      if (tempBlob == null) {
         log.trace("No content resulted out of merge");
         return null;
       }
       log.trace("Caching merged content");
-      return cache(mavenPath, content);
+      return cache(mavenPath, tempBlob, contentType);
     }
     finally {
-      Files.delete(path);
+      if(tempBlob != null) {
+        tempBlob.close();
+      }
     }
+  }
+
+  /**
+   * Allows different merge methods to be used with the {@link StreamCopier}
+   */
+  interface MetadataMerger {
+    void merge(OutputStream outputStream, MavenPath mavenPath, LinkedHashMap<Repository, Content> contents);
+  }
+
+  private TempBlob merge(final MetadataMerger merger, final MavenPath mavenPath, final LinkedHashMap<Repository, Content> contents) {
+    return new StreamCopier<>(
+        outputStream -> merger.merge(outputStream, mavenPath, contents),
+        this::createTempBlob).read();
+  }
+
+  private TempBlob createTempBlob(final InputStream inputStream) {
+    StorageFacet storageFacet = getRepository().facet(StorageFacet.class);
+    List<HashAlgorithm> hashAlgorithms = stream(HashType.values())
+        .map(HashType::getHashAlgorithm)
+        .collect(toList());
+    return storageFacet.createTempBlob(inputStream, hashAlgorithms);
   }
 
   /**
@@ -154,8 +194,14 @@ public class MavenGroupFacet
   /**
    * Caches the merged content and it's Maven2 format required sha1/md5 hashes along.
    */
-  private Content cache(final MavenPath mavenPath, final Content content) throws IOException {
-    return MavenFacetUtils.putWithHashes(mavenFacet, mavenPath, maintainCacheInfo(content));
+  private Content cache(final MavenPath mavenPath,
+                        final TempBlob tempBlob,
+                        final String contentType) throws IOException {
+    AttributesMap attributesMap = new AttributesMap();
+    maintainCacheInfo(attributesMap);
+    mayAddETag(attributesMap, tempBlob.getHashes());
+
+    return MavenFacetUtils.putWithHashes(mavenFacet, mavenPath, tempBlob, contentType, attributesMap);
   }
 
   /**

@@ -14,22 +14,17 @@ package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.ContentTypes;
 
 import com.google.common.base.Predicate;
 import org.apache.maven.archetype.catalog.Archetype;
@@ -46,35 +41,41 @@ public class ArchetypeCatalogMerger
     extends ComponentSupport
 {
   /**
-   * Merges the contents of passed in catalogs and returns the {@link Content} of the resulting merge. The content
-   * returned by this method is backed by temporary file and is reusable.
-   *
-   * @return {@code null} if no merge possible for various reasons (ie. corrupted catalog). If non-null is returned,
-   * the {@link Content} contains merged catalog and is reusable.
+   * Merges the contents of passed in catalogs
    */
-  @Nullable
-  public Content merge(final Path path,
-      final MavenPath mavenPath,
-      final Map<Repository, Content> contents) throws IOException
+  public void merge(final OutputStream outputStream,
+                    final MavenPath mavenPath,
+                    final Map<Repository, Content> contents)
   {
     log.debug("Merge archetype catalog for {}", mavenPath.getPath());
     ArchetypeCatalog mergedCatalog = new ArchetypeCatalog();
     UniqueFilter uniqueFilter = new UniqueFilter();
-    for (Map.Entry<Repository, Content> entry : contents.entrySet()) {
-      String origin = entry.getKey().getName() + " @ " + mavenPath.getPath();
-      ArchetypeCatalog catalog = MavenModels.readArchetypeCatalog(entry.getValue().openInputStream());
-      if (catalog == null) {
-        log.debug("Corrupted archetype catalog: {}", origin);
-        continue;
-      }
-      for (Archetype archetype : catalog.getArchetypes()) {
-        if (uniqueFilter.apply(archetype)) {
-          archetype.setRepository(null);
-          mergedCatalog.addArchetype(archetype);
+
+    try {
+      for (Map.Entry<Repository, Content> entry : contents.entrySet()) {
+        String origin = entry.getKey().getName() + " @ " + mavenPath.getPath();
+        ArchetypeCatalog catalog = MavenModels.readArchetypeCatalog(entry.getValue().openInputStream());
+        if (catalog == null) {
+          log.debug("Corrupted archetype catalog: {}", origin);
+          continue;
+        }
+        for (Archetype archetype : catalog.getArchetypes()) {
+          if (uniqueFilter.apply(archetype)) {
+            archetype.setRepository(null);
+            mergedCatalog.addArchetype(archetype);
+          }
         }
       }
+      // sort the archetypes
+      sortArchetypes(mergedCatalog);
+      MavenModels.writeArchetypeCatalog(outputStream, mergedCatalog);
     }
-    // sort the archetypes
+    catch (IOException e) {
+      log.error("Unable to merge {}", mavenPath, e);
+    }
+  }
+
+  private void sortArchetypes(final ArchetypeCatalog mergedCatalog) {
     Collections.sort(mergedCatalog.getArchetypes(),
         (Archetype o1, Archetype o2) ->
         {
@@ -88,14 +89,6 @@ public class ArchetypeCatalogMerger
           }
           return version(o1.getVersion()).compareTo(version(o2.getVersion()));
         });
-
-    return MavenFacetUtils.createTempContent(
-        path,
-        ContentTypes.APPLICATION_XML,
-        (OutputStream outputStream) -> {
-          MavenModels.writeArchetypeCatalog(outputStream, mergedCatalog);
-        }
-    );
   }
 
   /**

@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.view.Response;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.getHashAlgorithmFromContent;
 
 /**
  * Maven hosted archetype catalog handler.
@@ -74,7 +76,8 @@ public class ArchetypeCatalogHandler
         return HttpResponses.notFound(path.getPath());
       }
     }
-    MavenFacetUtils.mayAddETag(content);
+    AttributesMap attributesMap = content.getAttributes();
+    MavenFacetUtils.mayAddETag(attributesMap, getHashAlgorithmFromContent(attributesMap));
     return HttpResponses.ok(content);
   }
 }

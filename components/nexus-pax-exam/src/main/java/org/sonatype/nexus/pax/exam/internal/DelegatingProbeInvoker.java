@@ -10,36 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.pax.exam.internal;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.function.Supplier;
 
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.ComponentDirector;
+import org.ops4j.pax.exam.ProbeInvoker;
 
 /**
+ * Delegates to the supplied {@link ProbeInvoker}.
+ * 
  * @since 3.next
  */
-@Named("raw")
-@Singleton
-public class RawComponentDirector
-    implements ComponentDirector
+public class DelegatingProbeInvoker
+    implements ProbeInvoker
 {
-  @Override
-  public boolean allowMoveTo(final Repository destination) {
-    return true;
+  private final Supplier<ProbeInvoker> supplier;
+
+  private volatile ProbeInvoker delegate;
+
+  public DelegatingProbeInvoker(final Supplier<ProbeInvoker> supplier) {
+    this.supplier = supplier;
   }
 
   @Override
-  public boolean allowMoveTo(final Component component, final Repository destination) {
-    return true;
+  public void call(final Object... args) {
+    waitForDelegate().call(args);
   }
 
-  @Override
-  public boolean allowMoveFrom(final Repository source) {
-    return true;
+  private ProbeInvoker waitForDelegate() {
+    if (delegate == null) {
+      synchronized (this) {
+        if (delegate == null) {
+          delegate = supplier.get();
+        }
+      }
+    }
+    return delegate;
   }
 }
-

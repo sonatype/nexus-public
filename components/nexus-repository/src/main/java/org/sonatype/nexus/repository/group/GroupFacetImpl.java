@@ -25,6 +25,7 @@ import javax.inject.Named;
 import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotNull;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -245,8 +246,7 @@ public class GroupFacetImpl
   /**
    * Maintains the latest cache information in the given content's attributes.
    */
-  protected Content maintainCacheInfo(final Content content) {
-    content.getAttributes().set(CacheInfo.class, cacheController.current());
-    return content;
+  protected void maintainCacheInfo(final AttributesMap attributesMap) {
+    attributesMap.set(CacheInfo.class, cacheController.current());
   }
 }

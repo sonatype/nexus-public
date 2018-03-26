@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
@@ -49,6 +51,7 @@ import com.google.common.hash.HashingOutputStream;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toMap;
 import static org.sonatype.nexus.common.app.VersionComparator.version;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
@@ -163,7 +166,8 @@ public final class MavenFacetUtils
     );
     content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, DateTime.now());
     content.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
-    mayAddETag(content);
+    AttributesMap attributesMap = content.getAttributes();
+    mayAddETag(attributesMap, getHashAlgorithmFromContent(attributesMap));
     return content;
   }
 
@@ -171,30 +175,48 @@ public final class MavenFacetUtils
    * Adds {@link Content#CONTENT_ETAG} content attribute if not present. In case of hosted repositories, this is safe
    * and even good thing to do, as the content is hosted here only and NX is content authority.
    */
-  public static void mayAddETag(final Content content) {
-    if (content.getAttributes().contains(Content.CONTENT_ETAG)) {
+  public static void mayAddETag(final AttributesMap attributesMap,
+                                final Map<HashAlgorithm, HashCode> hashCodes) {
+    if (attributesMap.contains(Content.CONTENT_ETAG)) {
       return;
     }
-    Map<HashAlgorithm, HashCode> hashCodes = content.getAttributes()
-        .require(Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
     HashCode sha1HashCode = hashCodes.get(HashAlgorithm.SHA1);
     if (sha1HashCode != null) {
-      content.getAttributes().set(Content.CONTENT_ETAG, "{SHA1{" + sha1HashCode + "}}");
+      attributesMap.set(Content.CONTENT_ETAG, "{SHA1{" + sha1HashCode + "}}");
     }
+  }
+
+  /**
+   * Retrieves the hash codes stored in {@link Content#attributes}
+   * @param attributesMap
+   * @return
+   */
+  public static Map<HashAlgorithm, HashCode> getHashAlgorithmFromContent(final AttributesMap attributesMap) {
+    return attributesMap
+          .require(Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
   }
 
   /**
    * Performs a {@link MavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
    * the put content.
    */
-  public static Content putWithHashes(final MavenFacet mavenFacet,
-      final MavenPath mavenPath,
-      final Content content) throws IOException
+  public static void putWithHashes(final MavenFacet mavenFacet,
+                                   final MavenPath mavenPath,
+                                   final Content content) throws IOException
   {
-    final Map<HashAlgorithm, HashCode> hashCodes = content.getAttributes().require(
-        Content.CONTENT_HASH_CODES_MAP, Content.T_CONTENT_HASH_CODES_MAP);
+    final Map<HashAlgorithm, HashCode> hashCodes = getHashAlgorithmFromContent(content.getAttributes());
     final DateTime now = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
-    Content result = mavenFacet.put(mavenPath, content);
+
+    mavenFacet.put(mavenPath, content);
+    addHashes(mavenFacet, mavenPath, hashCodes, now);
+  }
+
+  private static void addHashes(final MavenFacet mavenFacet,
+                                final MavenPath mavenPath,
+                                final Map<HashAlgorithm, HashCode> hashCodes,
+                                final DateTime now)
+      throws IOException
+  {
     for (HashType hashType : HashType.values()) {
       final HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
       if (hashCode != null) {
@@ -204,6 +226,31 @@ public final class MavenFacetUtils
         mavenFacet.put(mavenPath.hash(hashType), hashContent);
       }
     }
+  }
+
+  /**
+   * Performs a {@link MavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
+   * the put content.
+   *
+   * @param mavenFacet facet to use for storing the hashes
+   * @param mavenPath path to the created hashes
+   * @param tempBlob blob with the hashes calculated
+   * @param contentType
+   * @param attributesMap attributes to be stored as part of the hashes
+   * @return generated Content
+   * @throws IOException
+   */
+  public static Content putWithHashes(final MavenFacet mavenFacet,
+                                      final MavenPath mavenPath,
+                                      final TempBlob tempBlob,
+                                      final String contentType,
+                                      final AttributesMap attributesMap) throws IOException
+  {
+    final DateTime now = DateTime.now();
+
+    Content result = mavenFacet.put(mavenPath, tempBlob, contentType, attributesMap);
+    result.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
+    addHashes(mavenFacet, mavenPath, tempBlob.getHashes(), now);
     return result;
   }
 

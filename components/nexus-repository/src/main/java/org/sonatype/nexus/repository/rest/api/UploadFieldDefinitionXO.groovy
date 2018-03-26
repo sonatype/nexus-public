@@ -37,9 +37,9 @@ class UploadFieldDefinitionXO
 
   boolean optional
 
-  static UploadFieldDefinitionXO from(final UploadFieldDefinition uploadFieldDefinition, final String prefix = '') {
+  static UploadFieldDefinitionXO from(final UploadFieldDefinition uploadFieldDefinition) {
     return builder()
-        .name("$prefix$uploadFieldDefinition.name")
+        .name(uploadFieldDefinition.name)
         .type(uploadFieldDefinition.type.name())
         .description(uploadFieldDefinition.helpText)
         .optional(uploadFieldDefinition.optional)

@@ -42,7 +42,7 @@ class UploadDefinitionXO
         .format(uploadDefinition.format)
         .multipleUpload(uploadDefinition.multipleUpload)
         .componentFields(uploadDefinition.componentFields.collect { UploadFieldDefinitionXO.from(it) })
-        .assetFields(uploadDefinition.assetFields.collect { UploadFieldDefinitionXO.from(it, 'asset.') })
+        .assetFields(uploadDefinition.assetFields.collect { UploadFieldDefinitionXO.from(it) })
         .build()
   }
 }

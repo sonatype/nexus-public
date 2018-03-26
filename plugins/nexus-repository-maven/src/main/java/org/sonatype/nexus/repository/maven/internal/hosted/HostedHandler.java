@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
@@ -35,6 +36,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.getHashAlgorithmFromContent;
 
 /**
  * Maven hosted handler.
@@ -74,7 +76,8 @@ public class HostedHandler
     if (content == null) {
       return HttpResponses.notFound(path.getPath());
     }
-    MavenFacetUtils.mayAddETag(content);
+    AttributesMap attributesMap = content.getAttributes();
+    MavenFacetUtils.mayAddETag(attributesMap, getHashAlgorithmFromContent(attributesMap));
     return HttpResponses.ok(content);
   }
 
