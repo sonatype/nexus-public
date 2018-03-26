@@ -76,7 +76,7 @@ public class XmlRolePermissionResolver
     this.configuration = configuration;
     this.privilegeDescriptors = privilegeDescriptors;
     this.permissionFactory = permissionFactory;
-    this.permissionsCache = new MapMaker().weakValues().makeMap();
+    this.permissionsCache = new MapMaker().softValues().makeMap();
     eventBus.register(this);
   }
 
