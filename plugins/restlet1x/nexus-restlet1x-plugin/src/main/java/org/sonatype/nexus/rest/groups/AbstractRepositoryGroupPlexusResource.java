@@ -22,6 +22,7 @@ import org.sonatype.configuration.ConfigurationException;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
 import org.sonatype.nexus.proxy.registry.ContentClass;
 import org.sonatype.nexus.proxy.registry.RepositoryTypeRegistry;
+import org.sonatype.nexus.proxy.repository.AbstractGroupRepository;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
 import org.sonatype.nexus.proxy.repository.InvalidGroupingException;
 import org.sonatype.nexus.proxy.repository.LocalStatus;
@@ -129,21 +130,57 @@ public abstract class AbstractRepositoryGroupPlexusResource
   protected void createOrUpdateRepositoryGroup(RepositoryGroupResource model, boolean create)
       throws ResourceException
   {
-    if (create) {
-      createRepositoryGroup(model);
+    try {
+      if (create) {
+        createRepositoryGroup(model);
+      }
+      else {
+        updateRepositoryGroup(model);
+      }
     }
-    else {
-      updateRepositoryGroup(model);
+    catch (NoSuchRepositoryException e) {
+      //Both update and create catch and wrap a NoSuchRepositoryException when a member does not exist. Update however
+      //will throw the exception without wrapping if the group itself does not exist. When the group does not exist
+      //then there is nothing to rollback so we log, wrap and throw the exception here.
+      throw logAndWrapNoSuchGroupRepositoryException(model, e);
+    }
+    catch (Exception e) {
+      GroupRepository group = getGroupRepository(model);
+
+      //Rollback any in memory changes for any failure while updating / creating the group.
+      if (group instanceof AbstractGroupRepository && ((AbstractGroupRepository) group).rollbackChanges()) {
+        getLogger().warn("Changes to group {} rolled back because an exception was encountered", group.getId());
+      }
+      throw e;
+    }
+  }
+
+  private PlexusResourceException logAndWrapNoSuchGroupRepositoryException(final RepositoryGroupResource model,
+                                                                           final NoSuchRepositoryException e)
+  {
+    getLogger().warn("Group repository does not exist, ID=" + model.getId(), e);
+
+    return new PlexusResourceException(
+        Status.CLIENT_ERROR_BAD_REQUEST,
+        "Group repository does not exist, GroupId=" + model.getId(),
+        e,
+        getNexusErrorResponse("repositories", "Group repository does not exist"));
+  }
+
+  private GroupRepository getGroupRepository(final RepositoryGroupResource model) throws PlexusResourceException {
+    try {
+      return getRepositoryRegistry().getRepositoryWithFacet(model.getId(), GroupRepository.class);
+    }
+    catch (NoSuchRepositoryException e) {
+      throw logAndWrapNoSuchGroupRepositoryException(model, e);
     }
   }
 
   protected void updateRepositoryGroup(RepositoryGroupResource model)
-      throws ResourceException
+      throws ResourceException, NoSuchRepositoryException
   {
+    GroupRepository group = getRepositoryRegistry().getRepositoryWithFacet(model.getId(), GroupRepository.class);
     try {
-      GroupRepository group =
-          getRepositoryRegistry().getRepositoryWithFacet(model.getId(), GroupRepository.class);
-
       group.setName(model.getName());
 
       group.setExposed(model.isExposed());
@@ -161,7 +198,7 @@ public abstract class AbstractRepositoryGroupPlexusResource
     }
     catch (NoSuchRepositoryAccessException e) {
       // access denied 403
-      getLogger().warn("Repository referenced by Repository Group Access Eenied, ID=" + model.getId(), e);
+      getLogger().warn("Repository referenced by Repository Group Access Denied, ID=" + model.getId(), e);
 
       throw new PlexusResourceException(
           Status.CLIENT_ERROR_BAD_REQUEST,
@@ -203,6 +240,8 @@ public abstract class AbstractRepositoryGroupPlexusResource
       throws ResourceException
   {
     try {
+      verifyMembersExist(model);
+
       ContentClass contentClass =
           repositoryTypeRegistry.getRepositoryContentClass(GroupRepository.class, model.getProvider());
 
@@ -267,6 +306,13 @@ public abstract class AbstractRepositoryGroupPlexusResource
     }
     catch (ConfigurationException e) {
       handleConfigurationException(e);
+    }
+  }
+
+  private void verifyMembersExist(final RepositoryGroupResource model) throws NoSuchRepositoryException {
+    for (RepositoryGroupMemberRepository member : model.getRepositories()) {
+      // this will throw NoSuchRepository if needed
+      getRepositoryRegistry().getRepository(member.getId());
     }
   }
 }
