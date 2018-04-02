@@ -110,6 +110,13 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-npm</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-raw</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -118,6 +125,13 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-maven</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restore-npm</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
@@ -134,6 +148,17 @@
       <artifactId>nexus-task-log-cleanup</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
+    </dependency>
+
+    <!-- make sure commons-compress and xz are installed at the same time -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.tukaani</groupId>
+      <artifactId>xz</artifactId>
     </dependency>
 
   </dependencies>

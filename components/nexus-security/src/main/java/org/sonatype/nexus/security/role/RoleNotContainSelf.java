@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Validate role does not contain itself anywhere in the child hierarchy.
  *
- * @since 3.next
+ * @since 3.10
  */
 @Target({TYPE, ANNOTATION_TYPE})
 @Retention(RUNTIME)

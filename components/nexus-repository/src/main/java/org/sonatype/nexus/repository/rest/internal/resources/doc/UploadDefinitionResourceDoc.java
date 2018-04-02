@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiParam;
 /**
  * Swagger documentation for {@link UploadDefinitionResource}
  *
- * @since 3.next
+ * @since 3.10
  */
 @Api(value = "formats")
 public interface UploadDefinitionResourceDoc

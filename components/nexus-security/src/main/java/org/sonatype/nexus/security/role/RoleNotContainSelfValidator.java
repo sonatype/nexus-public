@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link RoleNotContainSelf} validator.
  *
- * @since 3.next
+ * @since 3.10
  */
 @Named
 public class RoleNotContainSelfValidator

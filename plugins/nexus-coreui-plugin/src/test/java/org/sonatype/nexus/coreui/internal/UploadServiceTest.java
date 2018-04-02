@@ -146,7 +146,8 @@ public class UploadServiceTest
         map(mockFile("text/plain", 3L, "stuff")));
     verify(handler, times(1)).handle(eq(repo), componentUploadCaptor.capture());
     verify(componentUploadExtension, times(1)).validate(any());
-    verify(componentUploadExtension, times(1)).apply(repo, componentUploadCaptor.getValue(), newId);
+    verify(componentUploadExtension, times(1)).apply(repo, componentUploadCaptor.getValue(),
+        Collections.singletonList(newId));
 
     ComponentUpload uc = componentUploadCaptor.getValue();
     assertThat(uc.getFields(), hasEntry("g", "foo"));

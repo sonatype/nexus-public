@@ -50,7 +50,7 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     info[NX.I18n.get('Assets_Info_Blob_Updated')] = assetModel.get('blobUpdated');
     info[NX.I18n.get('Assets_Info_Downloaded_Count')] = assetModel.get('downloadCount') + ' '
             + NX.I18n.get('Assets_Info_Downloaded_Unit');
-    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = assetModel.get('lastDownloaded');
+    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.Date.format(assetModel.get('lastDownloaded'), 'D M d Y');
     info[NX.I18n.get('Assets_Info_Locally_Cached')] = contentType !== 'unknown' && size > 0;
     info[NX.I18n.get('Assets_Info_BlobRef')] = assetModel.get('blobRef');
     info[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = assetModel.get('containingRepositoryName');

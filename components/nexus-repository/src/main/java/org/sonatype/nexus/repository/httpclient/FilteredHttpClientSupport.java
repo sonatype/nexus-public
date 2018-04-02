@@ -12,39 +12,30 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.net.URI;
-
-import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Support for wrapping {@link HttpClient}s.
+ * Support for wrapping {@link CloseableHttpClient}s.
  *
  * @since 3.1
  */
 public abstract class FilteredHttpClientSupport
-    extends ComponentSupport
-    implements HttpClient, Closeable
+    extends CloseableHttpClient
 {
-  private final HttpClient delegate;
+  private final CloseableHttpClient delegate;
 
-  public FilteredHttpClientSupport(final HttpClient delegate) {
+  public FilteredHttpClientSupport(final CloseableHttpClient delegate) {
     this.delegate = checkNotNull(delegate);
   }
 
@@ -59,95 +50,24 @@ public abstract class FilteredHttpClientSupport
   }
 
   @Override
-  public void close() throws IOException {
-    if (delegate instanceof Closeable) {
-      ((Closeable) delegate).close();
-    }
-  }
-
-  protected abstract <T> T filter(final HttpHost target, final Filterable<T> filterable) throws IOException;
-
-  @Override
-  public HttpResponse execute(final HttpUriRequest request) throws IOException {
-    return filter(determineTarget(request), () -> delegate.execute(request));
-  }
-
-  @Override
-  public HttpResponse execute(final HttpUriRequest request,
-                              final HttpContext context)
-      throws IOException
-  {
-    return filter(determineTarget(request), () -> delegate.execute(request, context));
-  }
-
-  @Override
-  public HttpResponse execute(final HttpHost target,
-                              final HttpRequest request)
-      throws IOException
-  {
-    return filter(target, () -> delegate.execute(target, request));
-  }
-
-  @Override
-  public HttpResponse execute(final HttpHost target,
-                              final HttpRequest request,
-                              final HttpContext context)
+  protected CloseableHttpResponse doExecute(final HttpHost target, final HttpRequest request, final HttpContext context)
       throws IOException
   {
     return filter(target, () -> delegate.execute(target, request, context));
   }
 
   @Override
-  public <T> T execute(final HttpUriRequest request,
-                       final ResponseHandler<? extends T> responseHandler)
-      throws IOException
-  {
-    return filter(determineTarget(request), () -> delegate.execute(request, responseHandler));
+  public void close() throws IOException {
+    delegate.close();
   }
 
-  @Override
-  public <T> T execute(final HttpUriRequest request,
-                       final ResponseHandler<? extends T> responseHandler,
-                       final HttpContext context)
-      throws IOException
-  {
-    return filter(determineTarget(request), () -> delegate.execute(request, responseHandler, context));
-  }
-
-  @Override
-  public <T> T execute(final HttpHost target,
-                       final HttpRequest request,
-                       final ResponseHandler<? extends T> responseHandler)
-      throws IOException
-  {
-    return filter(target, () -> delegate.execute(target, request, responseHandler));
-  }
-
-  @Override
-  public <T> T execute(final HttpHost target,
-                       final HttpRequest request,
-                       final ResponseHandler<? extends T> responseHandler,
-                       final HttpContext context) throws IOException
-  {
-    return filter(target, () -> delegate.execute(target, request, responseHandler, context));
-  }
-
-  private static HttpHost determineTarget(final HttpUriRequest request) throws ClientProtocolException {
-    HttpHost target = null;
-    final URI requestURI = request.getURI();
-    if (requestURI.isAbsolute()) {
-      target = URIUtils.extractHost(requestURI);
-      if (target == null) {
-        throw new ClientProtocolException("URI does not specify a valid host name: " + requestURI);
-      }
-    }
-    return target;
-  }
+  protected abstract CloseableHttpResponse filter(final HttpHost target, final Filterable filterable)
+      throws IOException;
 
   @VisibleForTesting
-  public interface Filterable<T>
+  public interface Filterable
   {
-    T call() throws IOException;
+    CloseableHttpResponse call() throws IOException;
   }
 
   @Override

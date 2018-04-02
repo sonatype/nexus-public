@@ -54,7 +54,7 @@ public abstract class SecurityFacetSupport
   }
 
   @Override
-  protected void doDestroy() throws Exception {
+  protected void doDelete() throws Exception {
     securityContributor.remove(getRepository());
   }
 

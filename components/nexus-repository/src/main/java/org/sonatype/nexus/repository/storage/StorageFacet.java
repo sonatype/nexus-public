@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.io.InputStream;
 
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.view.Payload;
@@ -58,4 +59,10 @@ public interface StorageFacet
    */
   TempBlob createTempBlob(Payload payload, Iterable<HashAlgorithm> hashAlgorithms);
 
+  /**
+   * Returns the {@link BlobStore} associated with the repository.
+   *
+   * @since 3.10
+   */
+  BlobStore blobStore();
 }

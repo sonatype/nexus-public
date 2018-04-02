@@ -20,6 +20,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventConsumer;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -121,11 +123,13 @@ public class AnonymousManagerImpl
     checkNotNull(configuration);
 
     AnonymousConfiguration model = configuration.copy();
-    // TODO: Validate configuration before saving?  Or leave to ext.direct?  Should we try and verify the user exists?
 
     log.info("Saving configuration: {}", model);
+
     synchronized (lock) {
-      store.save(model);
+      if (!EventHelper.isReplicating()) {
+        store.save(model);
+      }
       this.configuration = model;
     }
 
@@ -167,14 +171,20 @@ public class AnonymousManagerImpl
    * @since 3.2
    */
   @Subscribe
-  public void onStoreChanged(AnonymousConfigurationEvent event) {
+  public void onStoreChanged(final AnonymousConfigurationEvent event) {
+    handleReplication(event, e -> setConfiguration(e.getAnonymousConfiguration()));
+  }
+
+  private void handleReplication(final AnonymousConfigurationEvent event,
+                                 final EventConsumer<AnonymousConfigurationEvent> consumer)
+  {
     if (!event.isLocal()) {
-      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
-      AnonymousConfiguration model;
-      synchronized (lock) {
-        configuration = model = loadConfiguration();
+      try {
+        consumer.accept(event);
       }
-      eventManager.post(new AnonymousConfigurationChangedEvent(model));
+      catch (Exception e) {
+        log.error("Failed to replicate: {}", event, e);
+      }
     }
   }
 }

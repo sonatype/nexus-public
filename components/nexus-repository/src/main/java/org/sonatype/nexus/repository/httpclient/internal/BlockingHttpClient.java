@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.httpclient.internal;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -29,13 +27,20 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 
 import org.apache.http.HttpHost;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
+import org.apache.http.impl.EnglishReasonPhraseCatalog;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Locale.ENGLISH;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.sonatype.nexus.repository.http.HttpStatus.PROXY_AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
@@ -45,14 +50,15 @@ import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusTyp
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNINITIALISED;
 
 /**
- * Wraps an {@link HttpClient} with manual and automatic blocking functionality.
+ * Wraps an {@link CloseableHttpClient} with manual and automatic blocking functionality.
  *
  * @since 3.0
  */
 public class BlockingHttpClient
     extends FilteredHttpClientSupport
-    implements HttpClient, Closeable
 {
+  private static final Logger log = LoggerFactory.getLogger(BlockingHttpClient.class);
+
   private final boolean blocked;
 
   private HttpHost mainTarget;
@@ -69,7 +75,7 @@ public class BlockingHttpClient
 
   private RemoteConnectionStatus status = new RemoteConnectionStatus(UNINITIALISED);
 
-  public BlockingHttpClient(final HttpClient delegate,
+  public BlockingHttpClient(final CloseableHttpClient delegate,
                             final HttpClientFacetImpl.Config config,
                             final RemoteConnectionStatusObserver statusObserver,
                             final boolean repositoryOnline)
@@ -89,7 +95,7 @@ public class BlockingHttpClient
     autoBlockSequence = new FibonacciNumberSequence(Time.seconds(40).toMillis());
   }
 
-  protected <T> T filter(final HttpHost target, final Filterable<T> filterable) throws IOException {
+  protected CloseableHttpResponse filter(final HttpHost target, final Filterable filterable) throws IOException {
     // main target is the first accessed target
     if (mainTarget == null) {
       mainTarget = target;
@@ -106,56 +112,54 @@ public class BlockingHttpClient
       throw new RemoteBlockedIOException("Remote Auto Blocked until " + blockedUntilCopy);
     }
 
-    Optional<IOException> exception = Optional.empty();
-    T result = null;
     try {
-      result = filterable.call();
-    }
-    catch (IOException e) {
-      exception = Optional.of(e);
-    }
+      CloseableHttpResponse response = filterable.call();
+      int statusCode = response.getStatusLine().getStatusCode();
 
-    synchronized (this) {
-      if (!exception.isPresent()) {
-        if (autoBlock && blockedUntil != null) {
-            blockedUntil = null;
-            checkThread.interrupt();
-            checkThread = null;
-            autoBlockSequence.reset();
-        }
-        updateStatus(AVAILABLE);
+      if (isUnavailableStatus(statusCode)) {
+        updateStatusToUnavailable(getReason(statusCode), target);
       }
       else {
-        IOException e = exception.get();
-        if (isRemoteUnavailable(e)) {
-          if (autoBlock) {
-            // avoid some other thread already increased the sequence
-            if (blockedUntil == null || blockedUntil.isBeforeNow()) {
-              blockedUntil = DateTime.now().plus(autoBlockSequence.next());
-              if (checkThread != null) {
-                checkThread.interrupt();
-              }
-              String uri = target.toURI();
-              // TODO maybe find different means to schedule status checking
-              checkThread = new Thread(new CheckStatus(uri, blockedUntil), "Check Status " + uri);
-              checkThread.setDaemon(true);
-              checkThread.start();
-            }
-            updateStatus(AUTO_BLOCKED_UNAVAILABLE, getReason(e), target.toURI(),
-                blockedUntil.isAfter(status.getBlockedUntil()));
-          }
-          else {
-            updateStatus(UNAVAILABLE, getReason(e), target.toURI(), false);
-          }
-        }
+        updateStatusToAvailable();
       }
+      return response;
     }
+    catch (IOException e) {
+      if (isRemoteUnavailable(e)) {
+        updateStatusToUnavailable(getReason(e), target);
+      }
+      throw e;
+    }
+  }
 
-    if (exception.isPresent()) {
-      throw exception.get();
+  private synchronized void updateStatusToAvailable() {
+    if (autoBlock && blockedUntil != null) {
+      blockedUntil = null;
+      checkThread.interrupt();
+      checkThread = null;
+      autoBlockSequence.reset();
+    }
+    updateStatus(AVAILABLE);
+  }
+
+  private synchronized void updateStatusToUnavailable(final String reason, final HttpHost target) {
+    if (autoBlock) {
+      // avoid some other thread already increased the sequence
+      if (blockedUntil == null || blockedUntil.isBeforeNow()) {
+        blockedUntil = DateTime.now().plus(autoBlockSequence.next());
+        if (checkThread != null) {
+          checkThread.interrupt();
+        }
+        String uri = target.toURI();
+        // TODO maybe find different means to schedule status checking
+        checkThread = new Thread(new CheckStatus(uri, blockedUntil), "Check Status " + uri);
+        checkThread.setDaemon(true);
+        checkThread.start();
+      }
+      updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, target.toURI(), blockedUntil.isAfter(status.getBlockedUntil()));
     }
     else {
-      return result;
+      updateStatus(UNAVAILABLE, reason, target.toURI(), false);
     }
   }
 
@@ -188,11 +192,20 @@ public class BlockingHttpClient
     return true;
   }
 
+  private boolean isUnavailableStatus(final int statusCode) {
+    return statusCode == SC_UNAUTHORIZED || statusCode == PROXY_AUTHENTICATION_REQUIRED || statusCode >= 500;
+  }
+
   private String getReason(final Exception e) {
     if (e instanceof SSLPeerUnverifiedException) {
       return "Untrusted Remote";
     }
     return e.getClass().getName() + ": " + e.getMessage();
+  }
+
+  private String getReason(final int statusCode) {
+    String reason = EnglishReasonPhraseCatalog.INSTANCE.getReason(statusCode, ENGLISH);
+    return reason == null ? "Unrecognized HTTP error" : reason;
   }
 
   @Override

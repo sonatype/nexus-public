@@ -131,6 +131,8 @@ public interface SecurityConfigurationManager
    */
   void deletePrivilege(String id) throws NoSuchPrivilegeException;
 
+  void cleanRemovedPrivilege(String privilegeId);
+
   //
   // User-role mapping
   //

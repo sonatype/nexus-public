@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentDirector;
 
 /**
- * @since 3.next
+ * @since 3.10
  */
 @Named("raw")
 @Singleton

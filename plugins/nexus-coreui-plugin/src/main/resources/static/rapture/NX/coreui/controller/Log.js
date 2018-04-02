@@ -245,11 +245,14 @@ Ext.define('NX.coreui.controller.Log', {
    * @param {String} text log content
    */
   showLog: function (text) {
-    var textarea = this.getList().down('textarea');
+    var list = this.getList(),
+        textarea = list ? list.down('textarea') : null;
 
-    textarea.setValue(text);
-    // scroll to the bottom
-    textarea.getEl().down('textarea').dom.scrollTop = 1000000;
+    if (textarea) {
+      textarea.setValue(text);
+      // scroll to the bottom
+      textarea.getEl().down('textarea').dom.scrollTop = 1000000;
+    }
   },
 
   /**

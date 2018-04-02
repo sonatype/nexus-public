@@ -88,7 +88,10 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
     if (panel) {
       me.getStore('RealmType').load(function() {
         // The form depends on this store, so load it after the store has loaded
-        me.getForm().load();
+        var form = me.getForm();
+        if (form) {
+          form.load();
+        }
       });
     }
   }

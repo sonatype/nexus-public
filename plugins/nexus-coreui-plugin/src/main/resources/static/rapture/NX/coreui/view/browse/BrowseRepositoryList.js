@@ -43,9 +43,6 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
 
     this.store.clearFilter(true); // remove existing filters
     this.store.remoteFilter = true;
-    this.store.addFilter([
-      { property: 'applyPermissions', value: true }
-    ], false);
   }
 
 });

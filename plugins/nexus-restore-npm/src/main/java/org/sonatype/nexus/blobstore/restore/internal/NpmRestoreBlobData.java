@@ -1,0 +1,65 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.blobstore.restore.internal;
+
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+
+/**
+ * @since 3.6.1
+ */
+public final class NpmRestoreBlobData // must be public for guice injection
+{
+  public enum NpmType
+  {
+    REPOSITORY_ROOT,
+    PACKAGE_ROOT,
+    TARBALL;
+  }
+
+  private final NpmType type;
+
+  private final String packageId;
+
+  private final String tarballName;
+
+  private final RestoreBlobData blobData;
+
+  NpmRestoreBlobData(final NpmType type,
+                     final String packageId,
+                     @Nullable final String tarballName,
+                     final RestoreBlobData blobData)
+  {
+    this.type = type;
+    this.packageId = packageId;
+    this.tarballName = tarballName;
+    this.blobData = blobData;
+  }
+
+  public NpmType getType() {
+    return type;
+  }
+
+  public String getPackageId() {
+    return packageId;
+  }
+
+  public String getTarballName() {
+    return tarballName;
+  }
+
+  public RestoreBlobData getBlobData() {
+    return blobData;
+  }
+}

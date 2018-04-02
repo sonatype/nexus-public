@@ -11,11 +11,22 @@
 @REM Eclipse Foundation. All other trademarks are the property of their respective owners.
 @REM
 
+@REM keep track of what folder we're currently in so we can return there later
+set here=%cd%
+
 @REM Backup nexus.properties
 copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
 
-call mvn clean install -Dmaven.test.skip=true -T 4
+@REM allow user to specify custom thread count on the command line
+if "%~1"=="-T" goto :customThreads
 
+call mvn clean install -DskipTests -T 4
+goto :continue
+
+:customThreads
+call mvn clean install -DskipTests -T %~2
+
+:continue
 set KARAF_DEBUG=true
 
 @REM Set NEXUS_RESOURCE_DIRS for UI development
@@ -38,3 +49,5 @@ if exist "C:\Program Files\7-Zip\7z.exe" (
 cd nexus*\bin
 
 nexus /run
+
+cd %here%

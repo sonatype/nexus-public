@@ -125,7 +125,10 @@ Ext.define('NX.coreui.controller.Privileges', {
         '#Privilege': {
           load: function() {
             me.reselect(arguments);
-            me.getSearchBox().focus();
+            var searchBox = me.getSearchBox();
+            if (searchBox) {
+              searchBox.focus();
+            }
           }
         }
       },

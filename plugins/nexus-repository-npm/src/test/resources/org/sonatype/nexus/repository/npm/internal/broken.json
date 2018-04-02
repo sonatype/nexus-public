@@ -1,0 +1,13 @@
+{
+  "_attachments": {
+    "deletePackage1x-1.0.tgz": {
+      "content_type": "application/gzip",
+      "data": "H4sIAAAAAAAAA+1Tz2/aMBTu2X+F5dMqQeJAEhAq0ypaaTt0h9LbuoMbTOKR2JFt6KIJ/vb5xaHbYdIOpUiV8l2e835+zvNXs2zDch7W3gY/jJIXJwalNI1jDHaSJq2lI/8NSMfuHI2SdJJM0slodEGjMY3HLn5qIv/C1limHZXX9vF3wS/2neAXwphIVnEyw8SIqi75UNbVsHsPZADxHddGKAkpUUAD6r0rbjItattFlm0x7grxWmlsubFC5j693j6VwhQLJdciJ3iGYTSAaJ4LY3UDTlJYW8/CsFQZKwtl7GxKp1Goea2MsEo3oWMHfr6KQuI67NvmFRMtCSFX/Kd7xH6k52fIcRYBQpDGs0LhR/JV4QfnMY/kT6cNb56VXkHRt7+KBv7s/xBkf2+z2dYWSkPLB1YxgxeG6x2XbIOvLDg+ZUdHILn9iD9018tMGw6UzsNLT7YUGZem3cOX5YKgPTrH/rt1hfe31zd3t28z4z/6j0AuoP+EJnEagf6jmMa9/s+BTrVOVEflovl8jtCdE1TZeBWrxokYPwtbBAihz2zn1L2VA3Swh7O80R49evTocXr8BuKt7gUADAAA",
+      "length": 447
+    }
+  },
+  "dist-tags": {
+    "latest": "1.0"
+  }
+  Contents intentionally broken for testing.
+  Please ensure that this is broken somewhere after the _attachments section for testing cleanup on failure.

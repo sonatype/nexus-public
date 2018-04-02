@@ -39,6 +39,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -223,7 +224,7 @@ public class HttpClientFacetImpl
     HttpClientConfiguration delegateConfig = new HttpClientConfiguration();
     delegateConfig.setConnection(config.connection);
     delegateConfig.setAuthentication(config.authentication);
-    HttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
+    CloseableHttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
     boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client

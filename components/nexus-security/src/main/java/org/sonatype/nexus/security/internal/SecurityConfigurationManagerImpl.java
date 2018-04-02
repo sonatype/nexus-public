@@ -148,7 +148,7 @@ public class SecurityConfigurationManagerImpl
     if (!found) {
       throw new NoSuchPrivilegeException(id);
     }
-    configCleaner.privilegeRemoved(getDefaultConfiguration(), id);
+    cleanRemovedPrivilege(id);
   }
 
   @Override
@@ -279,6 +279,11 @@ public class SecurityConfigurationManagerImpl
       securityContributors.remove(contributor);
     }
     eventManager.post(new SecurityContributionChangedEvent());
+  }
+
+  @Override
+  public void cleanRemovedPrivilege(String privilegeId) {
+    configCleaner.privilegeRemoved(getDefaultConfiguration(), privilegeId);
   }
 
   private SecurityConfiguration getDefaultConfiguration() {

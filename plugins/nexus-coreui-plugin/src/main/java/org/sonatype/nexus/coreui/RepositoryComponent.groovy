@@ -362,19 +362,13 @@ class RepositoryComponent
       repositories = filterIn(repositories, versionPolicies, { Repository repository ->
         (String) repository?.configuration?.attributes?.maven?.versionPolicy
       })
-
-      repositories = applyPermissions(parameters, repositories)
     }
+
+    repositories = repositories.findResults {
+      Repository repository -> repositoryPermissionChecker.userCanBrowseRepository(repository) ? repository : null
+    }
+
     return repositories
-  }
-
-  Collection<Repository> applyPermissions(StoreLoadParameters parameters, Iterable<Repository> repositories) {
-    if (Boolean.valueOf(parameters.getFilter('applyPermissions'))) {
-      repositories = repositories.findResults {
-        Repository repository -> repositoryPermissionChecker.userCanBrowseRepository(repository) ? repository : null
-      }
-    }
-    repositories
   }
 
   Iterable<Repository> browse() {

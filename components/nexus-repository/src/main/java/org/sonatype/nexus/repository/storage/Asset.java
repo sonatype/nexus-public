@@ -226,7 +226,7 @@ public class Asset
    */
   public boolean markAsDownloaded() {
     DateTime now = DateTime.now();
-    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusMinutes(1))) {
+    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusHours(12))) {
       lastDownloaded(now);
       return true;
     }

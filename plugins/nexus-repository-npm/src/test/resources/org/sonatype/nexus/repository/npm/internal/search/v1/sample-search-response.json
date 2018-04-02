@@ -1,0 +1,60 @@
+{
+  "objects": [
+    {
+      "package": {
+        "name": "yargs",
+        "version": "6.6.0",
+        "description": "yargs the modern, pirate-themed, successor to optimist.",
+        "keywords": [
+          "argument",
+          "args",
+          "option",
+          "parser",
+          "parsing",
+          "cli",
+          "command"
+        ],
+        "date": "2016-12-30T16:53:16.023Z",
+        "links": {
+          "npm": "https://www.npmjs.com/package/yargs",
+          "homepage": "http://yargs.js.org/",
+          "repository": "https://github.com/yargs/yargs",
+          "bugs": "https://github.com/yargs/yargs/issues"
+        },
+        "publisher": {
+          "username": "bcoe",
+          "email": "ben@npmjs.com"
+        },
+        "maintainers": [
+          {
+            "username": "bcoe",
+            "email": "ben@npmjs.com"
+          },
+          {
+            "username": "chevex",
+            "email": "alex.ford@codetunnel.com"
+          },
+          {
+            "username": "nexdrew",
+            "email": "andrew@npmjs.com"
+          },
+          {
+            "username": "nylen",
+            "email": "jnylen@gmail.com"
+          }
+        ]
+      },
+      "score": {
+        "final": 0.9237841281241451,
+        "detail": {
+          "quality": 0.9270640902288084,
+          "popularity": 0.8484861649808381,
+          "maintenance": 0.9962706951777409
+        }
+      },
+      "searchScore": 100000.914
+    }
+  ],
+  "total": 1,
+  "time": "Wed Jan 25 2017 19:23:35 GMT+0000 (UTC)"
+}

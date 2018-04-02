@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -20,13 +23,13 @@ import org.sonatype.nexus.security.config.MutableSecurityContributor;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.id;
+import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.privilege;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
 import static org.sonatype.nexus.security.BreadActions.READ;
-import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.id;
-import static org.sonatype.nexus.repository.security.RepositoryAdminPrivilegeDescriptor.privilege;
 import static org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport.ALL;
 
 /**
@@ -61,17 +64,13 @@ public class RepositoryAdminSecurityContributor
     checkNotNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        // no per-repo repository-admin ADD action
-        model.addPrivilege(privilege(format, name, ALL));
-        model.addPrivilege(privilege(format, name, BROWSE));
-        model.addPrivilege(privilege(format, name, READ));
-        model.addPrivilege(privilege(format, name, EDIT));
-        model.addPrivilege(privilege(format, name, DELETE));
-      }
+    apply((model, configurationManager) -> {
+      // no per-repo repository-admin ADD action
+      model.addPrivilege(privilege(format, name, ALL));
+      model.addPrivilege(privilege(format, name, BROWSE));
+      model.addPrivilege(privilege(format, name, READ));
+      model.addPrivilege(privilege(format, name, EDIT));
+      model.addPrivilege(privilege(format, name, DELETE));
     });
   }
 
@@ -82,17 +81,16 @@ public class RepositoryAdminSecurityContributor
     checkNotNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        // no per-repo repository-admin ADD action
-        model.removePrivilege(id(format, name, ALL));
-        model.removePrivilege(id(format, name, BROWSE));
-        model.removePrivilege(id(format, name, READ));
-        model.removePrivilege(id(format, name, EDIT));
-        model.removePrivilege(id(format, name, DELETE));
-      }
+    final List<String> privilegeIds = Arrays.asList(
+        id(format, name, ALL),
+        id(format, name, BROWSE),
+        id(format, name, READ),
+        id(format, name, EDIT),
+        id(format, name, DELETE));
+    apply((model, configurationManager) -> {
+      // no per-repo repository-admin ADD action
+      privilegeIds.forEach(model::removePrivilege);
+      privilegeIds.forEach(configurationManager::cleanRemovedPrivilege);
     });
   }
 }

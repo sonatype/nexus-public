@@ -15,7 +15,7 @@
 /**
  * Window related utils.
  *
- * @since 3.next
+ * @since 3.10
  */
 Ext.define('NX.util.Window', {
   singleton: true,

@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.config.MutableSecurityContributor;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
@@ -67,18 +70,14 @@ public class RepositoryFormatSecurityContributor
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
 
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        // add repository-view <format> <name> privileges
-        model.addPrivilege(privilege(format, name, ALL));
-        model.addPrivilege(privilege(format, name, BROWSE));
-        model.addPrivilege(privilege(format, name, READ));
-        model.addPrivilege(privilege(format, name, EDIT));
-        model.addPrivilege(privilege(format, name, ADD));
-        model.addPrivilege(privilege(format, name, DELETE));
-      }
+    apply((model, configurationManager) -> {
+      // add repository-view <format> <name> privileges
+      model.addPrivilege(privilege(format, name, ALL));
+      model.addPrivilege(privilege(format, name, BROWSE));
+      model.addPrivilege(privilege(format, name, READ));
+      model.addPrivilege(privilege(format, name, EDIT));
+      model.addPrivilege(privilege(format, name, ADD));
+      model.addPrivilege(privilege(format, name, DELETE));
     });
   }
 
@@ -89,19 +88,18 @@ public class RepositoryFormatSecurityContributor
     checkNotNull(repository);
     final String format = repository.getFormat().getValue();
     final String name = repository.getName();
+    final List<String> privilegeIds = asList(
+        id(format, name, ALL),
+        id(format, name, BROWSE),
+        id(format, name, READ),
+        id(format, name, EDIT),
+        id(format, name, ADD),
+        id(format, name, DELETE));
 
-    apply(new Mutator()
-    {
-      @Override
-      public void apply(final SecurityConfiguration model) {
-        // remove repository-view <format> <name> privileges
-        model.removePrivilege(id(format, name, ALL));
-        model.removePrivilege(id(format, name, BROWSE));
-        model.removePrivilege(id(format, name, READ));
-        model.removePrivilege(id(format, name, EDIT));
-        model.removePrivilege(id(format, name, ADD));
-        model.removePrivilege(id(format, name, DELETE));
-      }
+    apply((model, configurationManager) -> {
+      // remove repository-view <format> <name> privileges
+      privilegeIds.forEach(model::removePrivilege);
+      privilegeIds.forEach(configurationManager::cleanRemovedPrivilege);
     });
   }
 }

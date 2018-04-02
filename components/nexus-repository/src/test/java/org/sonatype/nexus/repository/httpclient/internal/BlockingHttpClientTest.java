@@ -22,12 +22,18 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
 
 import org.apache.http.HttpHost;
-import org.apache.http.client.HttpClient;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -48,7 +54,7 @@ public class BlockingHttpClientTest
     extends TestSupport
 {
   @Mock
-  HttpClient httpClient;
+  CloseableHttpClient httpClient;
 
   @Mock
   RemoteConnectionStatusObserver statusObserver;
@@ -56,12 +62,21 @@ public class BlockingHttpClientTest
   @Mock
   Filterable filterable;
 
+  @Mock
+  CloseableHttpResponse httpResponse;
+
+  @Mock
+  StatusLine statusLine;
+
   HttpHost httpHost;
 
   BlockingHttpClient underTest;
 
   @Before
   public void setup() throws Exception {
+    when(filterable.call()).thenReturn(httpResponse);
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_OK);
     httpHost = HttpHost.create("localhost");
     underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, true);
   }
@@ -84,7 +99,7 @@ public class BlockingHttpClientTest
   }
 
   @Test
-  public void updateStatusWhenUnavailableAndAutoBlocked() throws Exception {
+  public void updateStatusWhenUnavailableDueToExceptionAndAutoBlocked() throws Exception {
     setInternalState(underTest, "autoBlock", true);
     when(filterable.call()).thenThrow(new IOException());
     filterAndHandleException();
@@ -92,10 +107,55 @@ public class BlockingHttpClientTest
   }
 
   @Test
-  public void updateStatusWhenUnavailable() throws Exception {
+  public void updateStatusWhenUnavailableDueToUnauthorizedResponseAndAutoBlocked() throws Exception {
+    setInternalState(underTest, "autoBlock", true);
+    when(statusLine.getStatusCode()).thenReturn(SC_UNAUTHORIZED);
+    filterAndHandleException();
+    verifyUpdateStatus(AUTO_BLOCKED_UNAVAILABLE, "Unauthorized");
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueToProxyAuthRequiredResponseAndAutoBlocked() throws Exception {
+    setInternalState(underTest, "autoBlock", true);
+    when(statusLine.getStatusCode()).thenReturn(SC_PROXY_AUTHENTICATION_REQUIRED);
+    filterAndHandleException();
+    verifyUpdateStatus(AUTO_BLOCKED_UNAVAILABLE, "Proxy Authentication Required");
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueTo5xxResponseAndAutoBlocked() throws Exception {
+    setInternalState(underTest, "autoBlock", true);
+    when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
+    filterAndHandleException();
+    verifyUpdateStatus(AUTO_BLOCKED_UNAVAILABLE, "Bad Gateway");
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueToException() throws Exception {
     when(filterable.call()).thenThrow(new IOException());
     filterAndHandleException();
     verifyUpdateStatus(UNAVAILABLE);
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueToUnauthorizedResponse() throws Exception {
+    when(statusLine.getStatusCode()).thenReturn(SC_UNAUTHORIZED);
+    filterAndHandleException();
+    verifyUpdateStatus(UNAVAILABLE, "Unauthorized");
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueToProxyAuthRequiredResponse() throws Exception {
+    when(statusLine.getStatusCode()).thenReturn(SC_PROXY_AUTHENTICATION_REQUIRED);
+    filterAndHandleException();
+    verifyUpdateStatus(UNAVAILABLE, "Proxy Authentication Required");
+  }
+
+  @Test
+  public void updateStatusWhenUnavailableDueTo5xxResponse() throws Exception {
+    when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
+    filterAndHandleException();
+    verifyUpdateStatus(UNAVAILABLE, "Bad Gateway");
   }
 
   @Test
@@ -126,11 +186,18 @@ public class BlockingHttpClientTest
   }
 
   private void verifyUpdateStatus(final RemoteConnectionStatusType newType) {
+    verifyUpdateStatus(newType, null);
+  }
+
+  private void verifyUpdateStatus(final RemoteConnectionStatusType newType, final String newReason) {
     ArgumentCaptor<RemoteConnectionStatus> oldStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     verify(statusObserver, times(2)).onStatusChanged(oldStatusCaptor.capture(), newStatusCaptor.capture());
     assertThat(oldStatusCaptor.getAllValues().get(1).getType(), is(equalTo(READY)));
     assertThat(newStatusCaptor.getAllValues().get(1).getType(), is(equalTo(newType)));
+    if (newReason != null) {
+      assertThat(newStatusCaptor.getAllValues().get(1).getReason(), is(equalTo(newReason)));
+    }
   }
 
   private void filterAndHandleException() throws IOException {

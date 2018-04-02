@@ -204,6 +204,7 @@ ConfigObject processRcConfigFile() {
   // assign any CLI options
   config.port = cliOptions.'port' ?: config.port
   config.sslPort = cliOptions.'ssl-port' ?: config.sslPort
+  config.sslIp = cliOptions.'ssl-ip' ?: null
   config.karafSshPort = cliOptions.'karaf-ssh-port' ?: config.karafSshPort
   config.javaDebugPort = cliOptions.'java-debug-port' ?: config.javaDebugPort
 
@@ -323,6 +324,7 @@ def processCliOptions(args) {
     b longOpt: 'build', 'Build mode [default]. Intelligently does a full or incremental build.'
     r longOpt: 'run', args: 1, 'Run mode. Starts Nexus with the specified assembly. Add \'debug\' for Nexus debug mode (i.e. remote debugging).'
     _ longOpt: 'geb', '''Process dependencies for Geb test execution in your IDE.'''
+    _ longOpt: 'sass', '''Compile Sass files to CSS.'''
     e longOpt: 'extract', 'Re-run the assembly extraction'
     // build mode options
     f longOpt: 'full', 'Force full build'
@@ -349,6 +351,7 @@ def processCliOptions(args) {
     _ longOpt: 'java-debug-port', args: 1, 'Set JDWP debug port. Defaults to 5005'
     _ longOpt: 'ssl', 'Enable SSL (if disabled by config)'
     _ longOpt: 'no-ssl', 'Disable SSL (enabled by default)'
+    _ longOpt: 'ssl-ip', args: 1, 'Provide the ip address of this machine to generate an SSL certificate for use with Docker'
     _ longOpt: 'orient', 'Enable Orient (if disabled by config)'
     _ longOpt: 'no-orient', 'Disable Orient (enabled by default)'
     _ longOpt: 'elastic', 'Enable Elastic plugins (disabled by default)'
@@ -863,13 +866,24 @@ def checkSSL() {
 
     // see if keystore.jks is already created
     def keystore = new File(".nxrm/keystore.jks")
+
+    if (rcConfig.sslIp != null && keystore.exists()) {
+      // If we have an ssl ip address set, then we need to generate a new keystore
+      keystore.delete()
+    }
+
     if (!keystore.exists()) {
-      info "Generating keystore.jks for the first time and storing in .nxrm/keystore.jks"
-      def process = new ProcessBuilder("keytool", "-genkeypair", "-keystore", ".nxrm/keystore.jks", "-storepass",
+      info "Generating .nxrm/keystore.jks"
+      def keytool = ["keytool", "-genkeypair", "-keystore", ".nxrm/keystore.jks", "-storepass",
           "password", "-keypass", "password", "-alias", "self-signed-example", "-keyalg", "RSA", "-keysize", "2048",
           "-validity", "5000", "-dname", "CN=localhost, OU=Example, O=Example, L=Unspecified, ST=Unspecified, C=US",
-          "-ext", "BC=ca:true"
-      ).redirectErrorStream(true).start()
+          "-ext", "BC=ca:true"]
+      if (rcConfig.sslIp) {
+        keytool << "-ext"
+        keytool << "SAN=IP:${rcConfig.sslIp},DNS:localhost"
+      }
+
+      def process = new ProcessBuilder(keytool as String[]).redirectErrorStream(true).start()
       process.inputStream.eachLine {
         println it
       }
@@ -1067,8 +1081,18 @@ def geb() {
   info('Enabling Geb tests for your IDE')
   info("Note: The default build options do NOT even compile tests. Before running '--geb' you should run './nxrm.groovy -f -t skip' to compile ALL test code.")
 
-  def cmd = 'dependency:properties process-test-resources -Dit -pl :functional-testsuite,:nexuspro-modern-testsuite,:nexuspro-fabric-testsuite'
+  mvnw('dependency:properties process-test-resources -Dit -pl :functional-testsuite,:nexuspro-modern-testsuite,:nexuspro-fabric-testsuite')
+}
+
+def sass() {
+  info('Compiling Sass files')
+
+  mvnw('clean install -Pdriver -Dmode=build -pl :nexus-rapture')
+}
+
+def mvnw(cmd) {
   info("Running command: ./mvnw $cmd")
+
   def process = new ProcessBuilder("unbuffer", "./mvnw", cmd).redirectErrorStream(true).start()
   process.inputStream.eachLine {
     // print to console
@@ -1104,6 +1128,10 @@ else if (cliOptions.extract) {
 }
 else if (cliOptions.geb) {
   geb()
+  return
+}
+else if (cliOptions.sass) {
+  sass()
   return
 }
 else {

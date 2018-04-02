@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 /**
  * Extension point interface which provides a mechanism for contributing an {@link UploadFieldDefinition}
  *
- * @since 3.next
+ * @since 3.10
  */
 public interface UploadDefinitionExtension
 {

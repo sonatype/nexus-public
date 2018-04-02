@@ -35,8 +35,10 @@
     <module>nexus-coreui-plugin</module>
     <module>nexus-repository-httpbridge</module>
     <module>nexus-repository-maven</module>
+    <module>nexus-repository-npm</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-maven</module>
+    <module>nexus-restore-npm</module>
     <module>nexus-script-plugin</module>
     <module>nexus-ssl-plugin</module>
     <module>nexus-task-log-cleanup</module>
@@ -153,6 +155,36 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-restore-maven</artifactId>
+        <version>3.10.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-npm -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-npm</artifactId>
+        <version>3.10.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-npm</artifactId>
+        <version>3.10.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-npm</artifactId>
+        <version>3.10.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-npm</artifactId>
         <version>3.10.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

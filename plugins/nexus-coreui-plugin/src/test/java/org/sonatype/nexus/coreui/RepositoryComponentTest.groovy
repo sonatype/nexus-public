@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
-import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -27,7 +26,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 
@@ -67,25 +65,8 @@ class RepositoryComponentTest
 
   @Test
   void checkUserPermissionsOnFilter() {
-    underTest.filter(applyPermissions(true))
+    underTest.filter(new StoreLoadParameters(filter: []))
     verify(repositoryPermissionChecker).userCanBrowseRepository(repository)
-  }
-
-  @Test
-  void doNotCheckPermissionsWhenNotApplied() {
-    underTest.filter(applyPermissions(false))
-    verify(repositoryPermissionChecker, never()).userCanBrowseRepository(repository)
-  }
-
-  StoreLoadParameters applyPermissions(boolean apply) {
-    new StoreLoadParameters(
-        filter: [
-            new Filter(
-                property: 'applyPermissions',
-                value: Boolean.toString(apply)
-            )
-        ]
-    )
   }
 
   Repository repository() {

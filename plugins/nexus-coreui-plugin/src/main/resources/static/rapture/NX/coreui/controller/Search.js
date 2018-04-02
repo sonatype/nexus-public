@@ -273,15 +273,17 @@ Ext.define('NX.coreui.controller.Search', {
   showHideLimitMessage: function() {
     var me = this,
         rawData =  me.getStore('SearchResult').proxy.reader.rawData,
-        info = me.getFeature().down('#info'),
+        info = me.getFeature() ? me.getFeature().down('#info') : null,
         format = Ext.util.Format.numberRenderer('0,000');
-    if (rawData.limited) {
-      info.setTitle(NX.I18n.format('Search_Results_Limit_Message',
-          format(rawData.total), format(rawData.unlimitedTotal)));
-      info.show();
-    }
-    else {
-      info.hide();
+    if (info) {
+      if (rawData.limited) {
+        info.setTitle(NX.I18n.format('Search_Results_Limit_Message',
+            format(rawData.total), format(rawData.unlimitedTotal)));
+        info.show();
+      }
+      else {
+        info.hide();
+      }
     }
   },
 

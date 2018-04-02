@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest;
 
+import java.util.Collection;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentsResource;
@@ -21,7 +23,7 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 /**
  * Extension point interface used within {@link ComponentsResource#uploadComponent}
  *
- * @since 3.next
+ * @since 3.10
  */
 public interface ComponentUploadExtension
 {
@@ -29,7 +31,7 @@ public interface ComponentUploadExtension
    * Apply data in the {@link ComponentUpload} to the provided {@link EntityId} within
    * the provided {@link Repository}
    */
-  void apply(Repository repository, ComponentUpload componentUpload, EntityId entityId);
+  void apply(Repository repository, ComponentUpload componentUpload, Collection<EntityId> entityIds);
 
   /**
    * Validate elements within {@link ComponentsResource#uploadComponent}

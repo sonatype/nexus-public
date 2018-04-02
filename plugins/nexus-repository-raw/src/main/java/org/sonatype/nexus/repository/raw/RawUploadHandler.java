@@ -84,7 +84,7 @@ public class RawUploadHandler
         .throwing(IOException.class).call(() -> {
 
           //Data holders for populating the UploadResponse
-          Content responseContent = null;
+          List<Content> responseContents = Lists.newArrayList();
           List<String> assetPaths = Lists.newArrayList();
 
           for (AssetUpload asset : upload.getAssetUploads()) {
@@ -94,15 +94,11 @@ public class RawUploadHandler
 
             Content content = facet.put(path, asset.getPayload());
 
-            //We only need to set this one time, it provides the component id which
-            //is the same for all assets upload for a component
-            if (responseContent == null) {
-              responseContent = content;
-            }
+            responseContents.add(content);
             assetPaths.add(path);
           }
 
-          return new UploadResponse(responseContent, assetPaths);
+          return new UploadResponse(responseContents, assetPaths);
         });
   }
 

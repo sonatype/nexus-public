@@ -30,7 +30,7 @@ import static org.sonatype.nexus.security.BreadActions.READ;
 /**
  * Repository permission checker.
  *
- * @since 3.next
+ * @since 3.10
  */
 @Named
 @Singleton
