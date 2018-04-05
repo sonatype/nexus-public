@@ -247,6 +247,9 @@ public class ComponentEntityAdapter
 
     String repositoryName = ((ODocument) document.field(P_BUCKET)).field(P_REPOSITORY_NAME);
 
+    // prefetch any lazy/linked fields that the extensions want to capture
+    componentEntityAdapterExtensions.forEach(d -> d.prefetchFields(document));
+
     switch (eventKind) {
       case CREATE:
         return new ComponentCreatedEvent(metadata, repositoryName);

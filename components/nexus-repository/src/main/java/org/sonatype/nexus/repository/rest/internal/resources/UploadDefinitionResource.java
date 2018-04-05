@@ -40,7 +40,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.10
  */
 @Named
 @Singleton

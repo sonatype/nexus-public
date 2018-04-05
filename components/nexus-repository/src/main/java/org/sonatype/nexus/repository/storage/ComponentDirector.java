@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Component management director.
  *
- * @since 3.next
+ * @since 3.10
  */
 public interface ComponentDirector
 {

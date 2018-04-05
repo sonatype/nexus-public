@@ -28,4 +28,9 @@ public class AnonymousConfigurationDeletedEvent
   public AnonymousConfigurationDeletedEvent(final EntityMetadata metadata) {
     super(metadata);
   }
+
+  @Override
+  public AnonymousConfiguration getAnonymousConfiguration() {
+    return getEntity();
+  }
 }

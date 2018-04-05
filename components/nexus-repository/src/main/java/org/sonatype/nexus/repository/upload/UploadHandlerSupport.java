@@ -28,7 +28,7 @@ import static jline.internal.Preconditions.checkNotNull;
  * enables {@link UploadFieldDefinition} contributions to the format
  * specific {@link UploadDefinition}
  *
- * @since 3.next
+ * @since 3.10
  */
 public abstract class UploadHandlerSupport
     extends ComponentSupport

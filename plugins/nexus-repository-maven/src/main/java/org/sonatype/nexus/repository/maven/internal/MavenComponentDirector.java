@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.isSnapshot;
 
 /**
- * @since 3.next
+ * @since 3.10
  */
 @Named("maven2")
 @Singleton

@@ -12,52 +12,83 @@
  */
 package org.sonatype.nexus.repository.upload;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Content;
 
+import com.google.common.collect.ImmutableList;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 /**
  * The resultant asset paths and associated component id with a component upload
  *
- * @since 3.next
+ * @since 3.10
  */
 public final class UploadResponse
 {
   private final List<String> assetPaths;
 
-  private final EntityId componentId;
+  private final List<EntityId> componentIds;
 
   public UploadResponse(final Asset asset) {
     checkNotNull(asset);
     this.assetPaths = singletonList(asset.name());
-    this.componentId = asset.componentId();
+    this.componentIds = Optional.of(asset)
+        .map(Asset::componentId)
+        .map(Collections::singletonList)
+        .orElse(emptyList());
   }
 
   public UploadResponse(final EntityId entityId, final List<String> assetPaths) {
-    this.componentId = checkNotNull(entityId);
+    this.componentIds = ImmutableList.of(checkNotNull(entityId));
     this.assetPaths = checkNotNull(assetPaths);
   }
 
   public UploadResponse(final Content content, final List<String> assetPaths) {
-    this.componentId = extractComponentId(checkNotNull(content));
+    this.componentIds = extractComponentIds(ImmutableList.of(checkNotNull(content)));
     this.assetPaths = checkNotNull(assetPaths);
   }
 
+  public UploadResponse(final Collection<Content> contents, final List<String> assetPaths) {
+    this.componentIds = extractComponentIds(checkNotNull(contents));
+    this.assetPaths = checkNotNull(assetPaths);
+  }
+
+  @Nullable
   public EntityId getComponentId() {
-    return componentId;
+    return componentIds.stream().findFirst().orElse(null);
+  }
+
+  public List<EntityId> getComponentIds() {
+    return componentIds;
   }
 
   public List<String> getAssetPaths() {
     return assetPaths;
   }
 
-  private EntityId extractComponentId(final Content content) {
-    Asset asset = content.getAttributes().get(Asset.class);
-    return asset.componentId();
+  private static List<EntityId> extractComponentIds(final Collection<Content> contents) {
+    return contents.stream()
+        .map(UploadResponse::extractComponentId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private static EntityId extractComponentId(final Content content) {
+    Optional<Asset> asset = Optional.ofNullable(content.getAttributes().get(Asset.class));
+    return asset.map(Asset::componentId).orElse(null);
   }
 }

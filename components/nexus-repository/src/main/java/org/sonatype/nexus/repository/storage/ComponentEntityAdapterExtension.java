@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import org.sonatype.nexus.orient.entity.EntityAdapter.EventKind;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,4 +40,11 @@ public interface ComponentEntityAdapterExtension
    * @see ComponentEntityAdapter#writeFields(ODocument, Component)
    */
   void writeFields(ODocument document, Component component);
+
+  /**
+   * Override this to capture lazy/linked content for component events.
+   *
+   * @see ComponentEntityAdapter#newEvent(ODocument, EventKind)
+   */
+  default void prefetchFields(ODocument document) {/* no-op */}
 }

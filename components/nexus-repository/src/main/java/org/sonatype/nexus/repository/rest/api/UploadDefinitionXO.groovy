@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition
 /**
  * Upload definition transfer object for rest api
  *
- * @since 3.next
+ * @since 3.10
  */
 @CompileStatic
 @Builder

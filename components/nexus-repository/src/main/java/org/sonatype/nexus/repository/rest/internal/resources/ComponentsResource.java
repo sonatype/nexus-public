@@ -255,7 +255,7 @@ public class ComponentsResource
       UploadResponse uploadResponse = uploadManager.handle(repository, componentUpload);
 
       for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
-        componentUploadExtension.apply(repository, componentUpload, uploadResponse.getComponentId());
+        componentUploadExtension.apply(repository, componentUpload, uploadResponse.getComponentIds());
       }
     } catch (IllegalOperationException e) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());

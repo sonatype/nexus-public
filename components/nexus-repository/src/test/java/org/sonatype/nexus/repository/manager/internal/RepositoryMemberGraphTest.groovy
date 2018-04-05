@@ -27,7 +27,7 @@ import com.google.common.graph.MutableGraph
 import spock.lang.Specification
 
 /**
- * @since 3.next
+ * @since 3.10
  */
 class RepositoryMemberGraphTest
     extends Specification

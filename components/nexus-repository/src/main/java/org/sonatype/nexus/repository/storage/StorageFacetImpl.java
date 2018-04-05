@@ -279,4 +279,9 @@ public class StorageFacetImpl
             componentFactory)
     );
   }
+
+  @Override
+  public BlobStore blobStore() {
+    return blobStoreManager.get(config.blobStoreName);
+  }
 }

@@ -298,7 +298,7 @@ public class ComponentsResourceTest
     verify(componentUploadExtension, times(1)).validate(any());
     verify(uploadManager).handle(eq(mavenReleases), componentUploadCaptor.capture());
     verify(componentUploadExtension, times(1)).apply(mavenReleases,
-        componentUploadCaptor.getValue(), uploadResponse.getComponentId());
+        componentUploadCaptor.getValue(), uploadResponse.getComponentIds());
 
     assertThat(componentUploadCaptor.getValue().getFields().size(), is(3));
     assertThat(componentUploadCaptor.getValue().getAssetUploads().size(), is(1));

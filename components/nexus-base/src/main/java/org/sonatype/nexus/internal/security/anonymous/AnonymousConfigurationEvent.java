@@ -24,4 +24,9 @@ public interface AnonymousConfigurationEvent
   boolean isLocal();
 
   String getRemoteNodeId();
+
+  /**
+   * @since 3.10
+   */
+  AnonymousConfiguration getAnonymousConfiguration();
 }

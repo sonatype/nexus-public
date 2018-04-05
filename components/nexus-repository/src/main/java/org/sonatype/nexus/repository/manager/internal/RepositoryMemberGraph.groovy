@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull
 
 /**
  * Graph the relationships of Group Repositories.
- * @since 3.next
+ * @since 3.10
  */
 @Named
 class RepositoryMemberGraph

@@ -19,7 +19,7 @@ import org.ops4j.pax.exam.ProbeInvoker;
 /**
  * Delegates to the supplied {@link ProbeInvoker}.
  * 
- * @since 3.next
+ * @since 3.10
  */
 public class DelegatingProbeInvoker
     implements ProbeInvoker
