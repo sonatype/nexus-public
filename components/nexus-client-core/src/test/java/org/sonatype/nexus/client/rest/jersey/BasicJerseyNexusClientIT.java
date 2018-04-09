@@ -95,7 +95,7 @@ public class BasicJerseyNexusClientIT
   {
     final NexusClientFactory factory = new JerseyNexusClientFactory();
     // this will fail, remoteUrl works but is not a Nexus
-    factory.createFor(BaseUrl.baseUrlFrom("https://www.sonatype.org/"));
+    factory.createFor(BaseUrl.baseUrlFrom("https://example.com"));
   }
 
 }
