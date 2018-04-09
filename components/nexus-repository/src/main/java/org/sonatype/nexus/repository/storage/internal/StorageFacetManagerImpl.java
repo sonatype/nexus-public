@@ -39,6 +39,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
+import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_PENDING_DELETION;
 
 /**
  * @since 3.2.1
@@ -50,8 +51,6 @@ public class StorageFacetManagerImpl
     extends StateGuardLifecycleSupport
     implements StorageFacetManager
 {
-  private static final String BUCKET_PENDING_DELETION_KEY = "pendingDeletion";
-
   private final Provider<DatabaseInstance> databaseInstanceProvider;
 
   private final BucketEntityAdapter bucketEntityAdapter;
@@ -80,7 +79,7 @@ public class StorageFacetManagerImpl
     // Consider what happens if the bucket is still being deleted and someone tries to reuse that repository name.
     String generatedRepositoryName = repository.getName() + '$' + UUID.randomUUID();
     bucket.setRepositoryName(generatedRepositoryName);
-    bucket.attributes().set(BUCKET_PENDING_DELETION_KEY, true);
+    bucket.attributes().set(P_PENDING_DELETION, true);
 
     updateBucket(bucket);
   }
@@ -110,7 +109,7 @@ public class StorageFacetManagerImpl
     return inTx(databaseInstanceProvider).call(db -> {
       return StreamSupport
           .stream(bucketEntityAdapter.browse(db).spliterator(), false)
-          .filter((bucket) -> bucket.attributes().contains(BUCKET_PENDING_DELETION_KEY))
+          .filter((bucket) -> bucket.attributes().contains(P_PENDING_DELETION))
           .collect(Collectors.toList());
     });
   }

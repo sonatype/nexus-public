@@ -56,6 +56,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
+import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_PENDING_DELETION;
 
 public class RebuildBrowseNodesManagerTest
     extends TestSupport
@@ -197,6 +198,22 @@ public class RebuildBrowseNodesManagerTest
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
         .thenReturn(taskConfiguration);
+
+    underTest.doStart();
+
+    verifyNoMoreInteractions(taskScheduler);
+  }
+
+  @Test
+  public void doStartSkipsTaskSchedulingIfBucketIsPendingDeletion() throws Exception {
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      Bucket bucket = bucketEntityAdapter.read(db, REPOSITORY_NAME);
+      bucket.attributes().set(P_PENDING_DELETION, true);
+      bucketEntityAdapter.editEntity(db, bucket);
+    }
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      assetEntityAdapter.addEntity(db, createAsset("asset", "maven2", bucket));
+    }
 
     underTest.doStart();
 

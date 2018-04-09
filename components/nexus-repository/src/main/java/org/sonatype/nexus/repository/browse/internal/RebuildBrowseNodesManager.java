@@ -47,6 +47,7 @@ import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.orient.entity.AttachedEntityHelper.id;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
+import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_PENDING_DELETION;
 
 /**
  * @since 3.6
@@ -94,6 +95,10 @@ public class RebuildBrowseNodesManager
     try {
       Collection<Bucket> buckets = inTx(componentDatabaseInstanceProvider).call(db -> {
         return stream(bucketEntityAdapter.browse(db)).filter(bucket -> {
+          if (bucket.attributes().contains(P_PENDING_DELETION)) {
+            log.debug("browse_node table won't be rebuilt for bucket={} as it is marked for deletion", id(bucket));
+            return false;
+          }
           boolean hasAssets = !execute(db, SELECT_ANY_ASSET_BY_BUCKET, singletonMap("bucket", id(bucket)))
               .isEmpty();
           boolean hasBrowseNodes = !execute(db, SELECT_ANY_BROWSE_NODE_BY_BUCKET,

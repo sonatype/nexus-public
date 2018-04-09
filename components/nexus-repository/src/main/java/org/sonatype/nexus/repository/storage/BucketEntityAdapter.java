@@ -58,6 +58,11 @@ public class BucketEntityAdapter
    */
   public static final String P_REPOSITORY_NAME = "repository_name";
 
+  /**
+   * Key of {@link Bucket} attribute indicating deletion is pending.
+   */
+  public static final String P_PENDING_DELETION = "pendingDeletion";
+
   private static final String I_REPOSITORY_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_REPOSITORY_NAME)
