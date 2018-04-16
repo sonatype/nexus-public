@@ -34,16 +34,17 @@ public class BundleRunnerTest
   @Test
   public void testInstall() throws Exception {
     final BundleRunner runner = new BundleRunner(testJRubyContainerRule.getScriptingContainer());
-    //System.err.println( runner.install() );
-    assertThat(numberOfLines(runner.install()), is(10));
-    assertThat(lastLine(runner.install()),
+    String output = runner.install();
+    assertThat(numberOfLines(output), is(10));
+    assertThat(lastLine(output),
         startsWith("Use `bundle show [gemname]` to see where a bundled gem is installed."));
   }
 
   @Test
   public void testShowAll() throws Exception {
     final BundleRunner runner = new BundleRunner(testJRubyContainerRule.getScriptingContainer());
-    assertThat(numberOfLines(runner.show()), is(5));
+    final String output = runner.show();
+    assertThat(numberOfLines(output), is(5));
   }
 
   @Test

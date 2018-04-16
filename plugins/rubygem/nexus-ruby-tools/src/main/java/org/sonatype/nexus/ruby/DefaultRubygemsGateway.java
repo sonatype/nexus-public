@@ -24,7 +24,6 @@ public class DefaultRubygemsGateway
   private Object gemspecHelperImplClass;
   private Object specsHelperImplClass;
   private Object mergeSpecsHelperImplClass;
-  private Object repairHelperImplClass;
   private Object dependencyDataImplClass;
 
   /**
@@ -40,8 +39,6 @@ public class DefaultRubygemsGateway
         + "Nexus::SpecsHelperImpl");
     mergeSpecsHelperImplClass = container.runScriptlet("require 'nexus/merge_specs_helper_impl';"
         + "Nexus::MergeSpecsHelperImpl");
-    repairHelperImplClass = container.runScriptlet("require 'nexus/repair_helper_impl';"
-        + "Nexus::RepairHelperImpl");
     dependencyDataImplClass = container.runScriptlet("require 'nexus/dependency_data_impl';"
         + "Nexus::DependencyDataImpl");
   }
@@ -52,7 +49,6 @@ public class DefaultRubygemsGateway
     gemspecHelperImplClass = null;
     specsHelperImplClass = null;
     mergeSpecsHelperImplClass = null;
-    repairHelperImplClass = null;
     dependencyDataImplClass = null;
     container.terminate();
   }
@@ -80,11 +76,6 @@ public class DefaultRubygemsGateway
   @Override
   public GemspecHelper newGemspecHelperFromGem(InputStream gem) {
     return container.callMethod(gemspecHelperImplClass, "from_gem", gem, GemspecHelper.class);
-  }
-
-  @Override
-  public RepairHelper newRepairHelper() {
-    return container.callMethod(repairHelperImplClass, "new", RepairHelper.class);
   }
 
   @Override

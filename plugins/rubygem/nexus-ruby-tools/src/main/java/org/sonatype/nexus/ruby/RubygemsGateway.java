@@ -17,7 +17,7 @@ import java.io.InputStream;
 /**
  * factory for all the ruby classes. all those ruby classes come with java interface
  * so they can be used easily from java.
- * 
+ *
  * @author christian
  *
  */
@@ -59,12 +59,6 @@ public interface RubygemsGateway
    * @return an empty MergeSpecsHelper
    */
   MergeSpecsHelper newMergeSpecsHelper();
-
-  /**
-   * create a new instance of <code>RepairHelper</code>
-   * @return an empty DependencyHelper
-   */
-  RepairHelper newRepairHelper();
 
   /**
    * create a new instance of <code>DependencyData</code> and parse

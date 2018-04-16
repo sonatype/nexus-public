@@ -164,6 +164,17 @@ public abstract class RubyITSupport
     return download;
   }
 
+  protected File assertSpecsDownload(String repoId, String name, Object... expected) {
+    File download = downloadFile(repoId, name);
+    assertThat("exists " + name, download.exists(), is(true));
+    // unpack index and consolidate into easy to compare format
+    Object[] specs = (Object[]) ruby().runScriptlet("Marshal.load(Gem.gunzip(File.new('" + download.toPath() + "').read)).collect { |c| \"#{c[0]}-#{c[1]}-#{c[2]}\" }.to_java");
+    assertThat("specs", specs, is(expected));
+    download.deleteOnExit();
+    return download;
+  }
+
+
   protected File downloadFile(String repoId, String name) {
     File download = new File(util.createTempDir(), "null");
     try {

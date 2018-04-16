@@ -14,51 +14,46 @@
 require 'bundler'
 require 'bundler/cli'
 require 'stringio'
-require 'thor/shell/basic'
-class Thor::Shell::Basic
-  
-  def self.stdout
-    @stdout ||= StringIO.new
-  end
-
-  def stdout
-    self.class.stdout
-  end
-  
-  def stderr
-    @stderr ||= StringIO.new
-  end
-  
-end
 
 module Nexus
 
   class BundleRunner
 
+    def _out
+      @out ||= StringIO.new
+    end
+    def _err
+      @err ||= StringIO.new
+    end
+
     def exec( *args )
+      $stdout = _out
+      $stderr = _err
 
       ENV['PATH'] ||= '' # just make sure bundler has a PATH variable
 
       Bundler::CLI.start( args )
 
-      Thor::Shell::Basic.stdout.string
+      _out.string
 
     rescue SystemExit => e
-      raise shell.stderr.string if e.exit_code != 0
+      raise err.string if e.exit_code != 0
 
-      Thor::Shell::Basic.stdout.string
+      out.string
 
     rescue Exception => e
-      puts Thor::Shell::Basic.stdout.string
+      STDOUT.puts out.string
+      STDERR.puts err.string
       trace = e.backtrace.join("\n\t")
       raise "#{e.message}\n\t#{trace}"
 
     ensure
-      Thor::Shell::Basic.stdout.reopen
+      $stdout = STDOUT
+      $stderr = STDERR
     end
 
   end
 end
-# this makes it easy for a scripting container to 
+# this makes it easy for a scripting container to
 # create an instance of this class
 Nexus::BundleRunner

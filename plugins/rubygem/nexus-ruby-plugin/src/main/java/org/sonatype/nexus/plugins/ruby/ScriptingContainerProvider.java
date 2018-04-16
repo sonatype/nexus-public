@@ -18,8 +18,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
-import org.jruby.embed.IsolatedScriptingContainer;
 import org.jruby.embed.ScriptingContainer;
+import org.jruby.embed.osgi.OSGiIsolatedScriptingContainer;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -36,13 +36,13 @@ public class ScriptingContainerProvider
     extends ComponentSupport
     implements Provider<ScriptingContainer>
 {
-  private IsolatedScriptingContainer scriptingContainer;
+  private OSGiIsolatedScriptingContainer scriptingContainer;
 
   @Override
   public synchronized ScriptingContainer get() {
     if (scriptingContainer == null) {
       log.debug("Creating JRuby ScriptingContainer");
-      scriptingContainer = new IsolatedScriptingContainer();
+      scriptingContainer = new OSGiIsolatedScriptingContainer();
       scriptingContainer.addBundleToGemPath( FrameworkUtil.getBundle( ScriptingContainerProvider.class ) );
     }
     return scriptingContainer;

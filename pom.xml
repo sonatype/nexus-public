@@ -445,7 +445,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>animal-sniffer-maven-plugin</artifactId>
-          <version>1.13</version>
+          <version>1.16</version>
           <configuration>
             <signature>
               <groupId>org.codehaus.mojo.signature</groupId>
@@ -688,6 +688,7 @@
                     <ignoreClass>*.thoughtworks.xstream.converters.reflection.LambdaConverter</ignoreClass>
                     <ignoreClass>*.thoughtworks.xstream.converters.time.*</ignoreClass>
                     <ignoreClass>*.thoughtworks.xstream.core.util.ISO8601JavaTimeConverter</ignoreClass>
+                    <ignoreClass>module-info</ignoreClass>
                   </ignoreClasses>
                   <ignoredScopes>
                     <ignoredScope>system</ignoredScope>

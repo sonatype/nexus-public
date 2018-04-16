@@ -13,6 +13,7 @@
 
 require 'nexus/rubygems_helper'
 require 'maven/tools/pom'
+require 'rubygems/package'
 
 java_import org.sonatype.nexus.ruby.GemspecHelper
 
@@ -42,7 +43,7 @@ module Nexus
     #        or gem file
     def initialize( io, is_gem )
       if is_gem
-        @gemspec = load_spec( io ) 
+        @gemspec = load_spec( io )
       else
         @gemspec = runzip( io )
       end
@@ -75,7 +76,7 @@ module Nexus
     end
 
     # generates the pom XML from the gemspec
-    # @param snapshot [boolean] whether or not to use a snapshot version. 
+    # @param snapshot [boolean] whether or not to use a snapshot version.
     #                           snapshot versions only works with prereleased
     #                           gem version
     # @return [String] pom XML
@@ -109,7 +110,7 @@ module Nexus
         # this part if basically copied from rubygems/package.rb
         Gem::Package::TarReader.new( io ) do |reader|
           reader.each do |entry|
-            case entry.full_name 
+            case entry.full_name
             when 'metadata' then
               return Gem::Specification.from_yaml entry.read
             when 'metadata.gz' then
@@ -117,10 +118,10 @@ module Nexus
               args << { :external_encoding => Encoding::UTF_8 } if
                 Object.const_defined?(:Encoding) &&
                 Zlib::GzipReader.method(:wrap).arity != 1
-              
+
               Zlib::GzipReader.wrap(*args) do |gzio|
                 return Gem::Specification.from_yaml gzio.read
-              end              
+              end
             end
           end
         end

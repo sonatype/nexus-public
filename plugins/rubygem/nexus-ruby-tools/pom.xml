@@ -26,6 +26,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
+
     <dependency>
       <groupId>org.jruby</groupId>
       <artifactId>jruby</artifactId>
@@ -68,10 +69,10 @@
     <resources>
       <resource>
         <directory>target/rubygems-provided</directory>
-	<includes>
-	  <include>gems/**</include>
-	  <include>specifications/*</include>
-	</includes>
+        <includes>
+          <include>gems/**</include>
+          <include>specifications/*</include>
+        </includes>
       </resource>
       <resource>
         <directory>${basedir}/src/main/resources</directory>

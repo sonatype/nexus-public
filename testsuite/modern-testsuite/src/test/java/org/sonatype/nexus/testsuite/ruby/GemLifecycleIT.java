@@ -52,8 +52,9 @@ public class GemLifecycleIT
     repositories().get(RubyProxyRepository.class, "gemsproxy").withMetadataMaxAge(0).withNotFoundCacheTTL(0).save();
 
     // start with an empty repo
-    assertFileDownloadSize(repoId, "latest_specs.4.8.gz", equalTo(24l));
-    assertFileDownloadSize(repoId, "specs.4.8.gz", equalTo(24l));
+    assertSpecsDownload(repoId, "latest_specs.4.8.gz");
+    assertSpecsDownload(repoId, "specs.4.8.gz");
+
 
     Thread.sleep(900L); // give chance for "cached" and "remote" file timestamps to drift as Last-Modified header has second resolution
 
@@ -75,9 +76,9 @@ public class GemLifecycleIT
 
     assertGem(repoId, nexusGem.getName());
 
-    // now we have one remote gem - i.e. a bigger size of the index files
-    assertFileDownloadSize(repoId, "latest_specs.4.8.gz", equalTo(76l));
-    assertFileDownloadSize(repoId, "specs.4.8.gz", equalTo(76l));
+    // now we have one remote gem
+    assertSpecsDownload(repoId, "latest_specs.4.8.gz", "nexus-1.2.1-ruby");
+    assertSpecsDownload(repoId, "specs.4.8.gz", "nexus-1.2.1-ruby");
 
     // reinstall the gem from repository
     assertThat(lastLine(gemRunner().install(repoId, "nexus")), equalTo("1 gem installed"));
@@ -87,7 +88,7 @@ public class GemLifecycleIT
     assertThat(lastLine(gemRunner().nexus(config, winGem)), equalTo("something went wrong"));
 
     // delete nexus gem
-    moreAsserts(repoId, gemName, gemspecName, 
+    moreAsserts(repoId, gemName, gemspecName,
         "api/v1/dependencies/" + nexusGem.getName().replaceFirst("-.*$", ".ruby"));
 
     // now use the "right" filename on upload
@@ -128,9 +129,9 @@ public class GemLifecycleIT
 
   private void doTestRebuildRubygemsMetadata() throws InterruptedException, IOException {
     String repoId = GEMSHOST;
-    assertFileDownloadSize(repoId, "latest_specs.4.8.gz", equalTo(80l));
-    assertFileDownloadSize(repoId, "specs.4.8.gz", equalTo(80l));
-    assertFileDownloadSize(repoId, "prerelease_specs.4.8.gz", equalTo(24l));
+    assertSpecsDownload(repoId, "latest_specs.4.8.gz", "win-2-x86-mswin32-60");
+    assertSpecsDownload(repoId, "specs.4.8.gz", "win-2-x86-mswin32-60");
+    assertSpecsDownload(repoId, "prerelease_specs.4.8.gz");
 
     File storage = new File(nexus().getWorkDirectory(), "storage/" + repoId);
     assertThat("delete specs.4.8.gz", new File(storage, "specs.4.8.gz").delete());
@@ -148,9 +149,9 @@ public class GemLifecycleIT
     Thread.sleep(200); // give some time to server to at least perform schedule
     scheduler().waitForAllTasksToStop(); // wait for it
 
-    assertFileDownloadSize(repoId, "latest_specs.4.8.gz", equalTo(80l));
-    assertFileDownloadSize(repoId, "specs.4.8.gz", equalTo(80l));
-    assertFileDownloadSize(repoId, "prerelease_specs.4.8.gz", equalTo(24l));
+    assertSpecsDownload(repoId, "latest_specs.4.8.gz", "win-2-x86-mswin32-60");
+    assertSpecsDownload(repoId, "specs.4.8.gz", "win-2-x86-mswin32-60");
+    assertSpecsDownload(repoId, "prerelease_specs.4.8.gz");
     assertThat("recreated gemspec.rz", gemspecRz.length(), equalTo(len));
     assertThat("deleted corrupted dependency file", dependency.exists(), is(false));
   }
