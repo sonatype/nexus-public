@@ -211,7 +211,7 @@ public final class MavenFacetUtils
     addHashes(mavenFacet, mavenPath, hashCodes, now);
   }
 
-  private static void addHashes(final MavenFacet mavenFacet,
+  public static void addHashes(final MavenFacet mavenFacet,
                                 final MavenPath mavenPath,
                                 final Map<HashAlgorithm, HashCode> hashCodes,
                                 final DateTime now)

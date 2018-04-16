@@ -50,34 +50,26 @@ class OrientSecurityConfigurationSourceTest
     source.loadConfiguration()
   }
 
-  def 'updateUser should persist user and prevent concurrent modification'() {
+  def 'updateUser should persist user'() {
     given:
       def admin = source.configuration.getUser('admin')
       def newUser = new CUser(id: 'new')
 
     when: 'updateUser is called'
       admin.firstName = 'foo'
-      source.configuration.updateUser(admin, [] as Set)
+      source.configuration.updateUser(admin)
     
     then: 'user is persisted'
       source.configuration.getUser('admin').firstName == 'foo'
 
-    when: 'updateUser is called again on old version'
-      admin.firstName = 'bar'
-      source.configuration.updateUser(admin, [] as Set)
-
-    then: 'exception is thrown'
-      thrown(ConcurrentModificationException)
-      source.configuration.getUser('admin').firstName == 'foo'
-
     when: 'updateUser is called on user that doesnt hasnt been saved'
-      source.configuration.updateUser(newUser, [] as Set)
+      source.configuration.updateUser(newUser)
 
     then: 'exception is thrown'
       thrown(UserNotFoundException)
   }
 
-  def 'updatePrivilege should persist privilege and prevent concurrent modification'() {
+  def 'updatePrivilege should persist privilege'() {
     given:
       source.configuration.addPrivilege(new CPrivilege(id: 'test', name: 'test', type: 'test'))
       def privilege = source.configuration.getPrivilege('test')
@@ -90,14 +82,6 @@ class OrientSecurityConfigurationSourceTest
     then: 'privilege is persisted'
       source.configuration.getPrivilege('test').name == 'foo'
       
-    when: 'updatePrivilege is called again on old version'
-      privilege.name = 'bar'
-      source.configuration.updatePrivilege(privilege)
-
-    then: 'exception is thrown'
-      thrown(ConcurrentModificationException)
-      source.configuration.getPrivilege('test').name == 'foo'
-
     when: 'updatePrivilege is called on privilege that hasnt been saved'
       source.configuration.updatePrivilege(newPrivilege)
 

@@ -10,38 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven;
+package org.sonatype.nexus.repository.storage;
 
-import javax.annotation.Nonnull;
+import java.util.function.BiPredicate;
 
 /**
- * Component representing Maven layout specific bits, like parsing request paths into {@link MavenPath}.
+ * This interface is used to filter the list of browse nodes that are returned at a given level of the browse tree
+ * and we need to be very careful to ensure this condition is not too expensive. It is also worth noting that this has
+ * the ability to hide non-leaf nodes which if implemented incorrectly could hide entire branches.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface MavenPathParser
+public interface BrowseNodeFilter
+    extends BiPredicate<BrowseNode, String>
 {
-  /**
-   * Parses path into {@link MavenPath}.
-   */
-  @Nonnull
-  MavenPath parsePath(String path);
-
-  /**
-   * Parses path into {@link MavenPath} with optional case sensitivity
-   *
-   * @since 3.7
-   */
-  @Nonnull
-  MavenPath parsePath(String path, boolean caseSensitive);
-
-  /**
-   * Returns {@code true} if passed in path represent repository metadata path.
-   */
-  boolean isRepositoryMetadata(MavenPath path);
-
-  /**
-   * Returns {@code true} if passed in path represents a repository index file path.
-   */
-  boolean isRepositoryIndex(MavenPath path);
 }

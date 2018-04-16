@@ -26,6 +26,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.orient.DatabaseManager;
+import org.sonatype.nexus.orient.DatabaseRestorer;
 import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.restore.RestoreFile;
 
@@ -54,18 +55,22 @@ public class DatabaseBackupImpl
 
   private final DatabaseManager databaseManager;
 
+  private final DatabaseRestorer databaseRestorer;
+
   private final ApplicationDirectories applicationDirectories;
 
   private final ApplicationVersion applicationVersion;
 
   @Inject
   public DatabaseBackupImpl(final DatabaseServer databaseServer, final DatabaseManager databaseManager,
+                            final DatabaseRestorer databaseRestorer,
                             @Named("${nexus.backup.compressionLevel:-9}") final int compressionLevel,
                             @Named("${nexus.backup.bufferSize:-1024}") final int bufferSize,
                             final ApplicationDirectories applicationDirectories,
                             final ApplicationVersion applicationVersion) {
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
+    this.databaseRestorer = checkNotNull(databaseRestorer);
     this.compressionLevel = compressionLevel;
     this.bufferSize = bufferSize;
     this.applicationDirectories = checkNotNull(applicationDirectories);
@@ -82,6 +87,10 @@ public class DatabaseBackupImpl
   File checkTarget(final String backupFolder, final String dbName, final LocalDateTime timestamp) throws IOException {
     String filename = RestoreFile.formatFilename(dbName, timestamp, applicationVersion.getVersion());
     File parentDir = applicationDirectories.getWorkDirectory(backupFolder);
+    if (databaseRestorer.isRestoreFromLocation(parentDir)) {
+      throw new IllegalArgumentException("Backup to " + parentDir + " is not allowed.");
+    }
+
     File output = new File(parentDir, filename);
     if (output.createNewFile()) {
       return output;

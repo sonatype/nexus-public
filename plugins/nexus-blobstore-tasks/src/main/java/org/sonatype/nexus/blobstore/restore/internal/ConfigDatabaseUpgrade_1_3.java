@@ -22,7 +22,6 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -54,8 +53,8 @@ public class ConfigDatabaseUpgrade_1_3 // NOSONAR
 
   @Override
   public void apply() throws Exception {
-    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
-      db.command(updateRestoreTasksQuery).execute();
-    }
+    withDatabaseAndClass(databaseInstance, "quartz_job_detail", (db, type) ->
+      db.command(updateRestoreTasksQuery).execute()
+    );
   }
 }

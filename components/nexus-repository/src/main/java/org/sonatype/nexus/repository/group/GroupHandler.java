@@ -134,7 +134,27 @@ public class GroupHandler
                                                        @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
-    final Request request = context.getRequest();
+    return getAll(context.getRequest(), context, members, dispatched);
+  }
+
+  /**
+   * Similar to {@link #getAll(Context, Iterable, DispatchedRepositories)}, but allows for using a
+   * different request then provided by the {@link Context#getRequest()} while still using the
+   * same {@link Context} to execute the request in.
+   *
+   * @param request  {@link Request} that could be different then the {@link Context#getRequest()}
+   * @param context  {@link Context}
+   * @param members  {@link Repository}'s
+   * @param dispatched {@link DispatchedRepositories}
+   * @return LinkedHashMap of all responses from all members where order is group member order.
+   * @throws Exception throw for any issues dispatching the request
+   */
+  protected LinkedHashMap<Repository, Response> getAll(@Nonnull final Request request,
+                                                       @Nonnull final Context context,
+                                                       @Nonnull final Iterable<Repository> members,
+                                                       @Nonnull final DispatchedRepositories dispatched)
+      throws Exception
+  {
     final LinkedHashMap<Repository, Response> responses = Maps.newLinkedHashMap();
     for (Repository member : members) {
       log.trace("Trying member: {}", member);
@@ -153,6 +173,7 @@ public class GroupHandler
     }
     return responses;
   }
+
 
   /**
    * Returns standard 404 with no message. Override for format specific messaging.

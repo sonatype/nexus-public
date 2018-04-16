@@ -13,6 +13,7 @@
 package org.sonatype.nexus.orient;
 
 import java.io.IOException;
+import java.io.File;
 
 import org.sonatype.nexus.orient.restore.RestoreFile;
 
@@ -29,7 +30,7 @@ public interface DatabaseRestorer
   /**
    * @param databaseName the name of the database
    * @return the {@link RestoreFile} to the 1 backup file if it exists, null otherwise
-   * @throws IOException if there was a problem listing files from the restore directoryu
+   * @throws IOException if there was a problem listing files from the restore directory
    * @throws IllegalStateException if more than 1 backup file exists for the database
    */
   RestoreFile getPendingRestore(String databaseName) throws IOException;
@@ -39,4 +40,10 @@ public interface DatabaseRestorer
    * @return true if the database was restored
    */
   boolean maybeRestoreDatabase(ODatabaseDocumentTx db, String databaseName) throws IOException;
+
+  /**
+   * @return true if location is where files are restored from
+   * @since 3.next
+   */
+  boolean isRestoreFromLocation(File location) throws IOException;
 }

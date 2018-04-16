@@ -68,6 +68,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Integration tests for {@link StorageFacetImpl}.
@@ -122,7 +123,7 @@ public class StorageFacetImplIT
     ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
     when(configurationFacet.readSection(
         any(Configuration.class),
-        eq(StorageFacetImpl.CONFIG_KEY),
+        eq(STORAGE),
         eq(StorageFacetImpl.Config.class)))
         .thenReturn(config);
 

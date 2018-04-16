@@ -38,7 +38,7 @@ class DatabaseRestorerImplTest
 
   ODatabaseDocumentTx db = Mock()
 
-  DatabaseRestorerImpl databaseRestorer = new DatabaseRestorerImpl(applicationDirectories)
+  DatabaseRestorerImpl databaseRestorer
 
   def setup() {
     workdir = tempFolder.newFolder('work')
@@ -48,11 +48,12 @@ class DatabaseRestorerImplTest
         it
       }
     }
+    databaseRestorer = new DatabaseRestorerImpl(applicationDirectories)
   }
 
   def 'restore with empty backup directory silently succeeds'() {
     when: 'an empty backup directory exists'
-      def backupDir = new File(workdir, 'backup')
+      def backupDir = new File(workdir, 'restore-from-backup')
       backupDir.mkdir()
       def didBackup = databaseRestorer.maybeRestoreDatabase(db, 'config')
 
@@ -63,7 +64,7 @@ class DatabaseRestorerImplTest
 
   def 'restore with one matching file in backup directory restores the db'() {
     when: 'a backup directory exists with one matching file plus some non-matching'
-      def backupDir = new File(workdir, 'backup')
+      def backupDir = new File(workdir, 'restore-from-backup')
       backupDir.mkdir()
       new File(backupDir, 'config-2016-11-23-09-20-40.bak') << 'backupdata'
       new File(backupDir, 'config-2016-11-23-09-20-40.') << 'bogusfile1'
@@ -78,7 +79,7 @@ class DatabaseRestorerImplTest
 
   def 'restore with two matching files in backup directory throws exception'() {
     when: 'a backup directory exists with two matching files'
-      def backupDir = new File(workdir, 'backup')
+      def backupDir = new File(workdir, 'restore-from-backup')
       backupDir.mkdir()
       new File(backupDir, 'config-2016-11-23-09-20-40.bak') << 'backupdata1'
       new File(backupDir, 'config-2016-11-23-09-20-41.bak') << 'backupdata2'

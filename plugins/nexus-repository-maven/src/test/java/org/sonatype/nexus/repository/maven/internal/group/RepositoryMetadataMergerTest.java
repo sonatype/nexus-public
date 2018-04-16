@@ -269,4 +269,23 @@ public class RepositoryMetadataMergerTest
     assertThat(m.getVersioning().getLastUpdated(), is(m2.getVersioning().getLastUpdated()));
     assertThat(m.getVersioning().getVersions(), contains("1.0.0", "1.0.1"));
   }
+
+  @Test
+  public void handleNullSnapshotTimestamps() {
+    Metadata m1 = v("org.foo", "some-project", "1.0.0", "20150322.121500", 1);
+    m1.getVersioning().getSnapshot().setTimestamp(null);
+    Metadata m2 = v("org.foo", "some-project", "1.0.0", "20150323.121500", 2);
+
+    final Metadata m = merger.merge(
+        ImmutableList.of(new Envelope("1", m1), new Envelope("2", m2))
+    );
+    assertThat(m, notNullValue());
+    assertThat(m.getModelVersion(), equalTo("1.1.0"));
+    assertThat(m.getGroupId(), equalTo("org.foo"));
+    assertThat(m.getArtifactId(), equalTo("some-project"));
+    assertThat(m.getVersioning().getLastUpdated(), equalTo("20150323121500"));
+    assertThat(m.getVersioning().getSnapshot(), notNullValue());
+    assertThat(m.getVersioning().getSnapshot().getTimestamp(), equalTo("20150323.121500"));
+    assertThat(m.getVersioning().getSnapshot().getBuildNumber(), equalTo(2));
+  }
 }

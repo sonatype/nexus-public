@@ -185,8 +185,6 @@ public class ViewServletTest
 
     verify(servletResponse).setHeader(HttpHeaders.CONTENT_SECURITY_POLICY,
         "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
-    verify(servletResponse).setHeader(HttpHeaders.X_CONTENT_SECURITY_POLICY,
-        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

@@ -62,6 +62,12 @@ public class Maven2MavenPathParser
     return path.main().getFileName().equals(Constants.METADATA_FILENAME);
   }
 
+  @Override
+  public boolean isRepositoryIndex(final MavenPath path) {
+    return path.getPath().equals(Constants.INDEX_MAIN_CHUNK_FILE_PATH) ||
+        path.getPath().equals(Constants.INDEX_PROPERTY_FILE_PATH);
+  }
+
   /**
    * Tries to parse a path according to Maven2 layout spec, and extract the {@link Coordinates} out of it, if possible.
    * If path does not obeys Maven2 layout or is not an artifact path, {@code null} is returned.

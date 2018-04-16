@@ -147,7 +147,6 @@ public class ViewServlet
   {
     if (sandboxEnabled) {
       httpResponse.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, SANDBOX);
-      httpResponse.setHeader(HttpHeaders.X_CONTENT_SECURITY_POLICY, SANDBOX);
     }
     // resolve repository for request
     RepositoryPath path = RepositoryPath.parse(httpRequest.getPathInfo());

@@ -114,7 +114,8 @@ public class BrowseNodeStoreLoadTest
         securityHelper,
         selectorManager,
         new CselAssetSqlBuilder(),
-        configuration);
+        configuration,
+        new HashMap<>());
 
     underTest.start();
   }

@@ -89,12 +89,17 @@ public class MemorySecurityConfiguration
   }
 
   @Override
-  public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
+  public void updateUser(final CUser user) throws UserNotFoundException {
     checkNotNull(user);
     checkNotNull(user.getId());
     if (users.replace(user.getId(), user) == null) {
       throw new UserNotFoundException(user.getId());
     }
+  }
+
+  @Override
+  public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
+    updateUser(user);
 
     CUserRoleMapping mapping = new CUserRoleMapping();
     mapping.setUserId(user.getId());

@@ -35,7 +35,7 @@ import static java.util.stream.Collectors.toList;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Restores orient databases from standard location "sonatype-work/nexus3/backup".
+ * Restores orient databases from standard location "sonatype-work/nexus3/restore-from-backup".
  *
  * @since 3.2
  */
@@ -46,20 +46,18 @@ public class DatabaseRestorerImpl
     implements DatabaseRestorer
 {
 
-  private static final String RESTORE_FROM_LOCATION = "backup";
+  private static final String RESTORE_FROM_LOCATION = "restore-from-backup";
 
-  private final ApplicationDirectories applicationDirectories;
+  private final File restoreFromLocation;
 
   @Inject
   public DatabaseRestorerImpl(final ApplicationDirectories applicationDirectories) {
-    this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
   }
 
   @Override
   public RestoreFile getPendingRestore(final String databaseName) throws IOException {
     checkNotNull(databaseName);
-
-    File restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
 
     List<Path> backupFiles = Files.list(restoreFromLocation.toPath())
         .filter(path -> isBackupFileForDatabase(path, databaseName))
@@ -78,6 +76,8 @@ public class DatabaseRestorerImpl
     checkNotNull(db);
     checkNotNull(databaseName);
 
+    log.debug("checking if database {} should be restored", databaseName);
+
     Path path = getRestorePath(databaseName);
 
     if (path != null) {
@@ -89,6 +89,11 @@ public class DatabaseRestorerImpl
     return false;
   }
 
+  @Override
+  public boolean isRestoreFromLocation(final File location) throws IOException {
+    return Files.isSameFile(restoreFromLocation.toPath(), location.toPath());
+  }
+
   /**
    * @param databaseName the name of the database
    * @return the {@link Path} to the 1 backup file if it exists, null otherwise
@@ -97,8 +102,6 @@ public class DatabaseRestorerImpl
    */
   protected Path getRestorePath(final String databaseName) throws IOException {
     checkNotNull(databaseName);
-
-    File restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
 
     List<Path> backupFiles = Files.list(restoreFromLocation.toPath())
         .filter(path -> isBackupFileForDatabase(path, databaseName))
@@ -127,6 +130,8 @@ public class DatabaseRestorerImpl
   private boolean isBackupFileForDatabase(final Path path, final String databaseName) {
     checkNotNull(path);
     checkNotNull(databaseName);
+
+    log.trace("testing if {} is a backup file for {}", path, databaseName);
 
     Path pathFile = path.getFileName();
     if (pathFile != null) {

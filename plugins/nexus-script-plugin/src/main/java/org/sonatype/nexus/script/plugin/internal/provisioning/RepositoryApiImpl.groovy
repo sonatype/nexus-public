@@ -408,6 +408,14 @@ class RepositoryApiImpl
   }
 
   @Nonnull
+  Repository createYumGroup(final String name,
+                            final List<String> members,
+                            final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+  {
+    createRepository(createGroup(name, 'yum-group', blobStoreName, members as String[]))
+  }
+
+  @Nonnull
   Repository createGitLfsHosted(final String name,
                                 final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                 final boolean strictContentTypeValidation = true,

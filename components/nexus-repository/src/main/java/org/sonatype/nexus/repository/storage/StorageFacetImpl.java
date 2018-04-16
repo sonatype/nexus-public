@@ -54,6 +54,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Default {@link StorageFacet} implementation.
@@ -88,9 +89,6 @@ public class StorageFacetImpl
   private final StorageFacetManager storageFacetManager;
 
   private final ComponentFactory componentFactory;
-
-  @VisibleForTesting
-  static final String CONFIG_KEY = "storage";
 
   @VisibleForTesting
   static class Config
@@ -149,14 +147,14 @@ public class StorageFacetImpl
 
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
-    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class,
+    facet(ConfigurationFacet.class).validateSection(configuration, STORAGE, Config.class,
         Default.class, getRepository().getType().getValidationGroup()
     );
   }
 
   @Override
   protected void doConfigure(final Configuration configuration) throws Exception {
-    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    config = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
     log.debug("Config: {}", config);
   }
 

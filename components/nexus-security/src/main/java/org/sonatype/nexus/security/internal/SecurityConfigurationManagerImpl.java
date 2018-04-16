@@ -43,7 +43,6 @@ import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
-import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.collect.Lists;
@@ -221,14 +220,7 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public void updateUser(CUser user) throws UserNotFoundException {
-    Set<String> roles = Collections.emptySet();
-    try {
-      roles = readUserRoleMapping(user.getId(), UserManager.DEFAULT_SOURCE).getRoles();
-    }
-    catch (NoSuchRoleMappingException e) {
-      log.debug("User: {} has no roles", user.getId());
-    }
-    updateUser(user, roles);
+    getDefaultConfiguration().updateUser(user);
   }
 
   @Override

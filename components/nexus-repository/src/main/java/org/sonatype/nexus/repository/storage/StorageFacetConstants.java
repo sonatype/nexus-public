@@ -10,38 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven;
-
-import javax.annotation.Nonnull;
+package org.sonatype.nexus.repository.storage;
 
 /**
- * Component representing Maven layout specific bits, like parsing request paths into {@link MavenPath}.
+ * Repository configuration attribute constants related to {@link StorageFacet}.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface MavenPathParser
+public class StorageFacetConstants
 {
-  /**
-   * Parses path into {@link MavenPath}.
-   */
-  @Nonnull
-  MavenPath parsePath(String path);
+  public static final String STORAGE = "storage";
 
-  /**
-   * Parses path into {@link MavenPath} with optional case sensitivity
-   *
-   * @since 3.7
-   */
-  @Nonnull
-  MavenPath parsePath(String path, boolean caseSensitive);
+  public static final String BLOB_STORE_NAME = "blobStoreName";
 
-  /**
-   * Returns {@code true} if passed in path represent repository metadata path.
-   */
-  boolean isRepositoryMetadata(MavenPath path);
+  public static final String WRITE_POLICY = "writePolicy";
 
-  /**
-   * Returns {@code true} if passed in path represents a repository index file path.
-   */
-  boolean isRepositoryIndex(MavenPath path);
+  public static final String STRICT_CONTENT_TYPE_VALIDATION = "strictContentTypeValidation";
+
+  private StorageFacetConstants() {
+    // static class
+  }
 }
