@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,8 +37,11 @@ import org.sonatype.security.realms.privileges.PrivilegeDescriptor;
 import org.sonatype.security.realms.tools.ConfigurationManager;
 import org.sonatype.security.realms.tools.ConfigurationManagerAction;
 import org.sonatype.security.realms.tools.StaticSecurityResource;
+import org.sonatype.sisu.goodies.common.ComponentSupport;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.permission.RolePermissionResolver;
 
@@ -57,6 +61,7 @@ import com.google.common.eventbus.Subscribe;
 @Typed(RolePermissionResolver.class)
 @Named("default")
 public class XmlRolePermissionResolver
+    extends ComponentSupport
     implements RolePermissionResolver
 {
   private final ConfigurationManager configuration;
@@ -65,31 +70,58 @@ public class XmlRolePermissionResolver
 
   private final PermissionFactory permissionFactory;
 
-  private final Map<String, Collection<Permission>> permissionsCache;
+  /**
+   * Privilege-id to permission cache.
+   */
+  private final Map<String,Permission> permissionsCache;
+
+  /**
+   * Role-id to role permissions cache.
+   */
+  private final Map<String, Collection<Permission>> rolePermissionsCache;
+
+  /**
+   * role not found cache.
+   */
+  private final Cache<String,String> roleNotFoundCache;
+
 
   @Inject
   public XmlRolePermissionResolver(@Named("default") ConfigurationManager configuration,
                                    List<PrivilegeDescriptor> privilegeDescriptors,
                                    @Named("caching") PermissionFactory permissionFactory,
-                                   EventBus eventBus)
+                                   EventBus eventBus,
+                                   @Named("${security.roleNotFoundCacheSize:-100000}") int roleNotFoundCacheSize)
   {
     this.configuration = configuration;
     this.privilegeDescriptors = privilegeDescriptors;
     this.permissionFactory = permissionFactory;
     this.permissionsCache = new MapMaker().softValues().makeMap();
+    this.rolePermissionsCache = new MapMaker().softValues().makeMap();
+    this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
     eventBus.register(this);
+  }
+
+  /**
+   * Invalidate/clear caches.
+   */
+  private void invalidate() {
+    permissionsCache.clear();
+    rolePermissionsCache.clear();
+    roleNotFoundCache.invalidateAll();
+    log.trace("Cache invalidated");
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AuthorizationConfigurationChanged event) {
-    permissionsCache.clear(); // invalidate previous results
+    invalidate();
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final SecurityConfigurationChanged event) {
-    permissionsCache.clear(); // invalidate previous results
+    invalidate();
   }
 
   public Collection<Permission> resolvePermissionsInRole(final String roleString) {
@@ -109,17 +141,39 @@ public class XmlRolePermissionResolver
   }
 
   protected void resolvePermissionsInRole(final String roleString, final Collection<Permission> permissions) {
-    final LinkedList<String> rolesToProcess = new LinkedList<String>();
-    rolesToProcess.add(roleString); // initial role
-    final Set<String> processedRoleIds = new LinkedHashSet<String>();
+
+    // check memory-sensitive cache; use cached value as long as config is not dirty
+    Collection<Permission> cachedPermissions = rolePermissionsCache.get(roleString);
+    if (cachedPermissions != null) {
+      reloadConfigToMakeSureNotDirty(roleString);
+
+      cachedPermissions = rolePermissionsCache.get(roleString);
+      if (cachedPermissions != null && !cachedPermissions.isEmpty()) {
+        permissions.addAll(cachedPermissions);
+        return;
+      }
+    }
+
+    final LinkedList<String> rolesToProcess = new LinkedList<>();
+    final Set<String> processedRoleIds = new LinkedHashSet<>();
+
+    // initial role
+    rolesToProcess.add(roleString);
+
     while (!rolesToProcess.isEmpty()) {
       final String roleId = rolesToProcess.removeFirst();
       if (processedRoleIds.add(roleId)) {
+
+        if (roleNotFoundCache.getIfPresent(roleId) != null) {
+          log.trace("Role {} found in NFC, role check skipped", roleId);
+          continue; // use cached results
+        }
+
         try {
-          final CRole role = configuration.readRole(roleId);
+          CRole role = configuration.readRole(roleId);
 
           // check memory-sensitive cache (after readRole to allow for the dirty check)
-          final Collection<Permission> cachedPermissions = permissionsCache.get(roleId);
+          cachedPermissions = rolePermissionsCache.get(roleId);
           if (cachedPermissions != null) {
             permissions.addAll(cachedPermissions);
             continue; // use cached results
@@ -127,36 +181,82 @@ public class XmlRolePermissionResolver
 
           // process the roles this role has recursively
           rolesToProcess.addAll(role.getRoles());
+
           // add the permissions this role has
-          final List<String> privilegeIds = role.getPrivileges();
-          for (String privilegeId : privilegeIds) {
-            Set<Permission> set = getPermissions(privilegeId);
-            permissions.addAll(set);
+          for (String privilegeId : role.getPrivileges()) {
+            Permission permission = permission(privilegeId);
+            if (permission != null) {
+              permissions.add(permission);
+            }
           }
         }
         catch (NoSuchRoleException e) {
-          // skip
+          handleNoSuchRole(roleId, e);
         }
       }
     }
 
     // cache result of (non-trivial) computation
-    permissionsCache.put(roleString, permissions);
+    rolePermissionsCache.put(roleString, permissions);
   }
 
-  protected Set<Permission> getPermissions(final String privilegeId) {
+  private void reloadConfigToMakeSureNotDirty(final String roleString) {
     try {
-      final CPrivilege privilege = configuration.readPrivilege(privilegeId);
-      for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
-        final String permission = descriptor.buildPermission(privilege);
-        if (permission != null) {
-          return Collections.singleton(permissionFactory.create(permission));
+      // readRole to check that config is not dirty
+      configuration.readRole(roleString);
+    }
+    catch (NoSuchRoleException e) {
+      // no-op
+    }
+  }
+
+  private void handleNoSuchRole(final String roleId, final NoSuchRoleException e) {
+    log.trace("Ignoring missing role: {}", roleId, e);
+    roleNotFoundCache.put(roleId, "");
+  }
+
+  /**
+   * Returns the descriptor for the given privilege-type or {@code null}.
+   */
+  @Nullable
+  private PrivilegeDescriptor descriptor(String privilegeType) {
+    assert privilegeType != null;
+
+    for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
+      if (privilegeType.equals(descriptor.getType())) {
+        return descriptor;
+      }
+    }
+
+    log.warn("Missing privilege-descriptor for type: {}", privilegeType);
+    return null;
+  }
+
+  /**
+   * Returns the permission for the given privilege-id or {@code null}.
+   */
+  @Nullable
+  private Permission permission(final String privilegeId) {
+    assert privilegeId != null;
+
+    Permission permission = permissionsCache.get(privilegeId);
+    if (permission == null) {
+      try {
+        CPrivilege privilege = configuration.readPrivilege(privilegeId);
+        PrivilegeDescriptor descriptor = descriptor(privilege.getType());
+        if (descriptor != null) {
+          final String permissionName = descriptor.buildPermission(privilege);
+          if (permissionName != null) {
+            permission = permissionFactory.create(permissionName);
+            permissionsCache.put(privilegeId, permission);
+          }
         }
       }
-      return Collections.emptySet();
+      catch (NoSuchPrivilegeException e) {
+        log.trace("Ignoring missing privilege: {}", privilegeId, e);
+      }
     }
-    catch (NoSuchPrivilegeException e) {
-      return Collections.emptySet();
-    }
+
+    return permission;
   }
 }
