@@ -97,11 +97,6 @@ Ext.define('NX.controller.Features', {
           clonedFeature.bookmark = NX.Bookmarks.encode(path).toLowerCase();
         }
 
-        // generate default context-help keyword
-        if (!clonedFeature.helpKeyword) {
-          clonedFeature.helpKeyword = path.replace(/\//g, ' ').toLowerCase();
-        }
-
         if (Ext.isDefined(clonedFeature.visible)) {
           if (!Ext.isFunction(clonedFeature.visible)) {
             if (clonedFeature.visible) {

@@ -40,7 +40,6 @@ Ext.define('NX.model.Feature', {
     { name: 'weight', defaultValue: 100 },
     { name: 'group', defaultValue: false },
     { name: 'view', defaultValue: undefined },
-    { name: 'helpKeyword', defaultValue: undefined },
     { name: 'visible', defaultValue: true },
     { name: 'expanded', defaultValue: true },
     { name: 'bookmark', defaultValue: undefined },

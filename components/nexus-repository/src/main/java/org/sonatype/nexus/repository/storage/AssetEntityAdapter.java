@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -284,6 +286,25 @@ public class AssetEntityAdapter
     );
     Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
     return transform(docs);
+  }
+
+  public Asset findByBucketComponentName(final ODatabaseDocumentTx db,
+                                         final ORID bucketId,
+                                         @Nullable final ORID componentId,
+                                         final String name)
+  {
+    String query = "select from " + DB_CLASS + " where " + P_BUCKET + " = :bucket ";
+    query += "and " + P_COMPONENT + (componentId == null ? " is null " : " = :component ");
+    query +=  "and " + P_NAME + " = :name";
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put(P_BUCKET, bucketId);
+    parameters.put(P_NAME, name);
+    if (componentId != null) {
+      parameters.put(P_COMPONENT, componentId);
+    }
+    Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
+    ODocument first = Iterables.getFirst(docs, null);
+    return first != null ? readEntity(first) : null;
   }
 
   @Override

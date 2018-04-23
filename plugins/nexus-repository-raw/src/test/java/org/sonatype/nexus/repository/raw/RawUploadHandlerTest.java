@@ -116,8 +116,8 @@ public class RawUploadHandlerTest
 
     assertThat(def.isMultipleUpload(), is(true));
     assertThat(def.getComponentFields(), contains(field("directory", "Directory",
-        "Destination for uploaded files (e.g. /path/to/files/)", false, STRING)));
-    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING)));
+        "Destination for uploaded files (e.g. /path/to/files/)", false, STRING, "Component attributes")));
+    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING, null)));
   }
 
   @Test
@@ -127,9 +127,10 @@ public class RawUploadHandlerTest
     UploadDefinition def = underTest.getDefinition();
 
     assertThat(def.getComponentFields(),
-        contains(field("directory", "Directory", "Destination for uploaded files (e.g. /path/to/files/)", false, STRING),
-            field("foo", "Foo", null, true, STRING)));
-    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING)));
+        contains(
+            field("directory", "Directory", "Destination for uploaded files (e.g. /path/to/files/)", false, STRING, "Component attributes"),
+            field("foo", "Foo", null, true, STRING, "bar")));
+    assertThat(def.getAssetFields(), contains(field("filename", "Filename", null, false, STRING, null)));
   }
 
   @Test
@@ -256,9 +257,10 @@ public class RawUploadHandlerTest
                                       final String displayName,
                                       final String helpText,
                                       final boolean optional,
-                                      final Type type)
+                                      final Type type,
+                                      final String group)
   {
-    return new UploadFieldDefinition(name, displayName, helpText, optional, type);
+    return new UploadFieldDefinition(name, displayName, helpText, optional, type, group);
   }
 
   private Set<UploadDefinitionExtension> getDefinitionExtensions() {
@@ -269,7 +271,7 @@ public class RawUploadHandlerTest
 
     @Override
     public UploadFieldDefinition contribute() {
-      return new UploadFieldDefinition("foo", "Foo", null, true, Type.STRING);
+      return new UploadFieldDefinition("foo", "Foo", null, true, Type.STRING, "bar");
     }
   }
 }

@@ -73,7 +73,7 @@ class InstallConfigurationCustomizerTest
   }
 
   @Test
-  void 'SanitizedHazelcastFileSource removes aws credentials'() {
+  void 'SanitizedHazelcastFileSource removes aws credentials and text from known password fields'() {
     File temp = File.createTempFile("test-", ".xml")
     temp.deleteOnExit()
 
@@ -92,6 +92,12 @@ class InstallConfigurationCustomizerTest
         <tag-value>nxrm</tag-value>
       </aws>
     </join>
+    <symmetric-encryption enabled="false">
+      <algorithm>PBEWithMD5AndDES</algorithm>
+      <salt>thesalt</salt>
+      <password>thepass</password>
+      <iteration-count>19</iteration-count>
+    </symmetric-encryption>
   </network>
 </hazelcast>
 '''
@@ -114,6 +120,12 @@ class InstallConfigurationCustomizerTest
         <tag-value>nxrm</tag-value>
       </aws>
     </join>
+    <symmetric-encryption enabled="false">
+      <algorithm>PBEWithMD5AndDES</algorithm>
+      <salt>thesalt</salt>
+      <password>removed</password>
+      <iteration-count>19</iteration-count>
+    </symmetric-encryption>
   </network>
 </hazelcast>
 '''

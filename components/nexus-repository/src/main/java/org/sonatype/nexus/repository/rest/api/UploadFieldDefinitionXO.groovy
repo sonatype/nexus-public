@@ -37,12 +37,15 @@ class UploadFieldDefinitionXO
 
   boolean optional
 
+  String group
+
   static UploadFieldDefinitionXO from(final UploadFieldDefinition uploadFieldDefinition) {
     return builder()
         .name(uploadFieldDefinition.name)
         .type(uploadFieldDefinition.type.name())
         .description(uploadFieldDefinition.helpText)
         .optional(uploadFieldDefinition.optional)
+        .group(uploadFieldDefinition.group)
         .build()
   }
 }

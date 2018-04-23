@@ -229,6 +229,24 @@ public class FileBlobStoreIT
   }
 
   @Test
+  public void testExistsMethodForDirectPathBlob() {
+    byte[] content = "hello".getBytes();
+    final ImmutableMap<String, String> DIRECT_PATH_HEADERS = ImmutableMap.of(
+        CREATED_BY_HEADER, "test",
+        BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
+        DIRECT_PATH_BLOB_HEADER, "true"
+    );
+    BlobId blobId = blobIdResolver.fromHeaders(DIRECT_PATH_HEADERS);
+    //At this point the exist test should return false
+    assertThat(underTest.exists(blobId), is(false));
+
+    final Blob blob = underTest.create(new ByteArrayInputStream(content), DIRECT_PATH_HEADERS);
+    assertThat(blobId.asUniqueString(), is(blob.getId().asUniqueString()));
+    //Now the exist test should be true
+    assertThat(underTest.exists(blob.getId()), is(true));
+  }
+
+  @Test
   public void getDirectPathBlobIdStreamSuccess() throws IOException {
     byte[] content = "hello".getBytes();
     Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(

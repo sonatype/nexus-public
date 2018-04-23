@@ -38,12 +38,6 @@ Ext.define('NX.view.header.Help', {
 
     me.menu = [
       {
-        // text and iconCls is dynamic
-        tooltip: NX.I18n.get('Header_Help_Feature_Tooltip'),
-        action: 'feature'
-      },
-      '-',
-      {
         text: NX.I18n.get('Header_Help_About_Text'),
         iconCls: 'nx-icon-nexus-x16',
         tooltip: NX.I18n.get('Header_Help_About_Tooltip'),

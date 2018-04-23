@@ -88,7 +88,7 @@ Ext.define('NX.view.Main', {
       {
         xtype: 'nx-footer',
         region: 'south',
-        hidden: false
+        hidden: true
       },
 
       {

@@ -18,6 +18,7 @@ import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.security.PasswordHelper
 
+import com.google.common.collect.Iterables
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException
 import org.junit.After
 import org.junit.Before
@@ -103,6 +104,45 @@ class ConfigurationEntityAdapterTest
 
       assert entity.attributes['baz']['password'] == 's1mpl3'
     }
+  }
+
+  @Test
+  void 'can modify group membership outside of transaction'() {
+    database.instance.connect().withCloseable { db ->
+      underTest.register(db)
+    }
+
+    database.instance.acquire().withCloseable { db ->
+      db.begin()
+
+      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
+      config.attributes('group').set('memberNames', [] as Collection)
+      underTest.addEntity(db, config)
+
+      db.commit()
+    }
+
+    Configuration config
+    database.instance.acquire().withCloseable { db ->
+      db.begin()
+
+      config = Iterables.getFirst(underTest.browse(db), null)
+      config.attributes('group').get('memberNames', Collection.class).add('testRepo')
+      underTest.editEntity(db, config)
+
+      db.commit()
+    }
+
+    /*
+     * Check the group membership can be modified outside of the transaction.
+     *
+     * This used to fail because the membership sequence was left backed by an
+     * OTrackedList which expected to find a live DB context whenever the list
+     * was mutated. We now wrap the config's attributes so any tracked entries
+     * will automatically detach when this isn't the case.
+     */
+
+    config.attributes('group').get('memberNames', Collection.class).remove('testRepo')
   }
 
   // FIXME: Below use protected bits to test, not easy to expose for testing w/o exposing too much api in impls

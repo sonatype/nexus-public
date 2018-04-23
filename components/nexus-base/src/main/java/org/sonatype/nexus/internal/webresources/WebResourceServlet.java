@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.internal.security.XFrameOptions;
 import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResource.Prepareable;
@@ -60,12 +61,16 @@ public class WebResourceServlet
 
   private final long maxAgeSeconds;
 
+  private final XFrameOptions xframeOptions;
+
   @Inject
   public WebResourceServlet(final WebResourceService webResources,
+                            final XFrameOptions xframeOptions,
                             @Named("${nexus.webresources.maxAge:-30days}") final Time maxAge)
   {
     this.webResources = checkNotNull(webResources);
     this.maxAgeSeconds = checkNotNull(maxAge.toSeconds());
+    this.xframeOptions = checkNotNull(xframeOptions);
     log.info("Max-age: {} ({} seconds)", maxAge, maxAgeSeconds);
   }
 
@@ -108,7 +113,7 @@ public class WebResourceServlet
     log.trace("Serving resource: {}", resource);
 
     // NEXUS-6569 Add X-Frame-Options header
-    response.setHeader(X_FRAME_OPTIONS, "DENY");
+    response.setHeader(X_FRAME_OPTIONS, xframeOptions.getValueForPath(request.getPathInfo()));
 
     // support resources which need to be prepared before serving
     if (resource instanceof Prepareable) {

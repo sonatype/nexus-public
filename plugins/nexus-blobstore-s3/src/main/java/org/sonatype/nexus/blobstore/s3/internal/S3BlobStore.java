@@ -227,7 +227,9 @@ public class S3BlobStore
     Long existingSize = null;
     if (isDirectPath) {
       S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath);
-      existingSize = getContentSizeForDeletion(blobAttributes);
+      if (exists(blobId)) {
+        existingSize = getContentSizeForDeletion(blobAttributes);
+      }
     }
 
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
@@ -610,6 +612,22 @@ public class S3BlobStore
     catch (Exception e) {
       log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
           blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
+    }
+  }
+
+  /**
+   * This is a simple existence check resulting from NEXUS-16729.  This allows clients
+   * to perform a simple check primarily intended for use in directpath scenarios.
+   */
+  @Override
+  public boolean exists(final BlobId blobId) {
+    checkNotNull(blobId);
+    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+    try {
+      return blobAttributes.load();
+    } catch (IOException ioe) {
+      log.debug("Unable to load attributes {} during existence check, exception: {}", blobAttributes, ioe);
+      return false;
     }
   }
 }

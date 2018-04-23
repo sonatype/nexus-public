@@ -134,7 +134,7 @@ public class ConfigurationEntityAdapter
   }
 
   /**
-   * Returns a copy of the attributes with sensitive data transformed using the given function.
+   * Returns a detached copy of the attributes with sensitive data transformed using the given function.
    */
   @SuppressWarnings("unchecked")
   @Nullable
@@ -145,11 +145,14 @@ public class ConfigurationEntityAdapter
     Map<String, V> processed = new HashMap<>(map.size());
     for (Entry<String, V> entry : map.entrySet()) {
       Object value = entry.getValue();
-      if (entry.getValue() instanceof Map) {
-        value = process((Map<String, Object>) value, transform);
+      if (value instanceof Map) {
+        value = process((Map) value, transform);
       }
       else if (isSensitiveEntry(entry)) {
         value = transform.apply((String) value);
+      }
+      else {
+        value = detach(value); 
       }
       processed.put(entry.getKey(), (V) value);
     }

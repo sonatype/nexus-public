@@ -40,6 +40,9 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       me.uploadDefinition = uploadDefinition;
       me.repository = repository;
 
+      var fields = me.uploadDefinition.get('componentFields').reduce(me.byGroup, {}),
+          groupedFields = me.createFieldsets(fields);
+
       me.removeAll(true);
       me.add(
         {
@@ -79,16 +82,15 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   }
                 ]
               }, {
-                xtype: 'fieldset',
+                xtype: 'container',
                 cls: 'nx-form-section',
                 itemId: 'nx-coreui-upload-component-fields',
                 layout: {
                   type: 'vbox',
                   align: 'stretch'
                 },
-                title: NX.I18n.get('FeatureGroups_Upload_Component_Form_Title'),
-                items: me.uploadDefinition.get('componentFields').map(me.createComponentField, this),
-                hidden: me.uploadDefinition.get('componentFields').length === 0
+                items: groupedFields,
+                hidden: groupedFields.length === 0
               }, {
                 xtype: 'hidden',
                 name: 'repositoryName',
@@ -239,6 +241,37 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
         widget.boxLabel = field.displayName;
       }
       return widget;
+    },
+
+    byGroup: function(accumulator, value) {
+      var group = value.group;
+      if (accumulator[group]) {
+        accumulator[group].push(value);
+      }
+      else {
+        accumulator[group] = [value];
+      }
+      return accumulator;
+    },
+
+    createFieldsets: function(fields) {
+      var groupFields = [];
+      for (var groupName in fields) {
+        if (fields.hasOwnProperty(groupName)) {
+          groupFields.push({
+            xtype: 'fieldset',
+            cls: 'nx-form-section',
+            title: groupName,
+            layout: {
+              type: 'vbox',
+              align: 'stretch'
+            },
+            items: fields[groupName].map(this.createComponentField, this),
+            hidden: fields[groupName].length === 0
+          });
+        }
+      }
+      return groupFields;
     },
 
     fileChange: function(fileField, value) {

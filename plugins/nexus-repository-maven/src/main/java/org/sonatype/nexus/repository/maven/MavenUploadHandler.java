@@ -79,6 +79,8 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
 public class MavenUploadHandler
     extends UploadHandlerSupport
 {
+  private static final String COMPONENT_COORDINATES_GROUP = "Component coordinates";
+
   private static final String GENERATE_POM_DISPLAY = "Generate a POM file with these coordinates";
 
   private static final String GENERATE_POM = "generate-pom";
@@ -266,13 +268,14 @@ public class MavenUploadHandler
   public UploadDefinition getDefinition() {
     if (definition == null) {
       List<UploadFieldDefinition> componentFields = Arrays.asList(
-          new UploadFieldDefinition(GROUP_ID, GROUP_ID_DISPLAY, null, false, Type.STRING),
-          new UploadFieldDefinition(ARTIFACT_ID, ARTIFACT_ID_DISPLAY, null, false, Type.STRING),
-          new UploadFieldDefinition(VERSION, false, Type.STRING),
-          new UploadFieldDefinition(GENERATE_POM, GENERATE_POM_DISPLAY, null, true, Type.BOOLEAN),
-          new UploadFieldDefinition(PACKAGING, true, Type.STRING));
+          new UploadFieldDefinition(GROUP_ID, GROUP_ID_DISPLAY, null, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(ARTIFACT_ID, ARTIFACT_ID_DISPLAY, null, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(VERSION, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(GENERATE_POM, GENERATE_POM_DISPLAY, null, true, Type.BOOLEAN, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(PACKAGING, true, Type.STRING, COMPONENT_COORDINATES_GROUP));
 
-      List<UploadFieldDefinition> assetFields = Arrays.asList(new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),
+      List<UploadFieldDefinition> assetFields = Arrays.asList(
+          new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),
           new UploadFieldDefinition(EXTENSION, false, Type.STRING));
 
       UploadRegexMap regexMap = new UploadRegexMap(

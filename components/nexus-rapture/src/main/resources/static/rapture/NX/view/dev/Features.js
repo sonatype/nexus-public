@@ -31,7 +31,6 @@ Ext.define('NX.view.dev.Features', {
     { text: 'bookmark', dataIndex: 'bookmark', editor: 'textfield', flex: 1 },
     { text: 'weight', dataIndex: 'weight', width: 80, editor: 'textfield' },
     { text: 'view', dataIndex: 'view', editor: 'textfield', hidden: true },
-    { text: 'help keyword', dataIndex: 'helpKeyword', editor: 'textfield', flex: 1 },
     { text: 'description', dataIndex: 'description', editor: 'textfield', flex: 1 },
     { text: 'iconName', dataIndex: 'iconName', editor: 'textfield' },
     {

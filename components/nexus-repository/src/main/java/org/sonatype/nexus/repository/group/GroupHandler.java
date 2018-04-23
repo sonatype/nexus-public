@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.group;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import static java.util.Collections.unmodifiableSet;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
@@ -66,6 +68,15 @@ public class GroupHandler
     @Override
     public String toString() {
       return dispatched.toString();
+    }
+
+    /**
+     * Get dispatched repositories names
+     *
+     * @return Unmodifiable {@link Set} of Dispatched repository names.
+     */
+    public Set<String> getDispatched() {
+      return unmodifiableSet(dispatched);
     }
   }
 

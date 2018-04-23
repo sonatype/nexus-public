@@ -12,6 +12,15 @@
     "component": {
       "dynamic_templates": [
         {
+          "dates": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        },
+        {
           "attributes.maven2": {
             "path_match": "attributes.maven2.*",
             "match_mapping_type": "string",
