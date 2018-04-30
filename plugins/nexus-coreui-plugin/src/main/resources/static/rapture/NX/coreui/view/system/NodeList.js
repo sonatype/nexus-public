@@ -44,19 +44,22 @@ Ext.define('NX.coreui.view.system.NodeList', {
       header: 'Node Name',
       dataIndex: 'friendlyName',
       stateId: 'friendlyName',
-      flex: 1
+      flex: 1,
+      renderer: Ext.htmlEncode
     },
     {
       header: 'Socket Address',
       dataIndex: 'socketAddress',
       stateId: 'socketAddress',
-      flex: 1
+      flex: 1,
+      renderer: Ext.htmlEncode
     },
     {
       header: 'Node Identity',
       dataIndex: 'nodeIdentity',
       stateId: 'nodeIdentity',
-      flex: 1
+      flex: 1,
+      renderer: Ext.htmlEncode
     }
   ],
 

@@ -48,52 +48,60 @@ Ext.define('NX.coreui.view.system.BundleList', {
           dataIndex: 'id',
           stateId: 'id',
           width: 60,
-          resizable: false
+          resizable: false,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_State_Header'),
           dataIndex: 'state',
           stateId: 'state',
           width: 80,
-          resizable: false
+          resizable: false,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_Level_Header'),
           dataIndex: 'startLevel',
           stateId: 'startLevel',
           width: 60,
-          resizable: false
+          resizable: false,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_Name_Header'),
           dataIndex: 'name',
           stateId: 'name',
-          flex: 2
+          flex: 2,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_SymbolicName_Header'),
           dataIndex: 'symbolicName',
           stateId: 'symbolicName',
           flex: 2,
-          hidden: true
+          hidden: true,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_Version_Header'),
           dataIndex: 'version',
           stateId: 'version',
-          flex: 1
+          flex: 1,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_Location_Header'),
           dataIndex: 'location',
           stateId: 'location',
-          hidden: true
+          hidden: true,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('System_BundleList_Fragment_Header'),
           dataIndex: 'fragment',
           stateId: 'fragment',
-          hidden: true
+          hidden: true,
+          renderer: Ext.htmlEncode
         }
       ],
 

@@ -32,6 +32,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractNewestVersion;
 
 /**
  * @since 3.next
@@ -73,10 +74,15 @@ public class NpmComponentDirector
       tx.browseAssets(component).forEach(asset -> {
         Blob blob = checkNotNull(tx.getBlob(asset.blobRef()));
         final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
-        final NestedAttributesMap updatedMetadata = createFullPackageMetadata(
-            new NestedAttributesMap("metadata", packageJson), destination.getName(), blob.getMetrics().getSha1Hash());
-        final NpmPackageId packageId = NpmPackageId.parse((String) updatedMetadata.get(P_NAME));
+        final NpmPackageId packageId = NpmPackageId.parse((String) packageJson.get(P_NAME));
+
         try {
+          final NestedAttributesMap updatedMetadata = createFullPackageMetadata(
+              new NestedAttributesMap("metadata", packageJson),
+              destination.getName(),
+              blob.getMetrics().getSha1Hash(),
+              destination,
+              extractNewestVersion);
           f.putPackageRoot(packageId, null, updatedMetadata);
         }
         catch (IOException e) {

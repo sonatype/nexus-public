@@ -455,4 +455,13 @@ public abstract class EntityAdapter<T extends Entity>
         return null;
     }
   }
+
+  /**
+   * Override this method to declare a custom affinity for {@link EntityEvent}s.
+   *
+   * @since 3.next
+   */
+  public String eventAffinity(final ODocument document) {
+    return document.getIdentity().toString();
+  }
 }

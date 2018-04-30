@@ -42,17 +42,20 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
         text: NX.I18n.get('Repository_RepositoryList_Name_Header'),
         dataIndex: 'name',
         stateId: 'name',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       },
       {
         text: NX.I18n.get('Repository_RepositoryList_Type_Header'),
         dataIndex: 'type',
-        stateId: 'type'
+        stateId: 'type',
+        renderer: Ext.htmlEncode
       },
       {
         text: NX.I18n.get('Repository_RepositoryList_Format_Header'),
         dataIndex: 'format',
-        stateId: 'format'
+        stateId: 'format',
+        renderer: Ext.htmlEncode
       },
       {
         header: NX.I18n.get('Repository_RepositoryList_Status_Header'), dataIndex: 'status', stateId: 'status', flex: 1,

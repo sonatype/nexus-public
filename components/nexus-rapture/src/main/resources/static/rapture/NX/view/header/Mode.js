@@ -132,7 +132,7 @@ Ext.define('NX.view.header.Mode', {
    * @param {String} text
    */
   setText: function(text) {
-    this.down('button').setText(text);
+    this.down('button').setText(Ext.htmlEncode(text));
   },
 
   /**
@@ -140,7 +140,7 @@ Ext.define('NX.view.header.Mode', {
    * @param {String} tip
    */
   setTooltip: function(tip) {
-    this.down('button').setTooltip(tip);
+    this.down('button').setTooltip(Ext.htmlEncode(tip));
   },
 
   /**

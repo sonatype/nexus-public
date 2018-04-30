@@ -33,6 +33,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -260,5 +261,14 @@ public class ComponentEntityAdapter
       default:
         return null;
     }
+  }
+
+  /**
+   * Custom affinity based on name, so recreated components will have the same affinity.
+   */
+  @Override
+  public String eventAffinity(final ODocument document) {
+    ORID bucketId = document.field(P_BUCKET, ORID.class);
+    return bucketId + "@" + document.field(P_NAME, OType.STRING);
   }
 }

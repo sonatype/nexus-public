@@ -56,7 +56,7 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
             return 'search-component';
           }
         },
-        { header: NX.I18n.get('Search_SearchResultList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 3 },
+        { header: NX.I18n.get('Search_SearchResultList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 3, renderer: Ext.htmlEncode },
         {
           header: NX.I18n.get('Search_SearchResultList_Group_Header'), dataIndex: 'group', stateId: 'group', flex: 4,
           renderer: NX.ext.grid.column.Renderers.optionalData
@@ -64,12 +64,13 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
         { header: NX.I18n.get('Search_SearchResultList_Version_Header'), dataIndex: 'version', stateId: 'version', flex: 1,
           renderer: NX.ext.grid.column.Renderers.optionalData
         },
-        { header: NX.I18n.get('Search_SearchResultList_Format_Header'), dataIndex: 'format', stateId: 'format', width: 70 },
+        { header: NX.I18n.get('Search_SearchResultList_Format_Header'), dataIndex: 'format', stateId: 'format', width: 70, renderer: Ext.htmlEncode },
         {
           header: NX.I18n.get('Search_SearchResultList_Repository_Header'),
           dataIndex: 'repositoryName',
           stateId: 'repositoryName',
-          hidden: true
+          hidden: true,
+          renderer: Ext.htmlEncode
         }
       ],
       

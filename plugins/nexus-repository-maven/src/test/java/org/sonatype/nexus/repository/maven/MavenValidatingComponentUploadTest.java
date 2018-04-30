@@ -70,6 +70,8 @@ public class MavenValidatingComponentUploadTest
     when(uploadDefinition.getFormat()).thenReturn(Maven2Format.NAME);
     when(uploadDefinition.getRegexMap()).thenReturn(new UploadRegexMap(
         MAVEN_CLASSIFIER_AND_EXTENSION_EXTRACTOR_REGEX, "classifier", "extension"));
+    when(jarPayload.getFieldName()).thenReturn("foo.jar");
+    when(jarPayload.getName()).thenReturn("asset");
 
     componentUpload = new ComponentUpload();
   }
@@ -133,15 +135,15 @@ public class MavenValidatingComponentUploadTest
   public void testValidate_duplicates() {
     AssetUpload assetUploadOne = new AssetUpload();
     assetUploadOne.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadOne.setPayload(mock(PartPayload.class));
+    assetUploadOne.setPayload(jarPayload);
 
     AssetUpload assetUploadTwo = new AssetUpload();
     assetUploadTwo.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadTwo.setPayload(mock(PartPayload.class));
+    assetUploadTwo.setPayload(jarPayload);
 
     AssetUpload assetUploadThree = new AssetUpload();
     assetUploadThree.getFields().putAll(ImmutableMap.of("extension", "x"));
-    assetUploadThree.setPayload(mock(PartPayload.class));
+    assetUploadThree.setPayload(jarPayload);
 
     componentUpload.getFields().putAll(ImmutableMap.of("groupId", "g", "artifactId", "a", "version", "1"));
     componentUpload.getAssetUploads().addAll(asList(assetUploadOne, assetUploadTwo, assetUploadThree));

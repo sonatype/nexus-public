@@ -44,8 +44,8 @@ Ext.define('NX.coreui.view.ldap.LdapServerList', {
           }
         },
         { header: NX.I18n.get('Ldap_LdapServerList_Order_Header'), dataIndex: 'order', stateId: 'order', width: 80 },
-        { header: NX.I18n.get('Ldap_LdapServerList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1 },
-        { header: NX.I18n.get('Ldap_LdapServerList_URL_Header'), dataIndex: 'url', stateId: 'url', flex: 1 }
+        { header: NX.I18n.get('Ldap_LdapServerList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1, renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('Ldap_LdapServerList_URL_Header'), dataIndex: 'url', stateId: 'url', flex: 1, renderer: Ext.htmlEncode }
       ],
 
       viewConfig: {

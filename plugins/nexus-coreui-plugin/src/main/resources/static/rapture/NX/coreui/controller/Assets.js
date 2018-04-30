@@ -155,11 +155,11 @@ Ext.define('NX.coreui.controller.Assets', {
         componentInfo = {};
 
     if (componentModel) {
-      repositoryInfo[NX.I18n.get('Search_Assets_Repository')] = componentModel.get('repositoryName');
-      repositoryInfo[NX.I18n.get('Search_Assets_Format')] = componentModel.get('format');
-      componentInfo[NX.I18n.get('Search_Assets_Group')] = componentModel.get('group');
-      componentInfo[NX.I18n.get('Search_Assets_Name')] = componentModel.get('name');
-      componentInfo[NX.I18n.get('Search_Assets_Version')] = componentModel.get('version');
+      repositoryInfo[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(componentModel.get('repositoryName'));
+      repositoryInfo[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(componentModel.get('format'));
+      componentInfo[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(componentModel.get('group'));
+      componentInfo[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(componentModel.get('name'));
+      componentInfo[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
 
       container.down('#repositoryInfo').showInfo(repositoryInfo);
       container.down('#componentInfo').showInfo(componentInfo);
@@ -286,7 +286,7 @@ Ext.define('NX.coreui.controller.Assets', {
       componentModel = componentDetails.componentModel;
       componentId = componentModel.get('name') + '/' + componentModel.get('version');
       repositoryName = componentModel.get('repositoryName');
-      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), componentId, function() {
+      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(componentId), function() {
         NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
           if (Ext.isObject(response) && response.success) {
             componentList.getSelectionModel().deselectAll();
@@ -423,7 +423,7 @@ Ext.define('NX.coreui.controller.Assets', {
 
     if (assetInfo) {
       var asset = assetInfo.assetModel;
-      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), asset.get('name'), function () {
+      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), Ext.htmlEncode(asset.get('name')), function () {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             assetList.getSelectionModel().deselectAll();
@@ -432,7 +432,7 @@ Ext.define('NX.coreui.controller.Assets', {
             var assetStore = assetList.getStore();
             assetStore.remove(assetStore.findRecord('id', asset.getId()));
             me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'}, true);
+            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });
       });

@@ -75,7 +75,8 @@ Ext.define('NX.coreui.view.browse.BrowseComponentList', {
           dataIndex: 'name',
           stateId: 'name',
           flex: 3,
-          sortable: false
+          sortable: false,
+          renderer: Ext.htmlEncode
         },
         {
           text: NX.I18n.get('Browse_BrowseComponentList_Version_Column'),

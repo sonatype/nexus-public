@@ -58,4 +58,11 @@ public interface EventManager
    */
   @VisibleForTesting
   boolean isCalmPeriod();
+
+  /**
+   * Is {@link WithAffinity} support enabled?
+   *
+   * @since 3.next
+   */
+  boolean isAffinityEnabled();
 }

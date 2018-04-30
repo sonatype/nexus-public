@@ -936,6 +936,7 @@
               -->
               <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
+              <exclude>**/nexus-base/**/org/sonatype/nexus/internal/event/SequentialExecutor.java</exclude>
             </excludes>
           </configuration>
         </plugin>

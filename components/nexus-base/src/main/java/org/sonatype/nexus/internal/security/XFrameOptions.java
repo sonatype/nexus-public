@@ -14,6 +14,8 @@
 package org.sonatype.nexus.internal.security;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,24 +30,34 @@ public class XFrameOptions implements Serializable
 {
   private static final long serialVersionUID = 5092514762222572451L;
 
+  private static final String COPYRIGHT_PATH = "/COPYRIGHT.html";
+
+  private static final String HEALTHCHECK_PATH = "/static/healthcheck-tos.html";
+
+  private static final String LICENSE_PATH = "/LICENSE.html";
+
   private static final String SWAGGER_UI = "/swagger-ui/";
 
   private static final String DENY = "DENY";
 
   private static final String SAME_ORIGIN = "SAMEORIGIN";
 
-  private final boolean defaultPolicy;
+  private final boolean defaultDeny;
+
+  private final Set<String> frameablePaths;
 
   @Inject
-  public XFrameOptions(@Named("${nexus.http.denyframe.enabled:-true}") final boolean defaultPolicy) {
-    this.defaultPolicy = defaultPolicy;
+  public XFrameOptions(@Named("${nexus.http.denyframe.enabled:-true}") final boolean defaultDeny) {
+    this.defaultDeny = defaultDeny;
+    frameablePaths = new HashSet<>();
+    frameablePaths.add(COPYRIGHT_PATH);
+    frameablePaths.add(HEALTHCHECK_PATH);
+    frameablePaths.add(LICENSE_PATH);
+    frameablePaths.add(SWAGGER_UI);
   }
 
   public String getValueForPath(final String path) {
-    if (!defaultPolicy) {
-      return SAME_ORIGIN;
-    }
-    if (SWAGGER_UI.equals(path)) {
+    if (!defaultDeny || frameablePaths.contains(path)) {
       return SAME_ORIGIN;
     }
     return DENY;

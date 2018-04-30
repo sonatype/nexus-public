@@ -17,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -42,7 +43,7 @@ public class EventManagerImplTest
 {
   @Test
   public void dispatchOrder() {
-    EventManager underTest = new EventManagerImpl(new DefaultBeanLocator(), new EventExecutor());
+    EventManager underTest = new EventManagerImpl(new DefaultBeanLocator(), newEventExecutor());
     ReentrantHandler handler = new ReentrantHandler(underTest);
 
     underTest.register(handler);
@@ -79,7 +80,7 @@ public class EventManagerImplTest
 
   @Test
   public void asyncInheritsIsReplicating() throws Exception {
-    EventExecutor executor = new EventExecutor();
+    EventExecutor executor = newEventExecutor();
     EventManager underTest = new EventManagerImpl(new DefaultBeanLocator(), executor);
     AsyncReentrantHandler handler = new AsyncReentrantHandler(underTest);
     underTest.register(handler);
@@ -144,7 +145,7 @@ public class EventManagerImplTest
 
   @Test
   public void singleThreadedOnShutdown() throws Exception {
-    EventExecutor executor = new EventExecutor();
+    EventExecutor executor = newEventExecutor();
     EventManager underTest = new EventManagerImpl(new DefaultBeanLocator(), executor);
     AsyncHandler handler = new AsyncHandler();
     underTest.register(handler);
@@ -187,6 +188,10 @@ public class EventManagerImplTest
         throw new RuntimeException(e);
       }
     });
+  }
+
+  private static EventExecutor newEventExecutor() {
+    return new EventExecutor(false, 0, Time.seconds(0), false, false);
   }
 
   private class AsyncHandler

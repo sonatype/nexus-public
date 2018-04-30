@@ -295,6 +295,10 @@ Ext.define('NX.coreui.controller.UploadComponent', {
         componentCoordinatesFieldset = form.down('fieldset[title="Component coordinates"]'),
         isPomFilePresent = form.query('textfield[name^=extension][value=pom]').length !== 0;
 
+    if (componentCoordinatesFieldset === null) {
+        return;
+    }
+
     componentCoordinatesFieldset.setDisabled(isPomFilePresent);
     if (isPomFilePresent) {
       componentCoordinatesFieldset.mask(NX.I18n.get('FeatureGroups_Upload_Form_DetailsFromPom_Mask'), 'nx-mask-without-spinner');

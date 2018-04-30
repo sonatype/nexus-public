@@ -36,7 +36,8 @@ public class XFrameOptionsTest
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] { { "/foo/", true, "DENY" }, { "/foo/", false, "SAMEORIGIN" },
-        { "/swagger-ui/", true, "SAMEORIGIN" }, });
+        { "/swagger-ui/", true, "SAMEORIGIN" }, { "/COPYRIGHT.html", true, "SAMEORIGIN" },
+        { "/LICENSE.html", true, "SAMEORIGIN" }, { "/static/healthcheck-tos.html", true, "SAMEORIGIN" } });
   }
 
   @Parameter

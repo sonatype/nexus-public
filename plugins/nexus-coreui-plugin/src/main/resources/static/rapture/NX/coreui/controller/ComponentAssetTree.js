@@ -617,7 +617,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       componentModel = componentInfo.componentModel;
       componentId = componentModel.get('name') + '/' + componentModel.get('version');
       repositoryName = componentModel.get('repositoryName');
-      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), NX.I18n.format('ComponentDetails_Delete_Body', componentId), function() {
+      NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(NX.I18n.format('ComponentDetails_Delete_Body', componentId)), function() {
         NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
           if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
@@ -641,7 +641,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if (componentAssetInfo) {
       var asset = componentAssetInfo.assetModel;
-      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), asset.get('name'), function () {
+      NX.Dialogs.askConfirmation(NX.I18n.get('AssetInfo_Delete_Title'), Ext.htmlEncode(asset.get('name')), function () {
         NX.direct.coreui_Component.deleteAsset(asset.getId(), asset.get('repositoryName'), function (response) {
           if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
@@ -653,7 +653,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
               selectedRecord.set('iconCls', selectedRecord.computeIconClass());
             }
             me.removeSideContent();
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'}, true);
+            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });
       });

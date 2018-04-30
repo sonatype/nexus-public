@@ -27,6 +27,13 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
 
+  <properties>
+    <!-- temporarily exclude this guava class from sonar -->
+    <sonar.exclusions>
+      src/main/java/org/sonatype/nexus/internal/event/SequentialExecutor.java
+    </sonar.exclusions>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.karaf.jaas</groupId>

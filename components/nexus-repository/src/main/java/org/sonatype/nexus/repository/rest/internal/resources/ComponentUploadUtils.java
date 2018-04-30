@@ -47,6 +47,8 @@ class ComponentUploadUtils
 
   private static final Pattern FILENAME_PATTERN = Pattern.compile(".*\\sfilename\\s*=[\'\"\\s]?([^\'\";]+).*");
 
+  private static final String ASSET_NAME_REGEX = "asset\\d*";
+
   private ComponentUploadUtils() {
     // empty
   }
@@ -157,11 +159,18 @@ class ComponentUploadUtils
       Optional<String> maybeContentDisposition = getContentDisposition(inputPart);
       if (maybeContentDisposition.isPresent()) {
         String contentDisposition = maybeContentDisposition.get();
-        Optional<String> maybeFilename = extractFilename(contentDisposition);
-        if (maybeFilename.isPresent()) {
-          String name = extractFieldName(format, contentDisposition).orElse(maybeFilename.get());
-          InputStream inputStream = inputPart.getBody(InputStream.class, null);
-          payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+        Optional<String> maybeFieldName = extractFieldName(format, contentDisposition);
+        if (maybeFieldName.isPresent()) {
+          String fieldName = maybeFieldName.get();
+          boolean isAsset = fieldName.matches(ASSET_NAME_REGEX);
+          if (isAsset) {
+            Optional<String> maybeFilename = extractFilename(contentDisposition);
+            InputStream inputStream = inputPart.getBody(InputStream.class, null);
+            String filename = maybeFilename.orElse(null);
+            String contentType = inputPart.getMediaType().toString();
+            InputStreamPartPayload payload = new InputStreamPartPayload(filename, fieldName, inputStream, contentType);
+            payloads.put(fieldName, payload);
+          }
         }
       }
     }

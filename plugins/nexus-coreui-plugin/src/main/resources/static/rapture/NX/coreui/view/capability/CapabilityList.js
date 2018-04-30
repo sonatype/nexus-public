@@ -52,7 +52,8 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
       {
         text: NX.I18n.get('Capability_CapabilityList_Type_Header'),
         dataIndex: 'typeName',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       },
       {
         text: NX.I18n.get('Capability_CapabilityList_Description_Header'),

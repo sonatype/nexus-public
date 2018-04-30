@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.proxy;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
@@ -22,12 +23,16 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
 import org.sonatype.nexus.repository.maven.internal.MavenIndexFacetSupport;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.maven.index.reader.Record;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher.prefetchIndexFiles;
 import static org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher.publishHostedIndex;
 
@@ -59,6 +64,13 @@ public class MavenProxyIndexFacet
 
   private Config config;
 
+  private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
+
+  @Inject
+  public MavenProxyIndexFacet(final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider) {
+    this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
+  }
+
   @Override
   protected void doValidate(final Configuration configuration) throws Exception {
     facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class,
@@ -76,11 +88,11 @@ public class MavenProxyIndexFacet
   public void publishIndex() throws IOException {
     log.debug("Fetching maven index properties from remote");
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try {
+    try(DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
       if (!prefetchIndexFiles(getRepository())) {
         if (Boolean.TRUE.equals(config.cacheFallback)) {
           log.debug("No remote index found... generating partial index from caches");
-          publishHostedIndex(getRepository());
+          publishHostedIndex(getRepository(), strategy);
         }
         else {
           log.debug("No remote index found... nothing to publish");

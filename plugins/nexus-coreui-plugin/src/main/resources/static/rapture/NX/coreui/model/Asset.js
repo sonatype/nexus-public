@@ -21,7 +21,7 @@ Ext.define('NX.coreui.model.Asset', {
   extend: 'Ext.data.Model',
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
-    {name: 'name', type: 'string', convert: Ext.util.Format.htmlEncode},
+    {name: 'name', type: 'string'},
     {name: 'format', type: 'string', sortType: 'asUCText'},
     {name: 'contentType', type: 'string', sortType: 'asUCText'},
     {name: 'size', type: 'int'},
@@ -33,7 +33,7 @@ Ext.define('NX.coreui.model.Asset', {
     {name: 'downloadCount', type: 'int'},
     {name: 'blobRef', type: 'string', sortType: 'asUCText'},
     {name: 'componentId', type: 'string', sortType: 'asUCText'},
-    {name: 'createdBy', type: 'string', convert: Ext.util.Format.htmlEncode},
+    {name: 'createdBy', type: 'string'},
     {name: 'createdByIp', type: 'string', sortType: 'asUCText'},
     {name: 'attributes', type: 'auto' /*object*/}
   ]
