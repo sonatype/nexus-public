@@ -34,7 +34,7 @@ public interface ComponentDirector
    *
    * This hook may be required in situations where there are unattached assets that may also need to be moved or copied.
    *
-   * @since 3.next
+   * @since 3.11
    */
   default Component beforeMove(final Component component,
                                final List<Asset> assets,

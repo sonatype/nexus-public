@@ -19,14 +19,13 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.NpmFacet;
-
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.npm.NpmFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -46,6 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractAlwaysPackageVersion;
 
 /**
  * {@link NpmHostedFacet} implementation.
@@ -109,8 +109,12 @@ public class NpmHostedFacetImpl
 
     checkNotNull(packageJson.get(NpmAttributes.P_NAME), "Uploaded package is invalid, or is missing package.json");
 
-    NestedAttributesMap metadata = createFullPackageMetadata(new NestedAttributesMap("metadata", packageJson),
-        getRepository().getName(), tempBlob.getHashes().get(HashAlgorithm.SHA1).toString());
+    NestedAttributesMap metadata = createFullPackageMetadata(
+        new NestedAttributesMap("metadata", packageJson),
+        getRepository().getName(),
+        tempBlob.getHashes().get(HashAlgorithm.SHA1).toString(),
+        null,
+        extractAlwaysPackageVersion);
 
     NpmPackageId packageId = NpmPackageId.parse((String) metadata.get(NpmAttributes.P_NAME));
 

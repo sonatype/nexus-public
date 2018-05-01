@@ -23,11 +23,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import javax.annotation.Nonnull;
@@ -39,6 +37,7 @@ import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -161,7 +160,9 @@ public final class MavenIndexPublisher
   /**
    * Publishes MI index into {@code target}, sourced from {@code repositories} repositories.
    */
-  public static void publishMergedIndex(final Repository target, final List<Repository> repositories)
+  public static void publishMergedIndex(final Repository target,
+                                        final List<Repository> repositories,
+                                        final DuplicateDetectionStrategy<Record> duplicateDetectionStrategy)
       throws IOException
   {
     checkNotNull(target);
@@ -186,7 +187,7 @@ public final class MavenIndexPublisher
           indexWriter.writeChunk(
               transform(
                   decorate(
-                      filter(concat(records), new UniqueFilter()),
+                      filter(concat(records), duplicateDetectionStrategy),
                       target.getName()
                   ),
                   RECORD_COMPACTOR::apply
@@ -206,7 +207,10 @@ public final class MavenIndexPublisher
   /**
    * Publishes MI index into {@code target}, sourced from repository's own CMA structures.
    */
-  public static void publishHostedIndex(final Repository repository) throws IOException {
+  public static void publishHostedIndex(final Repository repository,
+                                        final DuplicateDetectionStrategy<Record> duplicateDetectionStrategy)
+      throws IOException
+  {
     checkNotNull(repository);
     Transactional.operation.throwing(IOException.class).call(
         () -> {
@@ -216,7 +220,7 @@ public final class MavenIndexPublisher
               indexWriter.writeChunk(
                   transform(
                       decorate(
-                          filter(getHostedRecords(tx, repository), new UniqueFilter()),
+                          filter(getHostedRecords(tx, repository), duplicateDetectionStrategy),
                           repository.getName()
                       ),
                       RECORD_COMPACTOR::apply
@@ -495,47 +499,6 @@ public final class MavenIndexPublisher
     @Override
     public boolean apply(final Record input) {
       return allowedTypes.contains(input.getType());
-    }
-  }
-
-  /**
-   * Memory conservative "uniqueness filter" that filters MI keys (UINFO), allowing one uinfo at the time. MI index
-   * is unique by UINFO composite field, and this predicate filters it as such.
-   */
-  private static class UniqueFilter
-      implements Predicate<Record>
-  {
-    /**
-     * G->A->V->Set(CE), just to check for uniqueness.
-     */
-    private Map<String, Map<String, Map<String, Set<String>>>> gavce = new HashMap<>();
-
-    @Override
-    public boolean apply(final Record input) {
-      String g = input.get(Record.GROUP_ID);
-      String a = input.get(Record.ARTIFACT_ID);
-      String v = input.get(Record.VERSION);
-      String ce = defStr(input.get(Record.CLASSIFIER), "n/a") + ":" + input.get(Record.FILE_EXTENSION);
-      // G
-      Map<String, Map<String, Set<String>>> gMap = gavce.get(g);
-      if (gMap == null) {
-        gMap = new HashMap<>();
-        gavce.put(g, gMap);
-      }
-      // A
-      Map<String, Set<String>> aMap = gMap.get(a);
-      if (aMap == null) {
-        aMap = new HashMap<>();
-        gMap.put(a, aMap);
-      }
-      // V
-      Set<String> vSet = aMap.get(v);
-      if (vSet == null) {
-        vSet = new HashSet<>();
-        aMap.put(v, vSet);
-      }
-      // CE
-      return vSet.add(ce);
     }
   }
 

@@ -161,7 +161,7 @@ class ComponentUploadUtils
         if (maybeFilename.isPresent()) {
           String name = extractFieldName(format, contentDisposition).orElse(maybeFilename.get());
           InputStream inputStream = inputPart.getBody(InputStream.class, null);
-          payloads.put(name, new InputStreamPartPayload(name, name, inputStream, inputPart.getMediaType().toString()));
+          payloads.put(name, new InputStreamPartPayload(maybeFilename.get(), name, inputStream, inputPart.getMediaType().toString()));
         }
       }
     }

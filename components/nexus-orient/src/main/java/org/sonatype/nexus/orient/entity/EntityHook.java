@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.slf4j.Logger;
@@ -127,6 +129,7 @@ public final class EntityHook
 
   @Override
   public void onOpen(final ODatabaseInternal db) {
+    unregisterLiveQueryHook(db);
     if (OSecurityNull.class.equals(db.getProperty(ODatabase.OPTIONS.SECURITY.toString()))) {
       return; // ignore maintenance operations which run without security, such as index repair
     }
@@ -282,7 +285,12 @@ public final class EntityHook
 
   @Nullable
   private EntityEvent newEntityEvent(final ODocument document, final EventKind eventKind) {
-    return recordingAdapters.get(document.getSchemaClass()).newEvent(document, eventKind);
+    EntityAdapter adapter = recordingAdapters.get(document.getSchemaClass());
+    EntityEvent event = adapter.newEvent(document, eventKind);
+    if (event != null && eventManager.isAffinityEnabled()) {
+      event.setAffinity(adapter.eventAffinity(document));
+    }
+    return event;
   }
 
   @Nullable
@@ -314,5 +322,20 @@ public final class EntityHook
       return EventKind.DELETE; // record final delete
     }
     return recorded; // maintain initial observation
+  }
+
+  /**
+   * Unregisters {@link OLiveQueryHook} from the opened DB to reduce overhead as we don't use this feature.
+   */
+  private void unregisterLiveQueryHook(final ODatabase db) {
+    Optional<OLiveQueryHook> liveQueryHook = db.getHooks().keySet().stream()
+        .filter(hook -> hook instanceof OLiveQueryHook)
+        .findFirst();
+
+    if (liveQueryHook.isPresent()) {
+      log.debug("Unregistering OLiveQueryHook");
+      db.unregisterListener(liveQueryHook.get());
+      db.unregisterHook(liveQueryHook.get());
+    }
   }
 }

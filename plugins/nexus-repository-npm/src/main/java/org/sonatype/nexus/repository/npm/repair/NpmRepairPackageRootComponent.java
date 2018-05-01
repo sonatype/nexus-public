@@ -22,11 +22,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
-import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
-import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -34,9 +29,12 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.npm.internal.NpmFormat;
+import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
+import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
@@ -48,18 +46,18 @@ import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagateIfPossible;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_VERSION;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.loadPackageRoot;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
 import static java.util.Collections.singletonList;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.common.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.common.hash.Hashes.hash;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_VERSION;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractPackageRootVersionUnlessEmpty;
+import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.getPackageRoot;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -166,16 +164,17 @@ public class NpmRepairPackageRootComponent
   }
 
   private void maybeUpdateAsset(final Repository repository, final Asset asset, final Blob blob) {
-    Map<String, Object> packageJson = npmPackageParser.parsePackageJson(() -> blob.getInputStream());
+    Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
 
     NestedAttributesMap updatedMetadata = createFullPackageMetadata(
-        new NestedAttributesMap("metadata", packageJson), repository.getName(), blob.getMetrics().getSha1Hash());
+        new NestedAttributesMap("metadata", packageJson),
+        repository.getName(),
+        blob.getMetrics().getSha1Hash(),
+        repository,
+        extractPackageRootVersionUnlessEmpty);
 
-    NpmPackageId packageId = NpmPackageId.parse((String) updatedMetadata.get(P_NAME));
-
-    String packageVersion = (String) packageJson.get(P_VERSION);
-
-    updatePackageRootIfShaIncorrect(repository, asset, blob, updatedMetadata, packageId, packageVersion);
+    updatePackageRootIfShaIncorrect(repository, asset, blob, updatedMetadata,
+        NpmPackageId.parse((String) packageJson.get(P_NAME)), (String) packageJson.get(P_VERSION));
   }
 
   private void updatePackageRootIfShaIncorrect(final Repository repository,
@@ -187,12 +186,8 @@ public class NpmRepairPackageRootComponent
   {
     NpmHostedFacet hostedFacet = repository.facet(NpmHostedFacet.class);
     try {
-      StorageTx tx = UnitOfWork.currentTx();
-      Bucket bucket = tx.findBucket(repository);
-
-      Asset packageRootAsset = findPackageRootAsset(tx, bucket, packageId);
-      if (packageRootAsset != null) {
-        NestedAttributesMap oldPackageRoot = loadPackageRoot(tx, packageRootAsset);
+      NestedAttributesMap oldPackageRoot = getPackageRoot(UnitOfWork.currentTx(), repository, packageId);
+      if (oldPackageRoot != null) {
         String oldSha = extractShasum(oldPackageRoot, packageVersion);
         String newSha = extractShasum(newPackageRoot, packageVersion);
 
