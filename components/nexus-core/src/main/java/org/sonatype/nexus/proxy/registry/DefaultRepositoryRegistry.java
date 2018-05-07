@@ -196,18 +196,9 @@ public class DefaultRepositoryRegistry
   /**
    * The repository registry RO "view"
    */
-  private volatile Map<String, Repository> _repositoriesView;
+  private volatile Map<String, Repository> _repositoriesView = Collections.emptyMap();
 
-  /**
-   * Returns a copy of map with repositories. Is synchronized method, to allow consistent-read access. Methods
-   * modifying this map are all also synchronized (see API Interface and above), while all the "reading" methods from
-   * public API will boil down to this single method.
-   */
-  protected synchronized Map<String, Repository> getRepositoriesMap() {
-    if (_repositoriesView == null) {
-      _repositoriesView = Collections.unmodifiableMap(new HashMap<String, Repository>(_repositories));
-    }
-
+  protected Map<String, Repository> getRepositoriesMap() {
     return _repositoriesView;
   }
 
