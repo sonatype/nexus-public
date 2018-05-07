@@ -409,7 +409,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Lazily detaches the value; tracked collections are detached as their content is touched.
    *
-   * @since 3.next
+   * @since 3.11
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
   protected <V> V detach(final V value) {
@@ -459,7 +459,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Override this method to declare a custom affinity for {@link EntityEvent}s.
    *
-   * @since 3.next
+   * @since 3.11
    */
   public String eventAffinity(final ODocument document) {
     return document.getIdentity().toString();

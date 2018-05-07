@@ -19,7 +19,7 @@ import java.util.function.BiPredicate;
  * and we need to be very careful to ensure this condition is not too expensive. It is also worth noting that this has
  * the ability to hide non-leaf nodes which if implemented incorrectly could hide entire branches.
  *
- * @since 3.next
+ * @since 3.11
  */
 public interface BrowseNodeFilter
     extends BiPredicate<BrowseNode, String>

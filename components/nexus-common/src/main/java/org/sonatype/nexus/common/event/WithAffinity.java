@@ -18,7 +18,7 @@ package org.sonatype.nexus.common.event;
  * This is a hint to try and maintain ordering between events with the same affinity
  * at the point they reach subscribers, even when event delivery is multi-threaded.
  *
- * @since 3.next
+ * @since 3.11
  */
 public interface WithAffinity
 {

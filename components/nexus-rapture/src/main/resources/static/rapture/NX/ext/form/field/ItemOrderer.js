@@ -106,11 +106,6 @@ Ext.define('NX.ext.form.field.ItemOrderer', {
           scope: me,
           drop: me.syncValue
         }
-      },
-      listConfig: {
-        getInnerTpl: function(displayField) {
-          return '{' + displayField + ':htmlEncode}';
-        }
       }
     });
 

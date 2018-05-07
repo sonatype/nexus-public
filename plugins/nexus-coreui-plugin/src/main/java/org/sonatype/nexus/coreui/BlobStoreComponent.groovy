@@ -74,7 +74,7 @@ class BlobStoreComponent
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
     blobstoreDescriptors.collect { key, descriptor ->
-      new BlobStoreTypeXO(id: key, name: descriptor.name, formFields: descriptor.formFields)
+      new BlobStoreTypeXO(id: key, name: descriptor.name, formFields: descriptor.formFields.collect { FormFieldXO.create(it) })
     }
   }
 

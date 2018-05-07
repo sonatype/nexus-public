@@ -21,7 +21,7 @@ import static org.apache.maven.index.reader.Record.FILE_EXTENSION;
 /**
  * Provides utility methods for Maven records.
  *
- * @since 3.next
+ * @since 3.11
  */
 public final class RecordUtils
 {

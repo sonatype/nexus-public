@@ -20,7 +20,7 @@ import com.google.common.base.Predicate;
 /**
  * Strategy for filtering Maven records
  *
- * @since 3.next
+ * @since 3.11
  */
 public interface DuplicateDetectionStrategy<T>
     extends Predicate<T>, Closeable

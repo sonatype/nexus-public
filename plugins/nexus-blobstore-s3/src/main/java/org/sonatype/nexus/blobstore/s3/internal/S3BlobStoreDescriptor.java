@@ -20,6 +20,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -45,50 +46,56 @@ public class S3BlobStoreDescriptor
     @DefaultMessage("Bucket")
     String bucketLabel();
 
-    @DefaultMessage("S3 Bucket Name")
+    @DefaultMessage("S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)")
     String bucketHelp();
 
-    @DefaultMessage("Access Key ID")
+    @DefaultMessage("Access Key ID (Optional)")
     String accessKeyIdLabel();
 
-    @DefaultMessage("AWS Access Key ID")
+    @DefaultMessage("The AWS Access Key ID used for authentication when IAM roles are not being used")
     String accessKeyIdHelp();
 
-    @DefaultMessage("Secret Access Key")
+    @DefaultMessage("Secret Access Key (Optional)")
     String secretAccessKeyLabel();
 
-    @DefaultMessage("AWS Secret Access Key")
+    @DefaultMessage("The AWS Secret Access Key used for authentication when IAM roles are not being used")
     String secretAccessKeyHelp();
 
-    @DefaultMessage("Session Token")
+    @DefaultMessage("Session Token (Optional)")
     String sessionTokenLabel();
 
-    @DefaultMessage("STS Session Token")
+    @DefaultMessage("An STS Session Token, if required")
     String sessionTokenHelp();
 
-    @DefaultMessage("Assume Role ARN")
+    @DefaultMessage("Assume Role ARN (Optional)")
     String assumeRoleLabel();
 
-    @DefaultMessage("Optional ARN for Role to Assume")
+    @DefaultMessage("Optional ARN for Role to Assume, if required")
     String assumeRoleHelp();
 
-    @DefaultMessage("Region")
+    @DefaultMessage("Region (Optional)")
     String regionLabel();
 
-    @DefaultMessage("AWS Region")
+    @DefaultMessage("The AWS Region to use")
     String regionHelp();
 
-    @DefaultMessage("Endpoint URL")
+    @DefaultMessage("Endpoint URL (Optional)")
     String endpointLabel();
 
-    @DefaultMessage("AWS Endpoint URL")
+    @DefaultMessage("A custom endpoint URL for third party object stores using the S3 API")
     String endpointHelp();
 
     @DefaultMessage("Expiration Days")
     String expirationLabel();
 
-    @DefaultMessage("How many days until deleted blobs are finally removed from the S3 bucket")
+    @DefaultMessage("How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)")
     String expirationHelp();
+
+    @DefaultMessage("Signature Version (Optional)")
+    String signerTypeLabel();
+
+    @DefaultMessage("An API signature version which may be required for third party object stores using the S3 API")
+    String signerTypeHelp();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -101,13 +108,15 @@ public class S3BlobStoreDescriptor
   private final FormField region;
   private final FormField endpoint;
   private final FormField expiration;
+  private final FormField signerType;
 
   public S3BlobStoreDescriptor() {
     this.bucket = new StringTextFormField(
         S3BlobStore.BUCKET_KEY,
         messages.bucketLabel(),
         messages.bucketHelp(),
-        FormField.MANDATORY
+        FormField.MANDATORY,
+        S3BlobStore.BUCKET_REGEX
     );
     this.accessKeyId = new StringTextFormField(
         S3BlobStore.ACCESS_KEY_ID_KEY,
@@ -133,12 +142,13 @@ public class S3BlobStoreDescriptor
         messages.sessionTokenHelp(),
         FormField.OPTIONAL
     );
-    this.region = new StringTextFormField(
+    this.region = new ComboboxFormField<String>(
         S3BlobStore.REGION_KEY,
         messages.regionLabel(),
         messages.regionHelp(),
-        FormField.OPTIONAL
-    );
+        FormField.MANDATORY
+    ).withStoreApi("s3_S3.regions").withInitialValue("");
+    this.region.getAttributes().put("sortProperty", "order");
     this.endpoint = new StringTextFormField(
         S3BlobStore.ENDPOINT_KEY,
         messages.endpointLabel(),
@@ -151,7 +161,14 @@ public class S3BlobStoreDescriptor
         messages.expirationHelp(),
         FormField.OPTIONAL)
         .withInitialValue(S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS)
-        .withMinimumValue(1);
+        .withMinimumValue(-1);
+    this.signerType = new ComboboxFormField<String>(
+        S3BlobStore.SIGNERTYPE_KEY,
+        messages.signerTypeLabel(),
+        messages.signerTypeHelp(),
+        FormField.MANDATORY
+    ).withStoreApi("s3_S3.signertypes").withInitialValue("");
+    this.signerType.getAttributes().put("sortProperty", "order");
   }
 
   @Override
@@ -161,6 +178,7 @@ public class S3BlobStoreDescriptor
 
   @Override
   public List<FormField> getFormFields() {
-      return Arrays.asList(bucket, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint, expiration);
+    return Arrays.asList(bucket, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint,
+        expiration, signerType);
   }
 }

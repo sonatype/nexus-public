@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Overdue deliveries do not block the posting thread forever, but are bumped to
  * the next cycle when the timeout expires.
  *
- * @since 3.next
+ * @since 3.11
  */
 class AffinityBarrier
     extends Phaser

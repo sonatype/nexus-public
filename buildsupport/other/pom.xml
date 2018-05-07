@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-other</artifactId>
@@ -36,7 +36,25 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>21.0</version>
+        <version>25.0-jre</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-compat-qual</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.j2objc</groupId>
+            <artifactId>j2objc-annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-annotations</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

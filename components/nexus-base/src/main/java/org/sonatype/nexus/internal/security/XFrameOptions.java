@@ -22,7 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
- * @since 3.next
+ * @since 3.11
  */
 @Named
 @Singleton

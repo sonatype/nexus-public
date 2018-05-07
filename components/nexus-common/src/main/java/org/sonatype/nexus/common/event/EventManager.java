@@ -62,7 +62,7 @@ public interface EventManager
   /**
    * Is {@link WithAffinity} support enabled?
    *
-   * @since 3.next
+   * @since 3.11
    */
   boolean isAffinityEnabled();
 }

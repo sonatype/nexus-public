@@ -212,4 +212,12 @@ public interface BlobStore
    * @since 3.7
    */
   void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes);
+
+  /**
+   * Undeletes a soft deleted blob, if possible.
+   *
+   * @return {@code true} if the blob has been successfully undeleted.
+   * @since 3.next
+   */
+  boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
 }

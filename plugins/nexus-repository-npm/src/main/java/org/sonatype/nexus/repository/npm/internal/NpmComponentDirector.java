@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataU
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractNewestVersion;
 
 /**
- * @since 3.next
+ * @since 3.11
  */
 @Named("npm")
 @Singleton

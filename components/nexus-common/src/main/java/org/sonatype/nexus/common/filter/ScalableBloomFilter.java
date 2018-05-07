@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.toList;
  *
  * Some stats on the probabilities can be found here https://github.com/google/guava/issues/2520#issuecomment-231233736
  *
- * @since 3.next
+ * @since 3.11
  */
 public class ScalableBloomFilter<T>
 {

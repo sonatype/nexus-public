@@ -107,7 +107,7 @@ public abstract class EntityEvent
   /**
    * Declares the affinity for this event.
    *
-   * 3.next
+   * @since 3.11
    */
   public void setAffinity(final String affinity) {
     this.affinity = affinity;

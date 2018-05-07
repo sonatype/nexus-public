@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import javax.inject.Named;
@@ -112,10 +113,11 @@ public class NpmHostedComponentMaintenanceImpl
       return getRepository().facet(NpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
     }
     else {
-      NestedAttributesMap distTags = packageRoot.child(NpmMetadataUtils.DIST_TAGS);
-      for (Entry<String, Object> distTag : distTags) {
+      Iterator<Entry<String, Object>> distTags = packageRoot.child(NpmMetadataUtils.DIST_TAGS).iterator();
+      while (distTags.hasNext()) {
+        Entry<String, Object> distTag = distTags.next();
         if (version.getKey().equals(distTag.getValue())) {
-          distTags.remove(distTag.getKey());
+          distTags.remove();
         }
       }
       packageRoot.child(NpmMetadataUtils.TIME).remove(version.getKey());

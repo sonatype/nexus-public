@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.maven.internal.utils.RecordUtils.gav
  * If records are missed and the dataset is suitably large then recommend switching to
  * {@link DiskBackedDuplicateDetectionStrategy}
  *
- * @since 3.next
+ * @since 3.11
  */
 public class BloomFilterDuplicateDetectionStrategy
     implements DuplicateDetectionStrategy<Record>

@@ -450,9 +450,14 @@ class TaskComponent
 
   @PackageScope
   void validateState(final TaskInfo task) {
-    State state = task.currentState.state
-    if (State.RUNNING == state) {
-      throw new Exception('Task can not be edited while it is being executed or it is in line to be executed')
+    State localState = task.currentState.state
+    List<ClusteredTaskState> clusteredTaskStates = scheduler.getClusteredTaskStateById(task.id)
+    boolean running = localState == State.RUNNING ||
+        (clusteredTaskStates != null &&
+         clusteredTaskStates.any { clusteredTaskState -> clusteredTaskState.state == State.RUNNING })
+    if (running) {
+      throw new IllegalStateException(
+          'Task can not be edited while it is being executed or it is in line to be executed')
     }
   }
 

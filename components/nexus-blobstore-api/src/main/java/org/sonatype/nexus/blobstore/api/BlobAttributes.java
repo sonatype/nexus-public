@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,4 +41,11 @@ public interface BlobAttributes
    * @since 3.7
    */
   void updateFrom(BlobAttributes blobAttributes);
+
+  /**
+   * Stores the attributes in the blob store.
+   *
+   * @since 3.next
+   */
+  void store() throws IOException;
 }

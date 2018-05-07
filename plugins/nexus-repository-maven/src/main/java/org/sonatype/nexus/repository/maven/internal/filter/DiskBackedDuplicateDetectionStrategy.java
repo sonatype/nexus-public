@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.maven.internal.utils.RecordUtils.gav
  * This strategy is recommended for large datasets where the bloom filter strategy is not appropriate because records
  * have been missed.
  *
- * @since 3.next
+ * @since 3.11
  */
 public class DiskBackedDuplicateDetectionStrategy
     implements DuplicateDetectionStrategy<Record>

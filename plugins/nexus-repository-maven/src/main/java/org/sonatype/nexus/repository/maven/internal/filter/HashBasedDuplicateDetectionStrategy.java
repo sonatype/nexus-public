@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.maven.internal.utils.RecordUtils.gav
  * Detects duplicates using an in memory map of hashes calculated from GAV-CE. This has an upper limit and will struggle
  * on most machines to check for duplicates on central. It is, however, guaranteed to be correct and is quick.
  *
- * @since 3.next
+ * @since 3.11
  */
 public class HashBasedDuplicateDetectionStrategy
     implements DuplicateDetectionStrategy<Record>

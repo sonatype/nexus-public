@@ -588,26 +588,27 @@ public class FileBlobStore
       throws IOException
   {
     Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
-    if (!attributesOption.isPresent() || !maybeUndeleteBlob(inUseChecker, blobId, attributesOption.get(), false)) {
+    if (!attributesOption.isPresent() || !undelete(inUseChecker, blobId, attributesOption.get(), false)) {
       // attributes file is missing or blob id not in use, so it's safe to delete the file
       log.debug("Hard deleting blob id: {}, in blob store: {}", blobId, blobStoreConfiguration.getName());
       deleteHard(blobId);
     }
   }
 
-  public boolean maybeUndeleteBlob(@Nullable final BlobStoreUsageChecker inUseChecker,
-                                   final BlobId blobId,
-                                   final FileBlobAttributes attributes,
-                                   final boolean isDryRun)
+  @Override
+  public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker,
+                          final BlobId blobId,
+                          final BlobAttributes attributes,
+                          final boolean isDryRun)
   {
     checkNotNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     Optional<String> blobName = Optional.of(attributes)
-        .map(FileBlobAttributes::getProperties)
+        .map(BlobAttributes::getProperties)
         .map(p -> p.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER));
     if (!blobName.isPresent()) {
       log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER,
-          blobId, attributes.getPath());
+          blobId, attributePath(blobId));
       return false;
     }
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {

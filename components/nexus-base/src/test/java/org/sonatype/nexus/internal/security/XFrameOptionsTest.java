@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 /**
- * @since 3.next
+ * @since 3.11
  */
 @RunWith(Parameterized.class)
 public class XFrameOptionsTest

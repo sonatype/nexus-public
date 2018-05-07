@@ -81,7 +81,10 @@ Ext.define('NX.app.Application', {
 
     // custom grid columns
     'NX.ext.grid.column.Icon',
-    'NX.ext.grid.column.CopyLink'
+    'NX.ext.grid.column.CopyLink',
+
+    // view overrides
+    'NX.ext.view.BoundList'
   ],
 
   name: 'NX',

@@ -43,7 +43,7 @@ public interface DatabaseRestorer
 
   /**
    * @return true if location is where files are restored from
-   * @since 3.next
+   * @since 3.11
    */
   boolean isRestoreFromLocation(File location) throws IOException;
 }

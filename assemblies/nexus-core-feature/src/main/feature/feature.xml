@@ -24,6 +24,7 @@
     <feature>nexus-repository-npm</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-restore-maven</feature>
+    <feature>nexus-blobstore-s3</feature>
     <feature>nexus-restore-npm</feature>
   </feature>
 </features>

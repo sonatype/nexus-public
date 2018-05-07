@@ -41,6 +41,7 @@ import com.google.common.cache.LoadingCache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.util.concurrent.MoreExecutors.newSequentialExecutor;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.event.EventHelper.asReplicating;
 import static org.sonatype.nexus.common.event.EventHelper.isReplicating;
@@ -142,7 +143,7 @@ class EventExecutor
       }
       else {
         // multi-threaded coordination and delivery, with sequential coordination for events with same affinity
-        coordinator = () -> new SequentialExecutor(eventProcessor); // wraps behaviour on top of eventProcessor
+        coordinator = () -> newSequentialExecutor(eventProcessor); // wraps behaviour on top of eventProcessor
       }
 
       affinityBarriers = CacheBuilder.newBuilder()
@@ -179,7 +180,7 @@ class EventExecutor
   /**
    * Is {@link WithAffinity} support enabled?
    *
-   * @since 3.next
+   * @since 3.11
    */
   public boolean isAffinityEnabled() {
     return affinityEnabled;
@@ -188,7 +189,7 @@ class EventExecutor
   /**
    * Executes asynchronous posting of an event using affinity to maintain event ordering across threads.
    *
-   * @since 3.next
+   * @since 3.11
    */
   public void executeWithAffinity(final String affinity, final Runnable postEventToAsyncBus) {
     checkState(affinityEnabled);

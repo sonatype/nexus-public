@@ -20,19 +20,12 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
-
-  <properties>
-    <!-- temporarily exclude this guava class from sonar -->
-    <sonar.exclusions>
-      src/main/java/org/sonatype/nexus/internal/event/SequentialExecutor.java
-    </sonar.exclusions>
-  </properties>
 
   <dependencies>
     <dependency>
