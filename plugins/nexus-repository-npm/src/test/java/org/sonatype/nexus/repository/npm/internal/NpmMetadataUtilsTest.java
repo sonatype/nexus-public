@@ -23,7 +23,6 @@ import com.google.common.collect.Maps;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Test;
-import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;

@@ -157,7 +157,7 @@ public class RestoreMetadataTaskTest
 
     ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
     verify(restoreBlobStrategy).restore(propertiesArgumentCaptor.capture(), eq(blob), eq("test"), eq(false));
-    verify(fileBlobStore).maybeUndeleteBlob(blobstoreUsageChecker, blobId, blobAttributes, false);
+    verify(fileBlobStore).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
     Properties properties = propertiesArgumentCaptor.getValue();
 
     assertThat(properties.getProperty("@BlobStore.blob-name"), is("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"));
@@ -173,7 +173,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(restoreBlobStrategy).restore(any(), eq(blob), eq("test"), eq(false));
-    verify(fileBlobStore, never()).maybeUndeleteBlob(any(), any(), any(), eq(false));
+    verify(fileBlobStore, never()).undelete(any(), any(), any(), eq(false));
   }
 
   @Test
@@ -188,7 +188,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(restoreBlobStrategy, never()).restore(any(), any(), any());
-    verify(fileBlobStore).maybeUndeleteBlob(any(), any(), any(), eq(false));
+    verify(fileBlobStore).undelete(any(), any(), any(), eq(false));
   }
 
   @Test

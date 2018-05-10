@@ -70,6 +70,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.PyPiGroup',
     'repository.recipe.YumProxy',
     'repository.recipe.YumHosted',
+    'repository.recipe.YumGroup',
     'repository.recipe.GitLfsHosted'
   ],
   refs: [

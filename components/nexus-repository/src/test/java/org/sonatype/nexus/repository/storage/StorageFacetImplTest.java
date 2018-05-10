@@ -52,6 +52,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Unit tests for {@link StorageFacetImpl}.
@@ -141,7 +142,7 @@ public class StorageFacetImplTest
     when(blobStoreConfiguration.getName()).thenReturn(BLOB_STORE_NAME);
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
     when(configurationFacet
-        .readSection(any(Configuration.class), eq(StorageFacetImpl.CONFIG_KEY), eq(StorageFacetImpl.Config.class)))
+        .readSection(any(Configuration.class), eq(STORAGE), eq(StorageFacetImpl.Config.class)))
         .thenReturn(config);
     when(nodeAccess.getId()).thenReturn(NODE_ID);
     when(blob.getId()).thenReturn(blobId);

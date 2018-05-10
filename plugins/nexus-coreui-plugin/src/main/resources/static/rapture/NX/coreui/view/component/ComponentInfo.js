@@ -56,11 +56,11 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
         var me = this;
         me.componentModel = componentModel;
 
-        me.summary[NX.I18n.get('Search_Assets_Repository')] = me.componentModel.get('repositoryName');
-        me.summary[NX.I18n.get('Search_Assets_Format')] = me.componentModel.get('format');
-        me.summary[NX.I18n.get('Search_Assets_Group')] = me.componentModel.get('group');
-        me.summary[NX.I18n.get('Search_Assets_Name')] = me.componentModel.get('name');
-        me.summary[NX.I18n.get('Search_Assets_Version')] = me.componentModel.get('version');
+        me.summary[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(me.componentModel.get('repositoryName'));
+        me.summary[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(me.componentModel.get('format'));
+        me.summary[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(me.componentModel.get('group'));
+        me.summary[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(me.componentModel.get('name'));
+        me.summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(me.componentModel.get('version'));
 
         this.showInfo();
 

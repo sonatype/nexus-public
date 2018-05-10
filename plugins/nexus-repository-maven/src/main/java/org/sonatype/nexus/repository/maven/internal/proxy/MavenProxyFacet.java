@@ -66,6 +66,7 @@ public class MavenProxyFacet
       MavenPath mavenPath = mavenPath(context);
       if (mavenPath.getCoordinates() == null
           && !mavenFacet.getMavenPathParser().isRepositoryMetadata(mavenPath)
+          && !mavenFacet.getMavenPathParser().isRepositoryIndex(mavenPath)
           && !mavenPath.getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME)) {
         return null;
       }

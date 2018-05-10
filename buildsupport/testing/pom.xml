@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-testing</artifactId>
@@ -29,7 +29,6 @@
 
   <properties>
     <pax-exam.version>4.9.2</pax-exam.version>
-    <selenium.version>2.38.0</selenium.version>
   </properties>
 
   <dependencyManagement>

@@ -35,7 +35,6 @@ import org.eclipse.sisu.Hidden;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.SERVER;
 import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
-import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 
 /**
  * Sets up the basic environment for web-requests.
@@ -112,9 +111,6 @@ public class EnvironmentFilter
    */
   private void defaultHeaders(final HttpServletResponse response) {
     response.setHeader(SERVER, serverHeader);
-
-    // NEXUS-6569 Add X-Frame-Options header
-    response.setHeader(X_FRAME_OPTIONS, "SAMEORIGIN");
 
     // NEXUS-5023 disable IE for sniffing into response content
     response.setHeader(X_CONTENT_TYPE_OPTIONS, "nosniff");

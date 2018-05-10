@@ -30,6 +30,7 @@ Ext.define('NX.controller.Branding', {
   refs: [
     { ref: 'viewport', selector: 'viewport' },
     { ref: 'headerBranding', selector: 'nx-header-branding' },
+    { ref: 'footer', selector: 'nx-footer' },
     { ref: 'footerBranding', selector: 'nx-footer-branding' }
   ],
 
@@ -93,15 +94,18 @@ Ext.define('NX.controller.Branding', {
    */
   renderFooterBranding: function() {
     var branding = NX.State.getValue('branding'),
+        footer = this.getFooter(),
         footerBranding = this.getFooterBranding();
 
     if (footerBranding) {
       if (branding && branding['footerEnabled']) {
         footerBranding.update(branding['footerHtml']);
         footerBranding.show();
+        footer.show();
       }
       else {
         footerBranding.hide();
+        footer.hide();
       }
     }
   }

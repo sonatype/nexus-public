@@ -13,23 +13,35 @@
 package org.sonatype.nexus.internal.event;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
+import org.sonatype.nexus.common.event.WithAffinity;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.util.concurrent.MoreExecutors.newSequentialExecutor;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.event.EventHelper.asReplicating;
 import static org.sonatype.nexus.common.event.EventHelper.isReplicating;
@@ -54,11 +66,41 @@ class EventExecutor
     extends LifecycleSupport
     implements Executor
 {
-  private volatile Executor delegate;
+  /**
+   * Like {@link CallerRunsPolicy} but it continues to work after the executor is shutdown.
+   */
+  private static final RejectedExecutionHandler CALLER_RUNS_FAILSAFE = (command, executor) -> command.run();
 
-  public EventExecutor() {
-    // single-threaded until we reach TASKS phase
-    this.delegate = MoreExecutors.directExecutor();
+  private final boolean affinityEnabled;
+
+  private final int affinityCacheSize;
+
+  private final Time affinityTimeout;
+
+  private final boolean singleCoordinator;
+
+  private final boolean fairThreading;
+
+  private NexusExecutorService eventProcessor;
+
+  private NexusExecutorService affinityProcessor;
+
+  private LoadingCache<String, AffinityBarrier> affinityBarriers;
+
+  private volatile boolean asyncProcessing;
+
+  @Inject
+  public EventExecutor(@Named("${nexus.event.affinityEnabled:-true}") final boolean affinityEnabled,
+                       @Named("${nexus.event.affinityCacheSize:-1000}") final int affinityCacheSize,
+                       @Named("${nexus.event.affinityTimeout:-1s}") final Time affinityTimeout,
+                       @Named("${nexus.event.singleCoordinator:-false}") final boolean singleCoordinator,
+                       @Named("${nexus.event.fairThreading:-false}") final boolean fairThreading)
+  {
+    this.affinityEnabled = affinityEnabled;
+    this.affinityCacheSize = affinityCacheSize;
+    this.affinityTimeout = checkNotNull(affinityTimeout);
+    this.singleCoordinator = singleCoordinator;
+    this.fairThreading = fairThreading;
   }
 
   /**
@@ -66,40 +108,59 @@ class EventExecutor
    */
   @Override
   protected void doStart() throws Exception {
-    // direct hand-off used! Host pool will use caller thread to execute async subscribers when pool full!
+
     ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
         0,
         HOST_THREAD_POOL_SIZE,
         60L,
         TimeUnit.SECONDS,
-        new SynchronousQueue<>(),
+        new SynchronousQueue<>(fairThreading), // rendezvous only, zero capacity
         new NexusThreadFactory("event", "event-manager"),
-        new CallerRunsPolicy()
+        CALLER_RUNS_FAILSAFE
     );
 
-    // begin distributing events in truly asynchronous fashion
-    delegate = NexusExecutorService.forCurrentSubject(threadPool);
+    eventProcessor = NexusExecutorService.forCurrentSubject(threadPool);
+
+    if (affinityEnabled) {
+
+      Supplier<Executor> coordinator;
+      if (singleCoordinator) {
+        // like singleThreadExecutor but with custom rejection handler
+        ThreadPoolExecutor affinityThread = new ThreadPoolExecutor(
+            1,
+            1,
+            0L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(), // allow queueing up of requests
+            new NexusThreadFactory("affinity", "affinity-manager"),
+            CALLER_RUNS_FAILSAFE
+        );
+
+        affinityProcessor = NexusExecutorService.forCurrentSubject(affinityThread);
+
+        // use single-thread queue to coordinate all events (delivery to subscribers is still multi-threaded)
+        coordinator = () -> affinityProcessor;
+      }
+      else {
+        // multi-threaded coordination and delivery, with sequential coordination for events with same affinity
+        coordinator = () -> newSequentialExecutor(eventProcessor); // wraps behaviour on top of eventProcessor
+      }
+
+      affinityBarriers = CacheBuilder.newBuilder()
+          .maximumSize(affinityCacheSize)
+          .build(CacheLoader.from(() ->
+              new AffinityBarrier(coordinator.get(), eventProcessor, affinityTimeout)));
+    }
+
+    asyncProcessing = true;
   }
 
-  /**
-   * Move from asynchronous to direct subscriber processing.
-   */
   @Override
   protected void doStop() throws Exception {
-    Executor currentExecutor = delegate;
-
-    if (currentExecutor instanceof NexusExecutorService) {
-      // go back to single-threaded for rest of shutdown
-      delegate = MoreExecutors.directExecutor();
-
-      // wait for all background event subscribers to finish to have consistent state
-      ((NexusExecutorService) currentExecutor).shutdown();
-      try {
-        ((NexusExecutorService) currentExecutor).awaitTermination(5L, TimeUnit.SECONDS);
-      }
-      catch (InterruptedException e) {
-        log.debug("Interrupted while waiting for termination", e);
-      }
+    if (asyncProcessing) {
+      shutdown(affinityProcessor);
+      shutdown(eventProcessor);
+      asyncProcessing = false;
     }
   }
 
@@ -108,22 +169,87 @@ class EventExecutor
    */
   @VisibleForTesting
   boolean isCalmPeriod() {
-    Executor currentExecutor = delegate;
-
-    if (currentExecutor instanceof NexusExecutorService) {
-      ThreadPoolExecutor threadPool = (ThreadPoolExecutor)
-          ((NexusExecutorService) currentExecutor).getTargetExecutorService();
-
-      // "calm period" is when we have no queued nor active threads
-      return threadPool.getQueue().isEmpty() && threadPool.getActiveCount() == 0;
+    if (asyncProcessing) {
+      return isCalmPeriod(affinityProcessor) && isCalmPeriod(eventProcessor);
     }
-
-    return true; // single-threaded mode
+    else {
+      return true; // single-threaded mode is always calm
+    }
   }
 
+  /**
+   * Is {@link WithAffinity} support enabled?
+   *
+   * @since 3.11
+   */
+  public boolean isAffinityEnabled() {
+    return affinityEnabled;
+  }
+
+  /**
+   * Executes asynchronous posting of an event using affinity to maintain event ordering across threads.
+   *
+   * @since 3.11
+   */
+  public void executeWithAffinity(final String affinity, final Runnable postEventToAsyncBus) {
+    checkState(affinityEnabled);
+    if (asyncProcessing) {
+      Runnable command = inheritIsReplicating(postEventToAsyncBus);
+      AffinityBarrier barrier = affinityBarriers.getUnchecked(affinity);
+      barrier.coordinate(command); // waits (on separate thread) for last event delivery to complete before posting
+    }
+    else {
+      postEventToAsyncBus.run();
+    }
+  }
+
+  /**
+   * Executes asynchronous delivery of an event to a particular subscriber, tracking it as necessary.
+   */
   @Override
-  public void execute(final Runnable command) {
-    delegate.execute(inheritIsReplicating(command));
+  public void execute(final Runnable deliverEventToSubscriber) {
+    if (asyncProcessing) {
+      Runnable command = inheritIsReplicating(deliverEventToSubscriber);
+      AffinityBarrier barrier = affinityEnabled ? AffinityBarrier.current() : null;
+      if (barrier != null) {
+        barrier.execute(command); // tracks each event delivery to help with coordination of the next posting request
+      }
+      else {
+        eventProcessor.execute(command);
+      }
+    }
+    else {
+      deliverEventToSubscriber.run();
+    }
+  }
+
+  /**
+   * @return {@code true} if the thread pool backing the (optional) executor service is inactive
+   */
+  private boolean isCalmPeriod(@Nullable final NexusExecutorService executorService) {
+    if (executorService != null) {
+      ThreadPoolExecutor threadPool = (ThreadPoolExecutor) executorService.getTargetExecutorService();
+      return threadPool.getQueue().isEmpty() && threadPool.getActiveCount() == 0;
+    }
+    else {
+      return true; // service not enabled, consider as calm
+    }
+  }
+
+  /**
+   * @return {@code true} if the thread pool backing the (optional) executor service is shutdown
+   */
+  private void shutdown(@Nullable final NexusExecutorService executorService) {
+    if (executorService != null) {
+      ThreadPoolExecutor threadPool = (ThreadPoolExecutor) executorService.getTargetExecutorService();
+      threadPool.shutdown();
+      try {
+        threadPool.awaitTermination(5L, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException e) {
+        log.debug("Interrupted while waiting for termination", e);
+      }
+    }
   }
 
   /**

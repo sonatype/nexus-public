@@ -26,12 +26,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.MavenPomGenerator;
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
@@ -57,7 +59,9 @@ import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.hash.HashCode;
 import org.apache.maven.model.Model;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
@@ -75,6 +79,8 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
 public class MavenUploadHandler
     extends UploadHandlerSupport
 {
+  private static final String COMPONENT_COORDINATES_GROUP = "Component coordinates";
+
   private static final String GENERATE_POM_DISPLAY = "Generate a POM file with these coordinates";
 
   private static final String GENERATE_POM = "generate-pom";
@@ -209,6 +215,7 @@ public class MavenUploadHandler
       ensurePermitted(repositoryName, Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
 
       Content content = facet.put(mavenPath, asset.getPayload());
+      putChecksumFiles(facet, mavenPath, content);
 
       //We only need to set the component id one time
       if(responseData.getContent() == null) {
@@ -217,6 +224,12 @@ public class MavenUploadHandler
       responseData.addAssetPath(mavenPath.getPath());
     }
     return responseData;
+  }
+
+  private void putChecksumFiles(final MavenFacet facet, final MavenPath path, final Content content) throws IOException {
+    DateTime dateTime = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
+    Map<HashAlgorithm, HashCode> hashes = MavenFacetUtils.getHashAlgorithmFromContent(content.getAttributes());
+    MavenFacetUtils.addHashes(facet, path, hashes, dateTime);
   }
 
   private String createBasePath(final String groupId, final String artifactId, final String version) {
@@ -246,7 +259,8 @@ public class MavenUploadHandler
     String pom = mavenPomGenerator.generatePom(groupId, artifactId, version, packaging);
 
     MavenPath mavenPath = parser.parsePath(basePath + ".pom");
-    mavenFacet.put(mavenPath, new StringPayload(pom, "text/xml"));
+    Content content = mavenFacet.put(mavenPath, new StringPayload(pom, "text/xml"));
+    putChecksumFiles(mavenFacet, mavenPath, content);
     return mavenPath.getPath();
   }
 
@@ -254,13 +268,14 @@ public class MavenUploadHandler
   public UploadDefinition getDefinition() {
     if (definition == null) {
       List<UploadFieldDefinition> componentFields = Arrays.asList(
-          new UploadFieldDefinition(GROUP_ID, GROUP_ID_DISPLAY, null, false, Type.STRING),
-          new UploadFieldDefinition(ARTIFACT_ID, ARTIFACT_ID_DISPLAY, null, false, Type.STRING),
-          new UploadFieldDefinition(VERSION, false, Type.STRING),
-          new UploadFieldDefinition(GENERATE_POM, GENERATE_POM_DISPLAY, null, true, Type.BOOLEAN),
-          new UploadFieldDefinition(PACKAGING, true, Type.STRING));
+          new UploadFieldDefinition(GROUP_ID, GROUP_ID_DISPLAY, null, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(ARTIFACT_ID, ARTIFACT_ID_DISPLAY, null, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(VERSION, false, Type.STRING, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(GENERATE_POM, GENERATE_POM_DISPLAY, null, true, Type.BOOLEAN, COMPONENT_COORDINATES_GROUP),
+          new UploadFieldDefinition(PACKAGING, true, Type.STRING, COMPONENT_COORDINATES_GROUP));
 
-      List<UploadFieldDefinition> assetFields = Arrays.asList(new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),
+      List<UploadFieldDefinition> assetFields = Arrays.asList(
+          new UploadFieldDefinition(CLASSIFIER, true, Type.STRING),
           new UploadFieldDefinition(EXTENSION, false, Type.STRING));
 
       UploadRegexMap regexMap = new UploadRegexMap(

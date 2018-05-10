@@ -26,8 +26,6 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
@@ -122,38 +120,31 @@ public class RestoreMetadataTask
     if (dryRun) {
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
     }
-    if (store instanceof FileBlobStore) {
-      FileBlobStore fileBlobStore = (FileBlobStore) store;
-      for (BlobId blobId : (Iterable<BlobId>)fileBlobStore.getBlobIdStream()::iterator) {
-        Optional<Context> context = buildContext(blobStoreName, fileBlobStore, blobId);
-        if (context.isPresent()) {
-          Context c =  context.get();
-          if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
-            c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
-          }
-          if (undelete &&
-              fileBlobStore
-                  .maybeUndeleteBlob(blobStoreUsageChecker, c.blobId, (FileBlobAttributes) c.blobAttributes, dryRun))
-          {
-            undeleted++;
-          }
+    for (BlobId blobId : (Iterable<BlobId>)store.getBlobIdStream()::iterator) {
+      Optional<Context> context = buildContext(blobStoreName, store, blobId);
+      if (context.isPresent()) {
+        Context c =  context.get();
+        if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
+          c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
         }
-
-        processed++;
-
-        progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
-            processed, undeleted);
-
-        if (isCanceled()) {
-          break;
+        if (undelete &&
+            store.undelete(blobStoreUsageChecker, c.blobId, c.blobAttributes, dryRun))
+        {
+          undeleted++;
         }
       }
 
-      progressLogger.flush();
+      processed++;
+
+      progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
+                          processed, undeleted);
+
+      if (isCanceled()) {
+        break;
+      }
     }
-    else {
-      log.error("Blob store does not support rebuild: {}", blobStoreName);
-    }
+
+    progressLogger.flush();
   }
 
   private void blobStoreIntegrityCheck(final boolean integrityCheck, final String blobStoreId) {
@@ -177,12 +168,11 @@ public class RestoreMetadataTask
         );
   }
 
-  private Optional<Context> buildContext(final String blobStoreName, final FileBlobStore fileBlobStore,
-                                                                    final BlobId blobId)
+  private Optional<Context> buildContext(final String blobStoreName, final BlobStore blobStore, final BlobId blobId)
   {
-    return Optional.of(new Context(blobStoreName, fileBlobStore, blobId))
-        .map(c -> c.blob(c.fileBlobStore.get(c.blobId, true)))
-        .map(c -> c.blobAttributes(c.fileBlobStore.getBlobAttributes(c.blobId)))
+    return Optional.of(new Context(blobStoreName, blobStore, blobId))
+        .map(c -> c.blob(c.blobStore.get(c.blobId, true)))
+        .map(c -> c.blobAttributes(c.blobStore.getBlobAttributes(c.blobId)))
         .map(c -> c.properties(c.blobAttributes.getProperties()))
         .map(c -> c.repositoryName(c.properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)))
         .map(c -> c.repository(repositoryManager.get(c.repositoryName)))
@@ -192,7 +182,7 @@ public class RestoreMetadataTask
   private static class Context {
     final String blobStoreName;
 
-    final FileBlobStore fileBlobStore;
+    final BlobStore blobStore;
 
     final BlobId blobId;
 
@@ -208,9 +198,9 @@ public class RestoreMetadataTask
 
     RestoreBlobStrategy restoreBlobStrategy;
 
-    Context(final String blobStoreName, final FileBlobStore fileBlobStore, final BlobId blobId) {
+    Context(final String blobStoreName, final BlobStore blobStore, final BlobId blobId) {
       this.blobStoreName = checkNotNull(blobStoreName);
-      this.fileBlobStore = checkNotNull(fileBlobStore);
+      this.blobStore = checkNotNull(blobStore);
       this.blobId = checkNotNull(blobId);
     }
 

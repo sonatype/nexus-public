@@ -13,6 +13,15 @@
     "component": {
       "dynamic_templates": [
         {
+          "dates": {
+            "match_mapping_type": "date",
+            "mapping": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        },
+        {
           "attributes.npm": {
             "path_match": "attributes.npm.*",
             "match_mapping_type": "string",

@@ -292,15 +292,19 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   updatePomFileState: function() {
     var me = this,
         form = me.getUploadComponent().down('form'),
-        componentFieldset = form.down('fieldset#nx-coreui-upload-component-fields'),
+        componentCoordinatesFieldset = form.down('fieldset[title="Component coordinates"]'),
         isPomFilePresent = form.query('textfield[name^=extension][value=pom]').length !== 0;
 
-    componentFieldset.setDisabled(isPomFilePresent);
+    if (componentCoordinatesFieldset === null) {
+        return;
+    }
+
+    componentCoordinatesFieldset.setDisabled(isPomFilePresent);
     if (isPomFilePresent) {
-      componentFieldset.mask(NX.I18n.get('FeatureGroups_Upload_Form_DetailsFromPom_Mask'), 'nx-mask-without-spinner');
+      componentCoordinatesFieldset.mask(NX.I18n.get('FeatureGroups_Upload_Form_DetailsFromPom_Mask'), 'nx-mask-without-spinner');
     }
     else {
-      componentFieldset.unmask();
+      componentCoordinatesFieldset.unmask();
     }
   },
 

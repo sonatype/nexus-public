@@ -30,13 +30,6 @@ Ext.define('NX.controller.Help', {
     'AboutWindow'
   ],
 
-  refs: [
-    {
-      ref: 'featureHelp',
-      selector: 'nx-header-help menuitem[action=feature]'
-    }
-  ],
-
   /**
    * The base-url for help links.
    *
@@ -45,12 +38,6 @@ Ext.define('NX.controller.Help', {
    * @readonly
    */
   baseUrl: 'http://links.sonatype.com/products/nexus',
-
-  /**
-   * @private
-   * @property {NX.model.Feature}
-   */
-  selectedFeature: undefined,
 
   /**
    * @override
@@ -82,15 +69,7 @@ Ext.define('NX.controller.Help', {
     });
 
     me.listen({
-      controller: {
-        '#Menu': {
-          featureselected: me.onFeatureSelected
-        }
-      },
       component: {
-        'nx-header-help menuitem[action=feature]': {
-          click: me.onFeatureHelp
-        },
         'nx-header-help menuitem[action=about]': {
           click: me.onAbout
         },
@@ -114,49 +93,11 @@ Ext.define('NX.controller.Help', {
   },
 
   /**
-   * Update help menu content.
-   *
-   * @private
-   * @param {NX.model.Feature} feature selected feature
-   */
-  onFeatureSelected: function (feature) {
-    var me = this,
-        text = feature.get('text'),
-        iconName = feature.get('iconName'),
-        featureHelp = me.getFeatureHelp();
-
-    me.selectedFeature = feature;
-
-    featureHelp.setText(NX.I18n.get('Help_Feature_Text') + text);
-    featureHelp.setIconCls(NX.Icons.cls(iconName, 'x16'));
-  },
-
-  /**
    * @private
    * @param {String} section
    */
   openUrl: function(section) {
     NX.Windows.open(this.baseUrl + '/' + section);
-  },
-
-  /**
-   * Create a help url for the given keyword.
-   * @param keyword
-   * @returns {string}
-   */
-  createUrl: function(keyword) {
-    return this.baseUrl + '/docs-search/' + NX.State.getVersionMajorMinor() + '/' + keyword;
-  },
-
-  /**
-   * @private
-   */
-  onFeatureHelp: function() {
-    var me = this,
-        keyword = me.selectedFeature.get('helpKeyword'),
-        url = me.createUrl(keyword);
-
-    NX.Windows.open(url);
   },
 
   /**

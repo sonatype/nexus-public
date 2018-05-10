@@ -66,6 +66,8 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Default {@link RepositoryManager} implementation.
@@ -290,7 +292,7 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public Iterable<Repository> browseForBlobStore(String blobStoreId) {
     return stream(browse().spliterator(), true)
-        .filter(r -> blobStoreId.equals(r.getConfiguration().attributes("storage").get("blobStoreName")))
+        .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
         ::iterator;
   }
 
@@ -402,8 +404,8 @@ public class RepositoryManagerImpl
     return stream(browse().spliterator(), false)
       .map(Repository::getConfiguration)
       .map(Configuration::getAttributes)
-      .map(a -> a.get("storage"))
-      .map(s -> s.get("blobStoreName"))
+      .map(a -> a.get(STORAGE))
+      .map(s -> s.get(BLOB_STORE_NAME))
       .filter(blobStoreName::equals);
   }
 

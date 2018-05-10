@@ -43,7 +43,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreList', {
             return 'blobstore-default';
           }
         },
-        {header: NX.I18n.get('Blobstore_BlobstoreList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1},
+        {header: NX.I18n.get('Blobstore_BlobstoreList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1,  renderer: Ext.htmlEncode},
         {header: NX.I18n.get('Blobstore_BlobstoreList_Type_Header'), dataIndex: 'type', stateId: 'type'},
         {header: NX.I18n.get('Blobstore_BlobstoreList_BlobCount_Header'), dataIndex: 'blobCount', stateId: 'blobCount'},
         {

@@ -15,12 +15,14 @@ package org.sonatype.nexus.repository.maven;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -48,20 +50,24 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.google.common.hash.HashCode;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -78,7 +84,9 @@ import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.ST
 public class MavenUploadHandlerTest
     extends TestSupport
 {
-  private final String REPO_NAME = "maven-hosted";
+  private static final String GROUP_NAME_COORDINATES = "Component coordinates";
+
+  private static final String REPO_NAME = "maven-hosted";
 
   private MavenUploadHandler underTest;
 
@@ -140,6 +148,12 @@ public class MavenUploadHandlerTest
     Asset assetPayload = mock(Asset.class);
     when(assetPayload.componentId()).thenReturn(new DetachedEntityId("nuId"));
     when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
+    when(attributesMap.require(eq(Content.CONTENT_LAST_MODIFIED), eq(DateTime.class))).thenReturn(DateTime.now());
+    Map<HashAlgorithm, HashCode> checksums = Collections.singletonMap(
+        HashAlgorithm.SHA1,
+        HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
+    when(attributesMap.require(eq(Content.CONTENT_HASH_CODES_MAP), eq(Content.T_CONTENT_HASH_CODES_MAP)))
+        .thenReturn(checksums);
     when(content.getAttributes()).thenReturn(attributesMap);
     when(mavenFacet.put(any(), any())).thenReturn(content);
   }
@@ -150,13 +164,15 @@ public class MavenUploadHandlerTest
 
     assertThat(def.isMultipleUpload(), is(true));
     // Order is important on fields as it affects the UI
-    assertThat(def.getComponentFields(),
-        contains(field("groupId", "Group ID", null, false, STRING), field("artifactId", "Artifact ID", null, false, STRING),
-            field("version", "Version", null, false, STRING),
-            field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN),
-            field("packaging", "Packaging", null, true, STRING)));
-    assertThat(def.getAssetFields(),
-        contains(field("classifier", "Classifier", null, true, STRING), field("extension", "Extension", null, false, STRING)));
+    assertThat(def.getComponentFields(), contains(
+        field("groupId", "Group ID", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("artifactId", "Artifact ID", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("version", "Version", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN, GROUP_NAME_COORDINATES),
+        field("packaging", "Packaging", null, true, STRING, GROUP_NAME_COORDINATES)));
+    assertThat(def.getAssetFields(), contains(
+        field("classifier", "Classifier", null, true, STRING, null),
+        field("extension", "Extension", null, false, STRING, null)));
   }
 
   @Test
@@ -169,15 +185,17 @@ public class MavenUploadHandlerTest
 
     assertThat(def.isMultipleUpload(), is(true));
     // Order is important on fields as it affects the UI
-    assertThat(def.getComponentFields(),
-        contains(field("groupId", "Group ID", null, false, STRING), field("artifactId", "Artifact ID", null, false, STRING),
-            field("version", "Version", null, false, STRING),
-            field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN),
-            field("packaging", "Packaging", null, true, STRING),
-            field("foo", "Foo", null, true, STRING)));
+    assertThat(def.getComponentFields(), contains(
+        field("groupId", "Group ID", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("artifactId", "Artifact ID", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("version", "Version", null, false, STRING, GROUP_NAME_COORDINATES),
+        field("generate-pom", "Generate a POM file with these coordinates", null, true, BOOLEAN, GROUP_NAME_COORDINATES),
+        field("packaging", "Packaging", null, true, STRING, GROUP_NAME_COORDINATES),
+        field("foo", "Foo", null, true, STRING, "bar")));
 
-    assertThat(def.getAssetFields(),
-        contains(field("classifier", "Classifier", null, true, STRING), field("extension", "Extension", null, false, STRING)));
+    assertThat(def.getAssetFields(), contains(
+        field("classifier", "Classifier", null, true, STRING, null),
+        field("extension", "Extension", null, false, STRING, null)));
   }
 
   @Test
@@ -213,11 +231,11 @@ public class MavenUploadHandlerTest
     assertThat(uploadResponse.getComponentId().getValue(), is("nuId"));
 
     ArgumentCaptor<MavenPath> pathCapture = ArgumentCaptor.forClass(MavenPath.class);
-    verify(mavenFacet, times(2)).put(pathCapture.capture(), any(Payload.class));
+    verify(mavenFacet, times(4)).put(pathCapture.capture(), any(Payload.class));
 
     List<MavenPath> paths = pathCapture.getAllValues();
 
-    assertThat(paths, hasSize(2));
+    assertThat(paths, hasSize(4));
 
     MavenPath path = paths.get(0);
     assertNotNull(path);
@@ -226,8 +244,18 @@ public class MavenUploadHandlerTest
 
     path = paths.get(1);
     assertNotNull(path);
+    assertThat(path.getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar.sha1"));
+    assertCoordinates(path.getCoordinates(), "org.apache.maven", "tomcat", "5.0.28", null, "jar.sha1");
+
+    path = paths.get(2);
+    assertNotNull(path);
     assertThat(path.getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar"));
     assertCoordinates(path.getCoordinates(), "org.apache.maven", "tomcat", "5.0.28", "sources", "jar");
+
+    path = paths.get(3);
+    assertNotNull(path);
+    assertThat(path.getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar.sha1"));
+    assertCoordinates(path.getCoordinates(), "org.apache.maven", "tomcat", "5.0.28", "sources", "jar.sha1");
 
     verify(contentPermissionChecker, times(2)).isPermitted(eq(REPO_NAME), eq(Maven2Format.NAME), eq(BreadActions.EDIT),
         captor.capture());
@@ -259,11 +287,15 @@ public class MavenUploadHandlerTest
         "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom"));
 
     ArgumentCaptor<MavenPath> paths = ArgumentCaptor.forClass(MavenPath.class);
-    verify(mavenFacet, times(2)).put(paths.capture(), any());
+    verify(mavenFacet, times(4)).put(paths.capture(), any());
 
-    MavenPath pomPath = paths.getAllValues().get(1);
+    MavenPath pomPath = paths.getAllValues().get(2);
     assertTrue(pomPath.isPom());
     assertThat(pomPath, is(new MavenPath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom", null)));
+
+    MavenPath path = paths.getAllValues().get(3);
+    assertFalse(path.isPom());
+    assertThat(path, is(new MavenPath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.pom.sha1", null)));
 
     verify(mavenPomGenerator).generatePom("org.apache.maven", "tomcat", "5.0.28", null);
 
@@ -295,7 +327,8 @@ public class MavenUploadHandlerTest
     }
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
-      assertThat(e.getValidationErrors().get(0).getMessage(), is("Not authorized for requested path 'org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar'"));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Not authorized for requested path 'org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar'"));
     }
   }
 
@@ -321,7 +354,8 @@ public class MavenUploadHandlerTest
     }
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
-      assertThat(e.getValidationErrors().get(0).getMessage(), is("Version policy mismatch, cannot upload SNAPSHOT content to RELEASE repositories for file '0'"));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Version policy mismatch, cannot upload SNAPSHOT content to RELEASE repositories for file '0'"));
     }
   }
 
@@ -347,7 +381,8 @@ public class MavenUploadHandlerTest
     }
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
-      assertThat(e.getValidationErrors().get(0).getMessage(), is("Upload to snapshot repositories not supported, use the maven client."));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Upload to snapshot repositories not supported, use the maven client."));
     }
   }
 
@@ -364,12 +399,20 @@ public class MavenUploadHandlerTest
     underTest.handle(repository, componentUpload);
 
     ArgumentCaptor<MavenPath> pathCapture = ArgumentCaptor.forClass(MavenPath.class);
-    verify(mavenFacet).put(pathCapture.capture(), any(Payload.class));
+    verify(mavenFacet, times(2)).put(pathCapture.capture(), any(Payload.class));
 
-    MavenPath path = pathCapture.getValue();
+    List<MavenPath> paths = pathCapture.getAllValues();
+
+    assertThat(paths, hasSize(2));
+
+    MavenPath path = paths.get(0);
     assertNotNull(path);
     assertThat(path.getPath(), is("aParentGroupId/anArtifactId/2.0/anArtifactId-2.0.pom"));
     assertCoordinates(path.getCoordinates(), "aParentGroupId", "anArtifactId", "2.0", null, "pom");
+
+    path = paths.get(1);
+    assertThat(path.getPath(), is("aParentGroupId/anArtifactId/2.0/anArtifactId-2.0.pom.sha1"));
+    assertCoordinates(path.getCoordinates(), "aParentGroupId", "anArtifactId", "2.0", null, "pom.sha1");
   }
 
   @Test
@@ -530,20 +573,23 @@ public class MavenUploadHandlerTest
                                       final String displayName,
                                       final String helpText,
                                       final boolean optional,
-                                      final Type type)
+                                      final Type type,
+                                      final String group)
   {
-    return new UploadFieldDefinition(name, displayName, helpText, optional, type);
+    return new UploadFieldDefinition(name, displayName, helpText, optional, type, group);
   }
 
   private Set<UploadDefinitionExtension> getDefinitionExtensions() {
     return singleton(new TestUploadDefinitionExtension());
   }
 
-  private class TestUploadDefinitionExtension implements UploadDefinitionExtension {
+  private class TestUploadDefinitionExtension
+      implements UploadDefinitionExtension
+  {
 
     @Override
     public UploadFieldDefinition contribute() {
-      return new UploadFieldDefinition("foo", "Foo", null, true, STRING);
+      return new UploadFieldDefinition("foo", "Foo", null, true, STRING, "bar");
     }
   }
 }

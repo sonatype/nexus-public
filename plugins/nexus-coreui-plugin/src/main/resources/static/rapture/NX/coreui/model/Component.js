@@ -22,9 +22,9 @@ Ext.define('NX.coreui.model.Component', {
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'repositoryName', type: 'string', sortType: 'asUCText'},
-    {name: 'group', type: 'string', convert:  Ext.util.Format.htmlEncode},
-    {name: 'name', type: 'string', convert:  Ext.util.Format.htmlEncode},
-    {name: 'version', type: 'string', convert:  Ext.util.Format.htmlEncode},
+    {name: 'group', type: 'string'},
+    {name: 'name', type: 'string'},
+    {name: 'version', type: 'string'},
     {name: 'format', type: 'string', sortType: 'asUCText'}
   ]
 });

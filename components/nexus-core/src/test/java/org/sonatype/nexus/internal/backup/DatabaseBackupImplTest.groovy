@@ -17,6 +17,7 @@ import java.time.LocalDateTime
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.common.app.ApplicationVersion
 import org.sonatype.nexus.orient.DatabaseManager
+import org.sonatype.nexus.orient.DatabaseRestorer
 import org.sonatype.nexus.orient.DatabaseServer
 
 import spock.lang.Specification
@@ -33,13 +34,20 @@ class DatabaseBackupImplTest
     extends Specification
 {
 
+  DatabaseManager databaseManager = Mock()
+
+  DatabaseServer databaseServer = Mock()
+
+  DatabaseRestorer databaseRestorer = Mock()
+
+  ApplicationDirectories applicationDirectories = Mock()
+
+  ApplicationVersion applicationVersion = Mock()
+
   def 'checks that a file can be accessed'() {
-    def databaseManager = Mock(DatabaseManager)
-    def databaseServer = Mock(DatabaseServer)
-    def applicationDirectories = Mock(ApplicationDirectories)
-    def applicationVersion = Mock(ApplicationVersion)
+    databaseRestorer.isRestoreFromLocation(_) >> false
     applicationVersion.getVersion() >> "3.4.1"
-    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, 9, 1024, applicationDirectories, applicationVersion)
+    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, 9, 1024, applicationDirectories, applicationVersion)
 
     when: 'using a temp folder and a temp file'
       File temp = databaseBackup.checkTarget(System.getProperty("java.io.tmpdir"), "test", LocalDateTime.now())
@@ -48,5 +56,17 @@ class DatabaseBackupImplTest
       assertThat(temp, notNullValue())
       assertThat(temp.delete(), is(true))
       1 * applicationDirectories.getWorkDirectory(_) >> { String name -> new File(name) }
+  }
+
+  def 'restore to location is disallowed'() {
+    databaseRestorer.isRestoreFromLocation(_) >> true
+    applicationVersion.getVersion() >> "3.4.1"
+    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, 9, 1024, applicationDirectories, applicationVersion)
+
+    when: 'the target is checked'
+      databaseBackup.checkTarget(".", "test", LocalDateTime.now())
+
+    then: 'an exception is thrown'
+      thrown(IllegalArgumentException)
   }
 }

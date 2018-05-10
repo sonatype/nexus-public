@@ -62,7 +62,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
           allowBlank: !formField.required
         };
 
-    if (formField.initialValue) {
+    if (formField.initialValue != null) {
       itemConfig.listeners = {
         afterrender: function() {
           var me = this;
@@ -101,7 +101,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
 
         filters: filters,
         sortOnLoad: true,
-        sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: 'name', direction: 'ASC' }],
+        sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: formField['attributes']['sortProperty'] || 'name', direction: 'ASC' }],
         remoteFilter: true,
         autoLoad: true
       });

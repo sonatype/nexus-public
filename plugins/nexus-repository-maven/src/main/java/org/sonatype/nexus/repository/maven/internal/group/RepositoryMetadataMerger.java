@@ -371,14 +371,18 @@ public class RepositoryMetadataMerger
 
   /**
    * Parses string into a long (accepts strings with dots too, like maven timestamp is, where dot is between date and
-   * time). If fails, returns -1.
+   * time). If fails or is null, returns -1.
    */
   private long ts(final String ts) {
     try {
-      return Long.parseLong(ts.replace(".", ""));
+      if (ts != null) {
+        return Long.parseLong(ts.replace(".", ""));
+      }
     }
     catch (NumberFormatException e) {
-      return -1;
+      // Just fall through and return -1 just as if ts were null
     }
+
+    return -1;
   }
 }

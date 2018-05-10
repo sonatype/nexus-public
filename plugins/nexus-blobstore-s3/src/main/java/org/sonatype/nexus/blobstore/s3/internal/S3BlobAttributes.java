@@ -156,4 +156,8 @@ public class S3BlobAttributes implements BlobAttributes
       properties.remove(DELETED_REASON_ATTRIBUTE);
     }
   }
+
+  public String toString() {
+    return propertiesFile.toString();
+  }
 }

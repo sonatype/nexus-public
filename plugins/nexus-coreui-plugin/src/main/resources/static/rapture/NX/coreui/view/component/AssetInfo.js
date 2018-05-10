@@ -44,19 +44,19 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     var size = assetModel.get('size');
     info[NX.I18n.get('Assets_Info_Path')] = NX.coreui.util.RepositoryUrls.asRepositoryLink(
         assetModel, assetModel.get('format'));
-    info[NX.I18n.get('Assets_Info_ContentType')] = contentType;
+    info[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType);
     info[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
-    info[NX.I18n.get('Assets_Info_Blob_Created')] = assetModel.get('blobCreated');
-    info[NX.I18n.get('Assets_Info_Blob_Updated')] = assetModel.get('blobUpdated');
-    info[NX.I18n.get('Assets_Info_Downloaded_Count')] = assetModel.get('downloadCount') + ' '
+    info[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(assetModel.get('blobCreated'));
+    info[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(assetModel.get('blobUpdated'));
+    info[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(assetModel.get('downloadCount')) + ' '
             + NX.I18n.get('Assets_Info_Downloaded_Unit');
-    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.Date.format(assetModel.get('lastDownloaded'), 'D M d Y');
-    info[NX.I18n.get('Assets_Info_Locally_Cached')] = contentType !== 'unknown' && size > 0;
-    info[NX.I18n.get('Assets_Info_BlobRef')] = assetModel.get('blobRef');
-    info[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = assetModel.get('containingRepositoryName');
+    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(Ext.Date.format(assetModel.get('lastDownloaded'), 'D M d Y'));
+    info[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
+    info[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(assetModel.get('blobRef'));
+    info[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(assetModel.get('containingRepositoryName'));
 
-    info[NX.I18n.get('Assets_Info_UploadedBy')] = assetModel.get('createdBy');
-    info[NX.I18n.get('Assets_Info_UploadedIp')] = assetModel.get('createdByIp');
+    info[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(assetModel.get('createdBy'));
+    info[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(assetModel.get('createdByIp'));
 
     me.showInfo(info);
   }

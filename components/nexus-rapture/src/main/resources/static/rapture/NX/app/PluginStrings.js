@@ -42,7 +42,7 @@ Ext.define('NX.app.PluginStrings', {
     Button_Save: 'Save',
 
     // Header
-    Header_Panel_Logo_Text: 'Nexus Repository Manager',
+    Header_Panel_Logo_Text: 'Sonatype Nexus Repository Manager',
     Header_BrowseMode_Title: 'Browse',
     Header_BrowseMode_Tooltip: 'Browse server contents',
     Header_AdminMode_Title: 'Administration',
@@ -166,7 +166,7 @@ Ext.define('NX.app.PluginStrings', {
 
     // Browse -> Welcome
     Dashboard_Title: 'Welcome',
-    Dashboard_Description: 'Welcome to Nexus Repository Manager!',
+    Dashboard_Description: 'Learn about Sonatype Nexus Repository Manager',
 
     // Field validation messages
     Util_Validator_Text: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',

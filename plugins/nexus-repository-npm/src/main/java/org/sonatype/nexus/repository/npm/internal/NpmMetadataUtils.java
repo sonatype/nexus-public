@@ -323,4 +323,8 @@ public final class NpmMetadataUtils
     }
     return version;
   }
+
+  public static String getLatestVersionFromPackageRoot(NestedAttributesMap pkg) {
+    return pkg.child(DIST_TAGS).get(LATEST, String.class);
+  }
 }

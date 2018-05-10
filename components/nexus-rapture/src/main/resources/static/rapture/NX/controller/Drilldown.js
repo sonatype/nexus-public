@@ -458,7 +458,7 @@ Ext.define('NX.controller.Drilldown', {
 
     if (Ext.isDefined(selection) && selection.length > 0) {
       description = me.getDescription(selection[0]);
-      NX.Dialogs.askConfirmation('Confirm deletion?', description, function () {
+      NX.Dialogs.askConfirmation('Confirm deletion?', Ext.htmlEncode(description), function () {
         me.deleteModel(selection[0]);
 
         // Reset the bookmark
@@ -748,7 +748,7 @@ Ext.define('NX.controller.Drilldown', {
               ui: 'nx-drilldown',
               // Disabled if it’s the last item in the breadcrumb
               disabled: (i === me.currentIndex ? true : false),
-              text: items[j].itemName,
+              text: Ext.htmlEncode(items[j].itemName),
               handler: function() {
                 var bookmark = items[j].itemBookmark;
                 if (bookmark) {

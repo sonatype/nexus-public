@@ -49,25 +49,29 @@ Ext.define('NX.coreui.view.ssl.SslCertificateList', {
         header: NX.I18n.get('Ssl_SslCertificateList_Name_Header'),
         dataIndex: 'subjectCommonName',
         stateId: 'subjectCommonName',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       },
       {
         header: NX.I18n.get('Ssl_SslCertificateList_IssuedTo_Header'),
         dataIndex: 'subjectOrganization',
         stateId: 'subjectOrganization',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       },
       {
         header: NX.I18n.get('Ssl_SslCertificateList_IssuedBy_Header'),
         dataIndex: 'issuerOrganization',
         stateId: 'issuerOrganization',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       },
       {
         header: NX.I18n.get('Ssl_SslCertificateList_Fingerprint_Header'),
         dataIndex: 'fingerprint',
         stateId: 'fingerprint',
-        flex: 1
+        flex: 1,
+        renderer: Ext.htmlEncode
       }
     ];
 

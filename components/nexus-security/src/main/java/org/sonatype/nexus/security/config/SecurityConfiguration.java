@@ -36,6 +36,11 @@ public interface SecurityConfiguration
 
   void addUser(CUser user, Set<String> roles);
 
+  /**
+   * @since 3.11
+   */
+  void updateUser(CUser user) throws UserNotFoundException;
+
   void updateUser(CUser user, Set<String> roles) throws UserNotFoundException;
 
   boolean removeUser(String id);

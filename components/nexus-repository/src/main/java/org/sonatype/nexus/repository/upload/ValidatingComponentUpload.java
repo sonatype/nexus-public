@@ -110,6 +110,9 @@ public class ValidatingComponentUpload
     if (asset.getPayload() == null) {
       validationErrorsException.withError("file", format("Missing file on asset '%s'", assetIndex));
     }
+    else if (asset.getPayload().getName() == null) {
+      validationErrorsException.withError("file", format("Missing filename on asset '%s'", assetIndex));
+    }
   }
 
   private void validateAllowedAssetFields(final AssetUpload asset, final int assetIndex) {

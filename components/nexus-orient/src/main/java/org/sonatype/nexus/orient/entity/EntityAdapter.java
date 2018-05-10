@@ -384,6 +384,7 @@ public abstract class EntityAdapter<T extends Entity>
 
   /**
    * Makes the given (tracked) entity attributes detachable by using a lazy copy technique.
+   * Detaching only occurs outside of transactions, see {@link #allowDetach()} for details.
    *
    * Without this the tracked Orient collections will attempt to call back into the current
    * transaction when their content is changed, which can lead to exceptions if there is no
@@ -407,9 +408,11 @@ public abstract class EntityAdapter<T extends Entity>
 
   /**
    * Lazily detaches the value; tracked collections are detached as their content is touched.
+   *
+   * @since 3.11
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  private <V> V detach(final V value) {
+  protected <V> V detach(final V value) {
     Object untracked = value;
     if (value instanceof OTrackedMap) {
       untracked = new DetachingMap((Map) value, this::allowDetach, this::detach);
@@ -451,5 +454,14 @@ public abstract class EntityAdapter<T extends Entity>
       default:
         return null;
     }
+  }
+
+  /**
+   * Override this method to declare a custom affinity for {@link EntityEvent}s.
+   *
+   * @since 3.11
+   */
+  public String eventAffinity(final ODocument document) {
+    return document.getIdentity().toString();
   }
 }

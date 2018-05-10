@@ -46,6 +46,8 @@ public class MavenValidatingComponentUploadTest
 
   private static final String MAVEN_CLASSIFIER_AND_EXTENSION_EXTRACTOR_REGEX = "-(?:(?:\\.?\\d)+)(?:-(?:SNAPSHOT|\\d+))?(?:-(\\w+))?\\.((?:\\.?\\w)+)$";
 
+  private static final String GROUP_NAME_COORDINATES = "Component coordinates";
+
   @Mock
   private UploadDefinition uploadDefinition;
 
@@ -57,17 +59,19 @@ public class MavenValidatingComponentUploadTest
   @Before
   public void setup() {
     when(uploadDefinition.getComponentFields()).thenReturn(asList(
-        new UploadFieldDefinition("groupId", "Group ID", null, false, Type.STRING),
-        new UploadFieldDefinition("artifactId", "Artifact ID", null, false, Type.STRING),
-        new UploadFieldDefinition("version", false, Type.STRING),
-        new UploadFieldDefinition("generate-pom", "Generate a POM", null, true, Type.BOOLEAN),
-        new UploadFieldDefinition("packaging", true, Type.STRING)));
+        new UploadFieldDefinition("groupId", "Group ID", null, false, Type.STRING, GROUP_NAME_COORDINATES),
+        new UploadFieldDefinition("artifactId", "Artifact ID", null, false, Type.STRING, GROUP_NAME_COORDINATES),
+        new UploadFieldDefinition("version", false, Type.STRING, GROUP_NAME_COORDINATES),
+        new UploadFieldDefinition("generate-pom", "Generate a POM", null, true, Type.BOOLEAN, GROUP_NAME_COORDINATES),
+        new UploadFieldDefinition("packaging", true, Type.STRING, GROUP_NAME_COORDINATES)));
     when(uploadDefinition.getAssetFields()).thenReturn(asList(
         new UploadFieldDefinition("classifier", true, Type.STRING),
         new UploadFieldDefinition("extension", false, Type.STRING)));
     when(uploadDefinition.getFormat()).thenReturn(Maven2Format.NAME);
     when(uploadDefinition.getRegexMap()).thenReturn(new UploadRegexMap(
         MAVEN_CLASSIFIER_AND_EXTENSION_EXTRACTOR_REGEX, "classifier", "extension"));
+    when(jarPayload.getFieldName()).thenReturn("foo.jar");
+    when(jarPayload.getName()).thenReturn("asset");
 
     componentUpload = new ComponentUpload();
   }
@@ -131,15 +135,15 @@ public class MavenValidatingComponentUploadTest
   public void testValidate_duplicates() {
     AssetUpload assetUploadOne = new AssetUpload();
     assetUploadOne.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadOne.setPayload(mock(PartPayload.class));
+    assetUploadOne.setPayload(jarPayload);
 
     AssetUpload assetUploadTwo = new AssetUpload();
     assetUploadTwo.getFields().putAll(ImmutableMap.of("extension", "x", "classifier", "y"));
-    assetUploadTwo.setPayload(mock(PartPayload.class));
+    assetUploadTwo.setPayload(jarPayload);
 
     AssetUpload assetUploadThree = new AssetUpload();
     assetUploadThree.getFields().putAll(ImmutableMap.of("extension", "x"));
-    assetUploadThree.setPayload(mock(PartPayload.class));
+    assetUploadThree.setPayload(jarPayload);
 
     componentUpload.getFields().putAll(ImmutableMap.of("groupId", "g", "artifactId", "a", "version", "1"));
     componentUpload.getAssetUploads().addAll(asList(assetUploadOne, assetUploadTwo, assetUploadThree));

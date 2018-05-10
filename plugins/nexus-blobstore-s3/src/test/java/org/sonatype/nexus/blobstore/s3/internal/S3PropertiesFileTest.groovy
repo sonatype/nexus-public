@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
-import java.io.ByteArrayInputStream
-
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream

@@ -17,6 +17,8 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.PredefinedClientConfigurations;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -39,6 +41,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
 
 /**
  * Creates configured AmazonS3 clients.
@@ -55,6 +58,7 @@ public class AmazonS3Factory
     String accessKeyId = blobStoreConfiguration.attributes(CONFIG_KEY).get(ACCESS_KEY_ID_KEY, String.class);
     String secretAccessKey = blobStoreConfiguration.attributes(CONFIG_KEY).get(SECRET_ACCESS_KEY_KEY, String.class);
     String region = blobStoreConfiguration.attributes(CONFIG_KEY).get(REGION_KEY, String.class);
+    String signerType = blobStoreConfiguration.attributes(CONFIG_KEY).get(SIGNERTYPE_KEY, String.class);
 
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
       String sessionToken = blobStoreConfiguration.attributes(CONFIG_KEY).get(SESSION_TOKEN_KEY, String.class);
@@ -73,6 +77,12 @@ public class AmazonS3Factory
       } else {
         builder = builder.withRegion(region);
       }
+    }
+
+    if (!isNullOrEmpty(signerType)) {
+      ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
+      clientConfiguration.setSignerOverride(signerType);
+      builder = builder.withClientConfiguration(clientConfiguration);
     }
 
     return builder.build();

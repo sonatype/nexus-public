@@ -274,25 +274,25 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testMaybeUndeleteBlob_AttributesNotDeleted() throws IOException {
+  public void testUndelete_AttributesNotDeleted() throws IOException {
     when(attributes.isDeleted()).thenReturn(false);
 
-    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
+    boolean result = underTest.undelete(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(false));
     verify(blobStoreUsageChecker, never()).test(eq(underTest), any(BlobId.class), anyString());
   }
 
   @Test
-  public void testMaybeUndeleteBlob_CheckerNull() throws IOException {
-    boolean result = underTest.maybeUndeleteBlob(null, new BlobId("fakeid"), attributes, false);
+  public void testUndelete_CheckerNull() throws IOException {
+    boolean result = underTest.undelete(null, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(false));
   }
 
   @Test
-  public void testMaybeUndeleteBlob_CheckInUse() throws IOException {
+  public void testUndelete_CheckInUse() throws IOException {
     when(blobStoreUsageChecker.test(eq(underTest), any(BlobId.class), anyString())).thenReturn(true);
 
-    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
+    boolean result = underTest.undelete(blobStoreUsageChecker, new BlobId("fakeid"), attributes, false);
     assertThat(result, is(true));
     verify(attributes).setDeleted(false);
     verify(attributes).setDeletedReason(null);
@@ -300,10 +300,10 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testMaybeUndeleteBlob_CheckInUse_DryRun() throws IOException {
+  public void testUndelete_CheckInUse_DryRun() throws IOException {
     when(blobStoreUsageChecker.test(eq(underTest), any(BlobId.class), anyString())).thenReturn(true);
 
-    boolean result = underTest.maybeUndeleteBlob(blobStoreUsageChecker, new BlobId("fakeid"), attributes, true);
+    boolean result = underTest.undelete(blobStoreUsageChecker, new BlobId("fakeid"), attributes, true);
     assertThat(result, is(true));
     verify(attributes).getProperties();
     verify(attributes).isDeleted();

@@ -28,6 +28,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
+import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_MAIN_CHUNK_FILE_PATH;
+import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_PROPERTY_FILE_PATH;
 
 /**
  * UT for {@link Maven2MavenPathParser}
@@ -354,22 +356,42 @@ public class Maven2MavenPathParserTest
     mavenPath = pathParser.parsePath("/something/that/looks/maven-metadata.xml");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/something/that/looks/like-SNAPSHOT/maven-metadata.xml.sha1");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/org/codehaus/plexus/plexus-container-default/maven-metadata.xml.md5");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/org/jruby/jruby/1.0/maven-metadata.xml");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/org/jruby/jruby/1.0-SNAPSHOT/maven-metadata.xml");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
+  }
+
+  @Test
+  public void index() {
+    MavenPath mavenPath;
+
+    mavenPath = pathParser.parsePath(INDEX_PROPERTY_FILE_PATH);
+    assertThat(mavenPath.getCoordinates(), nullValue());
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+
+    mavenPath = pathParser.parsePath(INDEX_MAIN_CHUNK_FILE_PATH);
+    assertThat(mavenPath.getCoordinates(), nullValue());
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(true));
+    assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
   }
 
   @Test
@@ -382,6 +404,7 @@ public class Maven2MavenPathParserTest
         "/com/electrabel/connection-register-ear/1.2-SNAPSHOT/connection-register-ear-1.2-20101214.143755.ear");
     assertThat(mavenPath.getCoordinates(), nullValue()); // filename lacks the -BBB build number
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath =
         pathParser.parsePath(
@@ -389,38 +412,47 @@ public class Maven2MavenPathParserTest
     assertThat(mavenPath.getCoordinates(), notNullValue()); // baseVersion != version mismatch
     assertFalse(mavenPath.getCoordinates().getBaseVersion().startsWith("2.0-alpha"));
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/some/stupid/path");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/some/stupid/path/more/in/it");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/something/that/looks/");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/something/that/looks/like-an-artifact.blah");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("/something/that/looks/like-an-artifact.pom");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("org/apache/maven/scm/maven-scm");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
 
     mavenPath = pathParser.parsePath("org/apache/geronimo/javamail/geronimo-javamail_1.4_mail");
     assertThat(mavenPath.getCoordinates(), nullValue());
     assertThat(pathParser.isRepositoryMetadata(mavenPath), equalTo(false));
+    assertThat(pathParser.isRepositoryIndex(mavenPath), equalTo(false));
   }
 
 

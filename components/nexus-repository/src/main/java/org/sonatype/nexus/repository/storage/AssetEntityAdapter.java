@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,6 +35,7 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -286,6 +289,25 @@ public class AssetEntityAdapter
     return transform(docs);
   }
 
+  public Asset findByBucketComponentName(final ODatabaseDocumentTx db,
+                                         final ORID bucketId,
+                                         @Nullable final ORID componentId,
+                                         final String name)
+  {
+    String query = "select from " + DB_CLASS + " where " + P_BUCKET + " = :bucket ";
+    query += "and " + P_COMPONENT + (componentId == null ? " is null " : " = :component ");
+    query +=  "and " + P_NAME + " = :name";
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put(P_BUCKET, bucketId);
+    parameters.put(P_NAME, name);
+    if (componentId != null) {
+      parameters.put(P_COMPONENT, componentId);
+    }
+    Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
+    ODocument first = Iterables.getFirst(docs, null);
+    return first != null ? readEntity(first) : null;
+  }
+
   @Override
   public boolean sendEvents() {
     return true;
@@ -310,5 +332,24 @@ public class AssetEntityAdapter
       default:
         return null;
     }
+  }
+
+  /**
+   * Custom affinity based on name, so recreated assets will have the same affinity.
+   * Attempts to give asset events the same affinity as events from their component.
+   */
+  @Override
+  public String eventAffinity(final ODocument document) {
+    ORID bucketId = document.field(P_BUCKET, ORID.class);
+    // this either returns a pre-fetched document or an ORID needing fetching
+    OIdentifiable component = document.field(P_COMPONENT, OIdentifiable.class);
+    ODocument node = null;
+    if (component != null) {
+      node = component.getRecord(); // fetch document (no-op if it's already there)
+    }
+    if (node == null) {
+      node = document; // no component (or it's AWOL) so fall back to asset node
+    }
+    return bucketId + "@" + node.field(P_NAME, OType.STRING);
   }
 }

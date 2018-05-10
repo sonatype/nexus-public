@@ -18,17 +18,25 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.ClusteredTaskState;
+import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.EndState;
 import org.sonatype.nexus.scheduling.TaskInfo.RunState;
 import org.sonatype.nexus.scheduling.TaskInfo.State;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests {@link TaskComponent}.
@@ -36,11 +44,15 @@ import static org.hamcrest.Matchers.nullValue;
 public class TaskComponentTest
     extends TestSupport
 {
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
+
   private TaskComponent component;
 
   @Before
   public void setUp() {
     component = new TaskComponent();
+    component.setScheduler(mock(TaskScheduler.class));
   }
 
   @Test
@@ -190,5 +202,51 @@ public class TaskComponentTest
         new ClusteredTaskState("node-b", State.DONE, null, null, null, null),
         new ClusteredTaskState("node-c", State.WAITING, null, EndState.OK, null, null));
     assertThat(component.asTaskStates(states), is(nullValue()));
+  }
+
+  @Test
+  public void testValidateState_runningLocally() {
+    TaskInfo taskInfo = mock(TaskInfo.class);
+    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    when(localState.getState()).thenReturn(State.RUNNING);
+    when(taskInfo.getId()).thenReturn("taskId");
+    when(taskInfo.getCurrentState()).thenReturn(localState);
+    when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(null);
+
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Task can not be edited while it is being executed or it is in line to be executed");
+    component.validateState(taskInfo);
+  }
+
+  @Test
+  public void testValidateState_runningOnCluster() {
+    TaskInfo taskInfo = mock(TaskInfo.class);
+    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    List<ClusteredTaskState> clusteredStates = Arrays.asList(
+        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", State.RUNNING, RunState.RUNNING, null, null, null));
+    when(localState.getState()).thenReturn(State.WAITING);
+    when(taskInfo.getId()).thenReturn("taskId");
+    when(taskInfo.getCurrentState()).thenReturn(localState);
+    when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(clusteredStates);
+
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Task can not be edited while it is being executed or it is in line to be executed");
+    component.validateState(taskInfo);
+  }
+
+  @Test
+  public void testValidateState_notRunning() {
+    TaskInfo taskInfo = mock(TaskInfo.class);
+    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    List<ClusteredTaskState> clusteredStates = Arrays.asList(
+        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", State.WAITING, null, null, null, null));
+    when(localState.getState()).thenReturn(State.WAITING);
+    when(taskInfo.getId()).thenReturn("taskId");
+    when(taskInfo.getCurrentState()).thenReturn(localState);
+    when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(clusteredStates);
+
+    component.validateState(taskInfo);
   }
 }

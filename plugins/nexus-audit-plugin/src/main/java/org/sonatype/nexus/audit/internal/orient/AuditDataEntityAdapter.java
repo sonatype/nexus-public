@@ -21,7 +21,6 @@ import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -65,10 +64,8 @@ public class AuditDataEntityAdapter
   public void register(final ODatabaseDocumentTx db, final Runnable initializer) {
 
     // force single cluster to benefit from implicit event ordering
-    OStorageConfiguration dbConfig = db.getStorage().getConfiguration();
-    if (dbConfig.getMinimumClusters() != 1) {
-      dbConfig.setMinimumClusters(1);
-      dbConfig.update();
+    if (db.getStorage().getConfiguration().getMinimumClusters() != 1) {
+      db.getStorage().setMinimumClusters(1);
     }
 
     super.register(db, initializer);

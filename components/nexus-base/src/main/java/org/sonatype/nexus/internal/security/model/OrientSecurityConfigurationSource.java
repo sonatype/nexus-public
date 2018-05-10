@@ -210,7 +210,7 @@ public class OrientSecurityConfigurationSource
     }
 
     @Override
-    public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
+    public void updateUser(final CUser user) throws UserNotFoundException {
       checkNotNull(user);
       checkNotNull(user.getId());
       log.trace("Updating user: {}", user.getId());
@@ -221,10 +221,19 @@ public class OrientSecurityConfigurationSource
           if (existing == null) {
             throw new UserNotFoundException(user.getId());
           }
-          if (!Objects.equals(user.getVersion(), existing.getVersion())) {
-            throw concurrentlyModified("User", user.getId());
-          }
           userEntityAdapter.update(db, user);
+        });
+      }
+      catch (OConcurrentModificationException e) {
+        throw concurrentlyModified("User", user.getId());
+      }
+    }
+
+    @Override
+    public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
+      try {
+        inTxRetry(databaseInstance).throwing(UserNotFoundException.class).run(db -> {
+          updateUser(user);
 
           CUserRoleMapping mapping = userRoleMappingEntityAdapter.read(db, user.getId(), UserManager.DEFAULT_SOURCE);
           if (mapping == null) {
@@ -304,9 +313,6 @@ public class OrientSecurityConfigurationSource
           CPrivilege existing = privilegeEntityAdapter.read(db, privilege.getId());
           if (existing == null) {
             throw new NoSuchPrivilegeException(privilege.getId());
-          }
-          if (!Objects.equals(privilege.getVersion(), existing.getVersion())) {
-            throw concurrentlyModified("Privilege", privilege.getId());
           }
           privilegeEntityAdapter.update(db, privilege);
         });

@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.AssetStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
+import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.base.Stopwatch;
@@ -50,6 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 public class RebuildBrowseNodesTask
     extends RepositoryTaskSupport
+    implements Cancelable
 {
   private static final int BUCKET_KEY_ID = 0;
 

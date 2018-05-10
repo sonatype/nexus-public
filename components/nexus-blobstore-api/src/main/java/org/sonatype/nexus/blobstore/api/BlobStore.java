@@ -134,6 +134,14 @@ public interface BlobStore
   Blob get(BlobId blobId, boolean includeDeleted);
 
   /**
+   * Performs a simple existence check using the attributes path returning {@code true} if it exists and
+   * {@code false} if it does not.
+   *
+   * This was introduced to allow existence checking of direct-path blobs in support of edge cases such as RHC.
+   */
+  boolean exists(BlobId blobId);
+
+  /**
    * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *
@@ -204,4 +212,12 @@ public interface BlobStore
    * @since 3.7
    */
   void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes);
+
+  /**
+   * Undeletes a soft deleted blob, if possible.
+   *
+   * @return {@code true} if the blob has been successfully undeleted.
+   * @since 3.next
+   */
+  boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
 }

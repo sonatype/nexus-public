@@ -78,7 +78,7 @@ Ext.define('NX.util.Url', {
     } else {
       id = '';
     }
-    return '<a href="' + url + '" target="' + target + '"' + id + '>' + text + '</a>';
+    return '<a href="' + url + '" target="' + target + '"' + id + '>' + Ext.htmlEncode(text) + '</a>';
   },
 
   /**

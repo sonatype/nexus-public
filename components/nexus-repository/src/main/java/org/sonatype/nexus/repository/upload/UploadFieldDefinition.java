@@ -38,20 +38,37 @@ public class UploadFieldDefinition
 
   private Type type;
 
+  private String group;
+
   public UploadFieldDefinition(final String name, final boolean optional, final Type type) {
-    this(name, Strings2.capitalize(name), null, optional, type);
+    this(name, Strings2.capitalize(name), null, optional, type, null);
+  }
+
+  public UploadFieldDefinition(final String name, final boolean optional, final Type type, final String group) {
+    this(name, Strings2.capitalize(name), null, optional, type, group);
   }
 
   public UploadFieldDefinition(final String name, final String helpText, final boolean optional, final Type type) {
-    this(name, Strings2.capitalize(name), helpText, optional, type);
+    this(name, Strings2.capitalize(name), helpText, optional, type, null);
   }
 
-  public UploadFieldDefinition(final String name, final String displayName, final String helpText, final boolean optional, final Type type) {
+  public UploadFieldDefinition(final String name, final String helpText, final boolean optional, final Type type, final String group) {
+    this(name, Strings2.capitalize(name), helpText, optional, type, group);
+  }
+
+  public UploadFieldDefinition(final String name,
+                               final String displayName,
+                               final String helpText,
+                               final boolean optional,
+                               final Type type,
+                               final String group)
+  {
     this.name = name;
     this.displayName = displayName;
     this.helpText = helpText;
     this.optional = optional;
     this.type = type;
+    this.group = group;
   }
 
   /**
@@ -89,9 +106,16 @@ public class UploadFieldDefinition
     return optional;
   }
 
+  /**
+   * The name of a group this field belongs to
+   */
+  public String getGroup() {
+    return this.group;
+  }
+
   @Override
   public int hashCode() {
-    return Objects.hash(name, displayName, helpText, type, optional);
+    return Objects.hash(name, displayName, helpText, type, group, optional);
   }
 
   @Override
@@ -119,6 +143,10 @@ public class UploadFieldDefinition
     }
 
     if (!Objects.equals(type, other.type)) {
+      return false;
+    }
+
+    if (!Objects.equals(group, other.group)) {
       return false;
     }
 

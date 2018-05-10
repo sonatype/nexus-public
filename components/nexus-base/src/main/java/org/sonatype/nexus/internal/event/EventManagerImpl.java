@@ -21,6 +21,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.event.WithAffinity;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -124,7 +125,21 @@ public class EventManagerImpl
   public void post(final Object event) {
     // notify synchronous subscribers before going asynchronous
     eventBus.post(event);
-    asyncBus.post(event);
+
+    if (isAffinityEnabled() && event instanceof WithAffinity) {
+      String affinity = ((WithAffinity) event).getAffinity();
+      if (affinity != null) {
+        eventExecutor.executeWithAffinity(affinity, () -> asyncBus.post(event));
+      }
+      else {
+        // unexpected state, fall back to previous behaviour
+        log.warn("Event {} requested 'null' affinity", event);
+        asyncBus.post(event);
+      }
+    }
+    else {
+      asyncBus.post(event);
+    }
   }
 
   @Override
@@ -132,5 +147,10 @@ public class EventManagerImpl
   @ManagedAttribute
   public boolean isCalmPeriod() {
     return eventExecutor.isCalmPeriod();
+  }
+
+  @Override
+  public boolean isAffinityEnabled() {
+    return eventExecutor.isAffinityEnabled();
   }
 }

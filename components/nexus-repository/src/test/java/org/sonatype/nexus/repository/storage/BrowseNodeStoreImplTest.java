@@ -30,6 +30,7 @@ import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
@@ -46,6 +47,9 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -123,6 +127,9 @@ public class BrowseNodeStoreImplTest
   @Mock
   private EntityId assetId;
 
+  @Mock
+  private BrowseNodeFilter browseNodeFilter;
+
   private BrowseNodeStoreImpl underTest;
 
   @Before
@@ -146,13 +153,16 @@ public class BrowseNodeStoreImplTest
     when(byVersion.getAttributes()).thenReturn(ImmutableMap.of("expression", "coordinate.version == \"2.1\""));
     when(jexl.getType()).thenReturn(JexlSelector.TYPE);
 
+    when(browseNodeFilter.test(any(), any())).thenReturn(true);
+
     underTest = new BrowseNodeStoreImpl(
         () -> databaseInstance,
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
         new CselAssetSqlBuilder(),
-        new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)));
+        new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        ImmutableMap.of(FORMAT_NAME, browseNodeFilter));
 
     underTest.start();
 
@@ -461,6 +471,19 @@ public class BrowseNodeStoreImplTest
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "asset_name_lowercase like :keyword_filter", ImmutableMap.of("keyword_filter", "%'%"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
+  }
+
+  @Test
+  public void filterResponses() throws Exception {
+    List<String> queryPath = asList("org", "foo");
+
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+    when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap()))
+        .thenReturn(ImmutableList.of(new BrowseNode()));
+
+    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+
+    verify(browseNodeFilter).test(any(), eq(REPOSITORY_NAME));
   }
 
   private static BrowseNode node(final String repositoryName, final String name) {

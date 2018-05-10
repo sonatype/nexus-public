@@ -57,7 +57,7 @@ class InstallConfigurationCustomizer
         if (file.name == 'jetty-https.xml') {
           supportBundle << new SanitizedJettyFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
-        else if (file.name == 'hazelcast.xml') {
+        else if (file.name == 'hazelcast.xml' || file.name == 'hazelcast-network.xml') {
           supportBundle << new SanitizedHazelcastFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
         else {
@@ -98,6 +98,7 @@ class InstallConfigurationCustomizer
       def etcDir = new File(workDir, 'etc')
 
       maybeIncludeFile new File(etcDir, 'nexus.properties'), 'install/etc', HIGH
+      maybeIncludeFile new File(etcDir, 'fabric/hazelcast-network.xml'), 'install/etc/fabric', HIGH
       maybeIncludeDir new File(etcDir, 'logback'), 'install/etc', HIGH
     }
   }
@@ -164,6 +165,9 @@ class InstallConfigurationCustomizer
         <xsl:text>removed</xsl:text>
        </xsl:template>
        <xsl:template match="hz:secret-key/text()">
+        <xsl:text>removed</xsl:text>
+       </xsl:template>
+       <xsl:template match="hz:password/text()">
         <xsl:text>removed</xsl:text>
        </xsl:template>
       </xsl:stylesheet>'''.stripMargin()

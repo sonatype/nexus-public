@@ -84,6 +84,8 @@ public class BrowseNodeStoreImpl
 
   private final CselAssetSqlBuilder cselAssetSqlBuilder;
 
+  private final Map<String, BrowseNodeFilter> browseNodeFilters;
+
   private final int deletePageSize;
 
   private final boolean enabled;
@@ -94,13 +96,15 @@ public class BrowseNodeStoreImpl
                              final SecurityHelper securityHelper,
                              final SelectorManager selectorManager,
                              final CselAssetSqlBuilder cselAssetSqlBuilder,
-                             final BrowseNodeConfiguration configuration)
+                             final BrowseNodeConfiguration configuration,
+                             final Map<String, BrowseNodeFilter> browseNodeFilters)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
     this.securityHelper = checkNotNull(securityHelper);
     this.selectorManager = checkNotNull(selectorManager);
     this.cselAssetSqlBuilder = checkNotNull(cselAssetSqlBuilder);
+    this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.deletePageSize = configuration.getDeletePageSize();
     this.enabled = configuration.isEnabled();
   }
@@ -188,17 +192,21 @@ public class BrowseNodeStoreImpl
     Map<String, Object> filterParameters = new HashMap<>();
     String assetFilter = buildAssetFilter(repository, keyword, selectors, filterParameters);
 
+    BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
     if (repository.getType() instanceof GroupType) {
       // overlay member results, first-one-wins if there are any nodes with the same name
       return members(repository)
           .map(m -> getByPath(m.getName(), path, maxNodes, assetFilter, filterParameters))
           .flatMap(List::stream)
           .filter(distinctByName())
+          .filter(node -> filter.test(node, repositoryName))
           .limit(maxNodes)
           .collect(toList());
     }
     else {
-      return getByPath(repository.getName(), path, maxNodes, assetFilter, filterParameters);
+      return getByPath(repository.getName(), path, maxNodes, assetFilter, filterParameters).stream()
+          .filter(node -> filter.test(node, repositoryName))
+          .collect(toList());
     }
   }
 

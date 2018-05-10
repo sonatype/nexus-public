@@ -73,7 +73,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
-import static java.nio.file.Files.exists;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
@@ -226,7 +225,7 @@ public class FileBlobStore
     //While Path#getParent can return null we don't expect that from a configured blob store directory.
     Path legacyDeletionsIndex = deletedIndexPath.getParent().resolve(DELETIONS_FILENAME); //NOSONAR
 
-    if (!exists(deletedIndexPath) && exists(legacyDeletionsIndex)) {
+    if (!Files.exists(deletedIndexPath) && Files.exists(legacyDeletionsIndex)) {
       log.info("Found 'deletions.index' file in blob store {}, renaming to {}", getAbsoluteBlobDir(),
           deletedIndexPath);
       Files.move(legacyDeletionsIndex, deletedIndexPath);
@@ -292,7 +291,7 @@ public class FileBlobStore
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
     checkNotNull(sourceFile);
     checkNotNull(sha1);
-    checkArgument(exists(sourceFile));
+    checkArgument(Files.exists(sourceFile));
 
     return create(headers, destination -> {
       fileOperations.hardLink(sourceFile, destination);
@@ -319,10 +318,10 @@ public class FileBlobStore
     throw new BlobStoreException("Cannot find free BlobId", null);
   }
 
-  private Blob tryCreate(final Map<String, String> headers, final BlobIngester ingester) {
+  private Blob tryCreate(final Map<String, String> headers, final BlobIngester ingester) { // NOSONAR
     final BlobId blobId = blobIdLocationResolver.fromHeaders(headers);
     final boolean isDirectPath = Boolean.parseBoolean(headers.getOrDefault(DIRECT_PATH_BLOB_HEADER, "false"));
-    final Long existingSize = isDirectPath ? getContentSizeForDeletion(blobId) : null;
+    final Long existingSize = isDirectPath && exists(blobId) ? getContentSizeForDeletion(blobId) : null;
 
     final Path blobPath = contentPath(blobId);
     final Path attributePath = attributePath(blobId);
@@ -589,26 +588,27 @@ public class FileBlobStore
       throws IOException
   {
     Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
-    if (!attributesOption.isPresent() || !maybeUndeleteBlob(inUseChecker, blobId, attributesOption.get(), false)) {
+    if (!attributesOption.isPresent() || !undelete(inUseChecker, blobId, attributesOption.get(), false)) {
       // attributes file is missing or blob id not in use, so it's safe to delete the file
       log.debug("Hard deleting blob id: {}, in blob store: {}", blobId, blobStoreConfiguration.getName());
       deleteHard(blobId);
     }
   }
 
-  public boolean maybeUndeleteBlob(@Nullable final BlobStoreUsageChecker inUseChecker,
-                                   final BlobId blobId,
-                                   final FileBlobAttributes attributes,
-                                   final boolean isDryRun)
+  @Override
+  public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker,
+                          final BlobId blobId,
+                          final BlobAttributes attributes,
+                          final boolean isDryRun)
   {
     checkNotNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     Optional<String> blobName = Optional.of(attributes)
-        .map(FileBlobAttributes::getProperties)
+        .map(BlobAttributes::getProperties)
         .map(p -> p.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER));
     if (!blobName.isPresent()) {
       log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER,
-          blobId, attributes.getPath());
+          blobId, attributePath(blobId));
       return false;
     }
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
@@ -660,6 +660,20 @@ public class FileBlobStore
       log.warn("Can't open input stream to blob {} as file {} not found", blobId, path);
       throw new BlobStoreException("Blob has been deleted", blobId);
     }
+  }
+
+  /**
+   * This is a simple existence check resulting from NEXUS-16729.  This allows clients
+   * to perform a simple check and is primarily intended for use in directpath scenarios.
+   */
+  @Override
+  public boolean exists(final BlobId blobId) {
+    checkNotNull(blobId);
+    if (!fileOperations.exists(attributePath(blobId))) {
+      log.debug("Blob {} was not found during existence check");
+      return false;
+    }
+    return true;
   }
 
   private boolean delete(final Path path) throws IOException {

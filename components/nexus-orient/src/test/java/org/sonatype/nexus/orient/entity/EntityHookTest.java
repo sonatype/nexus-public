@@ -31,11 +31,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -227,10 +229,14 @@ public class EntityHookTest
 
       entityHook.onClose(db);
 
-      // make sure we're back to just the default listeners/hooks
-      assertThat(ImmutableList.copyOf(db.getListeners()), is(listeners));
-      assertThat(ImmutableList.copyOf(db.getHooks().keySet()), is(hooks));
+      // make sure we're back to just the default listeners/hooks (except OLiveQueryHook)
+      assertThat(ImmutableList.copyOf(db.getListeners()), is(withoutOLiveQueryHook(listeners)));
+      assertThat(ImmutableList.copyOf(db.getHooks().keySet()), is(withoutOLiveQueryHook(hooks)));
     }
+  }
+
+  private static <T> List<T> withoutOLiveQueryHook(final List<T> elements) {
+    return elements.stream().filter(e -> !(e instanceof OLiveQueryHook)).collect(toList());
   }
 
   @Test

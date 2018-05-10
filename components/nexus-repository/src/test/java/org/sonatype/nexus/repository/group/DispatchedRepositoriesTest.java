@@ -24,7 +24,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class GroupHandlerTest
+public class DispatchedRepositoriesTest
     extends TestSupport
 {
   private static final String REPOSITORY_1 = "repository1";
@@ -61,7 +61,7 @@ public class GroupHandlerTest
     underTest.add(repository2);
     underTest.add(repository3);
 
-    assertThat(underTest.toString(),
+    assertThat(underTest.getDispatched().toString(),
         containsString(String.format("[%s, %s, %s]", REPOSITORY_1, REPOSITORY_2, REPOSITORY_3)));
   }
 
@@ -71,7 +71,7 @@ public class GroupHandlerTest
     underTest.add(repository1);
     underTest.add(repository2);
 
-    assertThat(underTest.toString(),
+    assertThat(underTest.getDispatched().toString(),
         containsString(String.format("[%s, %s, %s]", REPOSITORY_3, REPOSITORY_1, REPOSITORY_2)));
   }
 }

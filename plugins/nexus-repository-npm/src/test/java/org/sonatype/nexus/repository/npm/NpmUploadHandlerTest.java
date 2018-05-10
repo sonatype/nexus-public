@@ -142,7 +142,7 @@ public class NpmUploadHandlerTest
     UploadDefinition def = underTest.getDefinition();
 
     assertThat(def.getComponentFields(),
-        contains(new UploadFieldDefinition("foo", "Foo", null, true, STRING)));
+        contains(new UploadFieldDefinition("foo", "Foo", null, true, STRING, "bar")));
     assertThat(def.getAssetFields(), empty());
   }
 
@@ -198,7 +198,7 @@ public class NpmUploadHandlerTest
 
     @Override
     public UploadFieldDefinition contribute() {
-      return new UploadFieldDefinition("foo", "Foo", null, true, Type.STRING);
+      return new UploadFieldDefinition("foo", "Foo", null, true, Type.STRING, "bar");
     }
   }
 }

@@ -15,12 +15,15 @@ package org.sonatype.nexus.common.entity;
 import java.util.Collections;
 import java.util.List;
 
+import org.sonatype.nexus.common.event.WithAffinity;
+
 /**
  * Batched sequence of {@link EntityEvent}s.
  *
  * @since 3.1
  */
 public class EntityBatchEvent
+    implements WithAffinity
 {
   /**
    * Marker for {@link EntityEvent}s which can be batched together in a {@link EntityBatchEvent} as well
@@ -39,6 +42,11 @@ public class EntityBatchEvent
 
   public List<EntityEvent> getEvents() {
     return events;
+  }
+
+  @Override
+  public String getAffinity() {
+    return events.get(0).getAffinity(); // first event in the batch declares the affinity for the rest
   }
 
   @Override

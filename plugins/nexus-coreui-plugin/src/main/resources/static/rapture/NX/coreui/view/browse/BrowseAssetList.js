@@ -76,7 +76,8 @@ Ext.define('NX.coreui.view.browse.BrowseAssetList', {
           text: NX.I18n.get('Browse_BrowseAssetList_Name_Column'),
           dataIndex: 'name',
           stateId: 'name',
-          flex: 1
+          flex: 1,
+          renderer: Ext.htmlEncode
         }
       ],
 

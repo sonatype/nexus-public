@@ -45,9 +45,9 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 public class S3BlobStoreMetricsStore
     extends StateGuardLifecycleSupport
 {
-  private static final String METRICS_PREFIX = "metrics-";
+  private static final String METRICS_SUFFIX = "-metrics";
 
-  private static final String METRICS_SUFFIX = ".properties";
+  private static final String METRICS_EXTENSION = ".properties";
 
   private static final String TOTAL_SIZE_PROP_NAME = "totalSize";
 
@@ -85,7 +85,7 @@ public class S3BlobStoreMetricsStore
     totalSize = new AtomicLong();
     dirty = new AtomicBoolean();
 
-    propertiesFile = new S3PropertiesFile(s3, bucket, METRICS_PREFIX + nodeAccess.getId() + METRICS_SUFFIX);
+    propertiesFile = new S3PropertiesFile(s3, bucket, nodeAccess.getId() + METRICS_SUFFIX + METRICS_EXTENSION);
     if (propertiesFile.exists()) {
       log.info("Loading blob store metrics file {}", propertiesFile);
       propertiesFile.load();
@@ -188,8 +188,8 @@ public class S3BlobStoreMetricsStore
     if (s3 == null) {
       return Stream.empty();
     } else {
-      Stream<S3PropertiesFile> stream = s3.listObjects(bucket, METRICS_PREFIX).getObjectSummaries().stream()
-          .filter(summary -> summary.getKey().endsWith(METRICS_SUFFIX))
+      Stream<S3PropertiesFile> stream = s3.listObjects(bucket, nodeAccess.getId()).getObjectSummaries().stream()
+          .filter(summary -> summary.getKey().endsWith(METRICS_EXTENSION))
           .map(summary -> new S3PropertiesFile(s3, bucket, summary.getKey()));
       return stream;
     }

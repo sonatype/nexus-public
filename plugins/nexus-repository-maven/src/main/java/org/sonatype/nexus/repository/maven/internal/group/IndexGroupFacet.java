@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
@@ -24,8 +25,14 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
 import org.sonatype.nexus.repository.maven.internal.MavenIndexFacetSupport;
 import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
+
+import org.apache.maven.index.reader.Record;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Group implementation of {@link MavenIndexFacet}.
@@ -36,10 +43,17 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 public class IndexGroupFacet
     extends MavenIndexFacetSupport
 {
+  private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
+
+  @Inject
+  public IndexGroupFacet(final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider) {
+    this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
+  }
+
   @Override
   public void publishIndex() throws IOException {
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try {
+    try (DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
       List<Repository> leafMembers = facet(GroupFacet.class).leafMembers();
       ArrayList<String> withoutIndex = new ArrayList<>();
       for (Iterator<Repository> ri = leafMembers.iterator(); ri.hasNext(); ) {
@@ -55,7 +69,7 @@ public class IndexGroupFacet
             withoutIndex
         );
       }
-      MavenIndexPublisher.publishMergedIndex(getRepository(), leafMembers);
+      MavenIndexPublisher.publishMergedIndex(getRepository(), leafMembers, strategy);
     }
     finally {
       UnitOfWork.end();

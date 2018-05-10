@@ -48,7 +48,8 @@ Ext.define('NX.coreui.view.logging.LoggerList', {
           dataIndex: 'name',
           stateId: 'name',
           hideable: false,
-          flex: 1
+          flex: 1,
+          renderer: Ext.htmlEncode
         },
         {
           header: NX.I18n.get('Logging_LoggerList_Level_Header'),
@@ -107,10 +108,25 @@ Ext.define('NX.coreui.view.logging.LoggerList', {
         }
       ],
 
-      plugins: [
-        {pluginId: 'editor', ptype: 'rowediting', clicksToEdit: 1, errorSummary: false},
-        {ptype: 'gridfilterbox', emptyText: NX.I18n.get('Logging_LoggerList_Filter_EmptyText')}
-      ]
+      plugins: [{
+        pluginId: 'editor',
+        ptype: 'rowediting',
+        clicksToEdit: 1,
+        errorSummary: false,
+        initEditorConfig: function() {
+          var cfg = Object.getPrototypeOf(this).initEditorConfig.apply(this, []); // using this.callParent(); doesn't
+                                                                                  // invoke the expected function
+          cfg.getDefaultFieldCfg = function() {
+            var fieldConfig = Object.getPrototypeOf(this).getDefaultFieldCfg.apply(this, []);
+            fieldConfig.renderer = Ext.htmlEncode; // Using this appears to cause double encoding, skipping it leaves an XSS
+            return fieldConfig;
+          };
+          return cfg;
+        }
+      }, {
+        ptype: 'gridfilterbox',
+        emptyText: NX.I18n.get('Logging_LoggerList_Filter_EmptyText')
+      }]
     });
 
     this.callParent();

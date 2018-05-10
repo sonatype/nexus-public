@@ -69,30 +69,30 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     me.assetModel = asset;
     me.componentModel = component;
 
-    summary[NX.I18n.get('Assets_Info_Repository')] = asset.get('repositoryName');
-    summary[NX.I18n.get('Assets_Info_Format')] = asset.get('format');
-    summary[NX.I18n.get('Assets_Info_Group')] = component.get('group');
-    summary[NX.I18n.get('Assets_Info_Name')] = component.get('name');
-    summary[NX.I18n.get('Assets_Info_Version')] = component.get('version');
+    summary[NX.I18n.get('Assets_Info_Repository')] = Ext.htmlEncode(asset.get('repositoryName'));
+    summary[NX.I18n.get('Assets_Info_Format')] = Ext.htmlEncode(asset.get('format'));
+    summary[NX.I18n.get('Assets_Info_Group')] = Ext.htmlEncode(component.get('group'));
+    summary[NX.I18n.get('Assets_Info_Name')] = Ext.htmlEncode(component.get('name'));
+    summary[NX.I18n.get('Assets_Info_Version')] = Ext.htmlEncode(component.get('version'));
     summary[NX.I18n.get('Assets_Info_Path')] = NX.coreui.util.RepositoryUrls.asRepositoryLink(asset, asset.get('format'));
-    summary[NX.I18n.get('Assets_Info_ContentType')] = contentType;
+    summary[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType);
     summary[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
-    summary[NX.I18n.get('Assets_Info_Blob_Created')] = asset.get('blobCreated');
-    summary[NX.I18n.get('Assets_Info_Blob_Updated')] = asset.get('blobUpdated');
-    summary[NX.I18n.get('Assets_Info_Downloaded_Count')] = asset.get('downloadCount') + ' '
+    summary[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(asset.get('blobCreated'));
+    summary[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(asset.get('blobUpdated'));
+    summary[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(asset.get('downloadCount')) + ' '
             + NX.I18n.get('Assets_Info_Downloaded_Unit');
-    summary[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.Date.format(asset.get('lastDownloaded'), 'D M d Y');
-    summary[NX.I18n.get('Assets_Info_Locally_Cached')] = contentType !== 'unknown' && size > 0;
-    summary[NX.I18n.get('Assets_Info_BlobRef')] = asset.get('blobRef');
-    summary[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = asset.get('containingRepositoryName');
+    summary[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(Ext.Date.format(asset.get('lastDownloaded'), 'D M d Y'));
+    summary[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
+    summary[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(asset.get('blobRef'));
+    summary[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(asset.get('containingRepositoryName'));
 
-    summary[NX.I18n.get('Assets_Info_UploadedBy')] = asset.get('createdBy');
-    summary[NX.I18n.get('Assets_Info_UploadedIp')] = asset.get('createdByIp');
+    summary[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
+    summary[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
 
     this.down('#summaryPanel').showInfo(summary);
     this.down('#attributesPanel').setAssetModel(asset);
 
-    this.setTitle(asset.get('name'));
+    this.setTitle(Ext.htmlEncode(asset.get('name')));
 
     this.fireEvent('update', this, asset, component);
   },

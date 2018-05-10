@@ -1,0 +1,106 @@
+{
+    "_id": "@foo/bar",
+    "_rev": "2",
+    "description": "A foo test project",
+    "dist-tags": {
+        "latest": "2.0.0"
+    },
+    "maintainers": [
+        {
+            "email": "my@email.com",
+            "name": "admin"
+        }
+    ],
+    "name": "@foo/bar",
+    "readme": "ERROR: No README data found!",
+    "time": {
+        "1.0.0": "2015-09-22T09:12:25.663Z",
+        "2.0.0": "2015-09-22T09:12:56.953Z",
+        "created": "2015-09-22T09:12:25.663Z",
+        "modified": "2015-09-22T09:12:56.953Z"
+    },
+    "versions": {
+        "1.0.0": {
+            "_from": ".",
+            "_id": "@foo/bar@1.0.0",
+            "_npmUser": {
+                "email": "my@email.com",
+                "name": "admin"
+            },
+            "_npmVersion": "1.4.28",
+            "_shasum": "224dd218a74827d5498661c36c0244270e837a33",
+            "author": {
+                "name": "someone"
+            },
+            "dependencies": {
+                "commonjs": "1.0.1"
+            },
+            "description": "A foo test project",
+            "dist": {
+                "shasum": "224dd218a74827d5498661c36c0244270e837a33",
+                "tarball": "${proxyServerUrl}@foo/bar/-/bar-1.0.0.tgz"
+            },
+            "keywords": [
+                "foo"
+            ],
+            "license": "ASLv2",
+            "main": "index.js",
+            "maintainers": [
+                {
+                    "email": "my@email.com",
+                    "name": "admin"
+                }
+            ],
+            "name": "@foo/bar",
+            "publishConfig": {
+                "registry": "http://localhost:8081/repository/test/"
+            },
+            "readme": "ERROR: No README data found!",
+            "scripts": {
+                "test": "echo \"Error: no test specified\" && exit 0"
+            },
+            "version": "1.0.0"
+        },
+        "2.0.0": {
+            "_from": ".",
+            "_id": "@foo/bar@2.0.0",
+            "_npmUser": {
+                "email": "my@email.com",
+                "name": "admin"
+            },
+            "_npmVersion": "1.4.28",
+            "_shasum": "27bd9e45f05531f8fcc096c898dae19e3bfe6191",
+            "author": {
+                "name": "someone"
+            },
+            "dependencies": {
+                "commonjs": "1.0.2"
+            },
+            "description": "A foo test project",
+            "dist": {
+                "shasum": "27bd9e45f05531f8fcc096c898dae19e3bfe6191",
+                "tarball": "${proxyServerUrl}@foo/bar/-/bar-2.0.0.tgz"
+            },
+            "keywords": [
+                "foo"
+            ],
+            "license": "ASLv2",
+            "main": "index.js",
+            "maintainers": [
+                {
+                    "email": "my@email.com",
+                    "name": "admin"
+                }
+            ],
+            "name": "@foo/bar",
+            "publishConfig": {
+                "registry": "http://localhost:8081/repository/test/"
+            },
+            "readme": "ERROR: No README data found!",
+            "scripts": {
+                "test": "echo \"Error: no test specified\" && exit 0"
+            },
+            "version": "2.0.0"
+        }
+    }
+}

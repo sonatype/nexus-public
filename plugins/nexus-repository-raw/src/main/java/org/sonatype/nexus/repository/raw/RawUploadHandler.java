@@ -58,6 +58,8 @@ public class RawUploadHandler
 
   private static final String DIRECTORY_HELP_TEXT = "Destination for uploaded files (e.g. /path/to/files/)";
 
+  private static final String FIELD_GROUP_NAME = "Component attributes";
+
   private UploadDefinition definition;
 
   private final ContentPermissionChecker contentPermissionChecker;
@@ -120,8 +122,9 @@ public class RawUploadHandler
   public UploadDefinition getDefinition() {
     if (definition == null) {
       definition = getDefinition(RawFormat.NAME, true,
-          singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING)),
-          singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)), new UploadRegexMap("(.*)", FILENAME));
+          singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING, FIELD_GROUP_NAME)),
+          singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)),
+          new UploadRegexMap("(.*)", FILENAME));
     }
     return definition;
   }

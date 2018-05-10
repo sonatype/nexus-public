@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import java.util.concurrent.locks.Lock;
 
 import javax.annotation.Nullable;
@@ -37,9 +37,11 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
@@ -49,24 +51,25 @@ import com.amazonaws.services.s3.model.lifecycle.LifecycleFilterPredicate;
 import com.amazonaws.services.s3.model.lifecycle.LifecycleTagPredicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.StreamSupport.stream;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -106,6 +109,11 @@ public class S3BlobStore
 
   public static final String EXPIRATION_KEY = "expiration";
 
+  public static final String SIGNERTYPE_KEY = "signertype";
+
+  public static final String BUCKET_REGEX =
+      "^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$";
+
   public static final int DEFAULT_EXPIRATION_IN_DAYS = 3;
 
   public static final String METADATA_FILENAME = "metadata.properties";
@@ -116,9 +124,13 @@ public class S3BlobStore
 
   public static final String CONTENT_PREFIX = "content";
 
+  public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
+
   static final Tag DELETED_TAG = new Tag("deleted", "true");
 
   static final String LIFECYCLE_EXPIRATION_RULE_ID = "Expire soft-deleted blobstore objects";
+
+  private static final String FILE_V1 = "file/1";
 
   private final AmazonS3Factory amazonS3Factory;
 
@@ -126,7 +138,11 @@ public class S3BlobStore
 
   private BlobStoreConfiguration blobStoreConfiguration;
 
+  private S3Uploader uploader;
+
   private S3BlobStoreMetricsStore storeMetrics;
+
+  private final DryRunPrefix dryRunPrefix;
 
   private LoadingCache<BlobId, S3Blob> liveBlobs;
 
@@ -135,11 +151,15 @@ public class S3BlobStore
   @Inject
   public S3BlobStore(final AmazonS3Factory amazonS3Factory,
                      final BlobIdLocationResolver blobIdLocationResolver,
-                     final S3BlobStoreMetricsStore storeMetrics)
+                     @Named("multipart-uploader") final S3Uploader uploader,
+                     final S3BlobStoreMetricsStore storeMetrics,
+                     final DryRunPrefix dryRunPrefix)
   {
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
+    this.uploader = checkNotNull(uploader);
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
   @Override
@@ -149,7 +169,7 @@ public class S3BlobStore
     if (metadata.exists()) {
       metadata.load();
       String type = metadata.getProperty(TYPE_KEY);
-      checkState(TYPE_V1.equals(type), "Unsupported blob store type/version: %s in %s", type, metadata);
+      checkState(TYPE_V1.equals(type) || FILE_V1.equals(type), "Unsupported blob store type/version: %s in %s", type, metadata);
     }
     else {
       // assumes new blobstore, write out type
@@ -197,12 +217,8 @@ public class S3BlobStore
     return create(headers, destination -> {
         try (InputStream data = blobData) {
           MetricsInputStream input = new MetricsInputStream(data);
-          TransferManager transferManager = TransferManagerBuilder.standard().withS3Client(s3).build();
-          transferManager.upload(getConfiguredBucket(), destination, input, new ObjectMetadata())
-              .waitForCompletion();
+          uploader.upload(s3, getConfiguredBucket(), destination, input);
           return input.getMetrics();
-        } catch (InterruptedException e) {
-          throw new BlobStoreException("error uploading blob", e, null);
         }
       });
   }
@@ -227,7 +243,9 @@ public class S3BlobStore
     Long existingSize = null;
     if (isDirectPath) {
       S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath);
-      existingSize = getContentSizeForDeletion(blobAttributes);
+      if (exists(blobId)) {
+        existingSize = getContentSizeForDeletion(blobAttributes);
+      }
     }
 
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
@@ -350,9 +368,9 @@ public class S3BlobStore
 
       // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
       // tag the bytes
-      s3.setObjectTagging(withDeletedTag(contentPath(blobId)));
+      s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
       // tag the attributes
-      s3.setObjectTagging(withDeletedTag(attributePath(blobId)));
+      s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
       blob.markStale();
 
       return true;
@@ -365,11 +383,19 @@ public class S3BlobStore
     }
   }
 
-  SetObjectTaggingRequest withDeletedTag(final String key) {
+  private SetObjectTaggingRequest tagAsDeleted(final String key) {
     return new SetObjectTaggingRequest(
         getConfiguredBucket(),
         key,
         new ObjectTagging(singletonList(DELETED_TAG))
+    );
+  }
+
+  private SetObjectTaggingRequest untagAsDeleted(final String key) {
+    return new SetObjectTaggingRequest(
+        getConfiguredBucket(),
+        key,
+        new ObjectTagging(emptyList())
     );
   }
 
@@ -447,12 +473,16 @@ public class S3BlobStore
       if (!s3.doesBucketExist(getConfiguredBucket())) {
         s3.createBucket(getConfiguredBucket());
 
-        addBucketLifecycleConfiguration(null);
+        if (getConfiguredExpirationInDays() >= 0) {
+          addBucketLifecycleConfiguration(null);
+        }
       } else {
-        // bucket exists, we should test that the correct lifecycle config is present
-        BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(getConfiguredBucket());
-        if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration)) {
-          addBucketLifecycleConfiguration(lifecycleConfiguration);
+        if (getConfiguredExpirationInDays() >= 0) {
+          // bucket exists, we should test that the correct lifecycle config is present
+          BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(getConfiguredBucket());
+          if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration)) {
+            addBucketLifecycleConfiguration(lifecycleConfiguration);
+          }
         }
       }
 
@@ -463,7 +493,7 @@ public class S3BlobStore
     }
   }
 
-  boolean isExpirationLifecycleConfigurationPresent(BucketLifecycleConfiguration lifecycleConfiguration) {
+  private boolean isExpirationLifecycleConfigurationPresent(BucketLifecycleConfiguration lifecycleConfiguration) {
     return lifecycleConfiguration != null &&
         lifecycleConfiguration.getRules() != null &&
         lifecycleConfiguration.getRules().stream()
@@ -478,7 +508,7 @@ public class S3BlobStore
         });
   }
 
-  BucketLifecycleConfiguration makeLifecycleConfiguration(BucketLifecycleConfiguration existing, int expirationInDays) {
+  private BucketLifecycleConfiguration makeLifecycleConfiguration(BucketLifecycleConfiguration existing, int expirationInDays) {
     BucketLifecycleConfiguration.Rule rule = new BucketLifecycleConfiguration.Rule()
         .withId(LIFECYCLE_EXPIRATION_RULE_ID)
         .withFilter(new LifecycleFilter(
@@ -542,6 +572,14 @@ public class S3BlobStore
         log.warn("Unable to delete non-empty blob store content directory in bucket {}", getConfiguredBucket());
       }
     }
+    catch (AmazonS3Exception s3Exception) {
+      if ("BucketNotEmpty".equals(s3Exception.getErrorCode())) {
+        log.warn("Unable to delete non-empty blob store bucket {}", getConfiguredBucket());
+      }
+      else {
+        throw new BlobStoreException(s3Exception, null);
+      }
+    }
     catch (IOException e) {
       throw new BlobStoreException(e, null);
     }
@@ -573,16 +611,19 @@ public class S3BlobStore
 
   @Override
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
-    String subpath = format("%s/%s/%s", CONTENT_PREFIX, DIRECT_PATH_ROOT, prefix);
+    String subpath = format("%s/%s", DIRECT_PATH_PREFIX, prefix);
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), subpath);
-    return blobIdStream(summaries);
+    return stream(summaries.spliterator(), false)
+      .map(S3ObjectSummary::getKey)
+      .filter(key -> key.endsWith(BLOB_ATTRIBUTE_SUFFIX))
+      .map(this::attributePathToDirectPathBlobId);
   }
 
   private Stream<BlobId> blobIdStream(Iterable<S3ObjectSummary> summaries) {
-    return StreamSupport.stream(summaries.spliterator(), false)
+    return stream(summaries.spliterator(), false)
       .map(S3ObjectSummary::getKey)
       .map(key -> key.substring(key.lastIndexOf('/') + 1, key.length()))
-      .filter(filename -> filename.endsWith(BLOB_ATTRIBUTE_SUFFIX) && !filename.startsWith(TEMPORARY_BLOB_ID_PREFIX))
+      .filter(filename -> filename.endsWith(BLOB_ATTRIBUTE_SUFFIX))
       .map(filename -> filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length()))
       .map(BlobId::new);
   }
@@ -611,5 +652,78 @@ public class S3BlobStore
       log.error("Unable to set BlobAttributes for blob id: {}, exception: {}",
           blobId, e.getMessage(), log.isDebugEnabled() ? e : null);
     }
+  }
+
+  @Override
+  public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker,
+                          final BlobId blobId,
+                          final BlobAttributes attributes,
+                          final boolean isDryRun)
+  {
+    checkNotNull(attributes);
+    String logPrefix = isDryRun ? dryRunPrefix.get() : "";
+    Optional<String> blobName = Optional.of(attributes)
+        .map(BlobAttributes::getProperties)
+        .map(p -> p.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER));
+    if (!blobName.isPresent()) {
+      log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER,
+          blobId, attributePath(blobId));
+      return false;
+    }
+    if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
+      String deletedReason = attributes.getDeletedReason();
+      if (!isDryRun) {
+        attributes.setDeleted(false);
+        attributes.setDeletedReason(null);
+        try {
+          s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
+          s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
+          attributes.store();
+        }
+        catch (IOException e) {
+          log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+              blobId, deletedReason, blobStoreConfiguration.getName(), blobName.get(), e);
+        }
+      }
+      log.warn(
+          "{}Soft-deleted blob still in use, un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
+          logPrefix, blobId, deletedReason, blobStoreConfiguration.getName(), blobName.get());
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * This is a simple existence check resulting from NEXUS-16729.  This allows clients
+   * to perform a simple check primarily intended for use in directpath scenarios.
+   */
+  @Override
+  public boolean exists(final BlobId blobId) {
+    checkNotNull(blobId);
+    S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+    try {
+      return blobAttributes.load();
+    } catch (IOException ioe) {
+      log.debug("Unable to load attributes {} during existence check, exception: {}", blobAttributes, ioe);
+      return false;
+    }
+  }
+
+  /**
+   * Used by {@link #getDirectPathBlobIdStream(String)} to convert an s3 key to a {@link BlobId}.
+   *
+   * @see BlobIdLocationResolver
+   */
+  private BlobId attributePathToDirectPathBlobId(final String s3Key) { // NOSONAR
+    checkArgument(s3Key.startsWith(DIRECT_PATH_PREFIX + "/"), "Not direct path blob path: %s", s3Key);
+    checkArgument(s3Key.endsWith(BLOB_ATTRIBUTE_SUFFIX), "Not blob attribute path: %s", s3Key);
+    String blobName = s3Key
+        .substring(0, s3Key.length() - BLOB_ATTRIBUTE_SUFFIX.length())
+        .substring(DIRECT_PATH_PREFIX.length() + 1);
+    Map<String, String> headers = ImmutableMap.of(
+        BLOB_NAME_HEADER, blobName,
+        DIRECT_PATH_BLOB_HEADER, "true"
+    );
+    return blobIdLocationResolver.fromHeaders(headers);
   }
 }

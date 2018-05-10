@@ -252,7 +252,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     FeatureGroups_Upload_Asset_Form_Remove_Button: 'Remove',
     FeatureGroups_Upload_Asset_Form_Add_Asset_Button: 'Add another asset',
     FeatureGroups_Upload_Asset_Form_Not_Unique_Error_Message: 'Asset not unique',
-    FeatureGroups_Upload_Component_Form_Title: 'Component coordinates',
     FeatureGroups_Upload_Form_Upload_Button: 'Upload',
     FeatureGroups_Upload_Form_Discard_Button: 'Cancel',
     FeatureGroups_Upload_Form_Browse_Button: 'Browse',

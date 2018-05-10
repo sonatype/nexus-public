@@ -23,7 +23,7 @@ Ext.define('NX.coreui.model.Capability', {
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'typeId', type: 'string', sortType: 'asUCText'},
     {name: 'enabled', type: 'boolean'},
-    {name: 'notes', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode},
+    {name: 'notes', type: 'string', sortType: 'asUCText'},
     {name: 'properties', type: 'auto' /*object*/, defaultValue: null },
 
     {name: 'active', type: 'boolean'},

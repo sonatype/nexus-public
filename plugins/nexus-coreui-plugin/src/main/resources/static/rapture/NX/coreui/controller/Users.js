@@ -176,7 +176,7 @@ Ext.define('NX.coreui.controller.Users', {
    * @override
    */
   getDescription: function(model) {
-    return Ext.htmlEncode(model.get('firstName') + ' ' + model.get('lastName'));
+    return model.get('firstName') + ' ' + model.get('lastName');
   },
 
   /**

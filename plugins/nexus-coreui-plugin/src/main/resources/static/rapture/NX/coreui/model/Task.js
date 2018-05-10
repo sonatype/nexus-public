@@ -25,7 +25,7 @@ Ext.define('NX.coreui.model.Task', {
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'enabled', type: 'boolean'},
-    {name: 'name', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode},
+    {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'typeId', type: 'string', sortType: 'asUCText'},
     {name: 'typeName', type: 'string', sortType: 'asUCText'},
     {name: 'status', type: 'string', sortType: 'asUCText'},
