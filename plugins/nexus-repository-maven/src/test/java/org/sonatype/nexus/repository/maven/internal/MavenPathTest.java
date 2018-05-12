@@ -167,6 +167,14 @@ public class MavenPathTest
   }
 
   @Test
+  public void mavenPathShouldProperlyStripClassifier() {
+    final String path = "/some/library/0.1/library-0.1-sources.jar";
+    final MavenPath mavenPath = pathParser.parsePath(path);
+
+    assertThat(mavenPath.locatePom().getPath(), equalTo("some/library/0.1/library-0.1.pom"));
+  }
+
+  @Test
   public void locateJar() {
     final String path = "/org/apache/maven/maven-repository-metadata/3.3.0-SNAPSHOT/maven-repository-metadata-3.3.0-20150311.160242-1.jar.sha1";
     final MavenPath mavenPath = pathParser.parsePath(path).locateMainArtifact("jar");
