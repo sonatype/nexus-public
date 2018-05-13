@@ -21,7 +21,7 @@ package org.sonatype.nexus.repository.security;
 public interface VariableResolverAdapterManager
 {
   /**
-   * Gets a {@link VariableResolverAdapter} for the specified format. If no specialized implemention for the format
+   * Gets a {@link VariableResolverAdapter} for the specified format. If no specialized implementation for the format
    * exists, a default implementation will be used.
    */
   VariableResolverAdapter get(String format);
