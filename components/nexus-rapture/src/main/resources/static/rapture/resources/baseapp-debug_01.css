@@ -3511,19 +3511,19 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {number} $button-opacity-disabled
- * opacity to apply to the button's main element when the buton is disabled
+ * opacity to apply to the button's main element when the button is disabled
  */
 /**
  * @var {number} $button-inner-opacity-disabled
- * opacity to apply to the button's inner elements (icon and text) when the buton is disabled
+ * opacity to apply to the button's inner elements (icon and text) when the button is disabled
  */
 /**
  * @var {number} $button-toolbar-opacity-disabled
- * opacity to apply to the toolbar button's main element when the buton is disabled
+ * opacity to apply to the toolbar button's main element when the button is disabled
  */
 /**
  * @var {number} $button-toolbar-inner-opacity-disabled
- * opacity to apply to the toolbar button's inner elements (icon and text) when the buton is disabled
+ * opacity to apply to the toolbar button's inner elements (icon and text) when the button is disabled
  */
 /**
  * @var {boolean}
