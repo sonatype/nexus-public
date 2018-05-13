@@ -141,7 +141,7 @@ public class OrientDbDocumentTrial
   }
 
   @Test
-  public void documentExistance() throws Exception {
+  public void documentExistence() throws Exception {
     try (ODatabaseDocumentTx db = createDatabase()) {
       ODocument doc = createPerson(db);
       log("Document: {}", doc);
