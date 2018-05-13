@@ -32,7 +32,7 @@ public abstract class AbstractUserManager
     extends ComponentSupport
     implements UserManager
 {
-  protected Set<User> filterListInMemeory(final Set<User> users, final UserSearchCriteria criteria) {
+  protected Set<User> filterListInMemory(final Set<User> users, final UserSearchCriteria criteria) {
     HashSet<User> result = new HashSet<>();
 
     for (User user : users) {
