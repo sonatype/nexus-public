@@ -353,7 +353,7 @@ public class DatabaseServerImpl
    * @see http://www.prjhub.com/#/issues/5327
    */
   private void configureOrientMinimumLogLevel() {
-    int minimumLevel = getOrientMininumLogLevel();
+    int minimumLevel = getOrientMinimumLogLevel();
     log.debug("Configuring OrientDB global minimum log level to {}", minimumLevel);
     OLogManager logManager = OLogManager.instance();
     logManager.setDebugEnabled(minimumLevel <= Level.FINE.intValue());
@@ -362,7 +362,7 @@ public class DatabaseServerImpl
     logManager.setErrorEnabled(minimumLevel <= Level.SEVERE.intValue());
   }
 
-  private int getOrientMininumLogLevel() {
+  private int getOrientMinimumLogLevel() {
     int minimumLogLevel = 0;
     for (String loggerName : new String[] { ORIENTDB_LOGGER, ORIENTDB_PARENT_LOGGER, JUL_ROOT_LOGGER }) {
       Integer logLevel = getSafeLogLevel(loggerName);
