@@ -34,18 +34,18 @@ public class FileWebResource
 
   private final File file;
 
-  private final boolean cachable;
+  private final boolean cacheable;
 
-  public FileWebResource(final File file, final String path, final String contentType, final boolean cachable) {
+  public FileWebResource(final File file, final String path, final String contentType, final boolean cacheable) {
     this.file = checkNotNull(file);
     this.path = checkNotNull(path);
     this.contentType = checkNotNull(contentType);
-    this.cachable = cachable;
+    this.cacheable = cacheable;
   }
 
   @Override
   public boolean isCacheable() {
-    return cachable;
+    return cacheable;
   }
 
   @Override
@@ -79,7 +79,7 @@ public class FileWebResource
         "path='" + path + '\'' +
         ", contentType='" + contentType + '\'' +
         ", file=" + file +
-        ", cachable=" + cachable +
+        ", cacheable=" + cacheable +
         '}';
   }
 }
