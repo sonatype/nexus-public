@@ -440,7 +440,7 @@ public class DefaultSecuritySystem
   private List<UserManager> orderUserManagers() {
     List<UserManager> orderedLocators = new ArrayList<>();
 
-    List<UserManager> unOrderdLocators = new ArrayList<>(getUserManagers());
+    List<UserManager> unOrderedLocators = new ArrayList<>(getUserManagers());
 
     Map<String, UserManager> realmToUserManagerMap = new HashMap<>();
 
@@ -457,14 +457,14 @@ public class DefaultSecuritySystem
       // now user the realm.name to find the UserManager
       if (realmToUserManagerMap.containsKey(realm.getName())) {
         UserManager userManager = realmToUserManagerMap.get(realm.getName());
-        // remove from unorderd and add to orderd
-        unOrderdLocators.remove(userManager);
+        // remove from unordered and add to ordered
+        unOrderedLocators.remove(userManager);
         orderedLocators.add(userManager);
       }
     }
 
     // now add all the un-ordered ones to the ordered ones, this way they will be at the end of the ordered list
-    orderedLocators.addAll(unOrderdLocators);
+    orderedLocators.addAll(unOrderedLocators);
 
     return orderedLocators;
   }
