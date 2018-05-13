@@ -127,7 +127,7 @@ public final class TaskConfiguration
   // Core properties
   //
 
-  // FIXME: Some of this screams out for a builer pattern, as we expect things like id to be non-null
+  // FIXME: Some of this screams out for a builder pattern, as we expect things like id to be non-null
   // FIXME: and this correctness is only enforced via validate helper
 
   public String getId() {

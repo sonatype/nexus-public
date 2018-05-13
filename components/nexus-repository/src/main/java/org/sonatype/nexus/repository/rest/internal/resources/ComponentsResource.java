@@ -141,7 +141,7 @@ public class ComponentsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
+    //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuilder)
     BrowseResult<Component> componentBrowseResult = browseService
         .browseComponents(repository,
             new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
