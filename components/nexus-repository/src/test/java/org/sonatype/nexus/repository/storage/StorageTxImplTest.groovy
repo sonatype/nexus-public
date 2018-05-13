@@ -196,8 +196,8 @@ extends TestSupport
   @Test
   void 'setting blob fails on asset with blob when DENY write policy'() {
     def blobRef = mock(BlobRef)
-    def asssetBlob = mock(AssetBlob)
-    when(asssetBlob.getBlobRef()).thenReturn(blobRef)
+    def assetBlob = mock(AssetBlob)
+    when(assetBlob.getBlobRef()).thenReturn(blobRef)
     when(asset.blobRef()).thenReturn(blobRef)
     def underTest = new StorageTxImpl('test', '127.0.0.1', blobTx, db, 'testRepo', WritePolicy.DENY,
         WritePolicySelector.DEFAULT, bucketEntityAdapter, componentEntityAdapter, assetEntityAdapter, false,
