@@ -45,7 +45,7 @@ class UserManagerTestSecurity
             new CUser(
                 id: 'anonymous',
                 password: '0a92fab3230134cca6eadd9898325b9b2ae67998',
-                firstName: 'Anonynmous',
+                firstName: 'Anonymous',
                 lastName: 'User',
                 status: 'active',
                 email: 'anonymous@example.org'
