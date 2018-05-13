@@ -147,7 +147,7 @@ public class AuthorizingRealmImpl
     // user not managed by this Realm
     {
       throw new AuthorizationException("User for principals: " + principals.getPrimaryPrincipal()
-          + " not manged by Nexus realm.");
+          + " not managed by Nexus realm.");
     }
 
     return new SimpleAuthorizationInfo(roles);

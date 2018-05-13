@@ -194,7 +194,7 @@ public class ManagedObjectRegistrar
 
     ReflectionMBeanBuilder builder = new ReflectionMBeanBuilder(type);
 
-    // attach manged target
+    // attach managed target
     builder.target(new Supplier()
     {
       @Override
