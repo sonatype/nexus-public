@@ -6222,7 +6222,7 @@ td:not([class|=x]):last-child {
  * @var {number}
  * The height of grid editor text fields.  Defaults to $form-field-height.  If grid row
  * height is smaller than $form-field-height, defaults to the grid row height.  Grid row
- * height is caluclated by adding $grid-row-cell-line-height to the top and bottom values of
+ * height is calculated by adding $grid-row-cell-line-height to the top and bottom values of
  * $grid-cell-inner-padding.
  */
 /**
