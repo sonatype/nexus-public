@@ -480,7 +480,7 @@ public class SearchResourceTest
     Set<String> allKeys = searchUtils.getSearchParameters().keySet();
     allKeys.forEach(s -> sb.append(s).append("=valueDoesNotMatter&"));
 
-    // asert only assert params remain
+    // assert only assert params remain
     result = underTest.getAssetParams(uriInfo("?" + sb.toString()));
     assertThat(result.size(), equalTo(searchUtils.getAssetSearchParameters().size()));
     assertThat(result.keySet(), equalTo(searchUtils.getAssetSearchParameters().keySet()));
