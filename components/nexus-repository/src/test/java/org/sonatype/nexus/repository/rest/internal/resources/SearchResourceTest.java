@@ -129,12 +129,12 @@ public class SearchResourceTest
     when(searchHitMaven.getSource()).thenReturn(component);
     when(searchHitMaven.getId()).thenReturn("id1");
 
-    List<?> mulitple_assets = newArrayList(
+    List<?> multiple_assets = newArrayList(
         createAsset("antlr-fooz.jar", "maven2", "first-sha1", of("extension", "jar", "classifier", "fooz", "version", "2.0")),
         createAsset("antlr.jar", "maven2", "first-sha1", of("extension", "jar")),
         createAsset("antlr.pom", "maven2", "first-sha1", of("extension", "pom"))
     );
-    Map<String, Object> component_with_multiple_assets = createComponent("fooz", "test-repo", "maven2", "test", "2.0", mulitple_assets);
+    Map<String, Object> component_with_multiple_assets = createComponent("fooz", "test-repo", "maven2", "test", "2.0", multiple_assets);
 
     when(searchHitMaven_withMultipleAssets.sourceAsMap()).thenReturn(component_with_multiple_assets);
     when(searchHitMaven_withMultipleAssets.getSource()).thenReturn(component_with_multiple_assets);
