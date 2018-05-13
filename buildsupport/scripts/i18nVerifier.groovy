@@ -30,7 +30,7 @@ import jdk.nashorn.internal.runtime.options.Options
 @Slf4j
 @Grab('ch.qos.logback:logback-classic:1.1.2')
 /**
- * Parse Javascript files named 'PluginStrings.js' for i18n definitions and compare those to all calls against the
+ * Parse JavaScript files named 'PluginStrings.js' for i18n definitions and compare those to all calls against the
  * NX.I18n service to find calls which would result in error.
  */
 class NashornExtI18nParser

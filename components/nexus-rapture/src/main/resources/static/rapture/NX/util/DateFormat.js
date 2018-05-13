@@ -84,7 +84,7 @@ Ext.define('NX.util.DateFormat', {
    * Formats the passed timestamp using the specified format pattern.
    *
    * @public
-   * @param {Number} value The value to format converted to a date by the Javascript's built-in Date#parse method.
+   * @param {Number} value The value to format converted to a date by the JavaScript's built-in Date#parse method.
    * @param {String} [format] Any valid date format string. Defaults to {@link Ext.Date#defaultFormat}.
    * @return {String} The formatted date string
    */
