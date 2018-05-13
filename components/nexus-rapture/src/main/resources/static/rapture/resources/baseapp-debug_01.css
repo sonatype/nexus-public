@@ -4828,7 +4828,7 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {string}
- * The type of cursor to dislay when the cursor is over the LoadMask
+ * The type of cursor to display when the cursor is over the LoadMask
  */
 /**
  * @var {number/list}
