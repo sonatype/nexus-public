@@ -5962,19 +5962,19 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {list}
- * The background-poisition of the Month Picker next year navigation button
+ * The background-position of the Month Picker next year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the hovered Month Picker next year navigation button
+ * The background-position of the hovered Month Picker next year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the Month Picker previous year navigation button
+ * The background-position of the Month Picker previous year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the hovered Month Picker previous year navigation button
+ * The background-position of the hovered Month Picker previous year navigation button
  */
 /**
  * @var {string}
@@ -6623,12 +6623,12 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {boolean}
- * True to change the x background-postition of the close icon background image on hover
+ * True to change the x background-position of the close icon background image on hover
  * to allow for a horizontally aligned background image sprite
  */
 /**
  * @var {boolean}
- * True to change the x background-postition of the close icon background image on click
+ * True to change the x background-position of the close icon background image on click
  * to allow for a horizontally aligned background image sprite
  */
 /**
@@ -6782,7 +6782,7 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {boolean}
- * true to change the x postition of the background image on hover to allow for a
+ * true to change the x position of the background image on hover to allow for a
  * horizontally alined background image sprite
  */
 /**
