@@ -573,7 +573,7 @@ public class JobStoreImplTest
   }
 
   @Test
-  public void testStoreAndRetriveTriggers() throws Exception {
+  public void testStoreAndRetrieveTriggers() throws Exception {
     // Store jobs and triggers.
     for (int i = 0; i < 10; i++) {
       String group = i < 5 ? "a" : "b";
