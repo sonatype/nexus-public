@@ -16,10 +16,10 @@ package org.sonatype.nexus.repository.tools
  * Thrown when Blob InputStream reports no available bytes.
  * @since 3.3
  */
-class BlobUnavilableException
+class BlobUnavailableException
     extends Exception
 {
-  BlobUnavilableException() {
+  BlobUnavailableException() {
     super('Blob InputStream reports unavailable')
   }
 }
