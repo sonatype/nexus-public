@@ -71,7 +71,7 @@ public class RepositoryPathTest
   }
 
   @Test
-  public void missingRepoPathSeperator() {
+  public void missingRepoPathSeparator() {
     assertExceptionOnInvalidPath("/repo", MULTIPLE_SLASH_MESSAGE);
   }
 
