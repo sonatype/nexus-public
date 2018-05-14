@@ -240,7 +240,7 @@ public class DatabaseFreezeServiceImplTest
     underTest.freezeLocalDatabases();
     try {
       underTest.checkUnfrozen("test");
-      fail("Should have thrown OModificationProhibtedException");
+      fail("Should have thrown OModificationProhibitedException");
     }
     catch (OModificationOperationProhibitedException e) {
       assertThat(e.getMessage(), is("test"));
