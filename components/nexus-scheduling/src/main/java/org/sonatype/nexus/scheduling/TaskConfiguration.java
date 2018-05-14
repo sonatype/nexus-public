@@ -235,7 +235,7 @@ public final class TaskConfiguration
   // Typed configuration helpers
   //
 
-  // FIXME: Consider changing set null to remove sematics, this could lead to confusing results
+  // FIXME: Consider changing set null to remove semantics, this could lead to confusing results
 
   public Date getDate(final String key, final Date defaultValue) {
     if (configuration.containsKey(key)) {
