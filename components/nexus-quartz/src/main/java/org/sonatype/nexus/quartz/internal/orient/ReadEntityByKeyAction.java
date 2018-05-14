@@ -40,15 +40,15 @@ public class ReadEntityByKeyAction<EntityT extends Entity>
   private final String query;
 
   public ReadEntityByKeyAction(final EntityAdapter<EntityT> adapter,
-                               final String namePropery,
+                               final String nameProperty,
                                final String groupProperty)
   {
     this.adapter = checkNotNull(adapter);
-    checkNotNull(namePropery);
+    checkNotNull(nameProperty);
     checkNotNull(groupProperty);
 
     this.query = String.format("SELECT FROM %s WHERE %s = ? AND %s = ?",
-        adapter.getTypeName(), namePropery, groupProperty);
+        adapter.getTypeName(), nameProperty, groupProperty);
   }
 
   @Nullable
