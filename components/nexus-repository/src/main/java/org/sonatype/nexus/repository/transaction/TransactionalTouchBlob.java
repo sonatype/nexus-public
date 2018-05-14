@@ -26,7 +26,9 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Indicates the method will access blobs and "touch" their last-downloaded times.
+ * Indicates the method will access blobs and "touch" book-keeping attributes like last-downloaded time.
+ *
+ * Unlike {@link TransactionalStoreBlob} this doesn't retry if there's a conflict with another update.
  *
  * @since 3.2
  */

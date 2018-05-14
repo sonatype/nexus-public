@@ -78,7 +78,7 @@ Ext.define('NX.coreui.controller.Api', {
    */
   refreshApiContent: function () {
     var me = this,
-        url = NX.util.Url.urlOf('swagger-ui/'),
+        url = NX.util.Url.cacheBustingUrl(NX.util.Url.urlOf('swagger-ui/')),
         apiPage = me.getApiPage();
 
     if (apiPage) {

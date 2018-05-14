@@ -281,17 +281,17 @@
                 <replace file="${project.build.directory}/assembly/public/swagger-ui/index.html">
                   <replacefilter token="swagger-ui.js" value="swagger-ui.min.js"/>
                   <!-- point to local documentation -->
-                  <replacefilter token="http://petstore.swagger.io/v2" value="../service/rest"/>
-                  <!-- list operations, apply alpha sorting -->
-                  <replacefilter token="docExpansion: &quot;none&quot;"
-                                 value="docExpansion:'list', apisSorter:'alpha', operationsSorter:'alpha'"/>
-                  <!-- remove unused API selector form -->
-                  <replacefilter token="&lt;div id='header'"
-                                 value="&lt;div id='header' style='display: none;'"/>
-                  <!-- disable the remote validation -->
-                  <replacefilter token="new SwaggerUi({"
-                                value="new SwaggerUi({validatorUrl:null,"/>
+                  <replacefilter token="http://petstore.swagger.io/v2/swagger.json" value="../service/rest/swagger.json?_cb=${project.version}"/>
+                  <!-- disable remote validation and apply alpha sorting to tags and operations list -->
+                  <replacefilter token="SwaggerUIBundle({"
+                                 value="SwaggerUIBundle({validatorUrl:null,docExpansion:'list',tagsSorter:'alpha',operationsSorter:'alpha',defaultModelsExpandDepth:-1,"/>
                 </replace>
+                <concat destfile="${project.build.directory}/assembly/public/swagger-ui/swagger-ui.css" append="true">
+                  <!-- hide unwanted intro sections and margins -->
+                  <string> .topbar{display:none}</string>
+                  <string> .swagger-ui .info .title,.swagger-ui .info .url{display:none}</string>
+                  <string> .swagger-ui .info,.swagger-ui .info hgroup.main{margin:0}</string>
+                </concat>
 
                 <!--
                 HACK: Include orientdb-studio plugin.

@@ -25,7 +25,9 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Indicates the method will access metadata and "touch" their last-downloaded times.
+ * Indicates the method will access metadata and "touch" book-keeping attributes like last-downloaded time.
+ *
+ * Unlike {@link TransactionalStoreMetadata} this doesn't retry if there's a conflict with another update.
  *
  * @since 3.2
  */

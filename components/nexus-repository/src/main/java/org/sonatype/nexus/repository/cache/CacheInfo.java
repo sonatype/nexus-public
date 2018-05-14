@@ -54,6 +54,11 @@ public class CacheInfo
   @VisibleForTesting
   static final String LAST_VERIFIED = "last_verified";
 
+  /**
+   * Cache token used to mark individually invalidated assets.
+   */
+  static final String INVALIDATED = "invalidated";
+
   private final DateTime lastVerified;
 
   @Nullable
@@ -79,6 +84,15 @@ public class CacheInfo
     return cacheToken;
   }
 
+  /**
+   * Returns whether this item has been individually invalidated from the cache.
+   *
+   * @since 3.next
+   */
+  public boolean isInvalidated() {
+    return INVALIDATED.equals(cacheToken);
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
@@ -93,12 +107,12 @@ public class CacheInfo
   @Nullable
   public static CacheInfo extractFromAsset(final Asset asset) {
     checkNotNull(asset);
-    final NestedAttributesMap proxyCache = asset.attributes().child(CACHE);
-    final DateTime lastVerified = toDateTime(proxyCache.get(LAST_VERIFIED, Date.class));
+    final NestedAttributesMap cache = asset.attributes().child(CACHE);
+    final DateTime lastVerified = toDateTime(cache.get(LAST_VERIFIED, Date.class));
     if (lastVerified == null) {
       return null;
     }
-    final String cacheToken = proxyCache.get(CACHE_TOKEN, String.class);
+    final String cacheToken = cache.get(CACHE_TOKEN, String.class);
     return new CacheInfo(lastVerified, cacheToken);
   }
 
@@ -108,8 +122,21 @@ public class CacheInfo
   public static void applyToAsset(final Asset asset, final CacheInfo cacheInfo) {
     checkNotNull(asset);
     checkNotNull(cacheInfo);
-    final NestedAttributesMap proxyCache = asset.attributes().child(CACHE);
-    proxyCache.set(LAST_VERIFIED, toDate(cacheInfo.getLastVerified()));
-    proxyCache.set(CACHE_TOKEN, cacheInfo.getCacheToken());
+    final NestedAttributesMap cache = asset.attributes().child(CACHE);
+    cache.set(LAST_VERIFIED, toDate(cacheInfo.getLastVerified()));
+    cache.set(CACHE_TOKEN, cacheInfo.getCacheToken());
+  }
+
+  /**
+   * Invalidates the passed in {@link Asset} by marking it as {@link #INVALIDATED}.
+   *
+   * @return {@code true} if asset was invalidated by us, otherwise {@code false}
+   *
+   * @since 3.next
+   */
+  public static boolean invalidateAsset(final Asset asset) {
+    checkNotNull(asset);
+    final NestedAttributesMap cache = asset.attributes().child(CACHE);
+    return !INVALIDATED.equals(cache.set(CACHE_TOKEN, INVALIDATED));
   }
 }

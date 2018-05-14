@@ -60,6 +60,10 @@ public class CacheController
    * age of the info.
    */
   public boolean isStale(final CacheInfo cacheInfo) {
+    if (cacheInfo.isInvalidated()) {
+      log.debug("Content invalidated");
+      return true;
+    }
     if (cacheToken != null && !cacheToken.equals(cacheInfo.getCacheToken())) {
       log.debug("Content expired (cacheToken)");
       return true;
