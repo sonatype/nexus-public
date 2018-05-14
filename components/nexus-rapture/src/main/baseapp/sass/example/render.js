@@ -197,7 +197,7 @@ Ext.theme = {
     },
 
     /**
-     * This method copies property from a `src` object to a `dest` object and reaplces
+     * This method copies property from a `src` object to a `dest` object and replaces
      * `"{foo}"` fragments of any string properties as defined in the `tpl` object.
      * 
      *      var obj = Ext.theme.copyProps({}, {
