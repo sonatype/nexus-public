@@ -65,7 +65,7 @@ public class GeneratedWebResourceTest
   }
 
   @Test
-  public void getSize_requiresPreperation() throws Exception {
+  public void getSize_requiresPreparation() throws Exception {
     try {
       underTest.getSize();
       fail();
@@ -80,7 +80,7 @@ public class GeneratedWebResourceTest
   }
 
   @Test
-  public void getInputStream_requiresPreperation() throws Exception {
+  public void getInputStream_requiresPreparation() throws Exception {
     try {
       underTest.getInputStream();
       fail();
