@@ -52,7 +52,7 @@ class OrientAsyncHelper
    * and returns a true asynchronous backed {@link Iterable} of {@link ODocument} instance, that can be later
    * transformed into whatever caller needs. This means that this wrapper supports ANY SQL commands, even those
    * performing aggregation on results, as long as iterator is not accumulated into a real array or list. Still, given
-   * the nature of non-blocking query, it's execution happens on a separate thread, hence, it will not see uncommited
+   * the nature of non-blocking query, it's execution happens on a separate thread, hence, it will not see uncommitted
    * changes from the caller thread, if any. It uses default buffer size of 128 and timeout of 60 seconds.
    *
    * @param db          The {@link ODatabaseDocumentTx} database instance
@@ -71,7 +71,7 @@ class OrientAsyncHelper
    * and returns a true asynchronous backed {@link Iterable} of {@link ODocument} instance, that can be later
    * transformed into whatever caller needs. This means that this wrapper supports ANY SQL commands, even those
    * performing aggregation on results, as long as iterator is not accumulated into a real array or list. Still, given
-   * the nature of non-blocking query, it's execution happens on a separate thread, hence, it will not see uncommited
+   * the nature of non-blocking query, it's execution happens on a separate thread, hence, it will not see uncommitted
    * changes from the caller thread, if any. This method allows to tune buffer queue size and timeout.
    *
    * @param db             The {@link ODatabaseDocumentTx} database instance
