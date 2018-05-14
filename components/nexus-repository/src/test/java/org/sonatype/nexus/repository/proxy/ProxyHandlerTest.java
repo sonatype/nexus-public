@@ -84,7 +84,7 @@ public class ProxyHandlerTest
   }
 
   @Test
-  public void testPayloaAbsentReturns404Response() throws Exception {
+  public void testPayloadAbsentReturns404Response() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
     assertStatusCode(underTest.handle(context), HttpStatus.NOT_FOUND);
   }
