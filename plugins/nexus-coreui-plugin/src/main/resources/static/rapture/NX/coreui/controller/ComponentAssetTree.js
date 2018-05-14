@@ -586,7 +586,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   },
 
   /**
-   * @pivate
+   * @private
    * Retrieve the current repository model as defined in the bookmark
    */
   getCurrentRepository: function() {
