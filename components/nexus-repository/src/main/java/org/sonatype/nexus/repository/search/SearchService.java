@@ -46,7 +46,7 @@ public interface SearchService
   void deleteIndex(Repository repository);
 
   /**
-   * Rebuilds index for specific reppsitory.
+   * Rebuilds index for specific repository.
    */
   void rebuildIndex(Repository repository);
 
