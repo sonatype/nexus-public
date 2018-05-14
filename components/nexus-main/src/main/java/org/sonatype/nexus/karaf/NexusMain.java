@@ -27,7 +27,7 @@ import org.osgi.framework.Version;
 public class NexusMain
     extends org.apache.karaf.main.Main
 {
-  //Visibile for testing
+  //Visible for testing
   static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
 
   Logger log = Logger.getLogger(this.getClass().getName());
