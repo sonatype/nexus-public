@@ -66,16 +66,16 @@ public class AuthenticatingRealmImplTest
   }
 
   @Test
-  public void testCreateWithPassowrd() throws Exception {
+  public void testCreateWithPassword() throws Exception {
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
 
     String clearPassword = "default-password";
-    String username = "testCreateWithPassowrdEmailUserId";
+    String username = "testCreateWithPasswordEmailUserId";
 
     CUser user = new CUser();
-    user.setEmail("testCreateWithPassowrdEmail@somewhere");
-    user.setFirstName("testCreateWithPassowrdEmail");
-    user.setLastName("testCreateWithPassowrdEmail");
+    user.setEmail("testCreateWithPasswordEmail@somewhere");
+    user.setFirstName("testCreateWithPasswordEmail");
+    user.setLastName("testCreateWithPasswordEmail");
     user.setStatus(CUser.STATUS_ACTIVE);
     user.setId(username);
 
@@ -84,7 +84,7 @@ public class AuthenticatingRealmImplTest
 
     configurationManager.createUser(user, clearPassword, roles);
 
-    UsernamePasswordToken upToken = new UsernamePasswordToken("testCreateWithPassowrdEmailUserId", clearPassword);
+    UsernamePasswordToken upToken = new UsernamePasswordToken("testCreateWithPasswordEmailUserId", clearPassword);
     AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
     String password = new String((char[]) ai.getCredentials());
 
