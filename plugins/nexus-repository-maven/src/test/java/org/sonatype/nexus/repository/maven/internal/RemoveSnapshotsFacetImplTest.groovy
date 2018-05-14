@@ -119,7 +119,7 @@ class RemoveSnapshotsFacetImplTest
     when: 'Processing snapshots to delete'
       def snapshotsToDelete = removeSnapshotsFacet.getSnapshotsToDelete(config, components)
 
-    then: 'Only appropriate snaphots are returned for deletions'
+    then: 'Only appropriate snapshots are returned for deletions'
       snapshotsToDelete.size() == expectedDeletions.size()
       if (expectedDeletions) {
         expectedDeletions.each {
