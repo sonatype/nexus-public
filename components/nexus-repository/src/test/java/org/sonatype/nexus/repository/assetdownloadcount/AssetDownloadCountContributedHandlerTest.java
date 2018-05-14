@@ -87,7 +87,7 @@ public class AssetDownloadCountContributedHandlerTest
   }
 
   @Test
-  public void testHandle_nullReponse() throws Exception {
+  public void testHandle_nullResponse() throws Exception {
     when(context.proceed()).thenReturn(null);
 
     underTest.handle(context);
@@ -97,7 +97,7 @@ public class AssetDownloadCountContributedHandlerTest
   }
 
   @Test
-  public void testHandle_unsuccessfulReponse() throws Exception {
+  public void testHandle_unsuccessfulResponse() throws Exception {
     when(response.getStatus()).thenReturn(Status.failure(404));
 
     underTest.handle(context);
