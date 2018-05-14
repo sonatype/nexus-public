@@ -49,7 +49,7 @@ public class NexusMain
         main.launch();
       }
       catch (Throwable ex) {
-        // Also log to sytem.err in case logging is not yet initialized
+        // Also log to system.err in case logging is not yet initialized
         System.err.println(ex.getMessage());
 
         main.log.log(Level.SEVERE, "Could not launch framework", ex);
