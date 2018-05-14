@@ -43,7 +43,7 @@ public class StreamPayload
   }
 
   /**
-   * Returnes opened stream from configured supplier.
+   * Returns opened stream from configured supplier.
    */
   @Override
   public InputStream openInputStream() throws IOException {
