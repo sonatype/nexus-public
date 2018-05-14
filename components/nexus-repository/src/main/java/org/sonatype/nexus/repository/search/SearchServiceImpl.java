@@ -129,7 +129,7 @@ public class SearchServiceImpl
    * @param repositoryManager the repositoryManager
    * @param securityHelper the securityHelper
    * @param searchSubjectHelper the searchSubjectHelper
-   * @param indexSettingsContributors the indexSetttingsContributors
+   * @param indexSettingsContributors the indexSettingsContributors
    * @param profile whether or not to profile elasticsearch queries (default: false)
    * @param bulkCapacity how many bulk requests to batch before they're automatically flushed (default: 1000)
    * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
