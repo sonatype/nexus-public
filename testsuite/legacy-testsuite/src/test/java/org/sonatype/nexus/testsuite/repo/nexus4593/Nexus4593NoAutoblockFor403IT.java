@@ -144,7 +144,7 @@ public class Nexus4593NoAutoblockFor403IT
       throws Exception
   {
     stopServer();
-    proxyServer.stop();
+    remoteRepositories.stop();
 
     server = Server.withPort(proxyPort).serve("/*").withBehaviours(error(code)).start();
   }

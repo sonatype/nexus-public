@@ -14,11 +14,15 @@ package org.sonatype.nexus.testsuite.proxy.nexus1089;
 
 import java.io.File;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusProxyIntegrationTest;
 import org.sonatype.nexus.integrationtests.ITGroups.PROXY;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.test.utils.FileTestingUtils;
+import org.sonatype.nexus.test.utils.TestProperties;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,15 +32,26 @@ import org.junit.experimental.categories.Category;
 public class Nexus1089SecureProxyIT
     extends AbstractNexusProxyIntegrationTest
 {
-  protected ServletServer secureProxyServer = null;
+  protected RemoteRepositories remoteRepositories = null;
 
   @Override
   @Before
   public void startProxy()
       throws Exception
   {
-    secureProxyServer = lookup(ServletServer.class, "secure");
-    secureProxyServer.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
+        .repo(
+            RemoteRepository.repo("remote")
+                .resourceBase(TestProperties.getString("proxy-repo-target-dir"))
+                .authInfo(
+                    new AuthInfo(
+                        "BASIC",
+                        ImmutableMap.of("admin", "admin")
+                    )
+                ).build()
+        )
+        .build().start();
   }
 
   @Override
@@ -44,8 +59,8 @@ public class Nexus1089SecureProxyIT
   public void stopProxy()
       throws Exception
   {
-    if (secureProxyServer != null) {
-      secureProxyServer.stop();
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
     }
   }
 

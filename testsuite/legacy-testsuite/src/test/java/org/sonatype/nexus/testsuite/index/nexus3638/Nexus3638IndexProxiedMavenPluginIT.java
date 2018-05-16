@@ -16,9 +16,10 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 
-import org.sonatype.jettytestsuite.ControlledServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
 import org.sonatype.nexus.rest.model.NexusArtifact;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.test.utils.GavUtil;
 import org.sonatype.nexus.test.utils.TaskScheduleUtil;
 import org.sonatype.nexus.test.utils.TestProperties;
@@ -38,23 +39,24 @@ public class Nexus3638IndexProxiedMavenPluginIT
     extends AbstractNexusIntegrationTest
 {
 
-  private ControlledServer server;
+  private RemoteRepositories remoteRepositories;
 
   @Before
   public void start()
       throws Exception
   {
-    server = lookup(ControlledServer.class);
-    server.addServer("nexus3638", getTestFile("repo"), 10);
-    server.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("webproxy-server-port"))
+        .repo("nexus3638", getTestFile("repo").getAbsolutePath())
+        .build().start();
   }
 
   @After
   public void stop()
       throws Exception
   {
-    if (server != null) {
-      server.stop();
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
     }
   }
 

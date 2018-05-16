@@ -13,14 +13,18 @@
 package org.sonatype.nexus.proxy;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.UsernamePasswordRemoteAuthenticationSettings;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.junit.Test;
 
@@ -34,14 +38,24 @@ public class RemoteAuthTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss)
+    final Map<String, Object> users = ImmutableMap.<String, Object>of(
+        "cstamas","cstamas123",
+        "brian","brian123",
+        "jason","jason123"
+    );
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo(RemoteRepository.repo("repo1").build())
+        .repo(RemoteRepository.repo("repo2").authInfo(new AuthInfo("BASIC", users)).build())
+        .repo(RemoteRepository.repo("repo3").authInfo(new AuthInfo("DIGEST", users)).build())
+        .build();
+
+    this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(remoteRepositories)
     {
       @Override
-      public void buildEnvironment(AbstractProxyTestEnvironment env)
-          throws ConfigurationException, IOException, ComponentLookupException
+      public void doBuildEnvironment(AbstractProxyTestEnvironment env)
+          throws Exception
       {
-        super.buildEnvironment(env);
+        super.doBuildEnvironment(env);
 
         // setting up auths before test starts: reason is that repo with wrong auth
         // settings will become auto blocked (and that's okay), but since NEXUS-5472 reposes

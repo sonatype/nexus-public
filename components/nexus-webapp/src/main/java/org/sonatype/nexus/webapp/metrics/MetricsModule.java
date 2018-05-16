@@ -15,26 +15,18 @@ package org.sonatype.nexus.webapp.metrics;
 import org.sonatype.nexus.guice.FilterChainModule;
 import org.sonatype.nexus.web.internal.SecurityFilter;
 
+import com.codahale.metrics.Clock;
+import com.codahale.metrics.servlet.InstrumentedFilter;
+import com.codahale.metrics.servlets.PingServlet;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.servlet.ServletModule;
-import com.yammer.metrics.HealthChecks;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Clock;
-import com.yammer.metrics.core.HealthCheckRegistry;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.VirtualMachineMetrics;
-import com.yammer.metrics.reporting.HealthCheckServlet;
-import com.yammer.metrics.reporting.MetricsServlet;
-import com.yammer.metrics.reporting.PingServlet;
-import com.yammer.metrics.reporting.ThreadDumpServlet;
-import com.yammer.metrics.web.DefaultWebappMetricsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <a href="http://metrics.codahale.com">Yammer Metrics</a> guice configuration.
+ * <a href="http://metrics.dropwizard.io">Dropwizard Metrics</a> guice configuration.
  *
  * Installs servlet endpoints:
  *
@@ -63,15 +55,6 @@ public class MetricsModule
     final Clock clock = Clock.defaultClock();
     bind(Clock.class).toInstance(clock);
 
-    final VirtualMachineMetrics virtualMachineMetrics = VirtualMachineMetrics.getInstance();
-    bind(VirtualMachineMetrics.class).toInstance(virtualMachineMetrics);
-
-    final HealthCheckRegistry healthCheckRegistry = HealthChecks.defaultRegistry();
-    bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
-
-    final MetricsRegistry metricsRegistry = Metrics.defaultRegistry();
-    bind(MetricsRegistry.class).toInstance(metricsRegistry);
-
     final JsonFactory jsonFactory = new JsonFactory(new ObjectMapper());
     bind(JsonFactory.class).toInstance(jsonFactory);
 
@@ -79,22 +62,18 @@ public class MetricsModule
     {
       @Override
       protected void configureServlets() {
+        bind(MetricsServlet.class);
+        bind(HealthCheckServlet.class);
+
         serve(MOUNT_POINT + "/ping").with(new PingServlet());
-
-        serve(MOUNT_POINT + "/threads").with(new ThreadDumpServlet(virtualMachineMetrics));
-
-        serve(MOUNT_POINT + "/metrics").with(new MetricsServlet(
-            clock,
-            virtualMachineMetrics,
-            metricsRegistry,
-            jsonFactory,
-            true
-        ));
-
-        serve(MOUNT_POINT + "/healthcheck").with(new HealthCheckServlet(healthCheckRegistry));
+        serve(MOUNT_POINT + "/threads").with(new ThreadDumpServlet());
+        serve(MOUNT_POINT + "/metrics").with(MetricsServlet.class);
+        serve(MOUNT_POINT + "/healthcheck").with(HealthCheckServlet.class);
 
         // record metrics for all webapp access
-        filter("/*").through(new DefaultWebappMetricsFilter());
+        filter("/*").through(new InstrumentedFilter());
+
+        bind(SecurityFilter.class);
 
         // configure security
         filter(MOUNT_POINT + "/*").through(SecurityFilter.class);

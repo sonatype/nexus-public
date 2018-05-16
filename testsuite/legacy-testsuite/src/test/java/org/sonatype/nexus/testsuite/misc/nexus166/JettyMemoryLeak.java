@@ -19,8 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.swing.*;
 
-import org.sonatype.jettytestsuite.BlockingServer;
-
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
@@ -58,7 +56,7 @@ public class JettyMemoryLeak
       }
     };
 
-    server = new BlockingServer(8080);
+    server = new Server(8080);
     server.setHandler(handler);
     server.setStopAtShutdown(true);
     server.start();

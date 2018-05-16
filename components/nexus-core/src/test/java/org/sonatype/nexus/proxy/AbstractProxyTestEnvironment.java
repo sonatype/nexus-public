@@ -77,6 +77,8 @@ public abstract class AbstractProxyTestEnvironment
    */
   private TestItemEventListener testEventListener;
 
+  private EnvironmentBuilder environmentBuilder;
+
   public ApplicationConfiguration getApplicationConfiguration() {
     return applicationConfiguration;
   }
@@ -142,13 +144,15 @@ public abstract class AbstractProxyTestEnvironment
 
     rootRouter = lookup(RepositoryRouter.class);
 
-    getEnvironmentBuilder().buildEnvironment(this);
+    environmentBuilder = getEnvironmentBuilder();
+
+    environmentBuilder.buildEnvironment(this);
 
     eventBus().post(new ConfigurationChangeEvent(applicationConfiguration, null, null));
 
     eventBus().post(new NexusStartedEvent(null));
 
-    getEnvironmentBuilder().startService();
+    environmentBuilder.startService();
   }
 
   /*
@@ -160,7 +164,7 @@ public abstract class AbstractProxyTestEnvironment
       throws Exception
   {
     try {
-      getEnvironmentBuilder().stopService();
+      environmentBuilder.stopService();
     }
     finally {
       super.tearDown();

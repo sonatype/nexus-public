@@ -15,7 +15,7 @@ package org.sonatype.nexus.integrationtests;
 import java.io.File;
 import java.io.IOException;
 
-import org.sonatype.jettytestsuite.ServletServer;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 import org.sonatype.nexus.test.utils.FileTestingUtils;
 import org.sonatype.nexus.test.utils.RepositoryMessageUtil;
 import org.sonatype.nexus.test.utils.TestProperties;
@@ -36,7 +36,7 @@ public abstract class AbstractNexusProxyIntegrationTest
 
   protected Integer proxyPort;
 
-  protected ServletServer proxyServer = null;
+  protected RemoteRepositories remoteRepositories = null;
 
   protected final RepositoryMessageUtil repositoryUtil;
 
@@ -56,15 +56,17 @@ public abstract class AbstractNexusProxyIntegrationTest
 
   @Before
   public void startProxy() throws Exception {
-    this.proxyServer = lookup(ServletServer.class);
-    this.proxyServer.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
+        .repo("remote", TestProperties.getString("proxy-repo-target-dir"))
+        .build().start();
   }
 
   @After
   public void stopProxy() throws Exception {
-    if (this.proxyServer != null) {
-      this.proxyServer.stop();
-      this.proxyServer = null;
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
+      remoteRepositories = null;
     }
   }
 

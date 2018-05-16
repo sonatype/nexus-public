@@ -14,16 +14,16 @@ package org.sonatype.nexus.testsuite.maven.nexus634;
 
 import java.io.File;
 
-import org.sonatype.jettytestsuite.BlockingServer;
 import org.sonatype.nexus.rest.model.RepositoryProxyResource;
 import org.sonatype.nexus.rest.model.ScheduledServicePropertyResource;
 import org.sonatype.nexus.tasks.descriptors.ExpireCacheTaskDescriptor;
 import org.sonatype.nexus.test.utils.RepositoryMessageUtil;
 import org.sonatype.nexus.test.utils.TaskScheduleUtil;
 import org.sonatype.nexus.test.utils.TestProperties;
+import org.sonatype.tests.http.server.fluent.Server;
+import org.sonatype.tests.http.server.jetty.behaviour.PathRecorderBehaviour;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class Nexus634CheckDoesNotGoRemoteIT
 
   protected Server server = null;
 
-  protected TouchTrackingHandler touchTrackingHandler;
+  protected PathRecorderBehaviour  pathRecorderBehaviour = null;
 
   protected RepositoryMessageUtil repositoryMessageUtil;
 
@@ -77,10 +77,8 @@ public class Nexus634CheckDoesNotGoRemoteIT
   public void startProxy()
       throws Exception
   {
-    touchTrackingHandler = new TouchTrackingHandler();
-    server = new BlockingServer(proxyPort);
-    server.setHandler(touchTrackingHandler);
-    server.start();
+    this.pathRecorderBehaviour = new PathRecorderBehaviour();
+    this.server = Server.withPort(proxyPort).serve("/*").withBehaviours(pathRecorderBehaviour).start();
   }
 
   @After
@@ -90,7 +88,6 @@ public class Nexus634CheckDoesNotGoRemoteIT
     if (server != null) {
       server.stop();
       server = null;
-      touchTrackingHandler = null;
     }
   }
 
@@ -114,8 +111,8 @@ public class Nexus634CheckDoesNotGoRemoteIT
     runSnapshotRemover("nexus-test-harness-snapshot-repo", 0, 0, true);
 
     // check is proxy touched
-    Assert.assertEquals("Proxy should not be touched! It was asked for " + touchTrackingHandler.getTouchedTargets(),
-        touchTrackingHandler.getTouchedTargets().size(),
+    Assert.assertEquals("Proxy should not be touched! It was asked for " + pathRecorderBehaviour.getPathsForVerb("GET"),
+        pathRecorderBehaviour.getPathsForVerb("GET").size(),
         0);
   }
 }

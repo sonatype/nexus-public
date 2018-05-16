@@ -14,10 +14,11 @@ package org.sonatype.nexus.testsuite.p2.nxcm3916;
 
 import java.net.URL;
 
-import org.sonatype.jettytestsuite.ProxyServer;
+import org.sonatype.nexus.test.http.HttpProxyServer;
 import org.sonatype.nexus.test.utils.TestProperties;
 import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class NXCM3916SecureWebProxiedP2IT
 
   private static String baseProxyURL;
 
-  protected ProxyServer webProxyServer;
+  protected HttpProxyServer httpProxyServer;
 
   static {
     baseProxyURL = TestProperties.getString("proxy.repo.base.url");
@@ -45,10 +46,10 @@ public class NXCM3916SecureWebProxiedP2IT
   @Before
   public void startWebProxy() throws Exception {
     try {
-      webProxyServer = lookup(ProxyServer.class);
-      webProxyServer.start();
-      webProxyServer.getProxyServlet().setUseAuthentication(true);
-      webProxyServer.getProxyServlet().getAuthentications().put("admin", "123");
+      httpProxyServer = new HttpProxyServer(
+          TestProperties.getInteger("webproxy.server.port"),
+          ImmutableMap.of("admin", "123")
+      ).start();
     }
     catch (Exception e) {
       throw new Exception("Current properties:\n" + TestProperties.getAll(), e);
@@ -68,13 +69,9 @@ public class NXCM3916SecureWebProxiedP2IT
   public void stopWebProxy()
       throws Exception
   {
-    if (webProxyServer != null) {
-      if (webProxyServer.getProxyServlet() != null) {
-        webProxyServer.getProxyServlet().setUseAuthentication(false);
-        webProxyServer.getProxyServlet().setAuthentications(null);
-      }
-      webProxyServer.stop();
-      webProxyServer = null;
+    if (httpProxyServer != null) {
+      httpProxyServer.stop();
+      httpProxyServer = null;
     }
   }
 
@@ -85,12 +82,12 @@ public class NXCM3916SecureWebProxiedP2IT
     installAndVerifyP2Feature();
 
     assertThat(
-        webProxyServer.getAccessedUris(),
+        httpProxyServer.getAccessedUris(),
         hasItem(baseProxyURL + "nxcm3916/features/com.sonatype.nexus.p2.its.feature_1.0.0.jar")
     );
 
     assertThat(
-        webProxyServer.getAccessedUris(),
+        httpProxyServer.getAccessedUris(),
         hasItem(baseProxyURL + "nxcm3916/plugins/com.sonatype.nexus.p2.its.bundle_1.0.0.jar")
     );
   }

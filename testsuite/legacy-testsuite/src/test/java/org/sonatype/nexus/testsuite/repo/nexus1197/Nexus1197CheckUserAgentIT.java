@@ -14,7 +14,6 @@ package org.sonatype.nexus.testsuite.repo.nexus1197;
 
 import java.io.FileNotFoundException;
 
-import org.sonatype.jettytestsuite.BlockingServer;
 import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
 import org.sonatype.nexus.test.utils.TestProperties;
 
@@ -46,7 +45,7 @@ public class Nexus1197CheckUserAgentIT
   {
     handler = new RequestHandler();
 
-    server = new BlockingServer(TestProperties.getInteger("proxy.server.port"));
+    server = new Server(TestProperties.getInteger("proxy.server.port"));
     server.setHandler(handler);
     server.start();
   }

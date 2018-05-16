@@ -15,7 +15,7 @@ package org.sonatype.nexus.proxy;
 import java.io.IOException;
 
 import org.sonatype.configuration.ConfigurationException;
-import org.sonatype.jettytestsuite.ServletServer;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 
@@ -27,32 +27,36 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 public abstract class AbstractJettyEnvironmentBuilder
     implements EnvironmentBuilder
 {
-  private ServletServer servletServer;
+  private RemoteRepositories remoteRepositories;
 
-  public AbstractJettyEnvironmentBuilder(ServletServer servletServer) {
-    super();
-    this.servletServer = servletServer;
+  public AbstractJettyEnvironmentBuilder(RemoteRepositories remoteRepositories) {
+    this.remoteRepositories = remoteRepositories;
   }
 
   public void startService()
       throws Exception
   {
-    servletServer.start();
+    remoteRepositories.start();
   }
 
   public void stopService()
       throws Exception
   {
-    servletServer.stop();
+    remoteRepositories.stop();
   }
 
-  public ServletServer getServletServer() {
-    return servletServer;
+  protected RemoteRepositories getRemoteRepositories() {
+    return remoteRepositories;
   }
 
-  public abstract void buildEnvironment(AbstractProxyTestEnvironment env)
-      throws ConfigurationException,
-             IOException,
-             ComponentLookupException;
+  public final void buildEnvironment(AbstractProxyTestEnvironment env)
+      throws Exception {
+    if (!remoteRepositories.isStarted()) {
+      remoteRepositories.start();
+    }
+    doBuildEnvironment(env);
+  }
 
+  protected abstract void doBuildEnvironment(AbstractProxyTestEnvironment env)
+      throws Exception;
 }

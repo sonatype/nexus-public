@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.testsuite.p2;
 
-import org.sonatype.jettytestsuite.ServletServer;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.AuthInfo;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
+import org.sonatype.nexus.test.utils.TestProperties;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 
 public abstract class AbstractNexusProxyP2SecureIT
@@ -26,9 +30,20 @@ public abstract class AbstractNexusProxyP2SecureIT
 
   @Before
   public void startProxy() throws Exception {
-    if (proxyServer == null) {
-      proxyServer = this.lookup(ServletServer.class, "secure");
-      proxyServer.start();
+    if (remoteRepositories == null) {
+      remoteRepositories = RemoteRepositories.builder()
+          .port(TestProperties.getInteger("proxy-repo-port"))
+          .repo(
+              RemoteRepository.repo("remote")
+                  .resourceBase(TestProperties.getString("proxy-repo-target-dir"))
+                  .authInfo(
+                      new AuthInfo(
+                          "BASIC",
+                          ImmutableMap.of("admin", "admin")
+                      )
+                  ).build()
+          )
+          .build().start();
     }
   }
 

@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.repository;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -25,6 +26,7 @@ import org.sonatype.nexus.client.core.subsystem.repository.Repositories;
 import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepository;
 import org.sonatype.nexus.rest.model.RemoteHttpProxySettingsDTO;
 import org.sonatype.nexus.rest.model.RemoteProxySettingsDTO;
+import org.sonatype.nexus.test.http.HttpProxyServer;
 import org.sonatype.nexus.testsuite.support.NexusRunningParametrizedITSupport;
 import org.sonatype.nexus.testsuite.support.NexusStartAndStopStrategy;
 import org.sonatype.sisu.bl.support.port.PortReservationService;
@@ -56,9 +58,9 @@ public class HttpAndHttpsProxyIT
 
   private int globalHttpsProxyPort;
 
-  private ProxyServerWithHttpsTunneling globalHttpProxy;
+  private HttpProxyServer globalHttpProxy;
 
-  private ProxyServerWithHttpsTunneling globalHttpsProxy;
+  private HttpProxyServer globalHttpsProxy;
 
   private Server httpRemoteServer;
 
@@ -80,13 +82,13 @@ public class HttpAndHttpsProxyIT
   public void initWebProxiesAndRemoteServer()
       throws Exception
   {
-    globalHttpProxy = new ProxyServerWithHttpsTunneling();
-    globalHttpProxy.setPort(globalHttpProxyPort = portReservationService.reservePort());
-    globalHttpProxy.initialize();
+    globalHttpProxy = new HttpProxyServer(
+        globalHttpProxyPort = portReservationService.reservePort()
+    );
 
-    globalHttpsProxy = new ProxyServerWithHttpsTunneling();
-    globalHttpsProxy.setPort(globalHttpsProxyPort = portReservationService.reservePort());
-    globalHttpsProxy.initialize();
+    globalHttpsProxy = new HttpProxyServer(
+        globalHttpsProxyPort = portReservationService.reservePort()
+    );
 
     httpRemoteServer = Server
         .withPort(0)
@@ -170,7 +172,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy);
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -189,7 +191,7 @@ public class HttpAndHttpsProxyIT
     disableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxy);
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -208,7 +210,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy);
+    assertRemoteServerAccessViaProxy(httpRemoteServer, globalHttpProxy.getAccessedHosts());
   }
 
   /**
@@ -227,7 +229,7 @@ public class HttpAndHttpsProxyIT
     enableGlobalHttpsProxy();
     final MavenProxyRepository repository = createMavenProxyRepository(httpsRemoteServer);
     downloadArtifact(repository.id());
-    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxy);
+    assertRemoteServerAccessViaProxy(httpsRemoteServer, globalHttpsProxy.getAccessedHosts());
   }
 
   private void enableGlobalHttpProxy()
@@ -287,9 +289,9 @@ public class HttpAndHttpsProxyIT
   }
 
   private void assertRemoteServerAccessViaProxy(final Server remoteServer,
-                                                final ProxyServerWithHttpsTunneling proxy)
+                                                final List<String> proxiedHosts)
   {
-    MatcherAssert.assertThat(proxy.getProxiedHosts(), hasItem("localhost:" + remoteServer.getPort()));
+    MatcherAssert.assertThat(proxiedHosts, hasItem("localhost:" + remoteServer.getPort()));
   }
 
   public ServerConfiguration config() {

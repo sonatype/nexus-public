@@ -29,6 +29,7 @@
 
   <modules>
     <module>nexus-test-common</module>
+    <module>nexus-test-http-common</module>
     <module>nexus-plugin-testsupport</module>
     <module>nexus-testsuite-client</module>
     <module>nexus-testsuite-support</module>

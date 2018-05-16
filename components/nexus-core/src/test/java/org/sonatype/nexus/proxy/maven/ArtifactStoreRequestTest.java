@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.proxy.maven;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.proxy.AbstractProxyTestEnvironment;
 import org.sonatype.nexus.proxy.EnvironmentBuilder;
 import org.sonatype.nexus.proxy.M2TestsuiteEnvironmentBuilder;
 import org.sonatype.nexus.proxy.maven.gav.Gav;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,8 +29,10 @@ public class ArtifactStoreRequestTest
   protected EnvironmentBuilder getEnvironmentBuilder()
       throws Exception
   {
-    ServletServer ss = (ServletServer) lookup(ServletServer.ROLE);
-    return new M2TestsuiteEnvironmentBuilder(ss);
+    RemoteRepositories remoteRepositories = RemoteRepositories.builder()
+        .repo("repo1", "target/test-classes/repo1")
+        .build();
+    return new M2TestsuiteEnvironmentBuilder(remoteRepositories);
   }
 
   @Test

@@ -40,7 +40,7 @@ public class Nexus1101NexusOverWebproxyIT
     Assert.assertTrue(FileTestingUtils.compareFileSHA1s(jarArtifact, jarFile));
 
     String artifactUrl = baseProxyURL + "release-proxy-repo-1/nexus1101/artifact/1.0/artifact-1.0.jar";
-    Assert.assertTrue("Proxy was not accessed", server.getAccessedUris().contains(artifactUrl));
+    Assert.assertTrue("Proxy was not accessed", getAccessedUris().contains(artifactUrl));
   }
 
 }

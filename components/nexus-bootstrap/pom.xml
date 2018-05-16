@@ -61,8 +61,14 @@
     </dependency>
 
     <dependency>
-      <groupId>com.yammer.metrics</groupId>
-      <artifactId>metrics-jetty</artifactId>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-jetty9</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-logback</artifactId>
       <optional>true</optional>
     </dependency>
 

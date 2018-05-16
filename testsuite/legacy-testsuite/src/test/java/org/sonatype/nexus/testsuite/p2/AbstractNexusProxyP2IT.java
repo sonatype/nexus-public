@@ -15,7 +15,7 @@ package org.sonatype.nexus.testsuite.p2;
 import java.io.File;
 import java.io.IOException;
 
-import org.sonatype.jettytestsuite.ServletServer;
+import org.sonatype.nexus.test.http.RemoteRepositories;
 import org.sonatype.nexus.test.utils.TestProperties;
 
 import org.apache.commons.io.FileUtils;
@@ -28,8 +28,7 @@ import static org.sonatype.nexus.test.utils.FileTestingUtils.interpolationDirect
 public abstract class AbstractNexusProxyP2IT
     extends AbstractNexusP2IT
 {
-
-  protected ServletServer proxyServer;
+  protected RemoteRepositories remoteRepositories;
 
   protected static final String localStorageDir;
 
@@ -45,27 +44,24 @@ public abstract class AbstractNexusProxyP2IT
     super(testRepositoryId);
   }
 
-  @SuppressWarnings("deprecation")
   @Before
   public void startProxy()
       throws Exception
   {
-    proxyServer = lookupProxyServer();
-    proxyServer.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
+        .repo("remote", TestProperties.getString("proxy-repo-target-dir"))
+        .build().start();
   }
 
   @After
   public void stopProxy()
       throws Exception
   {
-    if (proxyServer != null) {
-      proxyServer.stop();
-      proxyServer = null;
+    if (remoteRepositories != null) {
+      remoteRepositories.stop();
+      remoteRepositories = null;
     }
-  }
-
-  protected ServletServer lookupProxyServer() throws ComponentLookupException {
-    return lookup(ServletServer.class);
   }
 
   protected void replaceInFile(final String filename, final String target, final String replacement)

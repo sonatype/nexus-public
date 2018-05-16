@@ -12,12 +12,6 @@
  */
 package org.sonatype.nexus.proxy;
 
-import java.io.IOException;
-
-import org.sonatype.configuration.ConfigurationException;
-
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-
 /**
  * The Interface Environment.
  *
@@ -25,10 +19,8 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
  */
 public interface EnvironmentBuilder
 {
-  public void buildEnvironment(AbstractProxyTestEnvironment abstractProxyTestEnvironment)
-      throws ConfigurationException,
-             IOException,
-             ComponentLookupException;
+  void buildEnvironment(AbstractProxyTestEnvironment abstractProxyTestEnvironment)
+      throws Exception;
 
   void startService()
       throws Exception;

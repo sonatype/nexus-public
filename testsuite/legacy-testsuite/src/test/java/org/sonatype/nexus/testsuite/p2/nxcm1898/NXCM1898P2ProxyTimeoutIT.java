@@ -15,10 +15,14 @@ package org.sonatype.nexus.testsuite.p2.nxcm1898;
 import java.io.File;
 import java.io.IOException;
 
-import org.sonatype.jettytestsuite.ServletServer;
 import org.sonatype.nexus.rest.model.GlobalConfigurationResource;
+import org.sonatype.nexus.test.http.RemoteRepositories;
+import org.sonatype.nexus.test.http.RemoteRepositories.RemoteRepository;
 import org.sonatype.nexus.test.utils.SettingsMessageUtil;
+import org.sonatype.nexus.test.utils.TestProperties;
 import org.sonatype.nexus.testsuite.p2.AbstractNexusProxyP2IT;
+import org.sonatype.sisu.goodies.common.Time;
+import org.sonatype.tests.http.server.fluent.Behaviours;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -36,8 +40,10 @@ public abstract class NXCM1898P2ProxyTimeoutIT
   @Override
   @Before
   public void startProxy() throws Exception {
-    proxyServer = lookup(ServletServer.class, "timeout");
-    proxyServer.start();
+    remoteRepositories = RemoteRepositories.builder()
+        .port(TestProperties.getInteger("proxy-repo-port"))
+        .repo(RemoteRepository.repo("remote").behave(Behaviours.pause(Time.millis(500))).resourceBase(TestProperties.getString("proxy-repo-target-dir")).build())
+        .build().start();
   }
 
   @Test

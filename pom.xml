@@ -307,6 +307,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-test-http-common</artifactId>
+        <version>2.14.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-harness-launcher</artifactId>
         <version>2.14.9-SNAPSHOT</version>
       </dependency>
