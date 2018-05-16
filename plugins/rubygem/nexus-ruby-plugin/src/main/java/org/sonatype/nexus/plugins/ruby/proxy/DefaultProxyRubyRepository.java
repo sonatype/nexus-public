@@ -142,22 +142,6 @@ public class DefaultProxyRubyRepository
     return isOld;
   }
 
-  public int getArtifactMaxAge() {
-    return getExternalConfiguration(false).getArtifactMaxAge();
-  }
-
-  public void setArtifactMaxAge(int maxAge) {
-    getExternalConfiguration(true).setArtifactMaxAge(maxAge);
-  }
-
-  public int getMetadataMaxAge() {
-    return getExternalConfiguration(false).getMetadataMaxAge();
-  }
-
-  public void setMetadataMaxAge(int metadataMaxAge) {
-    getExternalConfiguration(true).setMetadataMaxAge(metadataMaxAge);
-  }
-
   private static Pattern BUNDLER_API_REQUEST = Pattern.compile(".*[?]gems=.*");
 
   @Override

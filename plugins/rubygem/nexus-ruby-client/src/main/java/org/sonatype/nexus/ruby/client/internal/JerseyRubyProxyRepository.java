@@ -48,26 +48,4 @@ public class JerseyRubyProxyRepository
 
     return settings;
   }
-
-  @Override
-  public JerseyRubyProxyRepository withArtifactMaxAge(final int minutes) {
-    settings().setArtifactMaxAge(minutes);
-    return this;
-  }
-
-  @Override
-  public JerseyRubyProxyRepository withMetadataMaxAge(final int minutes) {
-    settings().setMetadataMaxAge(minutes);
-    return this;
-  }
-
-  @Override
-  public int artifactMaxAge() {
-    return settings().getArtifactMaxAge();
-  }
-
-  @Override
-  public int metadataMaxAge() {
-    return settings().getMetadataMaxAge();
-  }
 }

@@ -794,6 +794,26 @@ public abstract class AbstractProxyRepository
     getExternalConfiguration(true).setItemMaxAge(itemMaxAge);
   }
 
+  @Override
+  public int getArtifactMaxAge() {
+    return getExternalConfiguration(false).getArtifactMaxAge();
+  }
+
+  @Override
+  public void setArtifactMaxAge(int maxAge) {
+    getExternalConfiguration(true).setArtifactMaxAge(maxAge);
+  }
+
+  @Override
+  public int getMetadataMaxAge() {
+    return getExternalConfiguration(false).getMetadataMaxAge();
+  }
+
+  @Override
+  public void setMetadataMaxAge(int metadataMaxAge) {
+    getExternalConfiguration(true).setMetadataMaxAge(metadataMaxAge);
+  }
+
   protected void resetRemoteStatus() {
     remoteStatusUpdated = 0;
   }

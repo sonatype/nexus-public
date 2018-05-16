@@ -661,26 +661,6 @@ public class UpdateSiteProxyRepositoryImpl
   }
 
   @Override
-  public int getArtifactMaxAge() {
-    return getExternalConfiguration(false).getArtifactMaxAge();
-  }
-
-  @Override
-  public void setArtifactMaxAge(final int maxAge) {
-    getExternalConfiguration(true).setArtifactMaxAge(maxAge);
-  }
-
-  @Override
-  public int getMetadataMaxAge() {
-    return getExternalConfiguration(false).getMetadataMaxAge();
-  }
-
-  @Override
-  public void setMetadataMaxAge(final int metadataMaxAge) {
-    getExternalConfiguration(true).setMetadataMaxAge(metadataMaxAge);
-  }
-
-  @Override
   public boolean isOld(final StorageItem item) {
     if (AbstractP2MetadataSource.isP2MetadataItem(item.getPath())) {
       return super.isOld(getMetadataMaxAge(), item);

@@ -23,23 +23,6 @@ import org.sonatype.nexus.client.core.subsystem.repository.Repository;
 public interface MavenProxyRepository
     extends ProxyRepository<MavenProxyRepository>
 {
-
-  /**
-   * Configures number of minutes artifacts will be cached.
-   *
-   * @param minutes to be cached
-   * @return itself, for fluent api usage
-   */
-  MavenProxyRepository withArtifactMaxAge(int minutes);
-
-  /**
-   * Configures number of minutes artifact metadata will be cached.
-   *
-   * @param minutes to be cached
-   * @return itself, for fluent api usage
-   */
-  MavenProxyRepository withMetadataMaxAge(int minutes);
-
   /**
    * Download remote indexes if they are available.
    *
@@ -53,17 +36,4 @@ public interface MavenProxyRepository
    * @return itself, for fluent api usage
    */
   MavenProxyRepository doNotDownloadRemoteIndexes();
-
-
-  /**
-   * @return the repository's max artifact age.
-   * @since 2.5
-   */
-  int artifactMaxAge();
-
-  /**
-   * @return the repository's max metadata age.
-   * @since 2.5
-   */
-  int metadataMaxAge();
 }

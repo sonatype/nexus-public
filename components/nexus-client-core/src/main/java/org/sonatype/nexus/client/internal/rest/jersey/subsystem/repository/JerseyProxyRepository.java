@@ -14,6 +14,7 @@ package org.sonatype.nexus.client.internal.rest.jersey.subsystem.repository;
 
 import org.sonatype.nexus.client.core.subsystem.repository.ProxyRepository;
 import org.sonatype.nexus.client.core.subsystem.repository.ProxyRepositoryStatus;
+import org.sonatype.nexus.client.core.subsystem.repository.maven.MavenProxyRepository;
 import org.sonatype.nexus.client.rest.jersey.JerseyNexusClient;
 import org.sonatype.nexus.rest.model.AuthenticationSettings;
 import org.sonatype.nexus.rest.model.RemoteConnectionSettings;
@@ -173,8 +174,30 @@ public class JerseyProxyRepository<T extends ProxyRepository>
   }
 
   @Override
+  public T withArtifactMaxAge(final int minutes) {
+    settings().setArtifactMaxAge(minutes);
+    return me();
+  }
+
+  @Override
+  public T withMetadataMaxAge(final int minutes) {
+    settings().setMetadataMaxAge(minutes);
+    return me();
+  }
+
+  @Override
   public int itemMaxAge() {
     return settings().getItemMaxAge();
+  }
+
+  @Override
+  public int artifactMaxAge() {
+    return settings().getArtifactMaxAge();
+  }
+
+  @Override
+  public int metadataMaxAge() {
+    return settings().getMetadataMaxAge();
   }
 
   @Override

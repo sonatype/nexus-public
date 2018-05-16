@@ -93,10 +93,38 @@ public interface ProxyRepository<T extends ProxyRepository>
   T withItemMaxAge(int minutes);
 
   /**
+   * Configures number of minutes artifacts will be cached.
+   *
+   * @param minutes to be cached
+   * @return itself, for fluent api usage
+   */
+  T withArtifactMaxAge(int minutes);
+
+  /**
+   * Configures number of minutes artifact metadata will be cached.
+   *
+   * @param minutes to be cached
+   * @return itself, for fluent api usage
+   */
+  T withMetadataMaxAge(int minutes);
+
+  /**
    * @return the repository's max item age.
    * @since 2.5
    */
   int itemMaxAge();
+
+  /**
+   * @return the repository's max artifact age.
+   * @since 2.5
+   */
+  int artifactMaxAge();
+
+  /**
+   * @return the repository's max metadata age.
+   * @since 2.5
+   */
+  int metadataMaxAge();
 
   /**
    * Configure username authentication for remote proxy

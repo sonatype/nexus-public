@@ -53,18 +53,6 @@ public class JerseyMavenProxyRepository
   }
 
   @Override
-  public MavenProxyRepository withArtifactMaxAge(final int minutes) {
-    settings().setArtifactMaxAge(minutes);
-    return me();
-  }
-
-  @Override
-  public MavenProxyRepository withMetadataMaxAge(final int minutes) {
-    settings().setMetadataMaxAge(minutes);
-    return me();
-  }
-
-  @Override
   public MavenProxyRepository downloadRemoteIndexes() {
     settings().setDownloadRemoteIndexes(true);
     return me();
@@ -75,15 +63,4 @@ public class JerseyMavenProxyRepository
     settings().setDownloadRemoteIndexes(false);
     return me();
   }
-
-  @Override
-  public int artifactMaxAge() {
-    return settings().getArtifactMaxAge();
-  }
-
-  @Override
-  public int metadataMaxAge() {
-    return settings().getMetadataMaxAge();
-  }
-
 }

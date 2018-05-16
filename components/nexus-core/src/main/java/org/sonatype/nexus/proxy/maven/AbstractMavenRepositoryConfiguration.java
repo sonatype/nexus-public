@@ -25,10 +25,6 @@ public abstract class AbstractMavenRepositoryConfiguration
 
   public static final String CHECKSUM_POLICY = "checksumPolicy";
 
-  public static final String ARTIFACT_MAX_AGE = "artifactMaxAge";
-
-  public static final String METADATA_MAX_AGE = "metadataMaxAge";
-
   public static final String DOWNLOAD_REMOTE_INDEX = "downloadRemoteIndex";
 
   public static final String CLEANSE_REPOSITORY_METADATA = "cleanseRepositoryMetadata";
@@ -56,22 +52,6 @@ public abstract class AbstractMavenRepositoryConfiguration
 
   public void setChecksumPolicy(ChecksumPolicy policy) {
     setNodeValue(getRootNode(), CHECKSUM_POLICY, policy.toString());
-  }
-
-  public int getArtifactMaxAge() {
-    return Integer.parseInt(getNodeValue(getRootNode(), ARTIFACT_MAX_AGE, "1440"));
-  }
-
-  public void setArtifactMaxAge(int age) {
-    setNodeValue(getRootNode(), ARTIFACT_MAX_AGE, String.valueOf(age));
-  }
-
-  public int getMetadataMaxAge() {
-    return Integer.parseInt(getNodeValue(getRootNode(), METADATA_MAX_AGE, "1440"));
-  }
-
-  public void setMetadataMaxAge(int age) {
-    setNodeValue(getRootNode(), METADATA_MAX_AGE, String.valueOf(age));
   }
 
   public boolean isDownloadRemoteIndex() {

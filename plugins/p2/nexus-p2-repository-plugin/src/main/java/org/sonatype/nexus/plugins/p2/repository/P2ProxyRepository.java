@@ -32,14 +32,6 @@ public interface P2ProxyRepository
   Map<String, ArtifactMapping> getArtifactMappings()
       throws IllegalOperationException, StorageException;
 
-  int getArtifactMaxAge();
-
-  void setArtifactMaxAge(final int maxAge);
-
-  int getMetadataMaxAge();
-
-  void setMetadataMaxAge(final int metadataMaxAge);
-
   ChecksumPolicy getChecksumPolicy();
 
   void setChecksumPolicy(final ChecksumPolicy checksumPolicy);

@@ -18,12 +18,4 @@ public interface UpdateSiteProxyRepository
     extends ProxyRepository
 {
   void mirror(final boolean force);
-
-  int getArtifactMaxAge();
-
-  void setArtifactMaxAge(final int maxAge);
-
-  int getMetadataMaxAge();
-
-  void setMetadataMaxAge(final int metadataMaxAge);
 }
