@@ -69,6 +69,7 @@
       <artifactId>nexus-kazuki-plugin</artifactId>
       <type>${nexus-plugin.type}</type>
       <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
