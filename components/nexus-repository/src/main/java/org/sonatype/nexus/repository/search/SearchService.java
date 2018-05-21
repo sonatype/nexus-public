@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -132,6 +133,14 @@ public interface SearchService
    *
    * @since 3.4
    */
-  void flush();
+  void flush(boolean fsync);
+
+  /**
+   * Used by UTs and ITs only to "wait for calm period" when all search indexing is finished.
+   *
+   * @since 3.next
+   */
+  @VisibleForTesting
+  boolean isCalmPeriod();
 
 }

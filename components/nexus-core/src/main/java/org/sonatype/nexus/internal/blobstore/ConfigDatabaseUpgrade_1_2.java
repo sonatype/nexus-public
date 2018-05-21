@@ -24,6 +24,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.upgrade.DependsOn;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
@@ -54,6 +55,7 @@ import static java.util.stream.StreamSupport.stream;
 @Named
 @Singleton
 @Upgrades(model = DatabaseInstanceNames.CONFIG, from = "1.1", to = "1.2")
+@DependsOn(model = DatabaseInstanceNames.COMPONENT, version = "1.0", checkpoint = true)
 public class ConfigDatabaseUpgrade_1_2 // NOSONAR
     extends DatabaseUpgradeSupport
 {

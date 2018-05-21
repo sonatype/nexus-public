@@ -18,7 +18,7 @@ import com.amazonaws.services.s3.AmazonS3;
 
 /**
  * Uploads a file to S3.
- * @since 3.next
+ * @since 3.12
  */
 public interface S3Uploader {
 

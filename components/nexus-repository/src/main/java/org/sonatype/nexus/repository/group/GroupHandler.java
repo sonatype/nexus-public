@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.group;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +48,8 @@ public class GroupHandler
     extends ComponentSupport
     implements Handler
 {
+  public static final String USE_DISPATCHED_RESPONSE = "USE_DISPATCHED_RESPONSE";
+
   /**
    * Request-context state container for set of repositories already dispatched to.
    */
@@ -130,7 +131,7 @@ public class GroupHandler
       final ViewFacet view = member.facet(ViewFacet.class);
       final Response response = view.dispatch(request, context);
       log.trace("Member {} response {}", member, response.getStatus());
-      if (response.getStatus().isSuccessful()) {
+      if (isValidResponse(response)) {
         return response;
       }
     }
@@ -191,5 +192,9 @@ public class GroupHandler
    */
   protected Response notFoundResponse(final Context context) {
     return HttpResponses.notFound();
+  }
+
+  private boolean isValidResponse(final Response response) {
+    return response.getStatus().isSuccessful() || response.getAttributes().contains(USE_DISPATCHED_RESPONSE);
   }
 }

@@ -44,7 +44,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -120,6 +119,8 @@ public class JobStoreImpl
 
   private final ExceptionSummarizer acquireNextTriggersSummarizer = summarize(sameType(), warn(log));
 
+  private final Time acquireRetryDelay;
+
   private SchedulerSignaler signaler;
 
   private String instanceName;
@@ -131,13 +132,15 @@ public class JobStoreImpl
                       final JobDetailEntityAdapter jobDetailEntityAdapter,
                       final TriggerEntityAdapter triggerEntityAdapter,
                       final CalendarEntityAdapter calendarEntityAdapter,
-                      final NodeAccess nodeAccess)
+                      final NodeAccess nodeAccess,
+                      @Named("${nexus.quartz.jobStore.acquireRetryDelay:-15s}") final Time acquireRetryDelay)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.jobDetailEntityAdapter = checkNotNull(jobDetailEntityAdapter);
     this.triggerEntityAdapter = checkNotNull(triggerEntityAdapter);
     this.calendarEntityAdapter = checkNotNull(calendarEntityAdapter);
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.acquireRetryDelay = acquireRetryDelay;
   }
 
   @Override
@@ -932,7 +935,50 @@ public class JobStoreImpl
     }
   }
 
+  @Override
+  public void resetTriggerFromErrorState(final TriggerKey triggerKey) throws JobPersistenceException {
+    execute(db -> {
+      TriggerEntity.State newState = WAITING;
 
+      if (isTriggerGroupPaused(db, triggerKey.getGroup())) {
+        newState = PAUSED;
+      }
+
+      updateTriggerStatesForJobFromOtherState(db, triggerKey, newState, ERROR);
+      return null;
+    });
+  }
+
+  private boolean isTriggerGroupPaused(final ODatabaseDocumentTx db, final String groupName) {
+    Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
+        (db, input ->
+            groupName.equals(input.getGroup()) && PAUSED.equals(input.getState())
+        );
+    return !Iterables.isEmpty(matches);
+  }
+
+  private void updateTriggerStatesForJobFromOtherState(final ODatabaseDocumentTx db,
+                                                       final TriggerKey triggerKey,
+                                                       final TriggerEntity.State state,
+                                                       final TriggerEntity.State oldState)
+  {
+    Iterable<TriggerEntity> matches = triggerEntityAdapter.browseWithPredicate
+        (db, input ->
+            triggerKey.getName().equals(input.getName()) &&
+                triggerKey.getGroup().equals(input.getGroup()) &&
+                oldState.equals(input.getState())
+        );
+
+    matches.forEach(entity -> {
+      entity.setState(state);
+      triggerEntityAdapter.editEntity(db, entity);
+    });
+  }
+
+  @Override
+  public long getAcquireRetryDelay(final int failureCount) {
+    return acquireRetryDelay.toMillis();
+  }
 
   private List<TriggerEntity> getAcquirableEntities(final ODatabaseDocumentTx db,
                                                      final long noLaterThan,
@@ -1463,7 +1509,8 @@ public class JobStoreImpl
     }
 
     // skip triggers which match misfire fudge logic (if the trigger will no longer fire)
-    if (applyMisfire(db, entity)) {
+    // NOTE: applyMisfire(...) may modify trigger.getNextFireTime()
+    if (applyMisfire(db, entity) && trigger.getNextFireTime() == null) {
       return false;
     }
 

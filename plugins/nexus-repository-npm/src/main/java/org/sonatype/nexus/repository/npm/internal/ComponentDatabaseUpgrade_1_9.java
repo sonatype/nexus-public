@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.DependsOn;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
@@ -42,6 +43,7 @@ import static java.util.stream.Collectors.toList;
 @Named
 @Singleton
 @Upgrades(model = DatabaseInstanceNames.COMPONENT, from = "1.8", to = "1.9")
+@DependsOn(model = DatabaseInstanceNames.CONFIG, version = "1.5")
 public class ComponentDatabaseUpgrade_1_9 // NOSONAR
     extends DatabaseUpgradeSupport
 {

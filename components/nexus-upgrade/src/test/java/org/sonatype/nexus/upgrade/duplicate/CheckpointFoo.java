@@ -10,42 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.upgrade.duplicate;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
+import org.sonatype.nexus.common.upgrade.Checkpoints;
+import org.sonatype.nexus.upgrade.example.CheckpointMock;
 
-/**
- * @since 3.4
- */
-public interface BlobAttributes
+@Checkpoints(model = "foo")
+public class CheckpointFoo
+    extends CheckpointMock
 {
-  Map<String, String> getHeaders();
-
-  BlobMetrics getMetrics();
-
-  boolean isDeleted();
-
-  void setDeleted(boolean deleted);
-
-  void setDeletedReason(String deletedReason);
-
-  String getDeletedReason();
-
-  Properties getProperties();
-
-  /**
-   * Update attributes based on the {@link BlobAttributes} provided.
-   *
-   * @since 3.7
-   */
-  void updateFrom(BlobAttributes blobAttributes);
-
-  /**
-   * Stores the attributes in the blob store.
-   *
-   * @since 3.12
-   */
-  void store() throws IOException;
 }

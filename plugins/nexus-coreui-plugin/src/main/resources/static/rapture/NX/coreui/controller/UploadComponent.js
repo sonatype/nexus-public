@@ -221,8 +221,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
   doUpload: function(button) {
     var me = this,
-        fp = button.up('form'),
-        fileUploadField;
+        fp = button.up('form');
 
     if(fp.getForm().isValid()) {
       me.setSuccessMessage();
@@ -237,19 +236,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
                 NX.I18n.get('FeatureGroups_Upload_Successful_Link_Text'), '_self');
           }
           me.setSuccessMessage(message);
-
-          fp.getForm().reset();
-
-          // remove rows
-          fp.query('fileuploadfield').forEach(function(fileUploadField) {
-            me.removeUploadAsset(fileUploadField);
-          });
-
-          // create new row
-          me.addAsset();
-
-          // clearOnSubmit prevents normal form reset from working...
-          fp.down('fileuploadfield').inputEl.dom.value = '';
+          me.resetForm();
         }
       });
     }
@@ -270,7 +257,26 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
   discardUpload: function() {
     var me = this;
+    me.resetForm();
     me.loadView(me.BROWSE_INDEX, true);
+  },
+
+  resetForm: function() {
+    var me = this,
+        form = me.getUploadComponent().down('form');
+
+    form.getForm().reset();
+
+    // remove rows
+    form.query('fileuploadfield').forEach(function(fileUploadField) {
+      me.removeUploadAsset(fileUploadField);
+    });
+
+    // create new row
+    me.addAsset();
+
+    // clearOnSubmit prevents normal form reset from working...
+    form.down('fileuploadfield').inputEl.dom.value = '';
   },
 
   addAsset: function() {
@@ -285,8 +291,11 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   },
 
   onExtensionChange: function() {
-    var me = this;
+    var me = this,
+        form = me.getUploadComponent().down('form');
+
     me.updatePomFileState();
+    form.isValid();
   },
 
   updatePomFileState: function() {

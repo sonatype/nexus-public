@@ -29,7 +29,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions
 /**
  * S3 {@link DirectComponent}.
  *
- * @since 3.next
+ * @since 3.12
  */
 @Named
 @Singleton

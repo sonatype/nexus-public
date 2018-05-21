@@ -334,6 +334,27 @@
       </plugin>
 
       <plugin>
+        <groupId>com.ruleoftech</groupId>
+        <artifactId>markdown-page-generator-plugin</artifactId>
+        <version>1.0.0</version>
+        <executions>
+          <execution>
+            <id>configure-assembly</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <inputDirectory>${project.basedir}/src/main/resources/licenses/</inputDirectory>
+          <outputDirectory>${project.build.directory}/assembly/public/</outputDirectory>
+          <headerHtmlFile>${project.basedir}/src/main/resources/licenses/license-header.html</headerHtmlFile>
+          <footerHtmlFile>${project.basedir}/src/main/resources/licenses/license-footer.html</footerHtmlFile>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
         <configuration>

@@ -112,6 +112,9 @@ public class MavenUploadHandlerTest
   TempBlob tempBlob;
 
   @Mock
+  MavenHostedFacet mavenHostedFacet;
+
+  @Mock
   private ContentPermissionChecker contentPermissionChecker;
 
   @Mock
@@ -135,6 +138,7 @@ public class MavenUploadHandlerTest
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
+    when(repository.facet(MavenHostedFacet.class)).thenReturn(mavenHostedFacet);
 
     StorageFacet storageFacet = mock(StorageFacet.class);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
@@ -266,6 +270,8 @@ public class MavenUploadHandlerTest
         "tomcat", "5.0.28", null, "jar");
     assertVariableSource(sources.get(1), "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar",
         "org.apache.maven", "tomcat", "5.0.28", "sources", "jar");
+
+    verify(mavenHostedFacet).rebuildMetadata("org.apache.maven", "tomcat", "5.0.28", false);
   }
 
   @Test

@@ -87,7 +87,7 @@ public class CacheInfo
   /**
    * Returns whether this item has been individually invalidated from the cache.
    *
-   * @since 3.next
+   * @since 3.12
    */
   public boolean isInvalidated() {
     return INVALIDATED.equals(cacheToken);
@@ -132,7 +132,7 @@ public class CacheInfo
    *
    * @return {@code true} if asset was invalidated by us, otherwise {@code false}
    *
-   * @since 3.next
+   * @since 3.12
    */
   public static boolean invalidateAsset(final Asset asset) {
     checkNotNull(asset);

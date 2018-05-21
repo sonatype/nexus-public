@@ -10,17 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.bad;
+package org.sonatype.nexus.upgrade.duplicate;
 
-import org.sonatype.nexus.common.upgrade.Upgrade;
-import org.sonatype.nexus.common.upgrade.Upgrades;
+import org.sonatype.nexus.common.upgrade.Checkpoints;
+import org.sonatype.nexus.upgrade.example.CheckpointMock;
 
-@Upgrades(model = "foo", from = "1.0", to = "1.0")
-public class UpgradeFoo_1_0
-    implements Upgrade
+@Checkpoints(model = "foo")
+public class CheckpointFoo_Duplicate
+    extends CheckpointMock
 {
-  @Override
-  public void apply() {
-    // no-op
-  }
 }

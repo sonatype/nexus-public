@@ -116,6 +116,8 @@ public class SearchServiceImpl
 
   private final ConcurrentMap<String, String> repositoryNameMapping;
 
+  private final BulkIndexUpdateListener updateListener;
+
   private final boolean profile;
 
   private final boolean periodicFlush;
@@ -150,11 +152,12 @@ public class SearchServiceImpl
     this.searchSubjectHelper = checkNotNull(searchSubjectHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.repositoryNameMapping = Maps.newConcurrentMap();
+    this.updateListener = new BulkIndexUpdateListener();
     this.profile = profile;
     this.periodicFlush = flushInterval > 0;
 
     this.bulkProcessor = BulkProcessor
-        .builder(client.get(), new BulkIndexUpdateListener())
+        .builder(client.get(), updateListener)
         .setBulkActions(bulkCapacity)
         .setBulkSize(new ByteSizeValue(-1)) // turn off automatic flush based on size in bytes
         .setConcurrentRequests(concurrentRequests)
@@ -163,9 +166,35 @@ public class SearchServiceImpl
   }
 
   @Override
-  public void flush() {
+  public void flush(final boolean fsync) {
     log.debug("Flushing index requests");
     bulkProcessor.flush();
+
+    if (fsync) {
+      try {
+        indicesAdminClient().prepareSyncedFlush().execute().actionGet();
+      }
+      catch (RuntimeException e) {
+        log.warn("Problem flushing search indices", e);
+      }
+    }
+  }
+
+  @Override
+  public boolean isCalmPeriod() {
+    if (updateListener.inflightRequestCount() > 0) {
+      return false;
+    }
+
+    try {
+      // now it's calm make sure updates are available for searching
+      indicesAdminClient().prepareRefresh().execute().actionGet();
+    }
+    catch (RuntimeException e) {
+      log.warn("Problem refreshing search indices", e);
+    }
+
+    return true;
   }
 
   @Override
@@ -286,6 +315,7 @@ public class SearchServiceImpl
       String identifier = identifierProducer.apply(component);
       String json = jsonDocumentProducer.apply(component);
       if (json != null) {
+        log.debug("Bulk adding to index document {} from {}: {}", identifier, repository, json);
         bulkProcessor.add(
             client.get()
                 .prepareIndex(indexName, TYPE, identifier)
@@ -332,8 +362,10 @@ public class SearchServiceImpl
         return; // index has gone, nothing to delete
       }
 
-      identifiers.forEach(id ->
-          bulkProcessor.add(client.get().prepareDelete(indexName, TYPE, id).request()));
+      identifiers.forEach(id -> {
+        log.debug("Bulk removing from index document {} from {}", id, repository);
+        bulkProcessor.add(client.get().prepareDelete(indexName, TYPE, id).request());
+      });
     }
     else {
 
@@ -350,8 +382,10 @@ public class SearchServiceImpl
             .execute()
             .actionGet();
 
-        toDelete.getHits().forEach(hit ->
-            bulkProcessor.add(client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request()));
+        toDelete.getHits().forEach(hit -> {
+          log.debug("Bulk removing from index document {} from {}", hit.getId(), hit.index());
+          bulkProcessor.add(client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request());
+        });
       });
     }
 

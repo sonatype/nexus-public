@@ -30,6 +30,7 @@ package org.sonatype.nexus.quartz.internal.orient;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
@@ -37,6 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -51,6 +53,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.DateBuilder;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -76,6 +79,7 @@ import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.OperableTrigger;
 import org.quartz.spi.SchedulerSignaler;
+import org.quartz.spi.TriggerFiredResult;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -88,6 +92,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.quartz.JobBuilder.newJob;
+import static org.quartz.SimpleTrigger.MISFIRE_INSTRUCTION_RESCHEDULE_NEXT_WITH_EXISTING_COUNT;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 
@@ -99,6 +104,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 public class JobStoreImplTest
     extends TestSupport
 {
+  private static final Time ACQUIRE_RETRY_DELAY = Time.seconds(15);
+
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
@@ -147,7 +154,8 @@ public class JobStoreImplTest
         jobDetailEntityAdapter,
         triggerEntityAdapter,
         calendarEntityAdapter,
-        nodeAccess
+        nodeAccess,
+        ACQUIRE_RETRY_DELAY
     );
   }
 
@@ -386,6 +394,77 @@ public class JobStoreImplTest
     this.jobStore.releaseAcquiredTrigger(trigger1);
     this.jobStore.releaseAcquiredTrigger(trigger2);
     this.jobStore.releaseAcquiredTrigger(trigger3);
+  }
+
+  /**
+   * Simulate a job that has run longer than the next fire time such that it misfires.
+   */
+  @Test
+  public void testTriggerPastDueMisfire() throws Exception {
+    JobDetail jobDetail = JobBuilder.newJob(MyNonConcurrentJob.class)
+        .storeDurably(true)
+        .build();
+    jobStore.storeJob(jobDetail, false);
+
+    ZoneId zone = ZoneId.systemDefault();
+
+    Date baseFireTimeDate = DateBuilder.evenMinuteDateAfterNow();
+    LocalDateTime baseDateTime = LocalDateTime.ofInstant(baseFireTimeDate.toInstant(), zone);
+    LocalDateTime startAt = baseDateTime.minusMinutes(5);
+    LocalDateTime nextFireTime = startAt.plusMinutes(1);
+
+    CronScheduleBuilder schedule = CronScheduleBuilder.cronSchedule("0 1 * * * ? *");
+    OperableTrigger trigger = (OperableTrigger) TriggerBuilder.newTrigger()
+        .forJob(jobDetail)
+        .withSchedule(schedule)
+        .startAt(Date.from(startAt.atZone(zone).toInstant()))
+        .build();
+
+    // misfire the trigger and set the next fire time in the past
+    trigger.updateAfterMisfire(null);
+    trigger.setNextFireTime(Date.from(nextFireTime.atZone(zone).toInstant()));
+    jobStore.storeTrigger(trigger, false);
+
+    List<OperableTrigger> acquiredTriggers =
+        jobStore.acquireNextTriggers(DateBuilder.evenMinuteDateAfterNow().getTime(), 4, 1000L);
+    assertEquals(1, acquiredTriggers.size());
+  }
+
+  /**
+   * Simulate a job that has run longer than the next fire time such that it misfires, but will not fire again because
+   * the end of the trigger window has passed.
+   */
+  @Test
+  public void testTriggerPastDueMisfireButWillNotFire() throws Exception {
+    JobDetail jobDetail = JobBuilder.newJob(MyNonConcurrentJob.class).storeDurably(true).build();
+    jobStore.storeJob(jobDetail, false);
+
+    ZoneId zone = ZoneId.systemDefault();
+
+    Date baseFireTimeDate = DateBuilder.evenMinuteDateAfterNow();
+    LocalDateTime baseDateTime = LocalDateTime.ofInstant(baseFireTimeDate.toInstant(), zone);
+    LocalDateTime startAt = baseDateTime.minusMinutes(5);
+    LocalDateTime endAt = baseDateTime.minusMinutes(1);
+    LocalDateTime nextFireTime = startAt.plusMinutes(1);
+
+    SimpleScheduleBuilder simple = SimpleScheduleBuilder.simpleSchedule()
+        .withIntervalInMinutes(1);
+    OperableTrigger trigger = (OperableTrigger) TriggerBuilder.newTrigger()
+        .forJob(jobDetail)
+        .withSchedule(simple)
+        .startAt(Date.from(startAt.atZone(zone).toInstant()))
+        .endAt(Date.from(endAt.atZone(zone).toInstant()))
+        .build();
+
+    // misfire the trigger and set the next fire time in the past
+    trigger.updateAfterMisfire(null);
+    trigger.setNextFireTime(Date.from(nextFireTime.atZone(zone).toInstant()));
+    trigger.setMisfireInstruction(MISFIRE_INSTRUCTION_RESCHEDULE_NEXT_WITH_EXISTING_COUNT);
+    jobStore.storeTrigger(trigger, false);
+
+    List<OperableTrigger> acquiredTriggers =
+        jobStore.acquireNextTriggers(baseFireTimeDate.getTime(), 4, 1000L);
+    assertEquals(0, acquiredTriggers.size());
   }
 
   @Test
@@ -663,6 +742,45 @@ public class JobStoreImplTest
     for (int i = 0; i < 7; i++) {
       assertEquals("job" + i, triggers.get(i).getKey().getName());
     }
+  }
+
+  @Test
+  public void testResetErrorTrigger() throws Exception {
+    JobDetail jobDetail = JobBuilder.newJob(MyJob.class).withIdentity("job1", "jobGroup1").storeDurably(true).build();
+    this.jobStore.storeJob(jobDetail, false);
+    Date baseFireTimeDate = DateBuilder.evenMinuteDateAfterNow();
+    long baseFireTime = baseFireTimeDate.getTime();
+
+    // create and store a trigger
+    OperableTrigger trigger1 =
+        new SimpleTriggerImpl("trigger1", "triggerGroup1", jobDetail.getKey().getName(),
+            jobDetail.getKey().getGroup(), new Date(baseFireTime + 200000),
+            new Date(baseFireTime + 200000), 2, 2000);
+
+    trigger1.computeFirstFireTime(null);
+    jobStore.storeTrigger(trigger1, false);
+
+    long firstFireTime = new Date(trigger1.getNextFireTime().getTime()).getTime();
+
+
+    // pretend to fire it
+    List<OperableTrigger> aqTs = jobStore.acquireNextTriggers(
+        firstFireTime + 10000, 1, 0L);
+    assertEquals(trigger1.getKey(), aqTs.get(0).getKey());
+
+    List<TriggerFiredResult> fTs = jobStore.triggersFired(aqTs);
+    TriggerFiredResult ft = fTs.get(0);
+
+    // get the trigger into error state
+    jobStore.triggeredJobComplete(ft.getTriggerFiredBundle().getTrigger(), ft.getTriggerFiredBundle().getJobDetail(),
+        Trigger.CompletedExecutionInstruction.SET_TRIGGER_ERROR);
+    TriggerState state = jobStore.getTriggerState(trigger1.getKey());
+    assertEquals(TriggerState.ERROR, state);
+
+    // test reset
+    jobStore.resetTriggerFromErrorState(trigger1.getKey());
+    state = jobStore.getTriggerState(trigger1.getKey());
+    assertEquals(TriggerState.NORMAL, state);
   }
 
   @Test

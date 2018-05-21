@@ -36,8 +36,6 @@ import com.google.common.base.Throwables;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.alwaysTrue;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
-import static org.sonatype.nexus.upgrade.internal.UpgradeManager.checkpoints;
-import static org.sonatype.nexus.upgrade.internal.UpgradeManager.upgrades;
 
 /**
  * Default {@link UpgradeService}.
@@ -80,7 +78,7 @@ public class UpgradeServiceImpl
 
     modelVersions = validate(modelVersionStore.load());
 
-    List<Upgrade> upgrades = upgradeManager.plan(modelVersions);
+    List<Upgrade> upgrades = upgradeManager.selectUpgrades(modelVersions);
     if (upgrades.isEmpty()) {
       return; // nothing to upgrade
     }
@@ -119,7 +117,7 @@ public class UpgradeServiceImpl
       inventoryFilter = (upgrade) -> localModels.contains(upgrade.model());
     }
 
-    upgrades.stream().map(UpgradeManager::upgrades)
+    upgrades.stream().map(upgradeManager::getMetadata)
         .filter(inventoryFilter)
         .forEach(upgrade -> modelVersions.put(upgrade.model(), upgrade.to()));
   }
@@ -128,7 +126,7 @@ public class UpgradeServiceImpl
    * Attempts to upgrade an existing installation keeping track of what was upgraded.
    */
   private void doUpgrade(List<Upgrade> upgrades) {
-    List<Checkpoint> checkpoints = upgradeManager.prepare(upgrades);
+    List<Checkpoint> checkpoints = upgradeManager.selectCheckpoints(upgrades);
 
     log.info(BANNER, "Begin upgrade");
     checkpoints.forEach(begin());
@@ -173,7 +171,7 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> begin() {
     return checkpoint -> {
-      String model = checkpoints(checkpoint).model();
+      String model = upgradeManager.getModel(checkpoint);
       try {
         log.info("Checkpoint {}", model);
         checkpoint.begin(modelVersions.getOrDefault(model, "1.0"));
@@ -188,14 +186,14 @@ public class UpgradeServiceImpl
 
   private Consumer<Upgrade> apply() {
     return upgrade -> {
-      Upgrades upgrades = upgrades(upgrade);
-      String detail = String.format("%s from %s to %s", upgrades.model(), upgrades.from(), upgrades.to());
+      Upgrades metadata = upgradeManager.getMetadata(upgrade);
+      String detail = String.format("%s from %s to %s", metadata.model(), metadata.from(), metadata.to());
       try {
         log.info("Upgrade {}", detail);
         upgrade.apply();
 
         // keep track of which upgrades we've applied so far
-        modelVersions.put(upgrades.model(), upgrades.to());
+        modelVersions.put(metadata.model(), metadata.to());
       }
       catch (Throwable e) {
         log.warn("Problem upgrading {}", detail, e);
@@ -207,7 +205,7 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> commit() {
     return checkpoint -> {
-      String model = checkpoints(checkpoint).model();
+      String model = upgradeManager.getModel(checkpoint);
       try {
         log.info("Commit {}", model);
         checkpoint.commit();
@@ -222,7 +220,7 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> rollback() {
     return checkpoint -> {
-      String model = checkpoints(checkpoint).model();
+      String model = upgradeManager.getModel(checkpoint);
       try {
         log.info("Rolling back {}", model);
         checkpoint.rollback();
@@ -236,7 +234,7 @@ public class UpgradeServiceImpl
 
   private Consumer<Checkpoint> end() {
     return checkpoint -> {
-      String model = checkpoints(checkpoint).model();
+      String model = upgradeManager.getModel(checkpoint);
       try {
         log.info("Cleaning up {}", model);
         checkpoint.end();

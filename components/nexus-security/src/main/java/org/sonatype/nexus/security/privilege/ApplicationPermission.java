@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,6 +32,10 @@ public class ApplicationPermission
 {
   public static final String SYSTEM = "nexus";
 
+  private static final char PART_SEPARATOR = ':';
+
+  private static final Splitter PART_SPLITTER = Splitter.on(PART_SEPARATOR);
+
   private final String domain;
 
   private final List<String> actions;
@@ -39,7 +44,16 @@ public class ApplicationPermission
     this.domain = checkNotNull(domain);
     this.actions = checkNotNull(actions);
 
-    setParts(ImmutableList.of(SYSTEM, domain), actions);
+    if (domain.indexOf(PART_SEPARATOR) < 0) {
+      setParts(ImmutableList.of(SYSTEM, domain), actions);
+    }
+    else {
+      // complex domain we need to split into parts
+      setParts(ImmutableList.<String> builder()
+          .add(SYSTEM)
+          .addAll(PART_SPLITTER.split(domain))
+          .build(), actions);
+    }
   }
 
   public ApplicationPermission(final String domain, final String... actions) {

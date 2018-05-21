@@ -33,7 +33,7 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 
 /**
  * Uploads a file as a multipart upload.
- * @since 3.next
+ * @since 3.12
  */
 @Named("multipart-uploader")
 public class MultipartUploader

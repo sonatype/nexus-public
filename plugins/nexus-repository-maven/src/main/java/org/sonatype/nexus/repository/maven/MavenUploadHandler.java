@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -42,21 +41,21 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
-import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
-import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
-import org.sonatype.nexus.repository.upload.UploadResponse;
-import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
+import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
-import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
@@ -146,49 +145,53 @@ public class MavenUploadHandler
       throw new ValidationErrorsException("Upload to snapshot repositories not supported, use the maven client.");
     }
 
-    StorageFacet storageFacet = repository.facet(StorageFacet.class);
+    ContentAndAssetPathResponseData responseData;
 
-    return TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(() -> {
-      Optional<AssetUpload> pomAsset = findPomAsset(componentUpload);
-      if (pomAsset.isPresent()) {
-        PartPayload payload = pomAsset.get().getPayload();
+    String basePath = getBasePath(repository, componentUpload);
 
-        try (TempBlob pom = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
-          pomAsset.get().setPayload(new TempBlobPartPayload(payload, pom));
-          return createAssets(repository.getName(), facet, createBasePathFromPom(pom),
-              componentUpload.getAssetUploads()).uploadResponse();
+    doValidation(repository, basePath, componentUpload.getAssetUploads());
 
-        }
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    try {
+      responseData = createAssets(repository, basePath, componentUpload.getAssetUploads());
+
+      if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
+        String pomPath = generatePom(repository, basePath, componentUpload.getFields().get(GROUP_ID),
+            componentUpload.getFields().get(ARTIFACT_ID), componentUpload.getFields().get(VERSION),
+            componentUpload.getFields().get(PACKAGING));
+
+        responseData.addAssetPath(pomPath);
       }
-      else {
-        Map<String, String> componentFields = componentUpload.getFields();
-        String basePath = createBasePath(componentFields.get(GROUP_ID), componentFields.get(ARTIFACT_ID),
-            componentFields.get(VERSION));
 
-        ContentAndAssetPathResponseData responseData = createAssets(repository.getName(), facet, basePath,
-            componentUpload.getAssetUploads());
+      updateMetadata(repository, responseData.coordinates);
+    }
+    finally {
+      UnitOfWork.end();
+    }
 
-        if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
-          String pomPath = generatePom(facet, basePath, componentFields.get(GROUP_ID),
-              componentFields.get(ARTIFACT_ID), componentFields.get(VERSION), componentFields.get(PACKAGING));
-
-          responseData.addAssetPath(pomPath);
-        }
-
-        return new UploadResponse(responseData.getContent(), responseData.getAssetPaths());
-      }
-    });
+    return new UploadResponse(responseData.getContent(), responseData.getAssetPaths());
   }
 
-  private ContentAndAssetPathResponseData createAssets(final String repositoryName,
-                                    final MavenFacet facet,
-                                    final String basePath,
-                                    final List<AssetUpload> assetUploads)
-      throws IOException
-  {
-    ContentAndAssetPathResponseData responseData = new ContentAndAssetPathResponseData();
+  private String getBasePath(final Repository repository, final ComponentUpload componentUpload) throws IOException {
+    AssetUpload pomAsset = findPomAsset(componentUpload);
+    if (pomAsset != null) {
+      PartPayload payload = pomAsset.getPayload();
 
-    for (AssetUpload asset : assetUploads) {
+      try (TempBlob pom = repository.facet(StorageFacet.class).createTempBlob(payload, HashType.ALGORITHMS)) {
+        return createBasePathFromPom(pom);
+      }
+    }
+
+    return createBasePath(componentUpload.getFields().get(GROUP_ID), componentUpload.getFields().get(ARTIFACT_ID),
+        componentUpload.getFields().get(VERSION));
+  }
+
+  private void doValidation(final Repository repository,
+                               final String basePath,
+                               final List<AssetUpload> assetUploads)
+  {
+    for (int i = 0 ; i < assetUploads.size() ; i++) {
+      AssetUpload asset = assetUploads.get(i);
       StringBuilder path = new StringBuilder(basePath);
 
       String classifier = asset.getFields().get(CLASSIFIER);
@@ -204,32 +207,81 @@ public class MavenUploadHandler
             format("Cannot generate maven coordinate from assembled path '%s'", mavenPath.getPath()));
       }
 
-      if (!versionPolicyValidator.validArtifactPath(facet.getVersionPolicy(), mavenPath.getCoordinates())) {
+      MavenFacet facet = repository.facet(MavenFacet.class);
+
+      if (!versionPolicyValidator
+          .validArtifactPath(facet.getVersionPolicy(), mavenPath.getCoordinates())) {
         throw new ValidationErrorsException(
             format("Version policy mismatch, cannot upload %s content to %s repositories for file '%s'",
                 facet.getVersionPolicy().equals(VersionPolicy.RELEASE) ? VersionPolicy.SNAPSHOT.name() : VersionPolicy.RELEASE.name(),
                 facet.getVersionPolicy().name(),
-                responseData.getAssetPaths().size()));
+                i));
       }
 
-      ensurePermitted(repositoryName, Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+      ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+    }
+  }
 
-      Content content = facet.put(mavenPath, asset.getPayload());
-      putChecksumFiles(facet, mavenPath, content);
+  private ContentAndAssetPathResponseData createAssets(final Repository repository,
+                                                       final String basePath,
+                                                       final List<AssetUpload> assetUploads)
+      throws IOException
+  {
+    ContentAndAssetPathResponseData responseData = new ContentAndAssetPathResponseData();
+
+    for (AssetUpload asset : assetUploads) {
+      StringBuilder path = new StringBuilder(basePath);
+
+      String classifier = asset.getFields().get(CLASSIFIER);
+      if (!Strings2.isEmpty(classifier)) {
+        path.append('-').append(classifier);
+      }
+      path.append('.').append(asset.getFields().get(EXTENSION));
+
+      MavenPath mavenPath = parser.parsePath(path.toString());
+
+      Content content = storeAssetContent(repository, mavenPath, asset.getPayload());
 
       //We only need to set the component id one time
       if(responseData.getContent() == null) {
         responseData.setContent(content);
       }
       responseData.addAssetPath(mavenPath.getPath());
+
+      //All assets belong to same component, so just grab the coordinates for one of them
+      if (responseData.getCoordinates() == null) {
+        responseData.setCoordinates(mavenPath.getCoordinates());
+      }
     }
+
     return responseData;
+  }
+
+  protected Content storeAssetContent(final Repository repository,
+                                      final MavenPath mavenPath,
+                                      final Payload payload) throws IOException
+  {
+    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    Content content = mavenFacet.put(mavenPath, payload);
+    putChecksumFiles(mavenFacet, mavenPath, content);
+
+    return content;
   }
 
   private void putChecksumFiles(final MavenFacet facet, final MavenPath path, final Content content) throws IOException {
     DateTime dateTime = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
     Map<HashAlgorithm, HashCode> hashes = MavenFacetUtils.getHashAlgorithmFromContent(content.getAttributes());
     MavenFacetUtils.addHashes(facet, path, hashes, dateTime);
+  }
+
+  private void updateMetadata(final Repository repository, final Coordinates coordinates) {
+    if (coordinates != null) {
+      repository.facet(MavenHostedFacet.class)
+          .rebuildMetadata(coordinates.getGroupId(), coordinates.getArtifactId(), coordinates.getVersion(), false);
+    }
+    else {
+      log.debug("Not updating metadata.xml files since coordinate could not be retrieved from path");
+    }
   }
 
   private String createBasePath(final String groupId, final String artifactId, final String version) {
@@ -246,7 +298,7 @@ public class MavenUploadHandler
     }
   }
 
-  private String generatePom(final MavenFacet mavenFacet,
+  private String generatePom(final Repository repository,
                              final String basePath,
                              final String groupId,
                              final String artifactId,
@@ -259,8 +311,9 @@ public class MavenUploadHandler
     String pom = mavenPomGenerator.generatePom(groupId, artifactId, version, packaging);
 
     MavenPath mavenPath = parser.parsePath(basePath + ".pom");
-    Content content = mavenFacet.put(mavenPath, new StringPayload(pom, "text/xml"));
-    putChecksumFiles(mavenFacet, mavenPath, content);
+
+    storeAssetContent(repository, mavenPath, new StringPayload(pom, "text/xml"));
+
     return mavenPath.getPath();
   }
 
@@ -315,10 +368,10 @@ public class MavenUploadHandler
     return new MavenValidatingComponentUpload(getDefinition(), componentUpload);
   }
 
-  private Optional<AssetUpload> findPomAsset(final ComponentUpload componentUpload) {
+  private AssetUpload findPomAsset(final ComponentUpload componentUpload) {
     return componentUpload.getAssetUploads().stream()
         .filter(asset -> "pom".equals(asset.getField(EXTENSION)) && isBlank(asset.getField(CLASSIFIER)))
-        .findFirst();
+        .findFirst().orElse(null);
   }
 
   @VisibleForTesting
@@ -368,9 +421,14 @@ public class MavenUploadHandler
   private static class ContentAndAssetPathResponseData {
     Content content;
     List<String> assetPaths = newArrayList();
+    Coordinates coordinates;
 
     public void setContent(final Content content) {
       this.content = content;
+    }
+
+    public void setCoordinates(final Coordinates coordinates) {
+      this.coordinates = coordinates;
     }
 
     public void addAssetPath(final String assetPath) {
@@ -378,6 +436,10 @@ public class MavenUploadHandler
     }
 
     public Content getContent() {return this.content;}
+
+    public Coordinates getCoordinates() {
+      return this.coordinates;
+    }
 
     public List<String> getAssetPaths() { return this.assetPaths;}
 

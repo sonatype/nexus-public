@@ -384,7 +384,7 @@ public abstract class NexusPaxExamSupport
         vmOption("-XX:+UnlockDiagnosticVMOptions"),
         vmOption("-XX:+UnsyncloadClass"),
 
-        vmOption("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir")),
+        vmOption("-Djava.io.tmpdir=./nexus3/tmp/"),
 
         systemTimeout(examTimeout()),
 

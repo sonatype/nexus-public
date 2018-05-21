@@ -10,42 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.upgrade.bad;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Provider;
+
+import org.sonatype.nexus.common.upgrade.DependsOn;
+import org.sonatype.nexus.common.upgrade.Upgrade;
+import org.sonatype.nexus.common.upgrade.Upgrades;
+import org.sonatype.nexus.orient.DatabaseInstance;
 
 /**
- * @since 3.4
+ * Error: upgrade doesn't trigger any checkpoint
  */
-public interface BlobAttributes
+@Upgrades(model = "privateModel", from = "1.2", to = "1.3")
+@DependsOn(model = "foo", version = "1.0")
+public class UpgradePrivateModel_1_3
+    implements Upgrade
 {
-  Map<String, String> getHeaders();
+  @Inject
+  public UpgradePrivateModel_1_3(@Named("foo") Provider<DatabaseInstance> database) {
+    // no-op
+  }
 
-  BlobMetrics getMetrics();
-
-  boolean isDeleted();
-
-  void setDeleted(boolean deleted);
-
-  void setDeletedReason(String deletedReason);
-
-  String getDeletedReason();
-
-  Properties getProperties();
-
-  /**
-   * Update attributes based on the {@link BlobAttributes} provided.
-   *
-   * @since 3.7
-   */
-  void updateFrom(BlobAttributes blobAttributes);
-
-  /**
-   * Stores the attributes in the blob store.
-   *
-   * @since 3.12
-   */
-  void store() throws IOException;
+  @Override
+  public void apply() {
+    // no-op
+  }
 }
