@@ -395,10 +395,10 @@ public class MavenPath
         null
     );
     // strip ".ext"
-    String newPath = origin.path.substring(0, origin.path.length() - (origin.coordinates.extension.length() + 1));
+    String newPath = origin.path.substring(0, origin.path.length() - origin.coordinates.extension.length() - 1);
     if (origin.coordinates.classifier != null) {
       // strip "-classifier"
-      newPath = newPath.substring(0, newPath.length() - origin.coordinates.classifier.length() + 1);
+      newPath = newPath.substring(0, newPath.length() - origin.coordinates.classifier.length() - 1);
     }
     if (classifier != null) {
       newPath += "-" + classifier;
