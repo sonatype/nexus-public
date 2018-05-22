@@ -34,9 +34,7 @@ public class XFrameOptions implements Serializable
 
   private static final String HEALTHCHECK_PATH = "/static/healthcheck-tos.html";
 
-  private static final String OSS_LICENSE_PATH = "/OSS-LICENSE.html";
-
-  private static final String PRO_LICENSE_PATH = "/PRO-LICENSE.html";
+  private static final String LICENSE_PATH = "/LICENSE.html";
 
   private static final String SWAGGER_UI = "/swagger-ui/";
 
@@ -54,8 +52,7 @@ public class XFrameOptions implements Serializable
     frameablePaths = new HashSet<>();
     frameablePaths.add(COPYRIGHT_PATH);
     frameablePaths.add(HEALTHCHECK_PATH);
-    frameablePaths.add(OSS_LICENSE_PATH);
-    frameablePaths.add(PRO_LICENSE_PATH);
+    frameablePaths.add(LICENSE_PATH);
     frameablePaths.add(SWAGGER_UI);
   }
 

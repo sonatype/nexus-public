@@ -914,11 +914,6 @@
               <exclude>assemblies/**/src/main/resources/overlay/**</exclude>
 
               <!--
-              Exclude licenses and related files
-              -->
-              <exclude>assemblies/**/src/main/resources/licenses/**</exclude>
-
-              <!--
               Exclude (most) test resource files, many of these need specific content w/o headers.
               -->
               <exclude>**/src/test/resources/**</exclude>

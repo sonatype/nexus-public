@@ -152,8 +152,7 @@ public class QuartzTaskJob
         }
       }
       catch (TaskInterruptedException e) {
-        log.info("Task {} : {} canceled, exception: {}", config.getId(), config.getTaskLogName(),
-            e.getMessage(), log.isDebugEnabled() ? e : null);
+        log.debug("Task {} : {} canceled", config.getId(), config.getTaskLogName(), e);
 
         // cancel task if not already canceled when interrupted
         QuartzTaskFuture future = taskInfo.getTaskFuture();
@@ -163,8 +162,7 @@ public class QuartzTaskJob
         }
       }
       catch (InterruptedException e) {
-        log.info("Task {} : {} interrupted, exception: {}", config.getId(), config.getTaskLogName(),
-            e.getMessage(), log.isDebugEnabled() ? e : null);
+        log.debug("Task {} : {} interrupted", config.getId(), config.getTaskLogName(), e);
 
         // non-cancelable task interrupted, treat as canceled to cleanup
         QuartzTaskFuture future = taskInfo.getTaskFuture();

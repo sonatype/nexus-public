@@ -44,7 +44,7 @@ Ext.define('NX.coreui.view.licensing.LicenseAgreement', {
       xtype: 'box',
       autoEl: {
         tag: 'iframe',
-        src: NX.util.Url.licenseUrl()
+        src: NX.util.Url.urlOf('/LICENSE.html')
       }
     };
 
@@ -59,7 +59,7 @@ Ext.define('NX.coreui.view.licensing.LicenseAgreement', {
             this.up('window').close();
           }},
           '->',
-          { xtype: 'component', html: '<a href="' + NX.util.Url.licenseUrl() +
+          { xtype: 'component', html: '<a href="' + NX.util.Url.urlOf('/LICENSE.html') +
               '" target="_new">' + NX.I18n.get('Licensing_LicenseAgreement_Download_Button') + '</a>'
           }
         ]

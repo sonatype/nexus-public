@@ -149,15 +149,6 @@ public class SelectorManagerImplTest
     assertThat(selectors, containsInAnyOrder(is(roleConfig), is(nestedRoleConfig)));
   }
 
-  @Test
-  public void browseActiveReturnsNoContentSelectorsWhenAnonymousAccessDisabled() throws Exception {
-    when(securitySystem.currentUser()).thenReturn(null);
-
-    List<SelectorConfiguration> selectors = manager.browseActive(asList("anyRepository"), asList("anyFormat"));
-
-    assertThat(selectors.size(), is(0));
-  }
-
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {
     SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
     Map<String, Object> attributes = new HashMap<>();
