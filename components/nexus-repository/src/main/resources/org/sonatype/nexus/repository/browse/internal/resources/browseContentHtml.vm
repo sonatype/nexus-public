@@ -45,7 +45,7 @@
     <link rel="stylesheet" type="text/css" href="$nexusUrl/static/css/nexus-content.css?$urlSuffix"/>
 </head>
 <body class="htmlIndex">
-<h1>Index of ${requestPath}</h1>
+<h1>Index of $esc.html($requestPath)</h1>
 
 #if($showMoreContentWarning)
 <h3>
@@ -71,7 +71,8 @@
     #end
     #foreach( $listItem in $listItems )
         <tr>
-            <td><a href="$esc.html($listItem.resourceUri)">$esc.html($listItem.name)</a></td>
+## resourceUri is escaped in RepositoryBrowseResource.getListItemPath
+            <td><a href="$listItem.resourceUri">$esc.html($listItem.name)</a></td>
             <td>
                 #if( $listItem.collection )
                     &nbsp;

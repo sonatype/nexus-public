@@ -193,30 +193,6 @@ public class RepositoryBrowseResourceTest
   }
 
   @Test
-  public void validateOrderedEntries() throws Exception {
-    List<BrowseNode> nodes = asList(
-        browseNode("a.txt", mock(EntityId.class), true),
-        browseNode("Org"),
-        browseNode("com"),
-        browseNode("B.txt", mock(EntityId.class), true));
-    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
-        .thenReturn(nodes);
-
-    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
-
-    ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
-    verify(templateHelper).render(any(), argument.capture());
-
-    List<BrowseListItem> listItems = (List<BrowseListItem>) argument.getValue().get().get("listItems");
-    assertThat(listItems.size(), is(4));
-
-    assertThat(listItems.get(0).getName(), is("com"));
-    assertThat(listItems.get(1).getName(), is("Org"));
-    assertThat(listItems.get(2).getName(), is("a.txt"));
-    assertThat(listItems.get(3).getName(), is("B.txt"));
-  }
-
-  @Test
   public void validateAsset() throws Exception {
     List<BrowseNode> nodes = asList(browseNode("a.txt", mock(EntityId.class), true));
     when(asset.size()).thenReturn(1024L);
@@ -423,7 +399,7 @@ public class RepositoryBrowseResourceTest
     assertThat(listItems.size(), is(1));
 
     assertThat(listItems.get(0).getName(), is("<img src=\"foo\">"));
-    assertThat(listItems.get(0).getResourceUri(), is("%3Cimg+src%3D%22foo%22%3E/"));
+    assertThat(listItems.get(0).getResourceUri(), is("%3Cimg%20src%3D%22foo%22%3E/"));
   }
 
   private BrowseNode browseNode(final String name) {

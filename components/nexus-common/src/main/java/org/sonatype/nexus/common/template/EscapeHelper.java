@@ -33,7 +33,12 @@ public class EscapeHelper
   }
 
   public String url(final String value) {
-    return EncodingUtil.urlEncode(value);
+    if (value == null) {
+      return null;
+    }
+    else {
+      return EncodingUtil.urlEncode(value);
+    }
   }
 
   public String url(final Object value) {
@@ -46,5 +51,24 @@ public class EscapeHelper
 
   public String xml(final Object value) {
     return xml(String.valueOf(value));
+  }
+
+  public String uri(final String value) {
+    if (value == null) {
+      return null;
+    }
+    else {
+      return url(value)
+          .replaceAll("\\+", "%20")
+          .replaceAll("\\%21", "!")
+          .replaceAll("\\%27", "'")
+          .replaceAll("\\%28", "(")
+          .replaceAll("\\%29", ")")
+          .replaceAll("\\%7E", "~");
+    }
+  }
+
+  public String uri(final Object value) {
+    return uri(String.valueOf(value));
   }
 }

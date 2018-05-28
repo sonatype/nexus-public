@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,6 +87,10 @@ public class BrowseNodeStoreImpl
 
   private final Map<String, BrowseNodeFilter> browseNodeFilters;
 
+  private final Map<String, BrowseNodeComparator> browseNodeComparators;
+
+  private final BrowseNodeComparator defaultBrowseNodeComparator;
+
   private final int deletePageSize;
 
   private final boolean enabled;
@@ -97,7 +102,8 @@ public class BrowseNodeStoreImpl
                              final SelectorManager selectorManager,
                              final CselAssetSqlBuilder cselAssetSqlBuilder,
                              final BrowseNodeConfiguration configuration,
-                             final Map<String, BrowseNodeFilter> browseNodeFilters)
+                             final Map<String, BrowseNodeFilter> browseNodeFilters,
+                             final Map<String, BrowseNodeComparator> browseNodeComparators)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
@@ -105,8 +111,10 @@ public class BrowseNodeStoreImpl
     this.selectorManager = checkNotNull(selectorManager);
     this.cselAssetSqlBuilder = checkNotNull(cselAssetSqlBuilder);
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
+    this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.deletePageSize = configuration.getDeletePageSize();
     this.enabled = configuration.isEnabled();
+    this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
   }
 
   @Override
@@ -193,9 +201,11 @@ public class BrowseNodeStoreImpl
     String assetFilter = buildAssetFilter(repository, keyword, selectors, filterParameters);
 
     BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
+
+    List<BrowseNode> results;
     if (repository.getType() instanceof GroupType) {
       // overlay member results, first-one-wins if there are any nodes with the same name
-      return members(repository)
+      results = members(repository)
           .map(m -> getByPath(m.getName(), path, maxNodes, assetFilter, filterParameters))
           .flatMap(List::stream)
           .filter(distinctByName())
@@ -204,10 +214,14 @@ public class BrowseNodeStoreImpl
           .collect(toList());
     }
     else {
-      return getByPath(repository.getName(), path, maxNodes, assetFilter, filterParameters).stream()
+      results = getByPath(repository.getName(), path, maxNodes, assetFilter, filterParameters).stream()
           .filter(node -> filter.test(node, repositoryName))
           .collect(toList());
     }
+
+    results.sort(getBrowseNodeComparator(format));
+
+    return results;
   }
 
   /**
@@ -325,5 +339,9 @@ public class BrowseNodeStoreImpl
     if (selectors.size() > 1) {
       filterBuilder.append(')');
     }
+  }
+
+  private Comparator<BrowseNode> getBrowseNodeComparator(String format) {
+    return browseNodeComparators.getOrDefault(format, defaultBrowseNodeComparator);
   }
 }

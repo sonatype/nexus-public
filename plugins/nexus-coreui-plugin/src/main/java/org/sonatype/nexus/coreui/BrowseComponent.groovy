@@ -19,7 +19,6 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.common.app.VersionComparator
 import org.sonatype.nexus.common.encoding.EncodingUtil
-import org.sonatype.nexus.common.text.Strings2
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.rapture.StateContributor
@@ -88,21 +87,6 @@ class BrowseComponent
           componentId: browseNode.componentId != null ? browseNode.componentId.value : null,
           assetId: browseNode.assetId != null ? browseNode.assetId.value : null
       )
-    }.sort { a, b ->
-      if (a.type == COMPONENT && b.type == COMPONENT) {
-        try {
-          return versionComparator.compare(a.text, b.text)
-        }
-        catch (IllegalArgumentException e) {
-          return 0
-        }
-      }
-      else if (a.type == b.type) {
-        return Strings2.lower(a.text) <=> Strings2.lower(b.text)
-      }
-      else {
-        return b.type <=> a.type
-      }
     }
   }
 

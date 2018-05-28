@@ -18,7 +18,7 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.task.TaskScheduleWeekly', {
-  extend: 'Ext.form.FieldContainer',
+  extend: 'NX.coreui.view.task.TaskScheduleFields',
   alias: 'widget.nx-coreui-task-schedule-weekly',
   requires: [
     'NX.util.DateFormat',

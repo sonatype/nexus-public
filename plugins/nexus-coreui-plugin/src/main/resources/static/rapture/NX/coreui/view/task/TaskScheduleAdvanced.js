@@ -18,7 +18,7 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.task.TaskScheduleAdvanced', {
-  extend: 'Ext.form.FieldContainer',
+  extend: 'NX.coreui.view.task.TaskScheduleFields',
   alias: 'widget.nx-coreui-task-schedule-advanced',
   requires: [
     'NX.I18n'

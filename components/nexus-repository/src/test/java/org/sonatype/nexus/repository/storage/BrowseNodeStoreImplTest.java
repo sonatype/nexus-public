@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.VersionComparator;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Format;
@@ -41,8 +45,10 @@ import org.mockito.Mock;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
@@ -162,7 +168,8 @@ public class BrowseNodeStoreImplTest
         selectorManager,
         new CselAssetSqlBuilder(),
         new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
-        ImmutableMap.of(FORMAT_NAME, browseNodeFilter));
+        ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
+        ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
     underTest.start();
 
@@ -486,11 +493,103 @@ public class BrowseNodeStoreImplTest
     verify(browseNodeFilter).test(any(), eq(REPOSITORY_NAME));
   }
 
+  @Test
+  public void defaultSortingOfComponents() throws Exception {
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+    when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap())).thenReturn(Arrays
+        .asList(
+            node("1.0", false, true),
+            node("2.0", false, true),
+            node("1.1", false, true),
+            node("1.10", false, true),
+            node("1.2", false, true)));
+
+    assertThat(versions(asList("org", "foo")), contains("1.0", "1.1", "1.2", "1.10", "2.0"));
+  }
+
+  @Test
+  public void defaultSortingOfAssets() throws Exception {
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+    //this test is for asset sorting, but i've left version numbers here so we validate version sorter is _not_ used
+    when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap())).thenReturn(Arrays
+        .asList(
+            node("1.0", true, false),
+            node("2.0", true, false),
+            node("1.1", true, false),
+            node("1.10", true, false),
+            node("1.2", true, false)));
+
+    assertThat(versions(asList("org", "foo")), contains("1.0", "1.1", "1.10", "1.2", "2.0"));
+  }
+
+  @Test
+  public void defaultSortingOfFolders() throws Exception {
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+    //this test is for folder sorting, but i've left version numbers here so we validate version sorter is _not_ used
+    when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap())).thenReturn(Arrays
+        .asList(
+            node("1.0", false, false),
+            node("2.0", false, false),
+            node("1.1", true, false),
+            node("1.10", false, true),
+            node("1.2", false, false)));
+
+    assertThat(versions(asList("org", "foo")), contains("1.10", "1.0", "1.2", "2.0", "1.1"));
+  }
+
+  @Test
+  public void alternateSorting() throws Exception {
+    underTest = new BrowseNodeStoreImpl(
+        () -> databaseInstance,
+        browseNodeEntityAdapter,
+        securityHelper,
+        selectorManager,
+        new CselAssetSqlBuilder(),
+        new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
+        ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
+
+    when(securityHelper.anyPermitted(any())).thenReturn(true);
+    when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap())).thenReturn(Arrays
+        .asList(
+            node("1.0", false, false),
+            node("2.0", true, false),
+            node("1.1", false, false),
+            node("1.10", false, true),
+            node("1.2", false, false)));
+
+    assertThat(versions(asList("org", "foo")), contains("2.0", "1.2", "1.10", "1.1", "1.0"));
+  }
+
+  private List<String> versions(List<String> queryPath) {
+    return StreamSupport.stream(underTest.getByPath(repository, queryPath, MAX_NODES, null).spliterator(), false)
+        .map(BrowseNode::getName).collect(toList());
+  }
+
   private static BrowseNode node(final String repositoryName, final String name) {
     BrowseNode node = new BrowseNode();
     node.setRepositoryName(repositoryName);
     node.setParentPath("/");
     node.setName(name);
     return node;
+  }
+
+  private static BrowseNode node(final String name, final boolean isAsset, final boolean isComponent ) {
+    BrowseNode node = new BrowseNode();
+    node.setName(name);
+    if (isAsset) {
+      node.setAssetId(new DetachedEntityId(name));
+    }
+    if (isComponent) {
+      node.setComponentId(new DetachedEntityId(name + "c"));
+    }
+    return node;
+  }
+
+  private final class TestComparator implements BrowseNodeComparator {
+    @Override
+    public int compare(BrowseNode o1, BrowseNode o2) {
+      return 0 - o1.getName().compareToIgnoreCase(o2.getName());
+    }
   }
 }

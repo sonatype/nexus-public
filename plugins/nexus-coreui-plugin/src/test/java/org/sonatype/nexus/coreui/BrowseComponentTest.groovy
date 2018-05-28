@@ -122,31 +122,4 @@ class BrowseComponentTest
       xos*.type == [FOLDER, COMPONENT, ASSET]
       xos*.leaf == [false, false, true]
   }
-
-  def 'browse nodes are sorted'() {
-    given: 'This repository and a list of browse nodes'
-      repositoryManager.get(REPOSITORY_NAME) >> repository
-      browseNodeStore.getByPath(repository, [], configuration.maxHtmlNodes, null) >> [
-          new BrowseNode(name: '1.0', componentId: componentId),
-          new BrowseNode(name: '1.10-alpha', componentId: componentId),
-          new BrowseNode(name: '1.10', componentId: componentId),
-          new BrowseNode(name: '1.2', componentId: componentId),
-          new BrowseNode(name: 'alpha'),
-          new BrowseNode(name: 'cr-acl'),
-          new BrowseNode(name: 'ga.js'),
-          new BrowseNode(name: 'adtld'),
-          new BrowseNode(name: 'a-load'),
-          new BrowseNode(name: 'AdminLTE-angular-sass'),
-          new BrowseNode(name: '2')
-      ]
-
-
-    when: 'Requesting the list of root nodes'
-      TreeStoreLoadParameters parameters = new TreeStoreLoadParameters(repositoryName: REPOSITORY_NAME, node: ROOT)
-      List<BrowseNodeXO> xos = browseComponent.read(parameters)
-
-    then: 'the entries are sorted properly'
-      xos*.text == ['2', 'a-load', 'AdminLTE-angular-sass', 'adtld', 'alpha', 'cr-acl', 'ga.js', '1.0', '1.2', '1.10-alpha', '1.10']
-      xos*.type == [FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, FOLDER, COMPONENT, COMPONENT, COMPONENT, COMPONENT]
-  }
 }
