@@ -23,7 +23,6 @@ import org.sonatype.security.SecuritySystem;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import com.bolyuba.nexus.plugin.npm.service.NpmBlob;
-import com.bolyuba.nexus.plugin.npm.service.PackageRoot;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
@@ -103,6 +102,16 @@ public class MetadataParserTest
   @Test //NEXUS-15720
   public void canParseWithMaintainerAsShortenedArray() throws Exception {
     InputStream stream = getClass().getResourceAsStream("/maintainer_shortened_array.json");
+    ContentLocator content = mock(ContentLocator.class);
+
+    when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);
+    when(content.getContent()).thenReturn(stream);
+    metadataParser.parsePackageRoot("repoId", content);
+  }
+  
+  @Test //NEXUS-17202
+  public void canParseMetadataWithLargeNumber() throws Exception {
+    InputStream stream = getClass().getResourceAsStream("/metadata-with-large-number.json");
     ContentLocator content = mock(ContentLocator.class);
 
     when(content.getMimeType()).thenReturn(JSON_MIME_TYPE);

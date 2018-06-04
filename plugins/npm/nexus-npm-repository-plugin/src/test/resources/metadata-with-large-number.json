@@ -1,0 +1,191 @@
+{
+  "_id": "rc-select",
+  "_rev": "191-63ba92c5a8d96415f9d57ed4d88dafb5",
+  "name": "rc-select",
+  "description": "React Select",
+  "dist-tags": {
+    "latest": "5.10.3"
+  },
+  "versions": {
+    "5.10.3": {
+      "_args": [
+        [
+          "rc-select@5.x",
+          "/Users/yiminghe/code/t"
+        ]
+      ],
+      "_cnpm_publish_time": 1457685770155,
+      "_from": ".",
+      "_id": "rc-select@5.10.3",
+      "_inCache": true,
+      "_installable": true,
+      "_location": "/rc-select",
+      "_nodeVersion": "4.2.2",
+      "_npmOperationalInternal": {
+        "host": "packages-12-west.internal.npmjs.com",
+        "tmp": "tmp/rc-select-5.10.3.tgz_1459223764067_0.9484070010948926"
+      },
+      "_npmUser": {
+        "name": "yiminghe",
+        "email": "yiminghe@gmail.com"
+      },
+      "_npmVersion": "3.5.3",
+      "_phantomChildren": {},
+      "_requested": {
+        "name": "rc-select",
+        "raw": "rc-select@5.x",
+        "rawSpec": "5.x",
+        "scope": null,
+        "spec": ">=5.0.0 <6.0.0",
+        "type": "range"
+      },
+      "_requiredBy": [
+        "#USER"
+      ],
+      "_resolved": "http://registry.npm.alibaba-inc.com/rc-select/download/rc-select-5.10.2.tgz",
+      "_shasum": "d940ae1ad0895a033eb7b1e5b44c73f29d98ccb0",
+      "_shrinkwrap": null,
+      "_spec": "rc-select@5.x",
+      "_where": "/Users/yiminghe/code/t",
+      "bugs": {
+        "url": "http://github.com/react-component/select/issues"
+      },
+      "config": {
+        "port": 8003
+      },
+      "dependencies": {
+        "classnames": "2.x",
+        "dom-scroll-into-view": "1.x",
+        "rc-animate": "2.x",
+        "rc-menu": "4.x",
+        "rc-trigger": "1.x",
+        "rc-util": "3.x"
+      },
+      "description": "React Select",
+      "devDependencies": {
+        "expect.js": "~0.3.1",
+        "jquery": "~1.11.3",
+        "jsonp": "^0.2.0",
+        "pre-commit": "1.x",
+        "querystring": "^0.2.0",
+        "rc-dialog": "^5.3.1",
+        "rc-server": "3.x",
+        "rc-tools": "4.x",
+        "react": "~0.14.0",
+        "react-addons-test-utils": "~0.14.0",
+        "react-dom": "~0.14.0"
+      },
+      "directories": {},
+      "dist": {
+        "key": "rc-select/-/rc-select-5.10.2.tgz",
+        "noattachment": false,
+        "shasum": "d940ae1ad0895a033eb7b1e5b44c73f29d98ccb0",
+        "size": 13486,
+        "tarball": "https://registry.npmjs.org/rc-select/-/rc-select-5.10.3.tgz"
+      },
+      "files": [
+        "assets/*.css",
+        "lib"
+      ],
+      "gitHead": "64d55886a70c5013fc7882543ff8d05878c1fb98",
+      "homepage": "http://github.com/react-component/select",
+      "keywords": [
+        "react",
+        "react-component",
+        "react-select",
+        "select"
+      ],
+      "licenses": "MIT",
+      "main": "./lib/index",
+      "maintainers": [
+        {
+          "name": "warmhug",
+          "email": "hualei5280@gmail.com"
+        },
+        {
+          "name": "yiminghe",
+          "email": "yiminghe@gmail.com"
+        }
+      ],
+      "name": "rc-select",
+      "optionalDependencies": {},
+      "pre-commit": [
+        "lint"
+      ],
+      "publish_time": 1457685770155,
+      "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/react-component/select.git"
+      },
+      "scripts": {
+        "browser-test": "rc-tools run browser-test",
+        "browser-test-cover": "rc-tools run browser-test-cover",
+        "build": "rc-tools run build",
+        "gh-pages": "rc-tools run gh-pages",
+        "karma": "rc-tools run karma",
+        "lint": "rc-tools run lint",
+        "pub": "rc-tools run pub",
+        "saucelabs": "rc-tools run saucelabs",
+        "start": "rc-server"
+      },
+      "version": "5.10.3"
+    }
+  },
+  "readme": "# rc-select\n---\n\nReact Select\n\n[![NPM version][npm-image]][npm-url]\n[![build status][travis-image]][travis-url]\n[![Test coverage][coveralls-image]][coveralls-url]\n[![gemnasium deps][gemnasium-image]][gemnasium-url]\n[![npm download][download-image]][download-url]\n\n[npm-image]: http://img.shields.io/npm/v/rc-select.svg?style=flat-square\n[npm-url]: http://npmjs.org/package/rc-select\n[travis-image]: https://img.shields.io/travis/react-component/select.svg?style=flat-square\n[travis-url]: https://travis-ci.org/react-component/select\n[coveralls-image]: https://img.shields.io/coveralls/react-component/select.svg?style=flat-square\n[coveralls-url]: https://coveralls.io/r/react-component/select?branch=master\n[gemnasium-image]: http://img.shields.io/gemnasium/react-component/select.svg?style=flat-square\n[gemnasium-url]: https://gemnasium.com/react-component/select\n[node-image]: https://img.shields.io/badge/node.js-%3E=_0.10-green.svg?style=flat-square\n[node-url]: http://nodejs.org/download/\n[download-image]: https://img.shields.io/npm/dm/rc-select.svg?style=flat-square\n[download-url]: https://npmjs.org/package/rc-select\n\n## Screenshots\n\n<img src=\"https://tfsimg.alipay.com/images/T1CUBeXa0kXXXXXXXX.png\" />\n\n## Feature\n\n* support ie8,ie8+,chrome,firefox,safari\n\n### Keyboard\n\n* Open select (focus input || focus and click)\n* KeyDown/KeyUp/Enter to navigate menu\n\n## install\n\n[![rc-select](https://nodei.co/npm/rc-select.png)](https://npmjs.org/package/rc-select)\n\n## Usage\n\n### basic use\n\n```js\nimport Select, {Option, OptGroup} from 'rc-select';\n\nvar c = (\n  <Select>\n    <Option value=\"jack\">jack</Option>\n    <Option value=\"lucy\">lucy</Option>\n    <Option value=\"yiminghe\">yiminghe</Option>\n  </Select>\n);\nReact.render(c, container);\n```\n\n## API\n\n### Select props\n\n| name     | description    | type     | default      |\n|----------|----------------|----------|--------------|\n|className | additional css class of root dom node | String | '' |\n|prefixCls | prefix class | String | '' |\n|animation | dropdown animation name. only support slide-up now | String | '' |\n|transitionName | dropdown css animation name | String | '' |\n|choiceTransitionName | css animation name for selected items at multiple mode | String | '' |\n|dropdownMatchSelectWidth | whether dropdown's with is same with select | bool | true |\n|dropdownClassName | additional className applied to dropdown | String | - |\n|dropdownStyle | additional style applied to dropdown | Object | {} |\n|dropdownAlign | additional align applied to dropdown | Object | {} |\n|dropdownMenuStyle | additional style applied to dropdown menu | Object | {} |\n|notFoundContent | specify content to show when no result matches. | String | 'Not Found' |\n|tokenSeparators | separator used to tokenize on tag/multiple mode | string[]? |  |\n|placeholder | select placeholder | React Node | |\n|showSearch | whether show search input in single mode | bool | true |\n|showArrow | whether show arrow in single mode | bool | true |\n|allowClear | whether allowClear | bool | false |\n|tags | when tagging is enabled the user can select from pre-existing options or create a new tag by picking the first choice, which is what the user has typed into the search box so far. | bool | false |\n|maxTagTextLength | max tag text length to show | number | - |\n|maxTagCount | max tag count to show | number | - |\n|maxTagPlaceholder | placeholder for omitted values | ReactNode/function(omittedValues) | - |\n|combobox | enable combobox mode(can not set multiple at the same time) | bool | false |\n|multiple | whether multiple select | bool | false |\n|disabled | whether disabled select | bool | false |\n|filterOption | whether filter options by input value. default filter by option's optionFilterProp prop's value | bool | true/Function(inputValue:string, option:Option) |\n|optionFilterProp | which prop value of option will be used for filter if filterOption is true | String | 'value' |\n|optionLabelProp | render option value or option children as content of select | String: 'value'/'children' | 'value' |\n|defaultValue | initial selected option(s) | String/Array<String> | - |\n|value | current selected option(s) | String/Array<String>/{key:String, label:React.Node}/Array<{key, label}> | - |\n|firstActiveValue | first active value when there is no value | String/Array<String> | - |\n|labelInValue| whether to embed label in value, see above value type | Bool | false |\n|backfill| whether backfill select option to search input (Only works in single and combobox mode) | Bool | false |\n|onChange | called when select an option or input value change(combobox) | function(value, option:Option/Array<Option>) | - |\n|onSearch | called when input changed | function | - |\n|onBlur | called when blur | function | - |\n|onFocus | called when focus | function | - |\n|onPopupScroll | called when menu is scrolled | function | - |\n|onSelect | called when a option is selected. param is option's value and option instance | Function(value, option:Option) | - |\n|onDeselect | called when a option is deselected. param is option's value. only called for multiple or tags | Function(value, option:Option) | - |\n|onInputKeydown | called when key down on input | Function(event) | - |\n|defaultActiveFirstOption | whether active first option by default | bool | true |\n|getPopupContainer | container which popup select menu rendered into | function(trigger:Node):Node | function(){return document.body;} |\n|getInputElement| customize input element | function(): Element | - |\n|showAction| actions trigger the dropdown to show | String[]? | - |\n|autoFocus| focus select after mount | Bool | - |\n| autoClearSearchValue | auto clear search input value when multiple select is selected/deselected | boolean | true |\n\n### Methods\n\n| name     | description    | parameters | return      |\n|----------|----------------|----------|--------------|\n|focus     | focus select programmably | - | - |\n|blur     | blur select programmably | - | - |\n\n### Option props\n\n| name     | description    | type     | default      |\n|----------|----------------|----------|--------------|\n|className | additional class to option | String | '' |\n|disabled | no effect for click or keydown for this item | bool | false |\n|key | if react want you to set key, then key is same as value, you can omit value | String | - |\n|value | default filter by this attribute. if react want you to set key, then key is same as value, you can omit value | String | - |\n|title | if you are not satisfied with auto-generated `title` which is show while hovering on selected value, you can customize it with this property | String | - |\n\n\n### OptGroup props\n\n| name     | description    | type     | default      |\n|----------|----------------|----------|--------------|\n|label | group label | String/React.Element | - |\n|key | - | String | - |\n|value | default filter by this attribute. if react want you to set key, then key is same as value, you can omit value | String | - |\n\n\n## Development\n\n```\nnpm install\nnpm start\n```\n\n## Example\n\nhttp://localhost:8003/examples/\n\nonline example: http://react-component.github.io/select/examples/\n\n## Test Case\n\n```\nnpm test\n```\n\n## Coverage\n\n```\nnpm run coverage\n```\n\n\n## License\n\nrc-select is released under the MIT license.\n",
+  "maintainers": [
+    {
+      "email": "afc163@gmail.com",
+      "name": "afc163"
+    },
+    {
+      "email": "picodoth@gmail.com",
+      "name": "picodoth"
+    },
+    {
+      "email": "hualei5280@gmail.com",
+      "name": "warmhug"
+    },
+    {
+      "email": "yesmeck@gmail.com",
+      "name": "yesmeck"
+    },
+    {
+      "email": "yiminghe@gmail.com",
+      "name": "yiminghe"
+    },
+    {
+      "email": "yutingzhao1991@sina.com",
+      "name": "yutingzhao1991"
+    },
+    {
+      "email": "smith3816@gmail.com",
+      "name": "zombiej"
+    }
+  ],
+  "time": {
+    "modified": "2018-05-18T08:43:26.971Z",
+    "created": "2015-02-05T14:58:03.376Z",
+    "5.10.3": "2016-03-29T03:56:06.825Z"
+  },
+  "homepage": "http://github.com/react-component/select",
+  "keywords": [
+    "react",
+    "react-component",
+    "react-select",
+    "select"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/react-component/select.git"
+  },
+  "bugs": {
+    "url": "http://github.com/react-component/select/issues"
+  },
+  "readmeFilename": "README.md",
+  "users": {
+    "yong_a": true,
+    "filipve": true,
+    "gregorynicholas": true
+  },
+  "_attachments": {}
+}

@@ -15,6 +15,7 @@ package com.bolyuba.nexus.plugin.npm.service.internal;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -243,7 +244,7 @@ public class MetadataParser
         return Boolean.TRUE;
       }
       case VALUE_NUMBER_INT: {
-        int value = parser.getValueAsInt();
+        BigInteger value = parser.getBigIntegerValue();
         parser.nextToken();
         return value;
       }
