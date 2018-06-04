@@ -20,7 +20,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
@@ -31,79 +30,61 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_INITIATED;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.6
+ * @deprecated since 3.next, use {@link DatabaseFreezeResource} instead.
  */
+@Deprecated
 @Named
 @Singleton
-@Path(DatabaseFreezeResource.RESOURCE_URI)
+@Path(DatabaseFreezeResourceBeta.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public class DatabaseFreezeResource
+public class DatabaseFreezeResourceBeta
     extends ComponentSupport
-    implements Resource, DatabaseFreezeResourceDoc
+    implements Resource
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/read-only";
+  static final String RESOURCE_URI = BETA_API_PREFIX + "/read-only";
 
-  private final DatabaseFreezeService freezeService;
+  private final DatabaseFreezeResource delegate;
 
-  private final SecurityHelper securityHelper;
   @Inject
-  public DatabaseFreezeResource(final DatabaseFreezeService freezeService, final SecurityHelper securityHelper) {
-    this.freezeService = checkNotNull(freezeService);
-    this.securityHelper = checkNotNull(securityHelper);
+  public DatabaseFreezeResourceBeta(final DatabaseFreezeService freezeService, final SecurityHelper securityHelper) {
+    delegate = new DatabaseFreezeResource(freezeService, securityHelper);
   }
 
-  @Override
   @GET
   public ReadOnlyState get() {
-    return freezeService.getReadOnlyState();
+    log.warn("Deprecated endpoint: {}, please use: {}", RESOURCE_URI, DatabaseFreezeResource.RESOURCE_URI);
+    return delegate.get();
   }
 
-  @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @POST
   @Path("/freeze")
   public void freeze() {
-    if (freezeService.requestFreeze(USER_INITIATED, principalAsString()) == null) {
-      throw new WebApplicationException("Attempt to enable read-only failed", 404);
-    }
+    log.warn("Deprecated endpoint: {}, please use: {}", RESOURCE_URI, DatabaseFreezeResource.RESOURCE_URI);
+    delegate.freeze();
   }
 
-  @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @POST
   @Path("/release")
   public void release() {
-    boolean success = freezeService.releaseUserInitiatedIfPresent();
-    if (!success) {
-      throw new WebApplicationException("Attempt to release read-only failed", 404);
-    }
+    log.warn("Deprecated endpoint: {}, please use: {}", RESOURCE_URI, DatabaseFreezeResource.RESOURCE_URI);
+    delegate.release();
   }
 
-  @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @POST
   @Path("/force-release")
   public void forceRelease() {
-    if (freezeService.releaseAllRequests().isEmpty()) {
-      throw new WebApplicationException("Attempt to force release read-only failed", 404);
-    }
-  }
-
-  private String principalAsString() {
-    Object principal = securityHelper.subject().getPrincipal();
-    if (principal == null) {
-      throw new WebApplicationException("Unauthorized", 401);
-    }
-    return principal.toString();
+    log.warn("Deprecated endpoint: {}, please use: {}", RESOURCE_URI, DatabaseFreezeResource.RESOURCE_URI);
+    delegate.forceRelease();
   }
 }

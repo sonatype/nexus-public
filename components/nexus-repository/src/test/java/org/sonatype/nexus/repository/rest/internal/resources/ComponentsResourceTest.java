@@ -164,7 +164,7 @@ public class ComponentsResourceTest
 
   @Test
   public void checkPath() {
-    assertThat(ComponentsResource.RESOURCE_URI, is("/beta/components"));
+    assertThat(ComponentsResource.RESOURCE_URI, is("/v1/components"));
   }
 
   @Before

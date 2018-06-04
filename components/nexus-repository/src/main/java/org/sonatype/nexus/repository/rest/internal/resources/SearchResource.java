@@ -60,26 +60,25 @@ import static java.util.stream.Collectors.toMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromElasticSearchMap;
-import static org.sonatype.nexus.repository.rest.internal.resources.SearchResource.RESOURCE_URI;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.4
  */
 @Named
 @Singleton
-@Path(RESOURCE_URI)
+@Path(SearchResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class SearchResource
     extends ComponentSupport
     implements Resource, SearchResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/search";
+  public static final String RESOURCE_URI = V1_API_PREFIX + "/search";
 
   public static final String SEARCH_ASSET_URI = "/assets";
 

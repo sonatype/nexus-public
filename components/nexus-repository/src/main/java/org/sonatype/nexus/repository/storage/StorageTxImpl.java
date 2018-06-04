@@ -178,7 +178,7 @@ public class StorageTxImpl
   @Override
   @Transitions(from = ACTIVE, to = OPEN, silent = true)
   public void commit() {
-    db.commit();
+    db.commit(); // this must happen _before_ we commit any blob changes
     blobTx.commit();
     retries = 0;
   }
@@ -786,14 +786,16 @@ public class StorageTxImpl
           if (!effectiveWritePolicy.checkUpdateAllowed()) {
             throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
           }
+
           assetBlob.setDuplicate(oldBlob);
+          
           return true;
         }
       }
     }
     return false;
   }
-
+  
   /**
    * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
    * write policy will be enforced for this operation and will throw an exception if updates are not supported.

@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.10
@@ -51,7 +51,7 @@ public class UploadDefinitionResource
     extends ComponentSupport
     implements Resource, UploadDefinitionResourceDoc
 {
-  public static final String BASE_PATH = BETA_API_PREFIX + "/formats";
+  public static final String BASE_PATH = V1_API_PREFIX + "/formats";
 
   private final UploadManager uploadManager;
 

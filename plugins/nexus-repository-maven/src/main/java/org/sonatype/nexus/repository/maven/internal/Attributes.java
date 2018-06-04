@@ -93,6 +93,10 @@ public final class Attributes
     REPOSITORY_METADATA,
 
     /**
+     * Represents a full or incremental index for the repository.
+     */
+    REPOSITORY_INDEX,
+    /**
      * Represents some other resource not belonging to Maven2 repository layout.
      */
     OTHER

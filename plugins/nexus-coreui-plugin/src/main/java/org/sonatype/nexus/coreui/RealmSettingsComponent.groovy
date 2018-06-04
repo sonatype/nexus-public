@@ -79,7 +79,7 @@ class RealmSettingsComponent
           id: entry.key.value,
           name: entry.description
       )
-    }
+    }.sort { a, b -> a.name.compareToIgnoreCase(b.name) }
   }
 
   /**

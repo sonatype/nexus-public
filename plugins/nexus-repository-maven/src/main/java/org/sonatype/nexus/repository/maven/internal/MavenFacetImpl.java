@@ -409,11 +409,7 @@ public class MavenFacetImpl
     if (asset == null) {
       asset = tx.createAsset(bucket, getRepository().getFormat());
       asset.name(path.getPath());
-      asset.formatAttributes().set(
-          P_ASSET_KIND,
-          getMavenPathParser().isRepositoryMetadata(path)
-              ? AssetKind.REPOSITORY_METADATA.name() : AssetKind.OTHER.name()
-      );
+      asset.formatAttributes().set(P_ASSET_KIND, fileAssetKindFor(path));
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
@@ -474,5 +470,17 @@ public class MavenFacetImpl
     }
     tx.deleteAsset(asset);
     return true;
+  }
+
+  private String fileAssetKindFor(final MavenPath path) {
+    if (getMavenPathParser().isRepositoryMetadata(path)) {
+      return AssetKind.REPOSITORY_METADATA.name();
+    }
+    else if (getMavenPathParser().isRepositoryIndex(path)) {
+      return AssetKind.REPOSITORY_INDEX.name();
+    }
+    else {
+      return AssetKind.OTHER.name();
+    }
   }
 }

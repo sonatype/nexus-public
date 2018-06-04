@@ -22,40 +22,38 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
-import org.sonatype.nexus.repository.rest.internal.resources.doc.RepositoriesResourceDoc;
 import org.sonatype.nexus.rest.Resource;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.9
+ * @deprecated since 3.next, use {@link RepositoriesResource} instead.
  */
+@Deprecated
 @Named
 @Singleton
-@Path(RepositoriesResource.RESOURCE_URI)
+@Path(RepositoriesResourceBeta.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public class RepositoriesResource
-    implements Resource, RepositoriesResourceDoc
+public class RepositoriesResourceBeta
+    extends ComponentSupport
+    implements Resource
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/repositories";
+  static final String RESOURCE_URI = BETA_API_PREFIX + "/repositories";
 
-  private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
+  private final RepositoriesResource delegate;
 
   @Inject
-  public RepositoriesResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter) {
-    this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
+  public RepositoriesResourceBeta(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter) {
+    delegate = new RepositoriesResource(repositoryManagerRESTAdapter);
   }
 
   @GET
   public List<RepositoryXO> getRepositories() {
-    return repositoryManagerRESTAdapter.getRepositories()
-        .stream()
-        .map(RepositoryXO::fromRepository)
-        .collect(toList());
+    log.warn("Deprecated endpoint: {}, please use: {}", RESOURCE_URI, RepositoriesResource.RESOURCE_URI);
+    return delegate.getRepositories();
   }
 }
