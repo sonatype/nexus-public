@@ -23,7 +23,6 @@ import org.sonatype.nexus.common.entity.EntityMetadata
 import org.sonatype.nexus.common.hash.HashAlgorithm
 import org.sonatype.nexus.mime.MimeRulesSource
 import org.sonatype.nexus.repository.IllegalOperationException
-import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.view.ContentTypes
 
 import com.google.common.base.Supplier
@@ -35,14 +34,12 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static java.util.Collections.singletonList
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.is
 import static org.mockito.Matchers.any
 import static org.mockito.Matchers.anyBoolean
 import static org.mockito.Matchers.anyString
 import static org.mockito.Matchers.eq
-import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.times
@@ -661,59 +658,5 @@ extends TestSupport
         MimeRulesSource.NOOP, componentFactory)
 
     assertThat underTest.findAsset(assetId), is(asset)
-  }
-
-  @Test
-  void 'test asset exists'() {
-    def repositoryName = 'testRepo'
-    def repository = mock(Repository.class);
-
-    def underTest = new StorageTxImpl(
-        'test',
-        '127.0.0.1',
-        blobTx,
-        db,
-        repositoryName,
-        WritePolicy.ALLOW,
-        WritePolicySelector.DEFAULT,
-        bucketEntityAdapter,
-        componentEntityAdapter,
-        assetEntityAdapter,
-        false,
-        defaultContentValidator,
-        MimeRulesSource.NOOP, componentFactory)
-
-    underTest.assetExists(repositoryName, repository)
-    verify(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
-
-    doReturn(true).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
-    assertThat underTest.assetExists(repositoryName, repository), is(true)
-
-    doReturn(false).when(assetEntityAdapter).exists(eq(db), eq(repositoryName), any(Bucket.class))
-    assertThat underTest.assetExists(repositoryName, repository), is(false)
-  }
-
-  @Test
-  void 'browse assets with query'() {
-    def asset = mock(Asset)
-    
-    when(assetEntityAdapter.browseByQueryAsync(any(), any(), any(), any(), any())).thenReturn(singletonList(asset))
-    
-    def underTest = new StorageTxImpl(
-        'test',
-        '127.0.0.1',
-        blobTx,
-        db,
-        'testRepo',
-        WritePolicy.ALLOW,
-        WritePolicySelector.DEFAULT,
-        bucketEntityAdapter,
-        componentEntityAdapter,
-        assetEntityAdapter,
-        false,
-        defaultContentValidator,
-        MimeRulesSource.NOOP, componentFactory)
-
-    assertThat underTest.browseAssets(mock(Query), mock(Bucket)), is(singletonList(asset))
   }
 }

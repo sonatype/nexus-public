@@ -123,17 +123,6 @@ public interface StorageTx
   Iterable<Asset> browseAssets(Bucket bucket);
 
   /**
-   * Gets all assets owned by the specified bucket for a given query. This method will NOT see uncommitted changes 
-   * performed in this same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
-   * receive new elements is breached.
-   *
-   * @see OrientAsyncHelper
-   * 
-   * @since 3.next
-   */
-  Iterable<Asset> browseAssets(Query query, Bucket bucket);
-
-  /**
    * Gets all assets owned by the specified component.
    */
   Iterable<Asset> browseAssets(Component component);
@@ -188,8 +177,7 @@ public interface StorageTx
   Asset findAssetWithProperty(String propName, Object propValue, Component component);
 
   /**
-   * Gets all assets in the specified repositories that match the given where clause. If a large data set is selected
-   * then it could cause an Out Of Memory when using this method - in those cases consider using {@link #browseAssets}.
+   * Gets all assets in the specified repositories that match the given where clause.
    *
    * @param whereClause  an OrientDB select query, minus the "select from X where " prefix. Rather than passing values
    *                     in directly, they should be specified as :labeled portions of the where clause (e.g. a =
@@ -207,9 +195,7 @@ public interface StorageTx
                              @Nullable String querySuffix);
 
   /**
-   * Gets all assets in the specified repositories that match the given where clause. If a large data set is selected
-   * then it could cause an Out Of Memory when using this method - in those cases consider using {@link #browseAssets}
-   * and pass a {@link Query}.
+   * Gets all assets in the specified repositories that match the given where clause.
    *
    * @param query        an {@link Query} query.
    * @param repositories the repositories to limit the results to. If null or empty, results won't be limited
@@ -239,14 +225,6 @@ public interface StorageTx
                           final String name,
                           @Nullable final String version,
                           final Repository repository);
-
-  /**
-   * Check for the existence of an asset with {@code name} in {@code repository}.
-   *
-   * @since 3.next
-   */
-  boolean assetExists(String name, Repository repository);
-
   /**
    * Gets a component by id, owned by the specified bucket, or {@code null} if not found.
    */

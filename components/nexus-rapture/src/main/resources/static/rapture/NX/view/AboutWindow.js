@@ -79,7 +79,7 @@ Ext.define('NX.view.AboutWindow', {
           {
             title: NX.I18n.get('AboutWindow_License_Tab'),
             xtype: 'uxiframe',
-            src: NX.util.Url.licenseUrl()
+            src: NX.util.Url.urlOf('/LICENSE.html')
           }
         ]
       }
@@ -100,4 +100,5 @@ Ext.define('NX.view.AboutWindow', {
       'Build Timestamp': NX.State.getBuildTimestamp()
     });
   }
+
 });

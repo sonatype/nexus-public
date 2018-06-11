@@ -61,7 +61,7 @@ public class Bucket
   /**
    * Sets the attributes.
    */
-  protected Bucket attributes(final NestedAttributesMap attributes) {
+  Bucket attributes(final NestedAttributesMap attributes) {
     this.attributes = checkNotNull(attributes);
     return this;
   }

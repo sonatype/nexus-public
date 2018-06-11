@@ -139,11 +139,6 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     Ext.Array.each(checkboxes, function(checkbox) {
       checkbox.originalValue = false;
     });
-
-    var taskScheduleFields = me.down('nx-coreui-task-schedule-fields');
-    if (taskScheduleFields) {
-      taskScheduleFields.up().remove(taskScheduleFields);
-    }
     me.form.reset();
   },
 

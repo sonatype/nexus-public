@@ -21,8 +21,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
     extend: 'NX.view.AddPanel',
     alias: 'widget.nx-coreui-upload-component',
     requires: [
-      'NX.I18n',
-      'Ext.util.Cookies'
+      'NX.I18n'
     ],
 
     /**
@@ -53,9 +52,6 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
             xtype: 'nx-settingsform',
             api: {
               submit: 'NX.direct.coreui_Upload.doUpload'
-            },
-            baseParams: {
-              'NX-ANTI-CSRF-TOKEN': Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN')
             },
             buttons: [{
               text: NX.I18n.get('FeatureGroups_Upload_Form_Upload_Button'),

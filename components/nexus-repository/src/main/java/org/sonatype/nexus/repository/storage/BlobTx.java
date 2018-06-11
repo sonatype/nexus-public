@@ -46,7 +46,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
  *
  * @since 3.0
  */
-public class BlobTx
+class BlobTx
 {
   private static final Logger log = LoggerFactory.getLogger(BlobTx.class);
 
@@ -70,8 +70,8 @@ public class BlobTx
   {
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashAlgorithms, inputStream);
     Blob streamedBlob = blobStore.create(hashingStream, headers); // pre-fetch to populate hashes
-    return createPrefetchedAssetBlob(
-        streamedBlob,
+    return createAssetBlob(
+        store -> streamedBlob,
         hashingStream.hashes(),
         true,
         contentType);
@@ -124,23 +124,6 @@ public class BlobTx
         headers.get(BlobStore.CONTENT_TYPE_HEADER));
   }
 
-  private PrefetchedAssetBlob createPrefetchedAssetBlob(final Blob blob,
-                                                        final Map<HashAlgorithm, HashCode> hashes,
-                                                        final boolean hashesVerified,
-                                                        final String contentType)
-  {
-    PrefetchedAssetBlob assetBlob = new PrefetchedAssetBlob(
-        nodeAccess,
-        blobStore,
-        blob,
-        contentType,
-        hashes,
-        hashesVerified);
-
-    newlyCreatedBlobs.add(assetBlob);
-    return assetBlob;
-  }
-
   private AssetBlob createAssetBlob(final Function<BlobStore, Blob> blobFunction,
                                     final Map<HashAlgorithm, HashCode> hashes,
                                     final boolean hashesVerified,
@@ -190,18 +173,6 @@ public class BlobTx
   }
 
   public void rollback() {
-    //
-    // No need to undelete deletionRequests here, because rollback is only triggered if the DB commit fails.
-    // At that point we haven't done any deletions (just queued up requests) so there's nothing to undelete.
-    //
-    // This relies on the DB commit happening before the BlobTx commit in StorageTxImpl.commit() as well as
-    // BlobTx.commit() not throwing any exception or error, which is why throwables are caught and logged
-    // throughout this class rather than being allowed to propagate.
-    //
-    // Also consider when two threads try to delete the same blob at the same time, only one will succeed
-    // and commit. The other thread will rollback - in that case we wouldn't want it to undelete the blob
-    // that was just deleted by the first thread, as that would lead to orphaned deleted blobs.
-    //
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
         assetBlob.delete("Rolling back new asset");

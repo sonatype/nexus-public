@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.metrics;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
 
@@ -92,7 +91,6 @@ public class MetricsModule
         addFilterChain(MOUNT_POINT + "/**",
             NexusAuthenticationFilter.NAME,
             AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME,
             PermissionsFilter.config("nexus:metrics:read"));
       }
     });

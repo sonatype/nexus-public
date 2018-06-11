@@ -34,21 +34,21 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_INITIATED;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.6
  */
 @Named
 @Singleton
-@Path(DatabaseFreezeResource.RESOURCE_URI)
+@Path(BETA_API_PREFIX + "/read-only")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class DatabaseFreezeResource
     extends ComponentSupport
     implements Resource, DatabaseFreezeResourceDoc
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/read-only";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/read-only";
 
   private final DatabaseFreezeService freezeService;
 

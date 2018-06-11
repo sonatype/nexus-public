@@ -55,7 +55,7 @@ import static org.sonatype.nexus.repository.rest.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.3
@@ -69,7 +69,7 @@ public class AssetsResource
     extends ComponentSupport
     implements Resource, AssetsResourceDoc
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/assets";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/assets";
 
   private final BrowseService browseService;
 

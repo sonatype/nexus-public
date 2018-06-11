@@ -23,7 +23,6 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -182,10 +181,5 @@ public class AssetBlob
    */
   public boolean getHashesVerified() {
     return hashesVerified;
-  }
-
-  @VisibleForTesting
-  Blob getIngestedBlob() {
-    return ingestedBlob;
   }
 }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.13.0-SNAPSHOT</version>
+    <version>3.12.1-01</version>
   </parent>
 
   <artifactId>nexus-buildsupport-groovy</artifactId>
@@ -28,8 +28,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <groovy.version>2.4.15</groovy.version>
-    <ant.version>1.9.11</ant.version>
+    <groovy.version>2.4.11</groovy.version>
+    <ant.version>1.9.7</ant.version>
     <spock.version>1.0-groovy-2.4</spock.version>
   </properties>
 

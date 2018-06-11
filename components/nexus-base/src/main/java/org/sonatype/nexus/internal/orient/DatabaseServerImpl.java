@@ -19,10 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -80,7 +78,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class DatabaseServerImpl
     extends StateGuardLifecycleSupport
-    implements DatabaseServer, EventAware, EventAware.Asynchronous
+    implements DatabaseServer, EventAware, EventAware.Asynchronous, Provider<OServer>
 {
   private static final String JUL_ROOT_LOGGER = "";
 
@@ -162,7 +160,6 @@ public class DatabaseServerImpl
 
     // instance startup
     OServer server = new OServer();
-    installOrientLogRecordFix();
     configureOrientMinimumLogLevel();
     server.setExtensionClassLoader(uberClassLoader);
     OServerConfiguration config = createConfiguration();
@@ -325,30 +322,10 @@ public class DatabaseServerImpl
     return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
   }
 
+  @Override
   @Guarded(by = STARTED)
-  public OServer getOrientServer() {
+  public OServer get() {
     return orientServer;
-  }
-
-  /**
-   * Provider-shim to support injection of {@link OServer} into freeze service.
-   */
-  @Named
-  @Singleton
-  private static class OServerProvider
-      implements Provider<OServer>
-  {
-    private final DatabaseServerImpl databaseServer;
-
-    @Inject
-    public OServerProvider(final DatabaseServerImpl databaseServer) {
-      this.databaseServer = checkNotNull(databaseServer);
-    }
-
-    @Override
-    public OServer get() {
-      return databaseServer.getOrientServer();
-    }
   }
 
   @Subscribe
@@ -414,30 +391,5 @@ public class DatabaseServerImpl
     }
     Level level = logger.getLevel();
     return (level != null) ? level.intValue() : null;
-  }
-
-  /**
-   * Workaround missing name in Orient's LogRecords: https://www.prjhub.com/#/issues/10200
-   */
-  private static void installOrientLogRecordFix() {
-    Logger.getLogger(ORIENTDB_LOGGER).addHandler(new Handler()
-    {
-      @Override
-      public void publish(LogRecord record) {
-        if (record.getLoggerName() == null) {
-          record.setLoggerName(ORIENTDB_LOGGER);
-        }
-      }
-
-      @Override
-      public void flush() {
-        // no-op
-      }
-
-      @Override
-      public void close() {
-        // no-op
-      }
-    });
   }
 }

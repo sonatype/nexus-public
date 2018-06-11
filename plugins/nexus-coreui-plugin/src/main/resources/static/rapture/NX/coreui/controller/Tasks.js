@@ -44,7 +44,6 @@ Ext.define('NX.coreui.controller.Tasks', {
     'task.TaskList',
     'task.TaskSelectType',
     'task.TaskScheduleFieldSet',
-    'task.TaskScheduleFields',
     'task.TaskScheduleAdvanced',
     'task.TaskScheduleDaily',
     'task.TaskScheduleHourly',

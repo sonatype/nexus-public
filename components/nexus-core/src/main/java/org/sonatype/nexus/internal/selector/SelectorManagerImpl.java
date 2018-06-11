@@ -184,10 +184,6 @@ public class SelectorManagerImpl
       return Collections.emptyList();
     }
 
-    if (currentUser == null) {
-      return Collections.emptyList();
-    }
-
     List<String> roleIds = currentUser.getRoles().stream().map(RoleIdentifier::getRoleId)
         .collect(toList());
 

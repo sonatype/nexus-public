@@ -74,14 +74,15 @@ import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils.createComponentUpload;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.repository.rest.internal.resources.ComponentsResource.RESOURCE_URI;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.4
  */
 @Named
 @Singleton
-@Path(ComponentsResource.RESOURCE_URI)
+@Path(RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class ComponentsResource
@@ -89,7 +90,7 @@ public class ComponentsResource
     implements Resource, ComponentsResourceDoc
 {
 
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/components";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/components";
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 

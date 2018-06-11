@@ -111,7 +111,7 @@ public class AssetsResourceTest
 
   @Test
   public void checkPath() {
-    assertThat(AssetsResource.RESOURCE_URI, is("/v1/assets"));
+    assertThat(AssetsResource.RESOURCE_URI, is("/beta/assets"));
   }
 
   @Test

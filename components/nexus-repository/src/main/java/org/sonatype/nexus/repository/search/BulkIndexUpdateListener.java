@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.sonatype.goodies.common.ComponentSupport;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -27,49 +25,32 @@ class BulkIndexUpdateListener
     extends ComponentSupport
     implements BulkProcessor.Listener
 {
-  private final AtomicInteger inflightRequestCount = new AtomicInteger();
-
-  int inflightRequestCount() {
-    return inflightRequestCount.get();
-  }
-
   @Override
   public void beforeBulk(final long executionId, final BulkRequest request) {
-    inflightRequestCount.getAndAdd(request.numberOfActions());
-
-    if (log.isDebugEnabled()) {
-      log.debug("index update starting, executionId: {}, request count: {}, request size (bytes): {}",
-          executionId,
-          request.numberOfActions(),
-          request.estimatedSizeInBytes()
-      );
-    }
+    log.debug("index update starting, executionId: {}, request count: {}, request size (bytes): {}, ",
+        executionId,
+        request.requests().size(),
+        request.estimatedSizeInBytes()
+    );
   }
 
   @Override
   public void afterBulk(final long executionId, final BulkRequest request, final BulkResponse response) {
-    inflightRequestCount.getAndAdd(-request.numberOfActions());
-
-    if (log.isDebugEnabled()) {
-      log.debug("index update success, executionId: {}, request count: {}, request size (bytes): {}; " +
-              "response took: {}, response hasFailures: {}",
-          executionId,
-          request.numberOfActions(),
-          request.estimatedSizeInBytes(),
-          response.getTook(),
-          response.hasFailures());
-    }
+    log.debug("index update success, executionId: {}, request count: {}, request size (bytes): {}, " +
+            "response took: {}, response hasFailures: {}",
+        executionId,
+        request.requests().size(),
+        request.estimatedSizeInBytes(),
+        response.getTook(),
+        response.hasFailures());
   }
 
   @Override
   public void afterBulk(final long executionId, final BulkRequest request, final Throwable failure) {
-    inflightRequestCount.getAndAdd(-request.numberOfActions());
-
     log.error("index update failure, executionId: {}, request count: {}, request size (bytes): {}; " +
             "this may indicate that not enough CPU is available to effectively index repository content",
         executionId,
-        request.numberOfActions(),
-        request.estimatedSizeInBytes(),
-        failure);
+        request.requests().size(),
+        request.estimatedSizeInBytes(), failure);
   }
 }

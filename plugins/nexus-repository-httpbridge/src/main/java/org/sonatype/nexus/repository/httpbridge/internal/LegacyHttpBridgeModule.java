@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
-import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 
@@ -89,14 +88,12 @@ public class LegacyHttpBridgeModule
         addFilterChain("/content/**",
             NexusAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
-            AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME);
+            AnonymousFilter.NAME);
 
         addFilterChain("/service/local/**",
             NexusAuthenticationFilter.NAME,
             ApiKeyAuthenticationFilter.NAME,
-            AnonymousFilter.NAME,
-            AntiCsrfFilter.NAME);
+            AnonymousFilter.NAME);
       }
     });
   }

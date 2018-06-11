@@ -36,7 +36,6 @@ import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.servlet.GuiceFilter;
 import org.apache.karaf.features.Feature;
@@ -186,12 +185,10 @@ public class NexusContextListener
     if (event.getType() == FrameworkEvent.STARTLEVEL_CHANGED) {
       // feature bundles have all been activated at this point
 
-      boolean continueStartup = true;
       try {
         lifecycleManager.to(CAPABILITIES);
       }
       catch (final Exception e) {
-        continueStartup = false;
         log.error("Failed to start nexus", e);
         if (!HAS_PAX_EXAM) {
           try {
@@ -212,13 +209,11 @@ public class NexusContextListener
         registerLocatorWithPaxExam(injector.getProvider(BeanLocator.class));
       }
 
-      if (continueStartup) {
-        try {
-          lifecycleManager.to(TASKS);
-        }
-        catch (final Exception e) {
-          log.warn("Scheduler did not start", e);
-        }
+      try {
+        lifecycleManager.to(TASKS);
+      }
+      catch (final Exception e) {
+        log.warn("Scheduler did not start", e);
       }
     }
   }
@@ -331,7 +326,7 @@ public class NexusContextListener
     {
       @Override
       public void injectFields(final Object target) {
-        Module testModule = new WireModule(new AbstractModule()
+        Guice.createInjector(new WireModule(new AbstractModule()
         {
           @Override
           protected void configure() {
@@ -346,15 +341,7 @@ public class NexusContextListener
             // inject the test-instance
             requestInjection(target);
           }
-        });
-
-        // lock locator to avoid a potential concurrency issue while injecting the target
-        // (just in case there was a startup problem that left things in an odd state and
-        // a Jetty thread is now trying to initialize the same singletons via the filter)
-        // - locking the locator holds back dynamic injection while we populate the test
-        synchronized (locatorProvider.get()) {
-          Guice.createInjector(testModule);
-        }
+        }));
       }
     }, examProperties);
   }

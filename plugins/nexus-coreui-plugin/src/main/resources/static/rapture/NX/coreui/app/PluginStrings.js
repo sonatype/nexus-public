@@ -1244,7 +1244,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Licensing_LicenseAgreement_Title: 'Nexus Repository Manager License Agreement',
     Licensing_LicenseAgreement_Yes_Button: 'I agree',
     Licensing_LicenseAgreement_No_Button: 'I do not agree',
-    Licensing_LicenseAgreement_Download_Button: 'Download a copy of the agreement.',
+    Licensing_LicenseAgreement_Download_Button: 'Download a copy of the license.',
     Licensing_Install_Success: 'License installed. Restart is only required if you are enabling new PRO features.',
     Licensing_Authentication_Validation: '{0} a license requires validation of your credentials.',
 

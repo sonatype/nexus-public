@@ -21,8 +21,7 @@ Ext.define('NX.coreui.view.licensing.LicensingDetails', {
   extend: 'NX.view.SettingsPanel',
   alias: 'widget.nx-coreui-licensing-details',
   requires: [
-    'NX.I18n',
-    'Ext.util.Cookies'
+    'NX.I18n'
   ],
 
   /**
@@ -109,9 +108,6 @@ Ext.define('NX.coreui.view.licensing.LicensingDetails', {
 
           api: {
             submit: 'NX.direct.licensing_Licensing.install'
-          },
-          baseParams: {
-            'NX-ANTI-CSRF-TOKEN': Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN')
           },
 
           items: [

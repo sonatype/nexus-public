@@ -77,7 +77,8 @@ public class IndexRequestProcessor
   @Override
   protected void doStop() {
     eventManager.unregister(this);
-    searchService.flush(true);
+
+    searchService.flush();
   }
 
   @Subscribe

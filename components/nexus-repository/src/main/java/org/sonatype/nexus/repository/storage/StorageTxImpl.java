@@ -178,7 +178,7 @@ public class StorageTxImpl
   @Override
   @Transitions(from = ACTIVE, to = OPEN, silent = true)
   public void commit() {
-    db.commit(); // this must happen _before_ we commit any blob changes
+    db.commit();
     blobTx.commit();
     retries = 0;
   }
@@ -301,13 +301,6 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
-  public Iterable<Asset> browseAssets(final Query query, final Bucket bucket) {
-    return assetEntityAdapter.browseByQueryAsync(db, query.getWhere(), query.getParameters(), ImmutableList.of(bucket), 
-        query.getQuerySuffix());
-  }
-
-  @Override
-  @Guarded(by = ACTIVE)
   public Asset firstAsset(final Component component) {
     return Iterables.getFirst(browseAssets(component), null);
   }
@@ -401,17 +394,6 @@ public class StorageTxImpl
                                  final Repository repository)
   {
     return componentEntityAdapter.exists(db, group, name, version, bucketOf(repository.getName()));
-  }
-
-  @Override
-  @Guarded(by = ACTIVE)
-  public boolean assetExists(final String name,
-                             final Repository repository)
-  {
-    checkNotNull(name);
-    checkNotNull(repository);
-
-    return assetEntityAdapter.exists(db, name, bucketOf(repository.getName()));
   }
 
   @Nullable
@@ -804,16 +786,14 @@ public class StorageTxImpl
           if (!effectiveWritePolicy.checkUpdateAllowed()) {
             throw new IllegalOperationException("Repository does not allow updating assets: " + repositoryName);
           }
-
           assetBlob.setDuplicate(oldBlob);
-          
           return true;
         }
       }
     }
     return false;
   }
-  
+
   /**
    * Deletes the existing blob for the asset if one exists, updating the blob updated field if necessary. The
    * write policy will be enforced for this operation and will throw an exception if updates are not supported.

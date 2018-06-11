@@ -79,8 +79,6 @@ import static org.apache.maven.index.reader.Utils.descriptor;
 import static org.apache.maven.index.reader.Utils.rootGroup;
 import static org.apache.maven.index.reader.Utils.rootGroups;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
-import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_MAIN_CHUNK_FILE_PATH;
-import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_PROPERTY_FILE_PATH;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
@@ -93,9 +91,9 @@ public final class MavenIndexPublisher
 {
   private static final Logger log = LoggerFactory.getLogger(MavenIndexPublisher.class);
 
-  private static final String INDEX_PROPERTY_FILE = "/" + INDEX_PROPERTY_FILE_PATH;
+  private static final String INDEX_PROPERTY_FILE = "/.index/nexus-maven-repository-index.properties";
 
-  private static final String INDEX_MAIN_CHUNK_FILE = "/" + INDEX_MAIN_CHUNK_FILE_PATH;
+  private static final String INDEX_MAIN_CHUNK_FILE = "/.index/nexus-maven-repository-index.gz";
 
   private static final String SELECT_HOSTED_ARTIFACTS =
       "SELECT " +

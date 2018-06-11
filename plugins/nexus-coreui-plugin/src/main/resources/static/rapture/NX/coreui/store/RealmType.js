@@ -35,6 +35,7 @@ Ext.define('NX.coreui.store.RealmType', {
       idProperty: 'id',
       successProperty: 'success'
     }
-  }
+  },
 
+  sorters: { property: 'name', direction: 'ASC' }
 });

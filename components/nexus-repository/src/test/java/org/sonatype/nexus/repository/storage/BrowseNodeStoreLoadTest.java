@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
-import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -27,7 +26,6 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -117,8 +115,7 @@ public class BrowseNodeStoreLoadTest
         selectorManager,
         new CselAssetSqlBuilder(),
         configuration,
-        new HashMap<>(),
-        ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
+        new HashMap<>());
 
     underTest.start();
   }

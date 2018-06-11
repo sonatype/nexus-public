@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.13.0-SNAPSHOT</version>
+    <version>3.12.1-01</version>
   </parent>
 
   <artifactId>nexus-buildsupport-db</artifactId>
@@ -28,9 +28,9 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.2.35</orientdb.version>
-    <hazelcast.version>3.8.9</hazelcast.version>
-    <hazelcast-aws.version>2.1.1</hazelcast-aws.version>
+    <orientdb.version>2.2.34</orientdb.version>
+    <hazelcast.version>3.7.8</hazelcast.version>
+    <hazelcast-aws.version>2.0.1</hazelcast-aws.version>
   </properties>
 
   <dependencyManagement>

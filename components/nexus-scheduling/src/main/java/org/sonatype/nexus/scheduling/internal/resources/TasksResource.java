@@ -46,21 +46,22 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.scheduling.internal.resources.TasksResource.RESOURCE_URI;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.6
  */
 @Named
 @Singleton
-@Path(TasksResource.RESOURCE_URI)
+@Path(RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class TasksResource
     extends ComponentSupport
     implements Resource, TasksResourceDoc
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/tasks";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/tasks";
 
   private static final String TRIGGER_SOURCE = "REST API";
 
