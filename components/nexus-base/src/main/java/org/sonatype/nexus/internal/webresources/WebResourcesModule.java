@@ -17,6 +17,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.security.FilterChainModule;
 import org.sonatype.nexus.security.SecurityFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
+import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -49,7 +50,7 @@ public class WebResourcesModule
     {
       @Override
       protected void configure() {
-        addFilterChain("/**", AnonymousFilter.NAME);
+        addFilterChain("/**", AnonymousFilter.NAME, AntiCsrfFilter.NAME);
       }
     });
   }

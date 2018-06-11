@@ -54,6 +54,7 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -140,6 +141,7 @@ public class MavenUploadHandler
 
   private UploadResponse doUpload(final Repository repository, final ComponentUpload componentUpload) throws IOException {
     MavenFacet facet = repository.facet(MavenFacet.class);
+    StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     if (VersionPolicy.SNAPSHOT.equals(facet.getVersionPolicy())) {
       throw new ValidationErrorsException("Upload to snapshot repositories not supported, use the maven client.");
@@ -147,39 +149,54 @@ public class MavenUploadHandler
 
     ContentAndAssetPathResponseData responseData;
 
-    String basePath = getBasePath(repository, componentUpload);
+    AssetUpload pomAsset = findPomAsset(componentUpload);
 
-    doValidation(repository, basePath, componentUpload.getAssetUploads());
+    //purposefully not using a try with resources, as this will only be used in case of an included pom file, which
+    //isn't required
+    TempBlob pom = null;
 
-    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
-      responseData = createAssets(repository, basePath, componentUpload.getAssetUploads());
-
-      if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
-        String pomPath = generatePom(repository, basePath, componentUpload.getFields().get(GROUP_ID),
-            componentUpload.getFields().get(ARTIFACT_ID), componentUpload.getFields().get(VERSION),
-            componentUpload.getFields().get(PACKAGING));
-
-        responseData.addAssetPath(pomPath);
+      if (pomAsset != null) {
+        PartPayload payload = pomAsset.getPayload();
+        pom = storageFacet.createTempBlob(payload, HashType.ALGORITHMS);
+        pomAsset.setPayload(new TempBlobPartPayload(payload, pom));
       }
 
-      updateMetadata(repository, responseData.coordinates);
+      String basePath = getBasePath(componentUpload, pom);
+
+      doValidation(repository, basePath, componentUpload.getAssetUploads());
+
+      UnitOfWork.begin(storageFacet.txSupplier());
+      try {
+        responseData = createAssets(repository, basePath, componentUpload.getAssetUploads());
+
+        if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
+          String pomPath = generatePom(repository, basePath, componentUpload.getFields().get(GROUP_ID),
+              componentUpload.getFields().get(ARTIFACT_ID), componentUpload.getFields().get(VERSION),
+              componentUpload.getFields().get(PACKAGING));
+
+          responseData.addAssetPath(pomPath);
+        }
+
+        updateMetadata(repository, responseData.coordinates);
+      }
+      finally {
+        UnitOfWork.end();
+      }
+
+      return new UploadResponse(responseData.getContent(), responseData.getAssetPaths());
     }
     finally {
-      UnitOfWork.end();
+      if (pom != null) {
+        pom.close();
+      }
     }
-
-    return new UploadResponse(responseData.getContent(), responseData.getAssetPaths());
   }
 
-  private String getBasePath(final Repository repository, final ComponentUpload componentUpload) throws IOException {
-    AssetUpload pomAsset = findPomAsset(componentUpload);
-    if (pomAsset != null) {
-      PartPayload payload = pomAsset.getPayload();
-
-      try (TempBlob pom = repository.facet(StorageFacet.class).createTempBlob(payload, HashType.ALGORITHMS)) {
-        return createBasePathFromPom(pom);
-      }
+  private String getBasePath(final ComponentUpload componentUpload, final TempBlob pom) throws IOException
+  {
+    if (pom != null) {
+      return createBasePathFromPom(pom);
     }
 
     return createBasePath(componentUpload.getFields().get(GROUP_ID), componentUpload.getFields().get(ARTIFACT_ID),

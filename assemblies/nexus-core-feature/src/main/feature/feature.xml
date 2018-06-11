@@ -22,6 +22,7 @@
     <feature>nexus-repository-httpbridge</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-npm</feature>
+    <feature>nexus-repository-pypi</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-restore-maven</feature>
     <feature>nexus-blobstore-s3</feature>

@@ -88,6 +88,12 @@ public class Query
       return where(" IS NOT NULL ");
     }
 
+    public Builder like(final Object value) {
+      checkNotNull(value);
+      checkState(hasWhere(), "Missing where statement");
+      return this.where(" LIKE ").param(value);
+    }
+
     public boolean hasWhere() {
       return clean(where) != null;
     }

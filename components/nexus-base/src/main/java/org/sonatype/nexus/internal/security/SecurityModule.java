@@ -21,6 +21,7 @@ import org.sonatype.nexus.internal.security.anonymous.OrientAnonymousConfigurati
 import org.sonatype.nexus.internal.security.realm.OrientRealmConfigurationStore;
 import org.sonatype.nexus.security.FilterProviderSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
+import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
@@ -43,9 +44,11 @@ public class SecurityModule
     bind(filterKey(NexusAuthenticationFilter.NAME)).to(NexusAuthenticationFilter.class);
     bind(filterKey(ApiKeyAuthenticationFilter.NAME)).to(ApiKeyAuthenticationFilter.class);
     bind(filterKey(PermissionsFilter.NAME)).to(PermissionsFilter.class);
+    bind(filterKey(AntiCsrfFilter.NAME)).to(AntiCsrfFilter.class);
 
     // FIXME: Sort out, and deal with naming the "authcBasic" are presently auth-token bits
     bind(filterKey("authcBasic")).toProvider(AuthcBasicFilterProvider.class);
+    bind(filterKey("authcAntiCsrf")).toProvider(AuthcAntiCsrfFilterProvider.class);
 
     // FIXME: This likely should be normalized with the auth-token bits
     bind(filterKey("authcApiKey")).toProvider(AuthcApiKeyFilterProvider.class);
@@ -72,6 +75,16 @@ public class SecurityModule
   {
     @Inject
     AuthcApiKeyFilterProvider(final ApiKeyAuthenticationFilter filter) {
+      super(filter);
+    }
+  }
+
+  @Singleton
+  static class AuthcAntiCsrfFilterProvider
+      extends FilterProviderSupport
+  {
+    @Inject
+    AuthcAntiCsrfFilterProvider(final AntiCsrfFilter filter) {
       super(filter);
     }
   }

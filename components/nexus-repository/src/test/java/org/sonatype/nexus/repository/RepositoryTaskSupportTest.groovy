@@ -17,6 +17,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.scheduling.TaskConfiguration
+import org.sonatype.nexus.scheduling.TaskInterruptedException
 
 import org.junit.Rule
 import org.junit.Test
@@ -54,17 +55,19 @@ class RepositoryTaskSupportTest
   }
 
   /**
-   * Verify that repository exists.
+   * Verify a TaskInterruptedException Exception is thrown when a repository associated with a task
+   * is null. This simulates when a repository (that was the configured target of a task) has been deleted.
    */
   @Test
   void 'repository exists'() {
     configuration = new TaskConfiguration(id: 'test', typeId: 'test')
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, 'foo')
+    when(repositoryManager.get('foo')).thenReturn(null)
     task = new TestTask()
     task.install(repositoryManager, new GroupType())
     task.configure(configuration)
 
-    thrown.expect(NullPointerException)
+    thrown.expect(TaskInterruptedException)
     task.execute()
   }
 

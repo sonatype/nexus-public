@@ -894,7 +894,7 @@ def checkSSL() {
     }
 
     // Copy to etc/ssl folder
-    List<String> files = new FileNameFinder().getFileNames("target", "nexus*/LICENSE.txt")
+    List<String> files = new FileNameFinder().getFileNames("target", "nexus*/NOTICE.txt")
     files.each {
       File dest = new File(new File(it).getParent(), "etc/ssl/")
       debug("SSL: Copying keystore.jks to $dest")

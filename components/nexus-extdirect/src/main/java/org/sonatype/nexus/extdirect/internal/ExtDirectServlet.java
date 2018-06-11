@@ -46,6 +46,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.model.Response;
+import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -106,8 +107,10 @@ public class ExtDirectServlet
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
                           final Provider<EventRecorder> recorderProvider,
-                          final Provider<EventDataFactory> eventDataFactoryProvider)
+                          final Provider<EventDataFactory> eventDataFactoryProvider,
+                          @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled)
   {
+    super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
     this.recorderProvider = checkNotNull(recorderProvider);

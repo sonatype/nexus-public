@@ -293,7 +293,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.SearchPyPi',
       active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-pypi');
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-pypi');
       }
     },
     {

@@ -65,18 +65,7 @@ public class AssetEntityAdapterTest
 
   @Test
   public void testModifyAssetAfterBrowsingByComponent() {
-
-    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      db.begin();
-
-      Component component = createComponent(bucket, "some-group", "some-component", "1.0");
-      componentEntityAdapter.addEntity(db, component);
-
-      Asset asset = createAsset(bucket, "some-asset", component);
-      assetEntityAdapter.addEntity(db, asset);
-
-      db.commit();
-    }
+    createAssetWithName("some-asset");
 
     Asset asset;
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
@@ -113,4 +102,32 @@ public class AssetEntityAdapterTest
     assertFalse(asset.attributes().child("optional").contains("test-key"));
   }
 
+  @Test
+  public void testAssetExists() throws Exception {
+    String assetName = "some-asset";
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      assertFalse(assetEntityAdapter.exists(db, assetName, bucket));
+    }
+
+    createAssetWithName(assetName);
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      assertTrue(assetEntityAdapter.exists(db, assetName, bucket));
+    }
+  }
+
+  private void createAssetWithName(final String assetName) {
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+
+      Component component = createComponent(bucket, "some-group", "some-component", "1.0");
+      componentEntityAdapter.addEntity(db, component);
+
+      Asset asset = createAsset(bucket, assetName, component);
+      assetEntityAdapter.addEntity(db, asset);
+
+      db.commit();
+    }
+  }
 }

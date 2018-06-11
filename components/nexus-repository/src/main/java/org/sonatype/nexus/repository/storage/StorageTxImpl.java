@@ -301,6 +301,13 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public Iterable<Asset> browseAssets(final Query query, final Bucket bucket) {
+    return assetEntityAdapter.browseByQueryAsync(db, query.getWhere(), query.getParameters(), ImmutableList.of(bucket), 
+        query.getQuerySuffix());
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public Asset firstAsset(final Component component) {
     return Iterables.getFirst(browseAssets(component), null);
   }
@@ -394,6 +401,17 @@ public class StorageTxImpl
                                  final Repository repository)
   {
     return componentEntityAdapter.exists(db, group, name, version, bucketOf(repository.getName()));
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public boolean assetExists(final String name,
+                             final Repository repository)
+  {
+    checkNotNull(name);
+    checkNotNull(repository);
+
+    return assetEntityAdapter.exists(db, name, bucketOf(repository.getName()));
   }
 
   @Nullable

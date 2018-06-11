@@ -167,6 +167,25 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
                             @Nullable final Iterable<Bucket> buckets,
                             @Nullable final String querySuffix)
   {
+    return browseByQuery(db, whereClause, parameters, buckets, querySuffix, false);
+  }
+
+  Iterable<T> browseByQueryAsync(final ODatabaseDocumentTx db,
+                                 @Nullable final String whereClause,
+                                 @Nullable final Map<String, Object> parameters,
+                                 @Nullable final Iterable<Bucket> buckets,
+                                 @Nullable final String querySuffix)
+  {
+    return browseByQuery(db, whereClause, parameters, buckets, querySuffix, true);
+  }
+
+  private Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
+                                    @Nullable final String whereClause,
+                                    @Nullable final Map<String, Object> parameters,
+                                    @Nullable final Iterable<Bucket> buckets,
+                                    @Nullable final String querySuffix,
+                                    final boolean async)
+  {
     String query = buildQuery(false, whereClause, buckets, querySuffix);
 
     if (isBlank(query)) {
@@ -175,8 +194,14 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     }
 
     log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
-    Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
-    return transform(docs);
+    
+    if (async) {
+      return transform(OrientAsyncHelper.asyncIterable(db, query, parameters));
+    }
+    else {
+      Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
+      return transform(docs);
+    }
   }
 
   long countByQuery(final ODatabaseDocumentTx db,

@@ -53,7 +53,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-public final class TaskConfiguration
+public class TaskConfiguration
     implements TaskLogInfo
 {
   // TODO: keys which start with "." are considered "private" for some strange reason

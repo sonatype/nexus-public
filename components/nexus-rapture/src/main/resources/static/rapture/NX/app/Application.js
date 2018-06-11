@@ -26,6 +26,7 @@ Ext.define('NX.app.Application', {
     'Ext.direct.Manager',
     'Ext.state.Manager',
     'Ext.state.LocalStorageProvider',
+    'Ext.util.Cookies',
     'Ext.util.LocalStorage',
     'NX.view.Viewport',
     'NX.util.Url',
@@ -189,9 +190,19 @@ Ext.define('NX.app.Application', {
       'X-Nexus-UI': 'true'
     };
 
+    app.initAntiCsrfToken();
     app.initErrorHandler();
     app.initDirect();
     app.initState();
+  },
+
+  initAntiCsrfToken: function () {
+    Ext.Ajax.on('beforerequest', function (conn, options, eOpts) {
+      var token = Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN');
+      if (token) {
+        conn.defaultHeaders["NX-ANTI-CSRF-TOKEN"] = token;
+      }
+    });
   },
 
   /**

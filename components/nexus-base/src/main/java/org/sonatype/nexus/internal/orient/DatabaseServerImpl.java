@@ -80,7 +80,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class DatabaseServerImpl
     extends StateGuardLifecycleSupport
-    implements DatabaseServer, EventAware, EventAware.Asynchronous, Provider<OServer>
+    implements DatabaseServer, EventAware, EventAware.Asynchronous
 {
   private static final String JUL_ROOT_LOGGER = "";
 
@@ -325,10 +325,30 @@ public class DatabaseServerImpl
     return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
   }
 
-  @Override
   @Guarded(by = STARTED)
-  public OServer get() {
+  public OServer getOrientServer() {
     return orientServer;
+  }
+
+  /**
+   * Provider-shim to support injection of {@link OServer} into freeze service.
+   */
+  @Named
+  @Singleton
+  private static class OServerProvider
+      implements Provider<OServer>
+  {
+    private final DatabaseServerImpl databaseServer;
+
+    @Inject
+    public OServerProvider(final DatabaseServerImpl databaseServer) {
+      this.databaseServer = checkNotNull(databaseServer);
+    }
+
+    @Override
+    public OServer get() {
+      return databaseServer.getOrientServer();
+    }
   }
 
   @Subscribe

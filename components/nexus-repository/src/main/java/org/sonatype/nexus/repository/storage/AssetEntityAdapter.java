@@ -42,10 +42,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.isEmpty;
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 
 /**
@@ -145,6 +149,11 @@ public class AssetEntityAdapter
       .property(P_NAME)
       .caseInsensitive()
       .build();
+
+  private static final String EXISTS_QUERY_STRING = format("select from index:%1$s where key = [:%2$s, :%3$s]",
+      I_BUCKET_NAME, P_BUCKET, P_NAME);
+
+  private static final OSQLSynchQuery<ODocument> EXISTS_QUERY = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
 
   private final ComponentEntityAdapter componentEntityAdapter;
 
@@ -351,5 +360,14 @@ public class AssetEntityAdapter
       node = document; // no component (or it's AWOL) so fall back to asset node
     }
     return bucketId + "@" + node.field(P_NAME, OType.STRING);
+  }
+
+  public boolean exists(final ODatabaseDocumentTx db, final String name, final Bucket bucket) {
+    Map<String, Object> params = ImmutableMap.of(
+        P_NAME, checkNotNull(name),
+        P_BUCKET, recordIdentity(id(checkNotNull(bucket)))
+    );
+
+    return !isEmpty(db.command(EXISTS_QUERY).<Iterable<ODocument>>execute(params));
   }
 }

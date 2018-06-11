@@ -93,7 +93,11 @@ public abstract class RepositoryTaskSupport
       return Iterables.filter(repositoryManager.browse(), this::appliesTo);
     }
     else {
-      Repository repository = checkNotNull(repositoryManager.get(repositoryName));
+      Repository repository = repositoryManager.get(repositoryName);
+      if (repository == null) {
+        log.warn("Repository '{}' was not found while running task '{}'", repositoryName, getMessage());
+        throw new TaskInterruptedException(String.format("Repository '%s' was not found.", repositoryName), true);
+      }
       checkState(appliesTo(repository));
       return ImmutableList.of(repository);
     }

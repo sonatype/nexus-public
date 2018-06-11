@@ -46,7 +46,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
  *
  * @since 3.0
  */
-class BlobTx
+public class BlobTx
 {
   private static final Logger log = LoggerFactory.getLogger(BlobTx.class);
 
