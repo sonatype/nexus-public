@@ -88,7 +88,7 @@ public class ExternalRoleMappedTest
     realmConfiguration.setRealmNames(ImmutableList.of("Mock", AuthorizingRealmImpl.NAME));
     realmManager.setConfiguration(realmConfiguration);
 
-    // jcohen has the role mockrole1, there is also test role with the same ID, which means jcohen automaticly has
+    // jcohen has the role mockrole1, there is also test role with the same ID, which means jcohen automatically has
     // this test role
 
     PrincipalCollection jcohen = new SimplePrincipalCollection("jcohen", MockRealm.NAME);

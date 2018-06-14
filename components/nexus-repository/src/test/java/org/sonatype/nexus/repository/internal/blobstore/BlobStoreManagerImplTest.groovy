@@ -197,7 +197,7 @@ class BlobStoreManagerImplTest
   }
 
   @Test
-  void 'Can successfullly create new blob stores concurrently'() {
+  void 'Can successfully create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
         databaseFreezeService, nodeAccess, true)

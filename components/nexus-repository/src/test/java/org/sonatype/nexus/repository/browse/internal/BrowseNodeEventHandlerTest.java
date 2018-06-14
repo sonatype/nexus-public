@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 public class BrowseNodeEventHandlerTest
     extends TestSupport
 {
-  private static final String REPOSITORY_NAME = "maven2repsoitory";
+  private static final String REPOSITORY_NAME = "maven2repository";
 
   private BrowseNodeEventHandler handler;
 

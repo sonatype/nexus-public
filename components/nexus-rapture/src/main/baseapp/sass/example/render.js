@@ -105,8 +105,8 @@ Ext.theme = {
      * looks the same as a `manifest` entry. These are combined by copying the properties
      * from the shortcut over those of the manifest entry. In basic terms:
      * 
-     *      var config = Ext.apply(Ext.apply({}, manfiest.config), shortcut.config);
-     *      var entry = Ext.apply(Ext.apply({}, manfiest), shortcut);
+     *      var config = Ext.apply(Ext.apply({}, manifest.config), shortcut.config);
+     *      var entry = Ext.apply(Ext.apply({}, manifest), shortcut);
      *      entry.config = config;
      * 
      * This is not exactly the process, but the idea is the same. The difference is that
@@ -197,7 +197,7 @@ Ext.theme = {
     },
 
     /**
-     * This method copies property from a `src` object to a `dest` object and reaplces
+     * This method copies property from a `src` object to a `dest` object and replaces
      * `"{foo}"` fragments of any string properties as defined in the `tpl` object.
      * 
      *      var obj = Ext.theme.copyProps({}, {

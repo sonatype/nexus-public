@@ -74,7 +74,7 @@ public interface StorageTx
 
   /**
    * A lower level but still safe access to SQL SELECT queries, that allows caller to "browse" potentially
-   * huge result sets without worry about paging or OOMs. This method will NOT see uncommited changes performed
+   * huge result sets without worry about paging or OOMs. This method will NOT see uncommitted changes performed
    * in this current TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
    *

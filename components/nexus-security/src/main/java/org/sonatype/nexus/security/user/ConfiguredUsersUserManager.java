@@ -112,7 +112,7 @@ public class ConfiguredUsersUserManager
   public Set<User> searchUsers(final UserSearchCriteria criteria) {
     // we only want to do this if the criteria is set to the source
     if (getSource().equals(criteria.getSource())) {
-      return filterListInMemeory(listUsers(), criteria);
+      return filterListInMemory(listUsers(), criteria);
     }
     else {
       return new HashSet<>();

@@ -16,7 +16,7 @@ import java.io.Serializable;
 
 import javax.annotation.Nullable;
 
-// TODO: implement Externalizable?  This is made Serialzable just for cache usage, may need to revisit to avoid needing
+// TODO: implement Externalizable?  This is made Serializable just for cache usage, may need to revisit to avoid needing
 // TODO: ... to have the cache semantics leak into this core api.  Negative-cache may want to wrap or we may want to
 // TODO: ... consider an interface instead, though that has non-trivial impact to code-base atm?
 

@@ -78,7 +78,7 @@ public class LegacyKeyStoreUpgradeService
   }
 
   public void upgradeSchema() throws Exception {
-    log.debug("Updgrading schema for trust store");
+    log.debug("Upgrading schema for trust store");
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       OSchema schema = db.getMetadata().getSchema();
       OClass type = schema.getClass(DB_CLASS);

@@ -131,7 +131,7 @@ public class OperationsBuilderTest
   }
 
   @Test
-  public void testBuilderAnnotionBehaviour() {
+  public void testBuilderAnnotationBehaviour() {
 
     assertBehaviour(
         Operations.DEFAULT_SPEC,

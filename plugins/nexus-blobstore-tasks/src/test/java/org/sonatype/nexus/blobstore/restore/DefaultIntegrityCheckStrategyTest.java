@@ -123,7 +123,7 @@ public class DefaultIntegrityCheckStrategyTest
     Asset asset = getMockAsset("name", TEST_HASH1);
     assets.add(asset);
 
-    BlobAttributes blobAttributes = getMockBlobAttribues("name", "sha1", true);
+    BlobAttributes blobAttributes = getMockBlobAttributes("name", "sha1", true);
     when(blobStore.getBlobAttributes(new BlobId("blob"))).thenReturn(blobAttributes);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
@@ -247,7 +247,7 @@ public class DefaultIntegrityCheckStrategyTest
                        final Blob mockBlob)
   {
     Asset asset = getMockAsset(assetName, assetHash);
-    BlobAttributes blobAttributes = getMockBlobAttribues(blobName, blobHash.toString());
+    BlobAttributes blobAttributes = getMockBlobAttributes(blobName, blobHash.toString());
     when(storageTx.browseAssets(any(Bucket.class))).thenReturn(newHashSet(asset));
     when(blobStore.getBlobAttributes(any())).thenReturn(blobAttributes);
     when(blobStore.get(new BlobId(blobId))).thenReturn(mockBlob);
@@ -262,11 +262,11 @@ public class DefaultIntegrityCheckStrategyTest
     }
   }
 
-  private BlobAttributes getMockBlobAttribues(final String name, final String sha1) {
-    return getMockBlobAttribues(name, sha1, false);
+  private BlobAttributes getMockBlobAttributes(final String name, final String sha1) {
+    return getMockBlobAttributes(name, sha1, false);
   }
 
-  private BlobAttributes getMockBlobAttribues(final String name, final String sha1, final boolean deleted) {
+  private BlobAttributes getMockBlobAttributes(final String name, final String sha1, final boolean deleted) {
     BlobAttributes blobAttributes = mock(BlobAttributes.class);
 
     Properties properties = new Properties();

@@ -617,7 +617,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
     var columns = Ext.Array.clone(panel.originalColumns),
         tagColumns = [];
 
-    // create new colums for each dynamic tag
+    // create new columns for each dynamic tag
     Ext.Array.each(tags, function(entry) {
       tagColumns.push({
         text: entry,

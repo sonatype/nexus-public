@@ -71,7 +71,7 @@ public class PreviewAssetsSqlBuilder
   }
 
   private String buildJexlExpression() {
-    //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
+    //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients built in escaping for double quotes
     return jexlExpression.replaceAll("\"", "'").replaceAll("\\s", " ");
   }
 }

@@ -43,7 +43,7 @@ This boils down to:
 5. theme `src`
 6. application `src`
 
-Where theme `var` and `src` includes are based on the Javascript class dependency order,
+Where theme `var` and `src` includes are based on the JavaScript class dependency order,
 and the application includes are explicit.
 
 ### Theme
@@ -58,11 +58,11 @@ Styles here are to augment the extended-style 'ext-theme-neptune' with customiza
 The application styles are located in `src/main/baseapp/sass`.
 
 There is a related tree under `src/main/baseapp/app` which is needed for our non-standard plugable UI for Sencha CMD
-to trigger inclusion of styles, as it only includes style files for Javascript classes that it thinks are included 
+to trigger inclusion of styles, as it only includes style files for JavaScript classes that it thinks are included 
 in the application.  Since the bulk of the application is not contained in this module, but in other plugins,
 there is no way for Sencha CMD to know what to include.
 
-To work around this we include a single empty Javascript class `baseapp.Application`, 
+To work around this we include a single empty JavaScript class `baseapp.Application`, 
 and an explicit require line in `src/mian/baseapp/app.js`, so that SCSS sources will get included.
 
 Management of other files here is managed via _explicitly ordered_ imports.
@@ -73,7 +73,7 @@ Management of other files here is managed via _explicitly ordered_ imports.
 
 Any time the style or application configuration changes, the baseapp needs to be rebuilt and committed to source control.
 This is done so that each developer on each build is not required to have Sencha CMD installed, nor incur the cost to
-build the aggregate Javascript for the ExtJS library or the theme+application styling each time.
+build the aggregate JavaScript for the ExtJS library or the theme+application styling each time.
 
     mvn clean install -Pdriver -Dmode=build
 

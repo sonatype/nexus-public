@@ -182,7 +182,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
     // Load the certificate
     form.loadRecord(model);
 
-    // Show the second panel in the create wiard, and set the breadcrumb
+    // Show the second panel in the create wizard, and set the breadcrumb
     me.setItemName(2, NX.I18n.get('Ssl_SslCertificateDetailsWindow_Title'));
     me.loadCreateWizard(2, true, panel);
   },

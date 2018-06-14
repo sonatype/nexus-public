@@ -27,7 +27,7 @@ import org.osgi.framework.Version;
 public class NexusMain
     extends org.apache.karaf.main.Main
 {
-  //Visibile for testing
+  //Visible for testing
   static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
 
   Logger log = Logger.getLogger(this.getClass().getName());
@@ -49,7 +49,7 @@ public class NexusMain
         main.launch();
       }
       catch (Throwable ex) {
-        // Also log to sytem.err in case logging is not yet initialized
+        // Also log to system.err in case logging is not yet initialized
         System.err.println(ex.getMessage());
 
         main.log.log(Level.SEVERE, "Could not launch framework", ex);

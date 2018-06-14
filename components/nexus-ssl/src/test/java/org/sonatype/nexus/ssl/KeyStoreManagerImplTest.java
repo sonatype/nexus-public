@@ -291,7 +291,7 @@ public class KeyStoreManagerImplTest
     X509Certificate certificate =
         generateCertificate(10, "Foo Bar", "other-org-unit", "other-org", "other-locality", "other-state",
             "other-country");
-    keyStoreManager.importTrustCertificate(certificate, "valie-alias");
+    keyStoreManager.importTrustCertificate(certificate, "valid-alias");
 
     keyStoreManager.getTrustedCertificate("alias-that-does-not-exist");
   }

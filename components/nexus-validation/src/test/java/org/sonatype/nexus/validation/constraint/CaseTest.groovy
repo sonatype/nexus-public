@@ -36,7 +36,7 @@ class CaseTest
     validator = Validation.buildDefaultValidatorFactory().validator
   }
 
-  class UperCaseSubject
+  class UpperCaseSubject
   {
     @Case(UPPER)
     String value
@@ -46,11 +46,11 @@ class CaseTest
   void 'test UPPER case'() {
     def violations
 
-    violations = validator.validate(new UperCaseSubject(value: 'YES'))
+    violations = validator.validate(new UpperCaseSubject(value: 'YES'))
     log violations
     assert violations.size() == 0
 
-    violations = validator.validate(new UperCaseSubject(value: 'No'))
+    violations = validator.validate(new UpperCaseSubject(value: 'No'))
     log violations
     assert violations.size() == 1
   }

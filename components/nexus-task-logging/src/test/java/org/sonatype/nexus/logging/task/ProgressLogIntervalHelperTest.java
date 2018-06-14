@@ -32,7 +32,7 @@ public class ProgressLogIntervalHelperTest
 
     ProgressLogIntervalHelper underTest = new ProgressLogIntervalHelper(logger, 1);
 
-    // on immediate call interval will not have elapased so the logger should not be hit
+    // on immediate call interval will not have elapsed so the logger should not be hit
     underTest.info("Test 1", arg);
     verify(logger, never()).info(PROGRESS, "Test 1", argArray);
 

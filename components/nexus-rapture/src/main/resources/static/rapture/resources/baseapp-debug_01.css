@@ -3511,19 +3511,19 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {number} $button-opacity-disabled
- * opacity to apply to the button's main element when the buton is disabled
+ * opacity to apply to the button's main element when the button is disabled
  */
 /**
  * @var {number} $button-inner-opacity-disabled
- * opacity to apply to the button's inner elements (icon and text) when the buton is disabled
+ * opacity to apply to the button's inner elements (icon and text) when the button is disabled
  */
 /**
  * @var {number} $button-toolbar-opacity-disabled
- * opacity to apply to the toolbar button's main element when the buton is disabled
+ * opacity to apply to the toolbar button's main element when the button is disabled
  */
 /**
  * @var {number} $button-toolbar-inner-opacity-disabled
- * opacity to apply to the toolbar button's inner elements (icon and text) when the buton is disabled
+ * opacity to apply to the toolbar button's inner elements (icon and text) when the button is disabled
  */
 /**
  * @var {boolean}
@@ -4828,7 +4828,7 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {string}
- * The type of cursor to dislay when the cursor is over the LoadMask
+ * The type of cursor to display when the cursor is over the LoadMask
  */
 /**
  * @var {number/list}
@@ -5962,19 +5962,19 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {list}
- * The background-poisition of the Month Picker next year navigation button
+ * The background-position of the Month Picker next year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the hovered Month Picker next year navigation button
+ * The background-position of the hovered Month Picker next year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the Month Picker previous year navigation button
+ * The background-position of the Month Picker previous year navigation button
  */
 /**
  * @var {list}
- * The background-poisition of the hovered Month Picker previous year navigation button
+ * The background-position of the hovered Month Picker previous year navigation button
  */
 /**
  * @var {string}
@@ -6222,7 +6222,7 @@ td:not([class|=x]):last-child {
  * @var {number}
  * The height of grid editor text fields.  Defaults to $form-field-height.  If grid row
  * height is smaller than $form-field-height, defaults to the grid row height.  Grid row
- * height is caluclated by adding $grid-row-cell-line-height to the top and bottom values of
+ * height is calculated by adding $grid-row-cell-line-height to the top and bottom values of
  * $grid-cell-inner-padding.
  */
 /**
@@ -6623,12 +6623,12 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {boolean}
- * True to change the x background-postition of the close icon background image on hover
+ * True to change the x background-position of the close icon background image on hover
  * to allow for a horizontally aligned background image sprite
  */
 /**
  * @var {boolean}
- * True to change the x background-postition of the close icon background image on click
+ * True to change the x background-position of the close icon background image on click
  * to allow for a horizontally aligned background image sprite
  */
 /**
@@ -6782,8 +6782,8 @@ td:not([class|=x]):last-child {
  */
 /**
  * @var {boolean}
- * true to change the x postition of the background image on hover to allow for a
- * horizonatlly alined background image sprite
+ * true to change the x position of the background image on hover to allow for a
+ * horizontally alined background image sprite
  */
 /**
  * @var {boolean}
@@ -8571,11 +8571,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -8750,11 +8750,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -8929,11 +8929,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-toolbar-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -9108,11 +9108,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -9287,11 +9287,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-toolbar-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -9466,11 +9466,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 
@@ -9645,11 +9645,11 @@ a.x-tab .x-tab-inner-right {
  *
  * @param {boolean} [$include-ui-menu-arrows=$button-include-ui-menu-arrows]
  * True to include the UI name in the file name of the {@link #cfg-menu}
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-ui-split-arrows=$button-include-ui-split-arrows]
  * True to include the UI name in the file name of the {@link Ext.button.Split Split Button}'s
- * arrow icon. Set this to false to share the same arrow bewteen multiple UIs.
+ * arrow icon. Set this to false to share the same arrow between multiple UIs.
  *
  * @param {boolean} [$include-split-noline-arrows=$button-toolbar-include-split-noline-arrows]
  * True to add a "-noline" suffix to the file name of the {@link Ext.button.Split Split Button}'s 

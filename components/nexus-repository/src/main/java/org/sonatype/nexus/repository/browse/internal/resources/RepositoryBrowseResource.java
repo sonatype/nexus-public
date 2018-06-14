@@ -220,8 +220,8 @@ public class RepositoryBrowseResource
       StorageTx tx = UnitOfWork.currentTx();
       Asset candidate = tx.findAsset(assetId);
       if (candidate != null) {
-        final String asssetBucketRepositoryName = bucketStore.getById(candidate.bucketId()).getRepositoryName();
-        if (members.stream().anyMatch(repo -> repo.getName().equals(asssetBucketRepositoryName))) {
+        final String assetBucketRepositoryName = bucketStore.getById(candidate.bucketId()).getRepositoryName();
+        if (members.stream().anyMatch(repo -> repo.getName().equals(assetBucketRepositoryName))) {
           return candidate;
         }
       }

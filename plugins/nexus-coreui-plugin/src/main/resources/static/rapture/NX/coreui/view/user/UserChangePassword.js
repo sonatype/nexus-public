@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * Chnage password window.
+ * Change password window.
  *
  * @since 3.0
  */

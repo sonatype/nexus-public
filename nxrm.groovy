@@ -437,7 +437,7 @@ def processMavenGoalsAndPhases() {
 
 def processTestArgs() {
   // Test options
-  // Precendence: environment variable, parameter, rc
+  // Precedence: environment variable, parameter, rc
   debug("Initial value for 'tests' environment variable: $env.tests")
   debug("Initial value for '-tests' CLI: $cliOptions.tests")
   debug("Initial value for 'tests' RC config: $rcConfig.tests")
@@ -496,7 +496,7 @@ def processTestArgs() {
 
 def processAssemblyArgs() {
   // Assembly options
-  // Precendence: environment variable, parameter, rc
+  // Precedence: environment variable, parameter, rc
   debug("Initial value for 'assemblies' environment variable: $env.assemblies")
   debug("Initial value for '-assemblies' CLI: $cliOptions.assemblies")
   debug("Initial value for 'assemblies' RC config: $rcConfig.assemblies")
@@ -549,7 +549,7 @@ def processAssemblyArgs() {
 
 def processSourceArgs() {
   // Source options
-  // Precendence: environment variable, parameter, rc
+  // Precedence: environment variable, parameter, rc
   debug("Initial value for 'sources' environment variable: $env.sources")
   debug("Initial value for '-sources' CLI: $cliOptions.sources")
   debug("Initial value for 'sources' RC config: $rcConfig.sources")

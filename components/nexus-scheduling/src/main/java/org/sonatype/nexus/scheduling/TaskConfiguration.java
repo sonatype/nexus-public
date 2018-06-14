@@ -127,7 +127,7 @@ public class TaskConfiguration
   // Core properties
   //
 
-  // FIXME: Some of this screams out for a builer pattern, as we expect things like id to be non-null
+  // FIXME: Some of this screams out for a builder pattern, as we expect things like id to be non-null
   // FIXME: and this correctness is only enforced via validate helper
 
   public String getId() {
@@ -235,7 +235,7 @@ public class TaskConfiguration
   // Typed configuration helpers
   //
 
-  // FIXME: Consider changing set null to remove sematics, this could lead to confusing results
+  // FIXME: Consider changing set null to remove semantics, this could lead to confusing results
 
   public Date getDate(final String key, final Date defaultValue) {
     if (configuration.containsKey(key)) {

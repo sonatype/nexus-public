@@ -100,7 +100,7 @@ public class MergingGroupHandler
         log.trace("Responses merged {} : {}", context.getRepository().getName(), mavenPath.getPath());
         return HttpResponses.ok(content);
       }
-      log.trace("Not found respone to merge {} : {}", context.getRepository().getName(), mavenPath.getPath());
+      log.trace("Not found response to merge {} : {}", context.getRepository().getName(), mavenPath.getPath());
       return HttpResponses.notFound();
     }
     else {

@@ -61,7 +61,7 @@ class DeadBlobFinder
   /**
    * Based on the db metadata, confirm that all Blobs exist and sha1 values match. Can optionally ignore any records
    * that don't have a blobRef, which is expected for NuGet search results.
-   * @parem repository  The Repository to inspect
+   * @param repository  The Repository to inspect
    * @param ignoreMissingBlobRefs (defaults to true)
    */
   List<DeadBlobResult> find(@NotNull final Repository repository, boolean ignoreMissingBlobRefs = true) {
@@ -158,7 +158,7 @@ class DeadBlobFinder
     catch (MismatchedSHA1Exception pae) {
       return new DeadBlobResult(repositoryName, asset, SHA1_DISAGREEMENT, pae.message)
     }
-    catch (BlobUnavilableException e) {
+    catch (BlobUnavailableException e) {
       return new DeadBlobResult(repositoryName, asset, UNAVAILABLE_BLOB, e.message ?: 'Blob inputstream unavailable')
     }
     catch (Throwable e) {
@@ -180,7 +180,7 @@ class DeadBlobFinder
       blobstream = blob.inputStream
       if (metrics.contentSize > 0) {
         if (!blobstream.available()) {
-          throw new BlobUnavilableException()
+          throw new BlobUnavailableException()
         }
       }
     }
