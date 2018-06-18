@@ -14,9 +14,12 @@ package org.sonatype.nexus.orient;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * Default {@link DatabaseInstance} implementation.
@@ -53,7 +56,12 @@ public class DatabaseInstanceImpl
   @Override
   protected void doStart() throws Exception {
     // ensure the database is created
-    databaseManager.connect(name, true).close();
+    try (ODatabaseDocumentTx db = databaseManager.connect(name, true)) {
+      ORecordConflictStrategyFactory strategyFactory = Orient.instance().getRecordConflictStrategy();
+      db.getStorage().setConflictStrategy(
+          ofNullable(strategyFactory.getStrategy(name))
+              .orElse(strategyFactory.getDefaultImplementation()));
+    }
   }
 
   @Override

@@ -178,7 +178,7 @@ class SearchServiceImplIT
         componentsByRepository.put(repositories[random.nextInt(TEST_REPOSITORY_COUNT)], component) })
 
     // populate each index using bulk operations
-    componentsByRepository.keys().forEach({ repository ->
+    componentsByRepository.keySet().forEach({ repository ->
       searchService.bulkPut(
           repository,
           componentsByRepository.get(repository),

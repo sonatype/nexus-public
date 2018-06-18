@@ -905,6 +905,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_Metrics_Dispatches_Title: 'Active Web Requests',
     Support_Metrics_ResponseCode_Title: 'Web Response Codes',
     Support_Metrics_Requests_Title: 'Web Requests',
+    
+    // Admin -> Support -> MetricHealth
+    Metric_Health_Text: 'Status',
+    Metric_Health_Description: 'System status checks',
+    Metric_Health_Name_Header: 'Name',
+    Metric_Health_Message_Header: 'Message',
+    Metric_Health_Error_Header: 'Error',
+    Metric_Health_Load_Mask: 'Loading&hellip;',
+    Metric_Health_Refresh_Warning : 'Failed to refresh server status',
 
 
     // Admin -> Support -> Support Request

@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
+import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
@@ -71,11 +72,20 @@ public class MergingGroupHandler
       }
     }
 
-    // now check group-level cache to see if it's been invalidated by any updates
-    Content content = groupFacet.getCached(mavenPath);
-    if (content != null) {
-      log.trace("Serving cached content {} : {}", context.getRepository().getName(), mavenPath.getPath());
-      return HttpResponses.ok(content);
+    Content content;
+
+    boolean cacheMergedResult = true;
+    try {
+      // now check group-level cache to see if it's been invalidated by any updates
+      content = groupFacet.getCached(mavenPath);
+      if (content != null) {
+        log.trace("Serving cached content {} : {}", context.getRepository().getName(), mavenPath.getPath());
+        return HttpResponses.ok(content);
+      }
+    }
+    catch (RetryDeniedException e) {
+      log.debug("Conflict fetching cached content {} : {}", context.getRepository().getName(), mavenPath.getPath(), e);
+      cacheMergedResult = false;
     }
 
     if (!mavenPath.isHash()) {
@@ -95,11 +105,18 @@ public class MergingGroupHandler
       }
 
       // merge the individual responses and cache the result
-      content = groupFacet.mergeAndCache(mavenPath, responses);
+      if (cacheMergedResult) {
+        content = groupFacet.mergeAndCache(mavenPath, responses);
+      }
+      else {
+        content = groupFacet.mergeWithoutCaching(mavenPath, responses);
+      }
+
       if (content != null) {
         log.trace("Responses merged {} : {}", context.getRepository().getName(), mavenPath.getPath());
         return HttpResponses.ok(content);
       }
+
       log.trace("Not found respone to merge {} : {}", context.getRepository().getName(), mavenPath.getPath());
       return HttpResponses.notFound();
     }

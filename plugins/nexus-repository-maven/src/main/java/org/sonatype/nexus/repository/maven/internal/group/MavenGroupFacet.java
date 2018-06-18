@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.repository.maven.internal.group;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -28,6 +30,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.http.HttpStatus;
@@ -38,24 +41,35 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetEvent;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.thread.io.StreamCopier;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.io.ByteStreams.toByteArray;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.mayAddETag;
 
 /**
@@ -109,8 +123,43 @@ public class MavenGroupFacet
    * map.
    */
   @Nullable
-  public Content mergeAndCache(final MavenPath mavenPath,
-      final Map<Repository, Response> responses) throws IOException
+  public Content mergeAndCache(final MavenPath mavenPath, final Map<Repository, Response> responses)
+      throws IOException
+  {
+    return merge(mavenPath, responses, this::createTempBlob, (tempBlob, contentType) -> {
+      log.trace("Caching merged content");
+      return cache(mavenPath, tempBlob, contentType);
+    });
+  }
+
+  /**
+   * Merges the metadata but doesn't cache it. Returns {@code null} if no usable response was in passed in map.
+   *
+   * @since 3.next
+   */
+  @Nullable
+  public Content mergeWithoutCaching(final MavenPath mavenPath, final Map<Repository, Response> responses)
+      throws IOException
+  {
+    return merge(mavenPath, responses, Function.identity(), (in, contentType) -> {
+      // load bytes in memory to make content re-usable; metadata shouldn't be too large
+      // (don't include cache-related attributes since this content has not been cached)
+      return new Content(new BytesPayload(toByteArray(in), contentType));
+    });
+  }
+
+  @FunctionalInterface
+  private interface ContentFunction<T>
+  {
+    Content apply(T data, String contentType) throws IOException;
+  }
+
+  @Nullable
+  private <T extends Closeable> Content merge(final MavenPath mavenPath,
+                                              final Map<Repository, Response> responses,
+                                              final Function<InputStream, T> streamFunction,
+                                              final ContentFunction<T> contentFunction)
+      throws IOException
   {
     checkMergeHandled(mavenPath);
     // we do not cache subordinates/hashes, they are created as side-effect of cache
@@ -130,30 +179,29 @@ public class MavenGroupFacet
       return null;
     }
 
-    TempBlob tempBlob = null;
+    T data = null;
 
     try {
       String contentType = null;
-
       if (mavenFacet.getMavenPathParser().isRepositoryMetadata(mavenPath)) {
-        tempBlob = merge(repositoryMetadataMerger::merge, mavenPath, contents);
+        data = merge(repositoryMetadataMerger::merge, mavenPath, contents, streamFunction);
         contentType = MavenMimeRulesSource.METADATA_TYPE;
       }
       else if (mavenPath.getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME)) {
-        tempBlob = merge(archetypeCatalogMerger::merge, mavenPath, contents);
+        data = merge(archetypeCatalogMerger::merge, mavenPath, contents, streamFunction);
         contentType = ContentTypes.APPLICATION_XML;
       }
 
-      if (tempBlob == null) {
+      if (data == null) {
         log.trace("No content resulted out of merge");
         return null;
       }
-      log.trace("Caching merged content");
-      return cache(mavenPath, tempBlob, contentType);
+
+      return contentFunction.apply(data, contentType);
     }
     finally {
-      if(tempBlob != null) {
-        tempBlob.close();
+      if (data != null) {
+        data.close();
       }
     }
   }
@@ -165,10 +213,14 @@ public class MavenGroupFacet
     void merge(OutputStream outputStream, MavenPath mavenPath, LinkedHashMap<Repository, Content> contents);
   }
 
-  private TempBlob merge(final MetadataMerger merger, final MavenPath mavenPath, final LinkedHashMap<Repository, Content> contents) {
+  private <T> T merge(final MetadataMerger merger,
+                      final MavenPath mavenPath,
+                      final LinkedHashMap<Repository, Content> contents,
+                      final Function<InputStream, T> streamFunction)
+  {
     return new StreamCopier<>(
         outputStream -> merger.merge(outputStream, mavenPath, contents),
-        this::createTempBlob).read();
+        streamFunction).read();
   }
 
   private TempBlob createTempBlob(final InputStream inputStream) {
@@ -192,23 +244,53 @@ public class MavenGroupFacet
   }
 
   /**
-   * Caches the merged content and it's Maven2 format required sha1/md5 hashes along.
+   * Attempts to cache the merged content, falling back to temporary uncached result if necessary.
    */
   private Content cache(final MavenPath mavenPath,
                         final TempBlob tempBlob,
                         final String contentType) throws IOException {
+
     AttributesMap attributesMap = new AttributesMap();
     maintainCacheInfo(attributesMap);
     mayAddETag(attributesMap, tempBlob.getHashes());
 
-    return MavenFacetUtils.putWithHashes(mavenFacet, mavenPath, tempBlob, contentType, attributesMap);
+    try {
+      return doCache(mavenPath, tempBlob, contentType, attributesMap);
+    }
+    catch (ONeedRetryException | ORecordDuplicatedException | MissingBlobException e) {
+      log.debug("Conflict caching merged content {} : {}",
+          getRepository().getName(), mavenPath.getPath(), e);
+    }
+    catch (Exception e) {
+      log.warn("Problem caching merged content {} : {}",
+          getRepository().getName(), mavenPath.getPath(), e);
+    }
+
+    invalidatePath(mavenPath); // sanity: force re-merge on next request
+
+    try (InputStream in = tempBlob.get()) {
+      // load bytes in memory before tempBlob vanishes; metadata shouldn't be too large
+      // (don't include cache-related attributes since this content has not been cached)
+      return new Content(new BytesPayload(toByteArray(in), contentType));
+    }
   }
 
   /**
-   * Evicts the cached content and it's Maven2 format required sha1/md5 hashes along.
+   * Caches the merged content and its Maven2 format required sha1/md5 hashes along.
+   *
+   * Declare this method as transactional before calling the main facet as we want to
+   * create the merged metadata as well as its Maven2 hashes in a single transaction.
+   * We also want to avoid retrying if another thread concurrently works on the same
+   * metadata path.
    */
-  private void evictCache(final MavenPath mavenPath) throws IOException {
-    MavenFacetUtils.deleteWithHashes(mavenFacet, mavenPath);
+  @Transactional
+  protected Content doCache(final MavenPath mavenPath,
+                            final TempBlob tempBlob,
+                            final String contentType,
+                            final AttributesMap attributesMap)
+      throws IOException
+  {
+    return MavenFacetUtils.putWithHashes(mavenFacet, mavenPath, tempBlob, contentType, attributesMap);
   }
 
   @Subscribe
@@ -218,20 +300,82 @@ public class MavenGroupFacet
     if (event.isLocal() && event.getComponentId() == null && member(event.getRepositoryName())) {
       final String path = event.getAsset().name();
       final MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
-      // group deletes path + path.hashes, but it should do only on content change in member
+      // only trigger eviction on main metadata artifact (which may go on to evict its hashes)
       if (!mavenPath.isHash()) {
         UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
         try {
-          evictCache(mavenPath);
-        }
-        catch (IOException e) {
-          log.warn("Could not evict merged content from {} cache at {}", getRepository().getName(),
-              mavenPath.getPath(), e);
+          evictCache(mavenPath, event instanceof AssetDeletedEvent);
         }
         finally {
           UnitOfWork.end();
         }
       }
+    }
+  }
+
+  /**
+   * Evicts the cached content and potentially its Maven2 format required sha1/md5 hashes.
+   */
+  private void evictCache(final MavenPath mavenPath, final boolean delete) {
+    if (delete) {
+      try {
+        deletePath(mavenPath);
+        return; // no need to invalidate
+      }
+      catch (ONeedRetryException | MissingBlobException e) {
+        log.debug("Conflict deleting cached content {} : {}, will invalidate instead",
+            getRepository().getName(), mavenPath.getPath(), e);
+      }
+      catch (Exception e) {
+        log.warn("Problem deleting cached content {} : {}, will invalidate instead",
+            getRepository().getName(), mavenPath.getPath(), e);
+      }
+    }
+
+    invalidatePath(mavenPath);
+  }
+
+  /**
+   * Attempts to delete previously cached content for the given {@link MavenPath}.
+   *
+   * Declare this method as transactional before calling the main facet as we want to
+   * override the default semantics and let retry exceptions propagate to the caller.
+   * We also want to avoid retrying if another thread concurrently works on the same
+   * metadata path.
+   */
+  @Transactional(swallow = ORecordNotFoundException.class)
+  protected void deletePath(final MavenPath mavenPath) throws IOException {
+    MavenFacetUtils.deleteWithHashes(mavenFacet, mavenPath);
+  }
+
+  /**
+   * Invalidates the previously cached content for the given {@link MavenPath}.
+   *
+   * Note: in the current maven-group design hashes are always considered 'fresh',
+   * so we don't mark them as stale. Instead they will be automatically refreshed
+   * when the main content is next requested.
+   *
+   * @see #getCached(MavenPath)
+   */
+  private void invalidatePath(final MavenPath mavenPath) {
+    try {
+      doInvalidate(mavenPath);
+    }
+    catch (Exception e) {
+      log.warn("Problem invalidating cached content {} : {}",
+          getRepository().getName(), mavenPath.getPath(), e);
+    }
+  }
+
+  /**
+   * Tries to invalidate the current main cached asset for the given {@link MavenPath}.
+   */
+  @Transactional(retryOn = ONeedRetryException.class, swallow = ORecordNotFoundException.class)
+  protected void doInvalidate(final MavenPath mavenPath) {
+    StorageTx tx = UnitOfWork.currentTx();
+    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), mavenPath.main());
+    if (asset != null && CacheInfo.invalidateAsset(asset)) {
+      tx.saveAsset(asset);
     }
   }
 }

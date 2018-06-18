@@ -24,8 +24,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import org.eclipse.sisu.wire.WireModule;
+
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.DATABASE_NAMES;
 
 /**
  * Boots the Orient console and adds support for PBE compression.
@@ -54,6 +59,12 @@ public class Main
 
     // enable support for PBE compression; needed to work with the security database
     OCompressionFactory.INSTANCE.register(injector.getInstance(PbeCompression.class));
+
+    // temporarily register default strategy under each database name in case they've
+    // been configured to use a custom strategy that's not on the current classpath
+    ORecordConflictStrategyFactory strategyFactory = Orient.instance().getRecordConflictStrategy();
+    ORecordConflictStrategy defaultStrategy = strategyFactory.getDefaultImplementation();
+    DATABASE_NAMES.forEach(name -> strategyFactory.registerImplementation(name, defaultStrategy));
 
     OConsoleDatabaseApp.main(args);
   }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public class TempBlob
-    implements AutoCloseable, Supplier<InputStream>
+    implements Closeable, Supplier<InputStream>
 {
   private static final Logger log = LoggerFactory.getLogger(TempBlob.class);
 

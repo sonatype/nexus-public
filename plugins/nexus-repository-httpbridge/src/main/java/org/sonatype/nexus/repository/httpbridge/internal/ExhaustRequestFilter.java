@@ -54,7 +54,13 @@ public class ExhaustRequestFilter
   private final Pattern exhaustForAgentsPattern;
 
   @Inject
-  public ExhaustRequestFilter(@Named("${nexus.view.exhaustForAgents:-Apache-Maven.*}") final String exhaustForAgents) {
+  public ExhaustRequestFilter(
+      @Named("${nexus.view.exhaustForAgents:-Apache-Maven.*|Apache Ivy.*}") final String exhaustForAgents)
+  {
+    /*
+      NOTE: An exhaustForAgents pattern delimited by "\\s,\\s" is supported for backwards-compatibility reasons but
+            using a pattern that is instead pipe-delimited is recommended.
+     */
     this.exhaustForAgentsPattern = Pattern.compile(exhaustForAgents.replace("\\s,\\s", "|"));
   }
 

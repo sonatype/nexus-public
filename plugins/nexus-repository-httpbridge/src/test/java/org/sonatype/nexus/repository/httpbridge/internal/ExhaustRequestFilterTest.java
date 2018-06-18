@@ -12,20 +12,20 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.verification.VerificationMode;
 
 import static org.apache.http.HttpHeaders.USER_AGENT;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -38,6 +38,13 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
  */
 public class ExhaustRequestFilterTest extends TestSupport
 {
+  private static final String PIPE_DELIMITED_MATCHING_PATTERN = "Apache-Maven.*|Apache Ivy.*";
+
+  private static final String UNFORTUNATELY_SUPPORTED_COMMA_DELIMITED_MATCHING_PATTERN =
+      "Apache-Maven.*\\s,\\sApache Ivy.*";
+
+  private static final String NULL_USER_AGENT = null;
+
   @Mock
   HttpServletRequest request;
 
@@ -47,69 +54,69 @@ public class ExhaustRequestFilterTest extends TestSupport
   @Mock
   javax.servlet.FilterChain filterChain;
 
-  ExhaustRequestFilter filter;
-
-  @Before
-  public void setUp() throws Exception {
-    filter = new ExhaustRequestFilter("Apache-Maven.*");
-  }
-
   @Test
   public void httpOkResponse() throws Exception {
-    setupMockResponse(OK, null, null);
-
-    filter.doFilter(request, response, filterChain);
-
-    verifyRequestNotExhausted();
+    verifyRequestNotExhausted(OK, PUT, "Apache-Maven.Foo");
   }
 
   @Test
   public void http400GetResponse() throws Exception {
-    setupMockResponse(BAD_REQUEST, GET, null);
-
-    filter.doFilter(request, response, filterChain);
-
-    verifyRequestNotExhausted();
+    verifyRequestNotExhausted(BAD_REQUEST, GET, "Apache-Maven.Foo");
   }
 
   @Test
   public void http400PutResponse_NullUserAgent() throws Exception {
-    setupMockResponse(BAD_REQUEST, PUT, null);
-
-    filter.doFilter(request, response, filterChain);
-
-    verifyRequestNotExhausted();
+    verifyRequestNotExhausted(BAD_REQUEST, PUT, NULL_USER_AGENT);
   }
 
   @Test
-  public void http400PutResponse_NonMavenUserAgent() throws Exception {
-    setupMockResponse(BAD_REQUEST, PUT, "notmaven");
-
-    filter.doFilter(request, response, filterChain);
-
-    verifyRequestNotExhausted();
+  public void http400PutResponse_NonMavenOrIvyUserAgent() throws Exception {
+    verifyRequestNotExhausted(BAD_REQUEST, PUT, "notmavenorivy");
   }
 
   @Test
   public void http400PutResponse_MavenUserAgent() throws Exception {
-    setupMockResponse(BAD_REQUEST, PUT, "Apache-Maven.Foo");
+    verifyRequestExhausted(BAD_REQUEST, PUT, "Apache-Maven.Foo");
+  }
 
-    filter.doFilter(request, response, filterChain);
+  @Test
+  public void http400PutResponse_IvyUserAgent() throws Exception {
+    verifyRequestExhausted(BAD_REQUEST, PUT, "Apache Ivy.Foo");
+  }
 
-    verifyRequestExhausted();
+  private void verifyRequestNotExhausted(final Integer status, final String method, final String userAgent)
+      throws Exception
+  {
+    verifyRequestExhaustionStatus(status, method, userAgent, never());
+  }
+
+  private void verifyRequestExhausted(final Integer status, final String method, final String userAgent)
+      throws Exception
+  {
+    verifyRequestExhaustionStatus(status, method, userAgent, times(1));
+  }
+
+  private void verifyRequestExhaustionStatus(final Integer status, final String method, final String userAgent,
+                                             final VerificationMode verificationMode) throws Exception
+  {
+    doVerifyRequestExhaustionStatus(status, method, userAgent, PIPE_DELIMITED_MATCHING_PATTERN, verificationMode);
+    doVerifyRequestExhaustionStatus(
+        status, method, userAgent, UNFORTUNATELY_SUPPORTED_COMMA_DELIMITED_MATCHING_PATTERN, verificationMode);
+  }
+
+  private void doVerifyRequestExhaustionStatus(final Integer status, final String method, final String userAgent,
+                                               final String exhaustForAgents, final VerificationMode verificationMode)
+      throws Exception
+  {
+    setupMockResponse(status, method, userAgent);
+    new ExhaustRequestFilter(exhaustForAgents).doFilter(request, response, filterChain);
+    verify(request, verificationMode).getInputStream();
   }
 
   private void setupMockResponse(final Integer status, final String method, final String userAgent) {
+    reset(request, response);
     when(response.getStatus()).thenReturn(status);
     when(request.getMethod()).thenReturn(method);
     when(request.getHeader(eq(USER_AGENT))).thenReturn(userAgent);
-  }
-
-  private void verifyRequestNotExhausted() throws IOException {
-    verify(request, never()).getInputStream();
-  }
-
-  private void verifyRequestExhausted() throws IOException {
-    verify(request).getInputStream();
   }
 }

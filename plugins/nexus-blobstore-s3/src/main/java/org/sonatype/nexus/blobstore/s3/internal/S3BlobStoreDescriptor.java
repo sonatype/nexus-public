@@ -40,7 +40,7 @@ public class S3BlobStoreDescriptor
   private interface Messages
       extends MessageBundle
   {
-    @DefaultMessage("S3 (Experimental)")
+    @DefaultMessage("S3")
     String name();
 
     @DefaultMessage("Bucket")
