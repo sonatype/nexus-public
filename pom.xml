@@ -816,6 +816,11 @@
                     <exclude>org.bouncycastle:*-jdk15:*</exclude>
                     <exclude>bouncycastle:*-jdk14:*</exclude>
                     <exclude>bouncycastle:*-jdk15:*</exclude>
+
+                    <!--
+                    Ban old javax.mail
+                    -->
+                    <exclude>javax.mail:mail(,1.5.3]</exclude>
                   </excludes>
 
                   <!--
