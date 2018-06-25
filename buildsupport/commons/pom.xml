@@ -88,6 +88,12 @@
         <version>1.9</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.tukaani</groupId>
+        <artifactId>xz</artifactId>
+        <version>1.8</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

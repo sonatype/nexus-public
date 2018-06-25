@@ -269,7 +269,7 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
           }
 
           var linkMarkup = '<a href="#nexus-search;gav~' + record.get('groupId') + '~' + record.get('artifactId')
-                  + '~~~~kw,versionexpand " onmousedown="cancel_bubble(event)" onclick="cancel_bubble(event); return true;">';
+                  + '~~~~kw,versionexpand" onmousedown="cancel_bubble(event)" onclick="cancel_bubble(event); return true;">';
 
           if (store.reader.jsonData.tooManyResults) {
             return linkMarkup + 'Show All Versions</a>';
