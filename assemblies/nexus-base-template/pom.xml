@@ -284,7 +284,7 @@
                   <replacefilter token="http://petstore.swagger.io/v2/swagger.json" value="../service/rest/swagger.json?_cb=${project.version}"/>
                   <!-- disable remote validation and apply alpha sorting to tags and operations list -->
                   <replacefilter token="SwaggerUIBundle({"
-                                 value="SwaggerUIBundle({requestInterceptor:function(r){r.headers['NX-ANTI-CSRF-TOKEN']=(document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];},validatorUrl:null,docExpansion:'list',tagsSorter:'alpha',operationsSorter:'alpha',defaultModelsExpandDepth:-1,"/>
+                                 value="SwaggerUIBundle({requestInterceptor:function(r){r.headers['NX-ANTI-CSRF-TOKEN']=(document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];return r;},showMutatedRequest:false,validatorUrl:null,docExpansion:'list',tagsSorter:'alpha',operationsSorter:'alpha',defaultModelsExpandDepth:-1,"/>
                 </replace>
                 <concat destfile="${project.build.directory}/assembly/public/swagger-ui/swagger-ui.css" append="true">
                   <!-- hide unwanted intro sections and margins -->

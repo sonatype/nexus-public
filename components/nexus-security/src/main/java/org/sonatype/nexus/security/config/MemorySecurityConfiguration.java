@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.security.config.CUserRoleMapping.isCaseInsensitiveSource;
 
 /**
  * Memory based {@link SecurityConfiguration}.
@@ -269,6 +270,6 @@ public class MemorySecurityConfiguration
   }
 
   private String userRoleMappingKey(final String userId, final String source) {
-    return userId + "|" + source;
+    return (isCaseInsensitiveSource(source) ? userId.toLowerCase() : userId) + "|" + source;
   }
 }

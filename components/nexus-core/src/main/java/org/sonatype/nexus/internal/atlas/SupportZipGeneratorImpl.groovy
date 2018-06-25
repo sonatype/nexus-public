@@ -144,13 +144,17 @@ class SupportZipGeneratorImpl
     log.debug 'Writing ZIP file: {}', file
 
     def truncated = generate(request, prefix, file.newOutputStream())
+    def length = file.length()
 
     // move the file into place
-    def target = downloadService.move(file, "${prefix}.zip")
-    log.info 'Created support ZIP file: {}', target
+    def targetFileName = "${prefix}.zip"
+    def path = downloadService.move(file, targetFileName)
+    log.info 'Created support ZIP file: {}', path
 
     return new Result(
-        file: target,
+        filename: targetFileName,
+        localPath: path,
+        size: length,
         truncated: truncated
     )
   }

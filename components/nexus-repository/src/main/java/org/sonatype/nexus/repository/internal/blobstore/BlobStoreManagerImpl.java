@@ -153,7 +153,13 @@ public class BlobStoreManagerImpl
       store.create(configuration);
     }
     catch (Exception e) {
-      blobStore.remove();
+      try {
+        blobStore.remove();
+      }
+      catch (Exception removeException) {
+        // if an error occurs on remove log and rethrow original to avoid losing the root cause
+        log.error("Error removing BlobStore {} after create failed", configuration.getName(), removeException);
+      }
       throw e;
     }
 

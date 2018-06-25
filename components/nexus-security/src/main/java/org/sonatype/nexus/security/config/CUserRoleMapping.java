@@ -17,7 +17,8 @@ import java.util.Set;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
 
-import com.google.common.collect.Sets;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
  * Persistent user-role mapping.
@@ -26,6 +27,8 @@ public class CUserRoleMapping
     extends AbstractEntity
     implements Serializable, Cloneable
 {
+  private static final Set<String> CASE_INSENSITIVE_SOURCES = newHashSet(DEFAULT_SOURCE.toLowerCase(), "crowd", "ldap");
+
   private String userId;
 
   private String source;
@@ -40,7 +43,7 @@ public class CUserRoleMapping
 
   public Set<String> getRoles() {
     if (this.roles == null) {
-      this.roles = Sets.newHashSet();
+      this.roles = newHashSet();
     }
     return this.roles;
   }
@@ -83,7 +86,7 @@ public class CUserRoleMapping
       CUserRoleMapping copy = (CUserRoleMapping) super.clone();
 
       if (this.roles != null) {
-        copy.roles = Sets.newHashSet(this.roles);
+        copy.roles = newHashSet(this.roles);
       }
 
       return copy;
@@ -101,5 +104,9 @@ public class CUserRoleMapping
         ", roles=" + roles +
         ", version='" + version + '\'' +
         '}';
+  }
+
+  public static boolean isCaseInsensitiveSource(final String source) {
+    return CASE_INSENSITIVE_SOURCES.contains(source.toLowerCase());
   }
 }

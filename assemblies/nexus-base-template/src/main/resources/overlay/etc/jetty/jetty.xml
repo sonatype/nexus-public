@@ -3,7 +3,9 @@
 <Configure id="Server" class="org.eclipse.jetty.server.Server">
 
   <Arg name="threadpool">
-    <New id="threadpool" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedQueuedThreadPool"/>
+    <New id="threadpool" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedQueuedThreadPool">
+      <Set name="maxThreads">400</Set>
+    </New>
   </Arg>
 
   <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler">

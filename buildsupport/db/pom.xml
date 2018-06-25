@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.2.35</orientdb.version>
+    <orientdb.version>2.2.36</orientdb.version>
     <hazelcast.version>3.8.9</hazelcast.version>
     <hazelcast-aws.version>2.1.1</hazelcast-aws.version>
   </properties>
@@ -84,6 +84,12 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-server</artifactId>
         <version>${orientdb.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

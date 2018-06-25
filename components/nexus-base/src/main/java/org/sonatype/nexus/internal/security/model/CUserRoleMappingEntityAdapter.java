@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import static org.sonatype.nexus.security.config.CUserRoleMapping.isCaseInsensitiveSource;
+
 /**
  * {@link CUserRoleMapping} entity adapter.
  *
@@ -49,6 +51,8 @@ public class CUserRoleMappingEntityAdapter
 
   private static final String P_USER_ID = "userId";
 
+  private static final String P_USER_ID_LOWERCASE = P_USER_ID + ".toLowerCase()";
+
   private static final String P_SOURCE = "source";
 
   private static final String P_ROLES = "roles";
@@ -62,9 +66,19 @@ public class CUserRoleMappingEntityAdapter
   private final ReadEntityByPropertyAction<CUserRoleMapping> read = new ReadEntityByPropertyAction<>(this, P_USER_ID,
       P_SOURCE);
 
+  private final ReadEntityByPropertyAction<CUserRoleMapping> readIgnoreCase = new ReadEntityByPropertyAction<>(
+      this, P_USER_ID_LOWERCASE, P_SOURCE);
+
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_USER_ID, P_SOURCE);
 
-  private final UpdateEntityByPropertyAction<CUserRoleMapping> update = new UpdateEntityByPropertyAction<>(this, P_USER_ID, P_SOURCE);
+  private final DeleteEntityByPropertyAction deleteIgnoreCase = new DeleteEntityByPropertyAction(this,
+      P_USER_ID_LOWERCASE, P_SOURCE);
+
+  private final UpdateEntityByPropertyAction<CUserRoleMapping> update = new UpdateEntityByPropertyAction<>(this,
+      P_USER_ID, P_SOURCE);
+
+  private final UpdateEntityByPropertyAction<CUserRoleMapping> updateIgnoreCase = new UpdateEntityByPropertyAction<>(
+      this, P_USER_ID_LOWERCASE, P_SOURCE);
 
   public CUserRoleMappingEntityAdapter() {
     super(DB_CLASS);
@@ -104,17 +118,23 @@ public class CUserRoleMappingEntityAdapter
 
   @Nullable
   public CUserRoleMapping read(final ODatabaseDocumentTx db, final String userId, final String source) {
-    return read.execute(db, userId, source);
+    return isCaseInsensitiveSource(source) ?
+        readIgnoreCase.execute(db, userId.toLowerCase(), source) :
+        read.execute(db, userId, source);
   }
 
   public boolean delete(final ODatabaseDocumentTx db, final String userId, final String source) {
-    return delete.execute(db, userId, source);
+    return isCaseInsensitiveSource(source) ?
+        deleteIgnoreCase.execute(db, userId.toLowerCase(), source) :
+        delete.execute(db, userId, source);
   }
 
   /**
    * @since 3.6.1
    */
   public boolean update(final ODatabaseDocumentTx db, final CUserRoleMapping entity) {
-    return update.execute(db, entity, entity.getUserId(), entity.getSource());
+    return isCaseInsensitiveSource(entity.getSource()) ?
+        updateIgnoreCase.execute(db, entity, entity.getUserId().toLowerCase(), entity.getSource()) :
+        update.execute(db, entity, entity.getUserId(), entity.getSource());
   }
 }

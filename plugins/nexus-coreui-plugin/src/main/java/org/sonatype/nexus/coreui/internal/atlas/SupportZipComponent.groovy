@@ -56,9 +56,9 @@ class SupportZipComponent
   SupportZipXO create(final @NotNull SupportZipGenerator.Request request) {
     def result = supportZipGenerator.generate(request)
     return new SupportZipXO(
-        file: result.file.canonicalPath,
-        name: result.file.name,
-        size: result.file.length(),
+        file: result.localPath,
+        name: result.filename,
+        size: result.size,
         truncated: result.truncated
     )
   }

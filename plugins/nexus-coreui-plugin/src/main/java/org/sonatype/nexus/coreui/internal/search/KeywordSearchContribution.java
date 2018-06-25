@@ -32,7 +32,10 @@ public class KeywordSearchContribution
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      query.must(QueryBuilders.queryStringQuery(value));
+      query.must(QueryBuilders.queryStringQuery(value)
+          .field("name.case_insensitive")
+          .field("group.case_insensitive")
+          .field("_all"));
     }
   }
 

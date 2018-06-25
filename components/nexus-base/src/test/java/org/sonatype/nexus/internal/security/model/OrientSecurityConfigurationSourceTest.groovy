@@ -25,6 +25,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException
 
 import org.junit.Rule
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Tests for {@link OrientSecurityConfigurationSource}.
@@ -58,7 +59,7 @@ class OrientSecurityConfigurationSourceTest
     when: 'updateUser is called'
       admin.firstName = 'foo'
       source.configuration.updateUser(admin)
-    
+
     then: 'user is persisted'
       source.configuration.getUser('admin').firstName == 'foo'
 
@@ -74,14 +75,14 @@ class OrientSecurityConfigurationSourceTest
       source.configuration.addPrivilege(new CPrivilege(id: 'test', name: 'test', type: 'test'))
       def privilege = source.configuration.getPrivilege('test')
       def newPrivilege = new CPrivilege(id: 'new', name: 'new', type: 'test')
-     
+
     when: 'updatePrivilege is called'
       privilege.name = 'foo'
       source.configuration.updatePrivilege(privilege)
 
     then: 'privilege is persisted'
       source.configuration.getPrivilege('test').name == 'foo'
-      
+
     when: 'updatePrivilege is called on privilege that hasnt been saved'
       source.configuration.updatePrivilege(newPrivilege)
 
@@ -143,5 +144,70 @@ class OrientSecurityConfigurationSourceTest
 
     then: 'exception is thrown'
       thrown(NoSuchRoleMappingException)
+  }
+
+  def 'userRoleMappings userIds are case sensitive'() {
+    given: 'an existing user role mapping'
+      def roles = ['test-role'] as Set
+      def userId = 'userid'
+      def src = 'other'
+      def newUserRoleMapping = new CUserRoleMapping(userId: userId, source: src, roles: roles)
+      source.configuration.addUserRoleMapping(newUserRoleMapping)
+
+    when: 'a users roles are retrieved with different user id casing'
+      def roleMapping = source.configuration.getUserRoleMapping(userId.toUpperCase(), src)
+
+    then: 'the mapping is not found'
+      roleMapping == null
+
+    when: 'the mapping is updated with different user id casing'
+      roleMapping = source.configuration.getUserRoleMapping(userId, src)
+      roleMapping.userId = 'USERID'
+      roleMapping.roles << 'new-role'
+      source.configuration.updateUserRoleMapping(roleMapping)
+
+    then: 'an error occurs'
+      thrown NoSuchRoleMappingException
+
+    when: 'the mapping is deleted with a different user id casing'
+      source.configuration.removeUserRoleMapping(userId.toUpperCase(), src)
+
+    then: 'the mapping is not deleted'
+      source.configuration.getUserRoleMapping(userId, src) != null
+  }
+
+  @Unroll
+  def 'userRoleMappings userIds are not case sensitive with source: \'#src\''(src) {
+    given: 'an existing user role mapping'
+      def roles = ['test-role'] as Set
+      def userId = 'userid'
+      def newUserRoleMapping = new CUserRoleMapping(userId: userId, source: src, roles: roles)
+      source.configuration.addUserRoleMapping(newUserRoleMapping)
+
+    when: 'a users roles are retrieved with different user id casing'
+      def roleMapping = source.configuration.getUserRoleMapping(userId.toUpperCase(), src)
+
+    then: 'the mapping is found'
+      roleMapping != null
+
+    when: 'the mapping is updated with different user id casing'
+      roleMapping.userId = 'USERID'
+      roleMapping.roles << 'new-role'
+      source.configuration.updateUserRoleMapping(roleMapping)
+
+    and: 'the mapping is read again'
+      roleMapping = source.configuration.getUserRoleMapping(userId, src)
+
+    then: 'the new role is found'
+      roleMapping.roles == roles << 'new-role'
+
+    when: 'the mapping is deleted with a different user id casing'
+      source.configuration.removeUserRoleMapping(userId.toUpperCase(), src)
+
+    then: 'the mapping is removed from the system'
+      source.configuration.getUserRoleMapping(userId, src) == null
+
+    where:
+      src << ['default', 'ldap', 'crowd']
   }
 }

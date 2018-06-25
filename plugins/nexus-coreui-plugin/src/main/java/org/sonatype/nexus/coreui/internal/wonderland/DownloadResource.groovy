@@ -91,16 +91,16 @@ class DownloadResource
     }
 
     try {
-      def file = downloadService.get(fileName, authTicket)
+      def download = downloadService.get(fileName, authTicket)
 
-      if (!file.exists()) {
+      if (download == null) {
         return Response.status(NOT_FOUND).build()
       }
 
-      log.debug 'Sending support ZIP file: {}', file
-      return Response.ok(file.newInputStream())
+      log.debug 'Sending support ZIP file: {}', fileName
+      return Response.ok(download.bytes)
           .header(CONTENT_DISPOSITION, "attachment; filename=\"${fileName}\"")
-          .header(CONTENT_LENGTH, file.length())
+          .header(CONTENT_LENGTH, download.length)
           .build()
     }
     catch (IllegalAccessException e) {

@@ -215,7 +215,12 @@ public class BlobStoreMetricsStoreImpl
 
   @Override
   public File[] listBackingFiles() {
-    return storageDirectory.toFile().listFiles((dir, name) -> name.endsWith(METRICS_FILENAME));
+    if (storageDirectory == null) {
+      return new File[0];
+    }
+    else {
+      return storageDirectory.toFile().listFiles((dir, name) -> name.endsWith(METRICS_FILENAME));
+    }
   }
 
   private void updateProperties() {

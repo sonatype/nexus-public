@@ -1099,6 +1099,11 @@
                     Ban snappy-java as there are lingering issues on OSGi when restarting.
                     -->
                     <exclude>org.xerial.snappy:snappy-java:*</exclude>
+
+                    <!--
+                    Ban old javax.mail
+                    -->
+                    <exclude>javax.mail:mail:*</exclude>
                   </excludes>
 
                   <!--

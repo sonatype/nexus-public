@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.internal.blobstore
 
 import javax.inject.Inject
 import javax.inject.Named
+import javax.inject.Provider
 import javax.inject.Singleton
 
 import org.sonatype.nexus.blobstore.api.BlobStore
@@ -36,27 +37,27 @@ class BlobStoreHealthCheck
   // in bytes
   private final long minimumAvailableSpace
 
-  private final BlobStoreManager blobStoreManager
+  private final Provider<BlobStoreManager> blobStoreManagerProvider
 
   @Inject
   BlobStoreHealthCheck(
       @Named('${nexus.blobstore.healthcheck.minimumAvailableGB:-10}') final long minimumAvailableGB,
-      final BlobStoreManager blobStoreManager)
+      final Provider<BlobStoreManager> blobStoreManagerProvider)
   {
     this.minimumAvailableSpace = FileUtils.ONE_GB * minimumAvailableGB  //convert GB parameter to bytes to ease check
-    this.blobStoreManager = checkNotNull(blobStoreManager)
+    this.blobStoreManagerProvider = checkNotNull(blobStoreManagerProvider)
   }
 
   @Override
   protected Result check() throws Exception {
-    Collection<String> unhealthyBlobStores = blobStoreManager.browse().findAll { BlobStore blobStore ->
+    Collection<String> unhealthyBlobStores = blobStoreManagerProvider.get().browse().findAll { BlobStore blobStore ->
       !blobStore.metrics.isUnlimited() && (blobStore.metrics.availableSpace < minimumAvailableSpace)
     }.collect { BlobStore blobStore -> blobStore.blobStoreConfiguration.name }
     
     String displaySize = FileUtils.byteCountToDisplaySize(minimumAvailableSpace)
     String stores = unhealthyBlobStores.join(',')
-    String message = "There are ${unhealthyBlobStores.size()}/${blobStoreManager.browse().size()} blob stores " +
-        "reporting less than $displaySize available. ${stores ? '(' + stores + ')' : ''}"
+    String message = "There are ${unhealthyBlobStores.size()}/${blobStoreManagerProvider.get().browse().size()} " +
+        "blob stores reporting less than $displaySize available. ${stores ? '(' + stores + ')' : ''}"
 
     Result healthCheckResult = unhealthyBlobStores ? Result.unhealthy(message) : Result.healthy(message)
     return healthCheckResult

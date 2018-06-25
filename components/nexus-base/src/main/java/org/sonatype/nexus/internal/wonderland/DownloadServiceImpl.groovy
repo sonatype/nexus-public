@@ -33,11 +33,11 @@ import static com.google.common.base.Preconditions.checkNotNull
  *
  * @since 2.8
  */
-@Named
+@Named("default")
 @Singleton
 class DownloadServiceImpl
-extends ComponentSupport
-implements DownloadService
+    extends ComponentSupport
+    implements DownloadService
 {
 
   /**
@@ -65,12 +65,7 @@ implements DownloadService
   }
 
   @Override
-  File getDirectory() {
-    return downloadDir
-  }
-
-  @Override
-  File get(String fileName, String authTicket) {
+  Download get(String fileName, String authTicket) {
     log.info 'Download: {}', fileName
 
     if (!authTickets.redeemTicket(authTicket)) {
@@ -85,16 +80,16 @@ implements DownloadService
       log.warn 'File {} not found in download directory (or is not a file)', file
       return null
     }
-    return file
+    return new Download(file.length(), new FileInputStream(file))
   }
 
   @Override
-  File move(File source, String name) {
+  String move(File source, String name) {
     def target = new File(downloadDir, name)
     ensureWithinDownloads(target)
     Files.move(source.toPath(), target.toPath())
     log.debug 'Moved {} to {}', source, target
-    return target
+    return target.getAbsolutePath()
   }
 
   @Override

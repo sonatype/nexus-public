@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.supportzip;
 
-import java.io.File;
 import java.io.OutputStream;
 
 /**
@@ -185,9 +184,19 @@ public interface SupportZipGenerator
     private boolean truncated;
 
     /**
-     * The location of the generated ZIP file.
+     * The name of the generated ZIP file.
      */
-    private File file;
+    private String filename;
+
+    /**
+     * The local path of the generated ZIP file.
+     */
+    private String localPath;
+
+    /**
+     * The size of the generated ZIP file.
+     */
+    private long size;
 
     public boolean isTruncated() {
       return truncated;
@@ -197,19 +206,37 @@ public interface SupportZipGenerator
       this.truncated = truncated;
     }
 
-    public File getFile() {
-      return file;
+    public String getFilename() {
+      return filename;
     }
 
-    public void setFile(final File file) {
-      this.file = file;
+    public void setFilename(final String filename) {
+      this.filename = filename;
+    }
+
+    public String getLocalPath() {
+      return localPath;
+    }
+
+    public void setLocalPath(final String localPath) {
+      this.localPath = localPath;
+    }
+
+    public long getSize() {
+      return size;
+    }
+
+    public void setSize(final long size) {
+      this.size = size;
     }
 
     @Override
     public String toString() {
       return getClass().getSimpleName() + "{" +
           "truncated=" + truncated +
-          ", file=" + file +
+          ", filename=" + filename +
+          ", localPath=" + localPath +
+          ", size=" + size +
           '}';
     }
   }

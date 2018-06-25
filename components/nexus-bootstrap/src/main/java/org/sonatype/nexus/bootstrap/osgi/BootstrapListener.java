@@ -13,6 +13,8 @@
 package org.sonatype.nexus.bootstrap.osgi;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -49,6 +51,8 @@ public class BootstrapListener
 
   private static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
 
+  private static final String EDITION_PRO = "edition_pro";
+
   private static final Logger log = LoggerFactory.getLogger(BootstrapListener.class);
 
   private ListenerTracker listenerTracker;
@@ -71,15 +75,19 @@ public class BootstrapListener
       requireProperty(properties, "karaf.base");
       requireProperty(properties, "karaf.data");
 
-      if (shouldSwitchToOss()) {
+      File workDir = new File(properties.get("karaf.data")).getCanonicalFile();
+      Path workDirPath = workDir.toPath();
+      DirectoryHelper.mkdir(workDirPath);
+
+      if (shouldSwitchToOss(workDirPath)) {
         adjustEditionProperties(properties);  
+      }
+      else {
+        createProEditionMarker(workDirPath);
       }
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
-
-      File workDir = new File(properties.get("karaf.data")).getCanonicalFile();
-      DirectoryHelper.mkdir(workDir.toPath());
 
       // are we already running in OSGi or should we embed OSGi?
       Bundle containingBundle = FrameworkUtil.getBundle(getClass());
@@ -128,18 +136,63 @@ public class BootstrapListener
   }
 
   /**
-   * Determine whether or not we should be booting the OSS edition or not, based on the presence of a license or
-   * a System property that can be used to override the behaviour.
+   * Determine whether or not we should be booting the OSS edition or not, based on the presence of a pro edition marker
+   * file, license, or a System property that can be used to override the behaviour.
    */
-  private static boolean shouldSwitchToOss() {
-    if (null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
-      return Boolean.valueOf(System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME));
+  boolean shouldSwitchToOss(final Path workDirPath) {
+    File proEditionMarker = getProEditionMarker(workDirPath);
+    boolean switchToOss;
+
+    if (hasNexusLoadAsOSS()) {
+      switchToOss = isNexusLoadAsOSS();
     }
-    if (Boolean.getBoolean("nexus.clustered")) {
-      return false; // avoid switching the edition when clustered
+    else if (proEditionMarker.exists()) {
+      switchToOss = false;
     }
-    return System.getProperty("nexus.licenseFile") == null
-        && userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
+    else if (isNexusClustered()) {
+      switchToOss = false; // avoid switching the edition when clustered
+    }
+    else {
+      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicense();
+    }
+
+    return switchToOss;
+  }
+
+  boolean hasNexusLoadAsOSS() {
+    return null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME);
+  }
+
+  boolean isNexusLoadAsOSS() {
+    return Boolean.getBoolean(NEXUS_LOAD_AS_OSS_PROP_NAME);
+  }
+
+  File getProEditionMarker(final Path workDirPath) {
+    return workDirPath.resolve(EDITION_PRO).toFile();
+  }
+
+  private void createProEditionMarker(final Path workDirPath) {
+    File proEditionMarker = getProEditionMarker(workDirPath);
+    try {
+      if (proEditionMarker.createNewFile()) {
+        log.debug("Created pro edition marker file: {}", proEditionMarker);
+      }
+    }
+    catch (IOException e) {
+      log.error("Failed to create pro edition marker file: {}", proEditionMarker, e);
+    }
+  }
+
+  boolean isNexusClustered() {
+    return Boolean.getBoolean("nexus.clustered");
+  }
+
+  boolean isNullNexusLicenseFile() {
+    return System.getProperty("nexus.licenseFile") == null;
+  }
+
+  boolean isNullJavaPrefLicense() {
+    return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
   }
 
   private static void installNexusEdition(final BundleContext ctx, @Nullable final String editionName)

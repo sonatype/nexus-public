@@ -13,6 +13,10 @@
 package org.sonatype.nexus.common.wonderland;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.annotation.Nullable;
 
 /**
  * Download service.
@@ -21,26 +25,38 @@ import java.io.File;
  */
 public interface DownloadService
 {
+
   /**
-   * @return directory where files to be downloaded are stored
+   * @since 3.next
    */
-  File getDirectory();
+  class Download {
+
+    private final long length;
+
+    private final InputStream bytes;
+
+    public Download(final long length, final InputStream bytes) {
+      this.length = length;
+      this.bytes = bytes;
+    }
+  }
 
   /**
    * @param fileName of file to be downloaded
    * @param authTicket authentication ticket
-   * @return specified file, if file exists in downloads directory, null otherwise
+   * @return the download, or null if it doesn't exist
    */
-  File get(String fileName, String authTicket);
+  @Nullable
+  Download get(String fileName, String authTicket) throws IOException;
 
   /**
    * Moves specified file to downloads, using specified name.
    *
    * @param source to be moved
    * @param name name of file in downloads dir
-   * @return moved file (residing in downloads)
+   * @return moved filename (residing in downloads)
    */
-  File move(File source, String name);
+  String move(File source, String name) throws IOException;
 
   /**
    * Generate a unique file prefix.

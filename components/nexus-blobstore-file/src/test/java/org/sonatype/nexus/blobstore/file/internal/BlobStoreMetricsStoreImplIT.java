@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.UUID;
 
@@ -28,6 +29,7 @@ import org.mockito.Mock;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
@@ -85,5 +87,18 @@ public class BlobStoreMetricsStoreImplIT
 
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(32L));
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getTotalSize(), is(200L));
+  }
+
+  @Test
+  public void listBackingFiles() throws Exception {
+    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
+    File[] backingFiles = underTest.listBackingFiles();
+    assertThat("backing files is empty", backingFiles.length, is(0));
+
+    underTest.setStorageDir(blobStoreDirectory);
+    underTest.start();
+
+    backingFiles = underTest.listBackingFiles();
+    assertThat("backing files contains the data file", backingFiles.length, is(1));
   }
 }

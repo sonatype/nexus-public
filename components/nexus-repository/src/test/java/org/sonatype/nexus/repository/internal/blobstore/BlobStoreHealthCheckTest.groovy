@@ -39,7 +39,7 @@ class BlobStoreHealthCheckTest
   BlobStoreConfiguration blobStoreConfiguration = Mock()
 
   @Subject
-  BlobStoreHealthCheck blobStoreHealthCheck = new BlobStoreHealthCheck(MINIMUM_SIZE, blobStoreManager)
+  BlobStoreHealthCheck blobStoreHealthCheck = new BlobStoreHealthCheck(MINIMUM_SIZE, { -> blobStoreManager})
 
   def "Healthy response with no BlobStores configured"() {
     when:
