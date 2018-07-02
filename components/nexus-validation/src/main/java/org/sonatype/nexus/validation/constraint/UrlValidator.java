@@ -14,10 +14,15 @@ package org.sonatype.nexus.validation.constraint;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
+import java.util.regex.Pattern;
 
 import javax.validation.ConstraintValidatorContext;
 
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
+
+import org.apache.commons.validator.routines.InetAddressValidator;
 
 /**
  * Validates a uri.
@@ -27,19 +32,67 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 public class UrlValidator
     extends ConstraintValidatorSupport<Url, URI>
 {
+  private static final Pattern SCHEME_RE = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern USER_INFO_RE = Pattern.compile("^(?:\\S+(?::\\S*)?)?$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern RESOURCE_RE = Pattern.compile("^(?:\\S*)?$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern HOSTNAME_RE = Pattern.compile("^(?:[^\"<>^`{|}:/]+)$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern IPV6_RE = Pattern.compile("^\\[(?<ipv6>[0-9:a-f]{3,39})\\]$", Pattern.CASE_INSENSITIVE);
+  private static final InetAddressValidator INET_ADDRESS_VALIDATOR = new InetAddressValidator();
 
   @Override
   public boolean isValid(final URI uri, final ConstraintValidatorContext constraintValidatorContext) {
     if (uri == null) {
       return true;
     }
+
     try {
-      uri.toURL();
-      return true;
+      URL ignored = uri.toURL(); // NOSONAR
+
+      return isValidScheme(uri.getScheme())
+          && isValidUserInfo(uri.getUserInfo())
+          && isValidHost(uri.getHost())
+          && isValidPort(uri.getPort())
+          && isValidPath(uri.getPath())
+          && isValidFragment(uri.getFragment());
     }
     catch (MalformedURLException | IllegalArgumentException e) {// NOSONAR
       log.debug("Failed to parse URL from {} with message {}", uri, e.getMessage());
     }
+
     return false;
+  }
+
+  private boolean isMatch(final Pattern pattern, final String string, final boolean allowBlank) {
+    return (allowBlank && Strings2.isBlank(string))
+        || (string != null && pattern.matcher(string).find());
+  }
+
+  private boolean isMatch(final Pattern pattern, final String string) {
+    return isMatch(pattern, string, true);
+  }
+
+  private boolean isValidScheme(final String scheme) {
+    return isMatch(SCHEME_RE, scheme);
+  }
+
+  private boolean isValidUserInfo(final String userInfo) {
+    return isMatch(USER_INFO_RE, userInfo);
+  }
+
+  private boolean isValidHost(final String host) {
+    return isMatch(HOSTNAME_RE, host, false)
+        || (isMatch(IPV6_RE, host, false) && INET_ADDRESS_VALIDATOR.isValidInet6Address(host.substring(1, host.length() - 2)));
+  }
+
+  private boolean isValidPort(final int port) {
+    return port == -1 || (port > 0 && port <= 65535);
+  }
+
+  private boolean isValidPath(final String path) {
+    return isMatch(RESOURCE_RE, path);
+  }
+
+  private boolean isValidFragment(final String fragment) {
+    return isMatch(RESOURCE_RE, fragment);
   }
 }

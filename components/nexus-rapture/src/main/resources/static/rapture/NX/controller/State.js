@@ -440,7 +440,7 @@ Ext.define('NX.controller.State', {
   },
 
   reloadWhenServerIdChanged: function (serverId, oldServerId) {
-    if (oldServerId && (serverId !== oldServerId) && !serverId.startsWith('ignore')) {
+    if (oldServerId && (serverId !== oldServerId) && !Ext.String.startsWith(serverId, 'ignore')) {
       // FIXME: i18n
       NX.Dialogs.showInfo(
           'Server restarted',

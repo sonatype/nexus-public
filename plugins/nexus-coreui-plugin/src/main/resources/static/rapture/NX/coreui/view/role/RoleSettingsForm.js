@@ -23,7 +23,8 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
   requires: [
     'NX.Conditions',
     'NX.coreui.store.Role',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Validator'
   ],
 
   api: {

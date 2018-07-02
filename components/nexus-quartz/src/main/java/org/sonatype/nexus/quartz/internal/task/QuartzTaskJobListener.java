@@ -172,11 +172,19 @@ public class QuartzTaskJobListener
     }
 
     final TaskConfiguration taskConfiguration = QuartzTaskJob.configurationOf(context.getJobDetail());
+    long runDuration = System.currentTimeMillis() - future.getStartedAt().getTime();
+
     QuartzTaskState.setLastRunState(
         taskConfiguration,
         endState,
         future.getStartedAt(),
-        System.currentTimeMillis() - future.getStartedAt().getTime());
+        runDuration);
+
+    QuartzTaskState.setLastRunState(
+        context.getJobDetail(),
+        endState,
+        future.getStartedAt(),
+        runDuration);
 
     log.trace("Job {} : {} lastRunState={}",
         jobKey.getName(), taskInfo.getConfiguration().getTaskLogName(), endState);

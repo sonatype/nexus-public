@@ -145,7 +145,7 @@ public class SecurityComponent
     UserXO userXO = null;
 
     Subject subject = securitySystem.getSubject();
-    if (isLoggedIn(subject)) {
+    if (subject != null && subject.isAuthenticated()) {
       userXO = new UserXO();
       userXO.setAuthenticated(subject.isAuthenticated());
 
@@ -158,10 +158,6 @@ public class SecurityComponent
       Object principal = subject.getPrincipal();
       if (principal != null) {
         userXO.setId(principal.toString());
-        AnonymousConfiguration anonymousConfiguration = anonymousManager.getConfiguration();
-        if (anonymousConfiguration.isEnabled() && userXO.getId().equals(anonymousConfiguration.getUserId())) {
-          userXO = null;
-        }
       }
     }
     return userXO;
@@ -173,7 +169,7 @@ public class SecurityComponent
   public List<PermissionXO> getPermissions() {
     List<PermissionXO> permissions = null;
     Subject subject = securitySystem.getSubject();
-    if (isLoggedIn(subject)) {
+    if (subject != null && (subject.isAuthenticated() || subject.isRemembered())) {
       permissions = calculatePermissions(subject);
     }
     return permissions;
@@ -188,10 +184,6 @@ public class SecurityComponent
     AnonymousConfiguration anonymousConfiguration = anonymousManager.getConfiguration();
     state.put("anonymousUsername", anonymousConfiguration.isEnabled() ? anonymousConfiguration.getUserId() : null);
     return state;
-  }
-
-  private boolean isLoggedIn(final Subject subject) {
-    return subject != null && (subject.isRemembered() || subject.isAuthenticated());
   }
 
   // FIXME: Avoid calculating permissions for every poll request

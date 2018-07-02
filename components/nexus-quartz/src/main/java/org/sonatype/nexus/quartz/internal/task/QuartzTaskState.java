@@ -23,6 +23,7 @@ import org.sonatype.nexus.scheduling.TaskInfo.LastRunState;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,11 +35,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class QuartzTaskState
 {
-  private static final String LAST_RUN_STATE_END_STATE = "lastRunState.endState";
+  public static final String LAST_RUN_STATE_END_STATE = "lastRunState.endState";
 
-  private static final String LAST_RUN_STATE_RUN_STARTED = "lastRunState.runStarted";
+  public static final String LAST_RUN_STATE_RUN_STARTED = "lastRunState.runStarted";
 
-  private static final String LAST_RUN_STATE_RUN_DURATION = "lastRunState.runDuration";
+  public static final String LAST_RUN_STATE_RUN_DURATION = "lastRunState.runDuration";
 
   private final TaskConfiguration taskConfiguration;
 
@@ -91,6 +92,22 @@ public class QuartzTaskState
     config.setLong(LAST_RUN_STATE_RUN_STARTED, runStarted.getTime());
     config.setLong(LAST_RUN_STATE_RUN_DURATION, runDuration);
   }
+
+  public static void setLastRunState(final JobDetail jobDetail,
+                                     final EndState endState,
+                                     final Date runStarted,
+                                     final long runDuration)
+  {
+    checkNotNull(jobDetail);
+    checkNotNull(endState);
+    checkNotNull(runStarted);
+    checkArgument(runDuration >= 0);
+
+    jobDetail.getJobDataMap().put(LAST_RUN_STATE_END_STATE, endState.name());
+    jobDetail.getJobDataMap().put(LAST_RUN_STATE_RUN_STARTED, runStarted.getTime());
+    jobDetail.getJobDataMap().put(LAST_RUN_STATE_RUN_DURATION, runDuration);
+  }
+
 
   /**
    * Helper to get ending state from a map. Returns {@code null} if no ending state in task configuration.

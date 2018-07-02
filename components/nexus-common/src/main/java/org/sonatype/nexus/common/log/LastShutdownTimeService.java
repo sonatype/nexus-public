@@ -10,20 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+package org.sonatype.nexus.common.log;
+
+import java.util.Date;
+import java.util.Optional;
 
 /**
- * A hostname **{@link Ext.form.field.Text}**.
+ * Service which provides an estimate of when nexus was last shutdown.
  *
- * @since 3.3
+ * @since 3.next
  */
-Ext.define('NX.ext.form.field.Hostname', {
-  extend: 'Ext.form.field.Text',
-  requires: [
-    'NX.util.Validator'
-  ],
-  alias: 'widget.nx-hostname',
-
-  vtype: 'nx-hostname',
-  maskRe: /\S/
-});
+public interface LastShutdownTimeService
+{
+  Optional<Date> estimateLastShutdownTime();
+}

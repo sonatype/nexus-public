@@ -16,6 +16,7 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.common.log.LastShutdownTimeService
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
@@ -26,8 +27,10 @@ import org.sonatype.nexus.quartz.internal.orient.TriggerDeletedEvent
 import org.sonatype.nexus.quartz.internal.orient.TriggerEntity
 import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo
+import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
+import org.sonatype.nexus.scheduling.TaskInfo.EndState
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
 import org.sonatype.nexus.scheduling.schedule.Manual
@@ -35,6 +38,8 @@ import org.sonatype.nexus.scheduling.schedule.Now
 import org.sonatype.nexus.scheduling.schedule.Schedule
 import org.sonatype.nexus.testcommon.event.SimpleEventManager
 
+import com.google.common.collect.Lists
+import com.google.common.collect.Sets
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.junit.After
@@ -56,6 +61,7 @@ import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
 import static org.mockito.Matchers.any
+import static org.mockito.Matchers.eq
 import static org.mockito.Matchers.anyObject
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
@@ -65,6 +71,9 @@ import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_END_STATE
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_STARTED
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_DURATION
 
 /**
  * {@link QuartzSchedulerSPI} tests.
@@ -92,8 +101,11 @@ class QuartzSchedulerSPITest
     when(provider.get()).thenReturn(jobStore)
     eventManager = new SimpleEventManager()
 
+    def lastShutdownTimeService = mock(LastShutdownTimeService)
+    when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty())
+
     underTest = new QuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, mock(JobFactoryImpl), 1
+        eventManager, nodeAccess, provider, mock(JobFactoryImpl), lastShutdownTimeService, 1
     )
     underTest.start()
     underTest.states.current = STARTED
@@ -268,6 +280,123 @@ class QuartzSchedulerSPITest
   void 'reattachListeners does not start Manual type tasks'() {
     testReattachListeners(new Manual(), false)
   }
+
+  @Test
+  void 'Trigger time before last run time does not modify job' () {
+    interruptStateTestHelper(
+        false,
+        DateTime.parse("2002-01-01").toDate(),
+        EndState.OK,
+        DateTime.parse("2003-01-01").toDate()
+    )
+  }
+
+  @Test
+  void 'Trigger time exists but no last run exists so the job is set to interrupted'() {
+    interruptStateTestHelper(
+        true,
+        DateTime.parse("2002-01-01").toDate(),
+        null,
+       null
+    )
+  }
+
+  @Test
+  void 'Trigger time is after last run time so the job is set to interrupted'() {
+    interruptStateTestHelper(
+        true,
+        DateTime.parse("2002-01-01").toDate(),
+        EndState.OK,
+        DateTime.parse("2001-01-01").toDate()
+    )
+  }
+
+  @Test
+  void 'Trigger time does not exist so the job is not modified'() {
+    interruptStateTestHelper(
+        false,
+        null,
+        EndState.OK,
+        DateTime.parse("2001-01-01").toDate()
+    )
+  }
+
+  @Test
+  void 'Trigger time does not exist nor does last run time so the job is not modified'() {
+    interruptStateTestHelper(
+        false,
+        null,
+        null,
+        null
+    )
+  }
+
+  void interruptStateTestHelper(
+      boolean shouldBeInterrupted,
+      Date lastTriggerDate,
+      EndState initialEndState,
+      Date runStart,
+      long runTime = 1000,
+      Date shutdownDate = DateTime.parse("2003-01-01T00:00").toDate()) {
+
+    def jobKey = new JobKey('testJobKeyName', 'testJobKeyGroup')
+    def trigger = mock(Trigger)
+    when(trigger.getPreviousFireTime()).thenReturn(lastTriggerDate)
+
+    def jobDataMap = mock(JobDataMap)
+    def jobDetail = mock(JobDetail)
+    when(jobDetail.getJobDataMap()).thenReturn(jobDataMap)
+
+    def config = new TaskConfiguration()
+    if (initialEndState != null) {
+      QuartzTaskState.setLastRunState(config, initialEndState, runStart, runTime)
+    }
+
+    def taskInfo = mock(QuartzTaskInfo)
+    when(taskInfo.getConfiguration()).thenReturn(config)
+
+    def jobListener = mock(QuartzTaskJobListener)
+    when(jobListener.taskInfo).thenReturn(taskInfo)
+
+    def listenerManager = mock(ListenerManager)
+    when(listenerManager.getJobListener(any())).thenReturn(jobListener)
+
+    def scheduler = mock(Scheduler)
+    when(scheduler.getListenerManager()).thenReturn(listenerManager)
+    when(scheduler.getJobKeys(any())).thenReturn(Sets.newHashSet(jobKey))
+    when(scheduler.getTriggersOfJob(eq(jobKey))).thenReturn(Lists.newArrayList(trigger))
+    when(scheduler.getJobDetail(eq(jobKey))).thenReturn(jobDetail)
+
+    def old = underTest.@scheduler
+    try {
+      underTest.@scheduler = scheduler
+      underTest.updateLastRunStateInfo(Optional.of(shutdownDate))
+    } finally {
+      underTest.@scheduler = old
+    }
+
+    if (shouldBeInterrupted) {
+      assert config.getString(LAST_RUN_STATE_END_STATE) == EndState.INTERRUPTED.name()
+      assert config.getLong(LAST_RUN_STATE_RUN_STARTED, -1) == lastTriggerDate.time
+      assert config.getLong(LAST_RUN_STATE_RUN_DURATION, -1) == shutdownDate.time - lastTriggerDate.time
+
+      verify(jobDataMap, times(1)).put(LAST_RUN_STATE_END_STATE, EndState.INTERRUPTED.name())
+      verify(jobDataMap, times(1)).put(LAST_RUN_STATE_RUN_STARTED,  lastTriggerDate.time.toString())
+      verify(jobDataMap, times(1)).put(LAST_RUN_STATE_RUN_DURATION, (shutdownDate.time - lastTriggerDate.time).toString())
+
+      verify(scheduler, times(1)).addJob(jobDetail, true, true)
+    } else if (initialEndState != null) {
+      assert config.getString(LAST_RUN_STATE_END_STATE) == initialEndState.name()
+      assert config.getLong(LAST_RUN_STATE_RUN_STARTED, -1) == runStart.time
+      assert config.getLong(LAST_RUN_STATE_RUN_DURATION, -1) == runTime
+
+      verify(scheduler, times(0)).addJob(jobDetail, true, true)
+    } else {
+      verify(scheduler, times(0)).addJob(jobDetail, true, true)
+    }
+
+  }
+
 
   private Scheduler testReattachListeners(schedule, shouldRun) {
     JobDetailEntity jobDetailEntity = mockJobDetailEntity()

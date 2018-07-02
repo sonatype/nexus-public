@@ -17,6 +17,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +34,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -49,6 +53,7 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.TaskInfo.EndState;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -80,12 +85,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
+import static java.util.Comparator.comparing;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJob.configurationOf;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJob.updateJobData;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.getLastRunState;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.hasLastRunState;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.setLastRunState;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 
 /**
@@ -120,6 +131,8 @@ public class QuartzSchedulerSPI
 
   private final QuartzTriggerConverter triggerConverter;
 
+  private final LastShutdownTimeService lastShutdownTimeService;
+
   private Scheduler scheduler;
 
   private QuartzScheduler quartzScheduler;
@@ -131,6 +144,7 @@ public class QuartzSchedulerSPI
                             final NodeAccess nodeAccess,
                             final Provider<JobStore> jobStoreProvider,
                             final JobFactory jobFactory,
+                            final LastShutdownTimeService lastShutdownTimeService,
                             @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize)
       throws Exception
   {
@@ -138,6 +152,7 @@ public class QuartzSchedulerSPI
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStoreProvider = checkNotNull(jobStoreProvider);
     this.jobFactory = checkNotNull(jobFactory);
+    this.lastShutdownTimeService = checkNotNull(lastShutdownTimeService);
 
     checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
     this.threadPoolSize = threadPoolSize;
@@ -181,6 +196,43 @@ public class QuartzSchedulerSPI
 
     // re-attach listeners right after scheduler is available
     reattachJobListeners();
+
+    updateLastRunStateInfo(lastShutdownTimeService.estimateLastShutdownTime());
+  }
+
+  /**
+   *  Iterates over all the tasks/jobs known to the scheduler and checks them against their last trigger fire time.
+   *  If the trigger's last fire time doesn't match with the jobs last fire time,
+   *  then the {@link EndState} is set to interrupted
+   * @param nexusLastRunTime - approximate time at which the last instance of nexus was shutdown
+   * @throws SchedulerException
+   */
+  private void updateLastRunStateInfo(Optional<Date> nexusLastRunTime) throws SchedulerException {
+    for (Entry<JobKey, QuartzTaskInfo> task :  allTasks().entrySet()) {
+      TaskConfiguration taskConfig = task.getValue().getConfiguration();
+      JobKey jobKey = task.getKey();
+
+      Optional<Date> latestFireWrapper = scheduler.getTriggersOfJob(jobKey).stream()
+          .filter(Objects::nonNull)
+          .map(Trigger::getPreviousFireTime)
+          .filter(Objects::nonNull)
+          .max(Date::compareTo);
+
+      if (latestFireWrapper.isPresent()) {
+        Date latestFire = latestFireWrapper.get();
+        JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+
+        if (!hasLastRunState(taskConfig) || getLastRunState(taskConfig).getRunStarted().before(latestFire)) {
+          long estimatedDuration = Math.max(nexusLastRunTime.orElse(latestFire).getTime() - latestFire.getTime(), 0);
+          setLastRunState(taskConfig, EndState.INTERRUPTED, latestFire, estimatedDuration);
+
+          log.warn("Updating lastRunState to interrupted for {} taskConfig: {}", jobDetail.getKey(), taskConfig);
+
+          updateJobData(jobDetail, taskConfig);
+          scheduler.addJob(jobDetail, true, true);
+        }
+      }
+    }
   }
 
   /**
@@ -316,7 +368,7 @@ public class QuartzSchedulerSPI
     log.debug("Initializing task-state: jobDetail={}, trigger={}", jobDetail, trigger);
 
     Date now = new Date();
-    TaskConfiguration taskConfiguration = QuartzTaskJob.configurationOf(jobDetail);
+    TaskConfiguration taskConfiguration = configurationOf(jobDetail);
     Schedule schedule = triggerConverter.convert(trigger);
     QuartzTaskState taskState = new QuartzTaskState(
         taskConfiguration,
@@ -364,7 +416,7 @@ public class QuartzSchedulerSPI
       taskInfo.setNexusTaskStateIfInState(
           TaskInfo.State.WAITING,
           new QuartzTaskState(
-              taskInfo.getConfiguration().apply(QuartzTaskJob.configurationOf(jobDetail)),
+              taskInfo.getConfiguration().apply(configurationOf(jobDetail)),
               taskInfo.getSchedule(),
               taskInfo.getCurrentState().getNextRun()
           ),

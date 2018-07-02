@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.app;
 import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
+import org.sonatype.nexus.validation.constraint.UrlString;
 
 import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.URL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,7 +32,7 @@ public class BaseUrlCapabilityConfiguration
   public static final String URL = "url";
 
   @NotBlank
-  @URL
+  @UrlString
   private String url;
 
   public BaseUrlCapabilityConfiguration(final Map<String,String> properties) {

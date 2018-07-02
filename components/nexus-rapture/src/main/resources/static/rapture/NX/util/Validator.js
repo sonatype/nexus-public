@@ -25,16 +25,6 @@ Ext.define('NX.util.Validator', {
   ],
 
   /**
-   * @private
-   */
-  default_url_options: {
-    protocols: ['http', 'https', 'ftp'],
-    require_tld: false,
-    require_protocol: false,
-    allow_underscores: false
-  },
-
-  /**
    * Changes to this property should be sync'd in:
    * components/nexus-validation/src/main/java/org/sonatype/nexus/validation/constraint/NamePatternConstants.java
    * @private
@@ -60,6 +50,12 @@ Ext.define('NX.util.Validator', {
      "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|" +
      "[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))(:([0-9]+))?$"
   ),
+
+  /**
+   * A regular expression to detect a possibly valid URL
+   * @private
+   */
+  nxUrlRegex: /^https?:\/\/[^"<>^`{|}]+$/i,
 
   /**
    * A regular expression to detect whether we have leading and trailing white space
@@ -96,52 +92,17 @@ Ext.define('NX.util.Validator', {
         'nx-trim': function(val) {
           return !NX.util.Validator.nxLeadingAndTrailingWhiteSpaceRegex.test(val);
         },
-        'nx-trimText': NX.I18n.get('Util_Validator_Trim')
+        'nx-trimText': NX.I18n.get('Util_Validator_Trim'),
+        'nx-url': function(val) {
+          return NX.util.Validator.nxUrlRegex.test(val);
+        },
+        'nx-urlText': NX.I18n.get('Util_Validator_Url')
       }
     ];
 
     Ext.each(me.vtypes, function(vtype) {
       me.registerVtype(vtype);
     });
-  },
-
-  /**
-   * Validate if given string is a URL.
-   * Based on: https://github.com/chriso/validator.js (MIT license)
-   *
-   * @public
-   * @param {String} str
-   * @param {Object} options (optional)
-   * @returns {boolean}
-   */
-  isURL: function (str, options) {
-
-    // Apply options
-    options = options || {};
-    options = Ext.applyIf(options, this.default_url_options);
-
-    // Short-circuit when empty
-    if (Ext.isEmpty(str)) {
-      return options.allow_blank;
-    }
-
-    // Ensure that the URL is of proper length
-    if (str.length >= 2083) {
-      return false;
-    }
-
-    // Check the URL syntax
-    var separators = '-?-?' + (options.allow_underscores ? '_?' : '');
-    var url = new RegExp('^(?!mailto:)(?:(?:' + options.protocols.join('|') + ')://)' +
-        (options.require_protocol ? '' : '?') +
-        '(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:www.)?)?(?:(?:[a-z\\u00a1-\\uffff0-9]+' +
-        separators + ')*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+' + separators +
-        ')*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{1,}))' + (options.require_tld ? '' : '?') +
-        ')|localhost)(?::(\\d{1,5}))?(?:(?:/|\\?|#)[^\\s]*)?$', 'i');
-    var match = str.match(url),
-        port = match ? match[1] : 0;
-
-    return !!(match && (!port || (port > 0 && port <= 65535)));
   }
 
 });

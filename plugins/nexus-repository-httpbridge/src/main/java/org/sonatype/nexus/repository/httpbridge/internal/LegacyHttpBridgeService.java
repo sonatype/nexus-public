@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
+import java.lang.annotation.Annotation;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -25,9 +30,11 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.inject.InjectorBindings;
 import org.eclipse.sisu.inject.MutableBeanLocator;
+import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -83,6 +90,13 @@ public class LegacyHttpBridgeService
             protected void configure() {
               // support injection of application components by wiring via shared locator
               bind(BeanLocator.class).toInstance(locator);
+
+              // support injection of application properties
+              Optional.ofNullable(locator.locate(ParameterKeys.PROPERTIES))
+                  .map(Iterable::iterator)
+                  .map(Iterator::next)
+                  .map(b -> ((BeanEntry<Annotation, Map>) b).getValue())
+                  .ifPresent(m -> bind(ParameterKeys.PROPERTIES).toInstance(m));
             }
           })));
       locator.add(legacyBridgeInjector);

@@ -44,6 +44,11 @@
     </dependency>
 
     <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.glassfish.web</groupId>
       <artifactId>javax.el</artifactId>
     </dependency>

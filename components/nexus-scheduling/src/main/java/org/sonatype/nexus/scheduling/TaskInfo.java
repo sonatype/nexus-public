@@ -152,7 +152,7 @@ public interface TaskInfo
 
   enum EndState
   {
-    OK, FAILED, CANCELED
+    OK, FAILED, CANCELED, INTERRUPTED
   }
 
   interface LastRunState

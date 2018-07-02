@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.system.NodeSettingsForm', {
   alias: 'widget.nx-coreui-system-node-settings-form',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Validator'
   ],
 
   api: {

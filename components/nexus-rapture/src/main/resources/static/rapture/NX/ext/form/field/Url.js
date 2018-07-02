@@ -20,26 +20,10 @@
 Ext.define('NX.ext.form.field.Url', {
   extend: 'Ext.form.field.Text',
   alias: 'widget.nx-url',
-  requires: [ 'NX.util.Validator' ],
-
-  validator: function (value) {
-    var valid = NX.util.Validator.isURL(value, {
-      protocols: ['http', 'https'],
-      require_protocol: true,
-      allow_underscores: true,
-      allow_blank: this.allowBlank
-    });
-
-    if (valid || isHandledByBlankValidation(value)) {
-      return true;
-    }
-
-    function isHandledByBlankValidation(value) {
-      return (Ext.isEmpty(value) && !this.allowBlank);
-    }
-
-    return 'This field should be a URL in the format "http:/' + '/www.example.com"';
-  },
+  requires: [
+      'NX.util.Validator'
+  ],
+  vtype: 'nx-url',
 
   useTrustStore: function (field) {
     if (Ext.String.startsWith(field.getValue(), 'https://')) {

@@ -29,6 +29,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.ops4j.pax.logging</groupId>
       <artifactId>pax-logging-api</artifactId>
     </dependency>
@@ -78,7 +84,7 @@
         <configuration>
           <instructions>
             <Bundle-Activator>
-              org.ops4j.pax.logging.logback.internal.Activator
+              org.sonatype.nexus.pax.logging.NexusLogActivator
             </Bundle-Activator>
             <Embed-Dependency>
               pax-logging-logback;inline=true,

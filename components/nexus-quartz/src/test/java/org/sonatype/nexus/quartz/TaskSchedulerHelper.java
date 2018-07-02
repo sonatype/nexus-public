@@ -13,6 +13,7 @@
 package org.sonatype.nexus.quartz;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.Nullable;
@@ -22,6 +23,7 @@ import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -76,6 +78,8 @@ public class TaskSchedulerHelper
 
   private BaseUrlManager baseUrlManager;
 
+  private LastShutdownTimeService lastShutdownTimeService;
+
   private NodeAccess nodeAccess;
 
   private final DatabaseInstance databaseInstance;
@@ -89,6 +93,7 @@ public class TaskSchedulerHelper
     applicationDirectories = mock(ApplicationDirectories.class);
     baseUrlManager = mock(BaseUrlManager.class);
     nodeAccess = mock(NodeAccess.class);
+    lastShutdownTimeService = mock(LastShutdownTimeService.class);
 
     Module module = binder -> {
       Properties properties = new Properties();
@@ -120,6 +125,9 @@ public class TaskSchedulerHelper
       if (factory != null) {
         binder.bind(JobFactory.class).toInstance(factory);
       }
+
+      binder.bind(LastShutdownTimeService.class).toInstance(lastShutdownTimeService);
+      when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty());
     };
 
     this.injector = Guice.createInjector(new WireModule(
