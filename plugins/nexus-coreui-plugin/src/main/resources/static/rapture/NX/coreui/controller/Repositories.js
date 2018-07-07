@@ -166,6 +166,7 @@ Ext.define('NX.coreui.controller.Repositories', {
   /**
    * @override
    */
+
   getDescription: function (model) {
     return model.get('name');
   },
@@ -317,6 +318,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       interval: 5000,
       baseParams: {},
       listeners: {
+
         data: function (provider, event) {
           if (event.data && event.data.success && event.data.data) {
             me.updateRepositoryModels(event.data.data);

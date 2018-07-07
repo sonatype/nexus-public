@@ -10,32 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
+package org.sonatype.nexus.repository.sizeassetcount;
 
-import groovy.transform.ToString
-import org.hibernate.validator.constraints.Range
-
+import org.sonatype.nexus.repository.Facet;
 
 /**
- * Repository reference exchange object.
- *
- * @since 3.0
+ * Facet used for calculating the size and the blobcount of repositories
+ * @since 3.7.0
  */
-@ToString(includePackage = false, includeNames = true)
-class RepositoryReferenceXO
-    extends ReferenceXO
-{
-  String type
-  String format
-  String versionPolicy
-  String url
-  RepositoryStatusXO status
-  long assetCount
-  long size
+@Facet.Exposed
+public interface SizeAssetCountAttributesFacet extends Facet{
 
-  /**
-   * sortOrder will override the typical alphanumeric ordering in the UI, so the higher your sortOrder, the closer to
-   * the top you will get
-   */
-  int sortOrder = 0
+    /**
+     * Calculate the size and the asset count of a repository
+     */
+    void calculateSizeAssetCount();
 }
