@@ -14,7 +14,8 @@
   opacity: 1;  
 }
 
-.x-form-field[readonly].x-form-field:not([role="combobox"]) {
+.x-form-field[readonly].x-form-field:not([role="combobox"]),
+.x-form-readonly input[role="combobox"] {
   @include nx-form-field-readonly;
 }
 

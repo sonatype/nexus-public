@@ -51,16 +51,10 @@ public class CapabilityRegistryBooter
 
   @Override
   protected void doStart() throws Exception {
-    try {
-      DefaultCapabilityRegistry registry = capabilityRegistryProvider.get();
-      registry.load();
+    DefaultCapabilityRegistry registry = capabilityRegistryProvider.get();
+    registry.load();
 
-      // fire event when the registry is loaded and ready for use
-      eventManager.post(new Ready(registry));
-    }
-    catch (final Exception e) {
-      // fail hard with an error to stop further server activity
-      throw new Error("Could not boot capabilities", e);
-    }
+    // fire event when the registry is loaded and ready for use
+    eventManager.post(new Ready(registry));
   }
 }

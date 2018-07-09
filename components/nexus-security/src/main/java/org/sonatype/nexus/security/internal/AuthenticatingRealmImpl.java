@@ -33,6 +33,7 @@ import org.apache.shiro.authc.credential.PasswordMatcher;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.eclipse.sisu.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,5 +169,12 @@ public class AuthenticatingRealmImpl
 
   private AuthenticationInfo createAuthenticationInfo(final CUser user) {
     return new SimpleAuthenticationInfo(user.getId(), user.getPassword().toCharArray(), getName());
+  }
+
+  /**
+   *  Exposed to support flushing authc cache for a specific user
+   */
+  protected void clearCache(final String userId) {
+    clearCache(new SimplePrincipalCollection(userId, NAME));
   }
 }

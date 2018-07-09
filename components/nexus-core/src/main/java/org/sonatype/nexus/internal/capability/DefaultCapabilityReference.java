@@ -352,7 +352,7 @@ public class DefaultCapabilityReference
     }
   }
 
-  private void setFailure(final String action, final Exception e) {
+  void setFailure(final String action, final Exception e) {
     try {
       stateLock.writeLock().lock();
       failure = checkNotNull(e);
@@ -430,9 +430,12 @@ public class DefaultCapabilityReference
     @Override
     public void create(final Map<String, String> properties) {
       try {
+        log.debug("Creating capability {} ({})", capability, id);
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
         capability.onCreate();
         resetFailure();
+        log.debug("Created capability {} ({})", capability, id);
       }
       catch (Exception e) {
         setFailure("Create", e);
@@ -446,9 +449,12 @@ public class DefaultCapabilityReference
     @Override
     public void load(final Map<String, String> properties) {
       try {
+        log.debug("Loading capability {} ({})", capability, id);
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
         capability.onLoad();
         resetFailure();
+        log.debug("Loaded capability {} ({})", capability, id);
       }
       catch (Exception e) {
         setFailure("Load", e);
@@ -495,6 +501,7 @@ public class DefaultCapabilityReference
     @Override
     public void update(final Map<String, String> properties, final Map<String, String> previousProperties) {
       try {
+        log.debug("Updating capability {} ({})", capability, id);
         eventManager.post(
             new CapabilityEvent.BeforeUpdate(
                 capabilityRegistry, DefaultCapabilityReference.this, properties, previousProperties
@@ -503,6 +510,7 @@ public class DefaultCapabilityReference
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
         capability.onUpdate();
         resetFailure();
+        log.debug("Updated capability {} ({})", capability, id);
       }
       catch (Exception e) {
         setFailure("Update", e);
@@ -519,10 +527,12 @@ public class DefaultCapabilityReference
     @Override
     public void remove() {
       try {
+        log.debug("Removing capability {} ({})", capability, id);
         DefaultCapabilityReference.this.disable();
         validityHandler.release();
         capability.onRemove();
         resetFailure();
+        log.debug("Removed capability {} ({})", capability, id);
       }
       catch (Exception e) {
         setFailure("Remove", e);

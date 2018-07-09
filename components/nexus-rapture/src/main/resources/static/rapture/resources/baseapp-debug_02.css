@@ -6222,7 +6222,8 @@
  *
  * cls: 'x-form-readonly'
  */
-.x-form-field[readonly].x-form-field:not([role="combobox"]) {
+.x-form-field[readonly].x-form-field:not([role="combobox"]),
+.x-form-readonly input[role="combobox"] {
   color: #777777;
   background-color: #ebebeb;
   opacity: 1;

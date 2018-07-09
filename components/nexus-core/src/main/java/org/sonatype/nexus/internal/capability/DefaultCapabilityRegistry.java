@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.validation.ValidationException;
 import javax.validation.Validator;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -31,7 +32,6 @@ import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
-import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityFactory;
 import org.sonatype.nexus.capability.CapabilityFactoryRegistry;
 import org.sonatype.nexus.capability.CapabilityIdentity;
@@ -70,7 +70,7 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 @Named
 public class DefaultCapabilityRegistry
     extends ComponentSupport
-    implements CapabilityRegistry, EventAware
+    implements CapabilityRegistry, EventAware, EventAware.Asynchronous
 {
 
   private final CapabilityStorage capabilityStorage;
@@ -419,10 +419,20 @@ public class DefaultCapabilityRegistry
 
       final DefaultCapabilityReference reference = create(id, capabilityType(item.getType()), descriptor);
 
-      reference.descriptor().validate(id, properties, ValidationMode.LOAD);
-
       reference.setNotes(item.getNotes());
       reference.load(properties);
+
+      try {
+        // validate after initial load, so properties are filled in for fixing
+        reference.descriptor().validate(id, properties, ValidationMode.LOAD);
+      }
+      catch (ValidationException e) {
+        log.warn("Capability '{}' of type '{}' with properties '{}' is invalid",
+            id, item.getType(), item.getProperties(), e);
+
+        reference.setFailure("Load", e); // flag validation issues in the UI
+      }
+
       if (item.isEnabled()) {
         reference.enable();
         reference.activate();
@@ -445,10 +455,6 @@ public class DefaultCapabilityRegistry
     final DefaultCapabilityReference reference = createReference(id, type, descriptor, capability);
 
     references.put(id, reference);
-
-    log.debug("Created capability '{}'", capability);
-
-    eventManager.post(new CapabilityEvent.Created(this, reference));
 
     return reference;
   }

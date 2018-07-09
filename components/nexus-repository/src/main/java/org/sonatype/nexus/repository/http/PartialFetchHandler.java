@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.http;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -26,8 +27,11 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Range;
 import com.google.common.net.HttpHeaders;
+import org.apache.http.client.utils.DateUtils;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -74,7 +78,7 @@ public class PartialFetchHandler
       return response;
     }
 
-    final String rangeHeader = getRangeHeader(context);
+    final String rangeHeader = getHeaderValue(context.getRequest(), HttpHeaders.RANGE);
     if (rangeHeader == null) {
       return response;
     }
@@ -93,6 +97,11 @@ public class PartialFetchHandler
 
     if (ranges.size() > 1) {
       return HttpResponses.notImplemented("Multiple ranges not supported.");
+    }
+
+    final String ifRangeHeader = getHeaderValue(context.getRequest(), HttpHeaders.IF_RANGE);
+    if (ifRangeHeader != null && !ifRangeHeaderMatches(response, ifRangeHeader)) {
+      return response;
     }
 
     Range<Long> requestedRange = ranges.get(0);
@@ -117,13 +126,44 @@ public class PartialFetchHandler
 
     // ResponseSender takes care of Content-Length header, via payload.size
     builder.header(HttpHeaders.CONTENT_RANGE,
-        requestedRange.lowerEndpoint() + "-" + requestedRange.upperEndpoint() + "/" + payload.getSize());
+       "bytes " + requestedRange.lowerEndpoint() + "-" + requestedRange.upperEndpoint() + "/" + payload.getSize());
 
     return builder.build();
   }
 
-  private String getRangeHeader(final Context context) {
-    final Request request = context.getRequest();
-    return request.getHeaders().get(HttpHeaders.RANGE);
+  private static boolean ifRangeHeaderMatches(final Response response, final String ifRangeHeader) {
+    // If the if-range header starts with " it is an ETag
+    if (ifRangeHeader.startsWith("\"")) {
+      String responseEtagHeader = getHeaderValue(response, HttpHeaders.ETAG);
+      return ifRangeHeader.equals(responseEtagHeader);
+    }
+
+    // Otherwise, it is the last-modified date and time
+    DateTime ifRangeHeaderDateTimeValue = parseDateTime(ifRangeHeader);
+    if (ifRangeHeaderDateTimeValue != null) {
+      DateTime responseLastModifiedHeader = parseDateTime(getHeaderValue(response, HttpHeaders.LAST_MODIFIED));
+      return ifRangeHeaderDateTimeValue.equals(responseLastModifiedHeader);
+    }
+    else {
+      return false;
+    }
+  }
+
+  private static String getHeaderValue(final Request request, final String header) {
+    return request.getHeaders().get(header);
+  }
+
+  private static String getHeaderValue(final Response response, final String header) {
+    return response.getHeaders().get(header);
+  }
+
+  private static DateTime parseDateTime(final String stringValue) {
+    if (!Strings.isNullOrEmpty(stringValue)) {
+      final Date date = DateUtils.parseDate(stringValue);
+      if (date != null) {
+        return new DateTime(date.getTime());
+      }
+    }
+    return null;
   }
 }

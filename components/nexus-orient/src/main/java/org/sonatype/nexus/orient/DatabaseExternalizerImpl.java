@@ -21,10 +21,10 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
-import java.util.stream.Collectors;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.collect.ImmutableSortedSet;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Comparator.nullsFirst;
 import static org.sonatype.nexus.orient.DatabaseManagerSupport.SYSTEM_PASSWORD;
 import static org.sonatype.nexus.orient.DatabaseManagerSupport.SYSTEM_USER;
 
@@ -143,12 +145,9 @@ public class DatabaseExternalizerImpl
       ODatabaseExport exporter = new ODatabaseExport(db, output, new LoggingCommandOutputListener("EXPORT"));
 
       if (!excludedClassNames.isEmpty()) {
-        // orientdb maps to classnames to uppercase
-        Set<String> upperCasedExcludedClassNames = excludedClassNames.stream()
-            .map(String::toUpperCase)
-            .collect(Collectors.toSet());
-        log.debug("excluding : {}", upperCasedExcludedClassNames);
-        exporter.setExcludeClasses(upperCasedExcludedClassNames);
+        log.debug("excluding : {}", excludedClassNames);
+        // case-insensitive to allow for orient using upper-case by default (and https://www.prjhub.com/#/issues/10298)
+        exporter.setExcludeClasses(ImmutableSortedSet.copyOf(nullsFirst(CASE_INSENSITIVE_ORDER), excludedClassNames));
       }
 
       exporter.exportDatabase();

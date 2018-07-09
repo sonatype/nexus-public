@@ -36,6 +36,8 @@ public class CapabilityReferenceFilterBuilder
 
     private String typeId;
 
+    private CapabilityIdentity ignoreCapabilityId;
+
     private Boolean enabled;
 
     private Boolean active;
@@ -66,6 +68,14 @@ public class CapabilityReferenceFilterBuilder
 
     public CapabilityReferenceFilter withType(final CapabilityType type) {
       typeId = type.toString();
+      return this;
+    }
+
+    /**
+     * @since 3.next
+     */
+    public CapabilityReferenceFilter ignore(final CapabilityIdentity id) {
+      ignoreCapabilityId = id;
       return this;
     }
 
@@ -128,6 +138,9 @@ public class CapabilityReferenceFilterBuilder
         return false;
       }
       if (typeId != null && !typeId.equals(input.context().type().toString())) {
+        return false;
+      }
+      if (ignoreCapabilityId != null && ignoreCapabilityId.equals(input.context().id())) {
         return false;
       }
       if (enabled != null && !enabled.equals(input.context().isEnabled())) {

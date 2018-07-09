@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -50,6 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class UploadService
+  extends ComponentSupport
 {
   private UploadManager uploadManager;
 
@@ -129,6 +131,8 @@ public class UploadService
       uc.getAssetUploads().add(ua);
     }
 
+    logUploadDetails(uc, repository.getName(), repository.getFormat().getValue());
+
     return uc;
   }
 
@@ -148,6 +152,30 @@ public class UploadService
           item.getFields().put(assetField.getName(), value);
         }
       }
+    }
+  }
+
+  private void logUploadDetails(ComponentUpload componentUpload, String repository, String format) {
+    Map<String,String> componentFields = componentUpload.getFields();
+    List<AssetUpload> assetUploads = componentUpload.getAssetUploads();
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Uploading component with parameters: ")
+        .append("repository").append("=\"").append(repository).append("\" ")
+        .append("format").append("=\"").append(format).append("\" ");
+    for (Entry<String,String> entry : componentFields.entrySet()) {
+      sb.append(entry.getKey()).append("=\"").append(entry.getValue()).append("\" ");
+    }
+    log.info(sb.toString());
+
+    for (AssetUpload assetUpload : assetUploads) {
+      sb = new StringBuilder();
+      sb.append("Asset with parameters: ");
+      sb.append("file=\"").append(assetUpload.getPayload().getName()).append("\" ");
+      for (Entry<String,String> entry : assetUpload.getFields().entrySet()) {
+        sb.append(entry.getKey()).append("=\"").append(entry.getValue()).append("\" ");
+      }
+      log.info(sb.toString());
     }
   }
 

@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Random;
 
 import javax.inject.Provider;
+import javax.validation.ValidationException;
 import javax.validation.Validator;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -63,6 +64,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -474,5 +477,80 @@ public class DefaultCapabilityRegistryTest
     iterator.next();
     underTest.add(CAPABILITY_TYPE, true, "note3", null);
     iterator.next();
+  }
+
+  /**
+   * On load, if properties are invalid, the entry is kept but marked as failed.
+   */
+  @Test
+  public void loadWhenPropertiesAreInvalid()
+      throws Exception
+  {
+    final Map<String, String> oldProps = Maps.newHashMap();
+    oldProps.put("bad", "data");
+
+    final CapabilityStorageItem item = new CapabilityStorageItem(
+        0, CAPABILITY_TYPE.toString(), true, null, oldProps
+    );
+
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
+
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.version()).thenReturn(0);
+
+    doThrow(new ValidationException("Bad data!"))
+        .when(descriptor).validate(fooId, oldProps, ValidationMode.LOAD);
+
+    assertThat(underTest.getAll(), hasSize(0));
+
+    underTest.load();
+
+    assertThat(underTest.getAll(), hasSize(1));
+
+    Iterator<DefaultCapabilityReference> itr = underTest.getAll().iterator();
+    assertThat(itr.next().hasFailure(), is(true));
+    assertThat(itr.hasNext(), is(false));
+  }
+
+  /**
+   * On load, if capability is not unique, the entry is kept but not marked as a failure.
+   * This is because the separate 'HasNoDuplicates' capability condition will track it.
+   */
+  @Test
+  public void loadWhenCapabilityIsNotUnique()
+      throws Exception
+  {
+    final Map<String, String> oldProps = Maps.newHashMap();
+    oldProps.put("duplicate", "data");
+
+    final CapabilityStorageItem item = new CapabilityStorageItem(
+        0, CAPABILITY_TYPE.toString(), true, null, oldProps
+    );
+    final CapabilityStorageItem duplicate = new CapabilityStorageItem(
+        0, CAPABILITY_TYPE.toString(), true, null, oldProps
+    );
+
+    CapabilityIdentity fooId = capabilityIdentity("foo");
+    CapabilityIdentity barId = capabilityIdentity("bar");
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item, barId, duplicate));
+
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.version()).thenReturn(0);
+
+    doNothing().when(descriptor).validate(fooId, oldProps, ValidationMode.LOAD);
+
+    assertThat(underTest.getAll(), hasSize(0));
+
+    underTest.load();
+
+    assertThat(underTest.getAll(), hasSize(2));
+
+    Iterator<DefaultCapabilityReference> itr = underTest.getAll().iterator();
+    assertThat(itr.next().hasFailure(), is(false));
+    assertThat(itr.next().hasFailure(), is(false));
+    assertThat(itr.hasNext(), is(false));
   }
 }

@@ -31,6 +31,7 @@ import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import groovy.transform.PackageScope
 
 /**
  * Browse {@link DirectComponent}.
@@ -44,9 +45,9 @@ class BrowseComponent
     extends DirectComponentSupport
     implements StateContributor
 {
-  static final FOLDER = "folder"
-  static final COMPONENT = "component"
-  static final ASSET = "asset"
+  @PackageScope static final FOLDER = "folder"
+  @PackageScope static final COMPONENT = "component"
+  @PackageScope static final ASSET = "asset"
 
   @Inject
   BrowseNodeConfiguration configuration

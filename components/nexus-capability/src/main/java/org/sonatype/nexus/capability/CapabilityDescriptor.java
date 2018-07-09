@@ -100,4 +100,11 @@ public interface CapabilityDescriptor
     CREATE, UPDATE, LOAD
   }
 
+  /**
+   * Returns whether the given capability properties are duplicated by another capability.
+   *
+   * @since 3.next
+   */
+  boolean isDuplicated(@Nullable CapabilityIdentity id, Map<String, String> properties);
+
 }

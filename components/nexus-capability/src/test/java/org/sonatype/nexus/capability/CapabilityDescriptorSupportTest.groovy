@@ -64,6 +64,7 @@ class CapabilityDescriptorSupportTest
 
     underTest.validate(null, [:], ValidationMode.CREATE)
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == null
   }
 
   @Test
@@ -80,16 +81,18 @@ class CapabilityDescriptorSupportTest
       assert e.message.contains('Test')
     }
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == null
   }
 
   @Test
   void 'Same Capability with same type already present'() {
-    when(capabilityRegistry.get(filterRecorder.capture())).thenReturn([capabilityReference])
+    when(capabilityRegistry.get(filterRecorder.capture())).thenReturn([])
     def underTest = new TestCapabilityDescriptor()
     underTest.installComponents(Providers.of(capabilityRegistry))
 
     underTest.validate(capabilityIdentity, [:], ValidationMode.UPDATE)
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == capabilityIdentity
   }
 
   @Test
@@ -110,6 +113,7 @@ class CapabilityDescriptorSupportTest
 
     underTest.validate(null, ['repository': 'foo'], ValidationMode.CREATE)
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == null
     assert filterRecorder.value.properties['repository'] == 'foo'
   }
 
@@ -139,12 +143,13 @@ class CapabilityDescriptorSupportTest
       assert e.message.contains('foo')
     }
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == null
     assert filterRecorder.value.properties['repository'] == 'foo'
   }
 
   @Test
   void 'Same Capability with same type and same repository already present'() {
-    when(capabilityRegistry.get(filterRecorder.capture())).thenReturn([capabilityReference])
+    when(capabilityRegistry.get(filterRecorder.capture())).thenReturn([])
     def underTest = new TestCapabilityDescriptor() {
       @Override
       List<FormField> formFields() {
@@ -160,6 +165,7 @@ class CapabilityDescriptorSupportTest
 
     underTest.validate(capabilityIdentity, ['repository': 'foo'], ValidationMode.UPDATE)
     assert filterRecorder.value.typeId == 'test'
+    assert filterRecorder.value.ignoreCapabilityId == capabilityIdentity
     assert filterRecorder.value.properties['repository'] == 'foo'
   }
 

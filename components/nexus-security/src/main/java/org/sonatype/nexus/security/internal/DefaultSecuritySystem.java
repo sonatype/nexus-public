@@ -34,6 +34,7 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
@@ -533,8 +534,8 @@ public class DefaultSecuritySystem
           userId, user.getSource());
     }
 
-    // flush authc
-    eventManager.post(new UserPrincipalsExpired(userId, user.getSource()));
+    // Post event containing the userId for which the password has been changed
+    eventManager.post(new UserPasswordChanged(userId));
   }
 
   private Collection<UserManager> getUserManagers() {

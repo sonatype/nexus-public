@@ -24,6 +24,11 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +38,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -172,6 +178,18 @@ public class DatabaseExternalizerTest
 
   private void createSampleDb() {
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      OSchema schema = db.getMetadata().getSchema();
+
+      OClass cityType = schema.createClass("City");
+      cityType.createProperty("name", OType.STRING);
+      cityType.createProperty("country", OType.STRING);
+      cityType.createIndex("name_country_idx", INDEX_TYPE.UNIQUE, "name", "country");
+
+      OClass personType = schema.createClass("Person");
+      personType.createProperty("name", OType.STRING);
+      personType.createProperty("surname", OType.STRING);
+      personType.createIndex("name_surname_idx", INDEX_TYPE.UNIQUE, "name", "surname");
+
       ODocument doc = db.newInstance("Person");
       doc.field("name", "Luke")
           .field("surname", "Skywalker")
@@ -197,6 +215,12 @@ public class DatabaseExternalizerTest
       ODocument doc = db.browseClass("Person").current().getRecord();
       assertThat(doc.field("city.name"), is(expectedName));
       assertThat(doc.field("city.country"), is(expectedCountry));
+
+      OSchema schema = db.getMetadata().getSchema();
+      assertTrue(schema.existsClass("City"));
+
+      OIndexManager indexManager = db.getMetadata().getIndexManager();
+      assertTrue(indexManager.existsIndex("name_country_idx"));
     }
   }
 
@@ -205,6 +229,12 @@ public class DatabaseExternalizerTest
       ODocument doc = db.browseClass("Person").current().getRecord();
       assertFalse(doc.containsField("city.name"));
       assertFalse(doc.containsField("city.country"));
+
+      OSchema schema = db.getMetadata().getSchema();
+      assertFalse(schema.existsClass("City"));
+
+      OIndexManager indexManager = db.getMetadata().getIndexManager();
+      assertFalse(indexManager.existsIndex("name_country_idx"));
     }
   }
 

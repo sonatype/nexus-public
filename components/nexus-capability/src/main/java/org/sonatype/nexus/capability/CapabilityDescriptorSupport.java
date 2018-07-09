@@ -123,7 +123,16 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
                        final ValidationMode validationMode)
   {
     validateConfig(properties, validationMode);
-    validateUnique(id, properties);
+    // skip uniqueness check on load; defer to 'HasNoDuplicates' activation condition
+    // but keep it for create and update, as we want early validation in those cases
+    if (validationMode != ValidationMode.LOAD) {
+      validateUnique(id, properties);
+    }
+  }
+
+  @Override
+  public boolean isDuplicated(@Nullable final CapabilityIdentity id, final Map<String, String> properties) {
+    return !capabilityRegistry.get().get(duplicatesFilter(id, properties)).isEmpty();
   }
 
   /**
@@ -166,22 +175,34 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
     ConstraintViolations.maybePropagate(violations, log);
   }
 
-  protected void validateUnique(@Nullable final CapabilityIdentity id, final Map<String, String> properties)
+  private CapabilityReferenceFilter duplicatesFilter(@Nullable final CapabilityIdentity id,
+                                                     final Map<String, String> properties)
   {
     checkNotNull(properties);
     checkNotNull(capabilityRegistry);
 
     CapabilityReferenceFilter filter = capabilities().withType(type());
+    if (id != null) {
+      filter.ignore(id);
+    }
     Set<String> uniqueProperties = uniqueProperties();
     if (uniqueProperties != null) {
       for (String key : uniqueProperties) {
         filter.withProperty(key, properties.get(key));
       }
     }
+
+    return filter;
+  }
+
+  protected void validateUnique(@Nullable final CapabilityIdentity id, final Map<String, String> properties)
+  {
+    CapabilityReferenceFilter filter = duplicatesFilter(id, properties);
+
     log.trace("Validating that unique capability of type {} and properties {}", type(), filter.getProperties());
 
     Collection<? extends CapabilityReference> references = capabilityRegistry.get().get(filter);
-    if (!references.isEmpty() && !Objects.equals(id, references.iterator().next().context().id())) {
+    if (!references.isEmpty()) {
       StringBuilder message = new StringBuilder().append("Only one capability of type '").append(name()).append("'");
       for (Entry<String, String> entry : filter.getProperties().entrySet()) {
         message.append(", ").append(propertyName(entry.getKey()).toLowerCase()).append(" '").append(entry.getValue())

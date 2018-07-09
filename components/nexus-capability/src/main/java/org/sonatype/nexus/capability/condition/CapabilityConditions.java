@@ -73,4 +73,12 @@ public interface CapabilityConditions
    * @return created condition
    */
   Condition evaluable(Evaluable condition);
+
+  /**
+   * Creates a new condition that is satisfied when the capability has no duplicates.
+   *
+   * @return created condition
+   * @since 3.next
+   */
+  Condition capabilityHasNoDuplicates();
 }
