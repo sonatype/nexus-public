@@ -131,22 +131,6 @@ class ComponentComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
-    Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
-    if (!repository.configuration.online) {
-      return null
-    }
-    def result = browseService.browseComponents(
-        repository,
-        toQueryOptions(parameters))
-    return new PagedResponse<ComponentXO>(
-        result.total,
-        result.results.collect(COMPONENT_CONVERTER.rcurry(repository.name)))
-  }
-
-  @DirectMethod
-  @Timed
-  @ExceptionMetered
   List<AssetXO> readComponentAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)
@@ -300,7 +284,7 @@ class ComponentComponent
     finally {
       storageTx.close()
     }
-    ensurePermissions(repository, assets, BreadActions.READ)
+    ensurePermissions(repository, assets, BreadActions.BROWSE)
     return COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO
   }
 
@@ -323,7 +307,7 @@ class ComponentComponent
       throw new WebApplicationException(Status.NOT_FOUND)
     }
 
-    ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
+    ensurePermissions(repository, Collections.singletonList(asset), BreadActions.BROWSE)
     if (asset) {
       def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
       def lastThirty = browseService.getLastThirtyDays(asset)

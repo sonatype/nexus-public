@@ -110,7 +110,7 @@ public class RebuildBrowseNodesTaskTest
         assetStore,
         bucketStore,
         browseNodeManager,
-        new BrowseNodeConfiguration(true, true, REBUILD_PAGE_SIZE, 1000, 10_000, 10_000, seconds(0))
+        new BrowseNodeConfiguration(true, REBUILD_PAGE_SIZE, 1000, 10_000, 10_000, seconds(0))
     );
   }
 

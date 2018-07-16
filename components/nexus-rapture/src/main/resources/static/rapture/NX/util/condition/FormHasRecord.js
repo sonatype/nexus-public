@@ -42,20 +42,18 @@ Ext.define('NX.util.condition.FormHasRecord', {
    */
   bind: function () {
     var me = this,
-        components = {}, queryResult;
+        queryResult = Ext.ComponentQuery.query(me.form),
+        formCmp = queryResult && queryResult.length ? queryResult[0] : null;
 
-    if (!me.bounded) {
-      components[me.form] = {
+    if (!me.bounded && formCmp) {
+      formCmp.on({
         afterrender: me.evaluate,
         recordloaded: me.evaluate,
-        destroy: me.evaluate
-      };
-      Ext.app.EventBus.listen({ component: components }, me);
+        destroy: me.evaluate,
+        scope: me
+      });
       me.callParent();
-      queryResult = Ext.ComponentQuery.query(me.form);
-      if (queryResult && queryResult.length > 0) {
-        me.evaluate(queryResult[0]);
-      }
+      me.evaluate(formCmp);
     }
 
     return me;

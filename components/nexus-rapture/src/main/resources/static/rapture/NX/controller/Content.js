@@ -75,6 +75,7 @@ Ext.define('NX.controller.Content', {
         view = feature.get('view'),
         text = feature.get('text'),
         iconName = feature.get('iconName'),
+        iconCls = feature.get('iconCls'),
         description = feature.get('description'),
         cmp;
 
@@ -96,7 +97,11 @@ Ext.define('NX.controller.Content', {
 
     // update title and icon
     content.setTitle(text);
-    content.setIconCls(NX.Icons.cls(iconName, 'x32'));
+    if (iconCls) {
+      content.setIconCls(iconCls + " nx-icon");
+    } else {
+      content.setIconCls(NX.Icons.cls(iconName, 'x32'));
+    }
 
     // Reset unsaved changes flag
     content.resetUnsavedChangesFlag();

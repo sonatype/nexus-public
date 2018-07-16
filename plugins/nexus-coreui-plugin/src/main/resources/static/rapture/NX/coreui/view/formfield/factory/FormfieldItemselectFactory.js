@@ -91,7 +91,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
           },
           reader: {
             type: 'json',
-            root: 'data',
+            rootProperty: 'data',
             idProperty: idMapping,
             successProperty: 'success'
           }

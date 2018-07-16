@@ -66,8 +66,8 @@ Ext.define('NX.view.info.Entry', {
     if (this.getEl()) {
       this.tpl.overwrite(this.getEl(), entries);
 
-      // FIXME: what 'panel' is this intended to re-layout?
-      this.up('panel').doComponentLayout();
+      // Ensure the parent panel updates it's layout
+      this.up('panel').updateLayout();
     }
     else {
       this.html = this.tpl.apply(entries);

@@ -23,8 +23,11 @@ Ext.define('NX.store.FeatureMenu', {
 
   root: {
     expanded: true,
-    text: 'Features',
-    children: []
+    text: 'Features'
+  },
+
+  proxy: {
+    type: 'memory'
   }
 
 });

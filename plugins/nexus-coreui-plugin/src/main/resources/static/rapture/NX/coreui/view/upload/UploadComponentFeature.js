@@ -22,7 +22,7 @@ Ext.define('NX.coreui.view.upload.UploadComponentFeature', {
   iconName: 'upload-component-default',
 
   masters: [
-    {xtype: 'nx-coreui-browse-repository-list'},
+    {xtype: 'nx-coreui-upload-repository-list'},
     {xtype: 'nx-coreui-upload-component'}
   ]
 });

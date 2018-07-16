@@ -23,7 +23,6 @@ Ext.define('NX.model.Permission', {
     'NX.Permissions'
   ],
 
-  idProperty: 'id',
   fields: [
     { name: 'id', type: 'string' },
     { name: 'permitted', type: 'bool', defaultValue: true }

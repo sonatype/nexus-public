@@ -23,7 +23,11 @@ Ext.define('NX.coreui.migration.PhaseFinishStep', {
     'NX.coreui.migration.PhaseFinishScreen'
   ],
 
-  screen: 'NX.coreui.migration.PhaseFinishScreen',
+  config: {
+    screen: 'NX.coreui.migration.PhaseFinishScreen',
+    enabled: true
+  },
+
   phase: 'FINISH',
 
   /**

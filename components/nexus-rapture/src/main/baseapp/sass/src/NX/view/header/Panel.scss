@@ -4,27 +4,34 @@
 
 .nx-header-panel {
   .x-toolbar {
-    background-color: $color-black;
-    padding: 0 0 0 16px;
+    background-color: $color-almost-black;
+    padding: 0 0 0 10px;
   }
 
   .productname {
     color: $color-white;
-    font-family: 'Proxima Nova Thin', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 20px;
+    font-family: 'Proxima Nova Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.2em;
+    height: 22px;
     line-height: 1.2em;
   }
 
   .productspec {
     color: $color-white;
-    font-family: 'Proxima Nova Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 11px;
-    line-height: 1.1em;
+    font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.9em;
     letter-spacing: 0.05em;
+    line-height: 1.1em;
+  }
+
+  .x-btn-icon-el-nx-header-medium {
+    font-size: $font-size-h1;
+    line-height: $font-size-h1;
+    height: $font-size-h1;
   }
 }
 
-@include extjs-button-toolbar-medium-ui(
+@include extjs-button-medium-ui(
     $ui: 'nx-header',
     $background-color: transparent,
     $background-color-over: $color-salem,
@@ -46,12 +53,13 @@
     $glyph-opacity: 1
 );
 
-.x-btn-nx-header-toolbar-medium {
-  height: 39px;
+.x-btn-nx-header-medium,
+.nx-modebutton {
   border-radius: 0;
-  padding: 3px 6px;
+  height: 49px;
+  padding: 0 6px 3px 6px;
 
-  .x-btn-wrap {
-    margin-top: 4px;
+  .x-btn-inner {
+    padding: 2px 5px 0 5px;
   }
 }

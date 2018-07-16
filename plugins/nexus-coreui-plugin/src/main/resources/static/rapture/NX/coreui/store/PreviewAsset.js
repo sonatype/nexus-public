@@ -30,7 +30,7 @@ Ext.define('NX.coreui.store.PreviewAsset', {
 
     reader: {
       type: 'json',
-      root: 'data',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

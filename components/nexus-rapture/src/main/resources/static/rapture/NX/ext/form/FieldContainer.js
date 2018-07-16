@@ -28,7 +28,7 @@ Ext.define('NX.ext.form.FieldContainer', {
     var me = this;
 
     if (me.helpText) {
-      me.afterLabelTpl = '<span style="font-size: 10px;">' + me.helpText + '</span>';
+      me.afterLabelTpl = '<span class="nx-help-text-after-label">' + me.helpText + '</span>';
     }
 
     me.callParent(arguments);

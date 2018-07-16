@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -67,9 +68,7 @@ public class BlobStoreManagerImpl
 
   private final DatabaseFreezeService databaseFreezeService;
 
-  private final NodeAccess nodeAccess;
-
-  private final boolean provisionDefaults;
+  private final BooleanSupplier provisionDefaults;
 
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager,
@@ -77,20 +76,27 @@ public class BlobStoreManagerImpl
                               Map<String, Provider<BlobStore>> blobstorePrototypes,
                               final DatabaseFreezeService databaseFreezeService,
                               final NodeAccess nodeAccess,
-                              @Named("${nexus.blobstore.provisionDefaults:-false}") final boolean provisionDefaults)
+                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.provisionDefaults = provisionDefaults;
+
+    if (provisionDefaults != null) {
+      // explicit true/false setting, so honour that
+      this.provisionDefaults = provisionDefaults::booleanValue;
+    }
+    else {
+      // otherwise only create in non-clustered mode
+      this.provisionDefaults = () -> !nodeAccess.isClustered();
+    }
   }
 
   @Override
   protected void doStart() throws Exception {
     List<BlobStoreConfiguration> configurations = store.list();
-    if (configurations.isEmpty() && (provisionDefaults || !nodeAccess.isClustered())) {
+    if (configurations.isEmpty() && provisionDefaults.getAsBoolean()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
       store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME).build());
       configurations = store.list();

@@ -18,7 +18,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -37,9 +36,8 @@ public class RebuildBrowseNodesTaskDescriptor
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   @Inject
-  public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess, BrowseNodeConfiguration configuration) {
-    super(TYPE_ID, RebuildBrowseNodesTask.class, "Repair - Rebuild repository browse",
-        configuration.isEnabled() ? VISIBLE : NOT_VISIBLE, configuration.isEnabled() ? EXPOSED : NOT_EXPOSED,
+  public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess) {
+    super(TYPE_ID, RebuildBrowseNodesTask.class, "Repair - Rebuild repository browse", VISIBLE, EXPOSED,
         new RepositoryCombobox(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository to rebuild browse tree",
             true).excludingAnyOfTypes(GroupType.NAME).includeAnEntryForAllRepositories(),
         nodeAccess.isClustered() ? newLimitNodeFormField() : null);

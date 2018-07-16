@@ -1,12 +1,519 @@
 {
-  "name": "baseapp",
+    "name": "baseapp",
+    "namespace": "baseapp",
+    "version": "1.0.0.0",
+    "framework": "ext",
+    "toolkit": "classic",
+    "theme": "rapture-theme",
 
-  "requires": [
-    // FIXME: this does not resolve in Ext <5, here for note about upgrade
-    // "ext-ux",
-    "font-awesome",
-    "rapture-theme"
-  ],
+    /**
+     * The list of required packages (with optional versions; default is "latest").
+     *
+     * For example,
+     *
+     *      "requires": [
+     *          "charts"
+     *      ]
+     */
+    "requires": [
+        "font-awesome",
+        "ux",
+        "charts"
+    ],
 
-  "id": "7ab894a2-c860-4858-81fe-e27ac87611e2"
+    /**
+     * The relative path to the application's markup file (html, jsp, asp, etc.).
+     */
+    "indexHtmlPath": "index.html",
+
+    /**
+     * Comma-separated string with the paths of directories or files to search. Any classes
+     * declared in these locations will be available in your class "requires" or in calls
+     * to "Ext.require". The "app.dir" variable below is expanded to the path where the
+     * application resides (the same folder in which this file is located).
+     */
+    "classpath": [
+        "app"
+    ],
+
+    /**
+     * Comma-separated string with the paths of directories or files to search. Any classes
+     * declared in these locations will be automatically required and included in the build.
+     * If any file defines an Ext JS override (using Ext.define with an "override" property),
+     * that override will in fact only be included in the build if the target class specified
+     * in the "override" property is also included.
+     */
+    "overrides": [
+        "overrides"
+    ],
+
+    /**
+     * Fashion build configuration properties.
+     */
+    "fashion": {
+        "missingParameters": "error",
+        "inliner": {
+            /**
+             * Disable resource inliner. Production builds enable this by default.
+             */
+            "enable": false
+        }
+    },
+
+    /**
+     * Sass configuration properties.
+     */
+    "sass": {
+        /**
+         * The root namespace to use when mapping *.scss files to classes in the
+         * sass/src and sass/var directories. For example, "baseapp.view.Foo" would
+         * map to "sass/src/view/Foo.scss". If we changed this to "baseapp.view" then
+         * it would map to "sass/src/Foo.scss". To style classes outside the app's
+         * root namespace, change this to "". Doing so would change the mapping of
+         * "baseapp.view.Foo" to "sass/src/baseapp/view/Foo.scss".
+         */
+        "namespace": "baseapp",
+
+        /**
+         * Generated sass source settings
+         *
+         *      "generated": {
+         *         // The file used to save sass variables edited via Sencha Inspector and Sencha Themer.
+         *         // This file will automatically be applied to the end of the scss build.
+         *         "var": "sass/save.scss",
+         *      
+         *         // The directory used to save generated sass sources.
+         *         // This directory will automatically be applied to the end of the scss build.
+         *         "src": "sass/save"
+         *      }
+         *
+         */
+
+        "generated": {
+            "var": "sass/save.scss",
+            "src": "sass/save"
+        },
+
+        /**
+         * Comma-separated list of files or folders containing extra Sass. These
+         * files are automatically included in the Sass compilation. By default this
+         * is just "etc/all.scss" to allow import directives to control the order
+         * other files are included.
+         *
+         * All "etc" files are included at the top of the Sass compilation in their
+         * dependency order:
+         *
+         *      +-------+---------+
+         *      |       | base    |
+         *      | theme +---------+
+         *      |       | derived |
+         *      +-------+---------+
+         *      | packages        |  (in package dependency order)
+         *      +-----------------+
+         *      | application     |
+         *      +-----------------+
+         */
+        "etc": [
+            "sass/etc/all.scss"
+        ],
+
+        /**
+         * Comma-separated list of folders containing Sass variable definitions
+         * files. These file can also define Sass mixins for use by components.
+         *
+         * All "var" files are included after "etc" files in the Sass compilation in
+         * dependency order:
+         *
+         *      +-------+---------+
+         *      |       | base    |
+         *      | theme +---------+
+         *      |       | derived |
+         *      +-------+---------+
+         *      | packages        |  (in package dependency order)
+         *      +-----------------+
+         *      | application     |
+         *      +-----------------+
+         *
+         * The "sass/var/all.scss" file is always included at the start of the var
+         * block before any files associated with JavaScript classes.
+         */
+        "var": [
+            "sass/var/all.scss",
+            "sass/var"
+        ],
+
+        /**
+         * Comma-separated list of folders containing Sass rule files.
+         *
+         * All "src" files are included after "var" files in the Sass compilation in
+         * dependency order (the same order as "etc"):
+         *
+         *      +-------+---------+
+         *      |       | base    |
+         *      | theme +---------+
+         *      |       | derived |
+         *      +-------+---------+
+         *      | packages        |  (in package dependency order)
+         *      +-----------------+
+         *      | application     |
+         *      +-----------------+
+         */
+        "src": [
+            "sass/src"
+        ]
+    },
+
+    /**
+     * List of all JavaScript assets in the right execution order.
+     *
+     * Each item is an object with the following format:
+     *
+     *      {
+     *          // Path to file. If the file is local this must be a relative path from
+     *          // this app.json file.
+     *          //
+     *          "path": "path/to/script.js",   // REQUIRED
+     *
+     *          // Set to true on one file to indicate that it should become the container
+     *          // for the concatenated classes.
+     *          //
+     *          "bundle": false,    // OPTIONAL
+     *
+     *          // Set to true to include this file in the concatenated classes.
+     *          //
+     *          "includeInBundle": false,  // OPTIONAL
+     *
+     *          // Specify as true if this file is remote and should not be copied into the
+     *          // build folder. Defaults to false for a local file which will be copied.
+     *          //
+     *          "remote": false,    // OPTIONAL
+     *
+     *          // If not specified, this file will only be loaded once, and cached inside
+     *          // localStorage until this value is changed. You can specify:
+     *          //
+     *          //   - "delta" to enable over-the-air delta update for this file
+     *          //   - "full" means full update will be made when this file changes
+     *          //
+     *          "update": "",        // OPTIONAL
+     *
+     *          // A value of true indicates that is a development mode only dependency.
+     *          // These files will not be copied into the build directory or referenced
+     *          // in the generate app.json manifest for the micro loader.
+     *          //
+     *          "bootstrap": false   // OPTIONAL
+     *      }
+     *
+     */
+    "js": [
+        {
+            "path": "${framework.dir}/build/ext-all-rtl-debug.js"
+        },
+        {
+            "path": "app.js",
+            "bundle": true
+        }
+    ],
+
+    /**
+     * List of all CSS assets in the right inclusion order.
+     *
+     * Each item is an object with the following format:
+     *
+     *      {
+     *          // Path to file. If the file is local this must be a relative path from
+     *          // this app.json file.
+     *          //
+     *          "path": "path/to/stylesheet.css",   // REQUIRED
+     *
+     *          // Specify as true if this file is remote and should not be copied into the
+     *          // build folder. Defaults to false for a local file which will be copied.
+     *          //
+     *          "remote": false,    // OPTIONAL
+     *
+     *          // If not specified, this file will only be loaded once, and cached inside
+     *          // localStorage until this value is changed. You can specify:
+     *          //
+     *          //   - "delta" to enable over-the-air delta update for this file
+     *          //   - "full" means full update will be made when this file changes
+     *          //
+     *          "update": ""      // OPTIONAL
+     *      }
+     */
+    "css": [
+        {
+            // this entry uses an ant variable that is the calculated
+            // value of the generated output css file for the app,
+            // defined in .sencha/app/defaults.properties
+            "path": "${build.out.css.path}",
+            "bundle": true,
+            "exclude": ["fashion"]
+        }
+    ],
+
+    /**
+     * This option is used to configure the dynamic loader. At present these options
+     * are supported.
+     *
+     */
+     "loader": {
+         // This property controls how the loader manages caching for requests:
+         //
+         //   - true: allows requests to receive cached responses
+         //   - false: disable cached responses by adding a random "cache buster"
+         //   - other: a string (such as the build.timestamp shown here) to allow
+         //     requests to be cached for this build.
+         //
+         "cache": false,
+
+         // When "cache" is not true, this value is the request parameter used
+         // to control caching.
+         //
+         "cacheParam": "_dc"
+     },
+
+    /**
+     * Settings specific to production builds.
+     */
+    "production": {
+        "output": {
+            "base": "${workspace.build.dir}",
+            "appCache": {
+                "enable": false,
+                "path": "cache.appcache"
+            },
+            "js": {
+                "path": "baseapp-prod.js"
+            },
+            "css": {
+                "path": "${app.output.resources}/${app.name}-prod.css"
+            }
+        },
+        "cache": {
+            "enable": true
+        },
+        "compressor": {
+            "type": "yui"
+        }
+    },
+
+    /**
+     * Settings specific to testing builds.
+     */
+    "testing": {
+        "output": {
+            "base": "${workspace.build.dir}",
+            "js": {
+                "path": "baseapp-debug.js"
+            },
+            "css": {
+                "path": "${app.output.resources}/${app.name}-debug.css"
+            }
+        }
+    },
+
+    /**
+     * Settings specific to development builds.
+     */
+    "development": {
+        "watch": {
+            "delay": 250
+        }
+    },
+
+    /**
+     * Controls the output structure of development-mode (bootstrap) artifacts. May
+     * be specified by a string:
+     *
+     *      "bootstrap": "${app.dir}"
+     *
+     * This will adjust the base path for all bootstrap objects, or expanded into object
+     * form:
+     *
+     *      "bootstrap": {
+     *          "base": "${app.dir}",
+     *          "manifest": "bootstrap.json",
+     *          "microloader": "bootstrap.js",
+     *          "css": "bootstrap.css"
+     *      }
+     *
+     * You can optionally exclude entries from the manifest. For example, to exclude
+     * the "loadOrder" (to help development load approximate a build) you can add:
+     *
+     *      "bootstrap": {
+     *          "manifest": {
+     *              "path": "bootstrap.json",
+     *              "exclude": "loadOrder"
+     *          }
+     *      }
+     *
+     */
+    "bootstrap": {
+        "base": "${app.dir}",
+
+        "microloader": "bootstrap.js",
+        "css": "bootstrap.css"
+    },
+
+    /**
+     * Controls the output directory for build resources.  May be set with
+     * either a string:
+     *
+     *      "${workspace.build.dir}/${build.environment}/${app.name}"
+     *
+     * or an object containing values for various types of build artifacts:
+     *
+     *      {
+     *          "base": "${workspace.build.dir}/${build.environment}/${app.name}",
+     *          "page": {
+     *              "path": "../index.html",
+     *              "enable": false
+     *          },
+     *          "css": "${app.output.resources}/${app.name}-all.css",
+     *          "js": {
+     *              "path": "app.js",
+     *              // This setting constrols the output language level.  Set to 'ES6' to 
+     *              // disable the transpiler
+     *              "version": "ES5"
+     *          },
+     *          "microloader": {
+     *              "path": "microloader.js",
+     *              "embed": true,
+     *              "enable": true
+     *          },
+     *          "manifest": {
+     *              "path": "app.json",
+     *              "embed": false,
+     *              "enable": "${app.output.microloader.enable}"
+     *          },
+     *          "resources": "resources",
+     *          "slicer": {
+     *              "path": "${app.output.resources}/images",
+     *              "enable": false
+     *          },
+     *          // Setting the "enable" property of this object to a Truthy value will cause a Application Cache
+     *          // manifest file to be generated based on this files appCache object. This file will then be injected
+     *          // into the index.html file of the built application
+     *          "appCache":{
+     *              "enable": false"
+     *          }
+     *      }
+     *
+     */
+
+    "output": {
+        "appCache": {
+            "enable": false
+        },
+        "microloader": {
+            "path": "microloader.js",
+            "embed": false,
+            "enable": false
+        }
+    },
+
+    /**
+    * Controls for localStorage caching
+    *   "cache": {
+    *       // This property controls whether localStorage caching of this manifest file is on or off.
+    *       // if disabled no deltas will be generated during a build and full updates will be disabled
+    *       "enable": false,
+    *
+    *       // This property allows for global toggle of deltas.
+    *       // If set to a string the value will be used as the path to where deltas will be generated relative to you build.
+    *       // If set to a Truthy Value the default path ok "deltas" will be used
+    *       // If set to a Falsey value or if this property is not present deltas will be disabled and not generated.
+    *
+    *       "deltas": "deltas"
+    *   }
+    */
+
+    "cache": {
+        "enable": false,
+        "deltas": true
+    },
+
+    /**
+     * Used to automatically generate cache.manifest (HTML 5 application cache manifest)
+     * file when you build.
+     */
+    "appCache": {
+        /**
+         * List of items in the CACHE MANIFEST section
+         */
+        "cache": [
+            "index.html"
+        ],
+        /**
+         * List of items in the NETWORK section
+         */
+        "network": [
+            "*"
+        ],
+        /**
+         * List of items in the FALLBACK section
+         */
+        "fallback": []
+    },
+
+    /**
+     * Extra resources to be copied into the resource folder as specified in the "resources"
+     * property of the "output" object. Folders specified in this list will be deeply copied.
+     */
+    "resources": [
+        {
+            "path": "resources",
+            "output": "shared"
+        }
+    ],
+
+    /**
+     * Directory path to store all previous production builds. Note that the content
+     * generated inside this directory must be kept intact for proper generation of
+     * deltas between updates.
+     */
+
+    "archivePath": "archive",
+
+    /**
+     * Additional resources used during theme slicing operations
+     */
+    "slicer": {
+        "js": [
+            {
+                "path": "sass/example/custom.js",
+                "isWidgetManifest": true
+            }
+        ],
+        "output": {
+            "appCache": {
+                "enable": false
+            }
+        },
+        "cache": {
+            "enable": false
+        }
+    },
+
+    /**
+     * Build Profiles. This object's properties are each a "build profile". You can
+     * add as many as you need to produce optimized builds for devices, themes, locales
+     * or other criteria. Your "Ext.beforeLoad" hook (see index.html) is responsible for
+     * selecting the desired build profile by setting "Ext.manifest" to one of these
+     * names.
+     *
+     */
+
+    /**
+     * File / directory name patttern to ignore when copying to the builds. Must be a
+     * valid regular expression.
+     */
+    "ignore": [
+        "(^|/)CVS(/?$|/.*?$)"
+    ],
+
+    /**
+     * Uniquely generated id for this application, used as prefix for localStorage keys.
+     * Normally you should never change this value.
+     */
+    "id": "72ff5611-734b-4ea3-8469-a2257ba6f296"
 }

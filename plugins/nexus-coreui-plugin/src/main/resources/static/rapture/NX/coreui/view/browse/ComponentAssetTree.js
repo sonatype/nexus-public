@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
   extend: 'Ext.panel.Panel',
   alias: 'widget.nx-coreui-component-asset-tree',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.State'
   ],
 
   /**
@@ -42,7 +43,7 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
         rootVisible: false,
         // Prevent the store from automatically loading
         loadStore: Ext.emptyFn,
-
+        animate: Ext.enableFx && !!NX.State.getValue('animateDuration'),
         viewConfig: {
           emptyText: NX.I18n.get('Component_Asset_Tree_EmptyText_View'),
           deferEmptyText: false

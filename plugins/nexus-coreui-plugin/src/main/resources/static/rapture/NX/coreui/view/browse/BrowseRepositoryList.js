@@ -27,22 +27,10 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
   stateful: true,
   stateId: 'nx-coreui-browse-repository-list',
 
-  /**
-   * @override
-   */
-  initComponent: function() {
+  store: 'RepositoryReference',
 
-    this.store = 'RepositoryReference';
-
-    // filter will install into toolbar, ensure its properly styled for drilldown
-    this.tbar = {
-      xtype: 'nx-actions'
-    };
-
-    this.callParent();
-
-    this.store.clearFilter(true); // remove existing filters
-    this.store.remoteFilter = true;
+  tbar: {
+    xtype: 'nx-actions'
   }
 
 });

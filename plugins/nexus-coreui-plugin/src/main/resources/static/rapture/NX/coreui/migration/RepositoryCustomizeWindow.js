@@ -63,7 +63,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
       closable: true,
       width: NX.view.ModalDialog.SMALL_MODAL,
 
-      title: NX.I18n.render(me, 'Title', me.repository),
+      title: NX.I18n.render(me, 'Title', me.getRepository()),
 
       items: {
         xtype: 'form',
@@ -75,7 +75,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
           {
             xtype: 'hiddenfield',
             name: 'id',
-            value: me.recordId
+            value: me.getRecordId()
           },
           {
             xtype: 'combo',
@@ -89,7 +89,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
             displayField: 'name',
             valueField: 'name',
             readOnlyOnUpdate: true,
-            value: me.blobStore
+            value: me.getBlobStore()
           },
           {
             xtype: 'combo',
@@ -103,7 +103,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
               ['FS_COPY', NX.I18n.render(me, 'IngestMethod_Copy')],
               ['DOWNLOAD', NX.I18n.render(me, 'IngestMethod_Download')]
             ],
-            value: me.ingestMethod
+            value: me.getIngestMethod()
           }
         ],
 

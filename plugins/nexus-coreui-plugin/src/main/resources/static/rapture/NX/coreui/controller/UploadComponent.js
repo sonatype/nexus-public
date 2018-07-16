@@ -26,7 +26,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     'NX.I18n'
   ],
   masters: [
-    'nx-coreui-uploadcomponentfeature nx-coreui-browse-repository-list',
+    'nx-coreui-uploadcomponentfeature nx-coreui-upload-repository-list',
     'nx-coreui-uploadcomponentfeature nx-coreui-upload-component'
   ],
   stores: [
@@ -41,12 +41,12 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   views: [
     'upload.UploadComponentFeature',
     'upload.UploadComponent',
-    'browse.BrowseRepositoryList'
+    'upload.UploadRepositoryList'
   ],
 
   refs: [
     {ref: 'feature', selector: 'nx-coreui-uploadcomponentfeature'},
-    {ref: 'repositoryList', selector: 'nx-coreui-uploadcomponentfeature nx-coreui-browse-repository-list'},
+    {ref: 'repositoryList', selector: 'nx-coreui-uploadcomponentfeature nx-coreui-upload-repository-list'},
     {ref: 'uploadComponent', selector: 'nx-coreui-uploadcomponentfeature nx-coreui-upload-component'},
     {ref: 'successMessage', selector: '#nx-coreui-upload-success-message'}
   ],
@@ -75,10 +75,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
       description: NX.I18n.get('FeatureGroups_Upload_Description'),
       view: 'NX.coreui.view.upload.UploadComponentFeature',
       group: false,
-      iconConfig: {
-        file: 'upload.png',
-        variants: ['x16', 'x32']
-      },
+      iconCls: 'x-fa fa-upload',
       authenticationRequired: false,
       visible: function() {
           return NX.Permissions.check('nexus:component:add');
@@ -94,7 +91,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
         }
       },
       component: {
-        'nx-coreui-uploadcomponentfeature nx-coreui-browse-repository-list': {
+        'nx-coreui-uploadcomponentfeature nx-coreui-upload-repository-list': {
           beforerender: me.onBeforeRender
         },
         'nx-coreui-upload-component button[action=remove_upload_asset]': {
@@ -148,7 +145,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     }
   },
 
-  loadView: function (index, animate, model) {
+  loadView: function (index, model) {
     this.callParent(arguments);
     if (model) {
         //redraw the panel after visible, to get around issue where file field can be drawn at invalid size
@@ -175,24 +172,26 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
     repoStore.removeAll();
 
-    this.getStore('UploadComponentDefinition').load(function (store, results) {
-        var formats = '';
-        results.getResultSet().records.forEach(function(record){
-            if (formats.length > 0) {
-                formats += ',';
-            }
-            formats += record.get('format');
+    this.getStore('UploadComponentDefinition').load(function (data) {
+        var formats = [];
+
+        data.forEach(function(def) {
+          formats.push(def.get('format'));
         });
 
         repoStore.addFilter([{
           property: 'format',
-          value: formats
+          filterFn: function(item) {
+            return formats.indexOf(item.get('format')) !== -1;
+          }
         }, {
           property: 'type',
           value: 'hosted'
         }, {
-          property: 'versionPolicies',
-          value: '!SNAPSHOT'
+          property: 'versionPolicy',
+          filterFn: function(item) {
+            return item.get('versionPolicy') == null || item.get('versionPolicy') !== 'SNAPSHOT';
+          }
         }]);
         repoStore.load(function () {
             // Load the asset upload page
@@ -258,7 +257,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
   discardUpload: function() {
     var me = this;
     me.resetForm();
-    me.loadView(me.BROWSE_INDEX, true);
+    me.loadView(me.BROWSE_INDEX);
   },
 
   resetForm: function() {

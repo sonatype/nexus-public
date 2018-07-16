@@ -22,7 +22,7 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
   alias: 'widget.nx-coreui-searchfeature',
 
   cls: 'nx-coreui-searchfeature',
-  iconName: 'search-default',
+  iconCls: 'x-fa fa-search',
 
   initComponent: function() {
     var me = this;

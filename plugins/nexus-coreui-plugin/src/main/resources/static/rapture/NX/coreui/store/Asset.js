@@ -30,7 +30,7 @@ Ext.define('NX.coreui.store.Asset', {
 
     reader: {
       type: 'json',
-      root: 'data',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },
@@ -41,6 +41,13 @@ Ext.define('NX.coreui.store.Asset', {
   remoteFilter: true,
   remoteSort: true,
 
-  sorters: { property: 'name', direction: 'ASC' }
+  sorters: { property: 'name', direction: 'ASC' },
+
+  onSorterEndUpdate: function() {
+    if (!this.getFilters().length) {
+      return;
+    }
+    this.callParent(arguments);
+  }
 
 });

@@ -40,11 +40,23 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionAdd', {
       editableMarker: NX.I18n.get('Ldap_LdapServerConnectionAdd_Create_Error'),
 
       buttons: [
-        { text: NX.I18n.get('Ldap_LdapServerConnectionAdd_Text'), action: 'next', formBind: true, ui: 'nx-primary' },
+        { text: NX.I18n.get('Ldap_LdapServerConnectionAdd_Text'), action: 'next', ui: 'nx-primary' },
         { text: NX.I18n.get('Add_Cancel_Button'), action: 'back' }
       ]
     };
 
     me.callParent();
+
+    NX.Conditions.formIs(me.down('form'), function(form) {
+      return !form.isDisabled() && form.isValid();
+    }).on({
+      satisfied: function() {
+        this.enable();
+      },
+      unsatisfied: function() {
+        this.disable();
+      },
+      scope: me.down('button[action=next]')
+    });
   }
 });

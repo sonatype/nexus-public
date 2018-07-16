@@ -38,7 +38,6 @@ Ext.define('NX.coreui.view.user.UserChangePassword', {
 
     me.ui = 'nx-inset';
     me.title = NX.I18n.get('User_UserChangePassword_Title');
-    me.defaultFocus = 'password';
 
     me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
@@ -81,6 +80,13 @@ Ext.define('NX.coreui.view.user.UserChangePassword', {
     };
 
     me.maxHeight = Ext.getBody().getViewSize().height - 100;
+
+    me.on({
+      resize: function() {
+        me.down('#password').focus();
+      },
+      single: true
+    });
 
     me.callParent();
   }

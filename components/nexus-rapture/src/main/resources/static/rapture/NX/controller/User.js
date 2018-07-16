@@ -102,30 +102,6 @@ Ext.define('NX.controller.User', {
         }
       }
     });
-
-    me.addEvents(
-        /**
-         * Fires when a user had been successfully signed-in.
-         *
-         * @event signin
-         * @param {Object} user
-         */
-        'signin',
-
-        /**
-         * Fires before a user is signed out.
-         *
-         * @event beforesignout
-         */
-        'beforesignout',
-
-        /**
-         * Fires when a user had been successfully signed-out.
-         *
-         * @event signout
-         */
-        'signout'
-    );
   },
 
   /**
@@ -391,8 +367,8 @@ Ext.define('NX.controller.User', {
       if (user) {
         signInButton.hide();
         userMode.show();
-        userMode.setText(user.id);
-        userMode.setTooltip(NX.I18n.format('User_Tooltip', user.id));
+        userMode.getViewModel().set('text', user.id);
+        userMode.getViewModel().set('tooltip', NX.I18n.format('User_Tooltip', user.id));
         signOutButton.show();
       }
       else {

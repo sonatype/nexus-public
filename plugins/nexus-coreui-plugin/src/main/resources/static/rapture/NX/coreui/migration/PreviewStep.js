@@ -23,7 +23,10 @@ Ext.define('NX.coreui.migration.PreviewStep', {
     'NX.coreui.migration.PreviewScreen'
   ],
 
-  screen: 'NX.coreui.migration.PreviewScreen',
+  config: {
+    screen: 'NX.coreui.migration.PreviewScreen',
+    enabled: true
+  },
 
   resetOnBack: true,
 

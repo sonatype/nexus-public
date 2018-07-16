@@ -156,17 +156,19 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
    * Export and download events.
    */
   exportEvents: function () {
-    var me = this;
-
-    NX.Dialogs.askConfirmation(NX.I18n.get('AnalyticsEvents_Export_Title'), NX.I18n.get('AnalyticsEvents_Export_Body'), function () {
+    var me = this,
+        onYesFn = function() {
           me.getMain().getEl().mask(NX.I18n.get('AnalyticsEvents_Export_Mask'));
-          NX.direct.analytics_Events.exportAll(function (response) {
+          NX.direct.analytics_Events.exportAll(function(response) {
             me.getMain().getEl().unmask();
             if (Ext.isObject(response) && response.success) {
               Ext.widget('nx-coreui-analytics-eventszipcreated').setValues(response.data);
             }
           });
-        });
+        };
+
+    NX.Dialogs.askConfirmation(NX.I18n.get('AnalyticsEvents_Export_Title'), NX.I18n.get('AnalyticsEvents_Export_Body'),
+        onYesFn, null, true);
   },
 
   /**
@@ -194,7 +196,7 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
    * Submit events to Sonatype.
    */
   submit: function () {
-    NX.Dialogs.askConfirmation(NX.I18n.get('AnalyticsEvents_Submit_Title'), NX.I18n.get('AnalyticsEvents_Submit_Body'), function () {
+    var onYesFn = function () {
       NX.Security.doWithAuthenticationToken(NX.I18n.get('AnalyticsEvents_Submit_HelpText'),
           {
             success: function (authToken) {
@@ -206,7 +208,9 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
             }
           }
       );
-    });
+    };
+    NX.Dialogs.askConfirmation(NX.I18n.get('AnalyticsEvents_Submit_Title'), NX.I18n.get('AnalyticsEvents_Submit_Body'),
+        onYesFn, null, true);
   },
 
   /**
@@ -217,9 +221,12 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
     button.mon(
         NX.Conditions.isPermitted('nexus:analytics:delete'),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function() {
+            button.enable();
+          },
+          unsatisfied: function() {
+            button.disable();
+          }
         }
     );
   },
@@ -232,9 +239,12 @@ Ext.define('NX.coreui.controller.AnalyticsEvents', {
     button.mon(
         NX.Conditions.isPermitted('nexus:analytics:create'),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function() {
+            button.enable();
+          },
+          unsatisfied: function() {
+            button.disable();
+          }
         }
     );
   }

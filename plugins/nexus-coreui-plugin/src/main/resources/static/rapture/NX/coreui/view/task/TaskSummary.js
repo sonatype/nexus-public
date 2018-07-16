@@ -24,6 +24,7 @@ Ext.define('NX.coreui.view.task.TaskSummary', {
     'NX.Conditions',
     'NX.I18n'
   ],
+  cls: 'nx-hr',
 
   /**
    * @override

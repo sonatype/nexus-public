@@ -21,38 +21,17 @@ Ext.define('NX.ext.tab.SortedPanel', {
   extend: 'Ext.tab.Panel',
   alias: 'widget.nx-sorted-tabpanel',
 
-  listeners: {
-    /**
-     * @private
-     * Reorders tabs sorting them by weight / title.
-     * Show the tab bar in case of more then one tab.
-     *
-     * @param me this tab panel
-     * @param component added tab
-     */
-    add: function (me, component) {
-      var thisTitle = component.title || '',
-          thisWeight = component.weight || 1000,
-          position = 0;
+  add: function(component) {
+    var componentWeight = component.weight || 1000,
+        componentTitle = component.title || '';
 
-      me.suspendEvents();
-      me.remove(component, false);
+    var index = this.items.findIndexBy(function(item, key) {
+      var itemWeight = item.weight || 1000,
+          itemTitle = item.title || '';
+      return componentWeight < itemWeight || (componentWeight === itemWeight && componentTitle < itemTitle);
+    });
 
-      me.items.each(function (item) {
-        var thatTitle = item.title || '',
-            thatWeight = item.weight || 1000;
-
-        if (thisWeight < thatWeight
-            || (thisWeight === thatWeight && thisTitle < thatTitle)) {
-          return false;
-        }
-        position++;
-        return true;
-      });
-
-      me.insert(position, component);
-      me.resumeEvents();
-    }
+    this.callParent([index, component]);
   },
 
   // FIXME: This doesn't belong here, this is styling treatment for master/detail tabs only
@@ -63,7 +42,8 @@ Ext.define('NX.ext.tab.SortedPanel', {
     item.tabConfig = item.tabConfig || {};
     Ext.applyIf(item.tabConfig, {
       // HACK: force tabs to follow scss style for borders
-      border: null
+      border: null,
+      title: item.title || item.titled
     });
 
     this.callParent([item, index]);

@@ -114,9 +114,12 @@ Ext.define('NX.coreui.controller.Licensing', {
             NX.Conditions.isPermitted('nexus:licensing:create')
         ),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
   },

@@ -11,11 +11,15 @@
     padding: 5px 20px 10px 20px;
     position: relative;
     margin-left: 25px;
-    width: auto !important;
+    width: auto;
   }
 
   // Give child elements a background opacity instead of a color
   .nx-optionalfieldset .x-fieldset-body {
     background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .x-fieldset-header > .x-mask {
+    display: none
   }
 }

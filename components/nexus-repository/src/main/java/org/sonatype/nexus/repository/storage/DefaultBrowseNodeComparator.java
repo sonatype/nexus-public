@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.app.VersionComparator;
  * Sort using VersionComparator when dealing with two components, fall back to node name when dealing
  * with any other comparison of the same type (component/asset/folder), finally fall back to node type
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named(value = DefaultBrowseNodeComparator.NAME)
 public class DefaultBrowseNodeComparator

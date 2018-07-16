@@ -32,7 +32,6 @@ Ext.define('NX.view.SignIn', {
 
     me.ui = 'nx-inset';
     me.title = NX.I18n.get('SignIn_Title');
-    me.defaultFocus = 'username';
 
     me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
@@ -69,6 +68,13 @@ Ext.define('NX.view.SignIn', {
           { text: NX.I18n.get('SignIn_Cancel_Button'), handler: me.close, scope: me }
         ]
       }
+    });
+
+    me.on({
+      resize: function() {
+        me.down('#username').focus();
+      },
+      single: true
     });
 
     me.callParent();

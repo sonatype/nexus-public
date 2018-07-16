@@ -41,9 +41,11 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     ]
   },
 
+  referenceHolder: true,
+
   items: [{
     xtype: 'nx-info-panel',
-    itemId: 'summaryPanel',
+    reference: 'summaryPanel',
     titled: 'Summary',
     collapsible: true
   }, {
@@ -54,20 +56,20 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     manageHeight: false,
     items: [{
       xtype: 'nx-coreui-component-assetattributes',
-      itemId: 'attributesPanel'
+      reference: 'attributesPanel'
     }]
   }],
 
   summary: {},
 
   setModel: function(asset, component) {
-    var me = this,
-        summary = me.summary,
+    var summary = this.summary,
         contentType = asset.get('contentType'),
-        size = asset.get('size');
+        size = asset.get('size'),
+        attributesPanel = this.lookup('attributesPanel');
 
-    me.assetModel = asset;
-    me.componentModel = component;
+    this.assetModel = asset;
+    this.componentModel = component;
 
     summary[NX.I18n.get('Assets_Info_Repository')] = Ext.htmlEncode(asset.get('repositoryName'));
     summary[NX.I18n.get('Assets_Info_Format')] = Ext.htmlEncode(asset.get('format'));
@@ -89,12 +91,15 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     summary[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
     summary[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
 
-    this.down('#summaryPanel').showInfo(summary);
-    this.down('#attributesPanel').setAssetModel(asset);
+    if (attributesPanel) {
+      attributesPanel.setAssetModel(asset);
+    }
+
+    this.showInfo();
 
     this.setTitle(Ext.htmlEncode(asset.get('name')));
 
-    this.fireEvent('update', this, asset, component);
+    this.fireEvent('updated', this, asset, component);
   },
 
   setInfo: function(section, key, value) {
@@ -102,8 +107,9 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
   },
 
   showInfo: function() {
-    if(this.down('#summaryPanel')) {
-      this.down('#summaryPanel').showInfo(this.summary);
+    var summaryPanel = this.lookup('summaryPanel');
+    if (summaryPanel) {
+      summaryPanel.showInfo(this.summary);
     }
   }
 

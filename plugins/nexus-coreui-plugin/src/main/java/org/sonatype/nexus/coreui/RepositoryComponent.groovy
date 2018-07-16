@@ -58,6 +58,7 @@ import org.sonatype.nexus.validation.group.Update
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.ImmutableList
+import com.google.common.collect.Iterables
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
@@ -364,9 +365,7 @@ class RepositoryComponent
       })
     }
 
-    repositories = repositories.findResults {
-      Repository repository -> repositoryPermissionChecker.userCanBrowseRepository(repository) ? repository : null
-    }
+    repositories = repositoryPermissionChecker.userCanBrowseRepositories(Iterables.toArray(repositories, Repository.class))
 
     return repositories
   }

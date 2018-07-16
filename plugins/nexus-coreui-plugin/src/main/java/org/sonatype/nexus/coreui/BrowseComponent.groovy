@@ -94,7 +94,7 @@ class BrowseComponent
   @Override
   @Nullable
   Map<String, Object> getState() {
-    return ['browseComponentAssetTree': configuration.enabled, 'browseTreeMaxNodes': configuration.maxNodes]
+    return ['browseTreeMaxNodes': configuration.maxNodes]
   }
 
   def isRoot(String path) {

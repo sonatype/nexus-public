@@ -18,7 +18,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
@@ -39,15 +38,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowseNodeEventHandler
     implements EventAware, EventAware.Asynchronous
 {
-  private final boolean enabled;
-
   private final BrowseNodeManager browseNodeManager;
 
   @Inject
-  public BrowseNodeEventHandler(final BrowseNodeConfiguration configuration,
-                                final BrowseNodeManager browseNodeManager)
+  public BrowseNodeEventHandler(final BrowseNodeManager browseNodeManager)
   {
-    this.enabled = checkNotNull(configuration).isEnabled();
     this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 
@@ -85,6 +80,6 @@ public class BrowseNodeEventHandler
 
   private boolean shouldProcess(final EntityEvent event) {
     checkNotNull(event);
-    return enabled && event.isLocal();
+    return event.isLocal();
   }
 }

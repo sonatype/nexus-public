@@ -90,17 +90,6 @@ Ext.define('NX.coreui.controller.Search', {
       }
     });
 
-    me.getApplication().getFeaturesController().registerFeature({
-      path: '/Search/Saved',
-      mode: 'browse',
-      group: true,
-      iconName: 'search-folder',
-      weight: 500,
-      visible: function() {
-        return NX.Permissions.check('nexus:search:read');
-      }
-    }, me);
-
     me.registerFilter([
       {
         id: 'keyword',
@@ -227,7 +216,7 @@ Ext.define('NX.coreui.controller.Search', {
         description: NX.I18n.get('Search_Description'),
         group: true,
         view: { xtype: 'nx-coreui-searchfeature', searchFilter: model, bookmarkEnding: '' },
-        iconName: 'search-default',
+        iconCls: 'x-fa fa-search',
         weight: 20,
         expanded: false,
         visible: function() {
@@ -240,7 +229,7 @@ Ext.define('NX.coreui.controller.Search', {
         mode: 'browse',
         path: '/Search/' + (model.get('readOnly') ? '' : 'Saved/') + model.get('name'),
         view: { xtype: 'nx-coreui-searchfeature', searchFilter: model, bookmarkEnding: '/' + model.getId() },
-        iconName: 'search-default',
+        iconCls: 'x-fa fa-search',
         text: model.get('text'),
         description: model.get('description'),
         authenticationRequired: false,
@@ -276,7 +265,7 @@ Ext.define('NX.coreui.controller.Search', {
         info = me.getFeature() ? me.getFeature().down('#info') : null,
         format = Ext.util.Format.numberRenderer('0,000');
     if (info) {
-      if (rawData.limited) {
+      if (rawData && rawData.limited) {
         info.setTitle(NX.I18n.format('Search_Results_Limit_Message',
             format(rawData.total), format(rawData.unlimitedTotal)));
         info.show();
@@ -481,7 +470,7 @@ Ext.define('NX.coreui.controller.Search', {
         componentModel;
 
     // If no search filter has been specified, don't load any stores
-    if (!me.getStore('SearchResult').filters.length) {
+    if (!searchResultStore.getFilters().length) {
       return;
     }
 
@@ -521,18 +510,19 @@ Ext.define('NX.coreui.controller.Search', {
 
     if (filter) {
       store.addFilter(Ext.apply(filter, { id: searchCriteria.criteriaId }), apply);
+      store.load();
     }
     else {
       // TODO code bellow is a workaround stores not removing filters when remoteFilter = true
       store.removeFilter(searchCriteria.criteriaId);
-      if (store.filters.removeAtKey(searchCriteria.criteriaId) && apply) {
-        if (store.filters.length) {
+      if (store.getFilters().removeAtKey(searchCriteria.criteriaId) && apply) {
+        if (store.getFilters().length) {
           store.filter();
         }
         else {
           store.clearFilter();
         }
-        store.fireEvent('filterchange', store, store.filters.items);
+        store.fireEvent('filterchange', store, store.getFilters().items);
       }
     }
 

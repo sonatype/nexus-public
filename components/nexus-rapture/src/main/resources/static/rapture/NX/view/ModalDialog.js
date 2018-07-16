@@ -33,5 +33,16 @@ Ext.define('NX.view.ModalDialog', {
     SMALL_MODAL: 320,
     MEDIUM_MODAL: 480,
     LARGE_MODAL: 640
+  },
+  onHide: function() {
+    var me = this, el;
+
+    me.callParent(arguments);
+
+    //we have to do a blur here, so that focus won't be forced back on the button that caused this window to open
+    el = Ext.dom.Element.getActiveElement(true);
+    if (el) {
+      el.blur();
+    }
   }
 });

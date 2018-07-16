@@ -1,11 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="baseapp" default=".help">
-    <!--
-    The build-impl.xml file imported here contains the guts of the build process. It is
-    a great idea to read that file to understand how the process works, but it is best to
-    limit your changes to this file.
-    -->
-    <import file="${basedir}/.sencha/app/build-impl.xml"/>
+
+    <!-- Find and load Sencha Cmd ant tasks -->
+    <script language="javascript">
+        <![CDATA[
+            var dir = project.getProperty("basedir"),
+                cmdDir = project.getProperty("cmd.dir"),
+                cmdLoaded = project.getReference("senchaloader");
+
+            if (!cmdLoaded) {
+                function echo(message, file) {
+                    var e = project.createTask("echo");
+                    e.setMessage(message);
+                    if (file) {
+                        e.setFile(file);
+                    }
+                    e.execute();
+                };
+
+                if (!cmdDir) {
+
+                    function exec(args) {
+                        var process = java.lang.Runtime.getRuntime().exec(args),
+                            input = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream())),
+                            headerFound = false,
+                            line;
+
+                        while (line = input.readLine()) {
+                            line = line + '';
+                            java.lang.System.out.println(line);
+                            if (line.indexOf("Sencha Cmd") > -1) {
+                                headerFound = true;
+                            }
+                            else if (headerFound && !cmdDir) {
+                                cmdDir = line;
+                                project.setProperty("cmd.dir", cmdDir);
+                            }
+                        }
+                        process.waitFor();
+                        return !!cmdDir;
+                    }
+
+                    if (!exec(["sencha", "which"])) {
+                        var tmpFile = "tmp.sh";
+                        echo("source ~/.bash_profile; sencha " + whichArgs.join(" "), tmpFile);
+                        exec(["/bin/sh", tmpFile]);
+                        new java.io.File(tmpFile)['delete'](); 
+                    }
+                }
+            }
+
+            if (cmdDir && !project.getTargets().containsKey("init-cmd")) {
+                var importDir = project.getProperty("build-impl.dir") || 
+                                (cmdDir + "/ant/build/app/build-impl.xml");
+                var importTask = project.createTask("import");
+
+                importTask.setOwningTarget(self.getOwningTarget());
+                importTask.setLocation(self.getLocation());
+                importTask.setFile(importDir);
+                importTask.execute();
+            }
+        ]]>
+    </script>
 
     <!--
     The following targets can be provided to inject logic before and/or after key steps
@@ -27,7 +83,7 @@
 
             <target name="-before-init"/>
             <target name="-after-init"/>
-        
+
         The "page" target performs the call to Sencha Cmd to build the 'all-classes.js' file.
 
             <target name="-before-page"/>

@@ -24,7 +24,7 @@ import com.google.common.hash.HashCode;
 /**
  * Marker class for a pre-fetched asset blob
  * 
- * @since 3.next
+ * @since 3.13
  */
 public class PrefetchedAssetBlob
   extends AssetBlob

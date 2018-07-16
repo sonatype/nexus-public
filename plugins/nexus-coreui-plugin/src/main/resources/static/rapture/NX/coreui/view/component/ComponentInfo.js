@@ -18,62 +18,70 @@
  * @since 3.4
  */
 Ext.define('NX.coreui.view.component.ComponentInfo', {
-    extend: 'Ext.Panel',
-    alias: 'widget.nx-coreui-component-componentinfo',
-    cls: 'nx-coreui-component-componentinfo',
-    requires: [
-        'NX.I18n',
-        'NX.coreui.util.RepositoryUrls'
-    ],
-    dockedItems: {
-        xtype: 'nx-actions',
-        dock: 'top',
-        items: [
-            {
-                xtype: 'button',
-                text: NX.I18n.get('ComponentDetails_Delete_Button'),
-                glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
-                action: 'deleteComponent',
-                hidden: true
-            },
-            {
-                xtype: 'button',
-                text: NX.I18n.get('ComponentDetails_Analyze_Button'),
-                glyph: 'xf085@FontAwesome' /* fa-gears */,
-                action: 'analyzeApplication'
-            }
-        ]
-    },
-    items: [{
-        xtype: 'nx-info-panel',
-        itemId: 'summaryPanel',
-        titled: NX.I18n.get('Component_AssetInfo_Info_Title'),
-        collapsible: true
-    }],
-    autoScroll: true,
-    summary: {},
-    setModel: function(componentModel) {
-        var me = this;
-        me.componentModel = componentModel;
+  extend: 'Ext.Panel',
+  alias: 'widget.nx-coreui-component-componentinfo',
+  cls: 'nx-coreui-component-componentinfo',
+  requires: [
+    'NX.I18n',
+    'NX.coreui.util.RepositoryUrls'
+  ],
+  dockedItems: {
+    xtype: 'nx-actions',
+    dock: 'top',
+    items: [
+      {
+        xtype: 'button',
+        text: NX.I18n.get('ComponentDetails_Delete_Button'),
+        glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+        action: 'deleteComponent',
+        hidden: true
+      },
+      {
+        xtype: 'button',
+        text: NX.I18n.get('ComponentDetails_Analyze_Button'),
+        glyph: 'xf085@FontAwesome' /* fa-gears */,
+        action: 'analyzeApplication'
+      }
+    ]
+  },
 
-        me.summary[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(me.componentModel.get('repositoryName'));
-        me.summary[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(me.componentModel.get('format'));
-        me.summary[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(me.componentModel.get('group'));
-        me.summary[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(me.componentModel.get('name'));
-        me.summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(me.componentModel.get('version'));
+  referenceHolder: true,
 
-        this.showInfo();
-
-        this.fireEvent('updated', this, me.componentModel);
-    },
-    setInfo: function(section, key, value) {
-        this.summary[key] = value;
-    },
-    showInfo: function() {
-        var me = this;
-        var summaryPanel = me.down('#summaryPanel');
-        if (summaryPanel) {
-            summaryPanel.showInfo(me.summary);
-        }
+  items: [
+    {
+      xtype: 'nx-info-panel',
+      reference: 'summaryPanel',
+      titled: NX.I18n.get('Component_AssetInfo_Info_Title'),
+      collapsible: true
     }
+  ],
+  autoScroll: true,
+  summary: {},
+
+  setModel: function(componentModel) {
+    var summary = this.summary;
+
+    this.componentModel = componentModel;
+
+    summary[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(componentModel.get('repositoryName'));
+    summary[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(componentModel.get('format'));
+    summary[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(componentModel.get('group'));
+    summary[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(componentModel.get('name'));
+    summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
+
+    this.showInfo();
+
+    this.fireEvent('updated', this, this.componentModel);
+  },
+
+  setInfo: function(section, key, value) {
+    this.summary[key] = value;
+  },
+
+  showInfo: function() {
+    var summaryPanel = this.lookup('summaryPanel');
+    if (summaryPanel) {
+      summaryPanel.showInfo(this.summary);
+    }
+  }
 });

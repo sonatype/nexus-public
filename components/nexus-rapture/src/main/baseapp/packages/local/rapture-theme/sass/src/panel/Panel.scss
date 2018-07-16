@@ -1,0 +1,149 @@
+/**
+ * @class Ext.panel.Panel
+ */
+
+/**
+ * ui: 'nx-inset'
+ */
+@include extjs-panel-ui(
+  $ui: 'nx-inset',
+
+  $ui-padding: 12px 12px 0 12px
+);
+
+.x-panel-nx-inset {
+  .x-panel-body {
+    .x-toolbar {
+      padding: 6px 0 6px 0;
+    }
+  }
+
+  .x-panel-nx-subsection-framed {
+    margin: 0 0 10px 0;
+  }
+}
+
+/**
+ * Style for the global warning header
+ */
+@include extjs-panel-ui(
+        $ui: 'nx-warning',
+        $ui-header-background-color: $color-charcoal,
+        $ui-header-padding: 5px 16px,
+        $ui-body-color: $color-white
+);
+
+.x-panel-nx-warning .x-panel-header {
+  padding: 5px 16px;
+}
+
+.x-panel-nx-warning {
+  color: $color-white;
+}
+
+.x-panel-nx-warning a,
+.x-panel-nx-warning a:visited,
+.x-panel-nx-warning a:active {
+  color: $color-gainsboro;
+}
+
+.x-panel-nx-warning a:hover {
+  color: $color-white;
+  text-decoration: underline;
+}
+
+/**
+ * Style for the global "node frozen warning" header
+ */
+#nx-database-freeze-warning.x-panel-nx-warning .x-panel-header{
+  background-color: $color-alert-purple;
+}
+
+#nx-database-freeze-warning.x-panel-header-text-container-nx-warning {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+/**
+ * Style for the global "file descriptor warning" header
+ */
+#nx-file-descriptor-warning.x-panel-nx-warning .x-panel-header {
+  background-color: $color-alert-purple;
+}
+
+#nx-file-descriptor-warning.x-panel-header-text-container-nx-warning {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+/**
+* Style for the "transparent" inter-page panels
+*
+* ui: 'subsection'
+*/
+
+@include extjs-panel-ui(
+  $ui: 'nx-subsection',
+
+  $ui-header-color: $color-night-rider,
+  $ui-header-font-size: $font-size-h4,
+  $ui-header-background-color: $color-white,
+  $ui-header-line-height: 22px
+);
+
+@include extjs-panel-ui(
+  $ui: 'nx-subsection-framed',
+
+  $ui-header-border-width: null,
+  $ui-header-color: $color-night-rider,
+  $ui-header-font-size: $font-size-h4,
+  $ui-header-font-weight: $font-weight-bold,
+  $ui-header-background-color: $color-white,
+  $ui-header-line-height: 22px,
+  $ui-body-background-color: $color-white,
+  $ui-body-border-width: null
+);
+
+.x-panel-nx-subsection > .x-panel-header {
+  padding: 10px 0 5px 0 !important;
+}
+
+.x-panel-nx-subsection-framed {
+  border: $color-gainsboro 1px solid;
+}
+
+.x-panel-nx-subsection-framed > .x-panel-header {
+  padding: 10px 9px 5px 9px;
+}
+
+.x-panel-nx-subsection-framed > .x-panel-bodyWrap > .x-panel-body {
+  padding: 9px 9px 10px 9px;
+}
+
+/**
+ * cls: 'nx-hr'
+ */
+.nx-hr {
+  border-top: 1px solid $color-gainsboro !important;
+}
+
+/**
+ * Style for the 'too many results' panel on the search page
+ */
+@include extjs-panel-ui(
+  $ui: 'nx-info-message',
+
+  $ui-header-background-color: $color-white,
+  $ui-header-color: $color-night-rider
+);
+.x-panel-nx-info-message .x-header {
+  padding: 0 10px 10px 10px;
+}
+.nx-search-result-list {
+  border-top: 1px solid $color-gainsboro;
+}
+
+// for rows that are repeated and identical
+.nx-repeated-row {
+  margin-bottom: 5px;
+}

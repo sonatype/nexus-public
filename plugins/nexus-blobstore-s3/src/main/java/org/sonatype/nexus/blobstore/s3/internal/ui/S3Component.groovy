@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.s3.internal.ui
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 
@@ -37,6 +38,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions
 class S3Component
     extends DirectComponentSupport
 {
+  private static final String DEFAULT_LABEL = "Default"
 
   /**
    * S3 regions
@@ -46,7 +48,7 @@ class S3Component
   @ExceptionMetered
   @RequiresPermissions('nexus:settings:read')
   List<S3RegionXO> regions() {
-    [new S3RegionXO(order: 0, id: "", name: "default")] +
+    [new S3RegionXO(order: 0, id: AmazonS3Factory.DEFAULT, name: DEFAULT_LABEL)] +
         Region.values().toList().withIndex(1).collect { item, index ->
           new S3RegionXO(order: index, id: item.toAWSRegion().name, name: item.toAWSRegion().name)
         }
@@ -61,7 +63,7 @@ class S3Component
   @RequiresPermissions('nexus:settings:read')
   List<S3RegionXO> signertypes() {
     [
-        new S3SignerTypeXO(order: 0, id: "", name: "default"),
+        new S3SignerTypeXO(order: 0, id: AmazonS3Factory.DEFAULT, name: DEFAULT_LABEL),
         new S3SignerTypeXO(order: 1, id: AmazonS3Client.S3_SIGNER, name: AmazonS3Client.S3_SIGNER),
         new S3SignerTypeXO(order: 2, id: AmazonS3Client.S3_V4_SIGNER, name: AmazonS3Client.S3_V4_SIGNER)
     ]

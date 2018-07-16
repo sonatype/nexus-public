@@ -40,7 +40,7 @@ import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_NA
 /**
  * Detects orphaned blobs (i.e. non-deleted blobs that exist in the blobstore but not the asset table)
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named
 public class OrphanedBlobFinder

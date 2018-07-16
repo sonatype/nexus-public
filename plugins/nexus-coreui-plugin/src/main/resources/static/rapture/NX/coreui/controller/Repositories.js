@@ -59,6 +59,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.NugetGroup',
     'repository.recipe.RubygemsHosted',
     'repository.recipe.RubygemsProxy',
+    'repository.recipe.RubygemsGroup',
     'repository.recipe.RawHosted',
     'repository.recipe.RawProxy',
     'repository.recipe.RawGroup',
@@ -211,7 +212,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     me.setItemClass(1, NX.Icons.cls('repository-hosted', 'x16'));
 
     // Show the panel
-    me.loadCreateWizard(1, true, Ext.widget({
+    me.loadCreateWizard(1, Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -241,7 +242,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       // Show the second panel in the create wizard, and set the breadcrumb
       me.setItemName(2, NX.I18n.format('Repositories_Create_Title', model.get('name')));
       me.setItemClass(2, NX.Icons.cls('repository-hosted', 'x16'));
-      me.loadCreateWizard(2, true, {xtype: 'nx-coreui-repository-add', recipe: model});
+      me.loadCreateWizard(2, {xtype: 'nx-coreui-repository-add', recipe: model});
       if (model.getId() === 'maven2-proxy') {
         me.cleanUpdateProxyFacetContentMaxAge(-1);
       }
@@ -428,9 +429,12 @@ Ext.define('NX.coreui.controller.Repositories', {
             })
         ),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
     button.mon(
@@ -438,9 +442,12 @@ Ext.define('NX.coreui.controller.Repositories', {
           return model.get('type') === 'proxy' || model.get('type') === 'hosted';
         }),
         {
-          satisfied: button.show,
-          unsatisfied: button.hide,
-          scope: button
+          satisfied: function() {
+            button.show();
+          },
+          unsatisfied: function() {
+            button.hide();
+          }
         }
     );
   },
@@ -462,9 +469,12 @@ Ext.define('NX.coreui.controller.Repositories', {
             })
         ),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
     button.mon(
@@ -472,9 +482,12 @@ Ext.define('NX.coreui.controller.Repositories', {
           return model.get('type') === 'proxy' || model.get('type') === 'group';
         }),
         {
-          satisfied: button.show,
-          unsatisfied: button.hide,
-          scope: button
+          satisfied: function () {
+            button.show();
+          },
+          unsatisfied: function () {
+            button.hide();
+          }
         }
     );
   },
@@ -488,9 +501,12 @@ Ext.define('NX.coreui.controller.Repositories', {
     button.mon(
         NX.Conditions.isPermitted('nexus:repository-admin:*:*:add'),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
   },
@@ -512,9 +528,12 @@ Ext.define('NX.coreui.controller.Repositories', {
             })
         ),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
   }

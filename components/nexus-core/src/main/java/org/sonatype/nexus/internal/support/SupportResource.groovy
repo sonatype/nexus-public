@@ -39,7 +39,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM
 /**
  * Resource for support API.
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named
 @Singleton

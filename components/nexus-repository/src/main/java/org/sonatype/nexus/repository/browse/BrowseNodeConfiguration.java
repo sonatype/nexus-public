@@ -29,13 +29,6 @@ import static org.sonatype.goodies.common.Time.seconds;
 @Named
 public class BrowseNodeConfiguration
 {
-  /**
-   * Configuration property for enabling browse trees
-   */
-  public static final String ENABLED = "nexus.browse.component.tree.enabled";
-
-  private final boolean enabled;
-
   private final boolean automaticRebuild;
 
   private final int rebuildPageSize;
@@ -49,15 +42,13 @@ public class BrowseNodeConfiguration
   private final Time queryTimeout;
 
   @Inject
-  public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.enabled:-true}") final boolean enabled,
-                                 @Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
+  public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
                                  @Named("${nexus.browse.component.tree.rebuildPageSize:-1000}") final int rebuildPageSize,
                                  @Named("${nexus.browse.component.tree.deletePageSize:-1000}") final int deletePageSize,
                                  @Named("${nexus.browse.component.tree.maxNodes:-10000}") final int maxNodes,
                                  @Named("${nexus.browse.component.tree.maxHtmlNodes:-10000}") final int maxHtmlNodes,
                                  @Named("${nexus.browse.component.tree.queryTimeout:-59s}") final Time queryTimeout)
   {
-    this.enabled = enabled;
     this.automaticRebuild = automaticRebuild;
     this.rebuildPageSize = rebuildPageSize;
     this.deletePageSize = deletePageSize;
@@ -68,7 +59,7 @@ public class BrowseNodeConfiguration
 
   @VisibleForTesting
   public BrowseNodeConfiguration() {
-    this(true, true, 1000, 1000, 10_000, 10_000, seconds(0));
+    this(true, 1000, 1000, 10_000, 10_000, seconds(0));
   }
 
   /**
@@ -117,13 +108,6 @@ public class BrowseNodeConfiguration
    * the browse tree on startup
    */
   public boolean isAutomaticRebuildEnabled() {
-    return enabled && automaticRebuild;
-  }
-
-  /**
-   * Whether the browse tree is enabled
-   */
-  public boolean isEnabled() {
-    return enabled;
+    return automaticRebuild;
   }
 }

@@ -18,15 +18,22 @@ String systemProperty(String key) {
   ant.properties.project.properties[key]
 }
 
+// Sanity check sencha cmd
+def senchaExe = 'sencha'
+try {
+  ant.exec(executable: senchaExe, failonerror: true) {
+    arg(line: 'which')
+  }
+} catch (e) {
+  log.error 'Sencha CMD not found.'
+  log.error 'Please install the Sencha CMD to rebuild application styles.'
+  log.error 'https://www.sencha.com/products/extjs/cmd-download/'
+  throw e
+}
+
 String mode = systemProperty('mode')
 assert mode: 'Missing property: mode'
 log.info "Mode: $mode"
-
-// Sanity check sencha cmd
-def senchaExe = 'sencha'
-ant.exec(executable: senchaExe, failonerror: true) {
-  arg(line: 'which')
-}
 
 def baseappDir = new File(project.basedir, 'src/main/baseapp')
 def outputDir = new File(project.basedir, 'src/main/resources/static/rapture')
@@ -50,7 +57,7 @@ def flavorToEnv = {flavor ->
 //
 
 def do_ext = {
-  def extDir = new File(project.build.directory, 'ext')
+  def extDir = new File(project.basedir, 'target/ext')
   if (extDir.exists()) {
     return
   }
@@ -62,13 +69,6 @@ def do_ext = {
     patternset {
       exclude(name: 'ext-*/docs/**')
       exclude(name: 'ext-*/welcome/**')
-    }
-  }
-
-  // HACK: Ext 4.2 needs special handling for Ext.ux sources, as the ext-ux package is 5+
-  ant.copy(todir: "$extDir/src") {
-    fileset(dir: "$extDir/examples/ux") {
-      include(name: '**/*')
     }
   }
 }
@@ -114,6 +114,20 @@ def do_build = {
     def env = flavorToEnv flavor
     ant.exec(executable: senchaExe, dir: baseappDir, failonerror: true) {
       arg(line: "app build $env")
+    }
+
+    // Strip out any multiline comments from the generated css
+    ant.replaceregexp(match: '/\\*.*?\\*/', replace: '', flags: 'g', byline: true) {
+      fileset(dir: outputDir) {
+        include(name: 'resources/baseapp-debug*.css')
+      }
+    }
+
+    // We don't need app.json, so remove it
+    ant.delete() {
+      fileset(dir: outputDir) {
+        include(name: 'app.json')
+      }
     }
   }
 }

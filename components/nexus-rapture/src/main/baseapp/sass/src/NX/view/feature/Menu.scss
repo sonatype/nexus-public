@@ -4,29 +4,79 @@
 
 @include extjs-panel-ui(
     $ui: 'nx-feature-menu',
-    $ui-header-padding: 4px,
+    $ui-header-padding: 8px,
     $ui-body-background-color: $color-gainsboro
 );
 
 .x-panel-nx-feature-menu {
-  border-width: 0 2px 0 0;
-  border-color: $color-light-gray;
-  border-style: solid;
+  border: none;
 
   .x-grid-header-ct {
     border: none;
   }
 
   .x-panel-body-nx-feature-menu {
-    .x-grid-cell {
-      background-color: $color-gainsboro;
+    .x-grid-item {
+      height: 2.8em;
+      .x-grid-cell {
+        background-color: $color-gainsboro;
+      }
+      .x-grid-td {
+        font-size: 1.1em;
+        vertical-align: middle;
+      }
     }
-    .x-grid-row-over .x-grid-td {
-      background-color: $color-smoke;
+
+    .x-grid-item-over {
+      .x-grid-cell {
+        background-color: $color-smoke;
+      }
+      .x-tree-icon {
+        filter: grayscale(0) drop-shadow(1px 1px 1px rgba(0,0,0,0.3));
+        -webkit-filter: grayscale(0) drop-shadow(1px 1px 1px rgba(0,0,0,0.3));
+      }
     }
-    .x-grid-row-selected .x-grid-td {
-      color: $color-white;
-      background-color: $color-cerulean-blue;
+
+    .x-tree-icon {
+      color: $color-black;
+      filter: grayscale(60%);
+      -webkit-filter: grayscale(60%);
+      font-size: 1em;
+    }
+
+    .x-tree-node-text {
+      padding-left: 0.5em;
+    }
+
+    .x-grid-item-selected {
+      .x-grid-cell {
+        color: $color-white;
+        background-color: $color-cerulean-blue;
+      }
+      .x-tree-icon {
+        color: $color-white;
+        filter: saturate(1) grayscale(0);
+        -webkit-filter: saturate(1) grayscale(0);
+      }
+      .x-tree-expander {
+        border-left-color: $color-white;
+      }
+    }
+
+    .x-tree-expander {
+      background-image: none;
+      border: 5px solid transparent;
+      border-left-width: 7px;
+      border-left-color: $color-night-rider;
+      height: 0;
+      margin: 3px 6px 3px 3px;
+      transition: transform 0.2s ease;
+      width: 0;
+    }
+
+    .x-grid-tree-node-expanded .x-tree-expander {
+      margin: 6px 6px 0 3px;
+      transform: rotate(90deg);
     }
   }
 }

@@ -43,6 +43,11 @@ Ext.define('NX.coreui.controller.DatabaseWarnings', {
         '#State': {
           changed: me.stateChanged
         }
+      },
+      component: {
+        '#nx-database-freeze-warning' : {
+          afterrender: me.stateChanged
+        }
       }
     });
   },

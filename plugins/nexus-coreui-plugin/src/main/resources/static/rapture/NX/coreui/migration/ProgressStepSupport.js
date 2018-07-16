@@ -128,7 +128,7 @@ Ext.define('NX.coreui.migration.ProgressStepSupport', {
   refresh: function() {
     var me = this;
 
-    NX.direct.migration_Progress.read(me.phase, function (response, event) {
+    NX.direct.migration_Progress.read(me.getPhase(), function (response, event) {
       if (event.status && response.success) {
         var payload = response.data,
             store = me.getStore('NX.coreui.migration.ProgressStore');

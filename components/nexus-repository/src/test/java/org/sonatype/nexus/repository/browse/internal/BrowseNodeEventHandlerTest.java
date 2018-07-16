@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.browse.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
@@ -42,7 +41,7 @@ public class BrowseNodeEventHandlerTest
 
   @Before
   public void setup() {
-    handler = new BrowseNodeEventHandler(new BrowseNodeConfiguration(), browseNodeManager);
+    handler = new BrowseNodeEventHandler(browseNodeManager);
   }
 
   @Test

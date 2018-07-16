@@ -18,7 +18,7 @@
  */
 Ext.define('NX.util.condition.Condition', {
   mixins: {
-    observable: 'Ext.util.Observable',
+    observable: 'Ext.mixin.Observable',
     logAware: 'NX.LogAware'
   },
 
@@ -67,24 +67,6 @@ Ext.define('NX.util.condition.Condition', {
     me.id = me.self.getName() + '-' + NX.util.condition.Condition.counter++;
 
     me.mixins.observable.constructor.call(me, config);
-
-    me.addEvents(
-        /**
-         * Fires when condition is satisfied.
-         *
-         * @event satisfied
-         * @param {NX.util.condition.Condition} this
-         */
-        'satisfied',
-
-        /**
-         * Fires when condition is not satisfied.
-         *
-         * @event unsatisfied
-         * @param {NX.util.condition.Condition} this
-         */
-        'unsatisfied'
-    );
   },
 
   // HACK: comment the following lines to let debug messages flow
@@ -197,9 +179,9 @@ Ext.define('NX.util.condition.Condition', {
    *
    * @override
    */
-  addListener: function (ename, fn, scope, options) {
+  doAddListener: function (ename, fn, scope, options, order, caller, manager) {
     var me = this;
-    me.mixins.observable.addListener.call(me, ename, fn, scope, options);
+    me.mixins.observable.doAddListener.call(me, ename, fn, scope, options, order, caller, manager);
     me.listenerCounter++;
     if (me.listenerCounter === 1) {
       me.bind();
@@ -213,9 +195,9 @@ Ext.define('NX.util.condition.Condition', {
    *
    * @override
    */
-  removeListener: function (ename, fn, scope) {
+  doRemoveListener: function (ename, fn, scope) {
     var me = this;
-    me.mixins.observable.removeListener.call(me, ename, fn, scope);
+    me.mixins.observable.doRemoveListener.call(me, ename, fn, scope);
     me.listenerCounter--;
     if (me.listenerCounter === 0) {
       me.unbind();

@@ -48,6 +48,7 @@ import org.sonatype.nexus.selector.JexlExpressionValidator;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.base.Suppliers;
+import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -177,7 +178,7 @@ public class ComponentComponentTest
     Asset asset = mock(Asset.class);
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
     VariableSource variableSource = mock(VariableSource.class);
-    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(any(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
     when(component.getEntityMetadata()).thenReturn(entityMetadata);
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
@@ -187,6 +188,22 @@ public class ComponentComponentTest
 
     assertThat(componentXO, is(notNullValue()));
     assertThat(componentXO.getId(), is("someid"));
+  }
+
+  @Test
+  public void testReadComponent_notAllowed() {
+    Component component = mock(Component.class);
+    Asset asset = mock(Asset.class);
+    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(false);
+    when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
+    when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset));
+
+    try {
+      underTest.readComponent("someid", "testRepositoryName");
+      fail("AuthorizationException should have been thrown");
+    } catch (AuthorizationException ae) {
+      // expected
+    }
   }
 
   @Test
@@ -224,7 +241,7 @@ public class ComponentComponentTest
     when(asset.getEntityMetadata()).thenReturn(entityMetadata);
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
-    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(any(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
 
     when(browseService.getLastThirtyDays(asset)).thenReturn(10L);
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
@@ -235,6 +252,20 @@ public class ComponentComponentTest
     assertThat(assetXO, is(notNullValue()));
     assertThat(assetXO.getId(), is("someid"));
     assertThat(assetXO.getDownloadCount(), is(10L));
+  }
+
+  @Test
+  public void testReadAsset_notAllowed() {
+    Asset asset = mock(Asset.class);
+    when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
+    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(false);
+
+    try{
+      underTest.readAsset("someid", "testRepositoryName");
+      fail("AuthorizationException should have been thrown");
+    } catch (AuthorizationException ae) {
+      //expected
+    }
   }
 
   @Test

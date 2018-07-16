@@ -33,8 +33,7 @@ Ext.define('NX.coreui.store.PrivilegeType', {
 
     reader: {
       type: 'json',
-      root: 'data',
-      idProperty: 'id',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

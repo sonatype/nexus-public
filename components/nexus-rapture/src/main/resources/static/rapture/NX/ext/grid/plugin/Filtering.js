@@ -104,13 +104,15 @@ Ext.define('NX.ext.grid.plugin.Filtering', {
   applyFilter: function () {
     var me = this,
         remoteFilter = me.filteredStore.remoteFilter,
-        filters = me.filteredStore.filters.items;
+        filters = me.filteredStore.getFilters().items;
 
     // HACK: when remote filter is on store will not be locally filtered, so we have to trick ExtJS into doing local
     // filtering by setting remoteFilter to false and temporary remove the other filters (will add them back after local
     // filtering is performed)
     if (remoteFilter) {
-      me.filteredStore.filters.clear();
+      if (me.filteredStore.filters) {
+        me.filteredStore.getFilters().clear();
+      }
       me.filteredStore.remoteFilter = false;
     }
     if (me.filterValue) {
@@ -129,8 +131,8 @@ Ext.define('NX.ext.grid.plugin.Filtering', {
     }
     if (remoteFilter) {
       me.filteredStore.remoteFilter = remoteFilter;
-      if (filters) {
-        me.filteredStore.filters.add(filters);
+      if (me.filteredStore.filters && me.filteredStore.getFilters().items) {
+        me.filteredStore.getFilters().add(filters);
       }
     }
   },
@@ -207,7 +209,7 @@ Ext.define('NX.ext.grid.plugin.Filtering', {
    * @param grid that was reconfigure
    */
   onBeforeRender: function (grid) {
-    this.onReconfigure(grid, grid.getStore(), grid.columns);
+    this.onReconfigure(grid, grid.getStore(), grid.getColumns());
   },
 
   /**
@@ -293,7 +295,7 @@ Ext.define('NX.ext.grid.plugin.Filtering', {
     var filterFieldNames = [];
 
     if (columns) {
-      Ext.each(columns, function (column) {
+      Ext.Object.eachValue(columns, function (column) {
         if (column.dataIndex) {
           filterFieldNames.push(column.dataIndex);
         }

@@ -89,11 +89,26 @@ Ext.define('NX.coreui.view.privilege.PrivilegeSettingsForm', {
    */
   loadRecord: function(model) {
     var me = this,
-        privilegeTypeModel = NX.getApplication().getStore('PrivilegeType').getById(model.get('type')),
+        store = NX.getApplication().getStore('PrivilegeType'),
+        privilegeTypeModel = store.getById(model.get('type')),
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset');
+
+    me.model = model;
 
     if (privilegeTypeModel) {
       settingsFieldSet.importProperties(model.get('properties'), privilegeTypeModel.get('formFields'), me.editableCondition);
+    }
+    else {
+      store.on({
+        load: function() {
+          privilegeTypeModel = store.getById(model.get('type'));
+          if (me.model === model && privilegeTypeModel) {
+            settingsFieldSet.importProperties(model.get('properties'), privilegeTypeModel.get('formFields'),
+                me.editableCondition);
+          }
+        },
+        single: true
+      });
     }
     me.callParent(arguments);
   },

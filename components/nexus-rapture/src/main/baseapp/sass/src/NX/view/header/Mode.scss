@@ -2,12 +2,32 @@
  * @class NX.view.header.Mode
  */
 
+@include extjs-button-medium-ui(
+    $ui: 'nx-mode',
+    $background-color: transparent,
+    $background-color-over: $color-gainsboro,
+    $background-color-focus: $color-gainsboro,
+    $background-color-pressed: $color-navy-blue,
+    $background-color-disabled: transparent,
+    $color: $color-white,
+    $color-over: $color-navy-blue,
+    $color-focus: $color-navy-blue,
+    $color-pressed: $color-white,
+    $color-disabled: $color-white,
+    $border-width: 0,
+    $background-gradient: transparent,
+    $background-gradient-over: transparent,
+    $background-gradient-focus: transparent,
+    $background-gradient-pressed: transparent,
+    $background-gradient-disabled: transparent,
+    $glyph-color: $color-white,
+    $glyph-opacity: 1
+);
+
 .nx-modebutton {
-  padding: 6px 0 0 0;
-  color: $color-white;
 
   .x-btn-glyph {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   &.x-icon-text-left {
@@ -25,36 +45,37 @@
   }
 }
 
-.nx-modebutton + .nx-caret {
+.nx-modebutton:hover {
+  .x-btn-glyph {
+    color: $color-navy-blue;
+  }
+  .x-btn-inner {
+    color: $color-navy-blue;
+  }
+}
+
+.nx-modebutton.x-btn-pressed:hover {
+  .x-btn-glyph {
+    color: $color-white;
+  }
+  .x-btn-inner {
+    color: $color-white;
+  }
+}
+
+/* Caret used to indicate the current mode. Hidden by default. */
+
+.nx-modebutton::after {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
+  width: 0;
+  height: 0;
+  left: 19px;
+  top: 44px;
+  position: absolute;
+  content: "";
 }
 
-.nx-modebutton:hover,
-.nx-modebutton:focus {
-  background-color: $color-gainsboro;
-
-  .x-btn-inner {
-    color: $color-navy-blue;
-  }
-
-  .x-btn-glyph {
-    color: $color-navy-blue;
-  }
-}
-
-.nx-modebutton.x-pressed {
-  background-color: $color-navy-blue;
-
-  .x-btn-inner {
-    color: $color-white;
-  }
-
-  .x-btn-glyph {
-    color: $color-white;
-  }
-}
-
-.nx-modebutton.x-pressed + .nx-caret {
+.nx-modebutton.x-btn-pressed::after {
   border-bottom: 5px solid $color-white;
 }

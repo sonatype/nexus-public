@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Upgrade step to set {@code asset_kind} for maven2 index file assets.
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named
 @Singleton

@@ -14,12 +14,10 @@
 -->
 # Nexus Rapture Baseapp
 
-This module provides the baseapp muck for ExtJS 4+ pre-compiled with
-[Sencha CMD](http://docs.sencha.com/extjs/4.2.5/#!/guide/command).
+This module provides the baseapp muck for ExtJS 6.5+ pre-compiled with
+[Sencha CMD](https://docs.sencha.com/cmd/6.5.3/index.html).
 
-Requires Sencha CMD 4.x (macOS 10.12+ requires Sencha CMD 6.2+).
-
-May completely revisit this solution later.
+Requires Sencha CMD 6.2+
 
 ## Styles
 
@@ -77,7 +75,8 @@ build the aggregate Javascript for the ExtJS library or the theme+application st
 
     mvn clean install -Pdriver -Dmode=build
 
-If the content has changed, then the result needs to be committed:
+The baseapp-debug.js and baseapp-prod.js files will always have a "hash" in the Ext.Manifest object that changes which we can ignore.
+If there are any other changes then make sure to commit all changes.
 
     git commit . -m "regenerated baseapp"
 
@@ -108,12 +107,6 @@ To remove the overlayed bits from baseapp:
 
 Most of the default Sencha CMD files (it needs a lot of junk) are left ASIS only a few have been customized:
 
-* `src/main/baseapp/.sencha/workspace/sencha.cfg`
-* `src/main/baseapp/.sencha/app/sencha.cfg`
-* `src/main/baseapp/.sencha/app/build.properties`
-* `src/main/baseapp/.sencha/app/production.properties`
-* `src/main/baseapp/.sencha/app/testing.properties`
+* `src/main/baseapp/app.json`
+* `src/main/baseapp/workspace.json`
 
-## Locally install ExtJS distribution
-
-    mvn -Pinstall-ext -Dext.dist=ext-4.2.3-commercial.zip -Dext.version=4.2.3

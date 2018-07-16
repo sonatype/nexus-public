@@ -33,8 +33,7 @@ Ext.define('NX.coreui.store.FirewallRepositoryStatus', {
 
     reader: {
       type: 'json',
-      root: 'data',
-      idProperty: 'repositoryName',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

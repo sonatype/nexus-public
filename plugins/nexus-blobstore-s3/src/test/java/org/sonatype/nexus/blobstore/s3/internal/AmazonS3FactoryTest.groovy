@@ -14,7 +14,10 @@ package org.sonatype.nexus.blobstore.s3.internal
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
+import com.amazonaws.SdkClientException
+import com.amazonaws.services.s3.AmazonS3
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * {@link AmazonS3FactoryTest} tests.
@@ -49,5 +52,19 @@ class AmazonS3FactoryTest
 
     then: 'The client signer override is set'
       s3.clientConfiguration.signerOverride == 'AWSS3V4SignerType'
+  }
+
+  @Unroll
+  def 'Signer value of \'#signer\' does not override config value'() {
+    when: 'A custom signing algorithm is provided'
+      config.attributes.s3.region = 'us-west-2'
+      config.attributes.s3.signertype = signer
+      def s3 = amazonS3Factory.create(config)
+
+    then: 'The client signer override is not set'
+      s3.clientConfiguration.signerOverride == null
+
+    where:
+      signer << [null, '', 'DEFAULT']
   }
 }

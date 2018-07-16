@@ -88,7 +88,7 @@ Ext.define('NX.wizard.Step', {
     me.initConfig(config);
 
     me.name = Ext.getClassName(me);
-    me.screenClass = Ext.ClassManager.get(me.screen);
+    me.screenClass = Ext.ClassManager.get(me.getScreen());
     // TODO: Sort out if this is proper api to get xtype from class, this may not be portable to new versions of extjs
     me.screenXtype = me.screenClass.xtype;
   },
@@ -238,7 +238,7 @@ Ext.define('NX.wizard.Step', {
    */
   reset: function() {
     this.prepared = false;
-    this.enabled = true;
+    this.setEnabled(true);
 
     //<if debug>
     this.logDebug('Reset');
@@ -405,7 +405,7 @@ Ext.define('NX.wizard.Step', {
     this.controller.moveBack();
 
     // optionally reset when moving back
-    if (this.resetOnBack) {
+    if (this.getResetOnBack()) {
       this.reset();
     }
   },

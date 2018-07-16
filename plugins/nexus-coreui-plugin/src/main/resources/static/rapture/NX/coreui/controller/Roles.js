@@ -138,7 +138,7 @@ Ext.define('NX.coreui.controller.Roles', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Roles_Create_Title'));
-    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-role-add'));
+    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-role-add'));
   },
 
   /**
@@ -155,7 +155,7 @@ Ext.define('NX.coreui.controller.Roles', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Roles_Create_Title'));
-    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-role-add', { source: menuItem.source }));
+    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-role-add', { source: menuItem.source }));
   },
 
   /**
@@ -201,8 +201,12 @@ Ext.define('NX.coreui.controller.Roles', {
             })
         ),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
+          satisfied: function() {
+            button.enable();
+          },
+          unsatisfied: function() {
+            button.disable();
+          },
           scope: button
         }
     );

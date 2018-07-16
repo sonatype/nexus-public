@@ -167,7 +167,7 @@ public class BrowseNodeStoreImplTest
         securityHelper,
         selectorManager,
         new CselAssetSqlBuilder(),
-        new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
@@ -545,7 +545,7 @@ public class BrowseNodeStoreImplTest
         securityHelper,
         selectorManager,
         new CselAssetSqlBuilder(),
-        new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
 

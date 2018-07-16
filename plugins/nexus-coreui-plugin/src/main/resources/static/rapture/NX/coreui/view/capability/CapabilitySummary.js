@@ -24,6 +24,8 @@ Ext.define('NX.coreui.view.capability.CapabilitySummary', {
     'NX.Conditions',
     'NX.I18n'
   ],
+  scrollable: true,
+  cls: 'nx-hr',
 
   /**
    * @override
@@ -32,7 +34,6 @@ Ext.define('NX.coreui.view.capability.CapabilitySummary', {
     var me = this;
 
     me.title = NX.I18n.get('Capability_CapabilitySummary_Title');
-    me.autoScroll = true;
 
     me.layout = {
       type: 'vbox',

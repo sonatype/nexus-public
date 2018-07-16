@@ -42,20 +42,16 @@ Ext.define('NX.util.condition.GridHasSelection', {
    */
   bind: function () {
     var me = this,
-        components = {};
+        gridQueryResult = Ext.ComponentQuery.query(me.grid),
+        cmp = gridQueryResult && gridQueryResult.length ? gridQueryResult[0] : null;
 
     if (!me.bounded) {
-      components[me.grid] = {
-        cellclick: function(list, td, cellIndex, model) {
-          me.evaluate(list, model);
-        },
-        selection: me.evaluate,
-        selectionchange: function(list, selected) {
-          me.evaluate(list, selected ? selected[0] : null);
-        },
-        destroy: me.evaluate
-      };
-      Ext.app.EventBus.listen({ component: components }, me);
+      cmp.on({
+        cellclick: me.cellclick,
+        selectionchange: me.selectionchange,
+        destroy: me.destroy,
+        scope: me
+      });
       me.callParent();
     }
 
@@ -65,19 +61,44 @@ Ext.define('NX.util.condition.GridHasSelection', {
   /**
    * @private
    */
+  cellclick: function (cmp, td, cellIndex, model) {
+    this.evaluate(cmp, model);
+  },
+
+  /**
+   * @private
+   */
+  selectionchange: function (cmp, selected) {
+    this.evaluate(cmp, selected ? selected[0] : null);
+  },
+
+  /**
+   * @private
+   */
+  destroy: function (cmp) {
+    var me = this;
+    if (cmp.getSelectionModel().getSelected()) {
+      me.evaluate(cmp, cmp.getSelection());
+    }
+    else {
+      me.evaluate(cmp, null);
+    }
+  },
+
+  /**
+   * @private
+   */
   evaluate: function (cmp, selection) {
     var me = this,
         satisfied = false;
 
-    if (me.bounded) {
-      if (selection) {
-        satisfied = true;
-        if (Ext.isFunction(me.fn)) {
-          satisfied = me.fn(selection) === true;
-        }
+    if (cmp && selection) {
+      satisfied = true;
+      if (Ext.isFunction(me.fn)) {
+        satisfied = me.fn(selection) === true;
       }
-      me.setSatisfied(satisfied);
     }
+    me.setSatisfied(satisfied);
   },
 
   /**

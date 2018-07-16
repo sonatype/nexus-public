@@ -34,6 +34,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
@@ -269,7 +270,11 @@ public abstract class ProxyFacetSupport
       log.debug(logMessage, exception, repositoryName, contextUrl, statusLine);
     }
     else {
-      if (log.isDebugEnabled()) {
+      if (exception instanceof RemoteBlockedIOException) {
+        // trace because the blocked status of a repo is typically discoverable in the UI and other log messages
+        log.trace(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
+      }
+      else if (log.isDebugEnabled()) {
         log.warn(logMessage, exception, repositoryName, contextUrl, statusLine, exception);
       }
       else {

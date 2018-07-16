@@ -73,7 +73,7 @@ public class S3BlobStoreDescriptor
     @DefaultMessage("Optional ARN for Role to Assume, if required")
     String assumeRoleHelp();
 
-    @DefaultMessage("Region (Optional)")
+    @DefaultMessage("Region")
     String regionLabel();
 
     @DefaultMessage("The AWS Region to use")
@@ -91,7 +91,7 @@ public class S3BlobStoreDescriptor
     @DefaultMessage("How many days until deleted blobs are finally removed from the S3 bucket (-1 to disable)")
     String expirationHelp();
 
-    @DefaultMessage("Signature Version (Optional)")
+    @DefaultMessage("Signature Version")
     String signerTypeLabel();
 
     @DefaultMessage("An API signature version which may be required for third party object stores using the S3 API")
@@ -146,8 +146,9 @@ public class S3BlobStoreDescriptor
         S3BlobStore.REGION_KEY,
         messages.regionLabel(),
         messages.regionHelp(),
-        FormField.MANDATORY
-    ).withStoreApi("s3_S3.regions").withInitialValue("");
+        FormField.MANDATORY,
+        AmazonS3Factory.DEFAULT
+    ).withStoreApi("s3_S3.regions");
     this.region.getAttributes().put("sortProperty", "order");
     this.endpoint = new StringTextFormField(
         S3BlobStore.ENDPOINT_KEY,
@@ -166,8 +167,9 @@ public class S3BlobStoreDescriptor
         S3BlobStore.SIGNERTYPE_KEY,
         messages.signerTypeLabel(),
         messages.signerTypeHelp(),
-        FormField.MANDATORY
-    ).withStoreApi("s3_S3.signertypes").withInitialValue("");
+        FormField.MANDATORY,
+        AmazonS3Factory.DEFAULT
+    ).withStoreApi("s3_S3.signertypes");
     this.signerType.getAttributes().put("sortProperty", "order");
   }
 

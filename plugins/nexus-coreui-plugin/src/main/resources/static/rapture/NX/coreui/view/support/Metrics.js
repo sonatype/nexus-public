@@ -22,13 +22,14 @@ Ext.define('NX.coreui.view.support.Metrics', {
   alias: 'widget.nx-coreui-support-metrics',
   requires: [
     'Ext.chart.Chart',
+    'Ext.chart.theme.*',
     'Ext.data.ArrayStore',
     'NX.Assert',
     'NX.I18n'
   ],
-
+  scrollable: true,
   cls: 'nx-coreui-support-metrics',
-  
+
   /**
    * @private
    */
@@ -45,23 +46,37 @@ Ext.define('NX.coreui.view.support.Metrics', {
       title: title
     };
   },
-  
+
   /**
    * @private
    */
   nameDataTip: function(suffix) {
-    return function(storeItem, item) {
-      this.setTitle(storeItem.get('name') + ': ' + storeItem.get('data') + ' ' + suffix);  
+    return function(tooltip, record, context) {
+      var title = record.get('name') + ': ' + record.get('data') + ' ' + suffix;
+      var percentage = record.get('percentage');
+
+      if (percentage) {
+        title += " (" + percentage + "%)";
+      }
+
+      tooltip.setTitle(title);
     }
   },
-  
+
+  /**
+   * @private
+   */
+  highlightConfig: {
+    opacity: 0.8,
+    stroke: '#55c',
+    'stroke-width': 3
+  },
+
   /**
    * @override
    */
   initComponent: function() {
     Ext.apply(this, {
-      autoScroll: true,
-
       dockedItems: [{
         xtype: 'nx-actions',
         items: [
@@ -98,57 +113,25 @@ Ext.define('NX.coreui.view.support.Metrics', {
               {
                 items: [
                   {
-                    xtype: 'chart',
+                    xtype: 'polar',
                     itemId: 'memoryUsage',
                     animate: false,
-                    insetPadding: 40,
-                    store: Ext.create('Ext.data.ArrayStore', {
-                      fields: ['value']
-                    }),
-                    axes: [
-                      {
-                        type: 'gauge',
-                        position: 'gauge',
-                        minimum: 0,
-                        maximum: 100,
-                        steps: 10
-                      }
-                    ],
-                    series: [
-                      {
-                        type: 'gauge',
-                        field: 'value',
-                        donut: 30,
-                        colorSet: ['#F49D10', '#ddd'],
-                        tips: {
-                          trackMouse: true,
-                          renderer: function (storeItem, item) {
-                            this.setTitle('Memory used: ' + storeItem.get('value') + '%');
-                          }
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-          ),
-          Ext.apply(this.widgetPanel(NX.I18n.get('Support_Metrics_MemoryDistribution_Title')),
-              {
-                items: [
-                  {
-                    xtype: 'chart',
-                    itemId: 'memoryDist',
-                    animate: false,
+                    downloadServerUrl: ' ', // NEXUS-16479 avoids console warnings about security  //NOSONAR
                     insetPadding: 20,
-                    theme: 'Green',
+                    colors: ['#5f7f1c', '#8ebd2b', '#ddd'],
                     store: Ext.create('Ext.data.ArrayStore', {
-                      fields: ['name', 'data']
+                      fields: ['name', 'data', 'percentage']
                     }),
                     series: [
                       {
                         type: 'pie',
                         angleField: 'data',
                         showInLegend: true,
+
+                        label: {
+                          field: 'name',
+                          display: 'none'
+                        },
 
                         tips: {
                           trackMouse: true,
@@ -157,8 +140,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                       }
                     ],
                     legend: {
-                      position: 'right',
-                      boxStrokeWidth: 0
+                      docked: 'right'
                     }
                   }
                 ]
@@ -168,9 +150,10 @@ Ext.define('NX.coreui.view.support.Metrics', {
               {
                 items: [
                   {
-                    xtype: 'chart',
+                    xtype: 'polar',
                     itemId: 'threadStates',
                     animate: false,
+                    downloadServerUrl: ' ', // NEXUS-16479 avoids console warnings about security  //NOSONAR
                     insetPadding: 20,
                     theme: 'Base',
                     store: Ext.create('Ext.data.ArrayStore', {
@@ -182,6 +165,11 @@ Ext.define('NX.coreui.view.support.Metrics', {
                         angleField: 'data',
                         showInLegend: true,
 
+                        label: {
+                          field: 'name',
+                          display: 'none'
+                        },
+
                         tips: {
                           trackMouse: true,
                           renderer: this.nameDataTip('')
@@ -189,7 +177,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                       }
                     ],
                     legend: {
-                      position: 'right',
+                      docked: 'right',
                       boxStrokeWidth: 0
                     }
                   }
@@ -203,14 +191,16 @@ Ext.define('NX.coreui.view.support.Metrics', {
                     xtype: 'chart',
                     itemId: 'activeRequests',
                     animate: false,
+                    downloadServerUrl: ' ', // NEXUS-16479 avoids console warnings about security  //NOSONAR
                     insetPadding: 20,
                     theme: 'Base',
+                    flipXY: true,
                     store: Ext.create('Ext.data.ArrayStore', {
                       fields: ['name', 'data']
                     }),
                     axes: [
                       {
-                        type: 'Category',
+                        type: 'category',
                         position: 'left',
                         fields: ['name']
                       }
@@ -220,6 +210,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                         type: 'bar',
                         axis: 'bottom',
                         highlight: true,
+                        highlightCfg: this.highlightConfig,
                         label: {
                           display: 'insideEnd',
                           field: 'data',
@@ -247,15 +238,17 @@ Ext.define('NX.coreui.view.support.Metrics', {
                     xtype: 'chart',
                     itemId: 'responseCodes',
                     animate: false,
+                    downloadServerUrl: ' ', // NEXUS-16479 avoids console warnings about security  //NOSONAR
                     insetPadding: 20,
                     theme: 'Category1',
+                    flipXY: true,
                     store: Ext.create('Ext.data.ArrayStore', {
                       fields: ['name', 'data'],
                       sorters: {property: 'name', direction: 'DESC'}
                     }),
                     axes: [
                       {
-                        type: 'Category',
+                        type: 'category',
                         position: 'left',
                         fields: ['name']
                       }
@@ -265,6 +258,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                         type: 'bar',
                         axis: 'bottom',
                         highlight: true,
+                        highlightCfg: this.highlightConfig,
                         tips: {
                           trackMouse: true,
                           renderer: this.nameDataTip('responses')
@@ -279,7 +273,8 @@ Ext.define('NX.coreui.view.support.Metrics', {
                         },
                         xField: 'name',
                         yField: 'data',
-                        renderer: function (sprite, record, attr, index, store) {
+                        renderer: function (sprite, config, rendererData, index) {
+                          var record = rendererData.store.getAt(index);
                           var color;
                           switch (record.get('name')) {
                             case '5xx':
@@ -289,7 +284,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                               color = 'rgb(68,220,225)';
                               break;
                           }
-                          return Ext.apply(attr, {
+                          return Ext.apply(config, {
                             fill: color
                           });
                         }
@@ -306,15 +301,17 @@ Ext.define('NX.coreui.view.support.Metrics', {
                     xtype: 'chart',
                     itemId: 'webRequests',
                     animate: false,
+                    downloadServerUrl: ' ', // NEXUS-16479 avoids console warnings about security  //NOSONAR
                     insetPadding: 20,
                     theme: 'Category6',
+                    flipXY: true,
                     store: Ext.create('Ext.data.ArrayStore', {
                       fields: ['name', 'data'],
                       sorters: {property: 'name', direction: 'DESC'}
                     }),
                     axes: [
                       {
-                        type: 'Category',
+                        type: 'category',
                         position: 'left',
                         fields: ['name']
                       }
@@ -324,6 +321,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                         type: 'bar',
                         axis: 'bottom',
                         highlight: true,
+                        highlightCfg: this.highlightConfig,
                         tips: {
                           trackMouse: true,
                           renderer: this.nameDataTip('requests')
@@ -344,7 +342,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
                 ]
               }
           )
-        ]   
+        ]
       }
     });
 
@@ -359,6 +357,10 @@ Ext.define('NX.coreui.view.support.Metrics', {
    * @param query used to find the component
    */
   loadStoreByQuery: function (data, query) {
+    if (!this.rendered) {
+      return;
+    }
+
     var p = this.down(query);
     //<if assert>
     NX.Assert.assert(p, "Expected this.down('" + query + "') to return component");
@@ -371,15 +373,8 @@ Ext.define('NX.coreui.view.support.Metrics', {
   /**
    * @public
    */
-  setTotalData: function (data) {
+  setMemoryUsageData: function (data) {
     this.loadStoreByQuery(data, 'panel #memoryUsage');
-  },
-
-  /**
-   * @public
-   */
-  setMemoryDistData: function (data) {
-    this.loadStoreByQuery(data, 'panel #memoryDist');
   },
 
   /**

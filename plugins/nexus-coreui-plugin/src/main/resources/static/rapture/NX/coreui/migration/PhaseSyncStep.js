@@ -24,7 +24,11 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
     'NX.I18n'
   ],
 
-  screen: 'NX.coreui.migration.PhaseSyncScreen',
+  config: {
+    screen: 'NX.coreui.migration.PhaseSyncScreen',
+    enabled: true
+  },
+
   phase: 'SYNC',
 
   /**
@@ -97,7 +101,7 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
       NX.direct.migration_Assistant.syncStatus(function (response, event) {
         var isComplete = response.success && response.data.waitingForChanges && response.data.scanComplete;
         if (!me.waitingToFinish && event.status && isComplete) {
-          screen.down('button[action=continue]').enable().setText(NX.I18n.render(me.screen, 'Continue_Button'));
+          screen.down('button[action=continue]').enable().setText(NX.I18n.render(screen, 'Continue_Button'));
         }
       });
     }
@@ -159,8 +163,9 @@ Ext.define('NX.coreui.migration.PhaseSyncStep', {
       NX.I18n.render(me, 'Stop_Waiting_Confirm_Title'),
       NX.I18n.render(me, 'Stop_Waiting_Confirm_Text'),
       function () {
-        me.getScreenCmp().down('button[action=continue]').disable()
-            .setText(NX.I18n.render(me.screen, 'Continue_Button_Pending'));
+        var screen = me.getScreenCmp();
+        screen.down('button[action=continue]').disable()
+            .setText(NX.I18n.render(screen, 'Continue_Button_Pending'));
         NX.direct.migration_Assistant.stopWaiting(function (response, event) {
           if (event.status && response.success && response.data) {
             me.waitingToFinish = true;

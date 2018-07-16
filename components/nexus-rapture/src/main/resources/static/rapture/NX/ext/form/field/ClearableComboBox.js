@@ -21,15 +21,16 @@ Ext.define('NX.ext.form.field.ClearableComboBox', {
   extend: 'Ext.form.field.ComboBox',
   alias: 'widget.nx-clearablecombobox',
 
-  // TODO: Only show clear trigger if we have text
-  trigger2Cls: Ext.baseCSSPrefix + 'form-clear-trigger',
-
-  /**
-   * @private
-   * Clear value.
-   */
-  onTrigger2Click: function () {
-    this.reset();
+  triggers: {
+    /**
+     * Clear value.
+     */
+    clear: {
+      cls: Ext.baseCSSPrefix + 'form-clear-trigger',
+      handler: function() {
+        this.reset();
+      }
+    }
   }
 
 });

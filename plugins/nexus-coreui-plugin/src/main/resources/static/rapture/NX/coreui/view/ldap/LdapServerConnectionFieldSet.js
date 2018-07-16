@@ -274,7 +274,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
         component.hide();
       }
     });
-    if (form) {
+    if (form && form.rendered) {
       form.isValid();
     }
   }

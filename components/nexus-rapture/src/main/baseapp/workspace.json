@@ -1,0 +1,49 @@
+{
+    /**
+     * An object containing key value pair framework descriptors.
+     *
+     * The value should be an object containing "path" the path inside the workspace where the framework
+     * files can be found and "version" the version of the framework. For example:
+     *
+     *      "frameworks": {
+     *          
+     *          "extnew": {
+     *              "path": "extnew",
+     *              "version": "n.n.n.n"
+     *          }
+     *      }
+     *
+     * You can exclude the directories that contain the framework from source control and later restore them
+     * with "sencha workspace install". See "sencha help workspace install" for more information.
+     *
+     */
+    "frameworks": {
+        "ext": {
+            "path":"../../../target/ext",
+            "version":"6.5.3.57"
+        }
+    },
+
+    /**
+     * This is the folder for build outputs in the workspace.
+     */
+    "build": {
+        "dir": "${workspace.dir}/../../../src/main/resources/static/rapture"
+    },
+
+    /**
+     * These configs determine where packages are generated and extracted to (when downloaded).
+     */
+    "packages": {
+        /**
+         * This folder contains all local packages.
+         * If a comma-separated string is used as value the first path will be used as the path to generate new packages.
+         */
+        "dir": "${workspace.dir}/packages/local,${workspace.dir}/packages",
+
+        /**
+         * This folder contains all extracted (remote) packages.
+         */
+        "extract": "${workspace.dir}/packages/remote"
+    }
+}

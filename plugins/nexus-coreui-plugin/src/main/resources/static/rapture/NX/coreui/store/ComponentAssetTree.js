@@ -37,7 +37,7 @@
 
           reader: {
               type: 'json',
-              root: 'data',
+              rootProperty: 'data',
               successProperty: 'success'
           }
       },

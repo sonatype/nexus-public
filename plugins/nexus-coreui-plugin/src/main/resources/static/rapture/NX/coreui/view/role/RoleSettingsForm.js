@@ -149,6 +149,22 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
     ];
 
     me.callParent();
+
+    NX.Conditions.formIs(me, function(form) {
+      return !form.isDisabled();
+    }).on({
+      satisfied: function() {
+        Ext.each(me.query('nx-itemselector'), function(it) {
+          it.show();
+        });
+      },
+      unsatisfied: function() {
+        Ext.each(me.query('nx-itemselector'), function(it) {
+          it.hide();
+        });
+      },
+      scope: me
+    });
   }
 
 });

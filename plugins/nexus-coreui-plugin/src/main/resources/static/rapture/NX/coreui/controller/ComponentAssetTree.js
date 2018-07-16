@@ -86,10 +86,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       text: NX.I18n.get('FeatureGroups_Browse_Text'),
       description: NX.I18n.get('FeatureGroups_Browse_Description'),
       view: 'NX.coreui.view.browse.ComponentAssetTreeFeature',
-      iconConfig: {
-        file: 'database_share.png',
-        variants: ['x16', 'x32']
-      },
+      iconCls: 'x-fa fa-database',
       authenticationRequired: false
     };
 
@@ -211,7 +208,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       modelId = decodeURIComponent(list_ids.shift());
       store = lists[0].getStore();
 
-      if (store.isLoading()) {
+      if (store.isLoading() || !store.isLoaded()) {
         // The store hasn’t yet loaded, load it when ready
         me.mon(store, 'load', function() {
           me.selectModelById(0, modelId);
@@ -221,7 +218,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.selectModelById(0, modelId);
       }
     } else {
-      me.loadView(0, false);
+      me.loadView(0);
     }
   },
 
@@ -252,13 +249,25 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   expandTree: function() {
     var me = this,
         treePanel = me.getComponentAssetTreePanel(),
-        segments = window.location.hash.split(':');
+        segments = window.location.hash.split(':'),
+        hasPath = segments && segments.length === 3,
+        path;
 
-    if (segments && segments.length === 3) {
-      // Extract the filter object from the URI and select it in the tree
-      treePanel.selectPath('/Root/' + decodeURIComponent(segments.pop()), 'text', '/', function (successful) {
+    if (treePanel.getStore().isLoading()) {
+      treePanel.getStore().on({
+        load: me.expandTree,
+        scope: me,
+        single: true
+      });
+    }
+    else if (hasPath) {
+      path = decodeURIComponent(segments[2]);
+      treePanel.selectPath('/Root/' + path, 'text', '/', function (successful, lastNode) {
         if (!successful) {
           NX.Messages.error(NX.I18n.get('Component_Asset_Tree_Expand_Failure'));
+        }
+        else {
+          lastNode.expand();
         }
       });
     }
@@ -349,9 +358,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     me.updateUploadButton();
   },
 
-  bookmarkNode: function(nodeId) {
+  bookmarkNode: function(node) {
+    const ROOT_LENGTH = '/Root/'.length;
     var baseUrl = '#browse/browse:' + encodeURIComponent(this.getCurrentRepository().get('name')),
-        encodedId = nodeId ? encodeURIComponent(nodeId) : null;
+        encodedId = node ? encodeURIComponent(node.getPath('text').substring(ROOT_LENGTH)) : null;
 
     //if we don't have the replaceState method, don't bother doing anything
     if (window.history.replaceState && window.location.hash.indexOf(baseUrl) === 0) {
@@ -359,7 +369,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
-  selectNode: function(view, model) {
+  selectNode: function(view, node) {
     var me = this,
         containerView = me.getComponentAssetTree(),
         componentInfoPanel,
@@ -367,11 +377,11 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         currentRepository;
 
     me.removeSideContent();
-    me.bookmarkNode(model.get('id'));
+    me.bookmarkNode(node);
 
-    if ('component' === model.get('type')) {
+    if ('component' === node.get('type')) {
       componentInfoPanel = containerView.add(me.getComponentComponentInfoView().create({
-        title: me.buildPathString(model),
+        title: me.buildPathString(node),
         iconCls: 'nx-icon-tree-component-x16',
         flex: 2
       }));
@@ -380,14 +390,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       if (currentRepository && currentRepository.get('type') !== 'group') {
         me.getDeleteComponentButton().show();
       }
-      NX.direct.coreui_Component.readComponent(model.get('componentId'), me.getCurrentRepository().get('name'), function(response) {
+      NX.direct.coreui_Component.readComponent(node.get('componentId'), me.getCurrentRepository().get('name'), function(response) {
         me.maybeUnmask(componentInfoPanel);
         if (me.isPanelVisible(componentInfoPanel) && me.isResponseSuccessful(response)) {
           componentInfoPanel.setModel(me.getComponentModel().create(response.data));
          }
       });
     }
-    else if ('asset' === model.get('type')) {
+    else if ('asset' === node.get('type')) {
       assetInfoPanel = containerView.add(me.getComponentComponentAssetInfoView().create({
         flex: 2,
         iconCls: 'nx-icon-tree-asset-x16'
@@ -398,7 +408,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.getDeleteAssetButton().show();
       }
 
-      NX.direct.coreui_Component.readAsset(model.get('assetId'), me.getCurrentRepository().get('name'), function(response) {
+      NX.direct.coreui_Component.readAsset(node.get('assetId'), me.getCurrentRepository().get('name'), function(response) {
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
           me.setInfoPanelModel(assetInfoPanel, me.getAssetModel().create(response.data));
         }
@@ -504,17 +514,23 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         repoModel;
 
     if (repoList) {
-      repoList.getStore().load(function() {
-        repoModel = me.getCurrentRepository();
+      repoList.getStore().on({
+        load: function() {
+          repoModel = me.getCurrentRepository();
 
-        if (repoModel) {
-          //0 references the first list in the Drilldown parent (the repository list)
-          me.onModelChanged(0, repoModel);
-          me.onRepositorySelection(repoModel);
-        }
+          if (repoModel) {
+            //0 references the first list in the Drilldown parent (the repository list)
+            me.onModelChanged(0, repoModel);
+            me.onRepositorySelection(repoModel);
+          }
 
-        me.reselect();
+          me.reselect();
+        },
+        single: true
       });
+
+      // In theory we should be able to just pass in the above load listener here, but for some reason it isn't being called
+      repoList.getStore().load();
     }
   },
 
@@ -791,7 +807,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
-  loadView: function (index, animate, model) {
+  loadView: function (index, model) {
     var me = this,
       lists = Ext.ComponentQuery.query('nx-drilldown-master'),
       hasPath = NX.Bookmarks.getBookmark().getSegments().length > 2;
@@ -813,7 +829,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
 
     // Show the next view in line
-    me.showChild(index, animate);
+    me.showChild(index);
     if (!hasPath) {
       me.bookmark(index, model);
     }

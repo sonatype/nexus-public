@@ -40,7 +40,6 @@ Ext.define('NX.view.Authenticate', {
 
     me.ui = 'nx-inset';
     me.title = NX.I18n.get('Authenticate_Title');
-    me.defaultFocus = 'password';
 
     me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
@@ -89,6 +88,13 @@ Ext.define('NX.view.Authenticate', {
           { text: NX.I18n.get('Authenticate_Cancel_Button'), handler: me.close, scope: me }
         ]
       }
+    });
+
+    me.on({
+      resize: function() {
+        me.down('#password').focus();
+      },
+      single: true
     });
 
     me.callParent();

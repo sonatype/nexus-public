@@ -73,12 +73,9 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
           renderer: Ext.htmlEncode
         }
       ],
-      
-      plugins: {
-        ptype: 'bufferedrenderer',
-        trailingBufferZone: 20,
-        leadingBufferZone: 50
-      }
+
+      trailingBufferZone: 20,
+      leadingBufferZone: 50
     });
 
     this.callParent();

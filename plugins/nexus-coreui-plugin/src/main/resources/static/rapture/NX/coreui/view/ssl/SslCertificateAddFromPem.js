@@ -42,7 +42,7 @@ Ext.define('NX.coreui.view.ssl.SslCertificateAddFromPem', {
           name: 'pem',
           itemId: 'pem',
           cls: 'nx-monospace-field',
-          rows: 16
+          height: '16rem'
         }
       ],
 

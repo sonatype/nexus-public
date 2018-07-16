@@ -118,6 +118,13 @@ Ext.define('NX.coreui.controller.Metrics', {
 
       success: function (response) {
         var data = Ext.decode(response.responseText);
+        var memoryTotalMax = gaugeValue('jvm.memory.total.max');
+        var memoryUsed = gaugeValue('jvm.memory.total.used');
+        var memoryAvailable = memoryTotalMax - memoryUsed;
+        var memoryHeap = gaugeValue('jvm.memory.heap.used');
+        var memoryHeapPercentage = Math.round((memoryHeap / memoryTotalMax) * 100);
+        var memoryNonHeap = memoryUsed - memoryHeap;
+        var memoryNonHeapPercentage = Math.round((memoryNonHeap / memoryTotalMax) * 100);
 
         // return gauge value
         function gaugeValue(name) {
@@ -140,13 +147,22 @@ Ext.define('NX.coreui.controller.Metrics', {
         }
 
         // update memory charts
-        panel.setTotalData([
-          { value: Math.round((gaugeValue('jvm.memory.total.used') / gaugeValue('jvm.memory.total.max')) * 100) }
-        ]);
-        panel.setMemoryDistData([
-          { name: NX.I18n.get('Support_Metrics_Heap_Title'), data: gaugeValue('jvm.memory.heap.used') },
-          { name: NX.I18n.get('Metrics_Heap_NonHeapItem'), data: gaugeValue('jvm.memory.total.used') - gaugeValue('jvm.memory.heap.used') },
-          { name: NX.I18n.get('Metrics_Heap_Available'), data: gaugeValue('jvm.memory.total.max') - gaugeValue('jvm.memory.total.used') }
+        panel.setMemoryUsageData([
+          {
+            name: NX.I18n.get('Support_Metrics_Heap_Title'),
+            data: memoryHeap,
+            percentage: memoryHeapPercentage
+          },
+          {
+            name: NX.I18n.get('Metrics_Heap_NonHeapItem'),
+            data: memoryNonHeap,
+            percentage: memoryNonHeapPercentage
+          },
+          {
+            name: NX.I18n.get('Metrics_Heap_Available'),
+            data: memoryAvailable,
+            percentage: 100 - memoryHeapPercentage - memoryNonHeapPercentage
+          }
         ]);
 
         // update threads charts

@@ -62,7 +62,7 @@ Ext.define('NX.coreui.controller.Outreach', {
 
     if (welcomePage) {
       NX.direct.outreach_Outreach.readStatus(function (response) {
-        if (Ext.isObject(response) && response.success) {
+        if (Ext.isObject(response) && response.success && welcomePage.rendered) {
           var user = NX.State.getUser(),
               usertype,
               url;

@@ -52,6 +52,8 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KE
 public class AmazonS3Factory
     extends ComponentSupport
 {
+  public static final String DEFAULT = "DEFAULT";
+
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
     AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
 
@@ -70,7 +72,7 @@ public class AmazonS3Factory
       builder = builder.withCredentials(credentialsProvider);
     }
 
-    if (!isNullOrEmpty(region)) {
+    if (!isNullOrEmptyOrDefault(region)) {
       String endpoint = blobStoreConfiguration.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class);
       if (!isNullOrEmpty(endpoint)) {
         builder = builder.withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration(endpoint, region));
@@ -79,7 +81,7 @@ public class AmazonS3Factory
       }
     }
 
-    if (!isNullOrEmpty(signerType)) {
+    if (!isNullOrEmptyOrDefault(signerType)) {
       ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
       clientConfiguration.setSignerOverride(signerType);
       builder = builder.withClientConfiguration(clientConfiguration);
@@ -132,5 +134,9 @@ public class AmazonS3Factory
       log.warn("Default AWS region not configured, using {}", region, e);
       return region;
     }
+  }
+
+  private boolean isNullOrEmptyOrDefault(final String value) {
+    return isNullOrEmpty(value) || DEFAULT.equals(value);
   }
 }

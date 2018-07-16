@@ -74,7 +74,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:blobstores:read') && NX.State.getUser();
+        return NX.Permissions.check('nexus:blobstores:read') && !Ext.isEmpty(NX.State.getUser());
       }
     };
 
@@ -142,9 +142,12 @@ Ext.define('NX.coreui.controller.Blobstores', {
         })
       ),
       {
-        satisfied: button.enable,
-        unsatisfied: button.disable,
-        scope: button
+        satisfied: function () {
+          button.enable();
+        },
+        unsatisfied: function () {
+          button.disable();
+        }
       }
     );
   },
@@ -157,7 +160,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Blobstores_Create_Title'));
-    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-blobstore-add'));
+    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-blobstore-add'));
   },
 
   /**

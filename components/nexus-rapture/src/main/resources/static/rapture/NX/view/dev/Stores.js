@@ -52,29 +52,20 @@ Ext.define('NX.view.dev.Stores', {
           queryMode: 'local',
           displayField: 'id',
           valueField: 'id',
-          trigger2Cls: 'x-form-search-trigger',
-          onTrigger2Click: function () {
-            this.getStore().load();
+          triggers: {
+            search: {
+              cls: 'x-form-search-trigger',
+              handler: function () {
+                this.getStore().load();
+              }
+            }
           },
           store: Ext.create('Ext.data.Store', {
             fields: ['id'],
             data: Ext.data.StoreManager,
             proxy: {
               type: 'memory',
-              reader: {
-                type: 'json',
-                read: function (data) {
-                  var stores = [];
-
-                  data.each(function (store) {
-                    stores.push({
-                      id: store.storeId
-                    });
-                  });
-
-                  return this.readRecords(stores);
-                }
-              }
+              reader: Ext.create('NX.data.reader.dev.StoresReader')
             },
             sorters: {property: 'id', direction: 'ASC'}
           })
@@ -97,4 +88,19 @@ Ext.define('NX.view.dev.Stores', {
     me.callParent();
   }
 
+});
+
+Ext.define('NX.data.reader.dev.StoresReader', {
+  extend: 'Ext.data.reader.Json',
+  read: function (data) {
+    var stores = [];
+
+    data.each(function (store) {
+      stores.push({
+        id: store.storeId
+      });
+    });
+
+    return this.readRecords(stores);
+  }
 });

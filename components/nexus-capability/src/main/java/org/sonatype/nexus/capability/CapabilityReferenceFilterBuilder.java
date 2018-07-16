@@ -72,7 +72,7 @@ public class CapabilityReferenceFilterBuilder
     }
 
     /**
-     * @since 3.next
+     * @since 3.13
      */
     public CapabilityReferenceFilter ignore(final CapabilityIdentity id) {
       ignoreCapabilityId = id;

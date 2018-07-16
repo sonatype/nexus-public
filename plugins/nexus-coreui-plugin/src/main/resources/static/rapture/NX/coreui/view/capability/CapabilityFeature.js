@@ -40,7 +40,7 @@ Ext.define('NX.coreui.view.capability.CapabilityFeature', {
         { xtype: 'nx-coreui-capability-settings', title: NX.I18n.get('Capability_CapabilitySettings_Title'), weight: 20 }
       ],
 
-      actions: [
+      nxActions: [
         {
           xtype: 'button',
           text: NX.I18n.get('Capability_CapabilityFeature_Delete_Button'),

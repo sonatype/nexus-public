@@ -58,7 +58,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupMappingTestResults', {
       ],
       store: Ext.create('Ext.data.JsonStore', {
         fields: ['username', 'realName', 'email', 'membership'],
-        data: me.mappedUsers
+        data: me.getMappedUsers()
       })
     };
 

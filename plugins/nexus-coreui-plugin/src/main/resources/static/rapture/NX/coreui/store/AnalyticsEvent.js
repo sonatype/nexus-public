@@ -32,7 +32,7 @@ Ext.define('NX.coreui.store.AnalyticsEvent', {
 
     reader: {
       type: 'json',
-      root: 'data',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

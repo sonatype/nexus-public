@@ -70,9 +70,7 @@ Ext.define('NX.view.info.Panel', {
    * @public
    */
   setTitle: function(title) {
-    var me = this;
-    me.titled = title;
-    me.down('panel').down('panel').setTitle(title);
+    this.titled = title;
   },
 
   /**

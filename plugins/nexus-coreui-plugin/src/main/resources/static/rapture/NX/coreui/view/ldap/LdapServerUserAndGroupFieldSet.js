@@ -48,7 +48,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupFieldSet', {
         queryMode: 'local',
         listeners: {
           select: function (combo, selected) {
-            var data = Ext.apply({}, selected[0].getData());
+            var data = selected.getData();
             delete data.name;
             combo.up('form').getForm().setValues(data);
           }
@@ -204,7 +204,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupFieldSet', {
         component.hide();
       }
     });
-    if (form) {
+    if (form && form.rendered) {
       form.isValid();
     }
   }

@@ -146,7 +146,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
             },
             items: [
               {
-                xtype: 'text',
+                xtype: 'label',
                 text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_File_Label'),
                 cls: 'nx-table-header-label',
                 width: 305,
@@ -158,7 +158,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
 
       assetFields.forEach(function(assetField) {
         header.items.push({
-          xtype: 'text',
+          xtype: 'label',
           text: assetField.displayName,
           cls: 'nx-table-header-label',
           width: 145,
@@ -186,7 +186,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                       glyph: 'xf016@FontAwesome' /* fa-file-o */
                   },
                   name: 'file',
-                  width: '150px',
+                  width: '300px',
                   listeners: {
                     change: function() {
                       me.fileChange.apply(me, arguments);
@@ -218,7 +218,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
 
     createAssetField: function(field) {
       var me = this;
-      return me.createField(field, true, '100px', 'nx-float-left', me.validateUniqueAsset);
+      return me.createField(field, true, '140px', 'nx-float-left', me.validateUniqueAsset);
     },
 
     createField: function (field, hideLabel, width, cls, validator) {

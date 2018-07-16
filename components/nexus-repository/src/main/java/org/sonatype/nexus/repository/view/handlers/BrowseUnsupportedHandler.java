@@ -23,7 +23,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.security.SecurityHandler;
@@ -58,17 +57,13 @@ public class BrowseUnsupportedHandler
 
   private final Route route;
 
-  private final boolean treeEnabled;
-
   @Inject
-  public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final BrowseNodeConfiguration configuration,
-                                  final SecurityHandler securityHandler) {
+  public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final SecurityHandler securityHandler) {
     this.templateHelper = checkNotNull(templateHelper);
     checkNotNull(securityHandler);
     this.template = getClass().getResource(TEMPLATE_RESOURCE);
     checkNotNull(template);
     this.route = new Route(MATCHER, ImmutableList.of(securityHandler, this));
-    this.treeEnabled = checkNotNull(configuration).isEnabled();
   }
 
   @Nonnull
@@ -76,7 +71,6 @@ public class BrowseUnsupportedHandler
   public Response handle(@Nonnull final Context context) throws Exception {
     TemplateParameters params = templateHelper.parameters();
     params.set("repository", context.getRepository());
-    params.set("treeEnabled", treeEnabled);
 
     String html = templateHelper.render(template, params);
     return HttpResponses.ok(new StringPayload(html, "text/html"));

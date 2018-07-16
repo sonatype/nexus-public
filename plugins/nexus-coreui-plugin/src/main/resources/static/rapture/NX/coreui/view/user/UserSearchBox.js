@@ -18,16 +18,36 @@
  * @since 3.0
  */
 Ext.define('NX.coreui.view.user.UserSearchBox', {
-  extend: 'Ext.form.field.Trigger',
+  extend: 'Ext.form.field.Text',
   alias: 'widget.nx-coreui-user-searchbox',
   requires: [
     'Ext.util.KeyNav',
     'NX.I18n'
   ],
 
-  // TODO: Only show clear trigger if we have text
-  trigger1Cls: 'nx-form-fa-times-circle-trigger',
-  trigger2Cls: 'x-form-search-trigger',
+  triggers: {
+    clear: {
+      cls: 'nx-form-fa-times-circle-trigger',
+      handler: 'clearSearch',
+      hidden: true
+    },
+    search: {
+      cls: 'x-form-search-trigger',
+      handler: 'doSearch'
+    }
+  },
+
+  keyMap: {
+    ESC: 'clearSearch',
+    ENTER: 'doSearch'
+  },
+
+  listeners: {
+    change: 'valueChanged'
+  },
+
+  width: 320,
+  submitValue: false,
 
   /**
    * @override
@@ -36,84 +56,16 @@ Ext.define('NX.coreui.view.user.UserSearchBox', {
     var me = this;
 
     me.emptyText = NX.I18n.get('User_UserList_Filter_EmptyText');
-    me.width = 320;
-    me.submitValue = false;
 
     me.callParent();
-
-    me.addEvents(
-        /**
-         * Fires when a search trigger was pressed.
-         *
-         * @event search
-         * @param {NX.coreui.view.user.UserSearchBox} this search box
-         * @param {String} search value
-         */
-        'search',
-
-        /**
-         * Fires when a search value had been cleared.
-         *
-         * @event searchcleared
-         * @param {NX.coreui.view.user.UserSearchBox} this search box
-         */
-        'searchcleared'
-    );
   },
 
   /**
-   * @override
-   */
-  initEvents: function() {
-    var me = this;
-
-    me.callParent();
-
-    me.keyNav = new Ext.util.KeyNav(me.inputEl, {
-      esc: {
-        handler: me.clearSearch,
-        scope: me,
-        defaultEventAction: false
-      },
-      enter: {
-        handler: me.onEnter,
-        scope: me,
-        defaultEventAction: false
-      },
-      scope: me,
-      forceKeyDown: true
-    });
-  },
-
-  /**
-   * Clear search.
-   *
    * @private
    */
-  onTrigger1Click: function() {
-    this.clearSearch();
-  },
-
-  /**
-   * Search on search trigger pressed.
-   *
-   * @private
-   */
-  onTrigger2Click: function() {
-    var me = this;
-
-    me.search(me.getValue());
-  },
-
-  /**
-   * Search on ENTER.
-   *
-   * @private
-   */
-  onEnter: function() {
-    var me = this;
-
-    me.search(me.getValue());
+  doSearch: function() {
+    var value = this.getValue();
+    this.search(value);
   },
 
   /**
@@ -143,6 +95,16 @@ Ext.define('NX.coreui.view.user.UserSearchBox', {
       me.setValue(undefined);
     }
     me.fireEvent('searchcleared', me);
+  },
+
+  valueChanged: function() {
+    var clearTrigger = this.getTrigger('clear');
+    if (this.getValue()) {
+      clearTrigger.show();
+    }
+    else {
+      clearTrigger.hide();
+    }
   }
 
 });

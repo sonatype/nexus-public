@@ -46,15 +46,14 @@ Ext.define('NX.coreui.view.support.SysInfo', {
       ]
     }];
 
-    // FIXME: clean up style, can reduce lots of complexity here with some better naming + scss nesting
-
     // simple named section with list of key-value properties
     me.sectionTpl = Ext.create('Ext.XTemplate',
-      '<div class="x-panel x-panel-nx-subsection-framed" style="margin: 0 0 20px 0">',
-      '<div class="x-panel-header-nx-subsection-framed x-panel-header-nx-subsection-framed-horizontal" style="border: none !important">',
-      '<span class="x-panel-header-text-container-nx-subsection-framed">{name}</span>',
-      '</div>',
-      '<div class="x-panel-body x-panel-body-nx-subsection-framed" style="border: none !important">',
+      '<div class="x-panel x-panel-nx-subsection-framed">',
+      '<div class="x-panel-header x-panel-header-nx-subsection-framed">',
+      '<div class="x-title x-panel-header-title x-panel-header-title-nx-subsection-framed x-title-nx-subsection-framed">',
+      '<div class="x-title-text x-title-text-nx-subsection-framed x-title-item">{name}</div></div></div>',
+      '<div class="x-panel-bodyWrap">',
+      '<div class="x-panel-body x-panel-body-nx-subsection-framed">',
       '<table>',
       '<tpl for="props">',
       '<tr>',
@@ -63,8 +62,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
       '</tr>',
       '</tpl>',
       '</table>',
-      '</div>',
-      '</div>',
+      '</div></div></div>',
       {
         compiled: true
       }
@@ -72,11 +70,12 @@ Ext.define('NX.coreui.view.support.SysInfo', {
 
     // nested named section with list of child named sections
     me.nestedSectionTpl = Ext.create('Ext.XTemplate',
-      '<div class="x-panel x-panel-nx-subsection-framed" style="margin: 0 0 20px 0">',
-      '<div class="x-panel-header-nx-subsection-framed x-panel-header-nx-subsection-framed-horizontal" style="border: none !important">',
-      '<span class="x-panel-header-text-container-nx-subsection-framed">{name}</span>',
-      '</div>',
-      '<div class="x-panel-body x-panel-body-nx-subsection-framed" style="border: none !important">',
+      '<div class="x-panel x-panel-nx-subsection-framed">',
+      '<div class="x-panel-header x-panel-header-nx-subsection-framed">',
+      '<div class="x-title x-panel-header-title x-panel-header-title-nx-subsection-framed x-title-nx-subsection-framed">',
+      '<div class="x-title-text x-title-text-nx-subsection-framed x-title-item">{name}</div></div></div>',
+      '<div class="x-panel-bodyWrap">',
+      '<div class="x-panel-body x-panel-body-nx-subsection-framed">',
       '<tpl for="nested">',
       '<h3>{name}</h3>',
       '<table>',
@@ -88,8 +87,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
       '</tpl>',
       '</table>',
       '</tpl>',
-      '</div>',
-      '</div>',
+      '</div></div></div>',
       {
         compiled: true
       }
@@ -174,9 +172,7 @@ Ext.define('NX.coreui.view.support.SysInfo', {
    */
   setInfo: function(info) {
     var me = this;
-    //<if assert>
-    NX.Assert.assert(me.rendered, "Expected me.rendered to be true");
-    //</if>
+
     if (me.rendered) {
       me.mainTpl.overwrite(me.body, info);
     }

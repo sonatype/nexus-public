@@ -23,7 +23,11 @@ Ext.define('NX.coreui.migration.PhasePrepareStep', {
     'NX.coreui.migration.PhasePrepareScreen'
   ],
 
-  screen: 'NX.coreui.migration.PhasePrepareScreen',
+  config: {
+    screen: 'NX.coreui.migration.PhasePrepareScreen',
+    enabled: true
+  },
+
   phase: 'PREPARE',
 
   /**

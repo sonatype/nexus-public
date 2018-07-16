@@ -77,13 +77,15 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
             xtype: 'textfield',
             name: 'username',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Username_FieldLabel'),
-            allowBlank: true
+            allowBlank: true,
+            inputAttrTpl: 'autocomplete="new-username"'
           },
           {
             xtype: 'nx-password',
             name: 'password',
             fieldLabel: NX.I18n.get('System_SmtpSettings_Password_FieldLabel'),
-            allowBlank: true
+            allowBlank: true,
+            inputAttrTpl: 'autocomplete="new-password"'
           },
           {
             xtype: 'nx-email',

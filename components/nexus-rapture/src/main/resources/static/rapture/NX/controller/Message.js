@@ -20,11 +20,8 @@
 Ext.define('NX.controller.Message', {
   extend: 'NX.app.Controller',
   requires: [
-    'NX.Icons'
-  ],
-
-  views: [
-    'message.Notification'
+    'NX.Icons',
+    'Ext.window.Toast'
   ],
 
   /**
@@ -88,13 +85,24 @@ Ext.define('NX.controller.Message', {
 
     // show transient message notification
     if (!this.messageExists(message)) {
-      var cfg = Ext.clone(this.windowOptions);
-      this.getView('message.Notification').create(Ext.apply(cfg, {
+      Ext.toast({
         ui: 'nx-message-' + message.type,
         iconCls: NX.Icons.cls('message-' + message.type, 'x16'),
+        html: message.text,
         title: Ext.String.capitalize(message.type),
-        html: message.text
-      }));
+        align: 'tr',
+        closable: true,
+        anchor: Ext.ComponentQuery.query('nx-feature-content')[0],
+        stickOnClick: true,
+        minWidth: 150,
+        maxWidth: 400,
+        autoCloseDelay: 5000,
+        slideInDuration: 800,
+        slideBackDuration: 500,
+        hideDuration: 500,
+        slideInAnimation: 'elasticIn',
+        slideBackAnimation: 'elasticIn'
+      });
     }
   },
 
@@ -104,9 +112,8 @@ Ext.define('NX.controller.Message', {
    * @param message
    */
   messageExists: function (message) {
-    var selector = 'nx-message-notification[title=' + Ext.String.capitalize(message.type) + ']';
-    var existingMessage = Ext.Array.filter(Ext.ComponentQuery.query(selector), function (foundMessage) {
-          return Ext.String.trim(foundMessage.body.el.dom.innerText) == message.text;
+    var existingMessage = Ext.Array.filter(Ext.ComponentQuery.query('toast'), function (foundMessage) {
+          return Ext.String.trim(foundMessage.config.html) === message.text;
         }
     );
     return existingMessage.length > 0;

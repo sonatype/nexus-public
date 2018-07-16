@@ -80,7 +80,7 @@ Ext.define('NX.coreui.view.selector.SelectorPreviewWindow', {
               itemId: 'expression',
               fieldLabel: NX.I18n.get('SelectorPreviewWindow_expression_FieldLabel'),
               allowBlank: false,
-              value: me.expression
+              value: me.getExpression()
             },
             {
               xtype: 'combo',

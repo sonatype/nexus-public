@@ -40,8 +40,20 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionForm', {
     me.callParent();
 
     me.getDockedItems('toolbar[dock="bottom"]')[0].add(
-        { xtype: 'button', text: NX.I18n.get('Ldap_LdapServerConnectionForm_VerifyConnection_Button'), formBind: true, action: 'verifyconnection' }
+        { xtype: 'button', text: NX.I18n.get('Ldap_LdapServerConnectionForm_VerifyConnection_Button'), action: 'verifyconnection' }
     );
+
+    NX.Conditions.formIs(me, function(form) {
+      return !form.isDisabled() && form.isValid();
+    }).on({
+      satisfied: function() {
+        this.enable();
+      },
+      unsatisfied: function() {
+        this.disable();
+      },
+      scope: me.down('button[action=verifyconnection]')
+    });
   }
 
 });

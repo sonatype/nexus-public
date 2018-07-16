@@ -60,6 +60,13 @@ Ext.define('NX.app.Application', {
     'NX.ext.form.field.Display',
     'NX.ext.form.field.Number',
 
+    // panel overrides
+    'NX.ext.panel.Panel',
+    'NX.ext.panel.Header',
+
+    // toolbar overrides
+    'NX.ext.toolbar.Toolbar',
+
     // custom form fields
     'NX.ext.form.OptionalFieldSet',
     'NX.ext.form.field.Email',
@@ -85,7 +92,10 @@ Ext.define('NX.app.Application', {
     'NX.ext.grid.column.CopyLink',
 
     // view overrides
-    'NX.ext.view.BoundList'
+    'NX.ext.view.BoundList',
+
+    // animated card layout
+    'NX.ext.layout.container.Card'
   ],
 
   name: 'NX',
@@ -184,26 +194,18 @@ Ext.define('NX.app.Application', {
     // Configure blank image URL
     Ext.BLANK_IMAGE_URL = NX.util.Url.baseUrl + '/static/rapture/resources/images/s.gif';
 
-    Ext.Ajax.defaultHeaders = {
+    Ext.Ajax.setDefaultHeaders({
       // HACK: Setting request header to allow analytics to tell if the request came from the UI or not
       // HACK: This has some issues, will only catch ajax requests, etc... but may be fine for now
-      'X-Nexus-UI': 'true'
-    };
-
-    app.initAntiCsrfToken();
+      'X-Nexus-UI': 'true',
+      'NX-ANTI-CSRF-TOKEN': Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN')
+    });
+    
     app.initErrorHandler();
     app.initDirect();
     app.initState();
   },
-
-  initAntiCsrfToken: function () {
-    Ext.Ajax.on('beforerequest', function (conn, options, eOpts) {
-      var token = Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN');
-      if (token) {
-        conn.defaultHeaders["NX-ANTI-CSRF-TOKEN"] = token;
-      }
-    });
-  },
+  // },
 
   /**
    * Hook into browser error handling (in order to log them).

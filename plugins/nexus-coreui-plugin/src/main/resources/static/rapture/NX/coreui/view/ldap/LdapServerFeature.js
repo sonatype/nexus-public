@@ -40,7 +40,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerFeature', {
         { xtype: 'nx-coreui-ldapserver-userandgroup', title: NX.I18n.get('Ldap_LdapServerFeature_UserAndGroup_Title'), weight: 20 }
       ],
 
-      actions: [
+      nxActions: [
         { xtype: 'button', text: NX.I18n.get('Ldap_LdapServerFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
       ]
     });

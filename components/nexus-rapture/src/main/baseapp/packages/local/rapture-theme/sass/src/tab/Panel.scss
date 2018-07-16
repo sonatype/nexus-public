@@ -1,0 +1,75 @@
+/**
+ * @class Ext.tab.Panel
+ */
+
+/**
+ * ui: 'light'
+ */
+
+@include extjs-panel-ui(
+  $ui: 'nx-light',
+
+  $ui-header-color: $color-night-rider,
+  $ui-header-background-color: $color-light-smoke,
+  $ui-header-font-size: 16px,
+  $ui-header-line-height: 20px
+
+  // FIXME: Unable to control icon spacing, unsure why
+  //$ui-header-icon-spacing: 6px,
+  //$ui-header-icon-height: 16px,
+  //$ui-header-icon-width: 16px,
+  //$ui-header-icon-background-position: $panel-header-icon-background-position, // center center
+
+  // FIXME: Unable to control glyph colors here, unsure why
+  //$ui-header-glyph-color: $color-smalt,
+  //$ui-header-glyph-opacity: 1
+);
+
+@include extjs-tab-ui(
+  $ui: 'nx-light',
+
+  $ui-background-color: $color-light-smoke,
+  $ui-background-color-over: $color-smoke,
+  $ui-background-color-active: $color-white,
+  $ui-background-color-disabled: $color-light-smoke,
+  
+  $ui-margin: 0 2px,
+  $ui-padding: 5px 12px,
+  $ui-text-padding: 0,
+  $ui-font-size: $font-size-body,
+  $ui-font-weight: $font-weight-body,
+  $ui-font-weight-over: $font-weight-body,
+  $ui-font-weight-active: $font-weight-body,
+  $ui-font-weight-disabled: $font-weight-body,
+  $ui-border-color: $color-light-smoke,
+  $ui-border-color-over: $color-gainsboro,
+  $ui-border-color-active: $color-white,
+  $ui-border-color-disabled: $color-light-smoke,
+
+  $ui-border-radius: 6px,
+  $ui-border-width: 1px,
+
+  $ui-color: $color-navy-blue,
+  $ui-color-over: $color-navy-blue,
+  $ui-color-active: $color-night-rider,
+  $ui-color-disabled: $color-night-rider
+);
+
+@include extjs-tab-bar-ui(
+  $ui: 'nx-light',
+
+  $ui-strip-height: 0px,
+  $ui-strip-border-width: 0px,
+  $ui-strip-plain-border-width: 0px,
+  $ui-strip-border-color: $color-light-gray,
+  $ui-strip-background-color: $color-light-smoke,
+
+  $ui-padding: 5px,
+  $ui-background-color: $color-light-smoke,
+  $ui-background-gradient: $tabbar-background-gradient
+);
+
+// Force the tab panel body to sit underneath the tab bar
+.x-tab-bar + .x-panel-body {
+  z-index: 0;
+}

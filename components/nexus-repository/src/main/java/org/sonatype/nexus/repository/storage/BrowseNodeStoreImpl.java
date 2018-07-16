@@ -93,8 +93,6 @@ public class BrowseNodeStoreImpl
 
   private final int deletePageSize;
 
-  private final boolean enabled;
-
   @Inject
   public BrowseNodeStoreImpl(@Named("component") final Provider<DatabaseInstance> databaseInstance,
                              final BrowseNodeEntityAdapter entityAdapter,
@@ -113,16 +111,13 @@ public class BrowseNodeStoreImpl
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.deletePageSize = configuration.getDeletePageSize();
-    this.enabled = configuration.isEnabled();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
   }
 
   @Override
   protected void doStart() throws Exception {
-    if (enabled) {
-      try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
-        entityAdapter.register(db);
-      }
+    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
+      entityAdapter.register(db);
     }
   }
 

@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.authc;
 /**
  * An event fired when the user's password has changed.
  *
- * @since 3.next
+ * @since 3.13
  */
 public class UserPasswordChanged
 {

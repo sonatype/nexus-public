@@ -24,6 +24,8 @@ Ext.define('NX.view.header.Help', {
     'NX.I18n'
   ],
 
+  glyph: 'xf059@FontAwesome', // fa-question-circle
+
   /**
    * @override
    */
@@ -31,7 +33,6 @@ Ext.define('NX.view.header.Help', {
     var me = this;
 
     me.tooltip = NX.I18n.get('Header_Help_Tooltip');
-    me.glyph = 'xf059@FontAwesome'; // fa-question-circle
 
     // hide the menu button arrow
     me.arrowCls = '';

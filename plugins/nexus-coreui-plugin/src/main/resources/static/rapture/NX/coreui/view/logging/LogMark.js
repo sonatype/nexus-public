@@ -34,7 +34,6 @@ Ext.define('NX.coreui.view.logging.LogMark', {
     me.ui = 'nx-inset';
 
     me.title = NX.I18n.get('Logging_LogMark_Title');
-    me.defaultFocus = 'message';
 
     me.items = {
       xtype: 'nx-settingsform',
@@ -65,6 +64,13 @@ Ext.define('NX.coreui.view.logging.LogMark', {
         }
       }
     ];
+
+    me.on({
+      resize: function() {
+        me.down('#message').focus();
+      },
+      single: true
+    });
 
     me.callParent();
   }

@@ -74,6 +74,12 @@ Ext.define('NX.coreui.view.capability.CapabilitySelectType', {
       }
     );
 
+    me.on('destroy', function(grid) {
+      if (grid.tip) {
+        grid.tip.destroy();
+      }
+    });
+
     me.callParent();
   }
 

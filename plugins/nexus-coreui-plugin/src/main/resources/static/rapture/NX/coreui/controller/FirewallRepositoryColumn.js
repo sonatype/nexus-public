@@ -155,11 +155,10 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
    */
   addFirewallColumn: function(grid) {
     var me = this,
-        view = grid.getView(),
-        column = grid.firewallColumn;
+        view = grid.getView();
 
-    if (!column) {
-      column = grid.firewallColumn = Ext.create('Ext.grid.column.Column', {
+    if (!grid.firewallColumn) {
+      grid.firewallColumn = grid.pushColumn({
         id: 'firewallColumn',
         header: NX.I18n.get('FirewallRepositoryColumn_Header'),
         hideable: false,
@@ -173,7 +172,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
           click: Ext.bind(me.viewReportHandler, me)
         }
       });
-      grid.headerCt.add(column);
+
       view.refresh();
     }
   },

@@ -52,7 +52,7 @@ Ext.define('NX.view.drilldown.Details', {
       },
       {
         xtype: 'nx-actions',
-        items: me.actions
+        items: me.nxActions
       },
       {
         xtype: 'nx-sorted-tabpanel',

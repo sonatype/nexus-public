@@ -263,9 +263,12 @@ Ext.define('NX.coreui.controller.Log', {
     button.mon(
         NX.Conditions.isPermitted('nexus:logging:mark'),
         {
-          satisfied: button.enable,
-          unsatisfied: button.disable,
-          scope: button
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
         }
     );
   }

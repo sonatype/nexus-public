@@ -52,10 +52,10 @@ Ext.define('NX.coreui.migration.PlanStepDetailWindow', {
         {name: 'message', type: 'string'}
       ]
     });
-    store.add(me.detail.entries);
+    store.add(me.getDetail().entries);
 
     Ext.apply(me, {
-      title: NX.I18n.render(me, 'Title', me.detail.name),
+      title: NX.I18n.render(me, 'Title', me.getDetail().name),
       width: NX.view.ModalDialog.LARGE_MODAL,
       items: {
         xtype: 'grid',

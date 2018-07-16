@@ -2,8 +2,10 @@
 // Ordered application SCSS files to include.
 //
 
+@import 'NX/ext/form/FieldContainer';
 @import 'NX/ext/form/OptionalFieldSet';
 @import 'NX/ext/Mask';
+@import 'NX/ext/grid/RowEditor';
 
 @import 'NX/view/AboutWindow';
 @import 'NX/view/Authenticate';

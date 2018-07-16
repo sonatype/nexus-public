@@ -45,7 +45,6 @@ Ext.define('NX.view.UnsavedChanges', {
     var me = this;
 
     me.title = NX.I18n.get('UnsavedChanges_Title');
-    me.defaultFocus = 'nx-discard';
 
     me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
 
@@ -70,6 +69,13 @@ Ext.define('NX.view.UnsavedChanges', {
           { text: NX.I18n.get('UnsavedChanges_Back_Button'), handler: me.close, scope: me }
         ]
       }
+    });
+
+    me.on({
+      resize: function() {
+        me.down('#nx-discard').focus();
+      },
+      single: true
     });
 
     me.callParent();

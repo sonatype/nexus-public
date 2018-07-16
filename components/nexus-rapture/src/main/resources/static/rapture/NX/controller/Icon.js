@@ -157,9 +157,9 @@ Ext.define('NX.controller.Icon', {
 
     // If icon contains 'variants' field then create an icon for each variant
     if (Ext.isArray(icon.variants)) {
-      var copy = Ext.clone(icon);
-      delete copy.variants;
       Ext.each(icon.variants, function (variant) {
+        var copy = Ext.clone(icon);
+        delete copy.variants;
         copy.variant = variant;
         me.addIcon(copy);
       });

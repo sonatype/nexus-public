@@ -30,8 +30,9 @@ Ext.define('NX.coreui.store.SearchResult', {
 
     reader: {
       type: 'json',
-      root: 'data',
-      successProperty: 'success'
+      rootProperty: 'data',
+      successProperty: 'success',
+      keepRawData: true
     }
   },
 

@@ -39,7 +39,7 @@ Ext.define('NX.coreui.view.role.RoleFeature', {
         { xtype: 'nx-coreui-role-settings', title: NX.I18n.get('Role_RoleFeature_Settings_Title'), weight: 10 }
       ],
 
-      actions: [
+      nxActions: [
         { xtype: 'button', text: NX.I18n.get('Role_RoleFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
       ]
     });

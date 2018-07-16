@@ -35,16 +35,6 @@ Ext.define('NX.State', {
     var me = this;
 
     me.mixins.observable.constructor.call(me, config);
-
-    me.addEvents(
-        /**
-         * Fires when any of application context values changes.
-         *
-         * @event changed
-         * @param {NX.State} this
-         */
-        'changed'
-    );
   },
 
   /**

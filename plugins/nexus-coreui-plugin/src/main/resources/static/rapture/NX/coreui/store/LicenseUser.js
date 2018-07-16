@@ -31,7 +31,7 @@ Ext.define('NX.coreui.store.LicenseUser', {
 
     reader: {
       type: 'json',
-      root: 'data',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

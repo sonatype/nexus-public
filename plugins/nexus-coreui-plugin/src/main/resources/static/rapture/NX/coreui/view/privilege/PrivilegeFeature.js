@@ -43,7 +43,7 @@ Ext.define('NX.coreui.view.privilege.PrivilegeFeature', {
         weight: 10
       },
 
-      actions: [
+      nxActions: [
         { xtype: 'button', text: NX.I18n.get('Privilege_PrivilegeFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
       ]
     });

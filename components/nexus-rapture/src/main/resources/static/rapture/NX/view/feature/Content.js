@@ -19,6 +19,7 @@
  */
 Ext.define('NX.view.feature.Content', {
   extend: 'Ext.panel.Panel',
+  requires: [ 'NX.view.feature.BreadcrumbPanel' ],
   alias: 'widget.nx-feature-content',
 
   itemId: 'feature-content',
@@ -32,15 +33,10 @@ Ext.define('NX.view.feature.Content', {
    */
   discardUnsavedChanges: false,
 
-  header: {
-    items: [
-      {
-        xtype: 'panel',
-        layout: { type: 'hbox' },
-        itemId: 'breadcrumb'
-      }
-    ]
-  },
+  dockedItems: [{
+      xtype: 'nx-breadcrumb',
+      dock: 'top'
+  }],
 
   listeners: {
     afterrender: function(obj) {
@@ -60,39 +56,65 @@ Ext.define('NX.view.feature.Content', {
       return;
     }
 
-    breadcrumb.removeAll();
-    breadcrumb.add(
-      {
-        xtype: 'label',
-        cls: 'nx-feature-name',
-        text: me.currentTitle
-      },
-      {
-        xtype: 'label',
-        cls: 'nx-feature-description',
-        text: me.currentDescription
+    if (breadcrumb.items.length !== 3) {
+      breadcrumb.removeAll();
+      breadcrumb.add(
+          {
+            xtype: 'container',
+            itemId: 'nx-feature-icon',
+            width: 32,
+            height: 32,
+            userCls: me.currentIcon
+          },
+          {
+            xtype: 'label',
+            cls: 'nx-feature-name',
+            text: me.currentTitle
+          },
+          {
+            xtype: 'label',
+            cls: 'nx-feature-description',
+            text: me.currentDescription
+          }
+      );
+    }
+    else {
+      breadcrumb.items.getAt(0).setUserCls(me.currentIcon);
+      breadcrumb.items.getAt(1).setText(me.currentTitle);
+      breadcrumb.items.getAt(2).setText(me.currentDescription);
+
+      if (breadcrumb.items.length > 3) {
+        Ext.each(breadcrumb.items.getRange(3), function(item) {
+          breadcrumb.remove(item);
+        });
       }
-    );
+    }
   },
 
   /**
-   * The currently set title, so subpanels can access it
-   * @param text
+   * The currently set title and icon, so subpanels can access it
    */
+  currentIcon: undefined,
   currentTitle: undefined,
 
   /**
-   * Custom handling for title since we are using custom header component.
+   * Custom handling for icon
+   *
+   * @override
+   * @param iconCls
+   */
+  setIconCls: function(iconCls) {
+    this.currentIcon = iconCls;
+  },
+
+  /**
+   * Custom handling for title
    *
    * @override
    * @param text
    */
   setTitle: function(text) {
-    var me = this;
-
-    me.callParent(arguments);
-
-    me.currentTitle = text;
+    this.currentTitle = text;
   },
 
   /**

@@ -135,7 +135,7 @@ public class MavenGroupFacet
   /**
    * Merges the metadata but doesn't cache it. Returns {@code null} if no usable response was in passed in map.
    *
-   * @since 3.next
+   * @since 3.13
    */
   @Nullable
   public Content mergeWithoutCaching(final MavenPath mavenPath, final Map<Repository, Response> responses)

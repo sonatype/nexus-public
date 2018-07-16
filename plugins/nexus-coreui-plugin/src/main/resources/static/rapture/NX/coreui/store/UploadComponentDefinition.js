@@ -28,7 +28,7 @@ Ext.define('NX.coreui.store.UploadComponentDefinition', {
 
     reader: {
       type: 'json',
-      root: 'data',
+      rootProperty: 'data',
       successProperty: 'success'
     }
   },

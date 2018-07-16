@@ -35,6 +35,17 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
   // Width must be defined on the class, otherwise overrides won’t be applied correctly
   width: 100,
 
+  triggers: {
+    remove: {
+      cls:  'nx-form-fa-minus-circle-trigger',
+      handler: function() {
+        var me = this;
+        // Fire event about user removing the search criteria.
+        me.fireEvent('criteriaremoved', me);
+      }
+    }
+  },
+
   filter: function() {
     var me = this;
     if (me.value) {
@@ -54,29 +65,9 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
     me.labelAlign = 'top';
     me.labelSeparator = '';
 
-    if (me.removable) {
-      me.trigger2Cls = 'nx-form-fa-minus-circle-trigger';
-    }
+    me.triggers.remove.setHidden(!me.removable);
 
     me.callParent();
-
-    me.addEvents(
-        /**
-         * @event criteriaremoved
-         * Fires when search criteria is removed.
-         */
-        'criteriaremoved'
-    );
-  },
-
-  /**
-   * @private
-   * Fire event about user removing the search criteria.
-   */
-  onTrigger2Click: function() {
-    var me = this;
-
-    me.fireEvent('criteriaremoved', me);
   }
 
 });
