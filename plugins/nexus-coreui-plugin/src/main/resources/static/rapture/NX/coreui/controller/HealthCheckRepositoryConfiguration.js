@@ -100,12 +100,9 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryConfiguration', {
             })
         ),
         {
-          satisfied: function() {
-            button.enable();
-          },
-          unsatisfied: function() {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
     button.mon(

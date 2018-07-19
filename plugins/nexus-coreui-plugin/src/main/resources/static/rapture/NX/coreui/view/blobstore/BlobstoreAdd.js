@@ -66,7 +66,6 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreAdd', {
       beforerender: function() {
         var me = this;
         me.setValue(me.getStore('BlobstoreType').first().data.id);
-        typeCombo.resetOriginalValue();
       }
     });
 

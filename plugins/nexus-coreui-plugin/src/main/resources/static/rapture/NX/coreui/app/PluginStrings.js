@@ -36,6 +36,18 @@ Ext.define('NX.coreui.app.PluginStrings', {
    */
   keys: {
     // Browse -> Browse
+    Browse_Assets_Title_Feature: 'Assets',
+    Browse_Assets_Description_Feature: 'Browse assets',
+    Browse_Components_Title_Feature: 'Components',
+    Browse_Components_Description_Feature: 'Browse components and assets',
+    Browse_BrowseComponentList_Name_Column: 'Name',
+    Browse_BrowseComponentList_Group_Column: 'Group',
+    Browse_BrowseComponentList_Version_Column: 'Version',
+    Browse_BrowseComponentList_EmptyText_View: 'No components found in repository',
+    Browse_BrowseComponentList_EmptyText_Filter: 'No components matched "$filter"',
+    Browse_BrowseAssetList_Name_Column: 'Name',
+    Browse_BrowseAssetList_EmptyText_View: 'No assets found in repository',
+    Browse_BrowseAssetList_EmptyText_Filter: 'No assets matched "$filter"',
     Assets_Info_Repository: 'Repository',
     Assets_Info_Format: 'Format',
     Assets_Info_Group: 'Component Group',
@@ -879,6 +891,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_Metrics_Dump_Button: 'Thread dump',
     Support_Metrics_Dump_Tooltip: 'Download thread dump',
     Support_Metrics_MemoryUsage_Title: 'Memory usage',
+    Support_Metrics_MemoryDistribution_Title: 'Memory distribution',
     Support_Metrics_Heap_Title: 'Heap',
     Metrics_Heap_NonHeapItem: 'Non-heap',
     Metrics_Heap_Available: 'Available',

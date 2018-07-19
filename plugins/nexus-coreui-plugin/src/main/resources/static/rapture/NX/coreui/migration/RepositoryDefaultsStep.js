@@ -24,10 +24,7 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsStep', {
     'NX.I18n'
   ],
 
-  config: {
-    screen: 'NX.coreui.migration.RepositoryDefaultsScreen',
-    enabled: true
-  },
+  screen: 'NX.coreui.migration.RepositoryDefaultsScreen',
 
   /**
    * @override

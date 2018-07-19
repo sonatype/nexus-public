@@ -1,2 +1,0 @@
-# rapture-theme - Read Me
-

@@ -30,7 +30,7 @@ Ext.define('NX.coreui.store.SearchResultVersion', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
       successProperty: 'success'
     }
   },

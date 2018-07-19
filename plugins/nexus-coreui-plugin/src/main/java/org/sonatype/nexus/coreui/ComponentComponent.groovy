@@ -131,6 +131,22 @@ class ComponentComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  PagedResponse<ComponentXO> read(final StoreLoadParameters parameters) {
+    Repository repository = repositoryManager.get(parameters.getFilter('repositoryName'))
+    if (!repository.configuration.online) {
+      return null
+    }
+    def result = browseService.browseComponents(
+        repository,
+        toQueryOptions(parameters))
+    return new PagedResponse<ComponentXO>(
+        result.total,
+        result.results.collect(COMPONENT_CONVERTER.rcurry(repository.name)))
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<AssetXO> readComponentAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     Repository repository = repositoryManager.get(repositoryName)

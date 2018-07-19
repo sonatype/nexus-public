@@ -27,7 +27,7 @@ Ext.define('NX.ext.direct.RemotingProvider', {
    */
   queueTransaction: function(transaction) {
     if (transaction.callbackOptions && transaction.callbackOptions.enableBuffer === false) {
-      this.sendTransaction(transaction);
+      this.sendRequest(transaction);
       return;
     }
     this.callParent(arguments);

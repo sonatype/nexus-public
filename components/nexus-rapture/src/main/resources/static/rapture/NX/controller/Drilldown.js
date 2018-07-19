@@ -58,20 +58,6 @@ Ext.define('NX.controller.Drilldown', {
    */
   deleteModel: undefined,
 
-  currentIndex: 0,
-
-  onClassExtended: function(cls, data, hooks) {
-    var onBeforeClassCreated = hooks.onBeforeCreated;
-
-    hooks.onBeforeCreated = function(cls, data) {
-      //ext changes the stores list from short names to fully qualified names, so here we are just copying the list 
-      //before ext changes it
-      data.storesForLoad = data.stores ? data.stores.slice() : [];
-      hooks.onBeforeCreated = onBeforeClassCreated;
-      hooks.onBeforeCreated.apply(this, arguments);
-    };
-  },
-
   /**
    * @override
    */
@@ -110,9 +96,11 @@ Ext.define('NX.controller.Drilldown', {
 
     // Drilldown
     componentListener[(me.masters[0] || me.detail) + ' ^ nx-drilldown'] = {
+      syncsize: me.syncSizeToOwner,
       activate: function() {
         me.currentIndex = 0;
         me.reselect();
+        me.syncSizeToOwner();
       }
     };
 
@@ -130,7 +118,7 @@ Ext.define('NX.controller.Drilldown', {
     // Back button
     componentListener[(me.masters[0] || me.detail) + ' ^ nx-drilldown nx-addpanel button[action=back]'] = {
       click: function() {
-        me.showChild(0);
+        me.showChild(0, true);
       }
     };
 
@@ -162,7 +150,7 @@ Ext.define('NX.controller.Drilldown', {
    * @private
    */
   getDrilldownItems: function() {
-    return Ext.ComponentQuery.query('nx-drilldown-item').sort(this.compareGeneratedIds);
+    return Ext.ComponentQuery.query('nx-drilldown-item');
   },
 
   /**
@@ -172,10 +160,6 @@ Ext.define('NX.controller.Drilldown', {
     return Ext.ComponentQuery.query('nx-drilldown-details')[0];
   },
 
-  getDrilldownContainer: function() {
-    return Ext.ComponentQuery.query('#drilldown-container')[0];
-  },
-
   /**
    * @public
    * Load all of the stores associated with this controller
@@ -183,7 +167,7 @@ Ext.define('NX.controller.Drilldown', {
   loadStores: function () {
     var me = this;
     if (this.getFeature()) {
-      Ext.each(this.storesForLoad, function(store){
+      Ext.each(this.stores, function(store){
         //<if debug>
         me.logDebug('Loading Drilldown store: ', store);
         //</if>
@@ -214,7 +198,7 @@ Ext.define('NX.controller.Drilldown', {
     if(e && e.getTarget('a')) {
       return false;
     }
-    this.loadView(index + 1, model);
+    this.loadView(index + 1, true, model);
   },
 
   /**
@@ -250,7 +234,7 @@ Ext.define('NX.controller.Drilldown', {
    * @param animate Whether to animate the panel into view
    * @param model An optional record to select
    */
-  loadView: function (index, model) {
+  loadView: function (index, animate, model) {
     var me = this,
       lists = Ext.ComponentQuery.query('nx-drilldown-master');
 
@@ -270,7 +254,7 @@ Ext.define('NX.controller.Drilldown', {
     }
 
     // Show the next view in line
-    me.showChild(index);
+    me.showChild(index, animate);
     me.bookmark(index, model);
   },
 
@@ -282,7 +266,7 @@ Ext.define('NX.controller.Drilldown', {
    * @param animate Whether to animate the panel into view
    * @param cmp An optional component to load
    */
-  loadCreateWizard: function (index, cmp) {
+  loadCreateWizard: function (index, animate, cmp) {
     var me = this;
 
     // Reset all non-root bookmarks
@@ -291,7 +275,7 @@ Ext.define('NX.controller.Drilldown', {
     }
 
     // Show the specified step in the wizard
-    me.showCreateWizard(index, cmp);
+    me.showCreateWizard(index, animate, cmp);
   },
 
   /**
@@ -315,7 +299,7 @@ Ext.define('NX.controller.Drilldown', {
 
     // Add the currently selected model to the bookmark array
     if (model) {
-      segments.push(encodeURIComponent(this.getModelId(model)));
+      segments.push(encodeURIComponent(model.getId()));
     }
 
     // Set the bookmark
@@ -355,7 +339,7 @@ Ext.define('NX.controller.Drilldown', {
       index = list_ids.length;
       store = lists[index].getStore();
 
-      if (store.isLoading() || !store.isLoaded()) {
+      if (store.isLoading()) {
         // The store hasn’t yet loaded, load it when ready
         me.mon(store, 'load', function() {
           me.selectModelById(index, modelId);
@@ -365,7 +349,7 @@ Ext.define('NX.controller.Drilldown', {
         me.selectModelById(index, modelId);
       }
     } else {
-      me.loadView(0);
+      me.loadView(0, false);
     }
   },
 
@@ -418,7 +402,7 @@ Ext.define('NX.controller.Drilldown', {
         lists = Ext.ComponentQuery.query('nx-drilldown-master');
 
     if (index + 1 !== me.currentIndex) {
-      me.loadView(index + 1, model);
+      me.loadView(index + 1, false, model);
     }
     else {
       lists[index].fireEvent('selection', lists[index], model);
@@ -439,7 +423,7 @@ Ext.define('NX.controller.Drilldown', {
     var me = this,
         lists = Ext.ComponentQuery.query('nx-drilldown-master'),
         store = lists[index].getStore(),
-        modelType = store.model.modelName && store.model.modelName.replace(/^.*?model\./, '').replace(/\-.*$/, '');
+        modelType = store.model.modelName.replace(/^.*?model\./, '').replace(/\-.*$/, '');
 
     NX.Messages.add({
       text: modelType + " (" + modelId + ") not found",
@@ -453,24 +437,15 @@ Ext.define('NX.controller.Drilldown', {
    * that arise from using Ext.data.Store.getById() with buffered stores.
    */
   getById: function (store, modelId) {
-    var me = this,
-        index = store.findBy(function(record) {
-          return me.getModelId(record) === modelId;
-        });
+    var index = store.findBy(function(record) {
+      return record.getId() === modelId;
+    });
 
     if (index !== -1) {
       return store.getAt(index);
     }
 
     return null;
-  },
-
-  /**
-   * @private
-   * Get an ID from a model. Override if using a model with a synthetic ID
-   */
-  getModelId: function(model) {
-    return model.getId();
   },
 
   /**
@@ -500,12 +475,9 @@ Ext.define('NX.controller.Drilldown', {
     button.mon(
         NX.Conditions.isPermitted(this.permission + ':create'),
         {
-          satisfied: function() {
-            button.enable();
-          },
-          unsatisfied: function() {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -518,12 +490,9 @@ Ext.define('NX.controller.Drilldown', {
     button.mon(
         NX.Conditions.isPermitted(this.permission + ':delete'),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -534,6 +503,20 @@ Ext.define('NX.controller.Drilldown', {
   BLANK_INDEX: 2,
 
   /**
+   * @private
+   * Given N drilldown items, this panel should have a width of N times the current screen width
+   */
+  syncSizeToOwner: function () {
+    var me = this,
+      drilldown = me.getDrilldown(),
+      owner = drilldown.ownerCt.body.el,
+      container = drilldown.down('container');
+
+    container.setSize(owner.getWidth() * container.items.length, owner.getHeight());
+    me.slidePanels(me.currentIndex, false);
+  },
+
+  /**
    * @public
    * Shift this panel to display the referenced step in the create wizard
    *
@@ -541,7 +524,7 @@ Ext.define('NX.controller.Drilldown', {
    * @param animate Set to “true” if the view should slide into place, “false” if it should just appear
    * @param cmp An optional component to load into the panel
    */
-  showCreateWizard: function (index, cmp) {
+  showCreateWizard: function (index, animate, cmp) {
     var me = this,
       drilldown = me.getDrilldown(),
       items = me.padItems(index), // Pad the drilldown
@@ -557,7 +540,7 @@ Ext.define('NX.controller.Drilldown', {
     // Show the proper card
     items[index].setCardIndex(me.CREATE_INDEX);
 
-    me.slidePanels(index);
+    me.slidePanels(index, animate);
   },
 
   /**
@@ -567,7 +550,7 @@ Ext.define('NX.controller.Drilldown', {
    * @param index The index of the master/detail panel to display
    * @param animate Set to “true” if the view should slide into place, “false” if it should just appear
    */
-  showChild: function (index) {
+  showChild: function (index, animate) {
     var me = this,
       items = me.getDrilldownItems(),
       item = items[index],
@@ -579,10 +562,10 @@ Ext.define('NX.controller.Drilldown', {
     // Destroy any create wizard panels
     for (var i = 0; i < items.length; ++i) {
       createContainer = items[i].down('#create' + i);
-      createContainer && createContainer.removeAll();
+      createContainer.removeAll();
     }
 
-    me.slidePanels(index);
+    me.slidePanels(index, animate);
   },
 
   /**
@@ -596,15 +579,12 @@ Ext.define('NX.controller.Drilldown', {
       items = me.getDrilldownItems(),
       form;
 
-    // Disable everything that’s not the specified panel
-    Ext.each(items, function(item, i) {
+    // Hide everything that’s not the specified panel
+    for (var i = 0; i < items.length; ++i) {
       if (i != index) {
-        item.disable();
+        items[i].getLayout().setActiveItem(me.BLANK_INDEX);
       }
-      else {
-        item.enable();
-      }
-    });
+    }
 
     // Set focus on the default field (if available) or the panel itself
     form = items[index].down('nx-addpanel[defaultFocus]');
@@ -616,58 +596,68 @@ Ext.define('NX.controller.Drilldown', {
   },
 
   /**
-   * @private show all panels
-   */
-  showAll: function() {
-    Ext.each(this.getDrilldownItems(), function(drilldownItem) {
-      drilldownItem.enable();
-    });
-  },
-
-  /**
    * @private
    * Slide the drilldown to reveal the specified panel
    */
-  slidePanels: function (index) {
-    var drilldownContainer = this.getDrilldownContainer(),
-        drilldownItems = this.getDrilldownItems(),
-        item = drilldownItems[index],
-        i, container, activeItem;
+  slidePanels: function (index, animate) {
+    var me = this,
+      drilldown = me.getDrilldown(),
+      feature = drilldown.up('nx-feature-content'),
+      items = me.getDrilldownItems(),
+      item = items[index];
 
-    this.showAll();
     if (item && item.el) {
-      this.currentIndex = index;
-      item.getLayout().setActiveItem(item.cardIndex);
-      activeItem = drilldownContainer.setActiveItem(index);
-      if (activeItem) {
-        activeItem.on({
-          activate: function() {
-            this.hideAllExceptAndFocus(this.currentIndex);
-            this.refreshBreadcrumb();
-          },
-          single: true,
-          scope: this
-        });
-      }
-    }
-    else {
-      activeItem = drilldownContainer.setActiveItem(index);
-      if (activeItem) {
-        activeItem.on({
-          activate: function() {
-            this.hideAllExceptAndFocus(this.currentIndex);
-            this.refreshBreadcrumb();
-          },
-          single: true,
-          scope: this
-        });
-      }
-    }
 
-    // Destroy any create wizard panels after current
-    for (i = index + 1; i < drilldownItems.length; ++i) {
-      container = drilldownItems[i].down('#create' + i);
-      container && container.removeAll();
+      // Restore the current card
+      me.currentIndex = index;
+      item.getLayout().setActiveItem(item.cardIndex);
+
+      var left = feature.el.getX() - (index * feature.el.getWidth());
+      if (animate) {
+        // Suspend layouts until the drilldown animation is complete
+        Ext.suspendLayouts();
+
+        drilldown.animate({
+          easing: 'easeInOut',
+          duration: NX.State.getValue('animateDuration', 200),
+          to: {
+            x: left
+          },
+          callback: function() {
+            // Update the breadcrumb
+            me.refreshBreadcrumb();
+
+            // Put focus on the panel we’re navigating to
+            me.hideAllExceptAndFocus(me.currentIndex);
+
+            // Destroy any create wizard panels after current
+            for (var i = index + 1; i < items.length; ++i) {
+              items[i].down('#create' + i).removeAll();
+            }
+
+            // Resume layouts
+            Ext.resumeLayouts(true);
+
+            // Resize the breadcrumb to fit the window
+            me.resizeBreadcrumb();
+          }
+        });
+      } else {
+        // Show the requested panel, without animation
+        drilldown.setX(left, false);
+
+        // Update the breadcrumb
+        me.refreshBreadcrumb();
+        me.resizeBreadcrumb();
+
+        // Put focus on the panel we’re navigating to
+        me.hideAllExceptAndFocus(index);
+
+        // Destroy any create wizard panels after current
+        for (var i = index + 1; i < items.length; ++i) {
+          items[i].down('#create' + i).removeAll();
+        }
+      }
     }
   },
 
@@ -689,6 +679,9 @@ Ext.define('NX.controller.Drilldown', {
       for (var i = items.length; i <= index; ++i) {
         itemContainer.add(drilldown.createDrilldownItem(i, undefined, undefined));
       }
+
+      // Resize the panel
+      me.syncSizeToOwner();
     }
 
     return me.getDrilldownItems();
@@ -710,22 +703,13 @@ Ext.define('NX.controller.Drilldown', {
       content.showRoot();
     } else {
       // Make a breadcrumb (including icon and 'home' link)
-      objs.push(
-        {
-          xtype: 'container',
-          itemId: 'nx-feature-icon',
-          width: 32,
-          height: 32,
-          cls: content.currentIcon
-        },
-        {
+      objs.push({
           xtype: 'button',
-          itemId: 'nx-feature-name',
           scale: 'large',
           ui: 'nx-drilldown',
           text: content.currentTitle,
           handler: function() {
-            me.slidePanels(0);
+            me.slidePanels(0, true);
 
             // Set the bookmark
             var bookmark = items[0].itemBookmark;
@@ -753,8 +737,7 @@ Ext.define('NX.controller.Drilldown', {
             xtype: 'image',
             height: 16,
             width: 16,
-            cls: 'nx-breadcrumb-icon ' + items[i].itemClass,
-            alt: ' ' // Alt text for breadcrumb icons would be redundant
+            cls: 'nx-breadcrumb-icon ' + items[i].itemClass
           },
 
           // Create a closure within a closure to decouple 'i' from the current context
@@ -771,7 +754,7 @@ Ext.define('NX.controller.Drilldown', {
                 if (bookmark) {
                   NX.Bookmarks.bookmark(bookmark.obj, bookmark.scope);
                 }
-                me.slidePanels(j);
+                me.slidePanels(j, true);
               }
             };
           })(i)
@@ -781,6 +764,70 @@ Ext.define('NX.controller.Drilldown', {
       breadcrumb.removeAll();
       breadcrumb.add(objs);
     }
+  },
+
+  /*
+   * @private
+   * Resize the breadcrumb, truncate individual elements with ellipses as needed
+   */
+  resizeBreadcrumb: function() {
+    var me = this,
+      padding = 60, // Prevent truncation from happening too late
+      parent = me.getDrilldown().ownerCt,
+      breadcrumb = me.getDrilldown().up('#feature-content').down('#breadcrumb'),
+      buttons, availableWidth, minimumWidth;
+
+    // Is the breadcrumb clipped?
+    if (parent && breadcrumb.getWidth() + padding > parent.getWidth()) {
+
+      // Yes. Take measurements and get a list of buttons sorted by length (longest first)
+      buttons = breadcrumb.query('button').splice(1);
+      availableWidth = parent.getWidth();
+
+      // What is the width of the breadcrumb, sans buttons?
+      minimumWidth = breadcrumb.getWidth() + padding;
+      for (var i = 0; i < buttons.length; ++i) {
+        minimumWidth -= buttons[i].getWidth();
+      }
+
+      // Reduce the size of the longest button, until all buttons fit in the specified width
+      me.reduceButtonWidth(buttons, availableWidth - minimumWidth);
+    }
+  },
+
+  /*
+   * @private
+   * Reduce the width of a set of buttons to fit a specified target width. The buttons are processed in
+   * ascending order by width until the first button with a width > the remaining target width / remaining buttons
+   * (i.e. equalPartsButtonWidth) is found. The equalPartsButtonWidth is then applied to all remaining buttons.
+   *
+   * @param buttons The list of buttons to resize
+   * @param targetWidth The desired resize width (sum of all buttons)
+   */
+  reduceButtonWidth: function(buttons, targetWidth) {
+    var currentButtonWidth,
+        equalPartsButtonWidth,
+        adjustedButtonWidth,
+        totalButtons = buttons.length,
+        byWidthAscending = function(button, anotherButton) {
+          return button.getWidth() - anotherButton.getWidth();
+        };
+
+    buttons.sort(byWidthAscending).forEach(function(button, buttonIndex) {
+      if (adjustedButtonWidth) {
+        button.setWidth(adjustedButtonWidth);
+        return;
+      }
+
+      equalPartsButtonWidth = Math.floor(targetWidth / (totalButtons - buttonIndex));
+      currentButtonWidth = button.getWidth();
+      targetWidth -= currentButtonWidth;
+
+      if (equalPartsButtonWidth < currentButtonWidth) {
+        adjustedButtonWidth = equalPartsButtonWidth;
+        button.setWidth(adjustedButtonWidth);
+      }
+    });
   },
 
   /**
@@ -866,14 +913,5 @@ Ext.define('NX.controller.Drilldown', {
     if (!me.detail) {
       me.getDrilldownDetails().removeTab(tab);
     }
-  },
-
-  /**
-   * @private
-   */
-  compareGeneratedIds: function(a, b) {
-    var idAIndex = parseInt(a.getId().replace('nx-drilldown-item', ''));
-    var idBIndex = parseInt(b.getId().replace('nx-drilldown-item', ''));
-    return idBIndex - idAIndex;
   }
 });

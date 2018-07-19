@@ -154,18 +154,11 @@ Ext.define('NX.coreui.controller.Tasks', {
   onSelection: function(list, model) {
     var me = this,
         settings = me.getSettings(),
-        taskTypeModel,
-        taskTypeStore = me.getStore('TaskType');
+        taskTypeModel;
 
     if (Ext.isDefined(model)) {
       me.showSummary(model);
-      if (!taskTypeStore.isLoaded()) {
-        taskTypeStore.on('load', function() {
-          me.onSelection(list, model);
-        }, me, {single: true});
-        return;
-      }
-      taskTypeModel = taskTypeStore.getById(model.get('typeId'));
+      taskTypeModel = me.getStore('TaskType').getById(model.get('typeId'));
       if (taskTypeModel) {
         if (!settings) {
           me.addTab({ xtype: 'nx-coreui-task-settings', title: NX.I18n.get('Tasks_Settings_Title'), weight: 20 });
@@ -239,7 +232,7 @@ Ext.define('NX.coreui.controller.Tasks', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Tasks_Select_Title'));
-    me.loadCreateWizard(1, Ext.widget({
+    me.loadCreateWizard(1, true, Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -261,7 +254,7 @@ Ext.define('NX.coreui.controller.Tasks', {
 
     // Show the second panel in the create wizard, and set the breadcrumb
     me.setItemName(2, NX.I18n.format('Tasks_Create_Title', model.get('name')));
-    me.loadCreateWizard(2, panel = Ext.widget({
+    me.loadCreateWizard(2, true, panel = Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -343,12 +336,9 @@ Ext.define('NX.coreui.controller.Tasks', {
             NX.Conditions.storeHasRecords('TaskType')
         ),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -367,12 +357,9 @@ Ext.define('NX.coreui.controller.Tasks', {
             })
         ),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -391,12 +378,9 @@ Ext.define('NX.coreui.controller.Tasks', {
             })
         ),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },

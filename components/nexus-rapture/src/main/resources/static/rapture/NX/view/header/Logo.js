@@ -23,7 +23,6 @@ Ext.define('NX.view.header.Logo', {
     'NX.Icons'
   ],
   alias: 'widget.nx-header-logo',
-  alt: 'Sonatype',
 
   autoEl: 'span',
   height: 32,

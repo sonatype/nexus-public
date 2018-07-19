@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
-import java.util.StringJoiner;
-
 import javax.annotation.Nullable;
 
 /**
@@ -49,18 +47,6 @@ public class BlobStoreException
 
   @Override
   public String getMessage() {
-    final StringJoiner joiner = new StringJoiner(", ");
-
-    if (blobId != null) {
-      joiner.add("BlobId: " + blobId);
-    }
-
-    joiner.add(super.getMessage());
-
-    if (getCause() != null && getCause().getMessage() != null) {
-      joiner.add("Cause: " + getCause().getMessage());
-    }
-
-    return joiner.toString();
+    return "BlobId: " + blobId + ", " + super.getMessage();
   }
 }

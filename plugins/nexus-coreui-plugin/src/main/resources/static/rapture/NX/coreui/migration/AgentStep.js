@@ -24,10 +24,7 @@ Ext.define('NX.coreui.migration.AgentStep', {
     'NX.I18n'
   ],
 
-  config: {
-    screen: 'NX.coreui.migration.AgentScreen',
-    enabled: true
-  },
+  screen: 'NX.coreui.migration.AgentScreen',
 
   /**
    * @override

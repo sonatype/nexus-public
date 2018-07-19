@@ -31,7 +31,7 @@ Ext.define('NX.coreui.store.LdapSchemaTemplate', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
       successProperty: 'success'
     }
   },

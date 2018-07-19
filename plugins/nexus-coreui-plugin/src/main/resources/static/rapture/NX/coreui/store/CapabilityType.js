@@ -30,7 +30,8 @@ Ext.define('NX.coreui.store.CapabilityType', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
+      idProperty: 'id',
       successProperty: 'success'
     }
   },

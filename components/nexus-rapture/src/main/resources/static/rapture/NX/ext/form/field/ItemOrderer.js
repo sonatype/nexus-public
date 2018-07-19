@@ -113,7 +113,7 @@ Ext.define('NX.ext.form.field.ItemOrderer', {
       me.orderField,
       {
         xtype: 'container',
-        margin: '0 4',
+        margins: '0 4',
         layout: {
           type: 'vbox',
           pack: 'center'

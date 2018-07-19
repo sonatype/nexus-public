@@ -21,7 +21,7 @@ Ext.define('NX.ext.form.field.ValueSet', {
   extend: 'Ext.form.FieldContainer',
     alias: 'widget.nx-valueset',
   requires: [
-    'Ext.data.identifier.Sequential',
+    'Ext.data.SequentialIdGenerator',
     'Ext.data.Store',
     'Ext.util.KeyNav',
     'NX.Icons'
@@ -31,9 +31,9 @@ Ext.define('NX.ext.form.field.ValueSet', {
   },
 
   statics: {
-    identifier: Ext.create('Ext.data.identifier.Sequential'),
+    idGenerator: Ext.create('Ext.data.SequentialIdGenerator'),
     generateId: function () {
-      return 'nx-valueset-valuefield-' + NX.ext.form.field.ValueSet.identifier.generate();
+      return 'nx-valueset-valuefield-' + NX.ext.form.field.ValueSet.idGenerator.generate();
     }
   },
 
@@ -231,8 +231,7 @@ Ext.define('NX.ext.form.field.ValueSet', {
           me.validate();
         }
       });
-      Ext.create('Ext.util.KeyNav', {
-        target: me.valueField.el,
+      Ext.create('Ext.util.KeyNav', me.valueField.el, {
         enter: me.addValue,
         scope: me
       });

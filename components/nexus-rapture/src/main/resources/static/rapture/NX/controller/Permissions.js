@@ -49,6 +49,16 @@ Ext.define('NX.controller.Permissions', {
         }
       }
     });
+
+    me.addEvents(
+        /**
+         * Fires when permissions change.
+         *
+         * @event changed
+         * @param {NX.Permissions} permissions  Permissions helper.
+         */
+        'changed'
+    );
   },
 
   /**

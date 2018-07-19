@@ -19,6 +19,7 @@
  */
 Ext.define('NX.coreui.migration.ProgressModel', {
   extend: 'Ext.data.Model',
+  idProperty: 'id',
   fields: [
     {name: 'id', type: 'string'},
     {name: 'name', type: 'string'},

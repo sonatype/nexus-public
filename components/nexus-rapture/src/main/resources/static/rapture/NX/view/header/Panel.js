@@ -45,7 +45,7 @@ Ext.define('NX.view.header.Panel', {
         xtype: 'toolbar',
 
         // set height to ensure we have uniform size and not depend on what is in the toolbar
-        height: 50,
+        height: 40,
 
         anchor: '100%',
 

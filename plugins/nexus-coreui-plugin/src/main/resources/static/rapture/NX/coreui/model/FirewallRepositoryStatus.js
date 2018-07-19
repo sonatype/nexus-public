@@ -19,7 +19,6 @@
  */
 Ext.define('NX.coreui.model.FirewallRepositoryStatus', {
   extend: 'Ext.data.Model',
-  idProperty: 'repositoryName',
   fields: [
     {name:'repositoryName', type: 'string', sortType: 'asUCText'},
     {name:'affectedComponentCount', type: 'int'},

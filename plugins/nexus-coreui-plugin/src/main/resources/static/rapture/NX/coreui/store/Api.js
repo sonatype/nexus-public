@@ -28,7 +28,7 @@ Ext.define('NX.coreui.store.Api', {
 
         reader: {
             type: 'json',
-            rootProperty: 'data',
+            root: 'data',
             successProperty: 'success'
         }
     }

@@ -44,7 +44,6 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextFieldFactory', {
     };
     if (formField.type === 'password') {
       item.inputType = 'password';
-      item.inputAttrTpl = 'autocomplete="new-password"';
     }
     if (formField.initialValue) {
       item.value = formField.initialValue;

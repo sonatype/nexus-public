@@ -39,9 +39,13 @@ Ext.define('NX.coreui.view.user.UserFeature', {
         { xtype: 'nx-coreui-user-settings', title: NX.I18n.get('User_UserFeature_Settings_Title'), weight: 10 }
       ],
 
-      nxActions: [
+      actions: [
         { xtype: 'button', text: NX.I18n.get('User_UserFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true },
-        { xtype: 'button', text: NX.I18n.get('User_UserFeature_ChangePasswordItem'), glyph: 'xf084@FontAwesome' /* fa-key */, action: 'setpassword', disabled: true}
+        { xtype: 'button', text: NX.I18n.get('User_UserFeature_More_Button'), glyph: 'xf0ae@FontAwesome' /* fa-tasks */, action: 'more', disabled: true,
+          menu: [
+            { text: NX.I18n.get('User_UserFeature_ChangePasswordItem'), glyph: 'xf084@FontAwesome' /* fa-key */, action: 'setpassword' }
+          ]
+        }
       ]
     });
 

@@ -42,7 +42,10 @@ Ext.define('NX.coreui.view.system.NodesDisabledMessage', {
       items: {
         xtype: 'panel',
         ui: 'nx-subsection-framed',
-        html: NX.I18n.get('Nodes_OSS_Message')
+        items: {
+          xtype: 'text',
+          text: NX.I18n.get('Nodes_OSS_Message')
+        }
       }
     }
   ]

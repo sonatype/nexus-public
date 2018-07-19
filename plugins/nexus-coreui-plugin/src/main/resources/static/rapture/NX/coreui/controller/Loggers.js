@@ -142,7 +142,7 @@ Ext.define('NX.coreui.controller.Loggers', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Loggers_Create_Title'));
-    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-logger-add'));
+    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-logger-add'));
   },
 
   /**
@@ -170,19 +170,17 @@ Ext.define('NX.coreui.controller.Loggers', {
           NX.I18n.format('Loggers_HelpText', values.name, values.level),
           function () {
             model.set('level', values.level);
-            me.loadView(0);
+            me.loadView(0, true);
           }
       );
     }
     else {
-      model = me.getLoggerModel().create({});
-      Object.keys(values).map(function(key) {
-        model.set(key, values[key]);
-      });
+      model = me.getLoggerModel().create(values);
+      model.setDirty();
       store.addSorted(model);
       store.sync();
       store.commitChanges();
-      me.loadView(0);
+      me.loadView(0, true);
     }
   },
 
@@ -232,12 +230,9 @@ Ext.define('NX.coreui.controller.Loggers', {
     button.mon(
         NX.Conditions.isPermitted('nexus:logging:update'),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -255,12 +250,9 @@ Ext.define('NX.coreui.controller.Loggers', {
             })
         ),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -273,12 +265,9 @@ Ext.define('NX.coreui.controller.Loggers', {
     button.mon(
         NX.Conditions.isPermitted('nexus:logging:update'),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   }

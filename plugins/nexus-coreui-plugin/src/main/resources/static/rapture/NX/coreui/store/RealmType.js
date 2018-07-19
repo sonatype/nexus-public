@@ -31,7 +31,8 @@ Ext.define('NX.coreui.store.RealmType', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
+      idProperty: 'id',
       successProperty: 'success'
     }
   }

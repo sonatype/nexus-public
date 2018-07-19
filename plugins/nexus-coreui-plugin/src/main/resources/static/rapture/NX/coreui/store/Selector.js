@@ -31,7 +31,8 @@ Ext.define('NX.coreui.store.Selector', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
+      idProperty: 'id',
       successProperty: 'success'
     }
   },

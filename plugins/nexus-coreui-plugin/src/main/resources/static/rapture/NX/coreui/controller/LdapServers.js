@@ -176,7 +176,6 @@ Ext.define('NX.coreui.controller.LdapServers', {
     if (Ext.isDefined(model)) {
       Ext.suspendLayouts();
 
-      me.connectionInfo = model.getData();
       me.getConnection().loadRecord(model);
       me.getUserAndGroup().loadRecord(model);
       me.getUserAndGroup().down('#template').setValue(null);
@@ -191,11 +190,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
   showConnectionPanel: function() {
     var me = this;
 
-    me.connectionInfo = {};
-
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('LdapServers_CreateConnection_Title'));
-    me.loadCreateWizard(1, Ext.widget({
+    me.loadCreateWizard(1, true, Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -217,11 +214,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
   showUserAndGroupPanel: function() {
     var me = this;
 
-    me.connectionInfo = me.getFeature().down('nx-coreui-ldapserver-connection-add').down('nx-coreui-ldapserver-connection-form').getForm().getValues();
-
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(2, NX.I18n.get('LdapServers_CreateUsersAndGroups_Title'));
-    me.loadCreateWizard(2, Ext.widget({
+    me.loadCreateWizard(2, true, Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -290,10 +285,12 @@ Ext.define('NX.coreui.controller.LdapServers', {
   createServer: function() {
     var me = this,
       feature = me.getFeature(),
+      connectionForm = feature.down('nx-coreui-ldapserver-connection-add').down('nx-coreui-ldapserver-connection-form'),
       userGroupForm = feature.down('nx-coreui-ldapserver-userandgroup-add').down('nx-coreui-ldapserver-userandgroup-form'),
-      values = me.connectionInfo;
+      values = {};
 
     // Get fields from all relevant forms
+    Ext.apply(values, connectionForm.getForm().getFieldValues());
     Ext.apply(values, userGroupForm.getForm().getFieldValues());
 
     me.getContent().getEl().mask(NX.I18n.get('LdapServers_Create_Mask'));
@@ -320,12 +317,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
     button.mon(
         NX.Conditions.isPermitted(this.permission + ':update'),
         {
-          satisfied: function() {
-            button.enable();
-          },
-          unsatisfied: function() {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -341,12 +335,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
             NX.Conditions.storeHasRecords('LdapServer')
         ),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -475,8 +466,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
    */
   getValues: function() {
     var feature = this.getFeature(),
-        values = this.connectionInfo,
-        url, connectionForm, userGroupForm;
+        values = {}, url, connectionForm, userGroupForm;
 
     if (feature.down('nx-coreui-ldapserver-connection-add')) {
       connectionForm = feature.down('nx-coreui-ldapserver-connection-add').down('nx-coreui-ldapserver-connection-form');

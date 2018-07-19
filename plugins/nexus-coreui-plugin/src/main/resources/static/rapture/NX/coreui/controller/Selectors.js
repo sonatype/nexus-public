@@ -74,9 +74,6 @@ Ext.define('NX.coreui.controller.Selectors', {
   init: function() {
     var me = this;
 
-    // We need a reference to the PreviewAsset store, but it should not auto-load when the Drilldown is activated.
-    me.storesForLoad = ['Selector'];
-
     me.features = {
       mode: 'admin',
       path: '/Repository/Selectors',
@@ -104,9 +101,6 @@ Ext.define('NX.coreui.controller.Selectors', {
       store: {
         '#Selector': {
           load: me.reselect
-        },
-        '#PreviewAsset': {
-          load: me.loadPreviewAssetStore
         }
       },
       component: {
@@ -180,7 +174,7 @@ Ext.define('NX.coreui.controller.Selectors', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Selectors_Create_Title'));
-    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-selector-add'));
+    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-selector-add'));
   },
 
   /**
@@ -211,6 +205,8 @@ Ext.define('NX.coreui.controller.Selectors', {
     }
 
     var assetStore = me.getPreviewAssetStore();
+    assetStore.addListener('load', me.loadPreviewAssetStore, this);
+
     //make sure to empty the store so we don't see stale data
     assetStore.removeAll();
 
@@ -267,7 +263,7 @@ Ext.define('NX.coreui.controller.Selectors', {
     }
   },
 
-  loadPreviewAssetStore: function(store, records, successful, operation) {
+  loadPreviewAssetStore: function(store, records, successful) {
     var me = this;
 
     var previewWindowPreviewButton = me.getPreviewWindowPreviewButton();
@@ -278,10 +274,10 @@ Ext.define('NX.coreui.controller.Selectors', {
     //since we are dealing with a store, there isn't typical api for mapping an error to a form field
     //so we do it manually
     if (!successful &&
-        operation.getResponse().result &&
-        operation.getResponse().result.errors &&
-        operation.getResponse().result.errors.expression) {
-      me.getPreviewExpression().markInvalid(operation.getResponse().result.errors.expression);
+        store.getProxy().getReader().jsonData &&
+        store.getProxy().getReader().jsonData.errors &&
+        store.getProxy().getReader().jsonData.errors.expression) {
+      me.getPreviewExpression().markInvalid(store.getProxy().getReader().jsonData.errors.expression);
     }
   },
 
@@ -313,8 +309,8 @@ Ext.define('NX.coreui.controller.Selectors', {
     }
     grid.getSelectionModel().deselectAll();
     // we have to remove filter directly as store#removeFilter() does not work when store#remoteFilter = true
-    if (store.getFilters().removeAtKey('filter')) {
-      if (store.getFilters().length) {
+    if (store.filters.removeAtKey('filter')) {
+      if (store.filters.length) {
         store.filter();
       }
       else {

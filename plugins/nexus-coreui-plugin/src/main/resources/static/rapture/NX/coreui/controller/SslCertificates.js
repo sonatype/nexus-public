@@ -153,7 +153,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('SslCertificates_Load_Title'));
-    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-sslcertificate-add-from-server'));
+    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-sslcertificate-add-from-server'));
   },
 
   /**
@@ -164,7 +164,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('SslCertificates_Paste_Title'));
-    me.loadCreateWizard(1, Ext.create('widget.nx-coreui-sslcertificate-add-from-pem'));
+    me.loadCreateWizard(1, true, Ext.create('widget.nx-coreui-sslcertificate-add-from-pem'));
   },
 
   /**
@@ -184,7 +184,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
 
     // Show the second panel in the create wiard, and set the breadcrumb
     me.setItemName(2, NX.I18n.get('Ssl_SslCertificateDetailsWindow_Title'));
-    me.loadCreateWizard(2, panel);
+    me.loadCreateWizard(2, true, panel);
   },
 
   /**
@@ -371,12 +371,9 @@ Ext.define('NX.coreui.controller.SslCertificates', {
             me.mon(
                 NX.Conditions.isPermitted('nexus:ssl-truststore:delete'),
                 {
-                  satisfied: function () {
-                    button.enable();
-                  },
-                  unsatisfied: function () {
-                    button.disable();
-                  }
+                  satisfied: button.enable,
+                  unsatisfied: button.disable,
+                  scope: button
                 }
             );
           }
@@ -393,12 +390,9 @@ Ext.define('NX.coreui.controller.SslCertificates', {
             me.mon(
                 NX.Conditions.isPermitted('nexus:ssl-truststore:create'),
                 {
-                  satisfied: function () {
-                    button.enable();
-                  },
-                  unsatisfied: function () {
-                    button.disable();
-                  }
+                  satisfied: button.enable,
+                  unsatisfied: button.disable,
+                  scope: button
                 }
             );
           }

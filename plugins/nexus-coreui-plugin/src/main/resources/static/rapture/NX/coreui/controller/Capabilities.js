@@ -61,9 +61,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
     { ref: 'statusPanel', selector: 'nx-coreui-capability-status' },
     { ref: 'aboutPanel', selector: 'nx-coreui-capability-about' },
     { ref: 'notesPanel', selector: '#nx-coreui-capability-notes-subsection' },
-    { ref: 'settingsPanel', selector: 'nx-coreui-capability-settings-form' },
-    { ref: 'enableButton', selector: 'nx-coreui-capability-feature button[action=enable]'},
-    { ref: 'disableButton', selector: 'nx-coreui-capability-feature button[action=disable]'}
+    { ref: 'settingsPanel', selector: 'nx-coreui-capability-settings-form' }
   ],
   icons: {
     'capability-default': {
@@ -132,10 +130,12 @@ Ext.define('NX.coreui.controller.Capabilities', {
           click: me.showSelectTypePanel
         },
         'nx-coreui-capability-feature button[action=enable]': {
-          runaction: me.enableCapability
+          runaction: me.enableCapability,
+          afterrender: me.bindEnableButton
         },
         'nx-coreui-capability-feature button[action=disable]': {
-          runaction: me.disableCapability
+          runaction: me.disableCapability,
+          afterrender: me.bindDisableButton
         },
         'nx-coreui-capability-settings button[action=save]': {
           click: me.updateCapability
@@ -174,25 +174,16 @@ Ext.define('NX.coreui.controller.Capabilities', {
    */
   onSelection: function(list, model) {
     var me = this,
-        capabilityTypeStore = me.getStore('CapabilityType'),
-        listener,
         capabilityTypeModel;
 
     if (Ext.isDefined(model)) {
-      if (capabilityTypeStore.isLoaded()) {
-        capabilityTypeModel = capabilityTypeStore.getById(model.get('typeId'));
+      capabilityTypeModel = me.getStore('CapabilityType').getById(model.get('typeId'));
 
-        me.eventuallyShowWarning(model);
-        me.showSummary(model);
-        me.showSettings(model);
-        me.showStatus(model);
-        me.showAbout(capabilityTypeModel);
-      }
-      else {
-        capabilityTypeStore.on('load', function() {
-          me.onSelection(list, model);
-        }, this, {single: true});
-      }
+      me.eventuallyShowWarning(model);
+      me.showSummary(model);
+      me.showSettings(model);
+      me.showStatus(model);
+      me.showAbout(capabilityTypeModel);
     }
   },
 
@@ -240,10 +231,6 @@ Ext.define('NX.coreui.controller.Capabilities', {
    */
   showSettings: function(model) {
     this.getSettingsTab().loadRecord(model);
-    if (NX.Permissions.check('nexus:capabilities:update')) {
-      this.getEnableButton().setDisabled(model.get('enabled'));
-      this.getDisableButton().setDisabled(!model.get('enabled'));
-    }
   },
 
   /**
@@ -272,7 +259,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(1, NX.I18n.get('Capabilities_Select_Title'));
-    me.loadCreateWizard(1, Ext.widget({
+    me.loadCreateWizard(1, true, Ext.widget({
       xtype: 'panel',
       layout: {
         type: 'vbox',
@@ -297,7 +284,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
 
     // Show the first panel in the create wizard, and set the breadcrumb
     me.setItemName(2, NX.I18n.format('Capabilities_Create_Title', model.get('name')));
-    me.loadCreateWizard(2, panel = Ext.create('widget.nx-coreui-capability-add'));
+    me.loadCreateWizard(2, true, panel = Ext.create('widget.nx-coreui-capability-add'));
     var m = me.getCapabilityModel().create({ typeId: model.getId(), enabled: true });
     panel.down('nx-settingsform').loadRecord(m);
   },
@@ -314,12 +301,49 @@ Ext.define('NX.coreui.controller.Capabilities', {
             NX.Conditions.storeHasRecords('CapabilityType')
         ),
         {
-          satisfied: function() {
-            button.enable();
-          },
-          unsatisfied: function() {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
+        }
+    );
+  },
+
+  /**
+   * @private
+   * Enable 'Enable' button when user has 'update' permission and capability is not enabled.
+   */
+  bindEnableButton: function(button) {
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted('nexus:capabilities:update'),
+            NX.Conditions.gridHasSelection('nx-coreui-capability-list', function(model) {
+              return !model.get('enabled');
+            })
+        ),
+        {
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
+        }
+    );
+  },
+
+  /**
+   * @private
+   * Enable 'Disable' button when user has 'update' permission and capability is enabled.
+   */
+  bindDisableButton: function(button) {
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted('nexus:capabilities:update'),
+            NX.Conditions.gridHasSelection('nx-coreui-capability-list', function(model) {
+              return model.get('enabled');
+            })
+        ),
+        {
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -543,7 +567,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
   addDynamicTagFieldsToModel: function(tags) {
     var me = this,
         model = me.getCapabilityModel(),
-        fields = [];
+        fields = model.prototype.fields.getRange();
 
     Ext.Array.each(tags, function(entry) {
       fields.push({
@@ -551,7 +575,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
         type: 'string'
       });
     });
-    model.replaceFields(fields, false);
+    model.setFields(fields);
 
     //<if debug>
     me.logDebug('Dynamic tag fields added to Capability model');

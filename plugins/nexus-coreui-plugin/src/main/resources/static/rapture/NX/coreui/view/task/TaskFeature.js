@@ -42,7 +42,7 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
         }
       ],
 
-      nxActions: [
+      actions: [
         {
           xtype: 'button',
           text: NX.I18n.get('Task_TaskFeature_Delete_Button'),

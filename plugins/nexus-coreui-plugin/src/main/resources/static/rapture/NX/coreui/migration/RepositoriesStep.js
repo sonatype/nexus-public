@@ -24,10 +24,7 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
     'NX.coreui.migration.RepositoryCustomizeWindow'
   ],
 
-  config: {
-    screen: 'NX.coreui.migration.RepositoriesScreen',
-    enabled: true
-  },
+  screen: 'NX.coreui.migration.RepositoriesScreen',
 
   /**
    * @override

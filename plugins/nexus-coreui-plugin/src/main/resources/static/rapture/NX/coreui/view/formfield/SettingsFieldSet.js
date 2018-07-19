@@ -80,15 +80,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
           item = Ext.apply(factory.create(formField), {
             requiresPermission: true,
             name: 'property_' + formField.id,
-            factory: factory,
-            listeners: {
-              afterrender: {
-                fn: function() {
-                  // fixes an issue with hidden validation errors when the error is added before the field is rendered
-                  this.validate();
-                }
-              }
-            }
+            factory: factory
           });
           me.add(item);
         }

@@ -44,21 +44,21 @@ Ext.define('NX.view.Main', {
         items: [
           {
             xtype: 'panel',
-            ui: 'nx-warning',
+            ui: 'nx-database-freeze-warning',
             id: 'nx-database-freeze-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
             hidden: true
           },
           {
             xtype: 'panel',
-            ui: 'nx-warning',
+            ui: 'nx-license-warning',
             id: 'nx-license-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
             hidden: true
           },
           {
             xtype: 'panel',
-            ui: 'nx-warning',
+            ui: 'nx-file-descriptor-warning',
             id: 'nx-file-descriptor-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
             hidden: true

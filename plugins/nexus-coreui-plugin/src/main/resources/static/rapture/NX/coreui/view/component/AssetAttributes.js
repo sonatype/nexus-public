@@ -84,6 +84,7 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
     me.assetModel = assetModel;
 
     // update the grid attribute data
+    store.data.clear();
     store.removeAll();
     Ext.iterate(me.assetModel.get('attributes'), function(facet, facetValues) {
       Ext.iterate(facetValues, function(key, value) {

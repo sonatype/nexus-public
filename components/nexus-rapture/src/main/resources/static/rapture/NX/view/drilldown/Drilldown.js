@@ -30,17 +30,9 @@ Ext.define('NX.view.drilldown.Drilldown', {
   masters: null,
 
   // List of actions to use in the detail view
-  nxActions: null,
+  actions: null,
 
   items: [],
-
-  scrollable: 'vertical',
-
-  layout: {
-    type: 'vbox',
-    align: 'stretch',
-    pack: 'start'
-  },
 
   /**
    * @override
@@ -92,7 +84,7 @@ Ext.define('NX.view.drilldown.Drilldown', {
               },
 
               tabs: Ext.clone(me.tabs),
-              nxActions: Ext.isArray(me.nxActions) ? Ext.Array.clone(me.nxActions) : me.nxActions
+              actions: Ext.isArray(me.actions) ? Ext.Array.clone(me.actions) : me.actions
             }
         );
       }
@@ -107,17 +99,20 @@ Ext.define('NX.view.drilldown.Drilldown', {
     me.add({
       xtype: 'container',
 
-      itemId: 'drilldown-container',
-
-      height: '100%',
+      defaults: {
+        flex: 1
+      },
 
       layout: {
-        type: 'card',
-        animate: true
+        type: 'hbox',
+        align: 'stretch'
       },
 
       items: items
     });
+
+    // Add resize events
+    me.addEvents('syncsize');
   },
 
   /**
@@ -127,7 +122,7 @@ Ext.define('NX.view.drilldown.Drilldown', {
   createDrilldownItem: function(index, browsePanel, createPanel) {
     return {
       xtype: 'nx-drilldown-item',
-      itemClass: this.iconCls || NX.Icons.cls(this.iconName) + (index === 0 ? '-x32' : '-x16'),
+      itemClass: NX.Icons.cls(this.iconName) + (index === 0 ? '-x32' : '-x16'),
       items: [
         {
           xtype: 'container',

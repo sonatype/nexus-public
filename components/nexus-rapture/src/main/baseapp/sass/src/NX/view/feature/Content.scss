@@ -4,15 +4,14 @@
 
 @include extjs-panel-ui(
     $ui: 'nx-feature-content',
+    $ui-header-padding: 10px 8px 10px 10px,
+    $ui-header-background-color: $color-white,
     $ui-body-background-color: $color-light-smoke,
-    $ui-tool-background-image: $panel-light-tool-background-image,
-    $ui-wrap-border-width: 0
-);
-
-@include extjs-panel-ui(
-    $ui: 'nx-feature-header',
-    $ui-body-background-color: $color-white,
-    $ui-wrap-border-width: 0
+    $ui-header-icon-height: 32px,
+    $ui-header-icon-width: 32px,
+    $ui-wrap-border-width: 0,
+    $ui-header-text-transform: $panel-light-header-text-transform,
+    $ui-tool-background-image: $panel-light-tool-background-image
 );
 
 .nx-feature-content {
@@ -23,7 +22,10 @@
 }
 
 .nx-feature-content .x-panel-body .x-toolbar {
-  padding: 6px 0 8px 8px;
+  padding: 12px 8px 0 0;
+  /*.x-toolbar-item {
+    margin: 100px 8px 0 0;
+  }*/
   &.x-toolbar-footer {
     background-color: $color-white;
   }
@@ -37,30 +39,15 @@
   }
 }
 
-.nx-feature-header {
-  border-width: 10px 8px 10px 10px !important;
-  border-color: $color-white !important;
-  border-style: solid;
-
-  .nx-icon {
-    font-size: $font-size-h2;
-    line-height: 32px;
-    text-align: center;
-  }
-}
-
 .nx-feature-name {
   font-size: $font-size-h2;
   font-weight: $font-weight-h2;
-  top: 8px !important;
-  padding-left: 6px;
 }
 
 .nx-feature-description {
   font-size: $font-size-body;
   font-weight: $font-weight-body;
   top: 12px !important;
-  white-space: nowrap;
-  padding-left: 6px;
+  padding-left: 7px;
 }
 

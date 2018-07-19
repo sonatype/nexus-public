@@ -298,7 +298,7 @@ Ext.define('NX.wizard.Controller', {
 
     // calculate number of enabled steps and displayed screen number
     for (i = 0; i < s.length; i++) {
-      if (s[i].getEnabled()) {
+      if (s[i].enabled) {
         enabledSteps++;
         if (i < index) {
           screenNumber++;
@@ -350,7 +350,7 @@ Ext.define('NX.wizard.Controller', {
     }
 
     for (i = current + 1; i < max; i++) {
-      if (this.steps[i].getEnabled()) {
+      if (this.steps[i].enabled) {
         return this.moveTo(i);
       }
     }
@@ -374,7 +374,7 @@ Ext.define('NX.wizard.Controller', {
     }
 
     for (i = current - 1; i >= 0; i--) {
-      if (this.steps[i].getEnabled()) {
+      if (this.steps[i].enabled) {
         return this.moveTo(i);
       }
     }

@@ -19,8 +19,10 @@
  */
 Ext.define('NX.coreui.audit.AuditModel', {
   extend: 'Ext.data.Model',
-
-  identifier: 'sequential',
+  requires: [
+    'Ext.data.SequentialIdGenerator'
+  ],
+  idgen: 'sequential',
   fields: [
     {name: 'domain', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},

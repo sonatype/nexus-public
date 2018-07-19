@@ -20,8 +20,7 @@
 Ext.define('NX.controller.KeyNav', {
   extend: 'NX.app.Controller',
   requires: [
-    'Ext.util.KeyNav',
-    'Ext.dom.Element'
+    'Ext.util.KeyNav'
   ],
 
   /**
@@ -50,8 +49,7 @@ Ext.define('NX.controller.KeyNav', {
   installEnterKey: function (button) {
     var form = button.up('form');
 
-    button.keyNav = Ext.create('Ext.util.KeyNav', {
-      target: form.el,
+    button.keyNav = Ext.create('Ext.util.KeyNav', form.el, {
       enter: function () {
         if (!button.isDisabled()) {
           button.fireEvent('click', button);
@@ -68,7 +66,7 @@ Ext.define('NX.controller.KeyNav', {
    */
   disableBackspaceNav: function() {
     var parent = Ext.isIE ? document : window;
-    Ext.get(parent).on('keydown', function(e, focused) {
+    Ext.EventManager.on(parent, 'keydown', function (e, focused) {
       // Check for least-likely to most-likely conditions in order to avoid costly evaluations - fail fast to increase performance
       var isBackspace = e.getKey() === e.BACKSPACE;
       if ( isBackspace && !isBackspaceAllowed() ) {

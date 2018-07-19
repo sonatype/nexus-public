@@ -70,7 +70,7 @@ public class BrowseNodeStoreLoadTest
 
   @Before
   public void setUp() throws Exception {
-    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0));
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0));
 
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     ComponentFactory componentFactory = new ComponentFactory(emptySet());

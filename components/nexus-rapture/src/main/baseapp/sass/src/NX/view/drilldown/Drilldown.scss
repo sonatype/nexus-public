@@ -13,7 +13,6 @@
     $color-pressed: $color-cornflower,
     $color-disabled: $color-night-rider,
     $font-size: $font-size-h2,
-    $line-height: $font-size-h2,
     $background-gradient: transparent,
     $background-gradient-over: transparent,
     $background-gradient-focus: transparent,
@@ -35,7 +34,7 @@
 );
 
 .x-btn-nx-drilldown-large {
-  padding: 0 0 0 6px !important;
+  padding: 0 !important;
 }
 
 @include extjs-button-medium-ui(
@@ -69,12 +68,14 @@
 
 .x-btn-nx-drilldown-medium {
   padding: 0 2px 0 6px;
-  top: 7px !important;
 
   .x-btn-inner {
-      text-overflow: ellipsis;
-      height: 20px;
+    text-overflow: ellipsis;
   }
+}
+
+.nx-feature-content .x-panel-header .x-btn-nx-drilldown-medium {
+  top: 7px !important;
 }
 
 @include extjs-button-toolbar-small-ui(

@@ -27,19 +27,16 @@ class FileDescriptorCheckValueContributor
     implements StateContributor
 {
   private final FileDescriptorService fileDescriptorService
-  private final boolean disable
 
   @Inject
-  FileDescriptorCheckValueContributor(final FileDescriptorService fileDescriptorService,
-                                      final @Named('${nexus.file.descriptor.warning.disabled:-false}') boolean disable) {
+  FileDescriptorCheckValueContributor(final FileDescriptorService fileDescriptorService) {
     this.fileDescriptorService = fileDescriptorService;
-    this.disable = disable;
   }
 
   @Override
   Map<String, Object> getState() {
     return [file_descriptor_limit: [
-        limitOk    : disable || fileDescriptorService.fileDescriptorLimitOk,
+        limitOk    : fileDescriptorService.fileDescriptorLimitOk,
         count      : fileDescriptorService.fileDescriptorCount,
         recommended: fileDescriptorService.fileDescriptorRecommended
     ]]

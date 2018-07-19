@@ -134,12 +134,9 @@ Ext.define('NX.coreui.controller.NuGetApiKey', {
     button.mon(
         NX.Conditions.isPermitted('nexus:apikey:read'),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   },
@@ -153,12 +150,9 @@ Ext.define('NX.coreui.controller.NuGetApiKey', {
     button.mon(
         NX.Conditions.isPermitted('nexus:apikey:delete'),
         {
-          satisfied: function () {
-            button.enable();
-          },
-          unsatisfied: function () {
-            button.disable();
-          }
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
     );
   }

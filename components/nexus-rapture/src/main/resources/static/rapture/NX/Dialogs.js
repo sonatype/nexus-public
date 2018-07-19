@@ -28,13 +28,8 @@ Ext.define('NX.Dialogs', {
    *
    * @public
    */
-  showInfo: function (title, message, options, htmlEncoded) {
+  showInfo: function (title, message, options) {
     options = options || {};
-
-    if (!htmlEncoded) {
-      message = Ext.htmlEncode(message);
-      title = title ? Ext.htmlEncode(title) : title;
-    }
 
     // set default configuration
     Ext.applyIf(options, {
@@ -53,13 +48,8 @@ Ext.define('NX.Dialogs', {
    *
    * @public
    */
-  showError: function (title, message, options, htmlEncoded) {
+  showError: function (title, message, options) {
     options = options || {};
-
-    if (!htmlEncoded) {
-      message = Ext.htmlEncode(message);
-      title = title ? Ext.htmlEncode(title) : title;
-    }
 
     // set default configuration
     Ext.applyIf(options, {
@@ -78,14 +68,8 @@ Ext.define('NX.Dialogs', {
    *
    * @public
    */
-  askConfirmation: function (title, message, onYesFn, options, htmlEncoded) {
+  askConfirmation: function (title, message, onYesFn, options) {
     options = options || {};
-
-    if (!htmlEncoded) {
-      message = Ext.htmlEncode(message);
-      title = title ? Ext.htmlEncode(title) : title;
-    }
-
     Ext.Msg.show({
       title: title,
       msg: message,

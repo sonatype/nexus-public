@@ -27,45 +27,74 @@ Ext.define('NX.view.drilldown.Master', {
    * @private
    */
   initComponent: function() {
-    var me = this,
-        hasAffordance = me.columns.some(function(column) {
-          return column.cls === 'nx-drilldown-affordance';
-        });
-
-    if (!hasAffordance) {
-      me.columns.push({
-        width: 28,
-        hideable: false,
-        sortable: false,
-        menuDisabled: true,
-        resizable: false,
-        draggable: false,
-        cls: 'nx-drilldown-affordance',
-
-        defaultRenderer: function() {
-          return Ext.DomHelper.markup({
-            tag: 'span',
-            cls: 'x-fa fa-angle-right'
-          });
-        }
-      });
-    }
+    var me = this;
 
     me.callParent();
 
     me.on('render', this.loadStore, this);
+
+    // Refresh drilldown affordances on load, and when a column is added
+    me.on('viewready', function(view) {
+      view.refreshDrilldown(view.headerCt);
+    });
+    me.headerCt.on('columnschanged', me.refreshDrilldown);
   },
 
   loadStore: function() {
     this.getStore().load();
   },
 
-  pushColumn: function(newColumn) {
-    var columns = this.getColumns(),
-        hasAffordance = columns.some(function(column) {
-          return column.cls === 'nx-drilldown-affordance';
+  /**
+   * @private
+   * Put a drilldown affordance ‘>’ at the end of each item in the list
+   *
+   * @param ct The content header for the grid
+   */
+  refreshDrilldown: function(ct) {
+    var firstIdx,
+        columns = ct.items.items.filter(function(e, idx) {
+          if (e.cls && e.cls === 'nx-drilldown-affordance') {
+            if (!firstIdx) {
+              firstIdx = idx;
+            }
+            return true;
+          }
+          return false;
         });
 
-    return this.getHeaderContainer().insert(hasAffordance ? columns.length - 1 : columns.length, newColumn);
+    // skip adding affordance if the column already exists and is teh last one
+    if (columns.length === 1 && firstIdx + 1 === ct.items.items.length) {
+      return;
+    }
+
+    this.suspendEvents(false);
+
+    // Remove drilldown affordance columns
+    columns.forEach(function(e) {
+      ct.remove(e);
+    });
+
+    // Add a drilldown affordance to the end of the list
+    ct.add(
+        {
+          width: 28,
+          hideable: false,
+          sortable: false,
+          menuDisabled: true,
+          resizable: false,
+          draggable: false,
+          stateId: 'affordance',
+          cls: 'nx-drilldown-affordance',
+
+          defaultRenderer: function () {
+            return Ext.DomHelper.markup({
+              tag: 'span',
+              cls: 'x-fa fa-angle-right'
+            });
+          }
+        }
+    );
+
+    this.resumeEvents();
   }
 });

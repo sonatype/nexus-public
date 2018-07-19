@@ -87,7 +87,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
           },
           reader: {
             type: 'json',
-            rootProperty: 'data',
+            root: 'data',
             idProperty: formField['idMapping'] || 'id',
             successProperty: 'success'
           }

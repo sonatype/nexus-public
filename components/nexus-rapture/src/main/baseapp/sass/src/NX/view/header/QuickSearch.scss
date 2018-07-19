@@ -24,9 +24,5 @@
   .x-form-trigger,
   .x-form-text {
     color: $color-white;
-    //IE11 seems to be the only culprit that makes the above defined color also be used in placeholder text
-    &:-ms-input-placeholder {
-      color: $color-gray !important;
-    }
   }
 }

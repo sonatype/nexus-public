@@ -93,8 +93,7 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
               fieldLabel: NX.I18n.get('ClmSettings_Username_FieldLabel'),
               helpText: NX.I18n.get('ClmSettings_Username_HelpText'),
               emptyText: NX.I18n.get('ClmSettings_Username_EmptyText'),
-              allowBlank: false,
-              inputAttrTpl: 'autocomplete="new-username"'
+              allowBlank: false
             },
             {
               xtype: 'nx-password',
@@ -102,8 +101,7 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
               fieldLabel: NX.I18n.get('ClmSettings_Password_FieldLabel'),
               helpText: NX.I18n.get('ClmSettings_Password_HelpText'),
               emptyText: NX.I18n.get('ClmSettings_Password_EmptyText'),
-              allowBlank: false,
-              inputAttrTpl: 'autocomplete="new-password"'
+              allowBlank: false
             }
           ]
         },

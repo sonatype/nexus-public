@@ -44,10 +44,6 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
     { ref: 'list', selector: 'nx-coreui-repository-list-template' },
     { ref: 'summary', selector: 'nx-coreui-healthcheck-summary' }
   ],
-  analyzeButtonTemplate: new Ext.Template('<a class="x-btn x-unselectable x-btn-nx-primary-small" ' +
-      'hidefocus="on" unselectable="on" role="button" aria-hidden="false" aria-disabled="false">' +
-      '<span data-ref="btnInnerEl" unselectable="on" class="x-btn-inner x-btn-inner-nx-primary-small">' +
-      '{0}</span></a>').compile(),
 
   /**
    * @override
@@ -129,10 +125,11 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
    */
   addHealthCheckColumn: function(grid) {
     var me = this,
-        view = grid.getView();
+        view = grid.getView(),
+        column = grid.healthCheckColumn;
 
-    if (!grid.healthCheckColumn) {
-      grid.healthCheckColumn = grid.pushColumn({
+    if (!column) {
+      column = grid.healthCheckColumn = Ext.create('Ext.grid.column.Column', {
         id: 'healthCheckColumn',
         header: NX.I18n.get('HealthCheckRepositoryColumn_Header'),
         hideable: false,
@@ -146,18 +143,18 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
           click: Ext.bind(me.maybeAskToEnable, me)
         }
       });
-
+      grid.headerCt.add(column);
       view.refresh();
-
       grid.healthCheckTooltip = Ext.create('Ext.ToolTip', {
         target: view.getEl(),
-        delegate: view.getCellSelector(grid.healthCheckColumn),
+        delegate: view.getCellSelector(column),
         renderTo: NX.global.document.body,
         maxWidth: 550,
-        // The following offset moves the tooltip to the left of the mouse
-        mouseOffset: [-15, 1],
+        // mouseOffset origin is [15, 18]. The following offset moves the tooltip to the left of the mouse
+        //  while correcting for the [15, 18] origin
+        mouseOffset: [-585, -18],
         showDelay: 400,
-        hideDelay: 2000,
+        hideDelay: 20000,
         dismissDelay: 20000,
         listeners: {
           beforeshow: Ext.bind(me.updateHealthCheckColumnTooltip, me)
@@ -206,7 +203,8 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
    */
   renderHealthCheckColumn: function(value, metadata, repositoryModel) {
     var me = this,
-        statusModel = me.getHealthCheckRepositoryStatusStore().getById(repositoryModel.getId());
+        statusModel = me.getHealthCheckRepositoryStatusStore().getById(repositoryModel.getId()),
+        classes, text, button;
 
     if (!statusModel) {
       if (!me.getHealthCheckRepositoryStatusStore().loaded && NX.Permissions.check('nexus:healthcheck:read')) {
@@ -253,7 +251,10 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
       }
     }
     else if (NX.Permissions.check('nexus:healthcheck:update')) {
-      return me.analyzeButtonTemplate.apply([NX.I18n.get('HealthCheckRepositoryColumn_Analyze')]);
+      classes = "x-btn x-unselectable x-btn-nx-primary-small x-btn-nx-primary-toolbar-small-disabled";
+      text = '<span class="x-btn-inner x-btn-inner-center" unselectable="on">' + NX.I18n.get('HealthCheckRepositoryColumn_Analyze') + '</span>';
+      button = '<a class="' + classes + '" hidefocus="on" unselectable="on">' + text + '</a>';
+      return button;
     }
     else {
       // User doesn’t have the permissions to enable RHC
@@ -329,7 +330,7 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
             }
             else {
               if (NX.Permissions.check('nexus:healthchecksummary:read')) {
-                cell = view.getCell(repository, me.getList().healthCheckColumn, true);
+                cell = view.getCell(repository, me.getList().healthCheckColumn);
                 Ext.defer(me.showSummary, 0, me, [status, cell.getX(), cell.getY()]);
                 return false;
               }

@@ -75,10 +75,6 @@ class SearchComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:search:read')
   PagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
-    if (parameters.limit > searchResultsLimit) {
-      parameters.limit = searchResultsLimit
-    }
-
     QueryBuilder query = buildQuery(parameters)
     if (!query) {
       return null

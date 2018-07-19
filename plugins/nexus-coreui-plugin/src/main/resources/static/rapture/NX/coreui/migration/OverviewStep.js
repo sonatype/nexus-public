@@ -23,10 +23,7 @@ Ext.define('NX.coreui.migration.OverviewStep', {
     'NX.coreui.migration.OverviewScreen'
   ],
 
-  config: {
-    screen: 'NX.coreui.migration.OverviewScreen',
-    enabled: true
-  },
+  screen: 'NX.coreui.migration.OverviewScreen',
 
   /**
    * @override

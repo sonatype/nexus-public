@@ -32,7 +32,7 @@ Ext.define('NX.coreui.audit.AuditStore', {
 
     reader: {
       type: 'json',
-      rootProperty: 'data',
+      root: 'data',
       successProperty: 'success'
     }
   },

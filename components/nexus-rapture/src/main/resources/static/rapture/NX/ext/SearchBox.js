@@ -18,7 +18,7 @@
  * @since 3.0
  */
 Ext.define('NX.ext.SearchBox', {
-  extend: 'Ext.form.field.Text',
+  extend: 'Ext.form.field.Trigger',
   alias: 'widget.nx-searchbox',
   requires: [
     'Ext.util.KeyNav'
@@ -34,21 +34,8 @@ Ext.define('NX.ext.SearchBox', {
    */
   searchDelay: 1000,
 
-  triggers: {
-    clear: {
-      cls: 'nx-form-fa-times-circle-trigger',
-      handler: function() {
-        this.clearSearch();
-      }
-    }
-  },
-
-  listeners: {
-    change: 'onValueChange',
-    keypress: 'updateTriggerVisibility'
-  },
-
-  maskOnDisable: false,
+  // TODO: Only show clear trigger if we have text
+  trigger1Cls: 'nx-form-fa-times-circle-trigger',
 
   /**
    * @override
@@ -61,6 +48,34 @@ Ext.define('NX.ext.SearchBox', {
     });
 
     me.callParent(arguments);
+
+    me.on('change', me.onValueChange, me);
+
+    me.addEvents(
+        /**
+         * Fires before a search is performed.
+         *
+         * @event beforesearch
+         */
+        'beforesearch',
+
+        /**
+         * Fires when a search values was typed. Fires with a delay of **{@link #searchDelay}**.
+         *
+         * @event search
+         * @param {NX.ext.SearchBox} this search box
+         * @param {String} search value
+         */
+        'search',
+
+        /**
+         * Fires when a search value had been cleared.
+         *
+         * @event searchcleared
+         * @param {NX.ext.SearchBox} this search box
+         */
+        'searchcleared'
+    );
   },
 
   /**
@@ -71,8 +86,7 @@ Ext.define('NX.ext.SearchBox', {
 
     me.callParent();
 
-    me.keyNav = new Ext.util.KeyNav({
-      target: me.inputEl,
+    me.keyNav = new Ext.util.KeyNav(me.inputEl, {
       esc: {
         handler: me.clearSearch,
         scope: me,
@@ -86,6 +100,15 @@ Ext.define('NX.ext.SearchBox', {
       scope: me,
       forceKeyDown: true
     });
+  },
+
+  /**
+   * Clear search.
+   *
+   * @private
+   */
+  onTrigger1Click: function () {
+    this.clearSearch();
   },
 
   /**

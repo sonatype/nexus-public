@@ -51,6 +51,16 @@ Ext.define('NX.coreui.controller.BrowseableFormats', {
         }
       }
     });
+
+    me.addEvents(
+        /**
+         * Fires when formats change.
+         *
+         * @event changed
+         * @param {NX.coreui.util.BrowseableFormats} formats  Formats helper.
+         */
+        'changed'
+    );
   },
 
   /**

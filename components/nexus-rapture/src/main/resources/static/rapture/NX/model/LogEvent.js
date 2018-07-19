@@ -19,12 +19,11 @@
  */
 Ext.define('NX.model.LogEvent', {
   extend: 'Ext.data.Model',
-
   fields: [
     { name: 'timestamp', type: 'int' },
     { name: 'logger', type: 'string' },
     { name: 'level', type: 'string' },
-    { name: 'message' }
+    { name: 'message', type: 'object' }
   ],
-  identifier: 'sequential'
+  idgen: 'sequential'
 });

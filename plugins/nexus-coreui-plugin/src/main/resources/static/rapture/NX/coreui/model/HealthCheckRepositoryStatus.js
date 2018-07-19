@@ -19,7 +19,6 @@
  */
 Ext.define('NX.coreui.model.HealthCheckRepositoryStatus', {
   extend: 'Ext.data.Model',
-  idProperty: 'repositoryName',
   fields: [
     {name:'repositoryName', type: 'string', sortType: 'asUCText'},
     {name:'enabled', type: 'boolean'},
@@ -32,7 +31,7 @@ Ext.define('NX.coreui.model.HealthCheckRepositoryStatus', {
     {name:'licenseIssueCount', type: 'int'},
     {name:'summaryUrl', type: 'string', sortType: 'asUCText'},
     {name:'detailUrl', type: 'string', sortType: 'asUCText'},
-    {name:'totalCounts', type: 'auto' /* array */},
-    {name:'vulnerableCounts', type: 'auto' /* array */}
+    {name:'totalCounts', type: 'long'},
+    {name:'vulnerableCounts', type: 'long'}
   ]
 });

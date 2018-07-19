@@ -27,12 +27,10 @@ Ext.define('NX.ext.form.field.ItemSelector', {
 
   // FIXME: This is not the best way to ensure that forms are limited width
   width: 600,
-  height: 300,
+  height: 253,
 
   disabledCls: 'nx-itemselector-disabled',
   invalidCls: 'nx-invalid',
-
-  maskOnDisable: false,
 
   /**
    * Override super *private* impl so we can control the button configuration.
@@ -91,8 +89,7 @@ Ext.define('NX.ext.form.field.ItemSelector', {
 
   createList: function (title) {
     var me = this,
-        store = Ext.getStore(me.store),
-        tbar, listener;
+        tbar;
 
     // only create filter box for from field
     if (!me.fromField) {
@@ -107,17 +104,6 @@ Ext.define('NX.ext.form.field.ItemSelector', {
         }
       };
     }
-
-    listener = store.onAfter('load', function() {
-      if (me.fromField && me.fromField.boundList && me.fromField.boundList.getMaskTarget()) {
-        me.fromField.boundList.mask();
-        if (!me.fromField.boundList.disabled) {
-          me.fromField.boundList.unmask();
-        }
-      }
-    }, me, { destroyable: true });
-
-    me.on('destroy', listener.destroy, listener);
 
     return Ext.create('Ext.ux.form.MultiSelect', {
       // We don't want the multiselects themselves to act like fields,
@@ -137,8 +123,8 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       dropGroup: me.ddGroup,
       title: title,
       store: {
-        model: store.model,
-        sorters: store.getSorters().items,
+        model: me.store.model,
+        sorters: me.store.getSorters(),
         data: []
       },
       displayField: me.displayField,
@@ -211,19 +197,6 @@ Ext.define('NX.ext.form.field.ItemSelector', {
       me.store.un('load', me.populateFromStore, me);
     }
     this.callParent();
-  },
-
-  onEnable: function() {
-    this.callParent(arguments);
-    Ext.each(this.query('boundlist'), function(list) {
-      list.unmask();
-    });
-  },
-
-  onDisable: function() {
-    this.callParent(arguments);
-    Ext.each(this.query('boundlist'), function(list) {
-      list.mask();
-    });
   }
+
 });

@@ -192,15 +192,12 @@ Ext.define('NX.coreui.audit.AuditController', {
    */
   bindClearButton: function (button) {
     button.mon(
-      NX.Conditions.isPermitted('nexus:audit:delete'),
-      {
-        satisfied: function() {
-          button.enable();
-        },
-        unsatisfied: function() {
-          button.disable();
+        NX.Conditions.isPermitted('nexus:audit:delete'),
+        {
+          satisfied: button.enable,
+          unsatisfied: button.disable,
+          scope: button
         }
-      }
     );
   }
 });

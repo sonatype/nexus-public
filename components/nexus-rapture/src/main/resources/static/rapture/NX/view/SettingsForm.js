@@ -81,6 +81,7 @@ Ext.define('NX.view.SettingsForm', {
    */
   editableMarker: undefined,
 
+  autoScroll: true,
   waitMsgTarget: true,
 
   defaults: {
@@ -123,6 +124,35 @@ Ext.define('NX.view.SettingsForm', {
     }
 
     me.callParent();
+
+    me.addEvents(
+        /**
+         * Fires when a record is loaded via {@link Ext.form.Panel#loadRecord}.
+         *
+         * @event recordloaded
+         * @param {Ext.form.Panel} this form
+         * @param {Ext.data.Model} loaded record
+         */
+        'recordloaded',
+
+        /**
+         * Fires after form was loaded via configured api.
+         *
+         * @event loaded
+         * @param {Ext.form.Panel} this form
+         * @param {Ext.form.action.Action} load action
+         */
+        'loaded',
+
+        /**
+         * Fires after form was submitted via configured api.
+         *
+         * @event submitted
+         * @param {Ext.form.Panel} this form
+         * @param {Ext.form.action.Action} submit action
+         */
+        'submitted'
+    );
   },
 
   /**
@@ -135,7 +165,6 @@ Ext.define('NX.view.SettingsForm', {
 
     me.callParent(arguments);
     me.fireEvent('recordloaded', me, record);
-    me.isValid();
   },
 
   /**
@@ -146,16 +175,8 @@ Ext.define('NX.view.SettingsForm', {
    */
   setEditable: function (editable) {
     var me = this,
-        itemsToDisable,
+        itemsToDisable = me.getChildItemsToDisable(),
         bottomBar;
-
-    if (me.isDestroying) {
-      return;
-    }
-
-    itemsToDisable = me.getChildItemsToDisable().filter(function(item){
-      return item.xtype !== 'nx-coreui-formfield-settingsfieldset';
-    });
 
     if (editable) {
       Ext.Array.each(itemsToDisable, function (item) {
@@ -196,7 +217,7 @@ Ext.define('NX.view.SettingsForm', {
           }
         }
         else {
-          if (item.resetEditable !== false) {
+          if (item.resetEditable !== false && !item.disabled) {
             item.disable();
             item.resetFormBind = item.formBind;
             delete item.formBind;

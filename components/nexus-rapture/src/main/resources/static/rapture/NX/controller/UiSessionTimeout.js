@@ -102,12 +102,12 @@ Ext.define('NX.controller.UiSessionTimeout', {
    */
   setupTimeout: function () {
     var me = this,
-        hasUser = !Ext.isEmpty(NX.State.getUser()),
+        user = NX.State.getUser(),
         uiSettings = NX.State.getValue('uiSettings') || {},
-        sessionTimeout = hasUser ? uiSettings['sessionTimeout'] : undefined;
+        sessionTimeout = user ? uiSettings['sessionTimeout'] : undefined;
 
     me.cancelTimeout();
-    if ((hasUser && NX.State.isReceiving()) && sessionTimeout > 0) {
+    if ((user && NX.State.isReceiving()) && sessionTimeout > 0) {
       //<if debug>
       me.logDebug('Session expiration enabled for', sessionTimeout, 'minutes');
       //</if>

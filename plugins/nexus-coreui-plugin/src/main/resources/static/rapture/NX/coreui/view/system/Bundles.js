@@ -37,8 +37,7 @@ Ext.define('NX.coreui.view.system.Bundles', {
 
       tabs: {
         xtype: 'nx-info-panel',
-        title: NX.I18n.get('System_Bundles_Details_Tab'),
-        cls: 'nx-hr'
+        title: NX.I18n.get('System_Bundles_Details_Tab')
       }
     });
 

@@ -132,8 +132,8 @@ Ext.define('NX.ext.grid.plugin.RemoteFilterBox', {
     }
     grid.getSelectionModel().deselectAll();
     // we have to remove filter directly as store#removeFilter() does not work when store#remoteFilter = true
-    if (store.getFilters().removeAtKey('filter')) {
-      if (store.getFilters().length) {
+    if (store.filters.removeAtKey('filter')) {
+      if (store.filters.length) {
         store.filter();
       }
       else {

@@ -76,6 +76,15 @@ Ext.define('NX.controller.State', {
         }
       }
     });
+
+    me.addEvents(
+        /**
+         * Fires when any of application context values changes.
+         *
+         * @event changed
+         */
+        'changed'
+    );
   },
 
   /**
@@ -138,43 +147,35 @@ Ext.define('NX.controller.State', {
    */
   setValue: function (key, value, hash) {
     var me = this,
-        store = me.getStore('State'),
-        model = store.getById(key),
-        hasValue = Ext.isDefined(value) && value !== null;
+        model = me.getStore('State').getById(key);
 
-    if (!hasValue && model) {
-      store.remove(model);
-    }
-    else if (hasValue && !model) {
-      store.add(me.getStateModel().create({ key: key, value: value, hash: hash }));
-    }
-    else if (hash && !Ext.Object.equals(hash, model.get('hash'))) {
-      model.set('hash', hash);
-
-      if (key === 'user' && model.get('value').id === value.id) {
-        model.set('value', value, { silent: true });
-      }
-
-      if (!Ext.Object.equals(value, model.get('value'))) {
-        model.set('value', value);
+    if (!model) {
+      if (Ext.isDefined(value)) {
+        me.getStore('State').add(me.getStateModel().create({ key: key, value: value, hash: hash }));
       }
     }
-    else if (!hash && hasValue) {
-      model.set('hash', hash);
-      model.set('value', value);
+    else {
+      if (Ext.isDefined(value) && value !== null) {
+        if (!Ext.Object.equals(value, model.get('value'))) {
+          model.set('value', value);
+        }
+        if (!Ext.Object.equals(hash, model.get('hash'))) {
+          model.set('hash', hash);
+        }
+      }
+      else {
+        me.getStore('State').remove(model);
+      }
     }
-
-    store.commitChanges();
-
+    me.getStore('State').commitChanges();
     if (me.statusProvider) {
-      if (hasValue && hash) {
+      if (Ext.isDefined(value) && hash) {
         me.statusProvider.baseParams[key] = hash;
       }
       else {
         delete me.statusProvider.baseParams[key];
       }
     }
-
   },
 
   setValues: function (map) {
@@ -212,10 +213,8 @@ Ext.define('NX.controller.State', {
     }
   },
 
-  onEntryRemoved: function (store, models) {
-    models.forEach(function(model) {
-      this.notifyChange(model.get('key'), undefined, model.get('value'));
-    }, this);
+  onEntryRemoved: function (store, model) {
+    this.notifyChange(model.get('key'), undefined, model.get('value'));
   },
 
   notifyChange: function (key, value, oldValue) {
