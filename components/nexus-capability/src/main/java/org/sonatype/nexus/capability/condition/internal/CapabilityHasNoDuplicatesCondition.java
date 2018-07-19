@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * A condition that is satisfied as long as the capability has no duplicates.
  *
- * @since 3.next
+ * @since 3.13
  */
 public class CapabilityHasNoDuplicatesCondition
     extends ConditionSupport

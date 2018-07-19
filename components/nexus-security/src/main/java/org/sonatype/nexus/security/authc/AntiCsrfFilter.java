@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This is an anti cross-site request forgery (CSRF / XSRF) protection using a cookie-to-header token approach.
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named
 @Singleton
@@ -62,7 +62,7 @@ public class AntiCsrfFilter
   private final boolean enabled;
 
   @Inject
-  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled) {
+  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean enabled) {
     this.enabled = enabled;
   }
 

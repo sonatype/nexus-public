@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.cache;
 
+import java.util.Set;
+
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -21,6 +23,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Handler that caches 404 responses.
@@ -34,11 +38,13 @@ public class NegativeCacheHandler
     extends ComponentSupport
     implements Handler
 {
+  private static final Set<String> NFC_CACHEABLE_ACTIONS = ImmutableSet.of(HttpMethods.GET, HttpMethods.HEAD);
+  
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
     String action = context.getRequest().getAction();
-    if (!HttpMethods.GET.equals(action)) {
+    if (!NFC_CACHEABLE_ACTIONS.contains(action)) {
       return context.proceed();
     }
     NegativeCacheFacet negativeCache = context.getRepository().facet(NegativeCacheFacet.class);

@@ -36,7 +36,7 @@ import org.apache.commons.io.input.ReversedLinesFileReader;
 /**
  * {@link LastShutdownTimeService} implementation.
  *
- * @since 3.next
+ * @since 3.13
  */
 @Named
 @Singleton

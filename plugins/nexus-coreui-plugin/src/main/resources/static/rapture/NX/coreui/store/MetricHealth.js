@@ -16,7 +16,7 @@
  * Metric Healthcheck store.
  * Intended to be populated directly by a controller.
  *
- * @since 3.next
+ * @since 3.13
  */
 Ext.define('NX.coreui.store.MetricHealth', {
   extend: 'Ext.data.Store',

@@ -108,7 +108,7 @@ public class ExtDirectServlet
                           final BeanLocator beanLocator,
                           final Provider<EventRecorder> recorderProvider,
                           final Provider<EventDataFactory> eventDataFactoryProvider,
-                          @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled)
+                          @Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean antiCsrfTokenEnabled)
   {
     super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME);
     this.directories = checkNotNull(directories);

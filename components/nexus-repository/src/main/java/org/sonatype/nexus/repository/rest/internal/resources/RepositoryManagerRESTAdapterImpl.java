@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,7 +23,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
-import com.google.common.collect.Streams;
+import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -76,8 +75,7 @@ public class RepositoryManagerRESTAdapterImpl
 
   @Override
   public List<Repository> getRepositories() {
-    return Streams.stream(repositoryManager.browse())
-        .filter(repositoryPermissionChecker::userCanBrowseRepository)
-        .collect(Collectors.toList());
+    return repositoryPermissionChecker
+        .userCanBrowseRepositories(Iterables.toArray(repositoryManager.browse(), Repository.class));
   }
 }

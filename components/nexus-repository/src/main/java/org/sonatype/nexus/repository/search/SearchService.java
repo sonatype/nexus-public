@@ -138,7 +138,7 @@ public interface SearchService
   /**
    * Used by UTs and ITs only to "wait for calm period" when all search indexing is finished.
    *
-   * @since 3.next
+   * @since 3.13
    */
   @VisibleForTesting
   boolean isCalmPeriod();

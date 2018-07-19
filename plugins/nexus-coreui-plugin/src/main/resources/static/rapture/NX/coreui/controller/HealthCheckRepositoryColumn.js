@@ -78,7 +78,8 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
       },
       component: {
         'nx-coreui-repository-list-template': {
-          afterrender: me.bindHealthCheckColumn
+          afterrender: me.bindHealthCheckColumn,
+          destroy: me.destroyToolTip
         }
       }
     });
@@ -159,6 +160,19 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryColumn', {
           beforeshow: Ext.bind(me.updateHealthCheckColumnTooltip, me)
         }
       });
+    }
+  },
+
+  /**
+   * Remove ToolTip associated with the Health Check column of the grid to prevent memory leak
+   *
+   * @private
+   * @param {NX.coreui.view.repository.RepositoryList} grid repository grid
+   */
+  destroyToolTip: function(grid) {
+    var tip = grid.healthCheckTooltip;
+    if (tip) {
+      tip.destroy();
     }
   },
 

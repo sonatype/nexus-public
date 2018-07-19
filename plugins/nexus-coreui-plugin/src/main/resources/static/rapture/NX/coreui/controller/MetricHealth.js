@@ -16,7 +16,7 @@
 /**
  * Metrics controller.
  *
- * @since 3.next
+ * @since 3.13
  */
 Ext.define('NX.coreui.controller.MetricHealth', {
   extend: 'NX.app.Controller',

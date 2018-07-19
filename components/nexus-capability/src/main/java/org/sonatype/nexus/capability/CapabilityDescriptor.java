@@ -103,7 +103,7 @@ public interface CapabilityDescriptor
   /**
    * Returns whether the given capability properties are duplicated by another capability.
    *
-   * @since 3.next
+   * @since 3.13
    */
   boolean isDuplicated(@Nullable CapabilityIdentity id, Map<String, String> properties);
 

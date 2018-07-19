@@ -78,7 +78,7 @@ public interface CapabilityConditions
    * Creates a new condition that is satisfied when the capability has no duplicates.
    *
    * @return created condition
-   * @since 3.next
+   * @since 3.13
    */
   Condition capabilityHasNoDuplicates();
 }

@@ -129,7 +129,7 @@ public interface StorageTx
    *
    * @see OrientAsyncHelper
    * 
-   * @since 3.next
+   * @since 3.13
    */
   Iterable<Asset> browseAssets(Query query, Bucket bucket);
 
@@ -243,7 +243,7 @@ public interface StorageTx
   /**
    * Check for the existence of an asset with {@code name} in {@code repository}.
    *
-   * @since 3.next
+   * @since 3.13
    */
   boolean assetExists(String name, Repository repository);
 

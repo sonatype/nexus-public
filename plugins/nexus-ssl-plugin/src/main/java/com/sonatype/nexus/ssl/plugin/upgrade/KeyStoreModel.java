@@ -20,7 +20,7 @@ package com.sonatype.nexus.ssl.plugin.upgrade;
  *
  * Upgrades should depend on the 'config' model and version at the time the upgrade was written.
  *
- * @since 3.next
+ * @since 3.13
  */
 public interface KeyStoreModel
 {

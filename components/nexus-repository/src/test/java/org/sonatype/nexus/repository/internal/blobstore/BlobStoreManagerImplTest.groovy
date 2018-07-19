@@ -73,7 +73,7 @@ class BlobStoreManagerImplTest
     underTest = newBlobStoreManager()
   }
 
-  private BlobStoreManagerImpl newBlobStoreManager(boolean provisionDefaults = false) {
+  private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
         databaseFreezeService, nodeAccess, provisionDefaults))
   }
@@ -111,6 +111,17 @@ class BlobStoreManagerImplTest
 
     verify(store).create(configurationArgumentCaptor.capture())
     assertThat(configurationArgumentCaptor.getValue().name, Matchers.is(DEFAULT_BLOBSTORE_NAME))
+  }
+
+  @Test
+  void 'Can skip creating default blobstore when non-clustered if provisionDefaults is false'() {
+    underTest = newBlobStoreManager(false)
+
+    when(nodeAccess.isClustered()).thenReturn(false)
+    when(store.list()).thenReturn(Lists.newArrayList())
+    underTest.doStart()
+
+    verify(store, times(0)).create(any(BlobStoreConfiguration.class))
   }
 
   @Test

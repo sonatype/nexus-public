@@ -12,14 +12,22 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,6 +64,62 @@ public class RepositoryPermissionChecker
 
   private boolean userHasRepositoryViewPermissionTo(final String action, final Repository repository) {
     return securityHelper.anyPermitted(new RepositoryViewPermission(repository, action));
+  }
+
+  /**
+   * @since 3.13
+   */
+  public List<Repository> userCanBrowseRepositories(final Repository... repositories) {
+    if (repositories.length == 0) {
+      return Collections.emptyList();
+    }
+    Subject subject = securityHelper.subject();
+    Permission[] permissions = Arrays.stream(repositories).map(r -> new RepositoryViewPermission(r, BROWSE))
+        .toArray(Permission[]::new);
+    boolean[] results = securityHelper.isPermitted(subject, permissions);
+
+    List<Repository> permittedRepositories = new ArrayList<>();
+    List<Repository> filteredRepositories = new ArrayList<>();
+
+    for (int i = 0; i < results.length; i++) {
+      if (results[i]) {
+        permittedRepositories.add(repositories[i]);
+      }
+      else {
+        filteredRepositories.add(repositories[i]);
+      }
+    }
+
+    if (!filteredRepositories.isEmpty()) {
+      permittedRepositories.addAll(subjectHasAnyContentSelectorAccessTo(subject, filteredRepositories));
+    }
+
+    return permittedRepositories;
+  }
+
+  private List<Repository> subjectHasAnyContentSelectorAccessTo(final Subject subject,
+                                                                final List<Repository> repositories)
+  {
+    List<String> repositoryNames = repositories.stream().map(r -> r.getName()).collect(Collectors.toList());
+    List<String> formats = repositories.stream().map(r -> r.getFormat().getValue()).distinct()
+        .collect(Collectors.toList());
+    List<SelectorConfiguration> selectors = selectorManager.browseActive(repositoryNames, formats);
+
+    if (selectors.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Repository> permittedRepositories = new ArrayList<>();
+    for (Repository repository : repositories) {
+      Permission[] permissions = selectors.stream()
+          .map(s -> new RepositoryContentSelectorPermission(s, repository, singletonList(BROWSE)))
+          .toArray(Permission[]::new);
+      if (securityHelper.anyPermitted(subject, permissions)) {
+        permittedRepositories.add(repository);
+      }
+    }
+
+    return permittedRepositories;
   }
 
   private boolean userHasAnyContentSelectorAccessTo(final Repository repository) {

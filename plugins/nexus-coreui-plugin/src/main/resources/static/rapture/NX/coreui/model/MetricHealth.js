@@ -15,7 +15,7 @@
 /**
  * Metric Health model.
  *
- * @since 3.next
+ * @since 3.13
  */
 Ext.define('NX.coreui.model.MetricHealth', {
   extend: 'Ext.data.Model',

@@ -184,7 +184,7 @@ public class UpgradeManager
   /**
    * Returns the model name for the given checkpoint.
    *
-   * @since 3.next
+   * @since 3.13
    */
   public String getModel(final Checkpoint checkpoint) {
     return checkpointIndex.inverse().get(checkpoint);
@@ -193,7 +193,7 @@ public class UpgradeManager
   /**
    * Returns the declared metadata for the given upgrade.
    *
-   * @since 3.next
+   * @since 3.13
    */
   public Upgrades getMetadata(final Upgrade upgrade) {
     return upgradeIndex.inverse().get(upgrade);

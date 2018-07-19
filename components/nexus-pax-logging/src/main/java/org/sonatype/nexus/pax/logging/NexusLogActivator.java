@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Adds logging statement immediately after activating pax-logging.
  *
- * @since 3.next
+ * @since 3.13
  */
 public class NexusLogActivator
     extends org.ops4j.pax.logging.logback.internal.Activator

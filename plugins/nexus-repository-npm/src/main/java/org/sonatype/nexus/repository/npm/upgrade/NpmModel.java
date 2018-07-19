@@ -21,7 +21,7 @@ package org.sonatype.nexus.repository.npm.upgrade;
  *
  * Upgrades should depend on the 'component' model and version at the time the upgrade was written.
  *
- * @since 3.next
+ * @since 3.13
  */
 public interface NpmModel
 {

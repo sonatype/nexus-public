@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when
  * Tests for {@link NegativeCacheHandler}.
  */
 class NegativeCacheHandlerTest
-extends TestSupport
+    extends TestSupport
 {
   private NegativeCacheHandler underTest
   private NegativeCacheFacet facet
@@ -61,14 +61,14 @@ extends TestSupport
 
   /**
    * Given:
-   * - request is not an GET request
+   * - request is not a GET/HEAD request
    * Then:
    * - context is asked to proceed
    * - response from context is passed on
    * - no other actions (checked by no interactions with repository)
    */
   @Test
-  void 'directly proceed on non GET requests'() {
+  void 'directly proceed on non GET/HEAD requests'() {
     when(request.getAction()).thenReturn(HttpMethods.PUT)
     Response contextResponse = HttpResponses.ok()
     when(context.proceed()).thenReturn(contextResponse)
@@ -81,23 +81,27 @@ extends TestSupport
   /**
    * Given:
    * - no cached key present
-   * - a 404 response from context
+   * - a 404 response from context for GET
    * Then:
-   * - context is asked to proceed
-   * - response from context is passed on
-   * - key is put in cache
-   * - key is not invalidated
+   * - 404 response is cached
    */
   @Test
-  void '404 response gets cached'() {
-    Response contextResponse = HttpResponses.notFound('404')
-    when(context.proceed()).thenReturn(contextResponse)
-    when(facet.get(key)).thenReturn(null)
-    Response response = underTest.handle(context)
-    assert response == contextResponse
-    verify(context).proceed()
-    verify(facet).put(key, response.status)
-    verify(facet, never()).invalidate(any(NegativeCacheKey))
+  void '404 response gets cached for GET'() {
+    when(request.getAction()).thenReturn(HttpMethods.GET)
+    verify404Cached()
+  }
+
+  /**
+   * Given:
+   * - no cached key present
+   * - a 404 response from context for HEAD
+   * Then:
+   * - 404 response is cached
+   */
+  @Test
+  void '404 response gets cached for HEAD'() {
+    when(request.getAction()).thenReturn(HttpMethods.HEAD)
+    verify404Cached()
   }
 
   /**
@@ -164,4 +168,21 @@ extends TestSupport
     verify(facet).invalidate(any(NegativeCacheKey))
   }
 
+  /**
+   * Verify 404 response is cached:
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - key is put in cache
+   * - key is not invalidated
+   */
+  void verify404Cached() {
+    Response contextResponse = HttpResponses.notFound('404')
+    when(context.proceed()).thenReturn(contextResponse)
+    when(facet.get(key)).thenReturn(null)
+    Response response = underTest.handle(context)
+    assert response == contextResponse
+    verify(context).proceed()
+    verify(facet).put(key, response.status)
+    verify(facet, never()).invalidate(any(NegativeCacheKey))
+  }
 }

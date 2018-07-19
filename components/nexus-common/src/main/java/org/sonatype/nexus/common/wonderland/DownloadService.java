@@ -27,7 +27,7 @@ public interface DownloadService
 {
 
   /**
-   * @since 3.next
+   * @since 3.13
    */
   class Download {
 

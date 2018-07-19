@@ -300,7 +300,7 @@ class ComponentComponent
     finally {
       storageTx.close()
     }
-    ensurePermissions(repository, assets, BreadActions.READ)
+    ensurePermissions(repository, assets, BreadActions.BROWSE)
     return COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO
   }
 
@@ -323,7 +323,7 @@ class ComponentComponent
       throw new WebApplicationException(Status.NOT_FOUND)
     }
 
-    ensurePermissions(repository, Collections.singletonList(asset), BreadActions.READ)
+    ensurePermissions(repository, Collections.singletonList(asset), BreadActions.BROWSE)
     if (asset) {
       def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
       def lastThirty = browseService.getLastThirtyDays(asset)

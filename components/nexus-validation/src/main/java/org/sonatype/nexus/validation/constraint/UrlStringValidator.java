@@ -23,7 +23,7 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 /**
  * Validates a url.
  *
- * @since 3.next
+ * @since 3.13
  */
 public class UrlStringValidator
     extends ConstraintValidatorSupport<Url, String>

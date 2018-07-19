@@ -66,7 +66,7 @@ class RepositoryComponentTest
   @Test
   void checkUserPermissionsOnFilter() {
     underTest.filter(new StoreLoadParameters(filter: []))
-    verify(repositoryPermissionChecker).userCanBrowseRepository(repository)
+    verify(repositoryPermissionChecker).userCanBrowseRepositories([repository] as Repository[])
   }
 
   Repository repository() {
