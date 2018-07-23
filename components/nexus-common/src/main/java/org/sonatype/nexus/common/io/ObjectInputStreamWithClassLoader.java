@@ -36,7 +36,8 @@ public class ObjectInputStreamWithClassLoader
     this.loader = checkNotNull(loader);
   }
 
-  protected Class resolveClass(final ObjectStreamClass classDesc)
+  @Override
+  protected Class<?> resolveClass(final ObjectStreamClass classDesc)
       throws IOException, ClassNotFoundException
   {
     return Class.forName(classDesc.getName(), false, loader);

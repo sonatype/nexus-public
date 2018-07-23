@@ -173,7 +173,7 @@ class ComponentComponent
       jexlExpressionValidator.validate(expression)
     }
     else if (type == CselSelector.TYPE) {
-      cselExpressionValidator.validate(expression);
+      cselExpressionValidator.validate(expression)
     }
     List<Repository> selectedRepositories = getPreviewRepositories(repositorySelector)
     if (!selectedRepositories.size()) {
@@ -251,7 +251,7 @@ class ComponentComponent
       maintenanceService.deleteAsset(repository, asset)
     }
   }
-  
+
   /**
    * Retrieve a component by its entity id.
    *

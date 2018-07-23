@@ -79,6 +79,12 @@ public class SettingsCapabilityDescriptor
     )
     String sessionTimeoutHelp();
 
+    @DefaultMessage("Request timeout")
+    String requestTimeoutLabel();
+
+    @DefaultMessage("Period of time to keep the connection alive when awaiting a response from the server (seconds)")
+    String requestTimeoutHelp();
+
     @DefaultMessage("Title")
     String titleLabel();
 
@@ -121,7 +127,14 @@ public class SettingsCapabilityDescriptor
             messages.sessionTimeoutLabel(),
             messages.sessionTimeoutHelp(),
             FormField.MANDATORY
-        ).withInitialValue(RaptureSettings.DEFAULT_SESSION_TIMEOUT)
+        ).withInitialValue(RaptureSettings.DEFAULT_SESSION_TIMEOUT),
+        new NumberTextFormField(
+            SettingsCapabilityConfiguration.REQUEST_TIMEOUT,
+            messages.requestTimeoutLabel(),
+            messages.requestTimeoutHelp(),
+            FormField.MANDATORY
+        ).withInitialValue(RaptureSettings.DEFAULT_REQUEST_TIMEOUT)
+            .withMinimumValue(RaptureSettings.DEFAULT_REQUEST_TIMEOUT)
     );
   }
 

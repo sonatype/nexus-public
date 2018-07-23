@@ -70,8 +70,8 @@ class DefaultCapabilityFactoryRegistry
   @Override
   public CapabilityFactoryRegistry register(final CapabilityType type, final CapabilityFactory factory) {
     checkNotNull(factory);
-    checkArgument(!factories.containsKey(type), "Factory already registered for %s", type);
-    checkArgument(!dynamicFactories.containsKey(type), "Factory already registered for %s", type);
+    checkArgument(!factories.containsKey(type.toString()), "Factory already registered for %s", type);
+    checkArgument(!dynamicFactories.containsKey(type.toString()), "Factory already registered for %s", type);
 
     dynamicFactories.put(type.toString(), factory);
     log.debug("Added {} -> {}", type, factory);
@@ -82,7 +82,7 @@ class DefaultCapabilityFactoryRegistry
   @Override
   public CapabilityFactoryRegistry unregister(final CapabilityType type) {
     if (type != null) {
-      final CapabilityFactory factory = dynamicFactories.remove(type);
+      final CapabilityFactory factory = dynamicFactories.remove(type.toString());
       log.debug("Removed {} -> {}", type, factory);
     }
 

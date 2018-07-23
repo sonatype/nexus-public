@@ -137,11 +137,11 @@ public class AuthenticatingRealmImplTest
     assertThat(passwordService.passwordsMatch(password, updatedUser.getPassword()), is(true));
   }
 
-  private void buildTestAuthenticationConfig(String status) throws Exception {
+  private void buildTestAuthenticationConfig(final String status) throws Exception {
     buildTestAuthenticationConfig(status, this.hashPassword("password"));
   }
 
-  private void buildTestAuthenticationConfig(String status, String hash) throws Exception {
+  private void buildTestAuthenticationConfig(final String status, final String hash) throws Exception {
     CPrivilege priv = new CPrivilege();
     priv.setId("priv");
     priv.setName("name");
@@ -174,15 +174,16 @@ public class AuthenticatingRealmImplTest
     configurationManager.createUser(testUser, roles);
   }
 
-  private String hashPassword(String password) {
+  private String hashPassword(final String password) {
     return passwordService.encryptPassword(password);
   }
 
-  private String legacyHashPassword(String password) {
+  @SuppressWarnings("deprecation")
+  private String legacyHashPassword(final String password) {
     return Hashing.sha1().hashString(password, StandardCharsets.UTF_8).toString();
   }
 
-  private void buildLegacyTestAuthenticationConfig(String password) throws Exception {
+  private void buildLegacyTestAuthenticationConfig(final String password) throws Exception {
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE, legacyHashPassword(password));
   }
 }

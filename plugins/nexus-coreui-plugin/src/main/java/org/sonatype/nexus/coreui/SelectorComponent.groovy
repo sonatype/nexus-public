@@ -88,7 +88,7 @@ class SelectorComponent
       jexlExpressionValidator.validate(selectorXO.expression)
     }
     else if (selectorXO.type == CselSelector.TYPE) {
-      cselExpressionValidator.validate(selectorXO.expression);
+      cselExpressionValidator.validate(selectorXO.expression)
     }
     def configuration = new SelectorConfiguration(
         name: selectorXO.name,
@@ -113,7 +113,7 @@ class SelectorComponent
       jexlExpressionValidator.validate(selectorXO.expression)
     }
     else if (selectorXO.type == CselSelector.TYPE) {
-      cselExpressionValidator.validate(selectorXO.expression);
+      cselExpressionValidator.validate(selectorXO.expression)
     }
     selectorManager.update(selectorManager.read(new DetachedEntityId(selectorXO.id)).with {
       description = selectorXO.description

@@ -136,16 +136,16 @@ may be appropriate.
   def 'Extract metadata from archive #filename '() {
     expect:
       getClass().getResourceAsStream(filename).withCloseable { input ->
-        PyPiInfoUtils.extractMetadata(filename, input)
+        PyPiInfoUtils.extractMetadata(input)
       } == attributes
     where:
       filename                            | attributes
-      'sample-1.2.0.tar.bz2'              | METADATA_V1_1
-      'sample-1.2.0.tar.gz'               | METADATA_V1_1
-      'sample-1.2.0.zip'                  | METADATA_V1_1
-      'sample-1.2.0.tar.Z'                | METADATA_V1_1
-      'sample-1.2.0-py2.7.egg'            | METADATA_V1_1
-      'sample-1.2.0-py2.py3-none-any.whl' | METADATA_V2_0
+      'sample-1.2.0.tar.bz2'              | METADATA_V1_1 + [archive_type: 'tar.bzip2']
+      'sample-1.2.0.tar.gz'               | METADATA_V1_1 + [archive_type: 'tar.gz']
+      'sample-1.2.0.zip'                  | METADATA_V1_1 + [archive_type: 'zip']
+      'sample-1.2.0.tar.Z'                | METADATA_V1_1 + [archive_type: 'tar.z']
+      'sample-1.2.0-py2.7.egg'            | METADATA_V1_1 + [archive_type: 'zip']
+      'sample-1.2.0-py2.py3-none-any.whl' | METADATA_V2_0 + [archive_type: 'zip']
   }
 
   def 'Properly parse metadata lines containing non-ASCII characters'() {

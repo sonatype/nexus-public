@@ -58,7 +58,8 @@ public class PartialPayloadTest
   }
 
   private byte[] partial(final BytesPayload bytes, final Range<Long> closed) throws IOException {
-    final PartialPayload partial = new PartialPayload(bytes, closed);
-    return ByteStreams.toByteArray(partial.openInputStream());
+    try (final PartialPayload partial = new PartialPayload(bytes, closed)) {
+      return ByteStreams.toByteArray(partial.openInputStream());
+    }
   }
 }

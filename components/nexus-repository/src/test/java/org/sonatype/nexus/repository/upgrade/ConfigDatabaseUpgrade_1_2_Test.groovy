@@ -87,10 +87,10 @@ class ConfigDatabaseUpgrade_1_2_Test
   ODocument duplicateCustomBlobStore
 
   @Mock
-  ODocument repository_dupeDefaultBlobStore;
+  ODocument repository_dupeDefaultBlobStore
 
   @Mock
-  Configuration configuration_dupeDefaultBlobStore;
+  Configuration configuration_dupeDefaultBlobStore
 
   Map defaultDupeStorageMap = [blobStoreName: "deFAULT"]
 
@@ -113,19 +113,19 @@ class ConfigDatabaseUpgrade_1_2_Test
 
 
   @Mock
-  ODocument compressDuplicateJobDoc;
+  ODocument compressDuplicateJobDoc
 
   @Mock
-  ODocument nonDuplicateJobDoc;
+  ODocument nonDuplicateJobDoc
 
   @Mock
-  ODocument someOtherJobDoc;
+  ODocument someOtherJobDoc
 
   @Mock
-  ORecordIteratorClass oRecordIteratorClass;
+  ORecordIteratorClass oRecordIteratorClass
 
   @Mock
-  ORecordIteratorClass oRecordIteratorClassBlobStores;
+  ORecordIteratorClass oRecordIteratorClassBlobStores
 
   ConfigDatabaseUpgrade_1_2 underTest
 
@@ -170,7 +170,7 @@ class ConfigDatabaseUpgrade_1_2_Test
 
     def results = [defaultBlobStore, duplicateDefaultBlobStore, uniqueBlobStore, customBlobStore,
                    duplicateCustomBlobStore]
-    when(documentTx.browseClass("repository_blobstore")).thenReturn(oRecordIteratorClassBlobStores);
+    when(documentTx.browseClass("repository_blobstore")).thenReturn(oRecordIteratorClassBlobStores)
     when(oRecordIteratorClassBlobStores.spliterator()).thenReturn(results.spliterator())
 
     def repositories = [repository_dupeCustomBlobStore, repository_dupeDefaultBlobStore, repository_noDupeBlobStore]
@@ -205,7 +205,7 @@ class ConfigDatabaseUpgrade_1_2_Test
   @Test
   public void testUpdateBlobStoreJobs() {
     when(documentTx.browseClass("quartz_job_detail")).thenReturn(oRecordIteratorClass)
-    def records = [compressDuplicateJobDoc, nonDuplicateJobDoc, someOtherJobDoc];
+    def records = [compressDuplicateJobDoc, nonDuplicateJobDoc, someOtherJobDoc]
     when(oRecordIteratorClass.spliterator()).thenReturn(Spliterators.spliteratorUnknownSize(records.iterator(), 0))
 
     def duplicateValueData = [jobDataMap: [blobstoreName: "DEFAULT"]]

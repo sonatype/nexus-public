@@ -69,7 +69,8 @@ Ext.define('NX.coreui.view.ldap.LdapServerUserAndGroupLoginCredentials', {
             name: 'username',
             itemId: 'username',
             fieldLabel: NX.I18n.get('Ldap_LdapServerUserAndGroupLoginCredentials_Username_FieldLabel'),
-            allowBlank: false
+            allowBlank: false,
+            validateOnBlur: false // allow cancel to be clicked w/o validating this to be non-blank
           },
           {
             name: 'password',

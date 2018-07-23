@@ -36,7 +36,6 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createAsset;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
 public class AssetStoreImplTest
     extends TestSupport
 {
@@ -114,7 +113,6 @@ public class AssetStoreImplTest
     OIndexCursor cursor = underTest.getIndex(AssetEntityAdapter.I_BUCKET_COMPONENT_NAME).cursor();
 
     List<Entry<OCompositeKey, EntityId>> assetPage1 = underTest.getNextPage(cursor, limit);
-    List<Entry<OCompositeKey, EntityId>> assetPage2 = underTest.getNextPage(cursor, limit);
 
     assertThat(assetPage1.size(), is(1));
     assertThat(assetPage1.get(0).getValue(), is(EntityHelper.id(asset1)));

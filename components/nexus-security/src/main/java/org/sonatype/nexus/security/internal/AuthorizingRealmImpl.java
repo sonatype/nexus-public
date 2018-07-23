@@ -28,10 +28,11 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.credential.Sha1CredentialsMatcher;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.crypto.hash.Sha1Hash;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.realm.Realm;
@@ -70,24 +71,26 @@ public class AuthorizingRealmImpl
     this.realmSecurityManager = realmSecurityManager;
     this.userManager = userManager;
     this.userManagerMap = userManagerMap;
-    setCredentialsMatcher(new Sha1CredentialsMatcher());
+    HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+    credentialsMatcher.setHashAlgorithmName(Sha1Hash.ALGORITHM_NAME);
+    setCredentialsMatcher(credentialsMatcher);
     setName(NAME);
     setAuthenticationCachingEnabled(false); // we authz only, no authc done by this realm
     setAuthorizationCachingEnabled(true);
   }
 
   @Override
-  public boolean supports(AuthenticationToken token) {
+  public boolean supports(final AuthenticationToken token) {
     return false;
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
+  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) {
     return null;
   }
 
   @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+  protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
     if (principals == null) {
       throw new AuthorizationException("Cannot authorize with no principals.");
     }
@@ -153,7 +156,7 @@ public class AuthorizingRealmImpl
     return new SimpleAuthorizationInfo(roles);
   }
 
-  private void cleanUpRealmList(Set<String> realmNames) {
+  private void cleanUpRealmList(final Set<String> realmNames) {
     for (UserManager userManager : this.userManagerMap.values()) {
       String authRealmName = userManager.getAuthenticationRealmName();
       if (authRealmName != null && realmNames.contains(authRealmName)) {

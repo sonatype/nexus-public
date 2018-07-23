@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.formfields;
 
-import java.util.Map;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.junit.Before;
@@ -21,6 +19,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 public class RepositoryComboboxTest
     extends TestSupport
@@ -37,7 +36,7 @@ public class RepositoryComboboxTest
   public void includeAnEntryForAllRepositories() {
     underTest.includeAnEntryForAllRepositories();
 
-    assertThat(underTest.getStoreFilters(), is((Map) null));
+    assertThat(underTest.getStoreFilters(), nullValue());
     assertThat(underTest.getStoreApi(), is("coreui_Repository.readReferencesAddingEntryForAll"));
   }
 

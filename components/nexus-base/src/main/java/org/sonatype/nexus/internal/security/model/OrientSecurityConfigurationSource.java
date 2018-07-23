@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.valueOf;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;

@@ -33,7 +33,6 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
@@ -87,25 +86,6 @@ public class ValidatingComponentUploadTest
     when(componentUpload.getAssetUploads()).thenReturn(Collections.singletonList(assetUpload));
 
     expectExceptionOnValidate(componentUpload, "Missing required component field 'Bar'");
-  }
-
-  @Test
-  public void testValidate_missingFilename() {
-    when(uploadDefinition.getAssetFields()).thenReturn(
-        Collections.singletonList(new UploadFieldDefinition("foo", false, STRING)));
-    when(uploadDefinition.getComponentFields()).thenReturn(
-        Collections.singletonList(new UploadFieldDefinition("bar", false, STRING)));
-
-    when(payload.getName()).thenReturn(null);
-    when(assetUpload.getPayload()).thenReturn(payload);
-    when(assetUpload.getFields()).thenReturn(singletonMap("foo", "fooValue"));
-    when(assetUpload.getField("foo")).thenReturn("fooValue");
-
-    when(componentUpload.getAssetUploads()).thenReturn(Collections.singletonList(assetUpload));
-    when(componentUpload.getFields()).thenReturn(singletonMap("bar", "barValue"));
-    when(componentUpload.getField("bar")).thenReturn("barValue");
-
-    expectExceptionOnValidate(componentUpload, "Missing filename on asset '1'");
   }
 
   @Test

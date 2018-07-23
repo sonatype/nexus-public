@@ -206,7 +206,7 @@ class NpmHostedRecipe
         .handler(NpmHandlers.deleteTarball)
         .create())
 
-    createUserRoutes(builder);
+    createUserRoutes(builder)
 
     builder.defaultHandlers(HttpHandlers.badRequest())
 

@@ -34,11 +34,9 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -176,6 +174,7 @@ public class RestoreMetadataTaskTest
     verify(fileBlobStore, never()).undelete(any(), any(), any(), eq(false));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testRestoreMetadata_BlobIsMarkedAsDeleted() throws Exception {
     configuration.setBoolean(RESTORE_BLOBS, true);

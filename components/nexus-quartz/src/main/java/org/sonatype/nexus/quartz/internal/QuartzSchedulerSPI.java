@@ -85,7 +85,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
-import static java.util.Comparator.comparing;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
@@ -227,9 +226,13 @@ public class QuartzSchedulerSPI
           setLastRunState(taskConfig, EndState.INTERRUPTED, latestFire, estimatedDuration);
 
           log.warn("Updating lastRunState to interrupted for {} taskConfig: {}", jobDetail.getKey(), taskConfig);
-
-          updateJobData(jobDetail, taskConfig);
-          scheduler.addJob(jobDetail, true, true);
+          try {
+            updateJobData(jobDetail, taskConfig);
+            scheduler.addJob(jobDetail, true, true);
+          }
+          catch (RuntimeException e) {
+            log.warn("Problem updating lastRunState to interrupted for {}", jobDetail.getKey(), e);
+          }
         }
       }
     }

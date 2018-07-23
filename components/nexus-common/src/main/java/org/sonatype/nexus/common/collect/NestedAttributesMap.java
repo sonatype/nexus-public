@@ -108,6 +108,7 @@ public class NestedAttributesMap
   /**
    * Returns nested children attributes for given name.
    */
+  @SuppressWarnings("unchecked")
   public NestedAttributesMap child(final String name) {
     checkNotNull(name);
 

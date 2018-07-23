@@ -102,7 +102,7 @@ class PyPiSearchUtilsTest
       String response = PyPiSearchUtils.buildSearchResponse([
           new PyPiSearchResult('foo', '1.0.1', 'Test summary for the search result.'),
           new PyPiSearchResult('foo', '1.0.3a', 'Test summary for the search result.')
-      ]);
+      ])
       GPathResult result = new XmlSlurper().parseText(response)
     then: 'the output should contain the expected XML content'
       result.name() == 'methodResponse'

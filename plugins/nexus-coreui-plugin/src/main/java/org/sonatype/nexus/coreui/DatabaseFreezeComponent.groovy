@@ -44,7 +44,7 @@ class DatabaseFreezeComponent
 {
 
   @Inject
-  DatabaseFreezeService databaseFreezeService;
+  DatabaseFreezeService databaseFreezeService
 
   @Inject
   SecuritySystem securitySystem

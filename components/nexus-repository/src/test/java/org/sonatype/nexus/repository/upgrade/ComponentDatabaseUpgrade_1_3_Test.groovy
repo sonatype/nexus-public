@@ -127,7 +127,7 @@ class ComponentDatabaseUpgrade_1_3_Test
   private void populateComponentDatabase(boolean includeLastAccessedField = true) {
     componentDatabase.instance.connect().withCloseable { db ->
 
-      OSchema schema = db.getMetadata().getSchema();
+      OSchema schema = db.getMetadata().getSchema()
       OClass assetType = schema.createClass(ASSET_CLASS)
 
       assetType.createProperty(P_NAME, OType.STRING)

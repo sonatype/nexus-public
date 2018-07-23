@@ -146,6 +146,11 @@ public final class PyPiAttributes
    */
   public static final String P_GENERATOR = "generator";
 
+  /**
+   * A stored copy of the detected archive type.
+   */
+  public static final String P_ARCHIVE_TYPE = "archive_type";
+
   private PyPiAttributes() {
     // empty
   }

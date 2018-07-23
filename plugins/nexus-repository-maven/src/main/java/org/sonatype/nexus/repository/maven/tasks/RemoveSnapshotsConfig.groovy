@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven.tasks
 
 import groovy.transform.Immutable
-import groovy.transform.ToString;
+import groovy.transform.ToString
 
 /**
  * Configuration for {@link org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsTask}
@@ -26,20 +26,20 @@ class RemoveSnapshotsConfig
   /**
    * The minimum number of snapshots to keep.
    */
-  int minimumRetained;
+  int minimumRetained
 
   /**
    * Snapshots older than this will be candidates for removal.
    */
-  int snapshotRetentionDays;
+  int snapshotRetentionDays
 
   /**
    * Whether or not to delete snapshots if a release version of the same artifact is available.
    */
-  boolean removeIfReleased;
+  boolean removeIfReleased
 
   /**
    * An optional period to keep snapshots around, even if a release version of the same artifact is available.
    */
-  int gracePeriod;
+  int gracePeriod
 }

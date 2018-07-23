@@ -10,16 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest;
+package org.sonatype.nexus.blobstore.s3.internal;
 
-import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
+import org.sonatype.nexus.common.log.LoggerLevel;
 
 /**
- * Extension point interface which provides a mechanism for contributing an {@link UploadFieldDefinition}
+ * Configures S3 loggers.
  *
- * @since 3.10
+ * @since 3.next
  */
-public interface UploadDefinitionExtension
+@Singleton
+@Named
+public class S3LogConfigurationCustomizer
+    implements LogConfigurationCustomizer
 {
-  UploadFieldDefinition contribute();
+
+  @Override
+  public void customize(final Configuration configuration) {
+    // limit noisy S3 logger
+    configuration.setLoggerLevel("com.amazonaws.services.s3.internal.S3AbortableInputStream", LoggerLevel.ERROR);
+  }
 }

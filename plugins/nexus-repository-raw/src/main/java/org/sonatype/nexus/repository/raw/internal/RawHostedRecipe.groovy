@@ -126,7 +126,7 @@ class RawHostedRecipe
     repository.attach(storageFacet.get())
     repository.attach(attributesFacet.get())
     repository.attach(componentMaintenance.get())
-    repository.attach(searchFacet.get());
+    repository.attach(searchFacet.get())
   }
 
   /**

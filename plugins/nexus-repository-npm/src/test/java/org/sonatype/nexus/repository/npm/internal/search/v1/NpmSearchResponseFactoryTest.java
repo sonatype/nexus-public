@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.npm.internal.search.v1;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchHitExtractor;

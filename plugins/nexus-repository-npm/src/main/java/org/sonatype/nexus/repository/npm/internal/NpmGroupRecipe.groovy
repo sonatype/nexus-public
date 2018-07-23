@@ -115,7 +115,7 @@ class NpmGroupRecipe
         .handler(tarballHandler)
         .create())
 
-    createUserRoutes(builder);
+    createUserRoutes(builder)
 
     builder.defaultHandlers(HttpHandlers.badRequest())
 

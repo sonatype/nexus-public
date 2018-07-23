@@ -169,7 +169,7 @@ class ApiKeyStoreImplTest
     def key = underTest.createApiKey('foo', principalA)
     def key2 = underTest.createApiKey('foo', principalA)
 
-    assertThat(key2, equalTo(key));
+    assertThat(key2, equalTo(key))
   }
 
   @Test
@@ -217,4 +217,3 @@ class ApiKeyStoreImplTest
     return new SimplePrincipalCollection(name, "foo")
   }
 }
-

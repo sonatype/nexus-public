@@ -38,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.group.GroupFacetImpl.CONFIG_KEY;
@@ -120,8 +121,8 @@ public class GroupFacetImplTest
 
   private ConstraintViolationFactory makeConstraintViolationFactory() {
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
-    when(constraintViolationFactory.createViolation(anyString(), anyString()))
-        .thenReturn(mock(ConstraintViolation.class));
+    doReturn(mock(ConstraintViolation.class))
+        .when(constraintViolationFactory).createViolation(anyString(), anyString());
     return constraintViolationFactory;
   }
 

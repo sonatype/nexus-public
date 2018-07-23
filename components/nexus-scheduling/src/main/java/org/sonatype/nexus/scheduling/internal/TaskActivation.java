@@ -20,8 +20,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -84,7 +84,7 @@ public class TaskActivation
   }
 
   private boolean maybeCancel(final TaskInfo taskInfo) {
-    Future future = taskInfo.getCurrentState().getFuture();
+    Future<?> future = taskInfo.getCurrentState().getFuture();
     return future == null || future.cancel(false);
   }
 }

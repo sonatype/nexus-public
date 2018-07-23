@@ -105,7 +105,7 @@ class AttributesMapTest
   void 'get or create'() {
     assert !underTest.contains(GetOrCreateAttribute.class)
     def value = underTest.getOrCreate(GetOrCreateAttribute.class)
-    assert value != null;
+    assert value != null
     assert underTest.contains(GetOrCreateAttribute.class)
   }
 

@@ -17,7 +17,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -57,6 +56,7 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
@@ -77,6 +77,7 @@ import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -264,6 +265,7 @@ public class SearchServiceImpl
     }
   }
 
+  @Override
   public void rebuildIndex(final Repository repository) {
     checkNotNull(repository);
     String indexName = repositoryNameMapping.remove(repository.getName());
@@ -402,6 +404,19 @@ public class SearchServiceImpl
   @Override
   public Iterable<SearchHit> browseUnrestrictedInRepos(final QueryBuilder query,
                                                        @Nullable final Collection<String> repoNames) {
+    return browse(query, repoNames, false, true);
+  }
+
+  @Override
+  public Iterable<SearchHit> browse(final QueryBuilder query) {
+    return browse(query, null, true, false);
+  }
+
+  private Iterable<SearchHit> browse(final QueryBuilder query,
+                                     @Nullable final Collection<String> repoNames,
+                                     final boolean skipContentPermForIndexes,
+                                     final boolean skipContentPermForSearch)
+  {
     checkNotNull(query);
     try {
       if (!indicesAdminClient().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
@@ -410,66 +425,13 @@ public class SearchServiceImpl
     }
     catch (IndexNotFoundException e) {
       // no repositories were created yet, so there is no point in searching
-      return null;
+      return emptyList();
     }
-    final String[] searchableIndexes = getSearchableIndexes(false, repoNames);
+    final String[] searchableIndexes = getSearchableIndexes(skipContentPermForIndexes, repoNames);
     if (searchableIndexes.length == 0) {
-      return Collections.emptyList();
+      return emptyList();
     }
-    return new Iterable<SearchHit>()
-    {
-      @Override
-      public Iterator<SearchHit> iterator() {
-        return new Iterator<SearchHit>()
-        {
-          private SearchResponse response;
-
-          private Iterator<SearchHit> iterator;
-
-          private boolean noMoreHits = false;
-
-          @Override
-          public boolean hasNext() {
-            if (noMoreHits) {
-              return false;
-            }
-            if (response == null) {
-              response = client.get().prepareSearch(searchableIndexes)
-                  .setTypes(TYPE)
-                  .setQuery(query)
-                  .setScroll(new TimeValue(1, TimeUnit.MINUTES))
-                  .setSize(100)
-                  .execute()
-                  .actionGet();
-              iterator = Arrays.asList(response.getHits().getHits()).iterator();
-              noMoreHits = !iterator.hasNext();
-            }
-            else if (!iterator.hasNext()) {
-              response = client.get().prepareSearchScroll(response.getScrollId())
-                  .setScroll(new TimeValue(1, TimeUnit.MINUTES))
-                  .execute()
-                  .actionGet();
-              iterator = Arrays.asList(response.getHits().getHits()).iterator();
-              noMoreHits = !iterator.hasNext();
-            }
-            return iterator.hasNext();
-          }
-
-          @Override
-          public SearchHit next() {
-            if (!hasNext()) {
-              throw new NoSuchElementException();
-            }
-            return iterator.next();
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
-    };
+    return () -> new SearchHitIterator(query, searchableIndexes, skipContentPermForSearch);
   }
 
   @Override
@@ -608,7 +570,7 @@ public class SearchServiceImpl
     return response.getHits().totalHits();
   }
 
-  private boolean validateQuery(QueryBuilder query) {
+  private boolean validateQuery(final QueryBuilder query) {
     checkNotNull(query);
     try {
       ValidateQueryResponse validateQueryResponse = indicesAdminClient().prepareValidateQuery()
@@ -657,7 +619,7 @@ public class SearchServiceImpl
         .toArray(String[]::new);
   }
 
-  private static boolean repoOnlineAndHasSearchFacet(Repository repo) {
+  private static boolean repoOnlineAndHasSearchFacet(final Repository repo) {
     return repo.optionalFacet(SearchFacet.class).isPresent() && repo.getConfiguration().isOnline();
   }
 
@@ -682,6 +644,80 @@ public class SearchServiceImpl
           log.error("Error writing elasticsearch profile result", e);
         }
       }
+    }
+  }
+
+  private class SearchHitIterator
+      implements Iterator<SearchHit>
+  {
+    private final QueryBuilder query;
+
+    private final String[] searchableIndexes;
+
+    private final boolean skipPermissionCheck;
+
+    private SearchResponse response;
+
+    private Iterator<SearchHit> iterator;
+
+    private boolean noMoreHits = false;
+
+    private SearchHitIterator(final QueryBuilder query,
+                              final String[] searchableIndexes, // NOSONAR
+                              final boolean skipPermissionCheck)
+    {
+      this.query = query;
+      this.searchableIndexes = searchableIndexes;
+      this.skipPermissionCheck = skipPermissionCheck;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (noMoreHits) {
+        return false;
+      }
+      if (response == null) {
+        SearchRequestBuilder builder = client.get().prepareSearch(searchableIndexes)
+            .setTypes(TYPE)
+            .setQuery(query)
+            .setScroll(new TimeValue(1, TimeUnit.MINUTES))
+            .setSize(100)
+            .setProfile(profile);
+        if (!skipPermissionCheck) {
+          try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
+            QueryBuilder permissionsFilter =
+                QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId()));
+            builder.setPostFilter(permissionsFilter);
+            response = builder.execute().actionGet();
+          }
+        }
+        else {
+          response = builder.execute().actionGet();
+        }
+        iterator = Arrays.asList(response.getHits().getHits()).iterator();
+        noMoreHits = !iterator.hasNext();
+      }
+      else if (!iterator.hasNext()) {
+        SearchScrollRequestBuilder builder = client.get().prepareSearchScroll(response.getScrollId())
+            .setScroll(new TimeValue(1, TimeUnit.MINUTES));
+        response = builder.execute().actionGet();
+        iterator = Arrays.asList(response.getHits().getHits()).iterator();
+        noMoreHits = !iterator.hasNext();
+      }
+      return iterator.hasNext();
+    }
+
+    @Override
+    public SearchHit next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      return iterator.next();
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }

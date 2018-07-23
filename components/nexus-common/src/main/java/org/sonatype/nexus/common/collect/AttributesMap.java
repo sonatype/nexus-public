@@ -266,7 +266,7 @@ public class AttributesMap
    * Remove attribute for given type-key.
    */
   @Nullable
-  public Object remove(final Class type) {
+  public Object remove(final Class<?> type) {
     return remove(AttributeKey.get(type));
   }
 
@@ -281,7 +281,7 @@ public class AttributesMap
   /**
    * Check if attributes contains given type-key.
    */
-  public boolean contains(final Class type) {
+  public boolean contains(final Class<?> type) {
     return contains(AttributeKey.get(type));
   }
 

@@ -198,7 +198,7 @@ public class PyPiProxyFacetImpl
     String filename = extractFilenameFromPath(path);
     Map<String, String> attributes;
     try (InputStream is = tempBlob.get()) {
-      attributes = extractMetadata(filename, is);
+      attributes = extractMetadata(is);
     }
 
     if (!attributes.containsKey(P_NAME)) {

@@ -19,11 +19,9 @@ import org.apache.maven.index.reader.Record;
 import org.junit.Test;
 
 import static org.apache.maven.index.reader.Record.ARTIFACT_ID;
-import static org.apache.maven.index.reader.Record.CLASSIFIER;
 import static org.apache.maven.index.reader.Record.FILE_EXTENSION;
 import static org.apache.maven.index.reader.Record.GROUP_ID;
 import static org.apache.maven.index.reader.Record.Type.ARTIFACT_ADD;
-import static org.apache.maven.index.reader.Record.VERSION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;

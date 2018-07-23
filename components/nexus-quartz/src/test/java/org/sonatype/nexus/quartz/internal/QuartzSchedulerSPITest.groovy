@@ -418,8 +418,8 @@ class QuartzSchedulerSPITest
     underTest.reattachJobListeners()
     underTest.@scheduler = old
 
-    verify(scheduler, shouldRun ? times(1) : never()).rescheduleJob(triggerEntity.value.getKey(), triggerEntity.value);
-    verify(scheduler, shouldRun ? times(1) : never()).resumeJob(jobDetailEntity.value.key);
+    verify(scheduler, shouldRun ? times(1) : never()).rescheduleJob(triggerEntity.value.getKey(), triggerEntity.value)
+    verify(scheduler, shouldRun ? times(1) : never()).resumeJob(jobDetailEntity.value.key)
   }
 
   private JobDetailEntity mockJobDetailEntity() {

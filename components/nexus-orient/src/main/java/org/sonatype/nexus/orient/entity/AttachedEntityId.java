@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class AttachedEntityId
     implements EntityId
 {
-  private final EntityAdapter owner;
+  private final EntityAdapter<?> owner;
 
   private final ORID identity;
 
@@ -38,7 +38,7 @@ public class AttachedEntityId
    */
   private volatile String encoded;
 
-  public AttachedEntityId(final EntityAdapter owner, final ORID identity) {
+  public AttachedEntityId(final EntityAdapter<?> owner, final ORID identity) {
     this.owner = checkNotNull(owner);
     this.identity = checkNotNull(identity);
   }

@@ -26,7 +26,7 @@ class EntityHelperTest
 {
   @Test
   void 'entity with-out metadata'() {
-    def entity = new AbstractEntity() {};
+    def entity = new AbstractEntity() {}
     assert !EntityHelper.hasMetadata(entity)
 
     try {
@@ -64,7 +64,7 @@ class EntityHelperTest
 
   @Test
   void 'entity with metadata'() {
-    def entity = new AbstractEntity() {};
+    def entity = new AbstractEntity() {}
     entity.setEntityMetadata(new DetachedEntityMetadata(new DetachedEntityId('a'), new DetachedEntityVersion('1')))
 
     assert EntityHelper.hasMetadata(entity)

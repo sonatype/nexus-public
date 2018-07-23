@@ -40,7 +40,7 @@ class HttpClientFacetImplConfigTest
 {
   private Validator validator
 
-  EventManager eventManager = mock(EventManager.class);
+  EventManager eventManager = mock(EventManager.class)
 
   @Before
   public void setUp() throws Exception {
@@ -72,7 +72,7 @@ class HttpClientFacetImplConfigTest
     def violation = violations.iterator().next()
     assert violation.propertyPath.toString() == 'authentication.username'
   }
-  
+
   @Test
   void 'required fields may not be whitespace only'() {
     def violations = validator.validate(new HttpClientFacetImpl.Config(
@@ -82,7 +82,7 @@ class HttpClientFacetImplConfigTest
         )
     ))
     assert violations.size() == 2
-    assert violations.collect { it.propertyPath.toString() }.sort() == ['authentication.password', 'authentication.username']  
+    assert violations.collect { it.propertyPath.toString() }.sort() == ['authentication.password', 'authentication.username']
   }
 
   @Test

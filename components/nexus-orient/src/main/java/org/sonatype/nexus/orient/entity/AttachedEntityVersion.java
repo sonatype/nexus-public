@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class AttachedEntityVersion
     implements EntityVersion
 {
-  private final EntityAdapter owner;
+  private final EntityAdapter<?> owner;
 
   private final int version;
 
@@ -38,7 +38,7 @@ public class AttachedEntityVersion
    */
   private volatile String encoded;
 
-  public AttachedEntityVersion(final EntityAdapter owner, final int version) {
+  public AttachedEntityVersion(final EntityAdapter<?> owner, final int version) {
     this.owner = checkNotNull(owner);
     this.version = version;
   }

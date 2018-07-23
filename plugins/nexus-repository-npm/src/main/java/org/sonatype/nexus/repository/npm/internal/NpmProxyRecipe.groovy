@@ -171,7 +171,7 @@ class NpmProxyRecipe
         .handler(proxyHandler)
         .create())
 
-    createUserRoutes(builder);
+    createUserRoutes(builder)
 
     builder.defaultHandlers(HttpHandlers.notFound())
 

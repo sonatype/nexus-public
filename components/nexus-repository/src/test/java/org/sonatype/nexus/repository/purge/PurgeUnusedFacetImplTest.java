@@ -35,7 +35,6 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.model.MultipleFailureException;

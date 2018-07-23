@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.orient.entity.action;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.sonatype.goodies.common.ComponentSupport;

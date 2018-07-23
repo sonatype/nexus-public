@@ -66,7 +66,7 @@ class SystemInformationGeneratorImplTest
         name() >> "brokenfsname"
         getTotalSpace() >> { throw new IOException("testing") }
       }
-      def fsReport = generator.reportFileStore(fs);
+      def fsReport = generator.reportFileStore(fs)
 
     then:
       fsReport == SystemInformationGeneratorImpl.UNAVAILABLE

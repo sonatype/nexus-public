@@ -75,18 +75,18 @@ public class FileKeystoreInstance
   private char[] openPassword; // The password last used to open the keystore for editing
 
   // The following variables are the state of the keystore, which should be chucked if the file on disk changes
-  private List<String> privateKeys = new ArrayList();
+  private List<String> privateKeys = new ArrayList<>();
 
-  private List<String> trustCerts = new ArrayList();
+  private List<String> trustCerts = new ArrayList<>();
 
   private KeyStore keystore;
 
-  public FileKeystoreInstance(CryptoHelper crypto,
-                              KeyStoreStorage storage,
-                              String keystoreName,
-                              char[] keystorePassword,
-                              String keystoreType,
-                              Map<String, char[]> keyPasswords)
+  public FileKeystoreInstance(final CryptoHelper crypto,
+                              final KeyStoreStorage storage,
+                              final String keystoreName,
+                              final char[] keystorePassword,
+                              final String keystoreType,
+                              final Map<String, char[]> keyPasswords)
   {
     this.crypto = crypto;
     this.storage = storage;
@@ -128,7 +128,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public String[] listPrivateKeys(char[] storePassword)
+  public String[] listPrivateKeys(final char[] storePassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -136,7 +136,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public String[] listTrustCertificates(char[] storePassword)
+  public String[] listTrustCertificates(final char[] storePassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -144,7 +144,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public void importTrustCertificate(Certificate cert, String alias, char[] storePassword)
+  public void importTrustCertificate(final Certificate cert, final String alias, final char[] storePassword)
       throws KeystoreException
   {
     if (storePassword == null) {
@@ -203,7 +203,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public void deleteEntry(String alias, char[] storePassword)
+  public void deleteEntry(final String alias, final char[] storePassword)
       throws KeystoreException
   {
     if (storePassword == null) {
@@ -226,7 +226,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public KeyManager[] getKeyManager(String algorithm, String alias, char[] storePassword)
+  public KeyManager[] getKeyManager(final String algorithm, final String alias, final char[] storePassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -272,7 +272,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public TrustManager[] getTrustManager(String algorithm, char[] storePassword)
+  public TrustManager[] getTrustManager(final String algorithm, final char[] storePassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -290,7 +290,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public PrivateKey getPrivateKey(String alias, char[] storePassword, char[] keyPassword)
+  public PrivateKey getPrivateKey(final String alias, final char[] storePassword, final char[] keyPassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -314,7 +314,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public Certificate getCertificate(String alias, char[] storePassword)
+  public Certificate getCertificate(final String alias, final char[] storePassword)
       throws KeystoreException
   {
     ensureLoaded(storePassword);
@@ -332,7 +332,7 @@ public class FileKeystoreInstance
   }
 
   @Override
-  public Certificate getCertificate(String alias) {
+  public Certificate getCertificate(final String alias) {
     try {
       return keystore.getCertificate(alias);
     }
@@ -344,7 +344,7 @@ public class FileKeystoreInstance
 
   // ==================== Internals =====================
 
-  private void loadKeystoreData(char[] password)
+  private void loadKeystoreData(final char[] password)
       throws KeystoreException
   {
     try {
@@ -356,9 +356,9 @@ public class FileKeystoreInstance
       privateKeys.clear();
       trustCerts.clear();
       openPassword = password;
-      Enumeration aliases = keystore.aliases();
+      Enumeration<String> aliases = keystore.aliases();
       while (aliases.hasMoreElements()) {
-        String alias = (String) aliases.nextElement();
+        String alias = aliases.nextElement();
         if (keystore.isKeyEntry(alias)) {
           privateKeys.add(alias);
         }
@@ -381,7 +381,7 @@ public class FileKeystoreInstance
     }
   }
 
-  private boolean isLoaded(char[] password) {
+  private boolean isLoaded(final char[] password) {
     if (openPassword == null || openPassword.length != password.length) {
       return false;
     }
@@ -396,7 +396,7 @@ public class FileKeystoreInstance
     return true;
   }
 
-  private void ensureLoaded(char[] storePassword)
+  private void ensureLoaded(final char[] storePassword)
       throws KeystoreException
   {
     char[] password;
@@ -421,7 +421,7 @@ public class FileKeystoreInstance
         country);
   }
 
-  private void saveKeystore(char[] password)
+  private void saveKeystore(final char[] password)
       throws KeystoreException
   {
     try {

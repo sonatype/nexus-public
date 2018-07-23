@@ -13,10 +13,8 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTestUtil;
@@ -34,7 +32,6 @@ import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.COMPO
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.isRelease;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.isSnapshot;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createBucket;
-import static org.sonatype.nexus.repository.storage.StorageTestUtil.createComponent;
 
 public class MavenFacetUtilsTest
 {

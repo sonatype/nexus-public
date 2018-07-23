@@ -14,7 +14,7 @@ package org.sonatype.nexus.upgrade.internal
 
 import org.sonatype.goodies.testsupport.TestSupport
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.is
 import org.junit.Before
 import org.junit.Test
 import static org.hamcrest.MatcherAssert.assertThat

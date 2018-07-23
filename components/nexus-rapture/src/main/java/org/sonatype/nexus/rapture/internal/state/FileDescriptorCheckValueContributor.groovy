@@ -32,8 +32,8 @@ class FileDescriptorCheckValueContributor
   @Inject
   FileDescriptorCheckValueContributor(final FileDescriptorService fileDescriptorService,
                                       final @Named('${nexus.file.descriptor.warning.disabled:-false}') boolean disable) {
-    this.fileDescriptorService = fileDescriptorService;
-    this.disable = disable;
+    this.fileDescriptorService = fileDescriptorService
+    this.disable = disable
   }
 
   @Override

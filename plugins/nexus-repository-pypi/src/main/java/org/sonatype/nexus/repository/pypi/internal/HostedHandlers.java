@@ -113,7 +113,7 @@ public final class HostedHandlers
       if (!ACTION_FILE_UPLOAD.equals(action)) {
         throw new IllegalStateException("Unsupported :action, found: " + action);
       }
-      context.getRepository().facet(PyPiHostedFacet.class).upload(attributes, upload);
+      context.getRepository().facet(PyPiHostedFacet.class).upload(upload.getName(), attributes, upload);
       return HttpResponses.ok();
     }
   };

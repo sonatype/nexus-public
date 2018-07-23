@@ -61,7 +61,7 @@ class ScriptAction
   Session session
 
   public void setSession(Session session) {
-    this.session = session;
+    this.session = session
   }
 
   // TODO: consider sub-shell support, but perhaps via another command?
@@ -95,9 +95,9 @@ class ScriptAction
     }
     // should never happen due to assert above
     checkState(source != null, 'No source available')
-    
+
     language = language ?: ScriptEngineManagerProvider.DEFAULT_LANGUAGE
-    
+
     // construct new context for execution
     ScriptContext context = scripts.createContext(language)
 
@@ -106,7 +106,7 @@ class ScriptAction
     context.writer = context.errorWriter = session.console.newWriter()
 
     // customize scope for execution
-    scripts.customizeBindings(context, 
+    scripts.customizeBindings(context,
         [
             log: LoggerFactory.getLogger(ScriptAction),
             session: session,

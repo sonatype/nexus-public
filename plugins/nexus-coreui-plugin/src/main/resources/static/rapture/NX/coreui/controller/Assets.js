@@ -278,7 +278,6 @@ Ext.define('NX.coreui.controller.Assets', {
    */
   deleteComponent: function() {
     var me = this,
-        componentList = me.getComponentList(),
         componentDetails = me.getComponentDetails(),
         componentModel, componentId, repositoryName;
 
@@ -289,13 +288,8 @@ Ext.define('NX.coreui.controller.Assets', {
       NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(componentId), function() {
         NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
           if (Ext.isObject(response) && response.success) {
-            componentList.getSelectionModel().deselectAll();
+            me.refreshComponentList();
             NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 1);
-            // delay refresh of component list because in case of search results it takes a while till removal is
-            // propagated to elastic search results. Not 100% but better then still showing
-            setTimeout(function() {
-              componentList.getStore().load();
-            }, 1000);
             NX.Messages.add({text: NX.I18n.format('ComponentDetails_Delete_Success', componentId), type: 'success'});
           }
         });
@@ -458,8 +452,24 @@ Ext.define('NX.coreui.controller.Assets', {
       //<if debug>
       me.logDebug('Asset deleted with component in scope');
       //</if>
+      me.refreshComponentList();
       NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 2);
     }
+  },
+
+  /**
+   * @private
+   * Refresh component list.
+   */
+  refreshComponentList: function () {
+    var componentList = this.getComponentList();
+
+    componentList.getSelectionModel().deselectAll();
+    // delay refresh of component list because in case of search results it takes a while till removal is
+    // propagated to elastic search results. Not 100% but better then still showing
+    setTimeout(function() {
+      componentList.getStore().load();
+    }, 1000);
   }
 
 });

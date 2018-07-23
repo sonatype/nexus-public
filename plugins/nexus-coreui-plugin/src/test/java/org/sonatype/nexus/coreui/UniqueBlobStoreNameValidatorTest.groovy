@@ -28,19 +28,19 @@ class UniqueBlobStoreNameValidatorTest
     extends TestSupport
 {
   @Mock
-  BlobStoreManager blobStoreManager;
+  BlobStoreManager blobStoreManager
 
-  UniqueBlobStoreNameValidator underTest;
+  UniqueBlobStoreNameValidator underTest
 
   @Before
   public void setup() {
-    underTest = new UniqueBlobStoreNameValidator(blobStoreManager);
+    underTest = new UniqueBlobStoreNameValidator(blobStoreManager)
   }
 
   @Test
   public void 'test validation'() {
-    when(blobStoreManager.exists('test')).thenReturn(true);
-    when(blobStoreManager.exists('DEFAULT')).thenReturn(false);
+    when(blobStoreManager.exists('test')).thenReturn(true)
+    when(blobStoreManager.exists('DEFAULT')).thenReturn(false)
 
     assert !underTest.isValid('test', null)
     assert underTest.isValid('DEFAULT', null)

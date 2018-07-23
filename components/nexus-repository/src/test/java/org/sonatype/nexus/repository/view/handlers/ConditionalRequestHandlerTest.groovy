@@ -67,7 +67,7 @@ class ConditionalRequestHandlerTest
   void prepare() {
     when(context.getRepository()).thenReturn(repository)
     when(repository.facet(eq(ViewFacet.class))).thenReturn(viewFacet)
-    when(viewFacet.dispatch(Matchers.any(Request))).thenReturn(response200);
+    when(viewFacet.dispatch(Matchers.any(Request))).thenReturn(response200)
   }
 
   @Test

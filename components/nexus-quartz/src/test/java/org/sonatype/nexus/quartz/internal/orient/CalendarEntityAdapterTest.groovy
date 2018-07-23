@@ -140,7 +140,7 @@ class CalendarEntityAdapterTest
     }
 
     database.instance.acquire().withCloseable {db ->
-      List<String> names = underTest.browseNames(db);
+      List<String> names = underTest.browseNames(db)
       assert names.size() == 2
       assert names.contains('test-calendar1')
       assert names.contains('test-calendar2')

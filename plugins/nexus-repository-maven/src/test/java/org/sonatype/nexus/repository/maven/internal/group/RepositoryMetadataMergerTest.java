@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.group;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +24,6 @@ import org.sonatype.nexus.repository.view.Content;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -47,7 +45,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.when;
 
 /**
  * UT for {@link RepositoryMetadataMerger}

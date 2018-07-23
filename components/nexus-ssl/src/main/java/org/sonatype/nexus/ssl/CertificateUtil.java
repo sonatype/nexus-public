@@ -162,8 +162,8 @@ public final class CertificateUtil
     // make sure we have something to parse
     if (pemFormattedCertificate != null) {
       StringReader stringReader = new StringReader(pemFormattedCertificate);
-      PEMParser pemReader = new PEMParser(stringReader);
-      try {
+
+      try (PEMParser pemReader = new PEMParser(stringReader)) {
         Object object = pemReader.readObject();
         log.trace("Object found while paring PEM formatted string: {}", object);
 

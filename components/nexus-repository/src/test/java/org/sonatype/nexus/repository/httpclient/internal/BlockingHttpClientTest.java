@@ -25,6 +25,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -81,12 +82,20 @@ public class BlockingHttpClientTest
     underTest = new BlockingHttpClient(httpClient, new Config(), statusObserver, true);
   }
 
+  @After
+  public void teardown() throws IOException {
+    if (underTest != null) {
+      underTest.close();
+    }
+  }
+
   @Test
   public void updateStatusWhenBlocked() throws Exception {
     Config config = new Config();
     config.blocked = true;
     reset(statusObserver);
-    new BlockingHttpClient(httpClient, config, statusObserver, true);
+    BlockingHttpClient client = new BlockingHttpClient(httpClient, config, statusObserver, true);
+    client.close();
     ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     verify(statusObserver).onStatusChanged(any(), newStatusCaptor.capture());
     assertThat(newStatusCaptor.getValue().getType(), is(equalTo(BLOCKED)));

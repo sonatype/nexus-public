@@ -185,8 +185,8 @@ class NegativeCacheFacetImplTest
     underTest.init()
     underTest.start()
     underTest.put(key, status)
-    ArgumentCaptor<NegativeCacheKey> keyCaptor = ArgumentCaptor.forClass(NegativeCacheKey);
-    ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status);
+    ArgumentCaptor<NegativeCacheKey> keyCaptor = ArgumentCaptor.forClass(NegativeCacheKey)
+    ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status)
     verify(cache).put(keyCaptor.capture(), statusCaptor.capture())
     assert key == keyCaptor.value
     assert status == statusCaptor.value

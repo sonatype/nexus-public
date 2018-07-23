@@ -94,7 +94,7 @@ public class ExportImportTrial
     File file;
 
     try (ODatabaseDocumentTx db = createDatabase("test")) {
-      ODocument doc = createPerson(db);
+      createPerson(db);
 
       file = File.createTempFile("export-", ".gz", util.getTmpDir());
       log("Exporting to: {}", file);

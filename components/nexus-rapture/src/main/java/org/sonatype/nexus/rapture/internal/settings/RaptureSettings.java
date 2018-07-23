@@ -36,6 +36,8 @@ public class RaptureSettings
 
   public static final int DEFAULT_SESSION_TIMEOUT = 30; // minutes
 
+  public static final int DEFAULT_REQUEST_TIMEOUT = 30; // seconds
+
   private boolean debugAllowed = DEFAULT_DEBUG_ALLOWED;
 
   @NotNull
@@ -49,6 +51,10 @@ public class RaptureSettings
   @NotNull
   @Min(0)
   private Integer sessionTimeout = DEFAULT_SESSION_TIMEOUT;
+
+  @NotNull
+  @Min(30)
+  private Integer requestTimeout = DEFAULT_REQUEST_TIMEOUT;
 
   @NotBlank
   private String title;
@@ -83,6 +89,14 @@ public class RaptureSettings
 
   public void setSessionTimeout(final int sessionTimeout) {
     this.sessionTimeout = sessionTimeout;
+  }
+
+  public int getRequestTimeout() {
+    return requestTimeout;
+  }
+
+  public void setRequestTimeout(final int requestTimeout) {
+    this.requestTimeout = requestTimeout;
   }
 
   public String getTitle() {

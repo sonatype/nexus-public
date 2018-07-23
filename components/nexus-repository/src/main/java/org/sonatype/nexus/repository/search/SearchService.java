@@ -113,6 +113,13 @@ public interface SearchService
   SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
 
   /**
+   * Search component metadata and browse results with content selectors applied.
+   *
+   * @since 3.next
+   */
+  Iterable<SearchHit> browse(QueryBuilder query);
+
+  /**
    * Search component metadata and browse results using aggregations with content selectors applied.
    *
    * @since 3.7

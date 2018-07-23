@@ -18,6 +18,7 @@ import javax.annotation.Nullable;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.sift.SiftingAppender;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import org.apache.commons.io.FileUtils;
@@ -45,7 +46,7 @@ public class TaskLogHome
   public static String getTaskLogHome() {
     LoggerContext loggerContext = (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
 
-    Appender appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
+    Appender<ILoggingEvent> appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
     if (!(appender instanceof SiftingAppender)) {
       // We are forgiving if the task log appender does not exist. It could be that a user had a customized logback.xml
       // as of 3.4.1 when task logging was introduced. We don't want to block application start in this scenario.
@@ -56,7 +57,8 @@ public class TaskLogHome
     SiftingAppender siftingAppender = (SiftingAppender) appender;
 
     // this will create a new appender which ultimately creates a temp.log within the tasks log folder
-    FileAppender tempFileAppender = (FileAppender) siftingAppender.getAppenderTracker().getOrCreate("temp", 0L);
+    FileAppender<ILoggingEvent> tempFileAppender = (FileAppender<ILoggingEvent>) siftingAppender.getAppenderTracker()
+        .getOrCreate("temp", 0L);
 
     // Note that at full execution speed the temp.log may not actually exist yet, but we don't actually need it to
     File file = new File(tempFileAppender.getFile());

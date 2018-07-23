@@ -68,7 +68,7 @@ class ConfigurationTest
         entityMetadata: Mock(EntityMetadata))
 
     when:
-      Configuration clone = original.copy();
+      Configuration clone = original.copy()
       clone.attributes.httpclient.authorization.password = 'top secret'
 
     then:

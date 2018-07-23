@@ -31,9 +31,9 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
-import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
@@ -41,7 +41,9 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.collect.ImmutableMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_ARCHIVE_TYPE;
 
 /**
  * @since 3.7
@@ -72,25 +74,35 @@ public class PyPiUploadHandler
     PyPiHostedFacet facet = repository.facet(PyPiHostedFacet.class);
 
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
-    return TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier())
-        .throwing(IOException.class).call(() -> {
-          PartPayload payload = upload.getAssetUploads().get(0).getPayload();
-          try (TempBlob tempBlob = storageFacet.createTempBlob(payload, PyPiDataUtils.HASH_ALGORITHMS)) {
-            Map<String, String> packageMetadata = facet.extractMetadata(payload, tempBlob);
-            if (packageMetadata.isEmpty()) {
-              throw new ValidationErrorsException("Unable to extract metadata from provided PyPi archive.");
-            }
+    PartPayload payload = upload.getAssetUploads().get(0).getPayload();
+    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, PyPiDataUtils.HASH_ALGORITHMS)) {
+      final Map<String, String> metadata = facet.extractMetadata(tempBlob);
 
-            String name = checkNotNull(packageMetadata.get(PyPiAttributes.P_NAME));
-            String version = checkNotNull(packageMetadata.get(PyPiAttributes.P_VERSION));
-            String filename = checkNotNull(payload.getName());
+      if (metadata.isEmpty()) {
+        throw new ValidationErrorsException("Unable to extract PyPI metadata from provided archive.");
+      }
 
-            String path = facet.createPackagePath(name, version, filename);
-            ensurePermitted(repository.getName(), PyPiFormat.NAME, path, coordinatesFromMetadata(packageMetadata));
+      String name = metadata.get(PyPiAttributes.P_NAME);
+      String version = metadata.get(PyPiAttributes.P_VERSION);
 
-            return new UploadResponse(facet.upload(packageMetadata, new TempBlobPartPayload(payload, tempBlob)));
-          }
-        });
+      if (isBlank(name)) {
+        throw new ValidationErrorsException("Metadata is missing the name attribute");
+      }
+
+      if (isBlank(version)) {
+        throw new ValidationErrorsException("Metadata is missing the name attribute");
+      }
+
+      String filename = isNotBlank(payload.getName()) ? payload.getName() :
+          name + '-' + version + '.' + metadata.get(P_ARCHIVE_TYPE);
+
+      String path = facet.createPackagePath(name, version, filename);
+
+      ensurePermitted(repository.getName(), PyPiFormat.NAME, path, coordinatesFromMetadata(metadata));
+
+      return TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class)
+          .call(() -> new UploadResponse(facet.upload(filename, metadata, new TempBlobPartPayload(payload, tempBlob))));
+    }
   }
 
   private Map<String, String> coordinatesFromMetadata(final Map<String, String> packageMetadata) {

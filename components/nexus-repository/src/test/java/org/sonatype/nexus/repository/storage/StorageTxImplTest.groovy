@@ -76,9 +76,9 @@ extends TestSupport
   @Mock
   private Asset asset
   @Mock
-  private EntityMetadata entityMetadata;
+  private EntityMetadata entityMetadata
   @Mock
-  private EntityId entityId;
+  private EntityId entityId
 
   private Supplier<InputStream> supplier = new Supplier<InputStream>(){
     @Override
@@ -94,9 +94,9 @@ extends TestSupport
 
   @Before
   void prepare() {
-    when(asset.getEntityMetadata()).thenReturn(entityMetadata);
-    when(entityMetadata.getId()).thenReturn(entityId);
-    
+    when(asset.getEntityMetadata()).thenReturn(entityMetadata)
+    when(entityMetadata.getId()).thenReturn(entityId)
+
     when(defaultContentValidator.determineContentType(anyBoolean(), any(Supplier), eq(MimeRulesSource.NOOP), anyString(), anyString())).thenReturn("text/plain")
     when(db.getTransaction()).thenReturn(tx)
   }
@@ -322,7 +322,7 @@ extends TestSupport
     def headerMap = [(BlobStore.CREATED_BY_IP_HEADER) : '127.0.0.1', (BlobStore.CREATED_BY_HEADER) : 'anonymous']
     when(blob.getHeaders()).thenReturn(headerMap)
     when(assetBlob.getBlob()).thenReturn(blob)
-    when(assetBlob.getBlobRef()).thenReturn(blobRef);
+    when(assetBlob.getBlobRef()).thenReturn(blobRef)
     when(asset.blobRef()).thenReturn(blobRef)
     def newBlobRef = mock(BlobRef)
     def newAssetBlob = mock(AssetBlob)
@@ -644,7 +644,7 @@ extends TestSupport
   void 'verifying asset lookup by id'() {
     def assetId = mock(EntityId)
     def asset = mock(Asset)
-    when(assetEntityAdapter.read(db, assetId)).thenReturn(asset);
+    when(assetEntityAdapter.read(db, assetId)).thenReturn(asset)
     def underTest = new StorageTxImpl(
         'test',
         '127.0.0.1',
@@ -666,7 +666,7 @@ extends TestSupport
   @Test
   void 'test asset exists'() {
     def repositoryName = 'testRepo'
-    def repository = mock(Repository.class);
+    def repository = mock(Repository.class)
 
     def underTest = new StorageTxImpl(
         'test',
@@ -696,9 +696,9 @@ extends TestSupport
   @Test
   void 'browse assets with query'() {
     def asset = mock(Asset)
-    
+
     when(assetEntityAdapter.browseByQueryAsync(any(), any(), any(), any(), any())).thenReturn(singletonList(asset))
-    
+
     def underTest = new StorageTxImpl(
         'test',
         '127.0.0.1',

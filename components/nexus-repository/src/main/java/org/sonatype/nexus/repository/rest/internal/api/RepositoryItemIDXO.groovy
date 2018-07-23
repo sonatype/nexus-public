@@ -49,12 +49,12 @@ class RepositoryItemIDXO
       return new RepositoryItemIDXO(parts[0], parts[1])
     }
     catch (IllegalArgumentException e) {
-      log.debug("Unable to parse id: {}, returning 404.", encoded, e);
-      throw new NotFoundException("Unable to locate asset with id " + encoded);
+      log.debug("Unable to parse id: {}, returning 404.", encoded, e)
+      throw new NotFoundException("Unable to locate asset with id " + encoded)
     }
   }
 
   public String getValue() {
-    return new String(Base64.getUrlEncoder().withoutPadding().encode("$repositoryId:$id".bytes));
+    return new String(Base64.getUrlEncoder().withoutPadding().encode("$repositoryId:$id".bytes))
   }
 }

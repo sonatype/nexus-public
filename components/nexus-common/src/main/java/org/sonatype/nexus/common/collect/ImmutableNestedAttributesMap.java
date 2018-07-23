@@ -40,6 +40,8 @@ public class ImmutableNestedAttributesMap
   /**
    * Returns nested children attributes for given name.
    */
+  @Override
+  @SuppressWarnings("unchecked")
   public NestedAttributesMap child(final String name) {
     checkNotNull(name);
 

@@ -44,15 +44,15 @@ import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditiona
 class NpmGroupPackageHandler
     extends GroupHandler
 {
-  
-  private final boolean mergeMetadata;
+
+  private final boolean mergeMetadata
 
   /**
    * @param mergeMetadata whether or not metadata should be merged across all group members (defaults to true)
    */
   @Inject
   NpmGroupPackageHandler(@Named('${nexus.npm.mergeGroupMetadata:-true}') final boolean mergeMetadata) {
-    this.mergeMetadata = mergeMetadata;
+    this.mergeMetadata = mergeMetadata
   }
 
   @Override

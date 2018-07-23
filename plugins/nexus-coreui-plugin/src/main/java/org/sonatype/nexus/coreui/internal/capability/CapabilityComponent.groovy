@@ -231,7 +231,7 @@ extends DirectComponentSupport
       capabilityXO.state = 'active'
     }
     else if (capabilityXO.enabled && !capabilityXO.active) {
-      capabilityXO.state = 'passive';
+      capabilityXO.state = 'passive'
     }
 
     try {

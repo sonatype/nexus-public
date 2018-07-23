@@ -69,6 +69,7 @@ public class HashesTest
     return new ByteArrayInputStream(DATA.getBytes(StandardCharsets.UTF_8));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void hashStreamWithFunction() throws Exception {
     byte[] bytes = DATA.getBytes(StandardCharsets.UTF_8);

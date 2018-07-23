@@ -142,7 +142,7 @@ class SearchComponent
       contribution.contribute(query, filter.property, filter.value)
     }
     if (!query.hasClauses()) {
-      return null;
+      return null
     }
     log.debug('Query: {}', query)
     return query

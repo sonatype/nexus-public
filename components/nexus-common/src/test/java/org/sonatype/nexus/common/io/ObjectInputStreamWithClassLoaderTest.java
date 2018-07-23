@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,14 +55,17 @@ public class ObjectInputStreamWithClassLoaderTest
 
   @Test(expected = NullPointerException.class)
   public void failFastWhenClassLoaderNull() throws Exception {
-    new ObjectInputStreamWithClassLoader(serialize(OBJECT_TO_SERIALIZE), null);
+    try (ObjectInputStreamWithClassLoader in = new ObjectInputStreamWithClassLoader(serialize(OBJECT_TO_SERIALIZE),
+        null)) {
+      // exception expected
+    }
   }
 
   @Test
   public void useCustomClassLoaderToResolveClass() throws Exception {
     String name = "testClassName";
     when(classDescription.getName()).thenReturn(name);
-    when(classLoader.loadClass(anyString())).thenReturn((Class)getClass());
+    doReturn(getClass()).when(classLoader).loadClass(anyString());
     try {
       underTest.resolveClass(classDescription);
     } catch (Exception e){
@@ -74,7 +78,7 @@ public class ObjectInputStreamWithClassLoaderTest
   public void deserializeUsingCustomLoader() throws Exception {
     String contents = "contents";
     TestFixture deserialized;
-    when(classLoader.loadClass(anyString())).thenReturn((Class)TestFixture.class);
+    doReturn(TestFixture.class).when(classLoader).loadClass(anyString());
     try (ObjectInputStream objects =
              new ObjectInputStreamWithClassLoader(serialize(new TestFixture(contents)), classLoader)) {
       deserialized = (TestFixture) objects.readObject();
@@ -90,6 +94,7 @@ public class ObjectInputStreamWithClassLoaderTest
     return new ByteArrayInputStream(bos.toByteArray());
   }
 
+  @SuppressWarnings("serial")
   private static class TestFixture
       implements Serializable {
     String contents;

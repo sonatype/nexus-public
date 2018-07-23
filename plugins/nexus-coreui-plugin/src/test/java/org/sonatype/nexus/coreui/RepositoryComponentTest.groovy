@@ -53,7 +53,7 @@ class RepositoryComponentTest
 
   @Before
   void setup() {
-    repository = repository();
+    repository = repository()
 
     when(format.getValue()).thenReturn('format')
     when(repositoryManager.browse()).thenReturn([repository])

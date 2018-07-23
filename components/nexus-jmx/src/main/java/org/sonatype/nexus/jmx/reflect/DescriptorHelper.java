@@ -105,17 +105,17 @@ public class DescriptorHelper
         // convert types as described by DescriptorKey javadocs
         if (value instanceof Class) {
           // class constant
-          value = ((Class) value).getCanonicalName();
+          value = ((Class<?>) value).getCanonicalName();
         }
         else if (value instanceof Enum) {
           // enum constant
-          value = ((Enum) value).name();
+          value = ((Enum<?>) value).name();
         }
         else if (value.getClass().isArray()) {
           Class<?> componentType = value.getClass().getComponentType();
           if (Class.class.equals(componentType)) {
             // array of class constants, convert to string[]
-            Class[] classes = (Class[]) value;
+            Class<?>[] classes = (Class[]) value;
             String[] strings = new String[classes.length];
             for (int i = 0; i < classes.length; i++) {
               strings[i] = classes[i].getName();
@@ -124,7 +124,7 @@ public class DescriptorHelper
           }
           else if (Enum.class.equals(componentType)) {
             // array of enum constants, convert to string[]
-            Enum[] enums = (Enum[]) value;
+            Enum<?>[] enums = (Enum[]) value;
             String[] strings = new String[enums.length];
             for (int i = 0; i < enums.length; i++) {
               strings[i] = enums[i].name();

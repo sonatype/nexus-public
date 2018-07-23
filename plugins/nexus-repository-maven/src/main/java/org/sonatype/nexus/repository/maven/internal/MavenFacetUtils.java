@@ -51,7 +51,6 @@ import com.google.common.hash.HashingOutputStream;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toMap;
 import static org.sonatype.nexus.common.app.VersionComparator.version;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;

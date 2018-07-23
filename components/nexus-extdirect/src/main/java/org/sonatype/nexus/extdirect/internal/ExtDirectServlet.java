@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -62,9 +63,17 @@ import com.softwarementors.extjs.djn.config.GlobalConfiguration;
 import com.softwarementors.extjs.djn.router.RequestRouter;
 import com.softwarementors.extjs.djn.router.dispatcher.Dispatcher;
 import com.softwarementors.extjs.djn.router.processor.poll.PollRequestProcessor;
+import com.softwarementors.extjs.djn.router.processor.standard.form.FormPostRequestData;
+import com.softwarementors.extjs.djn.router.processor.standard.form.upload.FileUploadException;
 import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet;
 import com.softwarementors.extjs.djn.servlet.ssm.SsmDispatcher;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -73,6 +82,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.extdirect.model.Responses.error;
 import static org.sonatype.nexus.extdirect.model.Responses.invalid;
@@ -108,9 +118,10 @@ public class ExtDirectServlet
                           final BeanLocator beanLocator,
                           final Provider<EventRecorder> recorderProvider,
                           final Provider<EventDataFactory> eventDataFactoryProvider,
-                          @Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean antiCsrfTokenEnabled)
+                          @Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean antiCsrfTokenEnabled,
+                          @Named("${nexus.direct.upload.maxSize:--1}") final long uploadMaxSize)
   {
-    super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME);
+    super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME, uploadMaxSize);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
     this.recorderProvider = checkNotNull(recorderProvider);
@@ -138,7 +149,40 @@ public class ExtDirectServlet
         return reader;
       }
     };
-    super.doPost(wrappedRequest, response);
+
+    try {
+      super.doPost(wrappedRequest, response);
+    } catch (FileUploadException fileUploadException) {
+      try {
+        FileItemIterator fileItems = new ServletFileUpload(new DiskFileItemFactory()).getItemIterator(request);
+        String tid = getTransactionId(fileItems);
+
+        // Send the error from the exception in a json object so we may capture it on the frontend.
+        response.setContentType("text/html");
+        response.getWriter().append("<html><body><textarea>{\"tid\":" + tid +
+            ",\"action\":\"coreui_Upload\",\"method\":\"doUpload\",\"result\":{\"success\": false,\"message\":\"" +
+            fileUploadException.getMessage() + "\"},\"type\":\"rpc\"}</textarea></body></html>").flush();
+      }
+      catch (Exception e) {
+        log.warn("Unable to read the ext direct transaction id for upload", e);
+        throw fileUploadException;
+      }
+    }
+  }
+
+  private String getTransactionId(final FileItemIterator fileItems)
+      throws org.apache.commons.fileupload.FileUploadException, IOException
+  {
+    String tid = null;
+    while (tid == null && fileItems.hasNext()) {
+      FileItemStream fileItemStream = fileItems.next();
+      if (StringUtils.equals(fileItemStream.getFieldName(), FormPostRequestData.TID_ELEMENT)) {
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(fileItemStream.openStream(), writer, UTF_8);
+        tid = writer.toString();
+      }
+    }
+    return tid;
   }
 
   @Override

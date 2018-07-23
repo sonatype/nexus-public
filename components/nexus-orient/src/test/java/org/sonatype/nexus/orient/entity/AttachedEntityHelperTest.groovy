@@ -32,7 +32,7 @@ class AttachedEntityHelperTest
 {
   @Test
   void 'entity with-out metadata'() {
-    def entity = new AbstractEntity() {};
+    def entity = new AbstractEntity() {}
 
     try {
       AttachedEntityHelper.metadata(entity)
@@ -77,7 +77,7 @@ class AttachedEntityHelperTest
 
   @Test
   void 'entity with metadata'() {
-    def entity = new AbstractEntity() {};
+    def entity = new AbstractEntity() {}
 
     ODocument doc = mock(ODocument.class)
 
@@ -88,7 +88,7 @@ class AttachedEntityHelperTest
     when(doc.getVersion()).thenReturn(rv)
 
     EntityAdapter entityAdapter = mock(EntityAdapter.class)
-    entity.setEntityMetadata(new AttachedEntityMetadata(entityAdapter, doc));
+    entity.setEntityMetadata(new AttachedEntityMetadata(entityAdapter, doc))
 
     assert AttachedEntityHelper.metadata(entity) != null
     assert AttachedEntityHelper.isAttached(entity)

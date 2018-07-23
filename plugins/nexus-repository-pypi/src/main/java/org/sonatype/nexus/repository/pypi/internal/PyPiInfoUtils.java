@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
-import java.io.IOException;
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -28,28 +28,24 @@ import javax.mail.internet.InternetHeaders;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.compress.archivers.ArchiveStreamFactory.*;
-import static org.apache.commons.compress.compressors.CompressorStreamFactory.*;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiArchiveType.UNKNOWN;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_ARCHIVE_TYPE;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_CLASSIFIERS;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.DIST_INFO_SUFFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.EGG_INFO_FILENAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.EGG_INFO_SUFFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.PKG_INFO_FILENAME;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.*;
 
 /**
  * Utility methods for working with PyPI package info following the PEP 241 and PEP 314 specifications.
@@ -72,66 +68,50 @@ public final class PyPiInfoUtils
   /**
    * Extracts metadata from archive files, returning an empty map on failure.
    */
-  static Map<String, String> extractMetadata(String filename, InputStream is) {
-    checkNotNull(filename);
+  static Map<String, String> extractMetadata(InputStream is) {
     checkNotNull(is);
-    final String extension = extractExtension(filename);
+
     try {
-      switch (SUPPORTED_EXTENSIONS.getOrDefault(extension, UNKNOWN)) {
-        case ZIP:
-          return extractMetadataFromArchive(ZIP, is);
-        case TAR:
-          return extractMetadataFromArchive(TAR, is);
-        case TAR_XZ:
-          return extractMetadataFromCompressedArchive(XZ, TAR, is);
-        case TAR_BZ2:
-          return extractMetadataFromCompressedArchive(BZIP2, TAR, is);
-        case TAR_LZ:
-          return extractMetadataFromCompressedArchive(LZMA, TAR, is);
-        case TAR_Z:
-          return extractMetadataFromCompressedArchive(Z, TAR, is);
-        case TAR_GZ:
-          return extractMetadataFromCompressedArchive(GZIP, TAR, is);
-        default:
-          log.debug("Unexpected extension {} for filename {} ", extension, filename);
+      String compressionType = CompressorStreamFactory.detect(is);
+      try (CompressorInputStream cis = CompressorStreamFactory.getSingleton()
+          .createCompressorInputStream(compressionType, is)) {
+        InputStream decompressedInput = new BufferedInputStream(cis);
+        String archiveType = ArchiveStreamFactory.detect(decompressedInput);
+        Map<String, String> metadata = extractMetadataFromArchive(archiveType, decompressedInput);
+        metadata.put(P_ARCHIVE_TYPE, archiveType + '.' + compressionType);
+        return metadata;
       }
     }
     catch (Exception e) {
-      log.debug("Error unpacking content from {}, skipping.", filename, e);
+      log.info("Unable to decompress PyPI archive (uncompressed input is normal, but another error may occur)", e);
     }
-    return new LinkedHashMap<>();
-  }
 
-  /**
-   * Extracts metadata from a compressed archive by decompressing the archive and then opening it (e.g. tar.gz).
-   */
-  private static Map<String, String> extractMetadataFromCompressedArchive(final String compressionType,
-                                                                          final String archiveType,
-                                                                          final InputStream is)
-      throws CompressorException, IOException
-  {
-    checkNotNull(compressionType);
-    checkNotNull(archiveType);
-    checkNotNull(is);
-    final CompressorStreamFactory compressorStreamFactory = new CompressorStreamFactory();
-    try (InputStream cis = compressorStreamFactory.createCompressorInputStream(compressionType, is)) {
-      return extractMetadataFromArchive(archiveType, cis);
+    try {
+      String archiveType = ArchiveStreamFactory.detect(is);
+      Map<String, String> metadata = extractMetadataFromArchive(archiveType, is);
+      metadata.put(P_ARCHIVE_TYPE, archiveType);
+      return metadata;
     }
+    catch (Exception e) {
+      log.error("Unable to extract PyPI archive", e);
+    }
+
+    return new LinkedHashMap<>();
   }
 
   /**
    * Extracts metadata from an archive directly (such as for tar and zip formats).
    */
-  private static Map<String, String> extractMetadataFromArchive(final String archiveType, final InputStream is) {
+  private static Map<String, String> extractMetadataFromArchive(final String archiveType,
+                                                                final InputStream is)
+      throws Exception
+  {
     checkNotNull(archiveType);
     checkNotNull(is);
+
     final ArchiveStreamFactory archiveFactory = new ArchiveStreamFactory();
     try (ArchiveInputStream ais = archiveFactory.createArchiveInputStream(archiveType, is)) {
       return processArchiveEntries(ais);
-    }
-    catch (Exception e) {
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
     }
   }
 

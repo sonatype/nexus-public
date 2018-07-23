@@ -74,7 +74,7 @@ class DependencyResolverTest
     public String toString() {
       return getClass().getSimpleName() + "{" +
           "id='" + id + '\'' +
-          '}';
+          '}'
     }
   }
 

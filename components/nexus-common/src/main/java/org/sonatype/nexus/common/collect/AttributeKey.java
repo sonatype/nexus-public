@@ -30,12 +30,12 @@ public class AttributeKey
     // empty
   }
 
-  public static String get(final Class type) {
+  public static String get(final Class<?> type) {
     checkNotNull(type);
     return type.getName();
   }
 
-  public static String get(final Class type, final String suffix) {
+  public static String get(final Class<?> type, final String suffix) {
     checkNotNull(suffix);
     return get(type) + SUFFIX_SEPARATOR + suffix;
   }

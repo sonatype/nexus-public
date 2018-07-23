@@ -18,11 +18,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,9 +28,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class UrlValidatorTest

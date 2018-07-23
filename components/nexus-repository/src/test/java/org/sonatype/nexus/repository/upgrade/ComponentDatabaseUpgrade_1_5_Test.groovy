@@ -44,13 +44,13 @@ class ComponentDatabaseUpgrade_1_5_Test
       .type(COMPONENT_CLASS)
       .property(P_CI_NAME)
       .caseInsensitive()
-      .build();
+      .build()
 
   static final String I_NAME_CASE_INSENSITIVE = new OIndexNameBuilder()
       .type(COMPONENT_CLASS)
       .property(P_NAME)
       .caseInsensitive()
-      .build();
+      .build()
 
   static final String P_NAME = 'name'
 

@@ -93,7 +93,7 @@ class FacetLookupTest
     def facet1 = new FacetNoExposure()
     try {
       underTest.add(facet1)
-      fail();
+      fail()
     }
     catch (Exception e) {
       // expected

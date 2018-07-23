@@ -18,10 +18,10 @@ import java.util.Set;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
-import static jline.internal.Preconditions.checkNotNull;
 
 /**
  * Base class for format specific {@link UploadHandler} classes which

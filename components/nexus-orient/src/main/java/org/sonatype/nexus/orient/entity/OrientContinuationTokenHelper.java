@@ -30,9 +30,9 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 public abstract class OrientContinuationTokenHelper
     implements ContinuationTokenHelper
 {
-  private final EntityAdapter entityAdapter;
+  private final EntityAdapter<?> entityAdapter;
 
-  public OrientContinuationTokenHelper(final EntityAdapter entityAdapter) {
+  public OrientContinuationTokenHelper(final EntityAdapter<?> entityAdapter) {
     this.entityAdapter = checkNotNull(entityAdapter);
   }
 

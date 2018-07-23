@@ -19,7 +19,6 @@ import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
 /**
@@ -50,20 +49,20 @@ public interface PyPiHostedFacet
   /**
    * Perform package upload.
    *
+   * @param filename the name of the file
    * @param attributes the package attributes
    * @param payload uploaded file content
    * @return the created/updated asset
    */
-  Asset upload(Map<String, String> attributes, TempBlobPartPayload payload) throws IOException;
+  Asset upload(String filename, Map<String, String> attributes, TempBlobPartPayload payload) throws IOException;
 
   /**
    * Extract metadata from a package
    *
-   * @param payload uploaded file content
    * @param tempBlob the temporary blob
    * @return the created/updated asset
    */
-  Map<String, String> extractMetadata(PartPayload payload, TempBlob tempBlob) throws IOException;
+  Map<String, String> extractMetadata(TempBlob tempBlob) throws IOException;
 
   /**
    * Create path to the package indicated by the name, version and filename.

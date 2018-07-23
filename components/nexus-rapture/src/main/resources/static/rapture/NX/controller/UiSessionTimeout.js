@@ -95,6 +95,10 @@ Ext.define('NX.controller.UiSessionTimeout', {
     if (uiSettings.sessionTimeout !== oldUiSettings.sessionTimeout) {
       this.setupTimeout();
     }
+
+    if (uiSettings.requestTimeout) {
+      this.setRequestTimeout(uiSettings.requestTimeout);
+    }
   },
 
   /**
@@ -104,7 +108,8 @@ Ext.define('NX.controller.UiSessionTimeout', {
     var me = this,
         hasUser = !Ext.isEmpty(NX.State.getUser()),
         uiSettings = NX.State.getValue('uiSettings') || {},
-        sessionTimeout = hasUser ? uiSettings['sessionTimeout'] : undefined;
+        sessionTimeout = hasUser ? uiSettings['sessionTimeout'] : undefined,
+        requestTimeout = hasUser ? uiSettings['requestTimeout'] : undefined;
 
     me.cancelTimeout();
     if ((hasUser && NX.State.isReceiving()) && sessionTimeout > 0) {
@@ -120,6 +125,22 @@ Ext.define('NX.controller.UiSessionTimeout', {
       });
       me.activityMonitor.start();
     }
+
+    me.setRequestTimeout(requestTimeout);
+  },
+
+  /**
+   * @private
+   */
+  setRequestTimeout: function (timeoutSeconds) {
+    if (isNaN(timeoutSeconds)) {
+      return;
+    }
+
+    var timeoutMilliseconds = timeoutSeconds * 1000;
+    Ext.Ajax.setTimeout(timeoutMilliseconds);
+    Ext.override(Ext.form.Panel, { timeout: timeoutSeconds });
+    Ext.override(Ext.data.Connection, { timeout: timeoutSeconds });
   },
 
   /**

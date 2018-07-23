@@ -54,7 +54,7 @@ class StateGuardTest
     @Override
     Void run() throws Exception {
       triggered = true
-      return null;
+      return null
     }
   }
 
@@ -63,7 +63,7 @@ class StateGuardTest
   {
     @Override
     Void run() throws Exception {
-      return null;
+      return null
     }
   }
 
@@ -229,14 +229,14 @@ class StateGuardTest
 
   private class Target implements StateGuardAware
   {
-    Class<? extends Throwable> failureType;
+    Class<? extends Throwable> failureType
 
     public Target(Class<? extends Throwable> failureType) {
       this.failureType = failureType
     }
 
     public StateGuard getStateGuard() {
-      return underTest;
+      return underTest
     }
 
     @Guarded(by = NEW)

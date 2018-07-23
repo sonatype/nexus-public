@@ -59,7 +59,7 @@ class PrivilegeComponent
   SecuritySystem securitySystem
 
   @Inject
-  List<PrivilegeDescriptor> privilegeDescriptors;
+  List<PrivilegeDescriptor> privilegeDescriptors
 
   /**
    * Retrieves privileges.
@@ -74,7 +74,7 @@ class PrivilegeComponent
       return convert(input)
     })
   }
-  
+
   /**
    * Retrieves privileges and extracts name and id fields only.
    */
@@ -89,24 +89,24 @@ class PrivilegeComponent
   }
 
   /**
-   * Return only those records matching the given parameters. Will apply a filter and/or sort to client-exposed 
+   * Return only those records matching the given parameters. Will apply a filter and/or sort to client-exposed
    * properties of {@link PrivilegeXO}: name, description, permission, type.
    */
   @RequiresPermissions('nexus:privileges:read')
   PagedResponse<PrivilegeXO> extractPage(final StoreLoadParameters parameters, final List<PrivilegeXO> xos) {
-    log.trace("requesting page with parameters: $parameters and size of: ${xos.size()}") 
-    
+    log.trace("requesting page with parameters: $parameters and size of: ${xos.size()}")
+
     checkArgument(!parameters.start || parameters.start < xos.size(), "Requested to skip more results than available")
-    
-    List<PrivilegeXO> result = xos.collect() 
+
+    List<PrivilegeXO> result = xos.collect()
     if(parameters.filter) {
       def filter = parameters.filter.first().value
       result = xos.findResults{ PrivilegeXO xo ->
         (xo.name.contains(filter) || xo.description.contains(filter) || xo.permission.contains(filter) ||
             xo.type.contains(filter)) ? xo : null
-      }  
+      }
     }
-    
+
     if(parameters.sort) {
       //assume one sort, not multiple props
       int order = parameters.sort[0].direction == 'ASC' ? 0 : 1
@@ -116,7 +116,7 @@ class PrivilegeComponent
         order ? -desc : desc
       }
     }
-    
+
     int size = result.size()
     int potentialFinalIndex = parameters.start + parameters.limit
     int finalIndex = (size > potentialFinalIndex) ? potentialFinalIndex : size
@@ -155,8 +155,8 @@ class PrivilegeComponent
   @Validate(groups = [Create.class, Default.class])
   PrivilegeXO create(final @NotNull @Valid PrivilegeXO privilege) {
     AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-    privilege.id = privilege.name; // Use name as privilege ID (note: eventually IDs should go away in favor of names)
-    return convert(authorizationManager.addPrivilege(convert(privilege)));
+    privilege.id = privilege.name // Use name as privilege ID (note: eventually IDs should go away in favor of names)
+    return convert(authorizationManager.addPrivilege(convert(privilege)))
   }
 
   /**
@@ -172,7 +172,7 @@ class PrivilegeComponent
   @Validate(groups = [Update.class, Default.class])
   PrivilegeXO update(final @NotNull @Valid PrivilegeXO privilege) {
     AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-    return convert(authorizationManager.updatePrivilege(convert(privilege)));
+    return convert(authorizationManager.updatePrivilege(convert(privilege)))
   }
 
   /**

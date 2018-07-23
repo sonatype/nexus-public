@@ -118,6 +118,7 @@ public class StateGuard
   /**
    * Create a transition to given state.
    */
+  @SuppressWarnings("unchecked")
   public Transition transition(final String to) {
     return new TransitionImpl(to, false, new Class[0]);
   }
@@ -169,6 +170,7 @@ public class StateGuard
           '}';
     }
 
+    @Override
     public TransitionImpl from(final String... allowed) {
       checkNotNull(allowed);
       checkArgument(allowed.length != 0);
@@ -208,7 +210,7 @@ public class StateGuard
             else {
               log.error("Failed transition: {} -> {}", current, to, t);
             }
-  
+
             // maybe set failure state
             if (failure != null) {
               current = failure;

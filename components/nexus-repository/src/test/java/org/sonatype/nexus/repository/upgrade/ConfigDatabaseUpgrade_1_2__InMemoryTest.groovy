@@ -55,10 +55,10 @@ class ConfigDatabaseUpgrade_1_2__InMemoryTest
   private static final String QUARTZ_JOB_DETAIL_CLASS = new OClassNameBuilder()
       .prefix("quartz")
       .type("job_detail")
-      .build();
+      .build()
 
   @Mock
-  PasswordHelper passwordHelper;
+  PasswordHelper passwordHelper
 
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test")

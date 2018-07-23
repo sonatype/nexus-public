@@ -51,27 +51,27 @@ class ScriptPrivilegeDescriptor
       extends MessageBundle
   {
     @DefaultMessage("Script")
-    String name();
+    String name()
 
     @DefaultMessage("Script Name")
-    String scriptName();
+    String scriptName()
 
     @DefaultMessage("The name of the script")
-    String scriptNameHelp();
+    String scriptNameHelp()
 
     @DefaultMessage("Actions")
-    String actions();
+    String actions()
 
     @DefaultMessage("The comma-delimited list of actions")
-    String actionsHelp();
+    String actionsHelp()
   }
 
-  private static final Messages messages = I18N.create(Messages.class);
+  private static final Messages messages = I18N.create(Messages.class)
 
-  private final List<FormField> formFields;
+  private final List<FormField> formFields
 
   ScriptPrivilegeDescriptor() {
-    super(TYPE);
+    super(TYPE)
     this.formFields = ImmutableList.of(
         (FormField) new StringTextFormField(
             P_NAME,
@@ -85,7 +85,7 @@ class ScriptPrivilegeDescriptor
             messages.actionsHelp(),
             FormField.MANDATORY
         )
-    );
+    )
   }
 
   @Override
@@ -96,12 +96,12 @@ class ScriptPrivilegeDescriptor
 
   @Override
   public List<FormField> getFormFields() {
-    return formFields;
+    return formFields
   }
 
   @Override
   public String getName() {
-    return messages.name();
+    return messages.name()
   }
 
   static CPrivilege privilege(final String name, final String... actions) {

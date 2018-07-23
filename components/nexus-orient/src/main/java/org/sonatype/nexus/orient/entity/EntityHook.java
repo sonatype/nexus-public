@@ -191,20 +191,20 @@ public final class EntityHook
 
   private static <T> T withActiveDb(final ODatabase db, final Supplier<T> supplier) {
     @SuppressWarnings("resource")
-    final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db.equals(currentDb) || !(db instanceof ODatabaseDocumentInternal)) {
       return supplier.get();
     }
     try {
-      ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) db);
+      ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db);
       return supplier.get();
     }
     finally {
       if (currentDb != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(currentDb);
+        ODatabaseRecordThreadLocal.instance().set(currentDb);
       }
       else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }
@@ -214,7 +214,7 @@ public final class EntityHook
     if (schemaType != null) {
       final EntityAdapter adapter = recordingAdapters.get(schemaType);
       if (adapter != null) {
-        final ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseInternal db = ODatabaseRecordThreadLocal.instance().get();
         if (db != null) {
           // workaround OrientDB 2.1 issue where in-TX dictionary updates are not replicated
           if (db.getStorage().isDistributed() && adapter instanceof SingletonEntityAdapter) {

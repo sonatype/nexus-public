@@ -37,6 +37,8 @@ import org.sonatype.nexus.security.realm.RealmManager;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.AuthenticatingRealm;
@@ -337,7 +339,7 @@ public class RealmManagerImpl
     if (realms != null) {
       for (Realm realm : realms) {
         if (realm instanceof AuthenticatingRealm) {
-          Cache cache = ((AuthenticatingRealm) realm).getAuthenticationCache();
+          Cache<Object, AuthenticationInfo> cache = ((AuthenticatingRealm) realm).getAuthenticationCache();
           if (cache != null) {
             log.debug("Clearing cache: {}", cache);
             cache.clear();
@@ -356,7 +358,7 @@ public class RealmManagerImpl
     if (realms != null) {
       for (Realm realm : realms) {
         if (realm instanceof AuthorizingRealm) {
-          Cache cache = ((AuthorizingRealm) realm).getAuthorizationCache();
+          Cache<Object, AuthorizationInfo> cache = ((AuthorizingRealm) realm).getAuthorizationCache();
           if (cache != null) {
             log.debug("Clearing cache: {}", cache);
             cache.clear();

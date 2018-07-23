@@ -175,7 +175,7 @@ class ScriptResource
   private Script findOr404(String name) {
     Script script = scriptManager.get(name)
     if (!script) {
-      throw new NotFoundException("Script with name: '${name}' not found");
+      throw new NotFoundException("Script with name: '${name}' not found")
     }
     return script
   }

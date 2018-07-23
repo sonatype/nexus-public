@@ -98,7 +98,7 @@ public class PyPiUploadHandlerTest
     when(repository.facet(PyPiHostedFacet.class)).thenReturn(pyPiFacet);
     when(repository.getName()).thenReturn(REPO_NAME);
 
-    when(pyPiFacet.extractMetadata(any(), any())).thenCallRealMethod();
+    when(pyPiFacet.extractMetadata(any())).thenCallRealMethod();
     when(pyPiFacet.createPackagePath(any(), any(), any())).thenCallRealMethod();
 
     TempBlob tempBlob = mock(TempBlob.class);
@@ -115,7 +115,7 @@ public class PyPiUploadHandlerTest
     when(asset.componentId()).thenReturn(new DetachedEntityId("nuId"));
     when(asset.name()).thenReturn("packages/sample/sample-1.2.0-py2.7.egg");
 
-    when(pyPiFacet.upload(any(), any())).thenReturn(asset);
+    when(pyPiFacet.upload(any(), any(), any())).thenReturn(asset);
   }
 
   @Test

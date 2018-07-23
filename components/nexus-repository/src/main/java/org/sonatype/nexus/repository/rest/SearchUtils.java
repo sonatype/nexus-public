@@ -30,9 +30,9 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
-import static jline.internal.Preconditions.checkNotNull;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;

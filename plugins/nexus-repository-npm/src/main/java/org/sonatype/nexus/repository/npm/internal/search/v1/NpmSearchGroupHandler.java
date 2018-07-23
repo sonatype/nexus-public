@@ -40,8 +40,6 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
-import org.joda.time.DateTime;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Comparator.comparingDouble;
 import static java.util.stream.Collectors.toList;

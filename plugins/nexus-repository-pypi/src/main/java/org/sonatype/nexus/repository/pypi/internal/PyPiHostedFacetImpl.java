@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.transaction.Transactional;
@@ -112,10 +111,12 @@ public class PyPiHostedFacetImpl
 
   @Override
   @TransactionalStoreBlob
-  public Asset upload(final Map<String, String> attributes, final TempBlobPartPayload payload) throws IOException {
+  public Asset upload(final String filename, final Map<String, String> attributes, final TempBlobPartPayload payload)
+      throws IOException
+  {
+    checkNotNull(filename);
     final String name = checkNotNull(attributes.get(P_NAME));
     final String version = checkNotNull(attributes.get(P_VERSION));
-    final String filename = checkNotNull(payload.getName());
     final String normalizedName = normalizeName(name);
 
     TempBlob tempBlob = payload.getTempBlob();
@@ -176,9 +177,9 @@ public class PyPiHostedFacetImpl
   }
 
   @Override
-  public Map<String, String> extractMetadata(final PartPayload payload, final TempBlob tempBlob) throws IOException {
+  public Map<String, String> extractMetadata(final TempBlob tempBlob) throws IOException {
     try (InputStream in = tempBlob.get()) {
-      return PyPiInfoUtils.extractMetadata(payload.getName(), in);
+      return PyPiInfoUtils.extractMetadata(in);
     }
   }
 }

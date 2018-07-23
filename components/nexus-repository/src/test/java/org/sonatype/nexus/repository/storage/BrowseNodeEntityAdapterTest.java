@@ -512,6 +512,7 @@ public class BrowseNodeEntityAdapterTest
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void browseAssetSameLevelAsComponent() throws Exception {
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
@@ -572,6 +573,7 @@ public class BrowseNodeEntityAdapterTest
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void browseNestedAssets() throws Exception {
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());

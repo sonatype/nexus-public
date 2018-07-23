@@ -21,7 +21,7 @@ import org.sonatype.nexus.capability.CapabilityReference
 import org.sonatype.nexus.capability.CapabilityRegistry
 import org.sonatype.nexus.rapture.PasswordPlaceholder
 
-import com.google.common.base.Predicate;
+import com.google.common.base.Predicate
 import spock.lang.Specification
 
 /**

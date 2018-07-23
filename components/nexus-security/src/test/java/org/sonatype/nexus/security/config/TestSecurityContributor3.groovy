@@ -16,12 +16,12 @@ class TestSecurityContributor3
 implements SecurityContributor
 {
 
-  private static int INSTANCE_COUNT = 1;
+  private static int INSTANCE_COUNT = 1
 
-  private String privId = "priv-" + INSTANCE_COUNT++;
+  private String privId = "priv-" + INSTANCE_COUNT++
 
   public String getId() {
-    return privId;
+    return privId
   }
 
   @Override

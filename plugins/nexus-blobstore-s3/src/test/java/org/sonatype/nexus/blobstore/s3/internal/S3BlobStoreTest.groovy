@@ -53,7 +53,7 @@ class S3BlobStoreTest
 
   S3BlobStoreMetricsStore storeMetrics = Mock()
 
-  DryRunPrefix dryRunPrefix = Mock();
+  DryRunPrefix dryRunPrefix = Mock()
 
   AmazonS3 s3 = Mock()
 

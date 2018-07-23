@@ -83,7 +83,7 @@ extends DirectComponentSupport
   CertificateXO create(final @NotBlank @PemCertificate String pem) {
     Certificate certificate = CertificateUtil.decodePEMFormattedCertificate(pem)
     trustStore.importTrustCertificate(certificate, calculateFingerprint(certificate))
-    return asCertificateXO(certificate, true);
+    return asCertificateXO(certificate, true)
   }
 
   /**

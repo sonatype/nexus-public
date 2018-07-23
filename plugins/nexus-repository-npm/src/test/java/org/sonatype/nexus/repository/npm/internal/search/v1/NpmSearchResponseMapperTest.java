@@ -31,8 +31,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.google.common.io.CharStreams;
 import net.javacrumbs.jsonunit.JsonMatchers;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;

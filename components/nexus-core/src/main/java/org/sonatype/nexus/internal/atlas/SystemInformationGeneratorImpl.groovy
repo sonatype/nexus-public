@@ -238,7 +238,7 @@ class SystemInformationGeneratorImpl
           'readOnly'        : store.readOnly
       ]
     } catch (IOException e) {
-      log.error("Could not add report to support zip for file store {}", store.name(), e);
+      log.error("Could not add report to support zip for file store {}", store.name(), e)
       return UNAVAILABLE
     }
   }
@@ -259,7 +259,7 @@ class SystemInformationGeneratorImpl
           }.join(',')
       ]
     } catch (SocketException e) {
-      log.error("Could not add report to support zip for network interface {}", intf.displayName, e);
+      log.error("Could not add report to support zip for network interface {}", intf.displayName, e)
       return UNAVAILABLE
     }
   }
