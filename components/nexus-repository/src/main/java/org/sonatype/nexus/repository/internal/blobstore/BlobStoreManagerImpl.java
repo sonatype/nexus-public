@@ -23,6 +23,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
@@ -64,7 +65,9 @@ public class BlobStoreManagerImpl
 
   private final BlobStoreConfigurationStore store;
 
-  private final Map<String, Provider<BlobStore>> blobstorePrototypes;
+  private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
+
+  private final Map<String, Provider<BlobStore>> blobStorePrototypes;
 
   private final DatabaseFreezeService databaseFreezeService;
 
@@ -73,14 +76,16 @@ public class BlobStoreManagerImpl
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager,
                               final BlobStoreConfigurationStore store,
-                              Map<String, Provider<BlobStore>> blobstorePrototypes,
+                              final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
+                              final Map<String, Provider<BlobStore>> blobStorePrototypes,
                               final DatabaseFreezeService databaseFreezeService,
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
-    this.blobstorePrototypes = checkNotNull(blobstorePrototypes);
+    this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
+    this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
 
     if (provisionDefaults != null) {
@@ -152,6 +157,8 @@ public class BlobStoreManagerImpl
     checkNotNull(configuration);
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
+    BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
+    blobStoreDescriptor.validateConfig(configuration);
 
     BlobStore blobStore = newBlobStore(configuration);
 
@@ -174,6 +181,22 @@ public class BlobStoreManagerImpl
     blobStore.start();
 
     eventManager.post(new BlobStoreCreatedEvent(blobStore));
+
+    return blobStore;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public BlobStore update(final BlobStoreConfiguration configuration) throws Exception {
+    checkNotNull(configuration);
+    log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
+        configuration.getAttributes());
+    BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
+    blobStoreDescriptor.validateConfig(configuration);
+
+    BlobStore blobStore = get(configuration.getName());
+    store.update(configuration);
+    blobStore.init(configuration);
 
     return blobStore;
   }
@@ -209,7 +232,7 @@ public class BlobStoreManagerImpl
   }
 
   private BlobStore newBlobStore(final BlobStoreConfiguration blobStoreConfiguration) throws Exception {
-    BlobStore blobStore = blobstorePrototypes.get(blobStoreConfiguration.getType()).get();
+    BlobStore blobStore = blobStorePrototypes.get(blobStoreConfiguration.getType()).get();
     blobStore.init(blobStoreConfiguration);
     return blobStore;
   }

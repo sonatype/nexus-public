@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import java.util.Set;
+
 import org.sonatype.nexus.selector.VariableSource;
 
 /**
@@ -38,4 +40,15 @@ public interface ContentPermissionChecker
                               String repositoryFormat,
                               String action,
                               VariableSource variableSource);
+
+  /**
+   * Ensure that either the view permission or the content selector permission is permitted for the desired
+   * repositories
+   *
+   * @since 3.next
+   */
+  boolean isPermitted(Set<String> repositoryNames,
+                      String repositoryFormat,
+                      String action,
+                      VariableSource variableSource);
 }

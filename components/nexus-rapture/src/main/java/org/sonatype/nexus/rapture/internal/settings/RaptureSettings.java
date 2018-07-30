@@ -36,7 +36,7 @@ public class RaptureSettings
 
   public static final int DEFAULT_SESSION_TIMEOUT = 30; // minutes
 
-  public static final int DEFAULT_REQUEST_TIMEOUT = 30; // seconds
+  public static final int DEFAULT_REQUEST_TIMEOUT = 60; // seconds
 
   private boolean debugAllowed = DEFAULT_DEBUG_ALLOWED;
 

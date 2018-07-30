@@ -191,25 +191,45 @@ Ext.define('NX.coreui.controller.Roles', {
    * @protected
    * Enable 'Delete' when user has 'delete' permission and role is not read only.
    */
-  bindDeleteButton: function(button) {
+  bindDeleteButton: function (button) {
     var me = this;
+
     button.mon(
         NX.Conditions.and(
             NX.Conditions.isPermitted(me.permission + ':delete'),
-            NX.Conditions.gridHasSelection(me.masters[0], function(model) {
-              return !model.get('readOnly');
-            })
+            NX.Conditions.watchEvents([
+              { observable: me.getStore('Role'), events: ['load']},
+              { observable: Ext.History, events: ['change']}
+            ], me.watchEventsHandler())
         ),
         {
-          satisfied: function() {
+          satisfied: function () {
             button.enable();
           },
-          unsatisfied: function() {
+          unsatisfied: function () {
             button.disable();
-          },
-          scope: button
+          }
         }
     );
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function () {
+    var me = this,
+        store = me.getStore('Role');
+
+    return function() {
+      var roleId = me.getModelIdFromBookmark(),
+          model = roleId ? store.findRecord('id', roleId, 0, false, true, true) : undefined;
+
+      if (model) {
+        return !model.get('readOnly');
+      }
+
+      return false;
+    };
   },
 
   /**

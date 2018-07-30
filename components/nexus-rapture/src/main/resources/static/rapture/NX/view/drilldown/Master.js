@@ -20,6 +20,9 @@
 Ext.define('NX.view.drilldown.Master', {
   extend: 'Ext.grid.Panel',
   alias: 'widget.nx-drilldown-master',
+  requires: [
+    'NX.I18n'
+  ],
 
   maskElement: 'body',
 
@@ -45,7 +48,8 @@ Ext.define('NX.view.drilldown.Master', {
         defaultRenderer: function() {
           return Ext.DomHelper.markup({
             tag: 'span',
-            cls: 'x-fa fa-angle-right'
+            cls: 'x-fa fa-angle-right',
+            'aria-label': NX.I18n.get('FeatureGroups_Browse_Description')
           });
         }
       });

@@ -316,12 +316,7 @@ public final class MavenIndexPublisher
                                      final MavenPath tocheck,
                                      final MavenFacet mavenFacet)
   {
-    try {
-      record.put(key, mavenFacet.get(tocheck) != null ? Boolean.TRUE : Boolean.FALSE);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    record.put(key, mavenFacet.exists(tocheck));
   }
 
   /**

@@ -7,6 +7,7 @@
  */
 @include extjs-panel-ui(
     $ui: 'nx-developer',
+    $ui-header-glyph-opacity: 1.0,
     $ui-header-padding: 4px,
     $ui-header-color: $color-white,
     $ui-header-background-color: $color-smalt,

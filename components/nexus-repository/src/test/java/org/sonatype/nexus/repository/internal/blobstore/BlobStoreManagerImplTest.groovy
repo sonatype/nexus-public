@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.internal.blobstore
 import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.event.EventManager
@@ -58,6 +59,9 @@ class BlobStoreManagerImplTest
   BlobStoreConfigurationStore store
   
   @Mock
+  BlobStoreDescriptor descriptor
+
+  @Mock
   Provider<BlobStore> provider
 
   @Mock
@@ -74,8 +78,8 @@ class BlobStoreManagerImplTest
   }
 
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
-    spy(new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
-        databaseFreezeService, nodeAccess, provisionDefaults))
+    spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
+        [test: provider, File: provider], databaseFreezeService, nodeAccess, provisionDefaults))
   }
 
   @Test
@@ -210,8 +214,8 @@ class BlobStoreManagerImplTest
   @Test
   void 'Can successfullly create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
-    underTest = new BlobStoreManagerImpl(eventManager, store, [test: provider, File: provider],
-        databaseFreezeService, nodeAccess, true)
+    underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
+        [test: provider, File: provider], databaseFreezeService, nodeAccess, true)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)

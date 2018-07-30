@@ -13,9 +13,11 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -383,6 +385,31 @@ public class RepositoryManagerImpl
     untrack(repository);
 
     eventManager.post(new RepositoryDeletedEvent(repository));
+  }
+
+  /**
+   * Retrieve a list of all groups that contain the desired repository, either directly or transitively through
+   * another group.
+   *
+   * @since 3.next
+   */
+  @Override
+  @Guarded(by = STARTED)
+  public Set<String> findContainingGroups(final String name) {
+    return findContainingGroups(name, new HashSet<>());
+  }
+
+  private Set<String> findContainingGroups(final String name, final Set<String> containingGroups) {
+    for (Repository group : repositories.values()) {
+      boolean containsRepository = group.optionalFacet(GroupFacet.class).filter(groupFacet -> groupFacet.member(name))
+          .isPresent();
+      if (containsRepository && !containingGroups.contains(group.getName())) {
+        containingGroups.add(group.getName());
+        containingGroups.addAll(findContainingGroups(group.getName(), containingGroups));
+      }
+    }
+
+    return containingGroups;
   }
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {

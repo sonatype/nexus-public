@@ -29,7 +29,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.common.text.Strings2;
 
-import org.apache.http.HttpHeaders;
+import com.google.common.net.HttpHeaders;
 import org.apache.shiro.web.filter.authc.AuthenticationFilter;
 import org.apache.shiro.web.servlet.SimpleCookie;
 import org.slf4j.Logger;

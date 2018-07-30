@@ -282,6 +282,7 @@ Ext.define('NX.app.Application', {
     remotingProvider.maxRetries = 0;
 
     // default request timeout to 60 seconds
+    // note this will be overridden by UiSessionTimeout.js where we load the user config
     remotingProvider.timeout = 60 * 1000;
 
     //<if debug>

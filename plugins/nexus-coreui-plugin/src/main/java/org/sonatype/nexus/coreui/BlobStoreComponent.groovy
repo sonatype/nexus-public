@@ -29,6 +29,7 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
+import org.sonatype.nexus.validation.group.Update
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
@@ -73,8 +74,15 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    blobstoreDescriptors.collect { key, descriptor ->
-      new BlobStoreTypeXO(id: key, name: descriptor.name, formFields: descriptor.formFields.collect { FormFieldXO.create(it) })
+    blobstoreDescriptors.findAll { key, descriptor ->
+      descriptor.enabled
+    }.collect { key, descriptor ->
+      new BlobStoreTypeXO(
+          id: key,
+          name: descriptor.name,
+          formFields: descriptor.formFields.collect { FormFieldXO.create(it) },
+          isModifiable: descriptor.isModifiable()
+      )
     }
   }
 
@@ -82,9 +90,24 @@ class BlobStoreComponent
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:create')
-  @Validate(groups = [Create.class, Default.class])
+  @Validate(groups = [Create, Default])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
     return asBlobStore(blobStoreManager.create(
+        new BlobStoreConfiguration(
+            name: blobStore.name,
+            type: blobStore.type,
+            attributes: blobStore.attributes
+        )
+    ))
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:update')
+  @Validate(groups = [Update, Default])
+  BlobStoreXO update(final @NotNull @Valid BlobStoreXO blobStore) {
+    return asBlobStore(blobStoreManager.update(
         new BlobStoreConfiguration(
             name: blobStore.name,
             type: blobStore.type,

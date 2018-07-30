@@ -53,6 +53,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -396,6 +397,18 @@ public class MavenFacetImpl
     else {
       return putFile(tx, path, assetBlob, contentAttributes);
     }
+  }
+
+  @Override
+  @Transactional
+  public boolean exists(final MavenPath path) {
+    log.debug("EXISTS {} : {}", getRepository().getName(), path.getPath());
+
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
+
+    return asset != null;
   }
 
   private Asset putFile(final StorageTx tx,

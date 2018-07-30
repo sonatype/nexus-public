@@ -88,6 +88,17 @@ class BlobStoreConfigurationStoreImplTest
     }
   }
 
+  @Test
+  void 'Can update an existing BlobStoreConfiguration'() {
+    BlobStoreConfiguration entity = createConfig()
+    assert underTest.list()
+    entity.attributes.file.path = 'blat'
+    underTest.update(entity)
+    def list = underTest.list()
+    assert list.size() == 1
+    assert list[0].attributes.file.path == 'blat'
+  }
+
   private BlobStoreConfiguration createConfig(name = 'foo', path = 'bar') {
     def entity = new BlobStoreConfiguration(
         name: name,

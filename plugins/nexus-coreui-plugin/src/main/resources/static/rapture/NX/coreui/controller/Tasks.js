@@ -359,12 +359,11 @@ Ext.define('NX.coreui.controller.Tasks', {
    * Enable 'Run' when user has 'read' permission and task is 'runnable'.
    */
   bindRunButton: function(button) {
+    var me = this;
     button.mon(
         NX.Conditions.and(
             NX.Conditions.isPermitted('nexus:tasks:start'),
-            NX.Conditions.gridHasSelection('nx-coreui-task-list', function(model) {
-              return model.get('runnable');
-            })
+            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({run: true}))
         ),
         {
           satisfied: function () {
@@ -383,12 +382,11 @@ Ext.define('NX.coreui.controller.Tasks', {
    * Enable 'Stop' when user has 'delete' permission and task is 'stoppable'.
    */
   bindStopButton: function(button) {
+    var me = this;
     button.mon(
         NX.Conditions.and(
             NX.Conditions.isPermitted('nexus:tasks:stop'),
-            NX.Conditions.gridHasSelection('nx-coreui-task-list', function(model) {
-              return model.get('stoppable');
-            })
+            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({stop: true}))
         ),
         {
           satisfied: function () {
@@ -399,6 +397,41 @@ Ext.define('NX.coreui.controller.Tasks', {
           }
         }
     );
+  },
+
+  /**
+   * @private
+   */
+  getObservables: function () {
+    var me = this;
+    return [
+      { observable: me.getStore('Task'), events: ['load']},
+      { observable: Ext.History, events: ['change']}
+    ];
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function (options) {
+    var me = this,
+        store = me.getStore('Task');
+
+    return function() {
+      var taskId = me.getModelIdFromBookmark(),
+          model = taskId ? store.findRecord('id', taskId, 0, false, true, true) : undefined;
+
+      if (model) {
+        if (options.run) {
+          return model.get('runnable');
+        }
+        else if (options.stop) {
+          return model.get('stoppable');
+        }
+      }
+
+      return false;
+    };
   },
 
   /**

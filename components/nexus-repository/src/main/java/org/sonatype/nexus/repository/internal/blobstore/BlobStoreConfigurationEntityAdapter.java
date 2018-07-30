@@ -25,9 +25,11 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,6 +55,9 @@ public class BlobStoreConfigurationEntityAdapter
   private static final String P_TYPE = "type";
 
   private static final String P_ATTRIBUTES = "attributes";
+
+  private final UpdateEntityByPropertyAction<BlobStoreConfiguration> update =
+      new UpdateEntityByPropertyAction<>(this, P_NAME);
 
   @VisibleForTesting
   static final String I_NAME = new OIndexNameBuilder()
@@ -122,5 +127,12 @@ public class BlobStoreConfigurationEntityAdapter
       default:
         return null;
     }
+  }
+
+  /**
+   * @since 3.next
+   */
+  public boolean update(final ODatabaseDocumentTx db, final BlobStoreConfiguration entity) {
+    return update.execute(db, entity, entity.getName());
   }
 }

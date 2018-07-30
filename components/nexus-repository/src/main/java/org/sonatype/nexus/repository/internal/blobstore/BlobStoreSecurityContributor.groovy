@@ -61,6 +61,15 @@ class BlobStoreSecurityContributor
                 ]
             ),
             new CPrivilege(
+                id: 'nx-blobstores-update',
+                description: 'Update permission for Blob Stores',
+                type: 'application',
+                properties: [
+                    domain : 'blobstores',
+                    actions: 'update,read'
+                ]
+            ),
+            new CPrivilege(
                 id: 'nx-blobstores-delete',
                 description: 'Delete permission for Blob Stores',
                 type: 'application',

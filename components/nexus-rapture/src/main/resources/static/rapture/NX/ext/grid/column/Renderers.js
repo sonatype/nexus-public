@@ -24,6 +24,6 @@ Ext.define('NX.ext.grid.column.Renderers', {
    * Renderer which will use no-data glyph if given value is undefined or null.
    */
   optionalData: function(value) {
-    return value ? Ext.htmlEncode(value) : '<span class="x-fa fa-ban" style="opacity: 0.33;"/>';
+    return value ? Ext.htmlEncode(value) : '<span class="x-fa fa-ban" style="opacity: 0.33;" aria-label="No data"/>';
   }
 });

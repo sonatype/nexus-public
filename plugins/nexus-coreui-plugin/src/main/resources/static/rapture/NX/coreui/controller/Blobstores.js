@@ -98,6 +98,9 @@ Ext.define('NX.coreui.controller.Blobstores', {
         'nx-coreui-blobstore-list button[action=new]': {
           click: me.showAddWindow
         },
+        'nx-coreui-blobstore-settings button[action=save]': {
+          click: me.updateBlobstore
+        },
         'nx-coreui-blobstore-settings-form': {
           submitted: me.loadStores
         }
@@ -122,34 +125,56 @@ Ext.define('NX.coreui.controller.Blobstores', {
   },
 
   /**
-   * @override
+   * @protected
+   * Enable 'Delete' when user has 'delete' permission for selected blobstore.
    */
-  bindDeleteButton: function (button) {
+  bindDeleteButton: function(button) {
     var me = this;
+
     button.mon(
-      NX.Conditions.and(
-        NX.Conditions.isPermitted(this.permission + ':delete'),
-        NX.Conditions.gridHasSelection('nx-coreui-blobstore-list', function(model) {
-          var repositoryUseCount = model.get('repositoryUseCount');
-          if (repositoryUseCount > 0) {
-            me.showInfo(NX.I18n.format('Blobstore_BlobstoreFeature_Delete_Disabled_Message',
-                Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories')));
+        NX.Conditions.and(
+            NX.Conditions.isPermitted(this.permission + ':delete'),
+            NX.Conditions.watchEvents([
+              { observable: me.getStore('Blobstore'), events: ['load']},
+              { observable: Ext.History, events: ['change']}
+            ], me.watchEventsHandler())
+        ),
+        {
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
           }
-          else {
-            me.clearInfo();
-          }
-          return !repositoryUseCount > 0;
-        })
-      ),
-      {
-        satisfied: function () {
-          button.enable();
-        },
-        unsatisfied: function () {
-          button.disable();
         }
-      }
     );
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function () {
+    var me = this,
+        store = me.getStore('Blobstore');
+
+    return function() {
+      var blobstoreId = me.getModelIdFromBookmark(),
+          model = blobstoreId ? store.findRecord('name', blobstoreId, 0, false, true, true) : undefined;
+
+      if (model) {
+        var repositoryUseCount = model.get('repositoryUseCount');
+        if (repositoryUseCount > 0) {
+          me.showInfo(NX.I18n.format('Blobstore_BlobstoreFeature_Delete_Disabled_Message',
+              Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories')));
+          return false;
+        }
+
+        me.clearInfo();
+        return true;
+      }
+
+      return false;
+    };
   },
 
   /**
@@ -173,6 +198,34 @@ Ext.define('NX.coreui.controller.Blobstores', {
     if (list) {
       me.getStore('BlobstoreType').load();
     }
+  },
+
+  /**
+   * @private
+   * Updates blobstore.
+   */
+  updateBlobstore: function(button) {
+    var me = this,
+        form = button.up('form'),
+        values = form.getValues();
+
+    me.getContent().getEl().mask(NX.I18n.get('Blobstores_Update_Mask'));
+    NX.direct.coreui_Blobstore.update(values, function(response) {
+      me.getContent().getEl().unmask();
+      if (Ext.isObject(response)) {
+        if (response.success) {
+          NX.Messages.add({
+            text: NX.I18n.format('Blobstores_Update_Success',
+                me.getDescription(me.getBlobstoreModel().create(response.data))),
+            type: 'success'
+          });
+          me.getStore('Blobstore').load();
+        }
+        else if (Ext.isDefined(response.errors)) {
+          form.markInvalid(response.errors);
+        }
+      }
+    });
   },
 
   /**

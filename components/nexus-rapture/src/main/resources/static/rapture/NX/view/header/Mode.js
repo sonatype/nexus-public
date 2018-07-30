@@ -123,7 +123,9 @@ Ext.define('NX.view.header.Mode', {
           bind: {
             text: '{text:htmlEncode}',
             tooltip: '{tooltip:htmlEncode}'
-          }
+          },
+
+          ariaLabel: me.text ? me.text : me.title
         }
       ]
     });

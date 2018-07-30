@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.selector.internal;
 import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -29,6 +30,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -64,6 +66,9 @@ public class ContentAuthPluginScriptTest
   @Mock
   VariableResolverAdapter variableResolverAdapter;
 
+  @Mock
+  RepositoryManager repositoryManager;
+
   SourceLookup sourceLookup;
 
   ContentAuthPluginScript underTest;
@@ -73,8 +78,9 @@ public class ContentAuthPluginScriptTest
     sourceLookup = new SourceLookup();
     when(variableResolverAdapterManager.get(FORMAT)).thenReturn(variableResolverAdapter);
     when(variableResolverAdapter.fromSourceLookup(eq(sourceLookup), anyMap())).thenReturn(variableSource);
+    when(repositoryManager.findContainingGroups(any())).thenReturn(Collections.emptySet());
     underTest = new ContentAuthPluginScript(subject, contentPermissionChecker,
-        variableResolverAdapterManager) {
+        variableResolverAdapterManager, repositoryManager) {
       @Override
       protected SourceLookup getSourceLookup() {
         return sourceLookup;
@@ -89,9 +95,9 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource)).thenReturn(true);
     assertThat(underTest.run(), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource);
   }
 
   @Test
@@ -101,9 +107,9 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource)).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource)).thenReturn(false);
     assertThat(underTest.run(), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(REPOSITORY_NAME, FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource);
   }
 
   @Test

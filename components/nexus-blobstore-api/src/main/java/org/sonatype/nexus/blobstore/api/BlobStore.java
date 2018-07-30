@@ -158,7 +158,7 @@ public interface BlobStore
   boolean deleteHard(BlobId blobId);
 
   /**
-   * Provides metrics about the BlobStore's usage.
+   * Provides an immutable snapshot of metrics about the BlobStore's usage.
    */
   BlobStoreMetrics getMetrics();
 

@@ -83,7 +83,8 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
  *
  * @since 3.0
  */
-@RunWith(PaxExam.class)
+@RunWith(SafeRunner.class)
+@SafeRunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public abstract class NexusPaxExamSupport
 {

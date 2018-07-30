@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.elasticsearch.PluginLocator;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -37,10 +38,11 @@ public class ContentAuthPluginLocator
   @Inject
   public ContentAuthPluginLocator(final ContentPermissionChecker contentPermissionChecker,
                                   final VariableResolverAdapterManager variableResolverAdapterManager,
-                                  final SearchSubjectHelper searchSubjectHelper)
+                                  final SearchSubjectHelper searchSubjectHelper,
+                                  final RepositoryManager repositoryManager)
   {
     ContentAuthPlugin.setDependencies(contentPermissionChecker, variableResolverAdapterManager,
-        searchSubjectHelper);
+        searchSubjectHelper, repositoryManager);
   }
 
   @Override

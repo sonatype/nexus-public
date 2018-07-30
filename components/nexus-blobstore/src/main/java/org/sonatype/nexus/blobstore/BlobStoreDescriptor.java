@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore;
 
 import java.util.List;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.formfields.FormField;
 
 /**
@@ -36,4 +37,30 @@ public interface BlobStoreDescriptor
    * @return blob store configuration form fields
    */
   List<FormField> getFormFields();
+
+  /**
+   * @return true if the blob store can be modified after creating.
+   *
+   * @since 3.next
+   */
+  default boolean isModifiable() {
+    return false;
+  }
+
+  /**
+   * Validate configuration.
+   *
+   * @since 3.next
+   */
+  default void validateConfig(BlobStoreConfiguration config) {
+  }
+
+  /**
+   * @return true if the blob store type is enabled.
+   *
+   * @since 3.next
+   */
+  default boolean isEnabled() {
+    return true;
+  }
 }

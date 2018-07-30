@@ -24,6 +24,7 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -130,14 +131,18 @@ public class ContentPermissionCheckerImplTest
   @Test
   public void testIsPermitted_viewNotPermittedContentPermitted() throws Exception {
     when(securityHelper
-        .anyPermitted(eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
-        .thenReturn(false);
+        .anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
 
     when(selectorManager.browse()).thenReturn(Arrays.asList(config));
 
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
 
-    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
+    assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(true));
+
+    //just to validate 'view' permission didn't sneak in and authorize the above call
+    verify(securityHelper).anyPermitted(eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName",
+        Arrays.asList(BreadActions.READ))));
   }
 
   @Test
@@ -151,5 +156,118 @@ public class ContentPermissionCheckerImplTest
     when(selectorManager.evaluate(any(), any())).thenReturn(false);
 
     assertThat(impl.isPermitted("repoName", "repoFormat", BreadActions.READ, variableSource), is(false));
+  }
+
+  @Test
+  public void testIsViewPermittedMultipleRepositories_permitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ), is(true));
+  }
+
+  @Test
+  public void testIsViewPermittedMultipleRepositories_notPermitted() throws Exception {
+    assertThat(impl.isViewPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ), is(false));
+
+    //just to make sure it was actually called, since returning false is the default behaviour
+    verify(securityHelper)
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ))));
+  }
+
+  @Test
+  public void testIsContentPermittedMultipleRepositories_permitted() throws Exception {
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    assertThat(impl.isContentPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, config, variableSource), is(true));
+  }
+
+  @Test
+  public void testIsContentPermittedMultipleRepositories_notPermitted() throws Exception {
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isContentPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, config, variableSource), is(false));
+
+    //just to make sure it was actually called, since returning false is the default behaviour
+    verify(securityHelper)
+        .anyPermitted(
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ))));
+  }
+
+  @Test
+  public void testIsPermittedMultipleRepositories_viewPermittedContentPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(true));
+  }
+
+  @Test
+  public void testIsPermittedMultipleRepositories_viewPermittedContentNotPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(true));
+  }
+
+  @Test
+  public void testIsPermittedMultipleRepositories_viewNotPermittedContentPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(true);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(true);
+
+    assertThat(impl.isPermitted(Sets.newLinkedHashSet(Arrays.asList("repoName", "repoName2")), "repoFormat", BreadActions.READ, variableSource), is(true));
+
+    //just to validate 'view' permission didn't sneak in and authorize the above call
+    verify(securityHelper).anyPermitted(
+        eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+        eq(new RepositoryContentSelectorPermission("selector", "repoFormat", "repoName2", Arrays.asList(BreadActions.READ))));
+  }
+
+  @Test
+  public void testIsPermittedMultipleRepositories_viewNotPermittedContentNotPermitted() throws Exception {
+    when(securityHelper
+        .anyPermitted(
+            eq(new RepositoryViewPermission("repoFormat", "repoName", Arrays.asList(BreadActions.READ))),
+            eq(new RepositoryViewPermission("repoFormat", "repoName2", Arrays.asList(BreadActions.READ)))))
+        .thenReturn(false);
+
+    when(selectorManager.browse()).thenReturn(Arrays.asList(config));
+
+    when(selectorManager.evaluate(any(), any())).thenReturn(false);
+
+    assertThat(impl.isPermitted(Sets.newHashSet("repoName", "repoName2"), "repoFormat", BreadActions.READ, variableSource), is(false));
   }
 }

@@ -716,7 +716,8 @@ Ext.define('NX.controller.Drilldown', {
           itemId: 'nx-feature-icon',
           width: 32,
           height: 32,
-          cls: content.currentIcon
+          cls: content.currentIcon,
+          ariaRole: 'presentation'
         },
         {
           xtype: 'button',
@@ -747,14 +748,17 @@ Ext.define('NX.controller.Drilldown', {
           {
             xtype: 'label',
             cls: 'nx-breadcrumb-separator',
-            text: '/'
+            text: '/',
+            ariaRole: 'presentation',
+            tabIndex: -1
           },
           {
             xtype: 'image',
             height: 16,
             width: 16,
             cls: 'nx-breadcrumb-icon ' + items[i].itemClass,
-            alt: ' ' // Alt text for breadcrumb icons would be redundant
+            alt: items[i].itemClass.replace(/^nx-(.+)-x\d+$/, '$1').replace(/-/g, ' '),
+            ariaRole: 'presentation'
           },
 
           // Create a closure within a closure to decouple 'i' from the current context
@@ -875,5 +879,12 @@ Ext.define('NX.controller.Drilldown', {
     var idAIndex = parseInt(a.getId().replace('nx-drilldown-item', ''));
     var idBIndex = parseInt(b.getId().replace('nx-drilldown-item', ''));
     return idBIndex - idAIndex;
+  },
+
+  getModelIdFromBookmark: function() {
+    var bookmarkSegments = NX.Bookmarks.getBookmark().segments,
+        modelId = (bookmarkSegments.length > 1) && decodeURIComponent(bookmarkSegments[1]);
+
+    return modelId;
   }
 });

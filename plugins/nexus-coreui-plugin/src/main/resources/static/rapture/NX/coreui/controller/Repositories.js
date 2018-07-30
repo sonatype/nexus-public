@@ -417,16 +417,13 @@ Ext.define('NX.coreui.controller.Repositories', {
    * Enables button if the select repository is a proxy or hosted repository.
    */
   bindIfProxyOrHostedAndEditable: function (button) {
-    var permittedCondition;
+    var me = this;
+
+    //bind the enable/disable state to whether user has perms to edit a repo
     button.mon(
         NX.Conditions.and(
-            permittedCondition = NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
-            NX.Conditions.gridHasSelection('nx-coreui-repository-list', function (model) {
-              permittedCondition.setPermission(
-                  'nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':edit'
-              );
-              return true;
-            })
+            NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
+            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true}))
         ),
         {
           satisfied: function () {
@@ -437,15 +434,15 @@ Ext.define('NX.coreui.controller.Repositories', {
           }
         }
     );
+
+    //bind the show/hide state to whether the repo is proxy or hosted
     button.mon(
-        NX.Conditions.gridHasSelection('nx-coreui-repository-list', function (model) {
-          return model.get('type') === 'proxy' || model.get('type') === 'hosted';
-        }),
+        NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({proxyOrHosted: true})),
         {
-          satisfied: function() {
+          satisfied: function () {
             button.show();
           },
-          unsatisfied: function() {
+          unsatisfied: function () {
             button.hide();
           }
         }
@@ -457,16 +454,13 @@ Ext.define('NX.coreui.controller.Repositories', {
    * Enables button if the select repository is a proxy or group repository.
    */
   bindIfProxyOrGroupAndEditable: function (button) {
-    var permittedCondition;
+    var me = this;
+
+    //bind the enable/disable state to whether user has perms to edit a repo
     button.mon(
         NX.Conditions.and(
-            permittedCondition = NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
-            NX.Conditions.gridHasSelection('nx-coreui-repository-list', function (model) {
-              permittedCondition.setPermission(
-                  'nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':edit'
-              );
-              return true;
-            })
+            NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
+            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({editRecord: true}))
         ),
         {
           satisfied: function () {
@@ -477,10 +471,10 @@ Ext.define('NX.coreui.controller.Repositories', {
           }
         }
     );
+
+    //bind the show/hide state to whether the repo is proxy or group
     button.mon(
-        NX.Conditions.gridHasSelection('nx-coreui-repository-list', function (model) {
-          return model.get('type') === 'proxy' || model.get('type') === 'group';
-        }),
+        NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({proxyOrGroup: true})),
         {
           satisfied: function () {
             button.show();
@@ -515,17 +509,13 @@ Ext.define('NX.coreui.controller.Repositories', {
    * @protected
    * Enable 'Delete' when user has 'delete' permission for selected repository.
    */
-  bindDeleteButton: function (button) {
-    var permittedCondition;
+  bindDeleteButton: function(button) {
+    var me = this;
+
     button.mon(
         NX.Conditions.and(
-            permittedCondition = NX.Conditions.isPermitted('nexus:repository-admin:*:*:delete'),
-            NX.Conditions.gridHasSelection('nx-coreui-repository-list', function (model) {
-              permittedCondition.setPermission(
-                  'nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':delete'
-              );
-              return true;
-            })
+            NX.Conditions.isPermitted('nexus:repository-admin:*:*:delete'),
+            NX.Conditions.watchEvents(me.getObservables(), me.watchEventsHandler({deleteRecord: true}))
         ),
         {
           satisfied: function () {
@@ -536,6 +526,47 @@ Ext.define('NX.coreui.controller.Repositories', {
           }
         }
     );
+  },
+
+  /**
+   * @private
+   */
+  getObservables: function () {
+    var me = this;
+    return [
+      { observable: me.getStore('Repository'), events: ['load']},
+      { observable: Ext.History, events: ['change']}
+    ];
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function (options) {
+    var me = this,
+        store = me.getStore('Repository');
+
+    return function() {
+      var repositoryId = me.getModelIdFromBookmark(),
+          model = repositoryId ? store.findRecord('name', repositoryId, 0, false, true, true) : undefined;
+
+      if (model) {
+        if (options.deleteRecord) {
+          return NX.Permissions.check('nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':delete');
+        }
+        else if (options.editRecord) {
+          return NX.Permissions.check('nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':edit');
+        }
+        else if (options.proxyOrGroup) {
+          return model.get('type') === 'proxy' || model.get('type') === 'group';
+        }
+        else if (options.proxyOrHosted) {
+          return model.get('type') === 'proxy' || model.get('type') === 'hosted';
+        }
+      }
+
+      return false;
+    };
   }
 
 });

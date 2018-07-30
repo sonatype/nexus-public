@@ -44,9 +44,15 @@ Ext.define('NX.coreui.view.repository.RepositoryAdd', {
       editableCondition: NX.Conditions.isPermitted('nexus:repository-admin:*:*:add'),
       editableMarker: NX.I18n.get('Repository_RepositoryAdd_Create_Error'),
 
-      buttons: [
-        { text: NX.I18n.get('Repository_RepositoryList_New_Button'), action: 'add', formBind: true, ui: 'nx-primary' },
-        { text: NX.I18n.get('Add_Cancel_Button'), action: 'back' }
+      buttons: [{
+        text: NX.I18n.get('Repository_RepositoryList_New_Button'),
+        action: 'add',
+        formBind: true,
+        ui: 'nx-primary'
+      }, {
+        text: NX.I18n.get('Add_Cancel_Button'),
+        action: 'back'
+      }
       ]
     };
 

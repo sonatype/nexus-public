@@ -54,11 +54,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>io.swagger</groupId>
       <artifactId>swagger-annotations</artifactId>
     </dependency>
@@ -71,6 +66,12 @@
     <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
       <scope>test</scope>
     </dependency>
 

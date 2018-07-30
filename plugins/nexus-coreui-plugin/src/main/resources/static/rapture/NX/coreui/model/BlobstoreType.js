@@ -22,6 +22,7 @@ Ext.define('NX.coreui.model.BlobstoreType', {
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'name', type: 'string', sortType: 'asUCText'},
-    {name: 'formFields', type: 'auto' /*object*/}
+    {name: 'formFields', type: 'auto' /*object*/},
+    {name: 'isModifiable', type: 'boolean'}
   ]
 });

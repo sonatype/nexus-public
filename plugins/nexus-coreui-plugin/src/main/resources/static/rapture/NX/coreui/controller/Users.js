@@ -432,11 +432,11 @@ Ext.define('NX.coreui.controller.Users', {
    * @private
    */
   watchEventsHandler: function (skipCurrentUser) {
-    var store = this.getUserStore();
+    var me = this,
+        store = me.getStore('User');
 
     return function() {
-      var bookmarkSegments = NX.Bookmarks.getBookmark().segments,
-          userId = (bookmarkSegments.length > 1) && decodeURIComponent(bookmarkSegments[1]),
+      var userId = me.getModelIdFromBookmark(),
           enableButton = false,
           selectedModel;
 

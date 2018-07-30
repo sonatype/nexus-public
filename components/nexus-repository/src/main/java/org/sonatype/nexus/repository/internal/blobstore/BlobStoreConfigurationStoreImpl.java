@@ -82,6 +82,14 @@ public class BlobStoreConfigurationStoreImpl
 
   @Override
   @Guarded(by = STARTED)
+  public void update(final BlobStoreConfiguration configuration) {
+    checkNotNull(configuration);
+
+    inTxRetry(databaseInstance).run(db -> entityAdapter.update(db, configuration));
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public void delete(final BlobStoreConfiguration configuration) {
     checkNotNull(configuration);
 

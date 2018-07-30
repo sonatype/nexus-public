@@ -36,6 +36,13 @@ public interface BlobStoreConfigurationStore
   void create(BlobStoreConfiguration configuration);
 
   /**
+   * Update an existing BlobStoreConfiguration.
+   *
+   * @since 3.next
+   */
+  void update(BlobStoreConfiguration configuration);
+
+  /**
    * Delete an existing BlobStoreConfiguration.
    */
   void delete(BlobStoreConfiguration configuration);

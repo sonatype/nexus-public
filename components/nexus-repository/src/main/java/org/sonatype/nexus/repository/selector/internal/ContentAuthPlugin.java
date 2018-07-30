@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.selector.internal;
 
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -34,11 +35,13 @@ public class ContentAuthPlugin
   private static ContentPermissionChecker contentPermissionChecker;
   private static VariableResolverAdapterManager variableResolverAdapterManager;
   private static SearchSubjectHelper searchSubjectHelper;
+  private static RepositoryManager repositoryManager;
 
   public ContentAuthPlugin() {
     checkNotNull(contentPermissionChecker);
     checkNotNull(variableResolverAdapterManager);
     checkNotNull(searchSubjectHelper);
+    checkNotNull(repositoryManager);
   }
 
   @Override
@@ -57,11 +60,13 @@ public class ContentAuthPlugin
 
   public static void setDependencies(final ContentPermissionChecker contentPermissionChecker,
                                      final VariableResolverAdapterManager variableResolverAdapterManager,
-                                     final SearchSubjectHelper searchSubjectHelper)
+                                     final SearchSubjectHelper searchSubjectHelper,
+                                     final RepositoryManager repositoryManager)
   {
     ContentAuthPlugin.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     ContentAuthPlugin.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     ContentAuthPlugin.searchSubjectHelper = checkNotNull(searchSubjectHelper);
+    ContentAuthPlugin.repositoryManager = checkNotNull(repositoryManager);
   }
 
   public static ContentPermissionChecker getContentPermissionChecker() {
@@ -74,5 +79,9 @@ public class ContentAuthPlugin
 
   public static SearchSubjectHelper getSearchSubjectHelper() {
     return searchSubjectHelper;
+  }
+
+  public static RepositoryManager getRepositoryManager() {
+    return repositoryManager;
   }
 }

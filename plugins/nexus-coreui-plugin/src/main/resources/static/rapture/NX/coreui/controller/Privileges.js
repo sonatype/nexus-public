@@ -219,9 +219,10 @@ Ext.define('NX.coreui.controller.Privileges', {
     button.mon(
         NX.Conditions.and(
             NX.Conditions.isPermitted(me.permission + ':delete'),
-            NX.Conditions.gridHasSelection(me.masters[0], function (model) {
-              return !model.get('readOnly');
-            })
+            NX.Conditions.watchEvents([
+              { observable: me.getStore('Privilege'), events: ['load']},
+              { observable: Ext.History, events: ['change']}
+            ], me.watchEventsHandler())
         ),
         {
           satisfied: function () {
@@ -232,6 +233,25 @@ Ext.define('NX.coreui.controller.Privileges', {
           }
         }
     );
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function () {
+    var me = this,
+        store = me.getStore('Privilege');
+
+    return function() {
+      var privilegeId = me.getModelIdFromBookmark(),
+          model = privilegeId ? store.findRecord('id', privilegeId, 0, false, true, true) : undefined;
+
+      if (model) {
+        return !model.get('readOnly');
+      }
+
+      return false;
+    };
   },
 
   /**

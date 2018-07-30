@@ -25,10 +25,6 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     'NX.I18n'
   ],
 
-  api: {
-    submit: 'NX.direct.coreui_Blobstore.update'
-  },
-
   initComponent: function() {
     var me = this;
 
@@ -38,7 +34,13 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
 
     me.editableMarker = NX.I18n.get('Blobstore_BlobstoreSettingsForm_Update_Error');
 
-    me.editableCondition = me.editableCondition || NX.Conditions.never();
+    me.editableCondition = me.editableCondition || NX.Conditions.and(
+        NX.Conditions.isPermitted('nexus:blobstores:update'),
+        NX.Conditions.formHasRecord('nx-coreui-blobstore-settings-form', function(model) {
+          var blobstoreTypeModel = NX.getApplication().getStore('BlobstoreType').getById(model.data.type);
+          return blobstoreTypeModel.data.isModifiable;
+        })
+    );
 
     me.items = [
       {

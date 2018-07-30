@@ -14,6 +14,7 @@
 package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -59,6 +60,17 @@ public class ContentPermissionCheckerImpl
   }
 
   @VisibleForTesting
+  public boolean isViewPermitted(final Set<String> repositoryNames, final String repositoryFormat, final String action) {
+    RepositoryViewPermission[] perms = repositoryNames.stream()
+        .map(repositoryName -> new RepositoryViewPermission(repositoryFormat, repositoryName, action))
+        .toArray(RepositoryViewPermission[]::new);
+    if (perms.length > 0) {
+      return securityHelper.anyPermitted(perms);
+    }
+    return false;
+  }
+
+  @VisibleForTesting
   public boolean isContentPermitted(final String repositoryName,
                                     final String repositoryFormat,
                                     final String action,
@@ -78,6 +90,34 @@ public class ContentPermissionCheckerImpl
       }
       else {
         log.debug(e.getMessage());
+      }
+    }
+
+    return false;
+  }
+
+  @VisibleForTesting
+  public boolean isContentPermitted(final Set<String> repositoryNames,
+                                    final String repositoryFormat,
+                                    final String action,
+                                    final SelectorConfiguration selectorConfiguration,
+                                    final VariableSource variableSource)
+  {
+    RepositoryContentSelectorPermission[] perms = repositoryNames.stream().map(
+        repositoryName -> new RepositoryContentSelectorPermission(selectorConfiguration.getName(), repositoryFormat,
+            repositoryName, Arrays.asList(action))).toArray(RepositoryContentSelectorPermission[]::new);
+    if (perms.length > 0) {
+      try {
+        // make sure subject has the selector permission before evaluating it, because that's a cheaper/faster check
+        return securityHelper.anyPermitted(perms) && selectorManager.evaluate(selectorConfiguration, variableSource);
+      }
+      catch (SelectorEvaluationException e) {
+        if (log.isTraceEnabled()) {
+          log.debug(e.getMessage(), e);
+        }
+        else {
+          log.debug(e.getMessage());
+        }
       }
     }
 
@@ -112,5 +152,22 @@ public class ContentPermissionCheckerImpl
     // otherwise check the content selector perms
     return selectorManager.browseJexl().stream()
         .anyMatch(config -> isContentPermitted(repositoryName, repositoryFormat, action, config, variableSource));
+  }
+
+  @Override
+  public boolean isPermitted(final Set<String> repositoryNames,
+                             final String repositoryFormat,
+                             final String action,
+                             final VariableSource variableSource)
+  {
+    if (repositoryNames.isEmpty()) {
+      return false;
+    }
+
+    if (isViewPermitted(repositoryNames, repositoryFormat, action)) {
+      return true;
+    }
+    return selectorManager.browse().stream()
+        .anyMatch(config -> isContentPermitted(repositoryNames, repositoryFormat, action, config, variableSource));
   }
 }

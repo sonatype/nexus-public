@@ -41,7 +41,8 @@ public class ContentAuthPluginScriptFactory
     return new ContentAuthPluginScript(
         subject,
         ContentAuthPlugin.getContentPermissionChecker(),
-        ContentAuthPlugin.getVariableResolverAdapterManager());
+        ContentAuthPlugin.getVariableResolverAdapterManager(),
+        ContentAuthPlugin.getRepositoryManager());
   }
 
   @Override

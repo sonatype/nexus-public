@@ -25,6 +25,7 @@ Ext.define('NX.view.footer.Panel', {
   ],
 
   cls: 'nx-footer',
+  ariaRole: 'contentinfo',
 
   /**
    * @override

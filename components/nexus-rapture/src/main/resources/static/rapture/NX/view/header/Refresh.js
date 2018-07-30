@@ -31,7 +31,8 @@ Ext.define('NX.view.header.Refresh', {
    */
   initComponent: function() {
     Ext.apply(this, {
-      tooltip: NX.I18n.get('Header_Refresh_Tooltip')
+      tooltip: NX.I18n.get('Header_Refresh_Tooltip'),
+      ariaLabel: NX.I18n.get('Header_Refresh_Tooltip')
     });
 
     this.callParent();

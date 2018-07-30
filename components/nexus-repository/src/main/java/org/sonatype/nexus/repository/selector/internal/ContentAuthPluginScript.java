@@ -13,9 +13,12 @@
 package org.sonatype.nexus.repository.selector.internal;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -49,13 +52,17 @@ public class ContentAuthPluginScript
 
   private final ContentPermissionChecker contentPermissionChecker;
 
+  private final RepositoryManager repositoryManager;
+
   public ContentAuthPluginScript(final Subject subject,
                                  final ContentPermissionChecker contentPermissionChecker,
-                                 final VariableResolverAdapterManager variableResolverAdapterManager)
+                                 final VariableResolverAdapterManager variableResolverAdapterManager,
+                                 final RepositoryManager repositoryManager)
   {
     this.subject = checkNotNull(subject);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Override
@@ -73,7 +80,10 @@ public class ContentAuthPluginScript
       if (assets != null) {
         for (Map<String, Object> asset : assets) {
           VariableSource variableSource = variableResolverAdapter.fromSourceLookup(sourceLookup, asset);
-          return contentPermissionChecker.isPermitted(repositoryName, format, BROWSE, variableSource);
+          Set<String> repoNames = new HashSet<>();
+          repoNames.add(repositoryName);
+          repoNames.addAll(repositoryManager.findContainingGroups(repositoryName));
+          return contentPermissionChecker.isPermitted(repoNames, format, BROWSE, variableSource);
         }
       }
       return false;

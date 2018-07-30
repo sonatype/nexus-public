@@ -13,7 +13,7 @@
 package org.sonatype.nexus.blobstore.api;
 
 /**
- * Provides usage metrics for a blob-store.
+ * Provides a snapshot of usage metrics for a blob-store.
  *
  * @since 3.0
  */

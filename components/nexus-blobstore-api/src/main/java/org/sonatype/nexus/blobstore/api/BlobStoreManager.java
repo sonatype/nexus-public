@@ -40,6 +40,13 @@ public interface BlobStoreManager
   BlobStore create(BlobStoreConfiguration blobStoreConfiguration) throws Exception;
 
   /**
+   * Update an existing BlobStore
+   *
+   * @since 3.next
+   */
+  BlobStore update(BlobStoreConfiguration blobStoreConfiguration) throws Exception;
+
+  /**
    * Lookup a BlobStore by name
    */
   @Nullable

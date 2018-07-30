@@ -106,8 +106,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
