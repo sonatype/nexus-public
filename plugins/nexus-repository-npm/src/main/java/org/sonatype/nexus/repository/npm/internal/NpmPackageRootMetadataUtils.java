@@ -27,9 +27,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import org.joda.time.DateTime;
-import se.sawano.java.text.AlphanumericComparator;
 
-import static java.util.Locale.US;
 import static java.util.Objects.isNull;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
@@ -62,17 +60,6 @@ public class NpmPackageRootMetadataUtils
   private static final String DEPENDENCIES = "dependencies";
 
   private static final String DEV_DEPENDENCIES = "devDependencies";
-
-  private static final AlphanumericComparator versionComparator = new AlphanumericComparator(US);
-
-  public static final BiFunction<String, String, String> extractNewestVersion = (packageRootVersion, packageVersion) ->
-      versionComparator.compare(packageVersion, packageRootVersion) > 0
-          ? packageVersion : packageRootVersion;
-
-  public static final BiFunction<String, String, String> extractPackageRootVersionUnlessEmpty = (packageRootVersion, packageVersion) ->
-      packageRootVersion.isEmpty() ? packageVersion : packageRootVersion;
-
-  public static final BiFunction<String, String, String> extractAlwaysPackageVersion = (packageRootVersion, packageVersion) -> packageVersion;
 
   private static final String[] FULL_HOISTED_FIELDS = new String[] { NpmAttributes.P_AUTHOR,
       NpmAttributes.P_CONTRIBUTORS, NpmAttributes.P_DESCRIPTION, NpmAttributes.P_HOMEPAGE, NpmAttributes.P_KEYWORDS,

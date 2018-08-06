@@ -96,7 +96,7 @@ Ext.define('NX.controller.Icon', {
     });
 
     // create the style sheet
-    me.stylesheet = Ext.util.CSS.createStyleSheet(styles.join(' '));
+    me.stylesheet = Ext.util.CSS.createStyleSheet(styles.join(' '), 'nx-icons');
 
     //<if debug>
     me.logDebug('Stylesheet installed with', me.stylesheet.cssRules.length, 'rules');

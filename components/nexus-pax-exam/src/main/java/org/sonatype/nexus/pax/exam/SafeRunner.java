@@ -22,6 +22,8 @@ import org.junit.runner.manipulation.Sorter;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
 
+import static org.sonatype.nexus.pax.exam.NexusPaxExamTestIndexRule.captureLogsOnFailure;
+
 /**
  * Safe {@link Runner} that records a failure if an exception escapes from the runner specified by {@link SafeRunWith}.
  *
@@ -71,7 +73,9 @@ public class SafeRunner
       delegate.run(notifier);
     }
     catch (Throwable e) { // NOSONAR
-      notifier.fireTestFailure(new Failure(suiteDescription, e));
+      Failure failure = new Failure(suiteDescription, e);
+      notifier.fireTestFailure(failure);
+      captureLogsOnFailure(failure);
     }
     finally {
       notifier.fireTestFinished(suiteDescription);

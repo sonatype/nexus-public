@@ -16,25 +16,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.storage.Asset;
 
 import org.elasticsearch.common.Strings;
-import se.sawano.java.text.AlphanumericComparator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.*;
 import static java.lang.Character.isDigit;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.*;
 
 /**
  * Extracts supported format attributes from a map of parsed package.json data.
@@ -45,7 +44,7 @@ public class NpmFormatAttributesExtractor
 {
   private static final String FIRST_STABLE_VERSION = "1.0.0";
 
-  private static final AlphanumericComparator comparator = new AlphanumericComparator(Locale.US);
+  private static final VersionComparator comparator = NpmVersionComparator.versionComparator;
 
   private static final String NAME = "name";
 
@@ -275,7 +274,7 @@ public class NpmFormatAttributesExtractor
 
   /**
    * Returns a "normalized" version suitable for lexicographical ordering in Elasticsearch. Overall this attempts to
-   * generally mimic the behavior of the {@code AlphanumericComparator}, which while likely not suitable for general
+   * generally mimic the behavior of the {@code VersionComparator}, which while likely not suitable for general
    * semver ordering, is nevertheless what we use for npm.
    */
   @Nullable

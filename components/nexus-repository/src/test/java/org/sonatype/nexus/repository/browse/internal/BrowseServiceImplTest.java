@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -27,8 +29,10 @@ import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -41,6 +45,9 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.selector.ConstantVariableResolver;
+import org.sonatype.nexus.selector.VariableSource;
+import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import com.google.common.base.Supplier;
 import com.orientechnologies.orient.core.id.ORID;
@@ -131,6 +138,9 @@ public class BrowseServiceImplTest
   @Mock
   GroupFacet groupFacet;
 
+  @Mock
+  RepositoryManager repositoryManager;
+
   BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
 
   BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
@@ -158,7 +168,8 @@ public class BrowseServiceImplTest
     browseComponentsSqlBuilder = new BrowseComponentsSqlBuilder(componentEntityAdapter);
 
     underTest = spy(new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker, assetDownloadCountStore, assetEntityAdapter, browseAssetsSqlBuilder, browseComponentsSqlBuilder, bucketStore));
+        contentPermissionChecker, assetDownloadCountStore, assetEntityAdapter, browseAssetsSqlBuilder,
+        browseComponentsSqlBuilder, bucketStore, repositoryManager));
   }
 
   @Test
@@ -447,5 +458,62 @@ public class BrowseServiceImplTest
 
     assertThat(underTest.getLastThirtyDays(assetOne), is(0L));
 
+  }
+
+  @Test
+  public void testBrowseComponentAssets_all_authorized() {
+    setupMocksForBrowserComponentAssets(true, true);
+    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+
+    assertThat(results.getTotal(), is(2l));
+    assertThat(results.getResults().get(0).name(), is(assetOne.name()));
+    assertThat(results.getResults().get(1).name(), is(assetTwo.name()));
+  }
+
+  @Test
+  public void testBrowseComponentAssets_not_all_authorized() {
+    setupMocksForBrowserComponentAssets(false, true);
+    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+
+    assertThat(results.getTotal(), is(1l));
+    assertThat(results.getResults().get(0).name(), is(assetTwo.name()));
+  }
+
+  @Test
+  public void testBrowseComponentAssets_none_authorized() {
+    setupMocksForBrowserComponentAssets(false, false);
+    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+
+    assertThat(results.getTotal(), is(0l));
+  }
+
+  private void setupMocksForBrowserComponentAssets(boolean allowAssetOne, boolean allowAssetTwo) {
+    Repository groupRepository = mock(Repository.class);
+    when(groupRepository.getType()).thenReturn(new GroupType());
+    when(groupRepository.getName()).thenReturn("group-repository");
+    when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.allMembers()).thenReturn(Arrays.asList(groupRepository, mavenReleases));
+    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(storageTx.findComponent(new DetachedEntityId(componentOneORID.toString()))).thenReturn(componentOne);
+    when(repositoryManager.findContainingGroups(mavenReleases.getName())).thenReturn(Collections.singleton("group-repository"));
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    when(variableResolverAdapterManager.get(componentOne.format())).thenReturn(variableResolverAdapter);
+    VariableSource variableSourceOne = createVariableSource(assetOne);
+    VariableSource variableSourceTwo = createVariableSource(assetTwo);
+    when(variableResolverAdapter.fromAsset(assetOne)).thenReturn(variableSourceOne);
+    when(variableResolverAdapter.fromAsset(assetTwo)).thenReturn(variableSourceTwo);
+    when(storageTx.browseAssets(componentOne)).thenReturn(Arrays.asList(assetOne, assetTwo));
+    when(contentPermissionChecker
+        .isPermitted(eq(Stream.of(mavenReleases.getName(), "group-repository").collect(Collectors.toSet())), any(),
+            any(), eq(variableSourceOne))).thenReturn(allowAssetOne);
+    when(contentPermissionChecker
+        .isPermitted(eq(Stream.of(mavenReleases.getName(), "group-repository").collect(Collectors.toSet())), any(),
+            any(), eq(variableSourceTwo))).thenReturn(allowAssetTwo);
+  }
+
+  private VariableSource createVariableSource(Asset asset) {
+    return new VariableSourceBuilder().addResolver(new ConstantVariableResolver('/' + asset.name(), "path"))
+        .addResolver(new ConstantVariableResolver(asset.format(), "format")).build();
   }
 }

@@ -109,7 +109,7 @@
           </execution>
         </executions>
       </plugin>
-      <!-- tests now fail after upgrading extjs, we weren't getting much value out of them anyway
+
       <plugin>
         <groupId>com.github.searls</groupId>
         <artifactId>jasmine-maven-plugin</artifactId>
@@ -119,11 +119,10 @@
             <source>NX-test.js</source>
           </preloadSources>
           <sourceIncludes>
-            <include>**/*.js</include>
+            <includ>NX.js</includ>
+            <include>Ext/**/*.js</include>
+            <include>NX/**/*.js</include>
           </sourceIncludes>
-          <sourceExcludes>
-            <exclude>**/baseapp-*.js</exclude>
-          </sourceExcludes>
           <specIncludes>
             <include>**/*-spec.js</include>
           </specIncludes>
@@ -139,7 +138,6 @@
           </webDriverCapabilities>
         </configuration>
       </plugin>
-      -->
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

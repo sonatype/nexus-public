@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
-import java.util.Locale;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.app.VersionComparator;
+
 import com.google.common.escape.Escaper;
 import com.google.common.net.UrlEscapers;
-import se.sawano.java.text.AlphanumericComparator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,7 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class NpmPackageId
     implements Comparable<NpmPackageId>
 {
-  private static final AlphanumericComparator comparator = new AlphanumericComparator(Locale.US);
+  private static final VersionComparator comparator = NpmVersionComparator.versionComparator;
 
   private static final Escaper escaper = UrlEscapers.urlPathSegmentEscaper();
 

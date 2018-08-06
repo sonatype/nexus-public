@@ -28,9 +28,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractNewestVersion;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractAlwaysPackageVersion;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractPackageRootVersionUnlessEmpty;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractNewestVersion;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractAlwaysPackageVersion;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractPackageRootVersionUnlessEmpty;
 
 public class NpmPackageRootMetadataUtilsTest
 {
@@ -118,31 +118,6 @@ public class NpmPackageRootMetadataUtilsTest
     finally {
       BaseUrlHolder.unset();
     }
-  }
-
-  @Test
-  public void shouldReturnsPackage() throws Exception {
-    assertThat(extractAlwaysPackageVersion.apply("1.0.0", "2.0.0"), is("2.0.0"));
-  }
-
-  @Test
-  public void shouldReturnPackageRootWhenNotEmpty() throws Exception {
-    assertThat(extractPackageRootVersionUnlessEmpty.apply("1.0.0", "2.0.0"), is("1.0.0"));
-  }
-
-  @Test
-  public void shouldReturnPackageWhenPackageRootIsEmpty() throws Exception {
-    assertThat(extractPackageRootVersionUnlessEmpty.apply("", "2.0.0"), is("2.0.0"));
-  }
-
-  @Test
-  public void shouldReturnPackageWhenLatest() throws Exception {
-    assertThat(extractNewestVersion.apply("1.0.0", "2.0.0"), is("2.0.0"));
-  }
-
-  @Test
-  public void shouldReturnPackageRootWhenLatest() throws Exception {
-    assertThat(extractNewestVersion.apply("2.0.0", "1.0.0"), is("2.0.0"));
   }
 
   @SuppressWarnings("unchecked")

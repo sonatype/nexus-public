@@ -26,6 +26,7 @@ import javax.inject.Named;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.sonatype.goodies.common.Loggers;
+import org.sonatype.goodies.testsupport.TestIndex;
 import org.sonatype.goodies.testsupport.junit.TestDataRule;
 import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.goodies.testsupport.port.PortRegistry;
@@ -43,6 +44,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.ops4j.net.URLUtils;
 import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.ExamFactory;
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
@@ -85,6 +87,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
  */
 @RunWith(SafeRunner.class)
 @SafeRunWith(PaxExam.class)
+@ExamFactory(NexusPaxExamTestFactory.class)
 @ExamReactorStrategy(PerClass.class)
 public abstract class NexusPaxExamSupport
 {
@@ -405,7 +408,6 @@ public abstract class NexusPaxExamSupport
             .karafMain("org.sonatype.nexus.karaf.NexusMain") //
             .karafVersion("4") //
             .frameworkUrl(frameworkZip) //
-            .unpackDirectory(resolveBaseFile("target/it-data")) //
             .useDeployFolder(false), //
 
         when(debugging).useOptions(debugConfiguration()), // port 5005, suspend=y
@@ -545,20 +547,24 @@ public abstract class NexusPaxExamSupport
     testIndex.setDirectory(applicationDirectories.getInstallDirectory());
   }
 
-  @After
-  public void stopTestRecording() {
-    testIndex.recordAndCopyLink("karaf.log", resolveWorkFile("log/karaf.log"));
-    testIndex.recordAndCopyLink("nexus.log", resolveWorkFile("log/nexus.log"));
-    testIndex.recordAndCopyLink("request.log", resolveWorkFile("log/request.log"));
-    testIndex.recordAndCopyLink("jvm.log", resolveWorkFile("log/jvm.log"));
+  public static void captureLogs(final TestIndex testIndex, final File logDir, final String className) {
+    testIndex.recordAndCopyLink("karaf.log", new File(logDir, "karaf.log"));
+    testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
+    testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
+    testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
 
-    final String surefirePrefix = "target/surefire-reports/" + getClass().getName();
+    final String surefirePrefix = "target/surefire-reports/" + className;
     testIndex.recordLink("surefire result", resolveBaseFile(surefirePrefix + ".txt"));
     testIndex.recordLink("surefire output", resolveBaseFile(surefirePrefix + "-output.txt"));
 
-    final String failsafePrefix = "target/failsafe-reports/" + getClass().getName();
+    final String failsafePrefix = "target/failsafe-reports/" + className;
     testIndex.recordLink("failsafe result", resolveBaseFile(failsafePrefix + ".txt"));
     testIndex.recordLink("failsafe output", resolveBaseFile(failsafePrefix + "-output.txt"));
+  }
+
+  @After
+  public void stopTestRecording() {
+    captureLogs(testIndex, resolveWorkFile("log"), getClass().getName());
 
     testCleaner.cleanOnSuccess(applicationDirectories.getInstallDirectory());
   }

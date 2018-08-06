@@ -33,7 +33,6 @@ Ext.define('NX.view.header.Help', {
     var me = this;
 
     me.tooltip = NX.I18n.get('Header_Help_Tooltip');
-    me.ariaLabel =  NX.I18n.get('Header_Help_Tooltip');
 
     // hide the menu button arrow
     me.arrowCls = '';

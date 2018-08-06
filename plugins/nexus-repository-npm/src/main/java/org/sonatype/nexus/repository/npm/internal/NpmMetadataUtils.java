@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,7 +28,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import se.sawano.java.text.AlphanumericComparator;
+
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.versionComparator;
 
 /**
  * npm utilities for manipulating npm metadata.
@@ -44,8 +44,6 @@ public final class NpmMetadataUtils
 
   @VisibleForTesting
   static final DateTimeFormatter NPM_TIMESTAMP_FORMAT = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC);
-
-  private static final AlphanumericComparator versionComparator = new AlphanumericComparator(Locale.US);
 
   static final String NAME = "name";
 

@@ -110,8 +110,7 @@
     padding-left: 0 !important;
 }
 
-.x-form-field[readonly]:not([role="combobox"]),
-.x-form-readonly input[role="combobox"] {
+.x-form-field[readonly]:not([role="combobox"]) {
     color: #777;
     background-color: #ebebeb;
     opacity: 1;
@@ -8056,8 +8055,12 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
     background-position: center center;
 }
 
+.x-panel-header-title-nx-developer > .x-title-icon-wrap-nx-developer > .x-title-icon-nx-developer.x-title-glyph {
+    opacity: 0.5;
+}
+
 .x-ie8 .x-panel-header-title-nx-developer > .x-title-icon-wrap-nx-developer > .x-title-icon-nx-developer.x-title-glyph {
-    color: #fff;
+    color: #80a7c5;
 }
 
 .x-panel-body-nx-developer {
@@ -10525,6 +10528,7 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 .nx-breadcrumb-separator {
     font-size: 18px;
     top: 7px !important;
+    color: grey;
     padding-left: 12px;
 }
 

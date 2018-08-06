@@ -77,7 +77,6 @@ Ext.define('NX.view.dev.styles.Toolbars', {
           '->', // spring
           {
             xtype: 'nx-searchbox',
-            ariaLabel: 'Sample search box',
             width: 200
           }
         ]

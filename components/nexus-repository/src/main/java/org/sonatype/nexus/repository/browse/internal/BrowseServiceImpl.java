@@ -15,9 +15,11 @@ package org.sonatype.nexus.repository.browse.internal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -37,6 +39,7 @@ import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -98,6 +101,8 @@ public class BrowseServiceImpl
 
   private final BucketStore bucketStore;
 
+  private final RepositoryManager repositoryManager;
+
   @Inject
   public BrowseServiceImpl(@Named(GroupType.NAME) final Type groupType,
                            final ComponentEntityAdapter componentEntityAdapter,
@@ -107,7 +112,8 @@ public class BrowseServiceImpl
                            final AssetEntityAdapter assetEntityAdapter,
                            final BrowseAssetsSqlBuilder browseAssetsSqlBuilder,
                            final BrowseComponentsSqlBuilder browseComponentsSqlBuilder,
-                           final BucketStore bucketStore)
+                           final BucketStore bucketStore,
+                           final RepositoryManager repositoryManager)
   {
     this.groupType = checkNotNull(groupType);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
@@ -118,6 +124,7 @@ public class BrowseServiceImpl
     this.browseAssetsSqlBuilder = checkNotNull(browseAssetsSqlBuilder);
     this.browseComponentsSqlBuilder = checkNotNull(browseComponentsSqlBuilder);
     this.bucketStore = checkNotNull(bucketStore);
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Override
@@ -160,11 +167,17 @@ public class BrowseServiceImpl
       if (component == null) {
         return new BrowseResult<>(0, Collections.emptyList());
       }
+
+      //As this method is only called when showing list of assets for a component in search results,
+      //we also need to check parent group(s) of the repository in question, as search doesn't have a
+      //'repository' context
+      Set<String> repoNames = new HashSet<>(repositoryManager.findContainingGroups(repository.getName()));
+      repoNames.add(repository.getName());
       VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format());
       List<Asset> assets = StreamSupport.stream(storageTx.browseAssets(component).spliterator(), false)
           .filter(
               (Asset asset) -> contentPermissionChecker.isPermitted(
-                  repository.getName(),
+                  repoNames,
                   asset.format(),
                   BreadActions.BROWSE,
                   variableResolverAdapter.fromAsset(asset))

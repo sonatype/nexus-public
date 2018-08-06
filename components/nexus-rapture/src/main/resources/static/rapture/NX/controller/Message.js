@@ -101,8 +101,7 @@ Ext.define('NX.controller.Message', {
         slideBackDuration: 500,
         hideDuration: 500,
         slideInAnimation: 'elasticIn',
-        slideBackAnimation: 'elasticIn',
-        ariaRole: 'alert'
+        slideBackAnimation: 'elasticIn'
       });
     }
   },

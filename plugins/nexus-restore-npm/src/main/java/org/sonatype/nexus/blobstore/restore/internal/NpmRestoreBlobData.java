@@ -15,11 +15,13 @@ package org.sonatype.nexus.blobstore.restore.internal;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 
 /**
  * @since 3.6.1
  */
-public final class NpmRestoreBlobData // must be public for guice injection
+public final class NpmRestoreBlobData
+    extends RestoreBlobDataSupport
 {
   public enum NpmType
   {
@@ -34,17 +36,15 @@ public final class NpmRestoreBlobData // must be public for guice injection
 
   private final String tarballName;
 
-  private final RestoreBlobData blobData;
-
   NpmRestoreBlobData(final NpmType type,
                      final String packageId,
                      @Nullable final String tarballName,
                      final RestoreBlobData blobData)
   {
+    super(blobData);
     this.type = type;
     this.packageId = packageId;
     this.tarballName = tarballName;
-    this.blobData = blobData;
   }
 
   public NpmType getType() {
@@ -57,9 +57,5 @@ public final class NpmRestoreBlobData // must be public for guice injection
 
   public String getTarballName() {
     return tarballName;
-  }
-
-  public RestoreBlobData getBlobData() {
-    return blobData;
   }
 }

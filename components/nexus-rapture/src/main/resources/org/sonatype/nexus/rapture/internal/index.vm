@@ -13,7 +13,7 @@
 #set($raptureUrl="$baseUrl/static/rapture")
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <title>Nexus Repository Manager</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
@@ -73,10 +73,10 @@
 <div id="loading-mask"></div>
 <div id="loading">
   <div id="loading-background">
-    <img id="loading-logo" src="$raptureUrl/resources/images/loading-logo.png?$urlSuffix" alt="Product Logo"/>
-    <img id="loading-product" src="$raptureUrl/resources/images/loading-product.png?$urlSuffix" alt="Nexus Repository Manager"/>
+    <img id="loading-logo" src="$raptureUrl/resources/images/loading-logo.png?$urlSuffix"/>
+    <img id="loading-product" src="$raptureUrl/resources/images/loading-product.png?$urlSuffix"/>
     <div class="loading-indicator">
-      <img id="loading-spinner" src="$raptureUrl/resources/images/loading-spinner.gif?$urlSuffix" alt="Loading Spinner"/>
+      <img id="loading-spinner" src="$raptureUrl/resources/images/loading-spinner.gif?$urlSuffix"/>
       <span id="loading-msg">Loading ...</span>
     </div>
   </div>
@@ -99,9 +99,9 @@
 </div>
 
 ## Fields required for history management
-<form id="history-form" class="x-hide-display" tabindex="-1">
+<form id="history-form" class="x-hide-display">
   <input type="hidden" id="x-history-field"/>
-  <iframe id="x-history-frame" title="Browse history form"></iframe>
+  <iframe id="x-history-frame"></iframe>
 </form>
 
 </body>

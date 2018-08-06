@@ -19,8 +19,7 @@
  */
 Ext.define('NX.view.header.Branding', {
   extend: 'Ext.container.Container',
-  alias: 'widget.nx-header-branding',
-  focusable: false
+  alias: 'widget.nx-header-branding'
 
   // intentionally empty, placeholder for where branding header content is dynamically inserted
 });

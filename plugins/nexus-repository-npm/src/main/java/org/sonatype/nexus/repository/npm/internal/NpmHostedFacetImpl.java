@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractAlwaysPackageVersion;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractAlwaysPackageVersion;
 
 /**
  * {@link NpmHostedFacet} implementation.

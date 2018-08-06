@@ -56,7 +56,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_VERSION;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractPackageRootVersionUnlessEmpty;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractPackageRootVersionUnlessEmpty;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.getPackageRoot;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 

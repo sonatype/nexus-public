@@ -47,24 +47,21 @@ Ext.define('NX.view.Main', {
             ui: 'nx-warning',
             id: 'nx-database-freeze-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
+            hidden: true
           },
           {
             xtype: 'panel',
             ui: 'nx-warning',
             id: 'nx-license-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
+            hidden: true
           },
           {
             xtype: 'panel',
             ui: 'nx-warning',
             id: 'nx-file-descriptor-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
+            hidden: true
           },
           {
             xtype: 'nx-header-panel'

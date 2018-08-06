@@ -13,7 +13,7 @@
 /*global Ext*/
 
 /**
- * Quick search box
+ * Help button.
  *
  * @since 3.0
  */
@@ -34,9 +34,7 @@ Ext.define('NX.view.header.QuickSearch', {
       width: 200,
       emptyText: NX.I18n.get('Header_QuickSearch_Empty'),
       // field tooltip
-      inputAttrTpl: "data-qtip='" + NX.I18n.get('Header_QuickSearch_Tooltip') + "'",
-      ariaRole: 'search',
-      ariaLabel: NX.I18n.get('Header_QuickSearch_Tooltip')
+      inputAttrTpl: "data-qtip='" + NX.I18n.get('Header_QuickSearch_Tooltip') + "'"
     });
 
     this.callParent();

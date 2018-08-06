@@ -32,7 +32,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
-import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.extractNewestVersion;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractNewestVersion;
 
 /**
  * @since 3.11

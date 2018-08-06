@@ -57,8 +57,7 @@ Ext.define('NX.ext.SearchBox', {
     var me = this;
 
     Ext.apply(me, {
-      checkChangeBuffer: me.searchDelay,
-      ariaLabel: me.emptyText
+      checkChangeBuffer: me.searchDelay
     });
 
     me.callParent(arguments);

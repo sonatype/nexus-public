@@ -13,24 +13,20 @@
 package org.sonatype.nexus.blobstore.restore.maven.internal;
 
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 
 /**
  * @since 3.6.1
  */
-public final class MavenRestoreBlobData // must be public for guice injection
+public final class MavenRestoreBlobData
+    extends RestoreBlobDataSupport
 {
-  private final RestoreBlobData blobData;
-
   private final MavenPath mavenPath;
 
   public MavenRestoreBlobData(final RestoreBlobData blobData, final MavenPath mavenPath) {
-    this.blobData = blobData;
+    super(blobData);
     this.mavenPath = mavenPath;
-  }
-
-  public RestoreBlobData getBlobData() {
-    return blobData;
   }
 
   public MavenPath getMavenPath() {

@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -96,6 +98,8 @@ public class RepositoryBrowseResource
   private final URL template;
 
   private final BucketStore bucketStore;
+
+  private final EscapeHelper escapeHelper = new EscapeHelper();
 
   @Inject
   public RepositoryBrowseResource(final RepositoryManager repositoryManager,
@@ -260,13 +264,15 @@ public class RepositoryBrowseResource
   {
     final String listItemPath;
     String filterParam = filter == null ? "" : "?filter=" + URLEncoder.encode(filter);
-    EscapeHelper escapeHelper = new EscapeHelper();
 
     if (asset == null) {
       listItemPath = escapeHelper.uri(browseNode.getName()) + "/" + filterParam;
     }
     else {
-      listItemPath = repository.getUrl() + "/" + escapeHelper.uri(asset.name());
+      listItemPath = repository.getUrl() + "/" +
+          Stream.of(asset.name().split("/"))
+              .map(escapeHelper::uri)
+              .collect(Collectors.joining("/"));
     }
 
     return listItemPath;

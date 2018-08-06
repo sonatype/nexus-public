@@ -29,8 +29,5 @@ Ext.define('NX.view.feature.Menu', {
 
   store: 'FeatureMenu',
   rootVisible: false,
-  sortableColumns: false,
-  lines: false,
-
-  ariaRole: 'navigation'
+  lines: false
 });

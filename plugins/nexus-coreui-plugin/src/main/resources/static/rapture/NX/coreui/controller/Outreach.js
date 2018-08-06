@@ -62,7 +62,7 @@ Ext.define('NX.coreui.controller.Outreach', {
 
     if (welcomePage) {
       NX.direct.outreach_Outreach.readStatus(function (response) {
-        if (Ext.isObject(response) && response.success && welcomePage.rendered) {
+        if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
           var user = NX.State.getUser(),
               usertype,
               url;
@@ -91,10 +91,6 @@ Ext.define('NX.coreui.controller.Outreach', {
             frame: false,
             hidden: true,
             src: url,
-            // override renderTpl to add title attribute for accessibility purpose
-            renderTpl: [
-              '<iframe src="{src}" id="{id}-iframeEl" data-ref="iframeEl" name="{frameName}" title="Nexus Repository Manager Outreach" width="100%" height="100%" frameborder="0"></iframe>'
-            ],
             listeners: {
               load: function () {
                 var iframe = this;
