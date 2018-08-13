@@ -156,7 +156,7 @@ public class BlobStoreMetricsStoreImpl
 
   private long getAvailableSpace() {
     try {
-      return Files.getFileStore(storageDirectory).getUsableSpace();
+      return storageDirectory.toFile().getUsableSpace();
     }
     catch (Exception e) {
       throw new RuntimeException(e);
