@@ -41,6 +41,8 @@ Ext.define('NX.app.PluginStrings', {
     Button_Next: 'Next',
     Button_Save: 'Save',
 
+    Column_No_Data: 'No data',
+
     // Header
     Header_Panel_Logo_Text: 'Sonatype Nexus Repository Manager',
     Header_BrowseMode_Title: 'Browse',

@@ -265,11 +265,12 @@ class RepositoryApiImpl
                                 final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                 final boolean strictContentTypeValidation = true,
                                 final boolean v1Enabled = true,
-                                final WritePolicy writePolicy = WritePolicy.ALLOW
+                                final WritePolicy writePolicy = WritePolicy.ALLOW,
+                                final boolean forceBasicAuth = true
   )
   {
     Configuration configuration = createHosted(name, 'docker-hosted', blobStoreName, writePolicy, strictContentTypeValidation)
-    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled)
+    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled, forceBasicAuth)
     createRepository(configuration)
   }
 
@@ -283,10 +284,11 @@ class RepositoryApiImpl
                                @Nullable Integer httpsPort,
                                final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                final boolean strictContentTypeValidation = true,
-                               final boolean v1Enabled = true)
+                               final boolean v1Enabled = true,
+                               final boolean forceBasicAuth = true)
   {
     Configuration configuration = createProxy(name, 'docker-proxy', remoteUrl, blobStoreName, strictContentTypeValidation)
-    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled)
+    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled, forceBasicAuth)
     configuration.attributes.dockerProxy = [
         indexType: indexType,
         indexUrl : indexUrl
@@ -301,10 +303,11 @@ class RepositoryApiImpl
                                @Nullable Integer httpsPort,
                                final List<String> members,
                                final boolean v1Enabled = true,
-                               final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+                               final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                               final boolean forceBasicAuth = true)
   {
     Configuration configuration = createGroup(name, 'docker-group', blobStoreName, members as String[])
-    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled)
+    configuration.attributes.docker = configureDockerAttributes(httpPort, httpsPort, v1Enabled, forceBasicAuth)
     createRepository(configuration)
   }
 
@@ -430,7 +433,7 @@ class RepositoryApiImpl
     [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy]
   }
 
-  private static Map configureDockerAttributes(Integer httpPort, Integer httpsPort, boolean v1Enabled) {
+  private static Map configureDockerAttributes(Integer httpPort, Integer httpsPort, boolean v1Enabled, boolean forceBasicAuth) {
     def docker = [:]
     if (httpPort) {
       docker.httpPort = httpPort
@@ -439,6 +442,7 @@ class RepositoryApiImpl
       docker.httpsPort = httpsPort
     }
     docker.v1Enabled = v1Enabled
+    docker.forceBasicAuth = forceBasicAuth
     return docker
   }
 

@@ -38,6 +38,7 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
       },
       items: [{
         xtype: 'treepanel',
+        ariaRole: 'grid',
         flex: 3,
         store: store,
         rootVisible: false,

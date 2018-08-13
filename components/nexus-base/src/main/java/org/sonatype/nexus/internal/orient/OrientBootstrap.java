@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.internal.orient;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -63,7 +60,7 @@ public class OrientBootstrap
                          final Provider<DatabaseManager> databaseManager,
                          final Iterable<OCompression> managedCompressions,
                          final Iterable<OSQLFunctionAbstract> functions,
-                         final Map<String, ORecordConflictStrategy> conflictStrategies)
+                         final Iterable<ORecordConflictStrategy> conflictStrategies)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.databaseServer = checkNotNull(databaseServer);
@@ -112,11 +109,11 @@ public class OrientBootstrap
     }
   }
 
-  private void registerConflictStrategies(final Map<String, ORecordConflictStrategy> strategies) {
+  private void registerConflictStrategies(final Iterable<ORecordConflictStrategy> strategies) {
     ORecordConflictStrategyFactory strategyFactory = Orient.instance().getRecordConflictStrategy();
-    for (Entry<String, ORecordConflictStrategy> entry : strategies.entrySet()) {
-      log.debug("Registering OrientDB conflict strategy {} as '{}'", entry.getValue(), entry.getKey());
-      strategyFactory.registerImplementation(entry.getKey(), entry.getValue());
+    for (ORecordConflictStrategy strategy : strategies) {
+      log.debug("Registering OrientDB conflict strategy {} as '{}'", strategy, strategy.getName());
+      strategyFactory.registerImplementation(strategy.getName(), strategy);
     }
   }
 }

@@ -44,6 +44,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-blobstore-file</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
       <scope>test</scope>
@@ -55,6 +60,11 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib-nodep</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

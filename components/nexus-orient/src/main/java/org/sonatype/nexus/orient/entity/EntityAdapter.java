@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -84,6 +87,8 @@ public abstract class EntityAdapter<T extends Entity>
 
   private EntityHook entityHook;
 
+  private ConflictHook conflictHook;
+
   private String dbName;
 
   private OClass schemaType;
@@ -115,6 +120,11 @@ public abstract class EntityAdapter<T extends Entity>
   @Inject
   public void enableEntityHook(final EntityHook entityHook) {
     this.entityHook = checkNotNull(entityHook);
+  }
+
+  @Inject
+  public void enableConflictHook(final ConflictHook conflictHook) {
+    this.conflictHook = checkNotNull(conflictHook);
   }
 
   /**
@@ -169,6 +179,13 @@ public abstract class EntityAdapter<T extends Entity>
 
     if (sendEvents() && entityHook != null) {
       entityHook.enableEvents(this);
+    }
+
+    if (resolveConflicts() && conflictHook != null) {
+      conflictHook.enableConflictResolution(this);
+      if (!conflictHook.equals(db.getConflictStrategy())) {
+        db.setConflictStrategy(conflictHook);
+      }
     }
   }
 
@@ -463,5 +480,72 @@ public abstract class EntityAdapter<T extends Entity>
    */
   public String eventAffinity(final ODocument document) {
     return document.getIdentity().toString();
+  }
+
+  //
+  // Conflict resolution
+  //
+
+  /**
+   * Override this method to enable conflict resolution for this adapter.
+   *
+   * @since 3.next
+   */
+  public boolean resolveConflicts() {
+    return false;
+  }
+
+  /**
+   * Resolution of the potential conflict.
+   *
+   * @since 3.next
+   */
+  public enum Resolution
+  {
+    /**
+     * After comparing the record content no conflict was found, go-ahead and apply the original change.
+     */
+    ALLOW {
+      @Override
+      public Resolution andThen(final Supplier<Resolution> nextStep) {
+        return nextStep.get();
+      }
+    },
+    /**
+     * Conflict resolved by merging in changes from the stored record, go-ahead and apply the merged result.
+     */
+    MERGE {
+      @Override
+      public Resolution andThen(final Supplier<Resolution> nextStep) {
+        return DENY.equals(nextStep.get()) ? DENY : MERGE;
+      }
+    },
+    /**
+     * Conflict cannot be resolved, deny the update.
+     */
+    DENY {
+      @Override
+      public Resolution andThen(final Supplier<Resolution> nextStep) {
+        return DENY; // short-circuit any further resolving
+      }
+    };
+
+    public abstract Resolution andThen(Supplier<Resolution> nextStep);
+  }
+
+  /**
+   * Attempts to resolve potential conflict(s) between the stored and incoming records.
+   *
+   * @return {@link Resolution#MERGE} if this results in further changes to {@code record}
+   *
+   * @since 3.next
+   */
+  public Resolution resolve(final ODocument storedRecord, final ODocument record) {
+    for (Entry<String, Object> property : storedRecord) {
+      if (!Objects.equals(property.getValue(), record.field(property.getKey()))) {
+        return Resolution.DENY;
+      }
+    }
+    return Resolution.ALLOW;
   }
 }

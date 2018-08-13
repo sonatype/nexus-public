@@ -20,6 +20,9 @@
 Ext.define('NX.view.drilldown.Master', {
   extend: 'Ext.grid.Panel',
   alias: 'widget.nx-drilldown-master',
+  requires: [
+    'NX.I18n'
+  ],
 
   maskElement: 'body',
 

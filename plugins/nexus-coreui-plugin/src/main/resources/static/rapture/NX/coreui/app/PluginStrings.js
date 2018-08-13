@@ -431,6 +431,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreList_EmptyText: 'No blob stores defined',
     Blobstore_BlobstoreFeature_Delete_Button: 'Delete blob store',
     Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and cannot be deleted',
+    Blobstore_BlobstoreFeature_Promote_Button: 'Promote to group',
+    Blobstore_BlobstoreFeature_Promote_Success: 'Blob store: {0} promoted to blob store group',
     Blobstore_BlobstoreSettings_Title: 'Settings',
     Blobstore_BlobstoreAdd_Type_FieldLabel: 'Type',
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',

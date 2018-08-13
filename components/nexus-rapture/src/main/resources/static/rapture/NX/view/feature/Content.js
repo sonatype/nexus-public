@@ -21,7 +21,7 @@ Ext.define('NX.view.feature.Content', {
   extend: 'Ext.panel.Panel',
   requires: [ 'NX.view.feature.BreadcrumbPanel' ],
   alias: 'widget.nx-feature-content',
-
+  ariaRole: 'main',
   itemId: 'feature-content',
   ui: 'nx-feature-content',
   cls: 'nx-feature-content',
@@ -64,7 +64,8 @@ Ext.define('NX.view.feature.Content', {
             itemId: 'nx-feature-icon',
             width: 32,
             height: 32,
-            userCls: me.currentIcon
+            userCls: me.currentIcon,
+            ariaRole: 'presentation'
           },
           {
             xtype: 'label',

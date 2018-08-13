@@ -214,6 +214,29 @@ public interface RepositoryApi
                                 final WritePolicy writePolicy);
 
   /**
+   * Create a Docker hosted repository.
+   *
+   * @since 3.next
+   * @param name The name of the new Repository
+   * @param httpPort The http port to accept traffic for this Repository on (optional)
+   * @param httpsPort The https port to accept traffic for this Repository on (optional)
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param v1Enabled Whether or not this Repository supports Docker V1 format
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @param writePolicy The {@link WritePolicy} for the Repository
+   * @param forceBasicAuth whether to force basic auth. False is required to enable token auth which can be used for anonymous access
+   * @return the newly created Repository
+   */
+  Repository createDockerHosted(final String name, //NOSONAR
+                                Integer httpPort,
+                                Integer httpsPort,
+                                final String blobStoreName,
+                                final boolean v1Enabled,
+                                final boolean strictContentTypeValidation,
+                                final WritePolicy writePolicy,
+                                final boolean forceBasicAuth);
+
+  /**
    * Create a Docker proxy repository.
    *
    * @param name                        The name of the new Repository
@@ -230,7 +253,7 @@ public interface RepositoryApi
    * @param v1Enabled                   Whether or not this Repository supports Docker V1 format
    * @return the newly created Repository
    */
-  Repository createDockerProxy(final String name,
+  Repository createDockerProxy(final String name, //NOSONAR
                                final String remoteUrl,
                                final String indexType,
                                final String indexUrl,

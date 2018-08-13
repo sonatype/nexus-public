@@ -33,6 +33,8 @@ Ext.define('NX.view.header.Panel', {
     pack: 'start'
   },
 
+  ariaRole: 'banner',
+
   /**
    * @override
    */

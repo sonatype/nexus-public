@@ -50,7 +50,9 @@ Ext.define('NX.Icons', {
     return Ext.DomHelper.markup({
       tag: 'img',
       src: Ext.BLANK_IMAGE_URL,
-      cls: this.cls(name, variant)
+      cls: this.cls(name, variant),
+      alt: name,
+      'aria-hidden': true
     });
   },
 

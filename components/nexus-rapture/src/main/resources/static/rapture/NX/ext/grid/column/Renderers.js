@@ -18,12 +18,17 @@
  * @since 3.0
  */
 Ext.define('NX.ext.grid.column.Renderers', {
+  requires: [
+    'NX.I18n'
+  ],
   singleton: true,
 
   /**
    * Renderer which will use no-data glyph if given value is undefined or null.
    */
   optionalData: function(value) {
-    return value ? Ext.htmlEncode(value) : '<span class="x-fa fa-ban" style="opacity: 0.33;"/>';
+    return value ?
+        Ext.htmlEncode(value) :
+        '<span class="x-fa fa-ban" style="opacity: 0.33;" aria-label="' + NX.I18n.get('Column_No_Data') + '"/>';
   }
 });

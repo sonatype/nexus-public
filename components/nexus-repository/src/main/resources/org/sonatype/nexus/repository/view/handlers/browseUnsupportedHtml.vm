@@ -12,7 +12,7 @@
  *###
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>Repository - Nexus Repository Manager</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -48,7 +48,7 @@
 <div class="nexus-header">
   <a href="$nexusUrl">
     <div class="product-logo">
-      <img src="$nexusUrl/static/images/nexus.png?$urlSuffix"/>
+      <img src="$nexusUrl/static/images/nexus.png?$urlSuffix" alt="Product logo"/>
     </div>
     <div class="product-id">
       <div class="product-id__line-1">
@@ -63,7 +63,7 @@
 
 <div class="nexus-body">
   <div class="content-header">
-    <img src="$nexusUrl/static/rapture/resources/icons/x32/database.png?$urlSuffix"/>
+    <img src="$nexusUrl/static/rapture/resources/icons/x32/database.png?$urlSuffix" alt="Repository image"/>
     <span class="title">Repository</span>
     <span class="description">${repository.name}</span>
   </div>

@@ -18,6 +18,7 @@ import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
+import org.sonatype.nexus.orient.entity.ConflictHook;
 import org.sonatype.nexus.orient.internal.PbeCompression;
 
 import com.google.inject.Guice;
@@ -26,11 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import org.eclipse.sisu.wire.WireModule;
-
-import static org.sonatype.nexus.orient.DatabaseInstanceNames.DATABASE_NAMES;
 
 /**
  * Boots the Orient console and adds support for PBE compression.
@@ -57,14 +54,11 @@ public class Main
       binder.bind(PbeCompression.class);
     }));
 
-    // enable support for PBE compression; needed to work with the security database
+    // register support for PBE compression; needed to work with the security database
     OCompressionFactory.INSTANCE.register(injector.getInstance(PbeCompression.class));
 
-    // temporarily register default strategy under each database name in case they've
-    // been configured to use a custom strategy that's not on the current classpath
-    ORecordConflictStrategyFactory strategyFactory = Orient.instance().getRecordConflictStrategy();
-    ORecordConflictStrategy defaultStrategy = strategyFactory.getDefaultImplementation();
-    DATABASE_NAMES.forEach(name -> strategyFactory.registerImplementation(name, defaultStrategy));
+    // register 'ConflictHook' strategy; needed to work with databases that enabled it
+    Orient.instance().getRecordConflictStrategy().registerImplementation(ConflictHook.NAME, new ConflictHook());
 
     OConsoleDatabaseApp.main(args);
   }

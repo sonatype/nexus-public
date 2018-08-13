@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -160,6 +161,7 @@ public class BlobStoreGroup
       // check directly without using cache
       return members.get().stream()
           .map((BlobStore member) -> member.get(blobId, true))
+          .filter(Objects::nonNull)
           .findAny()
           .orElse(null);
     }

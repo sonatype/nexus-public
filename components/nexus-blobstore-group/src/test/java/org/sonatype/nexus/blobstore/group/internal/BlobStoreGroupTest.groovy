@@ -19,7 +19,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 
 import com.google.common.hash.HashCode
-
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -116,6 +115,38 @@ class BlobStoreGroupTest
       'doesntexists' || null
       'in_one'       || blobOne
       'in_two'       || blobTwo
+  }
+
+  @Unroll
+  def 'Two-param get id #blobId, include deleted: #includeDeleted'() {
+    given: 'A group with two members'
+      config.attributes = [group: [members: 'one,two']]
+      blobStore.init(config)
+      blobStore.doStart()
+      blobStoreManager.get('one') >> one
+      blobStoreManager.get('two') >> two
+      one.exists(_) >> { BlobId id -> id == new BlobId('in_one') }
+      two.exists(_) >> { BlobId id -> id == new BlobId('in_two') || id == new BlobId('deleted_in_two') }
+      one.get(new BlobId('in_one'), _) >> blobOne
+      two.get(new BlobId('in_two'), _) >> blobTwo
+      two.get(new BlobId('deleted_in_two'), true) >> blobTwo
+
+    when: 'get called for blobId'
+      def foundBlob = blobStore.get(new BlobId(blobId), includeDeleted)
+
+    then: 'blob is found in blobstore one'
+      foundBlob == expectedBlob
+
+    where:
+      blobId           | includeDeleted || expectedBlob
+      'doesntexists'   | false          || null
+      'in_one'         | false          || blobOne
+      'in_two'         | false          || blobTwo
+      'deleted_in_two' | false          || null
+      'doesntexists'   | true           || null
+      'in_one'         | true           || blobOne
+      'in_two'         | true           || blobTwo
+      'deleted_in_two' | true           || blobTwo
   }
 
   def 'Create with stream delegates to the member chosen by the fill policy'() {

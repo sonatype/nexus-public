@@ -101,6 +101,10 @@ Ext.define('NX.coreui.controller.Blobstores', {
         'nx-coreui-blobstore-settings button[action=save]': {
           click: me.updateBlobstore
         },
+        'nx-coreui-blobstore-feature button[action=promoteToGroup]': {
+          click: me.promoteToGroup,
+          afterrender: me.bindIfFileAndUpdateable
+        },
         'nx-coreui-blobstore-settings-form': {
           submitted: me.loadStores
         }
@@ -243,6 +247,87 @@ Ext.define('NX.coreui.controller.Blobstores', {
         NX.Messages.add({ text: 'Blobstore deleted: ' + description, type: 'success' });
       }
     });
-  }
+  },
 
+  /**
+   * @private
+   * Converts file blob store to group.
+   */
+  promoteToGroup: function(button) {
+    var me = this,
+        model = me.getList().getSelectionModel().getLastSelected();
+    NX.direct.coreui_Blobstore.promoteToGroup(model.get('name'), function (response) {
+      if (Ext.isObject(response) && response.success) {
+        NX.Messages.add({
+          text: NX.I18n.format('Blobstore_BlobstoreFeature_Promote_Success', response.data.name),
+          type: 'success'
+        });
+        me.getStore('Blobstore').load();
+        button.disable();
+      }
+    });
+  },
+
+  /**
+   * @private
+   */
+  watchEventsForFile: function () {
+    var me = this,
+        store = me.getStore('Blobstore');
+
+    return function() {
+      var blobstoreId = me.getModelIdFromBookmark(),
+          model = blobstoreId ? store.findRecord('name', blobstoreId, 0, false, true, true) : undefined;
+
+      if (model) {
+        return model.get('type') === 'File';
+      }
+
+      return false;
+    };
+  },
+
+  /**
+   * @private
+   * checks that blobstore is a file blobstore and that user has permissions before activating button
+   */
+  bindIfFileAndUpdateable: function(button) {
+    var me = this;
+
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted(this.permission + ':update'),
+            NX.Conditions.watchEvents([
+              { observable: me.getStore('Blobstore'), events: ['load']},
+              { observable: Ext.History, events: ['change']}
+            ], me.watchEventsForFile())
+        ),
+        {
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
+        }
+    );
+
+    // check that Groups are enabled before showing the promote button
+    button.mon(
+        NX.Conditions.watchEvents([
+          { observable: me.getStore('BlobstoreType'), events: ['load']},
+          { observable: Ext.History, events: ['change']}
+        ], function() {
+          return me.getStore('BlobstoreType').findRecord('name', 'Group', false, true, true) != null;
+        }),
+        {
+          satisfied: function () {
+            button.show();
+          },
+          unsatisfied: function () {
+            button.hide();
+          }
+        }
+    );
+  }
 });

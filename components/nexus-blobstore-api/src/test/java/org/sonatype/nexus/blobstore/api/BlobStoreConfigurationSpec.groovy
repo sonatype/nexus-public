@@ -10,17 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+package org.sonatype.nexus.blobstore.api
 
-/**
- * Header branding panel.
- *
- * @since 3.0
- */
-Ext.define('NX.view.header.Branding', {
-  extend: 'Ext.container.Container',
-  alias: 'widget.nx-header-branding',
-  focusable: false
+import spock.lang.Specification
 
-  // intentionally empty, placeholder for where branding header content is dynamically inserted
-});
+class BlobStoreConfigurationSpec
+    extends Specification
+{
+
+  def 'copy works'() {
+    when: 'a configuration is created'
+      BlobStoreConfiguration source = new BlobStoreConfiguration()
+      source.setName('source')
+      source.setType('test type')
+      source.attributes('config key').set('foo', 'bar')
+
+    and: 'a copy is made'
+      BlobStoreConfiguration copy = source.copy('a copy')
+
+    then: 'the high-level items in the copy should be intact'
+      assert copy.name == 'a copy'
+      assert copy.type == source.type
+
+    and: 'the embedded attributes should be intact'
+      assert copy.attributes['config key'] != null
+      assert copy.attributes['config key']['foo'] == 'bar'
+  }
+}

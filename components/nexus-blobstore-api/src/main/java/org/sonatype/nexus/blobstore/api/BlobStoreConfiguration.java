@@ -12,11 +12,16 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.AbstractEntity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -82,5 +87,37 @@ public class BlobStoreConfiguration
         ", type='" + type + '\'' +
         ", attributes=" + attributes +
         '}';
+  }
+
+  private static final ObjectMapper MAPPER = makeObjectMapper();
+
+  private static ObjectMapper makeObjectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    return mapper;
+  }
+
+  public BlobStoreConfiguration copy(String name) {
+    BlobStoreConfiguration clone = new BlobStoreConfiguration();
+    clone.setName(name);
+    clone.setType(getType());
+    if (attributes != null && attributes.size() > 0) {
+      String attribsJson;
+      try {
+        attribsJson = MAPPER.writer().writeValueAsString(getAttributes());
+      }
+      catch (JsonProcessingException e) {
+        throw new BlobStoreException("failed to marshal blob store configuration attributes to JSON", e, null);
+      }
+      Map<String, Map<String,Object>> clonedAttributes;
+      try {
+        clonedAttributes = MAPPER.readValue(attribsJson, new TypeReference<Map<String,Map<String,Object>>>(){});
+      }
+      catch (IOException e) {
+        throw new BlobStoreException("failed to parse blob store configuration attributes from JSON", e, null);
+      }
+      clone.setAttributes(clonedAttributes);
+    }
+    return clone;
   }
 }
