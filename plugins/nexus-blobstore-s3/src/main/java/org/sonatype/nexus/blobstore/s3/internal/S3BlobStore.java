@@ -110,6 +110,8 @@ public class S3BlobStore
 
   public static final String SIGNERTYPE_KEY = "signertype";
 
+  public static final String FORCE_PATH_STYLE_KEY = "forcepathstyle";
+
   public static final String BUCKET_REGEX =
       "^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$";
 

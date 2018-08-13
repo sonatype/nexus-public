@@ -68,4 +68,19 @@ class S3Component
         new S3SignerTypeXO(order: 2, id: AmazonS3Client.S3_V4_SIGNER, name: AmazonS3Client.S3_V4_SIGNER)
     ]
   }
+
+  /**
+   * S3 force path style
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:settings:read')
+  List<S3ForcePathStyleXO> forcepathstyles() {
+    [
+        new S3ForcePathStyleXO(order: 0, id: "false", name: "false"),
+        new S3ForcePathStyleXO(order: 1, id: "true", name: "true")
+    ]
+  }
+
 }
