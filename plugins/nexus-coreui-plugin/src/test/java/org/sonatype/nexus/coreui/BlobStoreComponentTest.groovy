@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui
 
+import java.nio.file.Paths
+
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
@@ -100,7 +102,7 @@ class BlobStoreComponentTest
 
   def 'Default work directory returns the blobs directory'() {
     given: 'A blob directory'
-      def blobDirectory = 'path/to/blobs'
+      def blobDirectory = Paths.get('path', 'to', 'blobs').toString()
 
     when: 'The blob directory is requested'
       def defaultWorkDirectory = blobStoreComponent.defaultWorkDirectory()
