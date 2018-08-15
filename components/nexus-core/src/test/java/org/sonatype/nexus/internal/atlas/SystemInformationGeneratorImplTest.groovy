@@ -75,9 +75,22 @@ class SystemInformationGeneratorImplTest
   def "reportNetwork runs successfully using NetworkInterface.networkInterfaces"() {
     given:
       def generator = mockSystemInformationGenerator()
+      def intf = GroovyMock(NetworkInterface) {
+        getName() >> "lo"
+        getDisplayName() >> "Software Loopback Interface 1"
+        isUp() >> true
+        isVirtual() >> false
+        supportsMulticast() >> true
+        isLoopback() >> true
+        isPointToPoint() >> false
+        getMTU() >> -1
+        getInetAddresses() >> {
+          return Collections.enumeration(Collections.singletonList(InetAddress.localHost))
+        }
+      }
 
     when:
-      def data = NetworkInterface.networkInterfaces.toList().collectEntries {
+      def data = Collections.singletonList(intf).collectEntries {
         [ (it.name): generator.reportNetworkInterface(it) ]
       }
 
