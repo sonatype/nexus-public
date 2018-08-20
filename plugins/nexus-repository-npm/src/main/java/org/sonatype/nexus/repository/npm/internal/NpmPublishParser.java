@@ -24,18 +24,19 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.thread.io.StreamCopier;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import static com.fasterxml.jackson.core.JsonToken.*;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
+import static java.util.Objects.nonNull;
 
 /**
  * Parses incoming "npm publish" and "npm unpublish" JSON using the streaming API so that attachments are not read into
@@ -53,6 +54,7 @@ import static java.util.Collections.singletonList;
  * @since 3.4
  */
 public class NpmPublishParser
+    extends ComponentSupport
 {
   private static final String ATTACHMENTS_KEY = "_attachments";
 
@@ -65,6 +67,8 @@ public class NpmPublishParser
   private static final String NPM_USER = "_npmUser";
 
   public static final String NAME = "name";
+
+  private static final String DIST_TAGS = "dist-tags";
 
   private final JsonParser jsonParser;
 
@@ -98,7 +102,11 @@ public class NpmPublishParser
    */
   public NpmPublishRequest parse(@Nullable final String currentUserId) throws IOException {
     try {
-      NestedAttributesMap packageRoot = parsePackageRoot(currentUserId);
+      NestedAttributesMap packageRoot = parsePackageRoot();
+
+      if(currentUserId != null && !currentUserId.isEmpty()) {
+        updateMaintainer(packageRoot, currentUserId);
+      }
       return new NpmPublishRequest(packageRoot, tempBlobs);
     }
     catch (Throwable t) { //NOSONAR
@@ -109,11 +117,90 @@ public class NpmPublishParser
     }
   }
 
+  private void updateMaintainer(final NestedAttributesMap packageRoot, final String currentUserId) {
+    String distVersion = getDistTagVersion(packageRoot);
+
+    if (distVersion != null && packageRoot.contains(VERSIONS_KEY)) {
+      NestedAttributesMap versionsMap = packageRoot.child(VERSIONS_KEY);
+
+      if (versionsMap.contains(distVersion)) {
+        NestedAttributesMap versionToUpdate = versionsMap.child(distVersion);
+
+        String npmUser = getNpmUser(versionToUpdate);
+        if (isUserTokenBasedPublish(currentUserId, npmUser)) {
+          updateNpmUser(packageRoot, currentUserId);
+          updateMaintainerList(packageRoot, currentUserId);
+
+          updateNpmUser(versionToUpdate, currentUserId);
+          updateMaintainerList(versionToUpdate, currentUserId);
+        }
+      }
+    } else {
+      log.warn("Version(s) attribute not found in package root");
+    }
+  }
+
+  private boolean isUserTokenBasedPublish(final String currentUserId, final String npmUser) {
+    return npmUser != null && !currentUserId.equals(npmUser);
+  }
+
+  private String getNpmUser(final NestedAttributesMap packageEntry) {
+    if (packageEntry.contains(NPM_USER)) {
+      NestedAttributesMap npmUser = packageEntry.child(NPM_USER);
+      return npmUser.get(NAME, String.class);
+    }
+    return null;
+  }
+
+  private String getDistTagVersion(final NestedAttributesMap packageRoot) {
+    if (packageRoot.contains(DIST_TAGS)) {
+      NestedAttributesMap distTag = packageRoot.child(DIST_TAGS);
+      return (String) distTag.iterator().next().getValue();
+    }
+    return null;
+  }
+
+  private void updateMaintainerList(final NestedAttributesMap versionToUpdate, final String currentUserId) {
+    Object maintainersObject = versionToUpdate.get(MAINTAINERS_KEY);
+
+    if (nonNull(maintainersObject)) {
+      if(maintainersObject instanceof List) {
+        List maintainers = (List) maintainersObject;
+
+        Object maintainer = maintainers.get(0);
+        if (maintainer instanceof Map) {
+          updateMaintainerAsMap(maintainers, currentUserId);
+        }
+        else if (maintainer instanceof String) {
+          updateMaintainerAsString(maintainers, currentUserId);
+        }
+      }
+      else if (maintainersObject instanceof String) {
+        versionToUpdate.set(MAINTAINERS_KEY, currentUserId);
+      }
+    }
+  }
+
+  private void updateMaintainerAsMap(final List<Map<String, String>> maintainers, final String currentUserId) {
+    Map<String, String> latestEntry = maintainers.get(0);
+    latestEntry.put(NAME, currentUserId);
+  }
+
+  private void updateMaintainerAsString(final List<String> maintainers, String currentId) {
+    maintainers.set(0, currentId);
+  }
+
+  private void updateNpmUser(final NestedAttributesMap packageEntry, final String currentUserId) {
+    if (packageEntry.contains(NPM_USER)) {
+      NestedAttributesMap npmUser = packageEntry.child(NPM_USER);
+      npmUser.set(NAME, currentUserId);
+    }
+  }
+
   /**
    * Parses the package root, which is the starting point of the parsing process for the incoming request.
-   * @param currentUserId currently logged in userId
    */
-  private NestedAttributesMap parsePackageRoot(@Nullable final String currentUserId) throws IOException {
+  private NestedAttributesMap parsePackageRoot() throws IOException {
     Map<String, Object> backing = new LinkedHashMap<>();
     consumeToken();
     consumeToken();
@@ -122,12 +209,6 @@ public class NpmPublishParser
       final Object value;
       if (ATTACHMENTS_KEY.equals(key)) {
         value = parseAttachments();
-      } else if (VERSIONS_KEY.equals(key)) {
-        value = parseVersions(currentUserId);
-      } else if (MAINTAINERS_KEY.equals(key)) {
-        value = parseMaintainers(currentUserId);
-      } else if (NPM_USER.equals(key)) {
-        value = parseMaintainer(currentUserId);
       } else {
         value = parseValue();
       }
@@ -262,101 +343,6 @@ public class NpmPublishParser
     requireToken(VALUE_NULL);
     consumeToken();
     return null;
-  }
-
-  /**
-   * Parses the versions object in JSON
-   */
-  private Object parseVersions(@Nullable final String currentUserId) throws IOException {
-    requireToken(START_OBJECT);
-    consumeToken();
-    Map<String, Object> versions = new LinkedHashMap<>();
-    while (!END_OBJECT.equals(currentToken())) {
-      String name = parseFieldName();
-      Map<String, Object> attachment = parseVersion(currentUserId);
-      versions.put(name, attachment);
-    }
-    consumeToken();
-    return versions;
-  }
-
-  /**
-   * Parses the versions object and replaces maintainer and npmUser
-   * name elements with the currently logged in userId
-   */
-  private Map<String, Object> parseVersion(@Nullable final String currentUserId) throws IOException {
-    requireToken(START_OBJECT);
-    consumeToken();
-    Map<String, Object> version = new LinkedHashMap<>();
-    while (!END_OBJECT.equals(currentToken())) {
-      String name = parseFieldName();
-      if (MAINTAINERS_KEY.equals(name)) {
-        version.put(name, parseMaintainers(currentUserId));
-      } else if (NPM_USER.equals(name)) {
-        version.put(name, parseMaintainer(currentUserId));
-      } else {
-        version.put(name, parseValue());
-      }
-    }
-    consumeToken();
-    return version;
-  }
-
-  /**
-   * Parses the maintainers objects in the JSON
-   */
-  private List<Object> parseMaintainers(@Nullable final String currentUserId) throws IOException {
-    if (START_ARRAY.equals(currentToken())) {
-      return parseMaintainersAsArray(currentUserId);
-    } else {
-      return singletonList(parseStringMaintainer(currentUserId));
-    }
-  }
-
-  private List<Object> parseMaintainersAsArray(@Nullable final String currentUserId) throws IOException {
-    requireToken(START_ARRAY);
-    consumeToken();
-    List<Object> entries = new ArrayList<>();
-    while (!END_ARRAY.equals(currentToken())) {
-      if (START_OBJECT.equals(currentToken())) {
-        entries.add(parseMaintainer(currentUserId));
-      } else {
-        entries.add(parseStringMaintainer(currentUserId));
-      }
-    }
-    consumeToken();
-    return entries;
-  }
-
-  private Object parseStringMaintainer(final String currentUserId) throws IOException {
-    if (currentUserId != null && !currentUserId.isEmpty()) {
-      consumeToken();
-      return currentUserId;
-    } else {
-      return parseValue();
-    }
-  }
-
-  /**
-   * Parses a maintainer object and overwrites the name element
-   * with the currently logged in user (i.e. publisher)
-   */
-  private Map<String, Object> parseMaintainer(@Nullable final String currentUserId) throws IOException {
-    requireToken(START_OBJECT);
-    consumeToken();
-    Map<String, Object> entries = new LinkedHashMap<>();
-    while (!END_OBJECT.equals(currentToken())) {
-      String key = parseFieldName();
-      if (currentUserId != null && NAME.equals(key)) {
-        entries.put(key, currentUserId);
-        consumeToken();
-      }
-      else {
-        entries.put(key, parseValue());
-      }
-    }
-    consumeToken();
-    return entries;
   }
 
   /**

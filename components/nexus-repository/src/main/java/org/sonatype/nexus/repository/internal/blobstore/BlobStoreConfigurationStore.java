@@ -46,4 +46,11 @@ public interface BlobStoreConfigurationStore
    * Delete an existing BlobStoreConfiguration.
    */
   void delete(BlobStoreConfiguration configuration);
+
+  /**
+   * Find a BlobStoreConfiguration by name.
+   *
+   * @since 3.next
+   */
+  BlobStoreConfiguration read(String name);
 }

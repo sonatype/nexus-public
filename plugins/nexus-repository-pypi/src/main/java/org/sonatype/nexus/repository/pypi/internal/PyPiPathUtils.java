@@ -28,6 +28,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class PyPiPathUtils
 {
+  public static final String INDEX_PATH_PREFIX = "simple/";
+
+  public static final String PACKAGE_PATH_PREFIX = "packages/";
   /**
    * Returns whether or not the request is a PyPI search request.
    */
@@ -70,14 +73,14 @@ public final class PyPiPathUtils
    * Builds a path to the simple index for a particular name.
    */
   static String indexPath(final String name) {
-    return "simple/" + name + (name.endsWith("/") ? "" : "/");
+    return INDEX_PATH_PREFIX + name + (name.endsWith("/") ? "" : "/");
   }
 
   /**
    * Builds a path to a package for a particular path.
    */
   static String packagesPath(final String... parts) {
-    return "packages/" + String.join("/", parts);
+    return PACKAGE_PATH_PREFIX + String.join("/", parts);
   }
 
   /**
@@ -85,6 +88,26 @@ public final class PyPiPathUtils
    */
   static String normalizeName(final String name) {
     return name.replaceAll("[\\-\\_\\.]+", "-").toLowerCase(Locale.ENGLISH);
+  }
+
+  /**
+   * @param path for an asset
+   * @return {@code true} if the {@code path} represents an index
+   *
+   * @since 3.next
+   */
+  static boolean isIndexPath(final String path) {
+    return path.startsWith(INDEX_PATH_PREFIX);
+  }
+
+  /**
+   * @param path for an asset
+   * @return {@code true} if the {@code path} represents a package
+   *
+   * @since 3.next
+   */
+  static boolean isPackagePath(final String path) {
+    return path.startsWith(PACKAGE_PATH_PREFIX);
   }
 
   private PyPiPathUtils() {

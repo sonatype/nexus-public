@@ -95,4 +95,10 @@ public class BlobStoreConfigurationStoreImpl
 
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
   }
+
+  @Override
+  @Guarded(by = STARTED)
+  public BlobStoreConfiguration read(final String name) {
+      return inTx(databaseInstance).call(db -> entityAdapter.getByName(db, name));
+  }
 }

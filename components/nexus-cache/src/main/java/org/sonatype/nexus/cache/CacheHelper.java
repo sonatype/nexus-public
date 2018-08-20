@@ -37,13 +37,21 @@ public class CacheHelper
 {
   private final Provider<CacheManager> cacheManagerProvider;
 
+  private final Provider<CacheBuilder> cacheBuilderProvider;
+
   @Inject
-  public CacheHelper(final Provider<CacheManager> cacheManagerProvider) {
+  public CacheHelper(final Provider<CacheManager> cacheManagerProvider,
+                     final Provider<CacheBuilder> cacheBuilderProvider) {
     this.cacheManagerProvider = checkNotNull(cacheManagerProvider);
+    this.cacheBuilderProvider = checkNotNull(cacheBuilderProvider);
   }
 
   private CacheManager manager() {
     return cacheManagerProvider.get();
+  }
+
+  public <K,V> CacheBuilder<K,V> builder() {
+    return cacheBuilderProvider.get();
   }
 
   public synchronized <K, V> Cache<K, V> maybeCreateCache(final String name,
@@ -56,6 +64,22 @@ public class CacheHelper
 
     if (cache == null) {
       cache = manager().createCache(name, mutableConfiguration);
+      log.debug("Created cache: {}", cache);
+    }
+    else {
+      log.debug("Re-using existing cache: {}", cache);
+    }
+
+    return cache;
+  }
+
+  public synchronized <K, V> Cache<K, V> getOrCreate(final CacheBuilder<K,V> builder) {
+    checkNotNull(builder);
+
+    Cache<K, V> cache = manager().getCache(builder.getName(), builder.getKeyType(), builder.getValueType());
+
+    if (cache == null) {
+      cache = builder.build(manager());
       log.debug("Created cache: {}", cache);
     }
     else {

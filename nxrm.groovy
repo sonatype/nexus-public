@@ -24,7 +24,7 @@
 @Grab(group = 'com.aestasit.infrastructure.sshoogr', module = 'sshoogr', version = '0.9.26')
 @Grab(group = 'com.caseyscarborough.colorizer', module = 'groovy-colorizer', version = '1.0.0')
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
-@Grab(group = 'org.ajoberstar', module = 'grgit', version = '2.0.1')
+@Grab(group = 'org.ajoberstar', module = 'grgit', version = '2.2.1')
 @Grab(group = 'org.apache.commons', module = 'commons-compress', version = '1.15')
 @Grab(group = 'commons-io', module = 'commons-io', version = '2.6')
 @Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')

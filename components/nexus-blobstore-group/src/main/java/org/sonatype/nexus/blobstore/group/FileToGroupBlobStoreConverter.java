@@ -25,6 +25,8 @@ import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FALLBACK_FILL_POLICY_TYPE;
+import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FILL_POLICY_KEY;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
 
 /**
@@ -62,6 +64,7 @@ public class FileToGroupBlobStoreConverter
     BlobStoreConfiguration groupConf = fromConf.copy(fromOldName);
     groupConf.setType(BlobStoreGroup.TYPE);
     groupConf.attributes(CONFIG_KEY).set(MEMBERS_KEY, fromNewName);
+    groupConf.attributes(CONFIG_KEY).set(FILL_POLICY_KEY, FALLBACK_FILL_POLICY_TYPE);
 
     // rename the fbs
     fromConf.setName(fromNewName);

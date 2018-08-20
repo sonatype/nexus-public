@@ -247,7 +247,6 @@ Ext.define('NX.controller.Drilldown', {
    * Make the detail view appear
    *
    * @param index The zero-based view to load
-   * @param animate Whether to animate the panel into view
    * @param model An optional record to select
    */
   loadView: function (index, model) {
@@ -279,7 +278,6 @@ Ext.define('NX.controller.Drilldown', {
    * Make the create wizard appear
    *
    * @param index The zero-based step in the create wizard
-   * @param animate Whether to animate the panel into view
    * @param cmp An optional component to load
    */
   loadCreateWizard: function (index, cmp) {
@@ -538,7 +536,6 @@ Ext.define('NX.controller.Drilldown', {
    * Shift this panel to display the referenced step in the create wizard
    *
    * @param index The index of the create wizard to display
-   * @param animate Set to “true” if the view should slide into place, “false” if it should just appear
    * @param cmp An optional component to load into the panel
    */
   showCreateWizard: function (index, cmp) {
@@ -565,7 +562,6 @@ Ext.define('NX.controller.Drilldown', {
    * Shift this panel to display the referenced master or detail panel
    *
    * @param index The index of the master/detail panel to display
-   * @param animate Set to “true” if the view should slide into place, “false” if it should just appear
    */
   showChild: function (index) {
     var me = this,
@@ -616,15 +612,6 @@ Ext.define('NX.controller.Drilldown', {
   },
 
   /**
-   * @private show all panels
-   */
-  showAll: function() {
-    Ext.each(this.getDrilldownItems(), function(drilldownItem) {
-      drilldownItem.enable();
-    });
-  },
-
-  /**
    * @private
    * Slide the drilldown to reveal the specified panel
    */
@@ -634,34 +621,21 @@ Ext.define('NX.controller.Drilldown', {
         item = drilldownItems[index],
         i, container, activeItem;
 
-    this.showAll();
     if (item && item.el) {
       this.currentIndex = index;
       item.getLayout().setActiveItem(item.cardIndex);
-      activeItem = drilldownContainer.setActiveItem(index);
-      if (activeItem) {
-        activeItem.on({
-          activate: function() {
-            this.hideAllExceptAndFocus(this.currentIndex);
-            this.refreshBreadcrumb();
-          },
-          single: true,
-          scope: this
-        });
-      }
     }
-    else {
-      activeItem = drilldownContainer.setActiveItem(index);
-      if (activeItem) {
-        activeItem.on({
-          activate: function() {
-            this.hideAllExceptAndFocus(this.currentIndex);
-            this.refreshBreadcrumb();
-          },
-          single: true,
-          scope: this
-        });
-      }
+
+    activeItem = drilldownContainer.setActiveItem(index);
+    if (activeItem) {
+      activeItem.on({
+        activate: function() {
+          this.hideAllExceptAndFocus(this.currentIndex);
+          this.refreshBreadcrumb();
+        },
+        single: true,
+        scope: this
+      });
     }
 
     // Destroy any create wizard panels after current

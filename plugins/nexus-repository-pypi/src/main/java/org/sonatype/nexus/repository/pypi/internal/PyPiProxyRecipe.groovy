@@ -76,6 +76,7 @@ class PyPiProxyRecipe
     repository.attach(configure(viewFacet.get()))
     repository.attach(httpClientFacet.get())
     repository.attach(negativeCacheFacet.get())
+    repository.attach(pyPiFacet.get())
     repository.attach(componentMaintenanceFacet.get())
     repository.attach(proxyFacet.get())
     repository.attach(storageFacet.get())

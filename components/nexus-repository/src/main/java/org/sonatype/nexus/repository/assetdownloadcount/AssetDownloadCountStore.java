@@ -21,6 +21,9 @@ import org.joda.time.DateTime;
  */
 public interface AssetDownloadCountStore
 {
+
+  String CACHE_NAME = "assetDownloadCountStoreCache";
+
   /**
    * Get the count of downloads of an asset for the specified day
    */

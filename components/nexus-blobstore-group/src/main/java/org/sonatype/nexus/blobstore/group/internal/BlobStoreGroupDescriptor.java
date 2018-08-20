@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 
@@ -52,6 +53,9 @@ public class BlobStoreGroupDescriptor
 
     @DefaultMessage("Members")
     String membersLabel();
+
+    @DefaultMessage("Fill Policy")
+    String fillPolicyLabel();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -61,6 +65,8 @@ public class BlobStoreGroupDescriptor
   private final BlobStoreManager blobStoreManager;
 
   private final ItemselectFormField members;
+
+  private final FormField fillPolicy;
 
   @Inject
   public BlobStoreGroupDescriptor(@Named("${nexus.blobstoregroups.enabled:-false}") final boolean isEnabled,
@@ -78,6 +84,12 @@ public class BlobStoreGroupDescriptor
     this.members.setButtons("add", "remove");
     this.members.setFromTitle("Available");
     this.members.setToTitle("Selected");
+    this.fillPolicy = new ComboboxFormField<String>(
+        BlobStoreGroup.FILL_POLICY_KEY,
+        messages.fillPolicyLabel(),
+        null,
+        FormField.MANDATORY
+    ).withStoreApi("blobstoreGroup_BlobstoreGroup.fillPolicies");
   }
 
   @Override
@@ -87,7 +99,7 @@ public class BlobStoreGroupDescriptor
 
   @Override
   public List<FormField> getFormFields() {
-    return asList(members);
+    return asList(members, fillPolicy);
   }
 
   @Override

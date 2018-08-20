@@ -34,11 +34,11 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
-import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -80,19 +80,24 @@ public class NpmUploadHandler
 
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
-    return TransactionalStoreBlob.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class).call(() -> {
-      try (TempBlob tempBlob = storageFacet.createTempBlob(upload.getAssetUploads().get(0).getPayload(),
-          NpmFacetUtils.HASH_ALGORITHMS)) {
-        Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
+    try (TempBlob tempBlob = storageFacet.createTempBlob(upload.getAssetUploads().get(0).getPayload(),
+        NpmFacetUtils.HASH_ALGORITHMS)) {
+      final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
+      final String name = (String) packageJson.get(NpmAttributes.P_NAME);
+      final String version =(String) packageJson.get(NpmAttributes.P_VERSION);
+      final String path = NpmMetadataUtils.createRepositoryPath(name, version);
+      final Map<String, String> coordinates = toCoordinates(packageJson);
 
-        ensurePermitted(repository.getName(), NpmFormat.NAME,
-            NpmMetadataUtils.createRepositoryPath((String) packageJson.get(NpmAttributes.P_NAME),
-                (String) packageJson.get(NpmAttributes.P_VERSION)),
-            toCoordinates(packageJson));
+      ensurePermitted(repository.getName(), NpmFormat.NAME, path, coordinates);
 
+      UnitOfWork.begin(storageFacet.txSupplier());
+      try {
         return new UploadResponse(facet.putPackage(packageJson, tempBlob));
       }
-    });
+      finally {
+        UnitOfWork.end();
+      }
+    }
   }
 
   private Map<String, String> toCoordinates(final Map<String, Object> packageJson) {

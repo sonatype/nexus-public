@@ -58,6 +58,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 
 public class MetadataRebuilderTest
     extends TestSupport
@@ -123,9 +124,13 @@ public class MetadataRebuilderTest
     when(doc.field("baseVersions", OType.EMBEDDEDSET)).thenReturn(newHashSet("version"));
 
     Component component = mock(Component.class);
-    doReturn(mock(NestedAttributesMap.class)).when(component).formatAttributes();
+    
+    NestedAttributesMap attributes = mock(NestedAttributesMap.class);
+    when(attributes.get(P_BASE_VERSION)).thenReturn("version");
+    
+    doReturn(attributes).when(component).formatAttributes();
     doReturn(infiniteIterator(doc)).when(storageTx).browse(anyString(), anyMapOf(String.class, Object.class), anyInt(), anyLong());
-    doReturn(infiniteIterator(component)).when(storageTx).findComponents(anyString(), anyMap(), any(Iterable.class), anyString());
+    doReturn(infiniteIterator(component)).when(storageTx).browseComponents(any(), any());
     doReturn(infiniteIterator(mock(Asset.class))).when(storageTx).browseAssets(any(Component.class));
 
     final AtomicBoolean canceled = new AtomicBoolean(false);

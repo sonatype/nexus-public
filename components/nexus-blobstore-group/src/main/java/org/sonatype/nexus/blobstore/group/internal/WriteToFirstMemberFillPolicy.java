@@ -22,15 +22,23 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 
 /**
- * Default {@link FillPolicy}.
+ * {@link FillPolicy} that writes to first blobstore in group.
  *
  * @since 3.next
  */
-@Named
-public class DefaultFillPolicy
+@Named(WriteToFirstMemberFillPolicy.TYPE)
+public class WriteToFirstMemberFillPolicy
     extends ComponentSupport
     implements FillPolicy
 {
+
+  public static final String TYPE = "writeToFirst";
+  private static final String NAME = "Write to First";
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 
   @Override
   @Nullable

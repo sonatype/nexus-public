@@ -58,6 +58,7 @@ class PyPiHostedRecipe
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(storageFacet.get())
+    repository.attach(pyPiFacet.get())
     repository.attach(componentMaintenanceFacet.get())
     repository.attach(hostedFacet.get())
     repository.attach(searchFacet.get())

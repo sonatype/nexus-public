@@ -71,7 +71,6 @@ public class Launcher
 
     Map<String, String> props = builder.build();
     System.getProperties().putAll(props);
-    ConfigurationHolder.set(props);
 
     // log critical information about the runtime environment
     Logger log = LoggerFactory.getLogger(Launcher.class);

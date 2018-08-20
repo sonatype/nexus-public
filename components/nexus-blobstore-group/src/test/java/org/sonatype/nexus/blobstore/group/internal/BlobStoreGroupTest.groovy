@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.group.internal
 
+import javax.inject.Provider
+
 import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
@@ -34,7 +36,14 @@ class BlobStoreGroupTest
 
   BlobStoreManager blobStoreManager = Mock()
 
-  FillPolicy fillPolicy = Mock()
+  FillPolicy writeToFirstPolicy = new WriteToFirstMemberFillPolicy()
+
+  FillPolicy testFillPolicy = Mock()
+
+  Map<String, Provider<FillPolicy>> fillPolicyFactories = [
+      writeToFirst: { -> writeToFirstPolicy} as Provider,
+      test: { -> testFillPolicy } as Provider
+  ]
 
   @Shared Blob blobOne = Mock()
   
@@ -46,13 +55,13 @@ class BlobStoreGroupTest
 
   BlobStore two = Mock()
 
-  BlobStoreGroup blobStore = new BlobStoreGroup(blobStoreManager, fillPolicy)
+  BlobStoreGroup blobStore = new BlobStoreGroup(blobStoreManager, fillPolicyFactories)
 
   def config = new BlobStoreConfiguration()
 
   def 'Get with no members'() {
     given: 'An empty group'
-      config.attributes = [group: [members: '']]
+      config.attributes = [group: [members: '', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       BlobId blobId = new BlobId('doesntexist')
@@ -67,7 +76,7 @@ class BlobStoreGroupTest
   @Unroll
   def 'Get with two members with id #blobId'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -93,7 +102,7 @@ class BlobStoreGroupTest
   @Unroll
   def 'Two-param get with two members with id #blobId'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -120,7 +129,7 @@ class BlobStoreGroupTest
   @Unroll
   def 'Two-param get id #blobId, include deleted: #includeDeleted'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -151,7 +160,7 @@ class BlobStoreGroupTest
 
   def 'Create with stream delegates to the member chosen by the fill policy'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -163,7 +172,7 @@ class BlobStoreGroupTest
       blobStore.create(byteStream, [:])
 
     then:
-      1 * fillPolicy.chooseBlobStore(blobStore, [:]) >> two
+      1 * testFillPolicy.chooseBlobStore(blobStore, [:]) >> two
       0 * one.create(_, _)
       1 * two.create(byteStream, [:]) >> blob
       blob.getId() >> new BlobId('created')
@@ -171,7 +180,7 @@ class BlobStoreGroupTest
 
   def 'Create with path delegates to the member chosen by the fill policy'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -185,7 +194,7 @@ class BlobStoreGroupTest
       blobStore.create(path, [:], size, hashCode)
 
     then:
-      1 * fillPolicy.chooseBlobStore(blobStore, [:]) >> two
+      1 * testFillPolicy.chooseBlobStore(blobStore, [:]) >> two
       0 * one.create(_, _)
       1 * two.create(path, [:], size, hashCode) >> blob
       blob.getId() >> new BlobId('created')
@@ -193,7 +202,7 @@ class BlobStoreGroupTest
 
   def 'getBlobStreamId with two blobstores'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -214,7 +223,7 @@ class BlobStoreGroupTest
   @Unroll
   def 'delete with two members with id #blobId'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -244,7 +253,7 @@ class BlobStoreGroupTest
   @Unroll
   def 'delete hard with two members with id #blobId'() {
     given: 'A group with two members'
-      config.attributes = [group: [members: 'one,two']]
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'test']]
       blobStore.init(config)
       blobStore.doStart()
       blobStoreManager.get('one') >> one
@@ -269,5 +278,16 @@ class BlobStoreGroupTest
       'in_one'       || true
       'in_two'       || true
       'in_both'      || false // not deleted from two
+  }
+
+  def 'fall back on default fill policy if named policy not found'() {
+    given: 'a config with a bad fill policy name'
+      config.attributes = [group: [members: 'one,two', fillPolicy: 'nosuch']]
+
+    when: 'the blob store is initialized'
+      blobStore.init(config)
+
+    then: 'a fall back fill policy is used'
+      blobStore.fillPolicy instanceof WriteToFirstMemberFillPolicy
   }
 }

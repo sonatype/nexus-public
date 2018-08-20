@@ -145,10 +145,21 @@ public interface StorageTx
   Asset firstAsset(Component component);
 
   /**
+   * Gets all components owned by the specified bucket and query. This method will NOT see uncommitted changes performed 
+   * in this same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
+   * receive new elements is breached.
+   *
+   * @since 3.next
+   * 
+   * @see OrientAsyncHelper
+   */
+  Iterable<Component> browseComponents(Query query, Bucket bucket);
+
+  /**
    * Gets all components owned by the specified bucket. This method will NOT see unsommited changes performed in this
    * same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
-   *
+   *    
    * @see OrientAsyncHelper
    */
   Iterable<Component> browseComponents(Bucket bucket);

@@ -40,6 +40,7 @@ import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
@@ -49,8 +50,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.id.ORID;
@@ -60,11 +60,13 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.storage.Query.builder;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
@@ -338,19 +340,29 @@ public class MetadataRebuilder
         metadataBuilder.onEnterBaseVersion(baseVersion);
 
         TransactionalStoreBlob.operation.call(() -> {
-          final Iterable<Component> components = tx.findComponents(
-              "group = :groupId and name = :artifactId and attributes.maven2." + Attributes.P_BASE_VERSION +
-                  " = :baseVersion",
-              ImmutableMap.<String, Object>of(
-                  "groupId", groupId,
-                  "artifactId", artifactId,
-                  "baseVersion", baseVersion
-              ),
-              ImmutableList.of(repository),
-              null // order by
-          );
+          
+          Bucket bucket = tx.findBucket(repository);
 
-          for (Component component : components) {
+          Query query = builder()
+              .where(P_GROUP).eq(groupId)
+              .and(P_NAME).eq(artifactId)
+              .build();
+
+          /*
+            Originally this query was done in one piece and included a 'WHERE attributes.maven2.baseVersion =' but that
+            causes some severe performance problems because Orient decides not to use the index on group, name and 
+            bucket and instead falls back to only using an index on group. This would cause the metadata rebuild to get 
+            exponentially slower as the data size grew but also meant near-full table scans were being done no matter
+            which repository the task was run against.
+            
+            More information and metrics can be found here: https://issues.sonatype.org/browse/NEXUS-17696 
+           */
+          Iterable<Component> filteredComponents = Iterables.filter(tx.browseComponents(query, bucket), (component) -> {
+            String thisVersion = (String) component.formatAttributes().get(P_BASE_VERSION);
+            return baseVersion.equals(thisVersion);
+          });
+
+          for (Component component : filteredComponents) {
             checkCancellation();
 
             for (Asset asset : tx.browseAssets(component)) {

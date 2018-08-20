@@ -27,8 +27,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.npm.internal.NpmPublishParser;
-import org.sonatype.nexus.repository.npm.internal.NpmPublishRequest;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
 
@@ -124,12 +122,30 @@ public class NpmPublishParserTest
   }
 
   @Test
+  public void parsePublishLocalJsonWithUser() throws Exception {
+    String file = "publish-local.json";
+    String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
+    String name = "foo";
+    String version = "1.0";
+    parseFileAndAssertContents(file, url, name, version, "bob");
+  }
+
+  @Test
   public void parsePublishLocalJsonMaintainerNotArray() throws Exception {
     String file = "publish-local-maintainer-not-array.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
     parseFileAndAssertContents(file, url, name, version, NO_USER);
+  }
+
+  @Test
+  public void parsePublishLocalJsonMaintainerNotArrayWithUser() throws Exception {
+    String file = "publish-local-maintainer-not-array.json";
+    String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
+    String name = "foo";
+    String version = "1.0";
+    parseFileAndAssertContents(file, url, name, version, "bob");
   }
 
   @Test

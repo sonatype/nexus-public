@@ -318,6 +318,12 @@ public class StorageTxImpl
     return componentEntityAdapter.browseByBucket(db, bucket);
   }
 
+  @Override
+  public Iterable<Component> browseComponents(final Query query, final Bucket bucket) {
+    return componentEntityAdapter.browseByQueryAsync(db, query.getWhere(), query.getParameters(), 
+        ImmutableList.of(bucket), query.getQuerySuffix());
+  }
+
   @Nullable
   @Override
   @Guarded(by = ACTIVE)

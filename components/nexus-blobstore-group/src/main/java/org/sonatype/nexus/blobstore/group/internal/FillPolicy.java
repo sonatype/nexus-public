@@ -25,6 +25,8 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
  */
 public interface FillPolicy {
 
+  String getName();
+
   /**
    * Choose the blob store group member to write a new blob to.
    */

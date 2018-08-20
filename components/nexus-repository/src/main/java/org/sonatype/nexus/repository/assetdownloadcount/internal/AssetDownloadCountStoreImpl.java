@@ -12,32 +12,33 @@
  */
 package org.sonatype.nexus.repository.assetdownloadcount.internal;
 
-import java.util.concurrent.Executors;
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
+import javax.cache.Cache;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.MutableEntry;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
+import org.sonatype.nexus.repository.assetdownloadcount.CacheEntryKey;
 import org.sonatype.nexus.repository.assetdownloadcount.DateType;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
-import org.sonatype.nexus.thread.NexusExecutorService;
-import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListeners;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.joda.time.DateTime;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -65,7 +66,17 @@ public class AssetDownloadCountStoreImpl
 
   private final AssetDownloadHistoricDataCleaner historicDataCleaner;
 
-  private final LoadingCache<CacheEntryKey,AtomicLong> cache;
+  private Cache<CacheEntryKey, Long> cache = null;
+
+  private final EntryIncrementProcessor entryIncrementProcessor;
+
+  private final CacheHelper cacheHelper;
+
+  private final int cacheSize;
+
+  private final int cacheDuration;
+
+  private final CacheRemovalListener cacheRemovalListener;
 
   @Inject
   public AssetDownloadCountStoreImpl(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstance,
@@ -74,26 +85,20 @@ public class AssetDownloadCountStoreImpl
                                      @Named("${nexus.assetdownloads.cache.duration:-3600}") final int cacheDuration,
                                      final AssetDownloadCountEntityAdapter entityAdapter,
                                      final AssetDownloadHistoricDataCleaner historicDataCleaner,
-                                     final CacheRemovalListener cacheRemovalListener)
+                                     final CacheRemovalListener cacheRemovalListener,
+                                     final CacheHelper cacheHelper)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
     this.historicDataCleaner = checkNotNull(historicDataCleaner);
+    this.cacheHelper = checkNotNull(cacheHelper);
     this.enabled = enabled;
+    this.cacheSize = cacheSize;
+    this.cacheDuration = cacheDuration;
 
-    cache = CacheBuilder.newBuilder()
-        .maximumSize(cacheSize)
-        .expireAfterWrite(cacheDuration, TimeUnit.SECONDS)
-        .removalListener(RemovalListeners.asynchronous(cacheRemovalListener, NexusExecutorService
-            .forCurrentSubject(Executors.newSingleThreadExecutor(
-                new NexusThreadFactory("assetdownloads-count", "Asset Downloads Count")))))
-        .build(new CacheLoader<CacheEntryKey, AtomicLong>()
-        {
-          @Override
-          public AtomicLong load(final CacheEntryKey cacheEntryKey) throws Exception {
-            return new AtomicLong(0);
-          }
-        });
+    this.cacheRemovalListener = checkNotNull(cacheRemovalListener);
+
+    entryIncrementProcessor = new EntryIncrementProcessor();
   }
 
   @Override
@@ -101,11 +106,25 @@ public class AssetDownloadCountStoreImpl
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       entityAdapter.register(db);
     }
+
+    if (cache == null) {
+      this.cache = cacheHelper.getOrCreate(cacheHelper.<CacheEntryKey, Long>builder()
+          .name(CACHE_NAME)
+          .cacheSize(cacheSize)
+          .expiryFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.SECONDS, cacheDuration)))
+          .keyType(CacheEntryKey.class)
+          .valueType(Long.class)
+          .persister(cacheRemovalListener));
+    }
   }
 
   @Override
-  protected void doStop() throws Exception {
+  protected void doStop() {
     historicDataCleaner.stop();
+    if (cache != null) {
+      cache.removeAll();
+    }
+    cache = null;
   }
 
   @Override
@@ -154,13 +173,26 @@ public class AssetDownloadCountStoreImpl
     return counts;
   }
 
+  private static class EntryIncrementProcessor
+      implements EntryProcessor<CacheEntryKey, Long, Long>, Serializable
+  {
+
+    @Override
+    public Long process(MutableEntry<CacheEntryKey, Long> mutableEntry, Object... objects) {
+      Long originalValue = mutableEntry.getValue();
+      long newValue = originalValue == null ? 1 : originalValue + 1;
+      mutableEntry.setValue(newValue);
+      return newValue;
+    }
+  }
+
   @Override
   @Guarded(by = STARTED)
   public void incrementCount(final String repositoryName, final String assetName) {
-    log.debug("Incremented count(CACHE) {} {} by {}", repositoryName, assetName, 1);
-
-    //with the dead simple impl of the cache loader, i dont have concerns doing the getUnchecked over get method
-    cache.getUnchecked(new CacheEntryKey(repositoryName, assetName)).incrementAndGet();
+    if (cache != null) {
+      long newValue = cache.invoke(new CacheEntryKey(repositoryName, assetName), entryIncrementProcessor);
+      log.debug("Incremented cached count for {} {} by 1 to {}", repositoryName, assetName, newValue);
+    }
 
     historicDataCleaner.start();
   }
@@ -221,7 +253,14 @@ public class AssetDownloadCountStoreImpl
     for (long day : getDailyCounts(repositoryName, assetName)) {
       lastThirty += day;
     }
-    lastThirty += cache.getUnchecked(new CacheEntryKey(repositoryName, assetName)).get();
+
+    if (cache != null) {
+      Long cachedDownloadCount = cache.get(new CacheEntryKey(repositoryName, assetName));
+      lastThirty += cachedDownloadCount == null ? 0L : cachedDownloadCount;
+    }
+
+    log.debug("Last thirty days downloads for {} {} is {}", repositoryName, assetName, lastThirty);
+
     return lastThirty;
   }
 }

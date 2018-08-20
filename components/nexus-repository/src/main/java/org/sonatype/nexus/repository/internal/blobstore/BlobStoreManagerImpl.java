@@ -296,6 +296,23 @@ public class BlobStoreManagerImpl
     });
   }
 
+  @Subscribe
+  public void on(final BlobStoreConfigurationUpdatedEvent event) {
+    handleRemoteOnly(event, evt -> {
+      try {
+        // only update if tracked
+        String name = evt.getName();
+        if (stores.containsKey(name)) {
+          BlobStore blobStore = blobStore(name);
+          blobStore.init(event.getEntity());
+        }
+      }
+      catch (Exception e) {
+        log.warn("update blob store from remote event failed: {}", evt.getName(), e);
+      }
+    });
+  }
+
   private void handleRemoteOnly(final BlobStoreConfigurationEvent event,
                                 final Consumer<BlobStoreConfigurationEvent> consumer)
   {

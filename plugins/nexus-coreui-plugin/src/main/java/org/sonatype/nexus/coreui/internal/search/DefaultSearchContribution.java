@@ -32,7 +32,7 @@ public class DefaultSearchContribution
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      query.filter(QueryBuilders.termQuery(type, value));
+      query.must(QueryBuilders.queryStringQuery(value).field(type));
     }
   }
 

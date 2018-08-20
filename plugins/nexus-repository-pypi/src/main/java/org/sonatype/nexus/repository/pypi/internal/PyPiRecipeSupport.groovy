@@ -20,6 +20,7 @@ import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
+import org.sonatype.nexus.repository.pypi.PyPiFacet
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.storage.StorageFacet
@@ -86,6 +87,9 @@ abstract class PyPiRecipeSupport
 
   @Inject
   HandlerContributor handlerContributor
+
+  @Inject
+  Provider<PyPiFacet> pyPiFacet
 
   protected PyPiRecipeSupport(final Type type, final Format format) {
     super(type, format)

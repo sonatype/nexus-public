@@ -10,24 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.assetdownloadcount.internal;
+package org.sonatype.nexus.repository.assetdownloadcount;
 
+import java.io.Serializable;
 import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Simple key consisting of a reponame and assetname
+ * CacheEntryKey is serializable so that it can be used in distributed caches
  *
  * @since 3.4
  */
-public class CacheEntryKey
+public class CacheEntryKey implements Serializable
 {
+
+  private static final long serialVersionUID = 1L;
+
   private final String repositoryName;
 
   private final String assetName;
 
   public CacheEntryKey(final String repositoryName, final String assetName) {
-    this.repositoryName = repositoryName;
-    this.assetName = assetName;
+    this.repositoryName = checkNotNull(repositoryName);
+    this.assetName = checkNotNull(assetName);
   }
 
   public String getAssetName() {
@@ -53,5 +60,10 @@ public class CacheEntryKey
       return true;
     }
     return Objects.equals(repositoryName, other.repositoryName) && Objects.equals(assetName, other.assetName);
+  }
+
+  @Override
+  public String toString() {
+    return "CacheEntryKey for Repository:" + repositoryName + " Asset:" + assetName;
   }
 }

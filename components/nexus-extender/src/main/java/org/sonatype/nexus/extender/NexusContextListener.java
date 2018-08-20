@@ -90,6 +90,10 @@ public class NexusContextListener
    */
   public static final int NEXUS_PLUGIN_START_LEVEL = 200;
 
+  private static final String NEXUS_FULL_EDITION = "nexus-full-edition";
+
+  private static final String UNKNOWN = "unknown";
+
   static {
     boolean hasPaxExam;
     try {
@@ -235,7 +239,8 @@ public class NexusContextListener
 
     // log uptime before triggering activity which may run into problems
     long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
-    log.info("Uptime: {}", PeriodFormat.getDefault().print(new Period(uptime)));
+    log.info("Uptime: {} ({})", PeriodFormat.getDefault().print(new Period(uptime)),
+        System.getProperty(NEXUS_FULL_EDITION, UNKNOWN));
 
     try {
       lifecycleManager.to(KERNEL);

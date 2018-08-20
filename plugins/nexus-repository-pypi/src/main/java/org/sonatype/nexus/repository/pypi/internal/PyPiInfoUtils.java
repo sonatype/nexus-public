@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ public final class PyPiInfoUtils
    */
   static Map<String, String> extractMetadata(InputStream is) {
     checkNotNull(is);
+    Map<String, Exception> exceptions = new HashMap<>();
 
     try {
       String compressionType = CompressorStreamFactory.detect(is);
@@ -83,7 +85,7 @@ public final class PyPiInfoUtils
       }
     }
     catch (Exception e) {
-      log.info("Unable to decompress PyPI archive (uncompressed input is normal, but another error may occur)", e);
+      exceptions.put("Unable to decompress PyPI archive", e);
     }
 
     try {
@@ -93,9 +95,12 @@ public final class PyPiInfoUtils
       return metadata;
     }
     catch (Exception e) {
-      log.error("Unable to extract PyPI archive", e);
+      exceptions.put("Unable to extract PyPI archive", e);
     }
 
+    for (Map.Entry<String, Exception> entry : exceptions.entrySet()) {
+      log.error(entry.getKey(), entry.getValue());
+    }
     return new LinkedHashMap<>();
   }
 

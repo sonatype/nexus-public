@@ -13,7 +13,11 @@
 package org.sonatype.nexus.repository.raw;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -26,7 +30,6 @@ import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -36,6 +39,8 @@ import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.UploadRegexMap;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Lists;
 
@@ -82,26 +87,33 @@ public class RawUploadHandler
 
     String basePath = upload.getFields().get(DIRECTORY).trim();
 
-    return TransactionalStoreBlob.operation.withDb(repository.facet(StorageFacet.class).txSupplier())
-        .throwing(IOException.class).call(() -> {
+    //Data holders for populating the UploadResponse
+    List<Content> responseContents = Lists.newArrayList();
+    Map<String,PartPayload> pathToPayload = new LinkedHashMap<>();
 
-          //Data holders for populating the UploadResponse
-          List<Content> responseContents = Lists.newArrayList();
-          List<String> assetPaths = Lists.newArrayList();
+    for (AssetUpload asset : upload.getAssetUploads()) {
+      String path = normalizePath(basePath + '/' + asset.getFields().get(FILENAME).trim());
 
-          for (AssetUpload asset : upload.getAssetUploads()) {
-            String path = normalizePath(basePath + '/' + asset.getFields().get(FILENAME).trim());
+      ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
 
-            ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
+      pathToPayload.put(path, asset.getPayload());
+    }
 
-            Content content = facet.put(path, asset.getPayload());
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    try {
+      for (Entry<String,PartPayload> entry : pathToPayload.entrySet()) {
+        String path = entry.getKey();
 
-            responseContents.add(content);
-            assetPaths.add(path);
-          }
+        Content content = facet.put(path, entry.getValue());
 
-          return new UploadResponse(responseContents, assetPaths);
-        });
+        responseContents.add(content);
+      }
+    }
+    finally {
+      UnitOfWork.end();
+    }
+
+    return new UploadResponse(responseContents, new ArrayList<>(pathToPayload.keySet()));
   }
 
   private String normalizePath(final String path) {

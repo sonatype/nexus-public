@@ -61,11 +61,11 @@ public class NegativeCacheFacetImpl
     public Boolean enabled = Boolean.TRUE;
 
     /**
-     * Time-to-live seconds.
+     * Time-to-live minutes.
      */
     @NotNull
     @Min(0)
-    public Integer timeToLive = Time.hours(24).toSecondsI();
+    public Integer timeToLive = Time.hours(24).toMinutesI();
 
     @Override
     public String toString() {

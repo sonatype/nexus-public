@@ -25,6 +25,7 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -58,6 +59,9 @@ public class BlobStoreConfigurationEntityAdapter
 
   private final UpdateEntityByPropertyAction<BlobStoreConfiguration> update =
       new UpdateEntityByPropertyAction<>(this, P_NAME);
+
+  private final ReadEntityByPropertyAction<BlobStoreConfiguration> read =
+      new ReadEntityByPropertyAction<>(this, P_NAME);
 
   @VisibleForTesting
   static final String I_NAME = new OIndexNameBuilder()
@@ -122,6 +126,8 @@ public class BlobStoreConfigurationEntityAdapter
     switch (eventKind) {
       case CREATE:
         return new BlobStoreConfigurationCreatedEvent(metadata, name);
+      case UPDATE:
+        return new BlobStoreConfigurationUpdatedEvent(metadata, name);
       case DELETE:
         return new BlobStoreConfigurationDeletedEvent(metadata, name);
       default:
@@ -134,5 +140,12 @@ public class BlobStoreConfigurationEntityAdapter
    */
   public boolean update(final ODatabaseDocumentTx db, final BlobStoreConfiguration entity) {
     return update.execute(db, entity, entity.getName());
+  }
+
+  /**
+   * @since 3.next
+   */
+  public BlobStoreConfiguration getByName(final ODatabaseDocumentTx db, final String name) {
+    return read.execute(db, name);
   }
 }

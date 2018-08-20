@@ -118,9 +118,9 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset'),
         scheduleFieldSet = me.down('nx-coreui-task-schedulefieldset');
 
-    this.resetTaskForm();
-
     this.callParent(arguments);
+
+    this.resetTaskForm();
 
     if (taskTypeModel) {
       settingsFieldSet.importProperties(model.get('properties'), taskTypeModel.get('formFields'));
@@ -139,11 +139,6 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     Ext.Array.each(checkboxes, function(checkbox) {
       checkbox.originalValue = false;
     });
-
-    var taskScheduleFields = me.down('nx-coreui-task-schedule-fields');
-    if (taskScheduleFields) {
-      taskScheduleFields.up().remove(taskScheduleFields);
-    }
     me.form.reset();
   },
 

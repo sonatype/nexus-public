@@ -63,7 +63,7 @@ public class RuntimeCacheManagerProvider
     Provider<CacheManager> provider = providers.get(name);
     checkState(provider != null, "Cache-provider vanished: %s", name);
     CacheManager manager = provider.get();
-    log.debug("Constructed cache-manager: {} -> {}", name, manager);
+    log.debug("Constructed cache-provider: {} -> {}", name, manager);
     return manager;
   }
 }

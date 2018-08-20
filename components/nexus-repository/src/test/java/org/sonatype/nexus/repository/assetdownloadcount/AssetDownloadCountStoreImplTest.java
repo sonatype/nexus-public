@@ -13,7 +13,8 @@
 package org.sonatype.nexus.repository.assetdownloadcount;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
+import org.sonatype.nexus.cache.CacheBuilder;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.assetdownloadcount.internal.AssetDownloadCountEntityAdapter;
 import org.sonatype.nexus.repository.assetdownloadcount.internal.AssetDownloadCountStoreImpl;
@@ -29,12 +30,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.cache.Cache;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,6 +65,16 @@ public class AssetDownloadCountStoreImplTest
   @Mock
   private Subject subject;
 
+  @Mock
+  private CacheHelper cacheHelper;
+
+  @Mock
+  private CacheBuilder cacheBuilder;
+
+  @Mock
+  private Cache cache;
+
+  @Mock
   private CacheRemovalListener cacheRemovalListener;
 
   private AssetDownloadCountStoreImpl underTest;
@@ -75,9 +86,18 @@ public class AssetDownloadCountStoreImplTest
         .thenAnswer(invoc -> new SubjectRunnable(subject, (Runnable) invoc.getArguments()[0]));
     ThreadContext.bind(subject);
 
-    cacheRemovalListener = new CacheRemovalListener(database.getInstanceProvider(), assetDownloadCountEntityAdapter);
+    when(cacheHelper.builder()).thenReturn(cacheBuilder);
+    when(cacheBuilder.name(anyString())).thenReturn(cacheBuilder);
+    when(cacheBuilder.cacheSize(anyInt())).thenReturn(cacheBuilder);
+    when(cacheBuilder.expiryFactory(any())).thenReturn(cacheBuilder);
+    when(cacheBuilder.keyType(any())).thenReturn(cacheBuilder);
+    when(cacheBuilder.valueType(any())).thenReturn(cacheBuilder);
+    when(cacheHelper.getOrCreate(any())).thenReturn(cache);
+
+    when(cache.invoke(any(), any())).thenReturn(1L);
+
     underTest = new AssetDownloadCountStoreImpl(database.getInstanceProvider(), true, 10, 10,
-        assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener);
+        assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener, cacheHelper);
     underTest.start();
   }
 
@@ -119,60 +139,6 @@ public class AssetDownloadCountStoreImplTest
   }
 
   @Test
-  public void testIncrementCount() throws Exception {
-    underTest = new AssetDownloadCountStoreImpl(database.getInstanceProvider(), true, 1, 1,
-        assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener);
-    underTest.incrementCount(REPO_NAME, ASSET_NAME);
-    underTest.incrementCount(REPO_NAME, ASSET_NAME + 1);
-    Thread.sleep(100);
-    verify(assetDownloadCountEntityAdapter).incrementCount(any(), eq(REPO_NAME), eq(ASSET_NAME), eq(1L));
-  }
-
-  @Test
-  public void testIncrementCount_validateCaching() throws Exception {
-    underTest = new AssetDownloadCountStoreImpl(database.getInstanceProvider(), true, 10, 1,
-        assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener);
-
-    //increment 10 items, that will fill the queue, but not overflow it
-    for (int i = 0 ; i < 10 ; i++) {
-      underTest.incrementCount(REPO_NAME, ASSET_NAME + i);
-    }
-
-    Thread.sleep(100);
-
-    //should be nothing on disk yet
-    verify(assetDownloadCountEntityAdapter, never()).incrementCount(any(), anyString(), anyString(), anyLong());
-
-    //increment 4 more times
-    for (int i = 0 ; i < 4 ; i++) {
-      underTest.incrementCount(REPO_NAME, ASSET_NAME + (10 + i));
-    }
-
-    Thread.sleep(100);
-
-    //should have stuffed 4 things in db
-    for (int i = 0 ; i < 4 ; i++) {
-      verify(assetDownloadCountEntityAdapter).incrementCount(any(), eq(REPO_NAME), eq(ASSET_NAME + i), eq(1L));
-    }
-  }
-
-  @Test
-  public void testIncrementCount_validateCacheDrops_dbFrozen() throws Exception {
-    underTest = new AssetDownloadCountStoreImpl(database.getInstanceProvider(), true, 1, 1,
-        assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener);
-
-    cacheRemovalListener.onDatabaseFreezeChangeEvent(new DatabaseFreezeChangeEvent(true));
-
-    underTest.incrementCount(REPO_NAME, ASSET_NAME + "a");
-    underTest.incrementCount(REPO_NAME, ASSET_NAME + "b");
-
-    Thread.sleep(100);
-
-    // should be nothing on disk
-    verify(assetDownloadCountEntityAdapter, never()).incrementCount(any(), anyString(), anyString(), anyLong());
-  }
-
-  @Test
   public void testSetMonthlyVulnerableCount() {
     DateTime date = DateTime.now();
     underTest.setMonthlyVulnerableCount(REPO_NAME, date, 50L);
@@ -207,12 +173,31 @@ public class AssetDownloadCountStoreImplTest
     when(assetDownloadCountEntityAdapter.getCounts(any(), eq(REPO_NAME), eq(ASSET_NAME), eq(DateType.DAY))).thenReturn(
         new long[] { 100L, 0L });
 
+    when(cache.get(any())).thenReturn(0L);
+
     long count = underTest.getLastThirtyDays(REPO_NAME, ASSET_NAME);
     assertThat(count, is(100L));
 
     underTest.incrementCount(REPO_NAME, ASSET_NAME);
 
+    when(cache.get(any())).thenReturn(1L);
+
     count = underTest.getLastThirtyDays(REPO_NAME, ASSET_NAME);
     assertThat(count, is(101L));
+  }
+
+  @Test
+  public void testIncrementCount_validateCacheDrops_dbFrozen() throws Exception {
+    underTest = new AssetDownloadCountStoreImpl(database.getInstanceProvider(), true, 1, 1,
+            assetDownloadCountEntityAdapter, dataCleaner, cacheRemovalListener, cacheHelper);
+
+    database.getInstance().setFrozen(true);
+
+    underTest.incrementCount(REPO_NAME, ASSET_NAME + "a");
+    underTest.incrementCount(REPO_NAME, ASSET_NAME + "b");
+
+    Thread.sleep(100);
+
+    verify(assetDownloadCountEntityAdapter, never()).incrementCount(any(), anyString(), anyString(), anyLong());
   }
 }

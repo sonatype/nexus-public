@@ -716,4 +716,29 @@ extends TestSupport
 
     assertThat underTest.browseAssets(mock(Query), mock(Bucket)), is(singletonList(asset))
   }
+
+  @Test
+  void 'browse components with query'() {
+    def component = mock(Component)
+
+    when(componentEntityAdapter.browseByQueryAsync(any(), any(), any(), any(), any())).
+        thenReturn(singletonList(component))
+
+    def underTest = new StorageTxImpl(
+        'test',
+        '127.0.0.1',
+        blobTx,
+        db,
+        'testRepo',
+        WritePolicy.ALLOW,
+        WritePolicySelector.DEFAULT,
+        bucketEntityAdapter,
+        componentEntityAdapter,
+        assetEntityAdapter,
+        false,
+        defaultContentValidator,
+        MimeRulesSource.NOOP, componentFactory)
+
+    assertThat underTest.browseComponents(mock(Query), mock(Bucket)), is(singletonList(component))
+  }
 }

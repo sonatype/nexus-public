@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.repository.assetdownloadcount.internal;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.io.Serializable;
+import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,20 +21,17 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
+import org.sonatype.nexus.repository.assetdownloadcount.CacheEntryKey;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
-
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
- * Google cache removal listener that will stuff the data into the database
+ * Cache removal listener that will stuff the data into the database
+ * Required to be {@link Serializable} because some cache instances use serialization to share configuration objects
  *
  * @since 3.4
  */
@@ -41,38 +39,39 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Singleton
 public class CacheRemovalListener
     extends ComponentSupport
-    implements RemovalListener<CacheEntryKey, AtomicLong>, EventAware, EventAware.Asynchronous
+    implements Serializable, BiConsumer<CacheEntryKey, Long>
 {
-  private final AssetDownloadCountEntityAdapter entityAdapter;
+  private static final long serialVersionUID = 1L;
 
-  private final Provider<DatabaseInstance> databaseInstance;
+  private final transient Provider<AssetDownloadCountEntityAdapter> entityAdapter;
 
-  private volatile boolean frozen;
+  private final transient Provider<DatabaseInstance> databaseInstance;
+
+  private final transient Provider<NodeAccess> nodeAccess;
 
   @Inject
   public CacheRemovalListener(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstance,
-                              final AssetDownloadCountEntityAdapter entityAdapter)
+                              final Provider<AssetDownloadCountEntityAdapter> entityAdapter,
+                              final Provider<NodeAccess> nodeAccess)
   {
     this.entityAdapter = checkNotNull(entityAdapter);
     this.databaseInstance = checkNotNull(databaseInstance);
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
-  public void onRemoval(final RemovalNotification<CacheEntryKey, AtomicLong> removalNotification) {
-    if (!frozen) {
-      inTxRetry(databaseInstance).run(
-          db -> {
-            final CacheEntryKey key = removalNotification.getKey();
-            entityAdapter.incrementCount(db, key.getRepositoryName(), key.getAssetName(), removalNotification
-                .getValue().get());
-            log.debug("Incremented count(DB) {} {} by {}", key.getRepositoryName(), key.getAssetName(),
-                removalNotification.getValue());
-          });
+  public void accept(final CacheEntryKey key, final Long value) {
+    if (!nodeAccess.get().isClustered() || nodeAccess.get().isOldestNode()) {
+      if (!databaseInstance.get().isFrozen()) {
+        inTxRetry(databaseInstance).run(
+            db -> {
+              entityAdapter.get().incrementCount(db, key.getRepositoryName(), key.getAssetName(), value);
+              log.debug("Incremented count(DB) {} {} by {}", key.getRepositoryName(), key.getAssetName(), value);
+            });
+      }
+      else {
+        log.warn("Dropping download count increment of {} for {}", value, key);
+      }
     }
-  }
-
-  @Subscribe
-  public void onDatabaseFreezeChangeEvent(final DatabaseFreezeChangeEvent databaseFreezeChangeEvent) {
-    frozen = databaseFreezeChangeEvent.isFrozen();
   }
 }

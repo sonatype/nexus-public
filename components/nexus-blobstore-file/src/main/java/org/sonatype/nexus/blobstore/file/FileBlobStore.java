@@ -670,7 +670,7 @@ public class FileBlobStore
   public boolean exists(final BlobId blobId) {
     checkNotNull(blobId);
     if (!fileOperations.exists(attributePath(blobId))) {
-      log.debug("Blob {} was not found during existence check");
+      log.debug("Blob {} was not found during existence check", blobId);
       return false;
     }
     return true;

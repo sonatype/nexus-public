@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.pypi.internal
 
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+
+import org.slf4j.Logger
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -166,5 +170,42 @@ may be appropriate.
           'entryh': ['यादृच्छिक वर्ण'],
           'entryi': ['случайные символы']
       ]
+  }
+
+  def 'Log errors only when the file can not be read'() {
+    given: 'A mocked logger is used'
+      def logger = Mock(Logger)
+      Field field = PyPiInfoUtils.getDeclaredField("log")
+      field.setAccessible(true)
+      Field modifiersField = Field.class.getDeclaredField("modifiers")
+      modifiersField.setAccessible(true)
+      modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL)
+      field.set(null, logger)
+
+    when: 'a file that is a compressed archive is provided'
+      getClass().getResourceAsStream('sample-1.2.0.tar.bz2').withCloseable { input ->
+        PyPiInfoUtils.extractMetadata(input)
+      }
+
+    then: 'no errors are logged'
+      0 * _
+
+    when: 'a valid archive is provided, but a compression type can not be determined'
+      getClass().getResourceAsStream('sample-1.2.0.zip').withCloseable { input ->
+        PyPiInfoUtils.extractMetadata(input)
+      }
+
+    then: 'no errors are logged'
+      0 * _
+
+    when: 'a file that is not an archive is provided'
+      getClass().getResourceAsStream('sample-index.html').withCloseable { input ->
+        PyPiInfoUtils.extractMetadata(input)
+      }
+
+    then: 'log all errors'
+      1 * logger.error('Unable to decompress PyPI archive', _)
+      1 * logger.error('Unable to extract PyPI archive', _)
+      0 * _
   }
 }

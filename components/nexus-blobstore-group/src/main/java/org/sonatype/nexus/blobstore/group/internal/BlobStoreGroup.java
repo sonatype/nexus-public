@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -49,6 +50,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupConfigurationHelper.memberNames;
+import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupConfigurationHelper.fillPolicyName;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -70,7 +72,13 @@ public class BlobStoreGroup
 
   public static final String MEMBERS_KEY = "members";
 
+  public static final String FILL_POLICY_KEY = "fillPolicy";
+
+  public static final String FALLBACK_FILL_POLICY_TYPE = WriteToFirstMemberFillPolicy.TYPE;
+
   private final BlobStoreManager blobStoreManager;
+
+  private final Map<String, Provider<FillPolicy>> fillPolicyProviders;
 
   private Supplier<List<BlobStore>> members;
 
@@ -83,15 +91,24 @@ public class BlobStoreGroup
 
   @Inject
   public BlobStoreGroup(final BlobStoreManager blobStoreManager,
-                        final FillPolicy fillPolicy) {
+                        final Map<String, Provider<FillPolicy>> fillPolicyProviders) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.fillPolicy = checkNotNull(fillPolicy);
+    this.fillPolicyProviders = checkNotNull(fillPolicyProviders);
   }
 
   @Override
   public void init(final BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
     this.members = Suppliers.memoize(new MembersSupplier());
+    String fillPolicyName = fillPolicyName(configuration);
+    if (fillPolicyProviders.containsKey(fillPolicyName)) {
+      this.fillPolicy = fillPolicyProviders.get(fillPolicyName).get();
+    }
+    else {
+      log.warn("Unable to find fill policy {} for Blob Store Group {}, using fill policy {}",
+          fillPolicyName, configuration.getName(), FALLBACK_FILL_POLICY_TYPE);
+      this.fillPolicy = fillPolicyProviders.get(FALLBACK_FILL_POLICY_TYPE).get();
+    }
   }
 
   @Override
@@ -307,11 +324,14 @@ public class BlobStoreGroup
         locatedBlobs.put(blobId, blobStore);
       }
     }
+    else {
+      log.trace("{} location was cached as {}", blobId, blobStore);
+    }
     return Optional.ofNullable(blobStore);
   }
 
   private BlobStore search(BlobId blobId) {
-    log.trace("Searching for {}", blobId);
+    log.trace("Searching for {} in {}", blobId, members);
     return members.get().stream()
       .filter((BlobStore member) -> member.exists(blobId))
       .findAny()

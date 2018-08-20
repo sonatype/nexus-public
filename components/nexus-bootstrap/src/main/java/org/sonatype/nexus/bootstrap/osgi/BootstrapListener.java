@@ -16,14 +16,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.Map;
+import java.util.Properties;
 
-import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.sonatype.nexus.bootstrap.ConfigurationHolder;
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
 import org.apache.karaf.features.Feature;
@@ -55,6 +53,18 @@ public class BootstrapListener
 
   private static final Logger log = LoggerFactory.getLogger(BootstrapListener.class);
 
+  private static final String NEXUS_EDITION = "nexus-edition";
+
+  private static final String NEXUS_FULL_EDITION = "nexus-full-edition";
+
+  private static final String NEXUS_FEATURES = "nexus-features";
+
+  private static final String NEXUS_PRO_FEATURE = "nexus-pro-feature";
+
+  private static final String NEXUS_OSS_EDITION = "nexus-oss-edition";
+
+  private static final String NEXUS_OSS_FEATURE = "nexus-oss-feature";
+
   private ListenerTracker listenerTracker;
 
   private FilterTracker filterTracker;
@@ -66,7 +76,7 @@ public class BootstrapListener
     ServletContext servletContext = event.getServletContext();
     
     try {
-      Map<String, String> properties = ConfigurationHolder.get();
+      Properties properties = System.getProperties();
       if (properties == null) {
         throw new IllegalStateException("Missing bootstrap configuration properties");
       }
@@ -75,15 +85,17 @@ public class BootstrapListener
       requireProperty(properties, "karaf.base");
       requireProperty(properties, "karaf.data");
 
-      File workDir = new File(properties.get("karaf.data")).getCanonicalFile();
+      File workDir = new File(properties.getProperty("karaf.data")).getCanonicalFile();
       Path workDirPath = workDir.toPath();
       DirectoryHelper.mkdir(workDirPath);
 
-      if (shouldSwitchToOss(workDirPath)) {
-        adjustEditionProperties(properties);  
-      }
-      else {
-        createProEditionMarker(workDirPath);
+      if (hasProFeature(properties)) {
+        if (shouldSwitchToOss(workDirPath)) {
+          adjustEditionProperties(properties);
+        }
+        else {
+          createProEditionMarker(workDirPath);
+        }
       }
 
       // pass bootstrap properties to embedded servlet listener
@@ -101,8 +113,8 @@ public class BootstrapListener
       }
 
       // bootstrap our chosen Nexus edition
-      requireProperty(properties, "nexus-edition");
-      installNexusEdition(bundleContext, properties.get("nexus-edition"));
+      requireProperty(properties, NEXUS_EDITION);
+      installNexusEdition(bundleContext, properties);
 
       // watch out for the real Nexus listener
       listenerTracker = new ListenerTracker(bundleContext, "nexus", servletContext);
@@ -123,16 +135,20 @@ public class BootstrapListener
     log.info("Initialized");
   }
 
+  private boolean hasProFeature(final Properties properties) {
+    return properties.getProperty(NEXUS_FEATURES, "").contains(NEXUS_PRO_FEATURE);
+  }
+
   /**
    * Ensure that the oss edition is loaded, regardless of what the configuration specifies.
    * @param properties
    */
-  private void adjustEditionProperties(final Map<String, String> properties) {
+  private void adjustEditionProperties(final Properties properties) {
     log.info("Loading OSS Edition");
     //override to load nexus-oss-edition
-    properties.put("nexus-edition", "nexus-oss-edition");
+    properties.put(NEXUS_EDITION, NEXUS_OSS_EDITION);
     properties
-        .put("nexus-features", properties.get("nexus-features").replace("nexus-pro-feature", "nexus-oss-feature"));
+        .put(NEXUS_FEATURES, properties.getProperty(NEXUS_FEATURES).replace(NEXUS_PRO_FEATURE, NEXUS_OSS_FEATURE));
   }
 
   /**
@@ -195,15 +211,18 @@ public class BootstrapListener
     return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
   }
 
-  private static void installNexusEdition(final BundleContext ctx, @Nullable final String editionName)
+  private static void installNexusEdition(final BundleContext ctx, final Properties properties)
       throws Exception
   {
+    String editionName = properties.getProperty(NEXUS_EDITION);
     if (editionName != null && editionName.length() > 0) {
       final ServiceTracker<?, FeaturesService> tracker = new ServiceTracker<>(ctx, FeaturesService.class, null);
       tracker.open();
       try {
         FeaturesService featuresService = tracker.waitForService(1000);
         Feature editionFeature = featuresService.getFeature(editionName);
+
+        properties.put(NEXUS_FULL_EDITION, editionFeature.toString());
 
         log.info("Installing: {}", editionFeature);
 
@@ -222,7 +241,7 @@ public class BootstrapListener
     }
   }
 
-  private static void requireProperty(final Map<String, String> properties, final String name) {
+  private static void requireProperty(final Properties properties, final String name) {
     if (!properties.containsKey(name)) {
       throw new IllegalStateException("Missing required property: " + name);
     }
