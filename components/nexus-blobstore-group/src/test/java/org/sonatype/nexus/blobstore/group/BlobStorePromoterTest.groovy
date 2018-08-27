@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.group
 
+import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
@@ -24,25 +25,25 @@ import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY
 
 /**
- * Tests {@link FileToGroupBlobStoreConverter}
+ * Tests {@link BlobStorePromoter}
  */
-class FileToGroupBlobStoreConverterTest
+class BlobStorePromoterTest
     extends Specification
 {
 
   BlobStoreManager blobStoreManager = Mock()
 
-  def 'happy path'() {
+  def 'it will promote a #fromType to a group'() {
     setup:
-      FileToGroupBlobStoreConverter converter = new FileToGroupBlobStoreConverter(blobStoreManager)
-      FileBlobStore from = Mock()
+      BlobStorePromoter promoter = new BlobStorePromoter(blobStoreManager)
+      BlobStore from = Mock(fromType)
       BlobStoreGroup to = Mock()
       BlobStoreConfiguration fromConfig = new BlobStoreConfiguration()
       fromConfig.name = 'test'
-      fromConfig.type = FileBlobStore.TYPE
+      fromConfig.type = blobStoreType
 
-    when: 'trying to convert'
-      BlobStoreGroup result = converter.convert(from)
+    when: 'trying to promote'
+      BlobStoreGroup result = promoter.promote(from)
 
     then: 'blobStoreManager is called correctly'
       1 * from.getBlobStoreConfiguration() >> fromConfig
@@ -50,25 +51,29 @@ class FileToGroupBlobStoreConverterTest
       1 * blobStoreManager.create(fromConfig)
       1 * blobStoreManager.create({ it.name == 'test' &&
           it.type == BlobStoreGroup.TYPE &&
-          it.attributes(CONFIG_KEY).require(MEMBERS_KEY).toString() == 'test-promoted'}) >> to
+          it.attributes(CONFIG_KEY).require(MEMBERS_KEY) == ['test-promoted']}) >> to
 
     and: 'config values are updated appropriately'
       assert fromConfig.name == 'test-promoted'
 
     and: 'result is returned'
       assert result == to
+
+    where:
+      fromType       | blobStoreType
+      FileBlobStore  | FileBlobStore.TYPE
   }
 
   def 'delete of original file blob store fails'() {
     setup:
-      FileToGroupBlobStoreConverter converter = new FileToGroupBlobStoreConverter(blobStoreManager)
+      BlobStorePromoter promoter = new BlobStorePromoter(blobStoreManager)
       FileBlobStore from = Mock()
       BlobStoreConfiguration fromConfig = new BlobStoreConfiguration()
       fromConfig.name = 'test'
       fromConfig.type = FileBlobStore.TYPE
 
-    when: 'trying to convert'
-      converter.convert(from)
+    when: 'trying to promoter'
+      promoter.promote(from)
 
     then: 'blobStoreManager fails to delete original'
       1 * from.getBlobStoreConfiguration() >> fromConfig
@@ -78,19 +83,19 @@ class FileToGroupBlobStoreConverterTest
 
     and: 'wrapped exception is thrown'
       def e = thrown(BlobStoreException)
-      e.message == 'during promotion to group, failed to stop existing file blob store: test, Cause: testing failure'
+      e.message == 'during promotion to group, failed to stop existing blob store: test, Cause: testing failure'
   }
 
   def 'create of original file blob store with new name fails'() {
     setup:
-      FileToGroupBlobStoreConverter converter = new FileToGroupBlobStoreConverter(blobStoreManager)
+      BlobStorePromoter promoter = new BlobStorePromoter(blobStoreManager)
       FileBlobStore from = Mock()
       BlobStoreConfiguration fromConfig = new BlobStoreConfiguration()
       fromConfig.name = 'test'
       fromConfig.type = FileBlobStore.TYPE
 
-    when: 'trying to convert'
-      converter.convert(from)
+    when: 'trying to promote'
+      promoter.promote(from)
 
     then: 'blobStoreManager fails to create file blob store with new name, based on original configuration'
       1 * from.getBlobStoreConfiguration() >> fromConfig
@@ -102,19 +107,19 @@ class FileToGroupBlobStoreConverterTest
 
     and: 'wrapped exception is thrown'
       def e = thrown(BlobStoreException)
-      e.message == 'during promotion to group, failed to stop existing file blob store: test, Cause: testing failure'
+      e.message == 'during promotion to group, failed to stop existing blob store: test, Cause: testing failure'
   }
 
   def 'create of promoted group blob store fails'() {
     setup:
-      FileToGroupBlobStoreConverter converter = new FileToGroupBlobStoreConverter(blobStoreManager)
+      BlobStorePromoter promoter = new BlobStorePromoter(blobStoreManager)
       FileBlobStore from = Mock()
       BlobStoreConfiguration fromConfig = new BlobStoreConfiguration()
       fromConfig.name = 'test'
       fromConfig.type = FileBlobStore.TYPE
 
-    when: 'trying to convert'
-      converter.convert(from)
+    when: 'trying to promote'
+      promoter.promote(from)
 
     then: 'blobStoreManager fails to create file blob store with new name, based on original configuration'
       1 * from.getBlobStoreConfiguration() >> fromConfig

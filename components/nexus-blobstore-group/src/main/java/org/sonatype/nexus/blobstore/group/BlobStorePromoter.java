@@ -12,14 +12,16 @@
  */
 package org.sonatype.nexus.blobstore.group;
 
+import java.util.Collections;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,7 +32,7 @@ import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FILL_PO
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
 
 /**
- * Converts an existing file blobstore to a group blobstore.
+ * Promotes an existing blobstore to a group blobstore.
  *
  * The way it works is that the existing blobstore is renamed via database update. A new group is created that has the
  * existing blobstore's original name and then contains the original blobstore.
@@ -38,24 +40,24 @@ import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS
  * @since 3.next
  */
 @Singleton
-public class FileToGroupBlobStoreConverter
+public class BlobStorePromoter
     extends ComponentSupport
 {
   private final BlobStoreManager blobStoreManager;
 
   @Inject
-  public FileToGroupBlobStoreConverter(final BlobStoreManager blobStoreManager) {
+  public BlobStorePromoter(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 
   /**
-   * Takes a {@link FileBlobStore} and creates a {@link BlobStoreGroup} that contains the original blobstore
+   * Takes a {@link BlobStore} and creates a {@link BlobStoreGroup} that contains the original blobstore
    *
-   * @param from a {@link FileBlobStore} to be "promoted"
+   * @param from a {@link BlobStore} to be "promoted"
    * @return {@link BlobStoreGroup} that contains the original blobstore
    */
   @SuppressWarnings("squid:MethodCyclomaticComplexity") // trying to keep the rollback logic isolated in this method
-  public BlobStoreGroup convert(final FileBlobStore from) {
+  public BlobStoreGroup promote(final BlobStore from) {
     BlobStoreConfiguration fromConf = from.getBlobStoreConfiguration();
     String fromOldName = fromConf.getName();
     String fromNewName = format("%s-%s", fromOldName, "promoted");
@@ -63,7 +65,7 @@ public class FileToGroupBlobStoreConverter
     // create the group config that includes the fbs
     BlobStoreConfiguration groupConf = fromConf.copy(fromOldName);
     groupConf.setType(BlobStoreGroup.TYPE);
-    groupConf.attributes(CONFIG_KEY).set(MEMBERS_KEY, fromNewName);
+    groupConf.attributes(CONFIG_KEY).set(MEMBERS_KEY, Collections.singletonList(fromNewName));
     groupConf.attributes(CONFIG_KEY).set(FILL_POLICY_KEY, FALLBACK_FILL_POLICY_TYPE);
 
     // rename the fbs
@@ -74,7 +76,7 @@ public class FileToGroupBlobStoreConverter
     }
     catch (Exception e) {
       throw new BlobStoreException(
-          format("during promotion to group, failed to stop existing file blob store: %s", fromOldName), e, null
+          format("during promotion to group, failed to stop existing blob store: %s", fromOldName), e, null
       );
     }
 
@@ -88,11 +90,11 @@ public class FileToGroupBlobStoreConverter
         blobStoreManager.create(fromConf);
       }
       catch (Exception inner) {
-        log.error("during promotion to group, existing file blob: {} store was removed, but failed to be created " +
+        log.error("during promotion to group, existing blob: {} store was removed, but failed to be created " +
             "with new configuration and failed to be resurrected", fromOldName, inner);
       }
       throw new BlobStoreException(
-          format("during promotion to group, failed to stop existing file blob store: %s", fromOldName), e, null
+          format("during promotion to group, failed to stop existing blob store: %s", fromOldName), e, null
       );
     }
 
@@ -104,15 +106,15 @@ public class FileToGroupBlobStoreConverter
         blobStoreManager.delete(fromNewName);
       }
       catch (Exception inner) {
-        log.error("during promotion to group, existing file blob: {} store was removed, but the creation of the new" +
-            " group failed, recreating the original file blob store", fromOldName, inner);
+        log.error("during promotion to group, existing blob: {} store was removed, but the creation of the new" +
+            " group failed, recreating the original blob store", fromOldName, inner);
       }
       fromConf.setName(fromOldName);
       try {
         blobStoreManager.create(fromConf);
       }
       catch (Exception inner) {
-        log.error("during promotion to group, existing file blob: {} store was removed, but failed to be created " +
+        log.error("during promotion to group, existing blob: {} store was removed, but failed to be created " +
             "with new configuration and failed to be resurrected", fromOldName, inner);
       }
       throw new BlobStoreException("failed to create group configuration", e, null);

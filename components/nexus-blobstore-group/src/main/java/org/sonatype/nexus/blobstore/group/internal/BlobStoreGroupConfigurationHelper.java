@@ -16,8 +16,6 @@ import java.util.List;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FILL_POLICY_KEY;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
@@ -34,13 +32,7 @@ public class BlobStoreGroupConfigurationHelper {
   }
 
   public static List<String> memberNames(final BlobStoreConfiguration configuration) {
-    String configuredMembers = configuration.attributes(CONFIG_KEY).require(MEMBERS_KEY).toString();
-    if (!configuredMembers.isEmpty()) {
-      return asList(configuredMembers.split(","));
-    }
-    else {
-      return emptyList();
-    }
+    return configuration.attributes(CONFIG_KEY).require(MEMBERS_KEY, List.class);
   }
 
   public static String fillPolicyName(final BlobStoreConfiguration configuration) {

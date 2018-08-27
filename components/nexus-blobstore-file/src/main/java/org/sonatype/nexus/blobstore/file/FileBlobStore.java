@@ -633,6 +633,11 @@ public class FileBlobStore
   }
 
   @Override
+  public boolean isPromotable() {
+    return true;
+  }
+
+  @Override
   public BlobStoreConfiguration getBlobStoreConfiguration() {
     return this.blobStoreConfiguration;
   }

@@ -62,7 +62,7 @@ public class AntiCsrfFilter
   private final boolean enabled;
 
   @Inject
-  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean enabled) {
+  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled) {
     this.enabled = enabled;
   }
 
@@ -75,7 +75,7 @@ public class AntiCsrfFilter
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    if (!isEnabled()) {
+    if (!isEnabled() || !isCsrfCheckWarranted(httpRequest)) {
       return true;
     }
 
@@ -83,7 +83,9 @@ public class AntiCsrfFilter
 
     return isSafeHttpMethod(httpRequest)
         || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
-        || (isSessionAndRefererAbsent(httpRequest))
+                                                // and is validated in the directnjine code so we just needed
+                                                // to create the cookie above
+        || isSessionAndRefererAbsent(httpRequest)
         || isAntiCsrfTokenValid(httpRequest);
   }
 
@@ -98,6 +100,12 @@ public class AntiCsrfFilter
     httpResponse.getWriter().print(ERROR_MESSAGE_TOKEN_MISMATCH);
 
     return false;
+  }
+
+  private boolean isCsrfCheckWarranted(HttpServletRequest request) {
+    String userAgent = request.getHeader("User-Agent");
+
+    return userAgent != null && userAgent.startsWith("Mozilla/");
   }
 
   private boolean isSafeHttpMethod(final HttpServletRequest request) {

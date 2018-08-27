@@ -220,4 +220,12 @@ public interface BlobStore
    * @since 3.12
    */
   boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
+
+  /**
+   * Identifies if the instance is eligible to be promoted
+   *
+   * @return {@code true} if the blob is allowed to be promoted to a group
+   * @since 3.next
+   */
+  boolean isPromotable();
 }

@@ -45,4 +45,6 @@ class BlobStoreXO
   long repositoryUseCount
 
   boolean unlimited
+
+  boolean promotable
 }

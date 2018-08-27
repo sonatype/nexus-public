@@ -256,6 +256,11 @@ public class BlobStoreGroup
   }
 
   @Override
+  public boolean isPromotable() {
+    return false;
+  }
+
+  @Override
   public boolean exists(final BlobId blobId) {
     return members.get().stream()
         .anyMatch((BlobStore member) -> member.exists(blobId));

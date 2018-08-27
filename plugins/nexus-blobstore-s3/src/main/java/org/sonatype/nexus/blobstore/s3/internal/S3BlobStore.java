@@ -692,6 +692,11 @@ public class S3BlobStore
     return false;
   }
 
+  @Override
+  public boolean isPromotable() {
+    return true;
+  }
+
   /**
    * This is a simple existence check resulting from NEXUS-16729.  This allows clients
    * to perform a simple check primarily intended for use in directpath scenarios.

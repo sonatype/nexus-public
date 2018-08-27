@@ -17,13 +17,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.orient.entity.EntityAdapter.Resolution;
 
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -35,9 +37,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import static com.orientechnologies.orient.core.db.record.ORecordOperation.UPDATED;
 import static com.orientechnologies.orient.core.record.impl.ODocument.RECORD_TYPE;
 import static java.lang.Math.max;
+import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
-import static org.sonatype.nexus.orient.entity.EntityAdapter.Resolution.ALLOW;
-import static org.sonatype.nexus.orient.entity.EntityAdapter.Resolution.DENY;
+import static org.sonatype.nexus.orient.entity.ConflictState.DENY;
+import static org.sonatype.nexus.orient.entity.ConflictState.IGNORE;
 
 /**
  * {@link ORecordConflictStrategy} that delegates conflict resolution to interested {@link EntityAdapter}s.
@@ -56,9 +59,18 @@ public class ConflictHook
 {
   public static final String NAME = "ConflictHook";
 
+  private static final Pattern CLUSTER_SHARD_PATTERN = Pattern.compile("(.+?)_[0-9]+");
+
   private final Map<String, EntityAdapter<?>> resolvingAdapters = new ConcurrentHashMap<>();
 
   private final Map<String, String> typeNamesByClusterKey = new ConcurrentHashMap<>();
+
+  private final boolean enabled;
+
+  @Inject
+  public ConflictHook(@Named("${nexus.orient.conflictHook.enabled:-true}") final boolean enabled) {
+    this.enabled = enabled;
+  }
 
   @Override
   public String getName() {
@@ -90,7 +102,7 @@ public class ConflictHook
                          final byte recordType,
                          final ORecordId rid,
                          final int recordVersion,
-                         final byte[] content,
+                         final byte[] changeContent,
                          final AtomicInteger dbVersion)
   {
     // most records won't have an entity adapter interested in resolving their conflicts
@@ -100,7 +112,7 @@ public class ConflictHook
       // attempt to load the current stored record content
       byte[] storedContent = storage.readRecord(rid, null, false, false, null).getResult().getBuffer();
 
-      Resolution resolution;
+      ConflictState state;
       ODocument changeRecord = null;
 
       if (recordType == RECORD_TYPE) {
@@ -108,24 +120,30 @@ public class ConflictHook
         ODocument storedRecord = new ODocument(rid).fromStream(storedContent);
 
         // retrieve the change we originally wanted to save
-        changeRecord = getChangeRecord(rid, content);
+        changeRecord = getChangeRecord(rid, changeContent);
 
         // delegate conflict resolution to owning entity adapter
-        resolution = adapter.get().resolve(storedRecord, changeRecord);
+        state = adapter.get().resolve(storedRecord, changeRecord);
 
-        log.trace("{} update of {} with {}", resolution, storedRecord, changeRecord);
+        log.trace("{} update of {} with {}", state, storedRecord, changeRecord);
       }
       else {
         // binary content - no merging, we can only do a simple comparison
-        resolution = Arrays.equals(storedContent, content) ? ALLOW : DENY;
+        state = Arrays.equals(storedContent, changeContent) ? IGNORE : DENY;
+
+        log.trace("{} binary update of {}", state, rid);
       }
 
-      switch (resolution) {
+      switch (state) {
+        case IGNORE:
+          // for now treat "no-op" changes like ALLOW, but without any version bump
+          return null;
         case ALLOW:
-          dbVersion.set(max(dbVersion.get(), recordVersion));
-          return null; // this tells Orient to store the original change
+          // go ahead with original change, but bump version if record was behind DB
+          dbVersion.set(max(dbVersion.get() + 1, recordVersion));
+          return null;
         case MERGE:
-          // when merging we need to give the DB version an extra bump
+          // return merged content and bump version whether record was behind or not
           dbVersion.set(max(dbVersion.get(), recordVersion) + 1);
           return ofNullable(changeRecord).map(ODocument::toStream).orElse(null);
         default:
@@ -152,9 +170,21 @@ public class ConflictHook
    * Returns an optional {@link EntityAdapter} that 'owns' the clusterId and is interested in resolving its conflicts.
    */
   private Optional<EntityAdapter<?>> findResolvingAdapter(final OStorage storage, final int clusterId) {
+    if (!enabled) {
+      return empty();
+    }
+
     String clusterKey = storage.getName() + '#' + clusterId; // clusterIds are not unique across DBs
     String typeName = typeNamesByClusterKey.computeIfAbsent(clusterKey,
         k -> storage.getPhysicalClusterNameById(clusterId));
+
+    if (typeName != null) {
+      // trim the shard index from any sharded cluster names
+      Matcher clusterShardMatcher = CLUSTER_SHARD_PATTERN.matcher(typeName);
+      if (clusterShardMatcher.matches()) {
+        typeName = clusterShardMatcher.group(1);
+      }
+    }
 
     return ofNullable(typeName).map(resolvingAdapters::get);
   }

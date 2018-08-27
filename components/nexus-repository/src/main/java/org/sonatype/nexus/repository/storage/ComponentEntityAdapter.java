@@ -271,4 +271,12 @@ public class ComponentEntityAdapter
     ORID bucketId = document.field(P_BUCKET, ORID.class);
     return bucketId + "@" + document.field(P_NAME, OType.STRING);
   }
+
+  /**
+   * Enables deconfliction of component metadata.
+   */
+  @Override
+  public boolean resolveConflicts() {
+    return true;
+  }
 }

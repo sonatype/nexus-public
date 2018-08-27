@@ -24,6 +24,8 @@ import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.io.Cooperation;
+import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
@@ -109,28 +111,49 @@ public abstract class ProxyFacetSupport
 
   protected CacheControllerHolder cacheControllerHolder;
 
-  private Cooperation<Content> contentCooperation;
+  @Nullable
+  private CooperationFactory.Builder cooperationBuilder;
+
+  @Nullable
+  private Cooperation proxyCooperation;
 
   /**
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
    *
    * @param enabled should threads attempt to cooperate when downloading resources
-   * @param passiveTimeout used when passively cooperating on an initial download
-   * @param activeTimeout used when actively cooperating on a download dependency
-   * @param threadsPerKey maximum threads that can cooperate on the same download
+   * @param majorTimeout when waiting for the main I/O request
+   * @param minorTimeout when waiting for any I/O dependencies
+   * @param threadsPerKey limits the threads waiting under each key
    *
    * @since 3.4
    */
   @Inject
   protected void configureCooperation(
+      final CooperationFactory cooperationFactory,
       @Named("${nexus.proxy.cooperation.enabled:-true}") final boolean cooperationEnabled,
-      @Named("${nexus.proxy.cooperation.passiveTimeout:-0s}") final Time passiveTimeout,
-      @Named("${nexus.proxy.cooperation.activeTimeout:-30s}") final Time activeTimeout,
+      @Named("${nexus.proxy.cooperation.majorTimeout:-0s}") final Time majorTimeout,
+      @Named("${nexus.proxy.cooperation.minorTimeout:-30s}") final Time minorTimeout,
       @Named("${nexus.proxy.cooperation.threadsPerKey:-100}") final int threadsPerKey)
   {
     if (cooperationEnabled) {
-      this.contentCooperation = new Cooperation<>(passiveTimeout, activeTimeout, threadsPerKey);
+      this.cooperationBuilder = cooperationFactory.configure()
+          .majorTimeout(majorTimeout)
+          .minorTimeout(minorTimeout)
+          .threadsPerKey(threadsPerKey);
     }
+  }
+
+  @VisibleForTesting
+  void buildCooperation() {
+    if (cooperationBuilder != null) {
+      this.proxyCooperation = cooperationBuilder.build(getRepository().getName() + ":proxy");
+    }
+  }
+
+  @Override
+  protected void doInit(final Configuration configuration) throws Exception {
+    super.doInit(configuration);
+    buildCooperation();
   }
 
   @Override
@@ -196,12 +219,13 @@ public abstract class ProxyFacetSupport
     if (!isStale(context, content)) {
       return content;
     }
-    if (contentCooperation == null) {
+    if (proxyCooperation == null) {
       return doGet(context, content);
     }
-    return contentCooperation.cooperate(getRequestKey(context), (checkCache) -> {
+    return proxyCooperation.cooperate(getRequestKey(context), failover -> {
       Content latestContent = content;
-      if (checkCache) {
+      if (failover) {
+        // re-check cache when failing over to new thread
         latestContent = maybeGetCachedContent(context);
         if (!isStale(context, latestContent)) {
           return latestContent;
@@ -221,7 +245,7 @@ public abstract class ProxyFacetSupport
       remote = fetch(context, content);
       if (remote != null) {
         content = store(context, remote);
-        if (contentCooperation != null && remote.equals(content)) {
+        if (proxyCooperation != null && remote.equals(content)) {
           // remote wasn't stored; make reusable copy for cooperation
           content = new TempContent(remote);
         }
@@ -520,6 +544,6 @@ public abstract class ProxyFacetSupport
    */
   @VisibleForTesting
   Map<String, Integer> getThreadCooperationPerRequest() {
-    return contentCooperation.getThreadCountPerKey();
+    return proxyCooperation.getThreadCountPerKey();
   }
 }

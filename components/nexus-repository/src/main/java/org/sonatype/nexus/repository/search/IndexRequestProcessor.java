@@ -57,6 +57,8 @@ public class IndexRequestProcessor
 
   private final boolean bulkProcessing;
 
+  private boolean processEvents = true;
+
   @Inject
   public IndexRequestProcessor(final RepositoryManager repositoryManager,
                                final EventManager eventManager,
@@ -87,12 +89,23 @@ public class IndexRequestProcessor
   }
 
   public void process(final IndexBatchRequest request) {
+    if (!processEvents) {
+      if (log.isTraceEnabled()) {
+        log.trace("Skip processing of EntityBatchEvent, IndexRequestProcessor is disabled");
+      }
+      return;
+    }
+
     Set<EntityId> pendingDeletes = request.apply(this::maybeUpdateSearchIndex);
     if (!pendingDeletes.isEmpty()) {
       // IndexSyncService can request deletes that have no associated repository,
       // in which case we need to attempt a special bulk delete as the last step
       searchService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
     }
+  }
+
+  public void setProcessEvents(final boolean processEvents) {
+    this.processEvents = processEvents;
   }
 
   private void maybeUpdateSearchIndex(final String repositoryName, final IndexRequest indexRequest) {

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpStatus;

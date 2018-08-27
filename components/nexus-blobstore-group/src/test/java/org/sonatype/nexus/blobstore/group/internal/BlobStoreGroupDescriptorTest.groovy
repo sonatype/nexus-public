@@ -52,16 +52,16 @@ class BlobStoreGroupDescriptorTest
       noExceptionThrown()
 
     where:
-      members           || _
-      'single'          || _
-      'multiple,unique' || _
+      members                || _
+      ['single']             || _
+      ['multiple', 'unique'] || _
   }
 
   @Unroll
   def 'Validate invalid members #members'() {
     given: 'A config'
       def config = new BlobStoreConfiguration()
-      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: 'self']])
+      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self']]])
 
     when: 'the config is validated'
       config.name = 'self'
@@ -73,10 +73,10 @@ class BlobStoreGroupDescriptorTest
       exception.message == expectedMessage
 
     where:
-      members           || expectedMessage
-      ''                || '''Blob Store 'self' cannot be empty'''
-      'self'            || '''Blob Store 'self' cannot contain itself'''
-      'nested'          || '''Blob Store 'self' cannot contain itself'''
+      members    || expectedMessage
+      []         || '''Blob Store 'self' cannot be empty'''
+      ['self']   || '''Blob Store 'self' cannot contain itself'''
+      ['nested'] || '''Blob Store 'self' cannot contain itself'''
   }
 
   private BlobStore mockBlobStore(final String name, final String type, attributes = [:]) {

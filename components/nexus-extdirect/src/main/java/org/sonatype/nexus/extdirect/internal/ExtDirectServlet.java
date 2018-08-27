@@ -118,7 +118,7 @@ public class ExtDirectServlet
                           final BeanLocator beanLocator,
                           final Provider<EventRecorder> recorderProvider,
                           final Provider<EventDataFactory> eventDataFactoryProvider,
-                          @Named("${nexus.security.anticsrftoken.enabled:-false}") final boolean antiCsrfTokenEnabled,
+                          @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled,
                           @Named("${nexus.direct.upload.maxSize:--1}") final long uploadMaxSize)
   {
     super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME, uploadMaxSize);

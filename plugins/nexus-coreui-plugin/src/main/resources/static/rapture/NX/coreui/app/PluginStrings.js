@@ -67,6 +67,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_Asset_Tree_Upload_Component: 'Upload component',
 
     ComponentDetails_Delete_Button: 'Delete component',
+    ComponentDetails_Delete_Button_Snapshot: 'Delete snapshot',
     ComponentDetails_Analyze_Button: 'Analyze application',
     ComponentDetails_Delete_Body: 'This will delete all asset(s) associated with the component: {0}',
     ComponentDetails_Delete_Title: 'Confirm deletion?',

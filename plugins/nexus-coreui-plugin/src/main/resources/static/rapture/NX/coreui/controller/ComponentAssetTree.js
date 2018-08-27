@@ -26,6 +26,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     'NX.I18n',
     'NX.State'
   ],
+  mixins: {
+    componentUtils: 'NX.coreui.mixin.ComponentUtils'
+  },
   masters: [
     'nx-coreui-componentassettreefeature nx-coreui-browse-repository-list'
   ],
@@ -126,7 +129,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           click: me.deleteComponent
         },
         'nx-coreui-component-componentinfo button[action=analyzeApplication]': {
-          click: me.openAnalyzeApplicationWindow
+          click: me.mixins.componentUtils.openAnalyzeApplicationWindow
         },
         'nx-coreui-component-componentassetinfo button[action=deleteAsset]': {
           click: me.deleteAsset
@@ -627,14 +630,13 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var me = this,
         treePanel = me.getComponentAssetTreePanel(),
         componentInfo = me.getComponentInfo(),
-        componentModel, componentId, repositoryName;
+        componentModel, componentId;
 
     if (componentInfo) {
       componentModel = componentInfo.componentModel;
       componentId = componentModel.get('name') + '/' + componentModel.get('version');
-      repositoryName = componentModel.get('repositoryName');
       NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(NX.I18n.format('ComponentDetails_Delete_Body', componentId)), function() {
-        NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
+        NX.direct.coreui_Component.deleteComponent(JSON.stringify(componentModel.getData()), function(response) {
           if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
             me.removeNodeFromTree(selectedRecord);
@@ -676,64 +678,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
-  /**
-   * Open the analyze application form window
-   *
-   * @private
-   */
-  openAnalyzeApplicationWindow: function() {
-    var me = this,
-        componentInfo = me.getComponentInfo(),
-        componentId = componentInfo.componentModel.getId(),
-        repositoryName = componentInfo.componentModel.get('repositoryName');
-
-    function doOpenAnalyzeWindow(response) {
-      var widget = Ext.widget('nx-coreui-component-analyze-window');
-      var form = widget.down('form');
-      form.getForm().setValues(response.data);
-      //I am setting the original value so it won't be marked dirty unless user touches it
-      form.down('textfield[name="reportLabel"]').originalValue = response.data.reportLabel;
-
-      var assetKeys = response.data.assetMap ? Ext.Object.getKeys(response.data.assetMap) : [];
-
-      if (assetKeys.length < 1) {
-        widget.close();
-        NX.Dialogs.showError(NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Title'),
-            NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Message'));
-      }
-      else if (assetKeys.length === 1) {
-        widget.down('combo[name="asset"]').setValue(response.data.selectedAsset);
-      }
-      else {
-        var data = [];
-        for (var i = 0; i < assetKeys.length; i++) {
-          data.push([assetKeys[i], response.data.assetMap[assetKeys[i]]]);
-        }
-        var combo = widget.down('combo[name="asset"]');
-        combo.getStore().loadData(data, false);
-        combo.setValue(response.data.selectedAsset);
-        combo.show();
-      }
-    }
-
-    me.getRootContainer().getEl().mask(NX.I18n.get('AnalyzeApplicationWindow_Loading_Mask'));
-    NX.direct.ahc_Component.getPredefinedValues(componentId, repositoryName, function(response) {
-      me.getRootContainer().getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        if (response.data.tosAccepted) {
-          doOpenAnalyzeWindow(response);
-        }
-        else {
-          Ext.widget('nx-coreui-healthcheck-eula', {
-            acceptFn: function() {
-              NX.direct.ahc_Component.acceptTermsOfService(function() {
-                doOpenAnalyzeWindow(response);
-              });
-            }
-          });
-        }
-      }
-    });
+  fetchComponentModelFromView: function() {
+    return this.getComponentInfo().componentModel;
   },
 
   /**

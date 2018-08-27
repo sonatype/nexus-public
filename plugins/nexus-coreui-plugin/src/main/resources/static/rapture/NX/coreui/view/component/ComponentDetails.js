@@ -22,6 +22,10 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
   extend: 'Ext.panel.Panel',
   alias: 'widget.nx-coreui-component-details',
 
+  requires: [
+    'NX.coreui.view.component.Maven2ComponentDetailsProvider'
+  ],
+
   cls: 'nx-coreui-component-details',
 
   /**
@@ -79,6 +83,20 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
     var me = this;
 
     me.componentModel = componentModel;
+    me.updateDeleteComponentButtonText();
     me.fireEvent('updated', me, me.componentModel);
+  },
+
+  updateDeleteComponentButtonText: function() {
+    var deleteComponentButtonText = NX.I18n.get('ComponentDetails_Delete_Button'),
+        format = this.componentModel && this.componentModel.get('format'),
+        componentDetailsProvider = format &&
+            Ext.ClassManager.getByAlias('nx-coreui-' + format.toLowerCase() + '-component-details-provider');
+
+    if (componentDetailsProvider) {
+      deleteComponentButtonText = componentDetailsProvider.getDeleteButtonText(this.componentModel);
+    }
+
+    this.getDockedItems('nx-actions > button[action="deleteComponent"]')[0].setText(deleteComponentButtonText);
   }
 });

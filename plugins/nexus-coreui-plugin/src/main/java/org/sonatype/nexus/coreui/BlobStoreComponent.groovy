@@ -24,8 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
-import org.sonatype.nexus.blobstore.file.FileBlobStore
-import org.sonatype.nexus.blobstore.group.FileToGroupBlobStoreConverter
+import org.sonatype.nexus.blobstore.group.BlobStorePromoter
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -64,7 +63,7 @@ class BlobStoreComponent
   RepositoryManager repositoryManager
 
   @Inject
-  FileToGroupBlobStoreConverter blobStoreConverter
+  BlobStorePromoter blobStorePromoter
 
   @DirectMethod
   @Timed
@@ -153,7 +152,8 @@ class BlobStoreComponent
         totalSize: blobStore.metrics.totalSize,
         availableSpace: blobStore.metrics.availableSpace,
         unlimited: blobStore.metrics.unlimited,
-        repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name)
+        repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
+        promotable: blobStore.promotable
     )
   }
 
@@ -164,8 +164,8 @@ class BlobStoreComponent
   @Validate(groups = [Update.class, Default.class])
   BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
     BlobStore from = blobStoreManager.get(fromName)
-    if (from instanceof FileBlobStore) {
-      return asBlobStore(blobStoreConverter.convert(from as FileBlobStore))
+    if (from.promotable) {
+      return asBlobStore(blobStorePromoter.promote(from))
     }
     throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)
   }

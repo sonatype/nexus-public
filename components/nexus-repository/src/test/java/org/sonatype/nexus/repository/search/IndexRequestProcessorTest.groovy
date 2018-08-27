@@ -44,6 +44,7 @@ import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
+import static org.mockito.Mockito.verifyZeroInteractions
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.repository.FacetSupport.State.DELETED
 import static org.sonatype.nexus.repository.FacetSupport.State.DESTROYED
@@ -139,6 +140,24 @@ class IndexRequestProcessorTest
     }
 
     verifyNoMoreInteractions(searchFacet)
+  }
+
+  @Test
+  public void entityEventsDoNotTriggerSearchUpdatesWhenDisabled() throws Exception {
+    indexRequestProcessor.processEvents = false
+
+    // mix of events; simulates creating new entities, plus updating and/or deleting old ones
+    ComponentCreatedEvent e1 = mockEntityEvent(ComponentCreatedEvent, alphaComponentId)
+    AssetCreatedEvent e2 = mockEntityEvent(AssetCreatedEvent, betaComponentId)
+    AssetCreatedEvent e3 = mockEntityEvent(AssetCreatedEvent, alphaComponentId)
+    ComponentUpdatedEvent e4 = mockEntityEvent(ComponentUpdatedEvent, betaComponentId)
+    AssetUpdatedEvent e5 = mockEntityEvent(AssetUpdatedEvent, alphaComponentId)
+    AssetDeletedEvent e6 = mockEntityEvent(AssetDeletedEvent, betaComponentId)
+    ComponentDeletedEvent e7 = mockEntityEvent(ComponentDeletedEvent, alphaComponentId)
+
+    indexRequestProcessor.on(new EntityBatchEvent([e1, e2, e3, e4, e5, e6, e7]))
+
+    verifyZeroInteractions(searchFacet)
   }
 
   @Test

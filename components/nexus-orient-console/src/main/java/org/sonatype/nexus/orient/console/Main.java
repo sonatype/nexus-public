@@ -57,8 +57,8 @@ public class Main
     // register support for PBE compression; needed to work with the security database
     OCompressionFactory.INSTANCE.register(injector.getInstance(PbeCompression.class));
 
-    // register 'ConflictHook' strategy; needed to work with databases that enabled it
-    Orient.instance().getRecordConflictStrategy().registerImplementation(ConflictHook.NAME, new ConflictHook());
+    // register 'ConflictHook' strategy but leave it disabled; needed to load databases that set it as a strategy
+    Orient.instance().getRecordConflictStrategy().registerImplementation(ConflictHook.NAME, new ConflictHook(false));
 
     OConsoleDatabaseApp.main(args);
   }

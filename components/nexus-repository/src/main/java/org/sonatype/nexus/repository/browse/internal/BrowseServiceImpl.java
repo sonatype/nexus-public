@@ -167,23 +167,38 @@ public class BrowseServiceImpl
       if (component == null) {
         return new BrowseResult<>(0, Collections.emptyList());
       }
-
-      //As this method is only called when showing list of assets for a component in search results,
-      //we also need to check parent group(s) of the repository in question, as search doesn't have a
-      //'repository' context
-      Set<String> repoNames = new HashSet<>(repositoryManager.findContainingGroups(repository.getName()));
-      repoNames.add(repository.getName());
-      VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format());
-      List<Asset> assets = StreamSupport.stream(storageTx.browseAssets(component).spliterator(), false)
-          .filter(
-              (Asset asset) -> contentPermissionChecker.isPermitted(
-                  repoNames,
-                  asset.format(),
-                  BreadActions.BROWSE,
-                  variableResolverAdapter.fromAsset(asset))
-          ).collect(Collectors.toList());
-      return new BrowseResult<>(assets.size(), assets);
+      return browseComponentAssetsHelper(storageTx, repository, component);
     }
+  }
+
+  @Override
+  public BrowseResult<Asset> browseComponentAssets(final Repository repository, final Component component)
+  {
+    checkNotNull(repository);
+    checkNotNull(component);
+    try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      storageTx.begin();
+      return browseComponentAssetsHelper(storageTx, repository, component);
+    }
+  }
+
+  private BrowseResult<Asset> browseComponentAssetsHelper(StorageTx storageTx, Repository repository, Component component)
+  {
+    //As this method is only called when showing list of assets for a component in search results,
+    //we also need to check parent group(s) of the repository in question, as search doesn't have a
+    //'repository' context
+    Set<String> repoNames = new HashSet<>(repositoryManager.findContainingGroups(repository.getName()));
+    repoNames.add(repository.getName());
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format());
+    List<Asset> assets = StreamSupport.stream(storageTx.browseAssets(component).spliterator(), false)
+        .filter(
+            (Asset asset) -> contentPermissionChecker.isPermitted(
+                repoNames,
+                asset.format(),
+                BreadActions.BROWSE,
+                variableResolverAdapter.fromAsset(asset))
+        ).collect(Collectors.toList());
+    return new BrowseResult<>(assets.size(), assets);
   }
 
   @Override

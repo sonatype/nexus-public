@@ -17,12 +17,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
+import org.sonatype.nexus.common.entity.DetachedEntityVersion;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -39,7 +43,10 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentFinder;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
+import org.sonatype.nexus.repository.storage.DefaultComponentFinder;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
@@ -47,7 +54,10 @@ import org.sonatype.nexus.selector.CselExpressionValidator;
 import org.sonatype.nexus.selector.JexlExpressionValidator;
 import org.sonatype.nexus.selector.VariableSource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,10 +115,19 @@ public class ComponentComponentTest
   @Mock
   CselExpressionValidator cselExpressionValidator;
 
+  @Mock
+  Map<String, ComponentFinder> componentFinders;
+
+  @Mock
+  DefaultComponentFinder defaultComponentFinder;
+
+  private ObjectMapper objectMapper;
+
   private ComponentComponent underTest;
 
   @Before
   public void setup() {
+    objectMapper = new ObjectMapper();
     underTest = new ComponentComponent();
     underTest.setRepositoryManager(repositoryManager);
     underTest.setContentPermissionChecker(contentPermissionChecker);
@@ -117,6 +136,8 @@ public class ComponentComponentTest
     underTest.setBrowseService(browseService);
     underTest.setJexlExpressionValidator(jexlExpressionValidator);
     underTest.setCselExpressionValidator(cselExpressionValidator);
+    underTest.setObjectMapper(objectMapper);
+    underTest.setComponentFinders(componentFinders);
 
     when(repositoryManager.get("testRepositoryName")).thenReturn(repository);
     when(repository.getName()).thenReturn("testRepositoryName");
@@ -125,24 +146,37 @@ public class ComponentComponentTest
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(variableResolverAdapterManager.get("testFormat")).thenReturn(variableResolverAdapter);
     when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
+    when(componentFinders.get(any(String.class))).thenReturn(defaultComponentFinder);
   }
 
   @Test
   public void testDeleteComponent_success() {
-    Component component = mock(Component.class);
+    String repositoryName = "testRepositoryName";
+    String format = "testFormat";
+    Component component = makeTestComponent(format);
     Asset asset = mock(Asset.class);
     VariableSource variableSource = mock(VariableSource.class);
     when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
     when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Collections.singletonList(asset));
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
+    when(contentPermissionChecker.isPermitted(repositoryName, format, BreadActions.DELETE, variableSource))
         .thenReturn(true);
-    underTest.deleteComponent("testComponentId", "testRepositoryName");
+    when(defaultComponentFinder.findMatchingComponents(
+        eq(repository),
+        eq(EntityHelper.id(component).getValue()),
+        eq(component.group()),
+        eq(component.name()),
+        eq(component.version())
+    )).thenReturn(ImmutableList.of(component));
+
+    deleteComponent(component, repositoryName);
   }
 
   @Test
   public void testDeleteComponent_success_multipleAssets() {
-    Component component = mock(Component.class);
+    String repositoryName = "testRepositoryName";
+    String format = "testFormat";
+    Component component = makeTestComponent(format);
     Asset asset = mock(Asset.class);
     VariableSource variableSource = mock(VariableSource.class);
     Asset asset2 = mock(Asset.class);
@@ -151,11 +185,19 @@ public class ComponentComponentTest
     when(variableResolverAdapter.fromAsset(asset2)).thenReturn(variableSource2);
     when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset, asset2));
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource))
+    when(contentPermissionChecker.isPermitted(repositoryName, format, BreadActions.DELETE, variableSource))
         .thenReturn(true);
-    when(contentPermissionChecker.isPermitted("testRepositoryName", "testFormat", BreadActions.DELETE, variableSource2))
+    when(contentPermissionChecker.isPermitted(repositoryName, format, BreadActions.DELETE, variableSource2))
         .thenReturn(true);
-    underTest.deleteComponent("testComponentId", "testRepositoryName");
+    when(defaultComponentFinder.findMatchingComponents(
+        eq(repository),
+        eq(EntityHelper.id(component).getValue()),
+        eq(component.group()),
+        eq(component.name()),
+        eq(component.version())
+    )).thenReturn(ImmutableList.of(component));
+
+    deleteComponent(component, repositoryName);
 
     verify(maintenanceService).deleteComponent(repository, component);
   }
@@ -314,5 +356,27 @@ public class ComponentComponentTest
     filter.setProperty(property);
     filter.setValue(value);
     return filter;
+  }
+
+  private Component makeTestComponent(String format) {
+    Component component = new DefaultComponent();
+    component.setEntityMetadata(new DetachedEntityMetadata(
+        new DetachedEntityId("testComponentId"),
+        new DetachedEntityVersion("1.0")
+    ));
+    component.format(format);
+    component.group("testGroup");
+    component.name("testComponentName");
+    return component;
+  }
+
+  private void deleteComponent(Component component, String repositoryName) {
+    ComponentXO componentXO = ComponentComponent.COMPONENT_CONVERTER(component, repositoryName);
+    try {
+      underTest.deleteComponent(objectMapper.writeValueAsString(componentXO));
+    }
+    catch (JsonProcessingException e) {
+      fail("Unexpected exception: " + e.getMessage());
+    }
   }
 }

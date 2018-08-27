@@ -103,7 +103,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
         },
         'nx-coreui-blobstore-feature button[action=promoteToGroup]': {
           click: me.promoteToGroup,
-          afterrender: me.bindIfFileAndUpdateable
+          afterrender: me.bindIfUpdatableAndGroupsEnabled
         },
         'nx-coreui-blobstore-settings-form': {
           submitted: me.loadStores
@@ -271,7 +271,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
   /**
    * @private
    */
-  watchEventsForFile: function () {
+  watchEventsForNonGroups: function () {
     var me = this,
         store = me.getStore('Blobstore');
 
@@ -280,7 +280,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
           model = blobstoreId ? store.findRecord('name', blobstoreId, 0, false, true, true) : undefined;
 
       if (model) {
-        return model.get('type') === 'File';
+        return model.get('promotable');
       }
 
       return false;
@@ -289,9 +289,9 @@ Ext.define('NX.coreui.controller.Blobstores', {
 
   /**
    * @private
-   * checks that blobstore is a file blobstore and that user has permissions before activating button
+   * checks that blobstore is not a blobstore group and that user has permissions before activating button
    */
-  bindIfFileAndUpdateable: function(button) {
+  bindIfUpdatableAndGroupsEnabled: function(button) {
     var me = this;
 
     button.mon(
@@ -300,7 +300,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
             NX.Conditions.watchEvents([
               { observable: me.getStore('Blobstore'), events: ['load']},
               { observable: Ext.History, events: ['change']}
-            ], me.watchEventsForFile())
+            ], me.watchEventsForNonGroups())
         ),
         {
           satisfied: function () {

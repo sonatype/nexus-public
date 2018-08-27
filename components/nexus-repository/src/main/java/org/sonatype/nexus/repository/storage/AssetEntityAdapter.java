@@ -370,4 +370,12 @@ public class AssetEntityAdapter
 
     return !isEmpty(db.command(EXISTS_QUERY).<Iterable<ODocument>>execute(params));
   }
+
+  /**
+   * Enables deconfliction of asset metadata.
+   */
+  @Override
+  public boolean resolveConflicts() {
+    return true;
+  }
 }

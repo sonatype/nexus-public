@@ -20,6 +20,7 @@ import javax.ws.rs.WebApplicationException
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.common.entity.EntityHelper
+import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
@@ -34,6 +35,8 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.Component
+import org.sonatype.nexus.repository.storage.ComponentFinder
+import org.sonatype.nexus.repository.storage.ComponentStore
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.security.BreadActions
@@ -47,6 +50,7 @@ import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
@@ -58,6 +62,7 @@ import org.hibernate.validator.constraints.NotEmpty
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static javax.ws.rs.core.Response.Status
+import static org.sonatype.nexus.repository.storage.DefaultComponentFinder.DEFAULT_COMPONENT_FINDER_KEY
 
 /**
  * Component {@link DirectComponent}.
@@ -71,8 +76,8 @@ class ComponentComponent
     extends DirectComponentSupport
 {
 
-  private static final Closure COMPONENT_CONVERTER = { Component component, String repositoryName ->
-    new ComponentXO(
+  static final ComponentXO COMPONENT_CONVERTER(Component component, String repositoryName) {
+    return new ComponentXO(
         id: EntityHelper.id(component).value,
         repositoryName: repositoryName,
         group: component.group(),
@@ -128,6 +133,15 @@ class ComponentComponent
   @Inject
   MaintenanceService maintenanceService
 
+  @Inject
+  ComponentStore componentStore
+
+  @Inject
+  ObjectMapper objectMapper
+
+  @Inject
+  Map<String, ComponentFinder> componentFinders
+
   @DirectMethod
   @Timed
   @ExceptionMetered
@@ -137,10 +151,21 @@ class ComponentComponent
     if (!repository.configuration.online) {
       return null
     }
-    def result = browseService.browseComponentAssets(repository, parameters.getFilter('componentId'))
+
+    ComponentXO componentXO = objectMapper.readValue(parameters.getFilter('componentModel'), ComponentXO.class)
+
+    ComponentFinder componentFinder = componentFinders.get(componentXO.format)
+    if (null == componentFinder) {
+      componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
+    }
+
+    Iterable<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
+        componentXO.group, componentXO.name, componentXO.version)
+
+    def browseResult = browseService.browseComponentAssets(repository, components.getAt(0))
     def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
 
-    return createAssetXOs(result.results, parameters.getFilter('componentName'), repositoryName, repoNamesForBuckets)
+    return createAssetXOs(browseResult.results, componentXO.name, repositoryName, repoNamesForBuckets)
   }
 
   private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
@@ -213,19 +238,20 @@ class ComponentComponent
   @ExceptionMetered
   @RequiresAuthentication
   @Validate
-  void deleteComponent(@NotEmpty final String componentId, @NotEmpty final String repositoryName) {
-    Repository repository = repositoryManager.get(repositoryName)
-    StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
+  void deleteComponent(@NotEmpty final String componentModelString)
+  {
+    ComponentXO componentXO = objectMapper.readValue(componentModelString, ComponentXO.class)
+    Repository repository = repositoryManager.get(componentXO.repositoryName)
 
-    Component component
-    try {
-      storageTx.begin()
-      component = storageTx.findComponent(new DetachedEntityId(componentId))
+    ComponentFinder componentFinder = componentFinders.get(componentXO.format)
+    if (null == componentFinder) {
+      componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
     }
-    finally {
-      storageTx.close()
-    }
-    if (component != null) {
+
+    Iterable<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
+        componentXO.group, componentXO.name, componentXO.version)
+
+    for (Component component : components) {
       maintenanceService.deleteComponent(repository, component)
     }
   }
@@ -285,7 +311,7 @@ class ComponentComponent
       storageTx.close()
     }
     ensurePermissions(repository, assets, BreadActions.BROWSE)
-    return COMPONENT_CONVERTER.call(component, repository.name) as ComponentXO
+    return COMPONENT_CONVERTER(component, repository.name)
   }
 
   /**
@@ -355,7 +381,7 @@ class ComponentComponent
   private List<AssetXO> createAssetXOs(List<Asset> assets,
                                        String componentName,
                                        String repositoryName,
-                                       Map<String, String> repoNamesForBuckets) {
+                                       Map<EntityId, String> repoNamesForBuckets) {
     List<AssetXO> assetXOs = new ArrayList<>()
     for (Asset asset : assets) {
       def lastThirty = browseService.getLastThirtyDays(asset)

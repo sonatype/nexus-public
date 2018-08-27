@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Map;
+
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Repository;
 
 /**
  * Store providing access to components.
@@ -26,4 +29,19 @@ public interface ComponentStore
    * @return the component for the id
    */
   Component read(EntityId id);
+
+  /**
+   * Finds and returns all the components that match the specified parameters.
+   * @param repository
+   * @param group
+   * @param name
+   * @param formatAttributes
+   * @return All the components that match the specified parameters
+   *
+   * @since 3.next
+   */
+  Iterable<Component> getAllMatchingComponents(final Repository repository,
+                                               final String group,
+                                               final String name,
+                                               final Map<String, String> formatAttributes);
 }

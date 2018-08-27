@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
+import org.sonatype.nexus.blobstore.group.BlobStorePromoter
+import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
@@ -38,9 +39,12 @@ class BlobStoreComponentTest
   
   RepositoryManager repositoryManager = Mock()
 
+  BlobStorePromoter blobStoreConverter = Mock()
+
   @Subject
   BlobStoreComponent blobStoreComponent = new BlobStoreComponent(blobStoreManager: blobStoreManager,
-      applicationDirectories: applicationDirectories, repositoryManager: repositoryManager)
+      applicationDirectories: applicationDirectories, repositoryManager: repositoryManager,
+      blobStorePromoter: blobStoreConverter)
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
@@ -101,5 +105,57 @@ class BlobStoreComponentTest
       1 * applicationDirectories.getWorkDirectory('blobs') >> new File(blobDirectory)
       defaultWorkDirectory.path == blobDirectory
       defaultWorkDirectory.fileSeparator == File.separator
+  }
+
+  def 'it will promote a blob that is promotable'() {
+    setup:
+      def groupBlobName = 'myGroup'
+
+    when: 'trying to promote'
+      def blobStoreXO = blobStoreComponent.promoteToGroup(groupBlobName)
+
+    then: 'blobStoreManager is called correctly'
+      def from = Mock(BlobStore) {
+        isPromotable() >> true
+      }
+      1 * blobStoreManager.get(groupBlobName) >> from
+      1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
+      1 * blobStoreConverter.promote(from) >> Mock(BlobStoreGroup) {
+          getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) {
+          getName() >> 'name'
+          getType() >> 'type'
+          getAttributes() >> ['group': ['members': 'name-promoted']]
+        }
+        getMetrics() >> Mock(BlobStoreMetrics) {
+          getBlobCount() >> 1L
+          getTotalSize() >> 500L
+          getAvailableSpace() >> 450L
+          isUnlimited() >> false
+        }
+      }
+
+      blobStoreXO.name == 'name'
+      blobStoreXO.type == 'type'
+      blobStoreXO.attributes == ['group': ['members': 'name-promoted']]
+      blobStoreXO.blobCount == 1L
+      blobStoreXO.totalSize == 500L
+      blobStoreXO.availableSpace == 450L
+      !blobStoreXO.unlimited
+      blobStoreXO.repositoryUseCount == 2L
+  }
+
+  def 'it will not promote a blob store type that is not promotable'() {
+    setup:
+      def groupBlobName = 'myGroup'
+
+    when: 'trying to promote'
+      blobStoreComponent.promoteToGroup(groupBlobName)
+
+    then: 'blobStoreManager is called correctly'
+      1 * blobStoreManager.get(groupBlobName) >> Mock(BlobStore) {
+        isPromotable() >> false
+      }
+      BlobStoreException exception = thrown()
+      exception.message == 'Blob store (myGroup) could not be promoted to a blob store group'
   }
 }

@@ -23,6 +23,8 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
 import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.repository.search.SearchResultComponent
+import org.sonatype.nexus.repository.search.SearchResultsGenerator
 import org.sonatype.nexus.repository.search.SearchService
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -37,7 +39,6 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.SortOrder
 
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME
@@ -63,6 +64,9 @@ class SearchComponent
   @Inject
   @Named('${nexus.searchResultsLimit:-1000}')
   long searchResultsLimit
+
+  @Inject
+  SearchResultsGenerator searchResultsGenerator
 
   /**
    * Search based on configured filters.
@@ -106,18 +110,21 @@ class SearchComponent
             sortBuilders = [fieldSort(sort.property).order(SortOrder.valueOf(sort.direction))]
         }
       }
+
       SearchResponse response = searchService.search(query, sortBuilders, parameters.start, parameters.limit)
+      List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
+
       return new LimitedPagedResponse<ComponentXO>(
-          searchResultsLimit,
-          response.hits.totalHits,
-          response.hits.hits?.collect { hit ->
-            return new ComponentXO(
-                id: hit.id,
-                repositoryName: hit.source[REPOSITORY_NAME],
-                group: hit.source[GROUP],
-                name: hit.source[NAME],
-                version: hit.source[VERSION],
-                format: hit.source[FORMAT]
+          Math.min(parameters.limit, searchResultComponents.size()),
+          (parameters.limit < response.hits.totalHits()) ? response.hits.totalHits() : searchResultComponents.size(),
+          searchResultComponents.collect { searchResultComponent ->
+            new ComponentXO(
+                id: searchResultComponent.id,
+                repositoryName: searchResultComponent.repositoryName,
+                group: searchResultComponent.group,
+                name: searchResultComponent.name,
+                version: searchResultComponent.version,
+                format: searchResultComponent.format
             )
           }
       )

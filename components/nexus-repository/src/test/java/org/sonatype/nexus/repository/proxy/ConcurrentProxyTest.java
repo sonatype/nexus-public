@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,11 +32,13 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentTask;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.io.CooperationException;
+import org.sonatype.nexus.common.io.CooperationFactory;
+import org.sonatype.nexus.common.io.LocalCooperationFactory;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.proxy.Cooperation.CooperatingFuture;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -54,11 +55,8 @@ import static com.google.common.io.ByteStreams.toByteArray;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
@@ -108,6 +106,8 @@ public class ConcurrentProxyTest
 
   @Mock
   Content assetContent;
+
+  CooperationFactory cooperationFactory = new LocalCooperationFactory();
 
   Random random = new Random();
 
@@ -198,6 +198,8 @@ public class ConcurrentProxyTest
 
     when(cacheController.isStale(cacheInfo)).thenReturn(false);
     when(cacheControllerHolder.getContentCacheController()).thenReturn(cacheController);
+
+    when(repository.getName()).thenReturn("test-repo");
 
     underTest.cacheControllerHolder = cacheControllerHolder;
     underTest.attach(repository);
@@ -296,7 +298,8 @@ public class ConcurrentProxyTest
   public void noDownloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(false, Time.seconds(0), Time.seconds(0), 0);
+    underTest.configureCooperation(cooperationFactory, false, Time.seconds(0), Time.seconds(0), 0);
+    underTest.buildCooperation();
 
     // indirect paths will trigger a request for the index to resolve the final URL
     List<Request> validRequests = generateRandomRequests("some/valid/indirect/path-");
@@ -355,7 +358,8 @@ public class ConcurrentProxyTest
   public void downloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(10), NUM_CLIENTS);
+    underTest.configureCooperation(cooperationFactory, true, Time.seconds(60), Time.seconds(10), NUM_CLIENTS);
+    underTest.buildCooperation();
 
     List<Request> validRequests = generateRandomRequests("some/valid/indirect/path-");
     List<Request> brokenRequests = generateRandomRequests("some/broken/indirect/path-");
@@ -442,7 +446,8 @@ public class ConcurrentProxyTest
   public void limitCooperatingThreads() throws Exception {
     int threadLimit = 10;
 
-    underTest.configureCooperation(true, Time.seconds(60), Time.seconds(10), threadLimit);
+    underTest.configureCooperation(cooperationFactory, true, Time.seconds(60), Time.seconds(10), threadLimit);
+    underTest.buildCooperation();
 
     Request request = new Request.Builder().action(GET).path("some/fixed/path").build();
 
@@ -473,31 +478,4 @@ public class ConcurrentProxyTest
     // majority of requests should have been cancelled to maintain thread limit
     assertThat(cooperationExceptionCount.get(), is(NUM_CLIENTS - threadLimit));
   }
-
-  @Test
-  public void downloadTimeoutsAreStaggered() throws Exception {
-    CooperatingFuture<String> cooperatingFuture = new CooperatingFuture<>("testKey");
-
-    long[] downloadTimeMillis = new long[10];
-
-    long expectedGap = 200;
-
-    downloadTimeMillis[0] = System.currentTimeMillis(); // first download
-    for (int i = 1; i < downloadTimeMillis.length; i++) {
-
-      // random sleep representing some client-side work
-      LockSupport.parkNanos(Time.millis(random.nextInt((int) expectedGap)).toNanos());
-
-      // staggered sleep should bring us close to the expected gap
-      LockSupport.parkNanos(cooperatingFuture.staggerTimeout(Time.millis(expectedGap)).toNanos());
-
-      downloadTimeMillis[i] = System.currentTimeMillis(); // next download
-    }
-
-    for (int i = 1; i < downloadTimeMillis.length; i++) {
-      long actualGap = downloadTimeMillis[i] - downloadTimeMillis[i - 1];
-      assertThat(actualGap, allOf(greaterThanOrEqualTo(expectedGap - 10), lessThanOrEqualTo(expectedGap + 10)));
-    }
-  }
-
 }

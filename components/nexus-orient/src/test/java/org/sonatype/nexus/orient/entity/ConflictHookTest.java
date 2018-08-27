@@ -18,15 +18,17 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.sonatype.nexus.orient.entity.ConflictState.ALLOW;
 
 /**
  * Tests for {@link ConflictHook}.
@@ -36,10 +38,6 @@ public class ConflictHookTest
 {
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
-
-  private final TestEntityAdapter entityAdapter = new TestEntityAdapter();
-
-  private final ConflictHook conflictHook = new ConflictHook();
 
   private static class TestEntity
       extends AbstractEntity
@@ -52,10 +50,14 @@ public class ConflictHookTest
   {
     static final String DB_CLASS = new OClassNameBuilder().type("test").build();
 
+    final boolean resolveConflicts;
+
     int mvccCount;
 
-    TestEntityAdapter() {
+    TestEntityAdapter(final boolean resolveConflicts) {
       super(DB_CLASS);
+
+      this.resolveConflicts = resolveConflicts;
     }
 
     @Override
@@ -80,23 +82,20 @@ public class ConflictHookTest
 
     @Override
     public boolean resolveConflicts() {
-      return true;
+      return resolveConflicts;
     }
 
     @Override
-    public Resolution resolve(ODocument storedRecord, ODocument record) {
+    public ConflictState resolve(ODocument storedRecord, ODocument changeRecord) {
       mvccCount++;
-      return Resolution.ALLOW;
+      return ALLOW;
     }
   }
 
-  @Before
-  public void setup() throws Exception {
-    entityAdapter.enableConflictHook(conflictHook);
-  }
-
   @Test
-  public void testConflictsAreReported() {
+  public void mvccResolvedWhenConflictHookEnabled() {
+    TestEntityAdapter entityAdapter = new TestEntityAdapter(true);
+    entityAdapter.enableConflictHook(new ConflictHook(true));
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       entityAdapter.register(db);
@@ -141,5 +140,121 @@ public class ConflictHookTest
     }
 
     assertThat(entityAdapter.mvccCount, is(2));
+  }
+
+  @Test
+  public void mvccNotResolvedWhenConflictHookDisabled() {
+    TestEntityAdapter entityAdapter = new TestEntityAdapter(true);
+    entityAdapter.enableConflictHook(new ConflictHook(false));
+
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      entityAdapter.register(db);
+    }
+
+    TestEntity entity = entityAdapter.newEntity();
+
+    ODocument initialRecord;
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entity.text = "initial";
+      initialRecord = entityAdapter.addEntity(db, entity);
+      db.commit();
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entity.text = "updated";
+      entityAdapter.editEntity(db, entity);
+      db.commit();
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    // MVCC won't trigger ConflictHook
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      initialRecord.copy().field("text", "test!").save();
+      db.commit();
+      fail("Expected OConcurrentModificationException");
+    }
+    catch (OConcurrentModificationException e) {
+      // expected
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    // MVCC won't trigger ConflictHook
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      initialRecord.copy().field("text", "test!").save();
+      db.commit();
+      fail("Expected OConcurrentModificationException");
+    }
+    catch (OConcurrentModificationException e) {
+      // expected
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+  }
+
+  @Test
+  public void mvccNotResolvedWhenConflictHookEnabledButAdapterResolveConflictsDisabled() {
+    TestEntityAdapter entityAdapter = new TestEntityAdapter(false);
+    entityAdapter.enableConflictHook(new ConflictHook(true));
+
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      entityAdapter.register(db);
+    }
+
+    TestEntity entity = entityAdapter.newEntity();
+
+    ODocument initialRecord;
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entity.text = "initial";
+      initialRecord = entityAdapter.addEntity(db, entity);
+      db.commit();
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entity.text = "updated";
+      entityAdapter.editEntity(db, entity);
+      db.commit();
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    // MVCC will trigger ConflictHook but adapter won't resolve it
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      initialRecord.copy().field("text", "test!").save();
+      db.commit();
+      fail("Expected OConcurrentModificationException");
+    }
+    catch (OConcurrentModificationException e) {
+      // expected
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
+
+    // MVCC will trigger ConflictHook but adapter won't resolve it
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      initialRecord.copy().field("text", "test!").save();
+      db.commit();
+      fail("Expected OConcurrentModificationException");
+    }
+    catch (OConcurrentModificationException e) {
+      // expected
+    }
+
+    assertThat(entityAdapter.mvccCount, is(0));
   }
 }

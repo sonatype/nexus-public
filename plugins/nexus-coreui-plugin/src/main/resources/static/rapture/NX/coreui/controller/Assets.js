@@ -26,6 +26,10 @@ Ext.define('NX.coreui.controller.Assets', {
     'Ext.util.Format'
   ],
 
+  mixins: {
+    componentUtils: 'NX.coreui.mixin.ComponentUtils'
+  },
+
   views: [
     'component.AssetContainer',
     'component.AssetInfo',
@@ -91,7 +95,7 @@ Ext.define('NX.coreui.controller.Assets', {
           click: me.deleteComponent
         },
         'nx-coreui-component-details button[action=analyzeApplication]': {
-          click: me.openAnalyzeApplicationWindow
+          click: me.mixins.componentUtils.openAnalyzeApplicationWindow
         },
         'nx-coreui-component-analyze-window button[action=analyze]': {
           click: me.analyzeAsset
@@ -177,38 +181,20 @@ Ext.define('NX.coreui.controller.Assets', {
    * @param {NX.coreui.model.Component} componentModel component owning the assets to be loaded
    */
   loadAssets: function (grid, componentModel) {
-    var assetStore = grid.getStore(),
-        filters;
+    var assetStore = grid.getStore();
 
     if (componentModel) {
       assetStore.clearFilter(true);
-      filters = [
+      assetStore.addFilter([
         {
           property: 'repositoryName',
           value: componentModel.get('repositoryName')
         },
         {
-          property: 'componentId',
-          value: componentModel.getId()
-        },
-        {
-          property: 'componentName',
-          value: componentModel.get('name')
+          property: 'componentModel',
+          value: JSON.stringify(componentModel.getData())
         }
-      ];
-      if (componentModel.get('group')) {
-        filters.push({
-          property: 'componentGroup',
-          value: componentModel.get('group')
-        });
-      }
-      if (componentModel.get('version')) {
-        filters.push({
-          property: 'componentVersion',
-          value: componentModel.get('version')
-        });
-      }
-      assetStore.addFilter(filters);
+      ]);
     }
   },
 
@@ -279,14 +265,14 @@ Ext.define('NX.coreui.controller.Assets', {
   deleteComponent: function() {
     var me = this,
         componentDetails = me.getComponentDetails(),
-        componentModel, componentId, repositoryName;
+        componentModel, componentId, componentVersion;
 
     if (componentDetails) {
       componentModel = componentDetails.componentModel;
-      componentId = componentModel.get('name') + '/' + componentModel.get('version');
-      repositoryName = componentModel.get('repositoryName');
+      componentVersion = componentModel.get('version');
+      componentId = componentModel.get('name') + '/' + componentVersion;
       NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(componentId), function() {
-        NX.direct.coreui_Component.deleteComponent(componentModel.getId(), repositoryName, function(response) {
+        NX.direct.coreui_Component.deleteComponent(JSON.stringify(componentModel.getData()), function(response) {
           if (Ext.isObject(response) && response.success) {
             me.refreshComponentList();
             NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 1);
@@ -295,66 +281,6 @@ Ext.define('NX.coreui.controller.Assets', {
         });
       });
     }
-  },
-
-  /**
-   * Open the analyze application form window
-   *
-   * @private
-   */
-  openAnalyzeApplicationWindow: function() {
-    var me = this,
-        componentDetails = me.getComponentDetails(),
-        componentId = componentDetails.componentModel.getId(),
-        repositoryName = componentDetails.componentModel.get('repositoryName');
-
-    function doOpenAnalyzeWindow(response) {
-      var widget = Ext.widget('nx-coreui-component-analyze-window');
-      var form = widget.down('form');
-      form.getForm().setValues(response.data);
-      //I am setting the original value so it won't be marked dirty unless user touches it
-      form.down('textfield[name="reportLabel"]').originalValue = response.data.reportLabel;
-
-      var assetKeys = response.data.assetMap ? Ext.Object.getKeys(response.data.assetMap) : [];
-
-      if (assetKeys.length < 1) {
-        widget.close();
-        NX.Dialogs.showError(NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Title'),
-            NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Message'));
-      }
-      else if (assetKeys.length === 1) {
-        widget.down('combo[name="asset"]').setValue(response.data.selectedAsset);
-      }
-      else {
-        var data = [];
-        for (var i = 0; i < assetKeys.length; i++) {
-          data.push([assetKeys[i], response.data.assetMap[assetKeys[i]]]);
-        }
-        var combo = widget.down('combo[name="asset"]');
-        combo.getStore().loadData(data, false);
-        combo.setValue(response.data.selectedAsset);
-        combo.show();
-      }
-    }
-
-    me.getRootContainer().getEl().mask(NX.I18n.get('AnalyzeApplicationWindow_Loading_Mask'));
-    NX.direct.ahc_Component.getPredefinedValues(componentId, repositoryName, function(response) {
-      me.getRootContainer().getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        if (response.data.tosAccepted) {
-          doOpenAnalyzeWindow(response);
-        }
-        else {
-          Ext.widget('nx-coreui-healthcheck-eula', {
-            acceptFn: function() {
-              NX.direct.ahc_Component.acceptTermsOfService(function() {
-                doOpenAnalyzeWindow(response);
-              });
-            }
-          });
-        }
-      }
-    });
   },
 
   /**
@@ -455,6 +381,10 @@ Ext.define('NX.coreui.controller.Assets', {
       me.refreshComponentList();
       NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 2);
     }
+  },
+
+  fetchComponentModelFromView: function() {
+    return this.getComponentDetails().componentModel;
   },
 
   /**

@@ -55,8 +55,15 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         displayField: 'name',
         valueField: 'id',
         readOnly: true,
-        onChange: function(value) {
+        onChange: function(newValue, oldValue) {
+          var comboxBox = this;
           var settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset');
+          var value = newValue || oldValue;
+          if (!newValue) {
+            comboxBox.setValue(value);
+            comboxBox.originalValue = value;
+            comboxBox.validate();
+          }
           var blobstoreTypeModel = NX.getApplication().getStore('BlobstoreType').getById(value);
           settingsFieldSet.importProperties(null, blobstoreTypeModel.get('formFields'), me.editableCondition);
         }
@@ -68,7 +75,11 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Name_FieldLabel'),
         readOnly: true
       },
-      { xtype: 'nx-coreui-formfield-settingsfieldset' }
+      {
+        xtype: 'nx-coreui-formfield-settingsfieldset',
+        delimiter: null,
+        disableSort: true
+      }
     ];
 
     me.callParent();

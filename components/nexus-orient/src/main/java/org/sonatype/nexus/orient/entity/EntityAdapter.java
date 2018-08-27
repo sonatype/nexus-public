@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -39,6 +38,7 @@ import org.sonatype.nexus.orient.RecordIdObfuscator;
 import org.sonatype.nexus.orient.internal.PbeCompression;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -62,6 +62,8 @@ import static com.google.common.collect.Streams.stream;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import static org.sonatype.nexus.orient.entity.ConflictState.DENY;
+import static org.sonatype.nexus.orient.entity.ConflictState.IGNORE;
 
 /**
  * Support for entity-adapter implementations.
@@ -88,6 +90,8 @@ public abstract class EntityAdapter<T extends Entity>
   private EntityHook entityHook;
 
   private ConflictHook conflictHook;
+
+  private List<? extends DeconflictStep<T>> deconflictSteps = ImmutableList.of();
 
   private String dbName;
 
@@ -125,6 +129,11 @@ public abstract class EntityAdapter<T extends Entity>
   @Inject
   public void enableConflictHook(final ConflictHook conflictHook) {
     this.conflictHook = checkNotNull(conflictHook);
+  }
+
+  @Inject
+  public void setDeconflictSteps(final List<? extends DeconflictStep<T>> deconflictSteps) {
+    this.deconflictSteps = checkNotNull(deconflictSteps);
   }
 
   /**
@@ -487,7 +496,7 @@ public abstract class EntityAdapter<T extends Entity>
   //
 
   /**
-   * Override this method to enable conflict resolution for this adapter.
+   * Override this method to enable conflict resolution for entities managed by this adapter.
    *
    * @since 3.next
    */
@@ -496,56 +505,33 @@ public abstract class EntityAdapter<T extends Entity>
   }
 
   /**
-   * Resolution of the potential conflict.
+   * Attempts to resolve conflicts between the stored and incoming records by deconfliction.
+   *
+   * @return {@link ConflictState#MERGE} if this results in further changes to {@code changeRecord}
    *
    * @since 3.next
    */
-  public enum Resolution
-  {
-    /**
-     * After comparing the record content no conflict was found, go-ahead and apply the original change.
-     */
-    ALLOW {
-      @Override
-      public Resolution andThen(final Supplier<Resolution> nextStep) {
-        return nextStep.get();
-      }
-    },
-    /**
-     * Conflict resolved by merging in changes from the stored record, go-ahead and apply the merged result.
-     */
-    MERGE {
-      @Override
-      public Resolution andThen(final Supplier<Resolution> nextStep) {
-        return DENY.equals(nextStep.get()) ? DENY : MERGE;
-      }
-    },
-    /**
-     * Conflict cannot be resolved, deny the update.
-     */
-    DENY {
-      @Override
-      public Resolution andThen(final Supplier<Resolution> nextStep) {
-        return DENY; // short-circuit any further resolving
-      }
-    };
-
-    public abstract Resolution andThen(Supplier<Resolution> nextStep);
+  public ConflictState resolve(final ODocument storedRecord, final ODocument changeRecord) {
+    return deconflictSteps.stream()
+        .reduce(IGNORE, (decision, step) -> decision.andThen(
+            () -> step.deconflict(storedRecord, changeRecord)),
+            ConflictState::max)
+        .andThen(() -> compare(storedRecord, changeRecord));
   }
 
   /**
-   * Attempts to resolve potential conflict(s) between the stored and incoming records.
-   *
-   * @return {@link Resolution#MERGE} if this results in further changes to {@code record}
+   * Does one last round of comparison between the (hopefully) deconflicted records.
    *
    * @since 3.next
    */
-  public Resolution resolve(final ODocument storedRecord, final ODocument record) {
+  protected ConflictState compare(final ODocument storedRecord, final ODocument changeRecord) {
     for (Entry<String, Object> property : storedRecord) {
-      if (!Objects.equals(property.getValue(), record.field(property.getKey()))) {
-        return Resolution.DENY;
+      Object changeValue = changeRecord.field(property.getKey());
+      if (!Objects.equals(property.getValue(), changeValue)) {
+        log.trace("Conflict detected in {}: {} vs {}", property.getKey(), property.getValue(), changeValue);
+        return DENY;
       }
     }
-    return Resolution.ALLOW;
+    return IGNORE; // identical content, update can be ignored or allowed
   }
 }
