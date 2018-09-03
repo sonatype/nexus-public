@@ -26,6 +26,7 @@ Ext.define('NX.coreui.controller.Search', {
     'NX.Conditions',
     'NX.Permissions',
     'NX.I18n',
+    'NX.State',
     'NX.coreui.util.BrowseableFormats'
   ],
   masters: [
@@ -346,6 +347,11 @@ Ext.define('NX.coreui.controller.Search', {
     });
 
     searchCriteriaStore.each(function(criteria) {
+      // skip tags entry if not running PRO
+      if (criteria.getId() === 'tags' && !me.isTaggingEnabled()) {
+        return;
+      }
+
       var addTo = addCriteriaMenu,
           group = criteria.get('group'),
           format = criteria.get('config').format;
@@ -383,6 +389,14 @@ Ext.define('NX.coreui.controller.Search', {
     });
 
     searchResultStore.load();
+  },
+
+  /**
+   * @private
+   * @returns {boolean} whether tagging feature is available
+   */
+  isTaggingEnabled: function() {
+    return NX.State.getUser() && NX.Permissions.check('nexus:tags:read') && ('PRO' === NX.State.getEdition());
   },
 
   /**

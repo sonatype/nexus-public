@@ -15,7 +15,9 @@ package org.sonatype.nexus.blobstore.file.internal;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.FileStore;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,6 +34,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -154,9 +157,10 @@ public class BlobStoreMetricsStoreImpl
 
   }
 
-  private long getAvailableSpace() {
+  private Map<String, Long> getAvailableSpace() {
     try {
-      return Files.getFileStore(storageDirectory).getUsableSpace();
+      FileStore fileStore = Files.getFileStore(storageDirectory);
+      return ImmutableMap.of("fileStore:" + fileStore.name(), fileStore.getUsableSpace());
     }
     catch (Exception e) {
       throw new RuntimeException(e);

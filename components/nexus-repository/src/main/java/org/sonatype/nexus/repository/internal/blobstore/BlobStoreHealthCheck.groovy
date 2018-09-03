@@ -17,47 +17,43 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 
 import com.codahale.metrics.health.HealthCheck
 import com.codahale.metrics.health.HealthCheck.Result
-import org.apache.commons.io.FileUtils
 
 import static com.google.common.base.Preconditions.checkNotNull
 
 /**
- * Inform on the health of all BlobStores based on available disk space and a given tolerance.
+ * Inform on the health of all BlobStores based on their configured soft quota.
  */
 @Named("BlobStores")
 @Singleton
 class BlobStoreHealthCheck
     extends HealthCheck
 {
-  // in bytes
-  private final long minimumAvailableSpace
-
   private final Provider<BlobStoreManager> blobStoreManagerProvider
 
+  private final Provider<BlobStoreQuotaService> quotaServiceProvider
+
   @Inject
-  BlobStoreHealthCheck(
-      @Named('${nexus.blobstore.healthcheck.minimumAvailableGB:-10}') final long minimumAvailableGB,
-      final Provider<BlobStoreManager> blobStoreManagerProvider)
+  BlobStoreHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider,
+                       final Provider<BlobStoreQuotaService> quotaServiceProvider)
   {
-    this.minimumAvailableSpace = FileUtils.ONE_GB * minimumAvailableGB  //convert GB parameter to bytes to ease check
     this.blobStoreManagerProvider = checkNotNull(blobStoreManagerProvider)
+    this.quotaServiceProvider = checkNotNull(quotaServiceProvider)
   }
 
   @Override
   protected Result check() throws Exception {
-    Collection<String> unhealthyBlobStores = blobStoreManagerProvider.get().browse().findAll { BlobStore blobStore ->
-      !blobStore.metrics.isUnlimited() && (blobStore.metrics.availableSpace < minimumAvailableSpace)
-    }.collect { BlobStore blobStore -> blobStore.blobStoreConfiguration.name }
-    
-    String displaySize = FileUtils.byteCountToDisplaySize(minimumAvailableSpace)
+    Collection<String> unhealthyBlobStores = blobStoreManagerProvider.get().browse()
+        .findAll { quotaServiceProvider.get().checkQuota(it)?.violation }
+        .collect { it.getBlobStoreConfiguration().getName() }
+
     String stores = unhealthyBlobStores.join(',')
     String message = "There are ${unhealthyBlobStores.size()}/${blobStoreManagerProvider.get().browse().size()} " +
-        "blob stores reporting less than $displaySize available. ${stores ? '(' + stores + ')' : ''}"
+        "blob stores violating their quota. ${stores ? 'Violating blob stores:(' + stores + ')' : ''}"
 
     Result healthCheckResult = unhealthyBlobStores ? Result.unhealthy(message) : Result.healthy(message)
     return healthCheckResult

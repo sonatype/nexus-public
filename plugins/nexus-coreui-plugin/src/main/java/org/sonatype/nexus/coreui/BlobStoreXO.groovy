@@ -29,6 +29,13 @@ class BlobStoreXO
   @NotEmpty
   String type
 
+  String isQuotaEnabled
+
+  String quotaType
+
+  @Range
+  long quotaLimit
+
   @NotEmpty
   Map<String, Map<String, Object>> attributes
 
@@ -45,6 +52,11 @@ class BlobStoreXO
   long repositoryUseCount
 
   boolean unlimited
+
+  @Range
+  long blobStoreUseCount
+
+  boolean inUse
 
   boolean promotable
 }

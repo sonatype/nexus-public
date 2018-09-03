@@ -126,6 +126,11 @@ public class BlobStoreGroupDescriptor
     return isEnabled;
   }
 
+  @Override
+  public boolean configHasDependencyOn(final BlobStoreConfiguration config, final String blobStoreName) {
+    return memberNames(config).contains(blobStoreName);
+  }
+
   private boolean containsBlobStore(final String blobStoreName, final String memberName, final Set<String> processedBlobStores) {
     if (processedBlobStores.contains(memberName)) {
       return false;

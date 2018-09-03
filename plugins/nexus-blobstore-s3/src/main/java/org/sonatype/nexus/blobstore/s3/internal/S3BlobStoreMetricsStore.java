@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -145,7 +147,9 @@ public class S3BlobStoreMetricsStore
   }
 
   private BlobStoreMetrics getCombinedMetrics(final Stream<S3PropertiesFile> blobStoreMetricsFiles) {
-    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, -1, true);
+    Map<String, Long> availableSpaceByFileStore = ImmutableMap.of("s3", Long.MAX_VALUE);
+    AccumulatingBlobStoreMetrics blobStoreMetrics = new AccumulatingBlobStoreMetrics(0, 0, availableSpaceByFileStore,
+        true);
 
     blobStoreMetricsFiles.forEach(metricsFile -> {
         try {

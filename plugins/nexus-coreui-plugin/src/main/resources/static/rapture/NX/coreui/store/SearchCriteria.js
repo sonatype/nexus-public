@@ -84,6 +84,13 @@ Ext.define('NX.coreui.store.SearchCriteria', {
       }
     },
     {
+      id: 'tags',
+      config: {
+        fieldLabel: NX.I18n.get('SearchCriteria_Tag_FieldLabel'),
+        width: 200
+      }
+    },
+    {
       id: 'assets.attributes.checksum.sha1',
       group: NX.I18n.get('SearchCriteria_Checksum_Group'),
       config: {

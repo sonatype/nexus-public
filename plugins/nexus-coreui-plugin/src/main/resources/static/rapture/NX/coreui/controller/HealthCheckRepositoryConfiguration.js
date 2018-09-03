@@ -44,12 +44,11 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryConfiguration', {
     me.listen({
       component: {
         'nx-coreui-repository-feature button[action=toggleHealthCheck]': {
-          afterrender: me.bindHealthCheckButton,
           click: me.toggleHealthCheck,
           show: me.updateLabel
         },
         'nx-coreui-repository-settings-form': {
-          recordloaded: me.updateLabel
+          recordloaded: me.updateHealthCheckButton
         }
       }
     });
@@ -85,44 +84,24 @@ Ext.define('NX.coreui.controller.HealthCheckRepositoryConfiguration', {
    *
    * @private
    */
-  bindHealthCheckButton: function () {
+  updateHealthCheckButton: function (e, model) {
     var me = this,
-        button = me.getButton(),
-        permittedCondition;
-    button.mon(
-        NX.Conditions.and(
-            permittedCondition = NX.Conditions.isPermitted('nexus:repository-admin:*:*:edit'),
-            NX.Conditions.formHasRecord('nx-coreui-repository-settings-form', function (model) {
-              permittedCondition.setPermission(
-                  'nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':edit'
-              );
-              return true;
-            })
-        ),
-        {
-          satisfied: function() {
-            button.enable();
-          },
-          unsatisfied: function() {
-            button.disable();
-          }
-        }
-    );
-    button.mon(
-        NX.Conditions.formHasRecord('nx-coreui-repository-settings-form', function (model) {
-          if (model.get('format') === 'maven2' && model.get('attributes').maven.versionPolicy !== 'RELEASE') {
-            return false;
-          }
-          else {
-            return model.get('type') === 'proxy';
-          }
-        }),
-        {
-          satisfied: button.show,
-          unsatisfied: button.hide,
-          scope: button
-        }
-    );
+        button = me.getButton();
+
+    if (model.get('type') !== 'proxy' || model.get('format') === 'maven2'
+            && model.get('attributes').maven.versionPolicy !== 'RELEASE') {
+      button.hide();
+      return;
+    }
+    button.show();
+
+    if (NX.Permissions.check('nexus:repository-admin:' + model.get('format') + ':' + model.get('name') + ':edit')) {
+      button.enable();
+    }
+    else {
+      button.disable();
+    }
+    me.updateLabel();
   },
 
   /**

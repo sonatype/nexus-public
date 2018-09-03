@@ -139,6 +139,64 @@ Ext.define('NX.view.SettingsForm', {
   },
 
   /**
+   * Sets the read only state for all items passed in
+   *
+   * @public
+   * @param {boolean} editable
+   * @param itemsToModify
+   */
+  setItemsEditable: function (isEditable, itemsToModify) {
+    if (isEditable) {
+          Ext.Array.each(itemsToModify, function (item) {
+            var enable = true,
+                form;
+
+            if (item.resetEditable) {
+              if (Ext.isFunction(item.setReadOnly)) {
+                item.setReadOnly(false);
+              }
+              else {
+                if (Ext.isDefined(item.resetFormBind)) {
+                  item.formBind = item.resetFormBind;
+                }
+                if (item.formBind) {
+                  form = item.up('form');
+                  if (form && !form.isValid()) {
+                    enable = false;
+                  }
+                }
+                if (enable) {
+                  item.enable();
+                }
+              }
+            }
+            if (Ext.isDefined(item.resetEditable)) {
+              delete item.resetEditable;
+              delete item.resetFormBind;
+            }
+          });
+        }
+        else {
+          Ext.Array.each(itemsToModify, function (item) {
+            if (Ext.isFunction(item.setReadOnly)) {
+              if (item.resetEditable !== false && !item.readOnly) {
+                item.setReadOnly(true);
+                item.resetEditable = true;
+              }
+            }
+            else {
+              if (item.resetEditable !== false) {
+                item.disable();
+                item.resetFormBind = item.formBind;
+                delete item.formBind;
+                item.resetEditable = true;
+              }
+            }
+          });
+        }
+    },
+
+  /**
    * Sets the read only state for all fields of this form.
    *
    * @public
@@ -157,54 +215,7 @@ Ext.define('NX.view.SettingsForm', {
       return item.xtype !== 'nx-coreui-formfield-settingsfieldset';
     });
 
-    if (editable) {
-      Ext.Array.each(itemsToDisable, function (item) {
-        var enable = true,
-            form;
-
-        if (item.resetEditable) {
-          if (Ext.isFunction(item.setReadOnly)) {
-            item.setReadOnly(false);
-          }
-          else {
-            if (Ext.isDefined(item.resetFormBind)) {
-              item.formBind = item.resetFormBind;
-            }
-            if (item.formBind) {
-              form = item.up('form');
-              if (form && !form.isValid()) {
-                enable = false;
-              }
-            }
-            if (enable) {
-              item.enable();
-            }
-          }
-        }
-        if (Ext.isDefined(item.resetEditable)) {
-          delete item.resetEditable;
-          delete item.resetFormBind;
-        }
-      });
-    }
-    else {
-      Ext.Array.each(itemsToDisable, function (item) {
-        if (Ext.isFunction(item.setReadOnly)) {
-          if (item.resetEditable !== false && !item.readOnly) {
-            item.setReadOnly(true);
-            item.resetEditable = true;
-          }
-        }
-        else {
-          if (item.resetEditable !== false) {
-            item.disable();
-            item.resetFormBind = item.formBind;
-            delete item.formBind;
-            item.resetEditable = true;
-          }
-        }
-      });
-    }
+    me.setItemsEditable(editable, itemsToDisable);
 
     bottomBar = me.getDockedItems('toolbar[dock="bottom"]')[0];
     if (bottomBar) {

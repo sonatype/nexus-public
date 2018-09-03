@@ -64,6 +64,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
               change: function(radio) {
                 var indexUrl = radio.up('form').down('#indexUrl');
                 if (radio.getValue()) {
+                  me.deselectDefaultOption(radio);
                   indexUrl.setValue('https://index.docker.io/');
                   indexUrl.setDisabled(true);
                   indexUrl.setVisible(true);
@@ -80,6 +81,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
               change: function(radio) {
                 var indexUrl = radio.up('form').down('#indexUrl');
                 if (radio.getValue()) {
+                  me.deselectDefaultOption(radio);
                   indexUrl.setDisabled(false);
                   indexUrl.setVisible(true);
                 }
@@ -110,6 +112,15 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
     ];
 
     me.callParent();
+  },
+
+  deselectDefaultOption: function(radio) {
+    var indexTypeRegistryRadio = radio.up('form').down('#indexTypeRegistry');
+    if (indexTypeRegistryRadio.getValue()) {
+      //this is working around an apparent bug in ext where 2 radiobuttons from same group are being
+      //selected apparently because we have the 'checked' property set on one of them
+      indexTypeRegistryRadio.setValue(false);
+    }
   }
 
 });

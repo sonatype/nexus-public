@@ -115,6 +115,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchCriteria_Keyword_FieldLabel: 'Keyword',
     SearchCriteria_RepositoryName_FieldLabel: 'Repository Name',
     SearchCriteria_Name_FieldLabel: 'Name',
+    SearchCriteria_Tag_FieldLabel: 'Tag',
     SearchCriteria_Format_FieldLabel: 'Format',
     SearchCriteria_Group_FieldLabel: 'Group',
     SearchCriteria_Checksum_Group: 'Checksum',
@@ -431,7 +432,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreList_Filter_EmptyText: 'No blob stores matched "$filter"',
     Blobstore_BlobstoreList_EmptyText: 'No blob stores defined',
     Blobstore_BlobstoreFeature_Delete_Button: 'Delete blob store',
-    Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and cannot be deleted',
+    Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and {1} and cannot be deleted',
     Blobstore_BlobstoreFeature_Promote_Button: 'Promote to group',
     Blobstore_BlobstoreFeature_Promote_Success: 'Blob store: {0} promoted to blob store group',
     Blobstore_BlobstoreSettings_Title: 'Settings',
@@ -439,6 +440,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',
     Blobstore_BlobstoreSettingsForm_Name_FieldLabel: 'Name',
     Blobstore_BlobstoreSettingsForm_Path_FieldLabel: 'Path',
+    Blobstore_BlobstoreSettingsForm_EnableSoftQuota_FieldLabel: 'Enable Soft Quota',
+    Blobstore_BlobstoreSettingsForm_SoftQuota_HelpText: 'A soft quota provides warnings when a limit is violated.  It never causes an operation to be rejected',
+    Blobstore_BlobstoreSettingsForm_QuotaType_FieldLabel: 'Type of Quota',
+    Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel: 'Quota Limit in MB',
 
     // Admin -> Repository -> Selectors
     Selectors_Text: 'Content Selectors',

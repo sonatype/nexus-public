@@ -39,7 +39,9 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextAreaFactory', {
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,
       allowBlank: !formField.required,
-      regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null
+      regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null,
+      grow: true,
+      growMax: 320
     };
     if (formField.initialValue) {
       item.value = formField.initialValue;

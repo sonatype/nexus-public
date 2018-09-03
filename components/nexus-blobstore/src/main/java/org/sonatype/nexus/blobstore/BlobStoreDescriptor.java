@@ -63,4 +63,13 @@ public interface BlobStoreDescriptor
   default boolean isEnabled() {
     return true;
   }
+
+  /**
+   * @return true if the configuration has a dependency on another blobstore with the given name
+   *
+   * @since 3.next
+   */
+  default boolean configHasDependencyOn(BlobStoreConfiguration config, String blobStoreName) {
+    return false;
+  }
 }

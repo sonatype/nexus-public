@@ -23,12 +23,17 @@ Ext.define('NX.coreui.model.Blobstore', {
   fields: [
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
+    {name: 'isQuotaEnabled', type:'boolean' },
+    {name: 'quotaType', type:'string' },
+    {name: 'quotaLimit', type:'int' },
     {name: 'attributes', type: 'auto' /*object*/, defaultValue: null },
     {name: 'blobCount', type: 'int'},
     {name: 'totalSize', type: 'int'},
     {name: 'availableSpace', type: 'int'},
     {name: 'unlimited', type: 'boolean'},
     {name: 'repositoryUseCount', type: 'int'},
+    {name: 'blobStoreUseCount', type: 'int'},
+    {name: 'inUse', type: 'boolean'},
     {name: 'promotable', type: 'boolean'}
   ]
 });

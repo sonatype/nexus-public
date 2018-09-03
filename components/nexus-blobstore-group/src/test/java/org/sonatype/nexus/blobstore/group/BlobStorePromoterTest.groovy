@@ -47,7 +47,7 @@ class BlobStorePromoterTest
 
     then: 'blobStoreManager is called correctly'
       1 * from.getBlobStoreConfiguration() >> fromConfig
-      1 * blobStoreManager.delete('test')
+      1 * blobStoreManager.forceDelete('test')
       1 * blobStoreManager.create(fromConfig)
       1 * blobStoreManager.create({ it.name == 'test' &&
           it.type == BlobStoreGroup.TYPE &&
@@ -77,7 +77,7 @@ class BlobStorePromoterTest
 
     then: 'blobStoreManager fails to delete original'
       1 * from.getBlobStoreConfiguration() >> fromConfig
-      1 * blobStoreManager.delete('test') >> { String ignored ->
+      1 * blobStoreManager.forceDelete('test') >> { String ignored ->
         throw new BlobStoreException('testing failure', null)
       }
 
@@ -99,7 +99,7 @@ class BlobStorePromoterTest
 
     then: 'blobStoreManager fails to create file blob store with new name, based on original configuration'
       1 * from.getBlobStoreConfiguration() >> fromConfig
-      1 * blobStoreManager.delete('test')
+      1 * blobStoreManager.forceDelete('test')
       1 * blobStoreManager.create(fromConfig) >> { BlobStoreConfiguration ignored ->
         throw new RuntimeException('testing failure')
       }
@@ -124,12 +124,12 @@ class BlobStorePromoterTest
     then: 'blobStoreManager fails to create file blob store with new name, based on original configuration'
       1 * from.getBlobStoreConfiguration() >> fromConfig
 
-      1 * blobStoreManager.delete('test')
+      1 * blobStoreManager.forceDelete('test')
       1 * blobStoreManager.create(fromConfig)
       1 * blobStoreManager.create(_ as BlobStoreConfiguration) >> { BlobStoreConfiguration ignored ->
         throw new RuntimeException('testing failure')
       }
-      1 * blobStoreManager.delete('test-promoted')
+      1 * blobStoreManager.forceDelete('test-promoted')
       1 * blobStoreManager.create({ it.name == 'test' && it.type == FileBlobStore.TYPE })
 
     and: 'wrapped exception is thrown'

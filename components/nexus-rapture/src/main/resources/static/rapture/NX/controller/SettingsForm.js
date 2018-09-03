@@ -106,6 +106,8 @@ Ext.define('NX.controller.SettingsForm', {
         form.isValid();
       }
     }
+
+    this.updateButtonState(form.getForm());
   },
 
   /**

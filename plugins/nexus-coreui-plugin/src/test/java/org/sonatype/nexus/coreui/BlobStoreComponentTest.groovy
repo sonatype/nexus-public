@@ -48,7 +48,7 @@ class BlobStoreComponentTest
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
-      blobStoreComponent.blobstoreDescriptors =
+      blobStoreComponent.blobStoreDescriptors =
           [MyType: [getName: { -> 'MyType' }, getFormFields: { -> []}] as BlobStoreDescriptor]
 
     when: 'Reading blobstore types'
@@ -61,9 +61,11 @@ class BlobStoreComponentTest
   def 'Create blobstore creates and returns new blobstore'() {
     given: 'A blobstore create request'
       BlobStoreXO blobStoreXO = new BlobStoreXO(name: 'myblobs', type: 'File',
+          isQuotaEnabled: true, quotaType: 'spaceUsedQuota', quotaLimit: 10L,
           attributes: [file: [path: 'path/to/blobs/myblobs']])
       BlobStoreConfiguration expectedConfig = new BlobStoreConfiguration(name: 'myblobs', type: 'File',
-         attributes: [file: [path: 'path/to/blobs/myblobs']])
+          attributes: [file: [path: 'path/to/blobs/myblobs'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota',
+                                                                                     quotaLimit: 10L]])
       BlobStore blobStore = Mock()
 
     when: 'The blobstore is created'

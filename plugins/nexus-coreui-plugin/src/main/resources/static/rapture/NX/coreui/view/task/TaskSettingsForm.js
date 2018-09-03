@@ -116,14 +116,25 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     var me = this,
         taskTypeModel = NX.getApplication().getStore('TaskType').getById(model.get('typeId')),
         settingsFieldSet = me.down('nx-coreui-formfield-settingsfieldset'),
-        scheduleFieldSet = me.down('nx-coreui-task-schedulefieldset');
+        scheduleFieldSet = me.down('nx-coreui-task-schedulefieldset'),
+        formFields;
 
     this.callParent(arguments);
 
     this.resetTaskForm();
 
     if (taskTypeModel) {
-      settingsFieldSet.importProperties(model.get('properties'), taskTypeModel.get('formFields'));
+      formFields = taskTypeModel.get('formFields');
+
+      Ext.each(formFields, function(field) {
+        var properties = model.get('properties');
+        if (properties && !properties.hasOwnProperty(field.id)) {
+          properties[field.id] = null;
+          model.set('properties', properties, { dirty: false });
+        }
+      });
+
+      settingsFieldSet.importProperties(model.get('properties'), formFields);
       scheduleFieldSet.setRecurringDays(model.get('recurringDays'));
       scheduleFieldSet.setStartDate(model.get('startDate'));
     }

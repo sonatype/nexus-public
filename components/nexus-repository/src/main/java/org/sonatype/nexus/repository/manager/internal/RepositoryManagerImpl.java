@@ -438,7 +438,8 @@ public class RepositoryManagerImpl
 
   @Override
   public boolean isBlobstoreUsed(final String blobStoreName) {
-    return blobstoreUsageStream(blobStoreName).findAny().isPresent();
+    return blobstoreUsageStream(blobStoreName).findAny().isPresent() ||
+        blobStoreManager.blobStoreUsageCount(blobStoreName) > 0;
   }
 
   @Override

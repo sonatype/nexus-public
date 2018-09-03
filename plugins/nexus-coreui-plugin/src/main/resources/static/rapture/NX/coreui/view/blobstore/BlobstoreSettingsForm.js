@@ -76,6 +76,42 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         readOnly: true
       },
       {
+        xtype: 'checkbox',
+        name: 'isQuotaEnabled',
+        itemId: 'isQuotaEnabled',
+        boxLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_EnableSoftQuota_FieldLabel'),
+        listeners: {
+          change: function(checkbox, newValue) {
+            var quotaTypeField = me.down('#quotaType');
+            quotaTypeField.setVisible(newValue);
+            var quotaLimitField = me.down('#quotaLimit');
+            quotaLimitField.setVisible(newValue);
+          }
+        }
+      },
+      {
+        xtype: 'combo',
+        name: 'quotaType',
+        itemId: 'quotaType',
+        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_QuotaType_FieldLabel'),
+        editable: false,
+        store: 'BlobStoreQuotaType',
+        queryMode: 'local',
+        displayField: 'name',
+        valueField: 'id',
+        allowBlank: true
+      },
+      {
+        xtype: 'numberfield',
+        name: 'quotaLimit',
+        itemId: 'quotaLimit',
+        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel'),
+        minValue: 0,
+        allowDecimals: false,
+        allowExponential: true,
+        allowBlank: true
+      },
+      {
         xtype: 'nx-coreui-formfield-settingsfieldset',
         delimiter: null,
         disableSort: true
@@ -83,6 +119,14 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     ];
 
     me.callParent();
+
+    var isQuotaEnabledField = me.down('#isQuotaEnabled');
+
+    var quotaTypeField = me.down('#quotaType');
+    quotaTypeField.setVisible(isQuotaEnabledField !== null && isQuotaEnabledField.value);
+
+    var quotaLimitField = me.down('#quotaLimit');
+    quotaLimitField.setVisible(isQuotaEnabledField !== null && isQuotaEnabledField.value);
 
     //map repository attributes raw map structure to/from a flattened representation
     Ext.override(me.getForm(), {
@@ -104,5 +148,25 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         this.callParent(arguments);
       }
     });
+  },
+
+  setEditable: function(editable) {
+    var me = this;
+
+    if (editable || !NX.Permissions.check('nexus:blobstores:update')) {
+      me.callParent(arguments);
+    }
+    else {
+      //if we have edit permissions BUT the blobstore doesn't support editing, we still need to be able to modify the quota's values
+      //first set the overall form to be editable so buttons and the like are correct.
+      me.callParent([true]);
+
+      //then grab all of the dynamically generated fields and make them non-editable
+      var itemsToDisable = me.getChildItemsToDisable().filter(function(item) {
+        return item.ownerCt.xtype === 'nx-coreui-formfield-settingsfieldset';
+      });
+
+      me.setItemsEditable(false, itemsToDisable);
+    }
   }
 });

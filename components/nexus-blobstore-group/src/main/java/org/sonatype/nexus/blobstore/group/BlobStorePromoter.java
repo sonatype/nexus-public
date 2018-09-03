@@ -72,7 +72,7 @@ public class BlobStorePromoter
     fromConf.setName(fromNewName);
 
     try {
-      blobStoreManager.delete(fromOldName); // does not delete data
+      blobStoreManager.forceDelete(fromOldName); // does not delete data
     }
     catch (Exception e) {
       throw new BlobStoreException(
@@ -103,7 +103,7 @@ public class BlobStorePromoter
     }
     catch (Exception e) {
       try {
-        blobStoreManager.delete(fromNewName);
+        blobStoreManager.forceDelete(fromNewName);
       }
       catch (Exception inner) {
         log.error("during promotion to group, existing blob: {} store was removed, but the creation of the new" +

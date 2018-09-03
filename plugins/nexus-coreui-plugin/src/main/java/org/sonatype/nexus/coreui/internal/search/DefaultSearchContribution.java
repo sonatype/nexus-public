@@ -32,7 +32,7 @@ public class DefaultSearchContribution
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      query.must(QueryBuilders.queryStringQuery(value).field(type));
+      query.must(QueryBuilders.queryStringQuery(value).field(type).lowercaseExpandedTerms(false));
     }
   }
 

@@ -167,6 +167,9 @@ Ext.define('NX.app.Application', {
     },
     bundleActive: function (symbolicName) {
       return NX.State.getValue('activeBundles').indexOf(symbolicName) > -1;
+    },
+    capabilityActive: function (typeName) {
+      return NX.State.getValue('activeCapabilities').indexOf(typeName) > -1;
     }
   },
 

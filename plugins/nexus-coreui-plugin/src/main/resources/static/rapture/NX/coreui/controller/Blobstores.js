@@ -33,7 +33,8 @@ Ext.define('NX.coreui.controller.Blobstores', {
   ],
   stores: [
     'Blobstore',
-    'BlobstoreType'
+    'BlobstoreType',
+    'BlobStoreQuotaType'
   ],
   views: [
     'blobstore.BlobstoreAdd',
@@ -166,10 +167,13 @@ Ext.define('NX.coreui.controller.Blobstores', {
           model = blobstoreId ? store.findRecord('name', blobstoreId, 0, false, true, true) : undefined;
 
       if (model) {
-        var repositoryUseCount = model.get('repositoryUseCount');
-        if (repositoryUseCount > 0) {
+        var inUse = model.get('inUse');
+        if (inUse) {
+          var repositoryUseCount = model.get('repositoryUseCount');
+          var blobStoreUseCount = model.get('blobStoreUseCount');
           me.showInfo(NX.I18n.format('Blobstore_BlobstoreFeature_Delete_Disabled_Message',
-              Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories')));
+                     Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories'),
+                     Ext.util.Format.plural(blobStoreUseCount, 'other blob store', 'other blob stores')));
           return false;
         }
 
@@ -201,6 +205,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
 
     if (list) {
       me.getStore('BlobstoreType').load();
+      me.getStore('BlobStoreQuotaType').load();
     }
   },
 

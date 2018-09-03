@@ -25,6 +25,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.group.BlobStorePromoter
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuota
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -50,11 +52,16 @@ import org.hibernate.validator.constraints.NotEmpty
 class BlobStoreComponent
     extends DirectComponentSupport
 {
+  private static final long MILLION = 1_000_000
+
   @Inject
   BlobStoreManager blobStoreManager
 
   @Inject
-  Map<String, BlobStoreDescriptor> blobstoreDescriptors
+  Map<String, BlobStoreDescriptor> blobStoreDescriptors
+
+  @Inject
+  Map<String, BlobStoreQuota> quotaFactories
 
   @Inject
   ApplicationDirectories applicationDirectories
@@ -70,7 +77,7 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> read() {
-    blobStoreManager.browse().collect { asBlobStore(it) }
+    blobStoreManager.browse().collect { asBlobStoreXO(it) }
   }
 
   @DirectMethod
@@ -78,7 +85,7 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    blobstoreDescriptors.findAll { key, descriptor ->
+    blobStoreDescriptors.findAll { key, descriptor ->
       descriptor.enabled
     }.collect { key, descriptor ->
       new BlobStoreTypeXO(
@@ -93,16 +100,18 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
+  List<BlobStoreQuotaTypeXO> readQuotaTypes() {
+    quotaFactories.collect { key, value -> new BlobStoreQuotaTypeXO(id: key, name: value.displayName) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:create')
   @Validate(groups = [Create, Default])
   BlobStoreXO create(final @NotNull @Valid BlobStoreXO blobStore) {
-    return asBlobStore(blobStoreManager.create(
-        new BlobStoreConfiguration(
-            name: blobStore.name,
-            type: blobStore.type,
-            attributes: blobStore.attributes
-        )
-    ))
+    return asBlobStoreXO(blobStoreManager.create(asConfiguration(blobStore)))
   }
 
   @DirectMethod
@@ -111,13 +120,7 @@ class BlobStoreComponent
   @RequiresPermissions('nexus:blobstores:update')
   @Validate(groups = [Update, Default])
   BlobStoreXO update(final @NotNull @Valid BlobStoreXO blobStore) {
-    return asBlobStore(blobStoreManager.update(
-        new BlobStoreConfiguration(
-            name: blobStore.name,
-            type: blobStore.type,
-            attributes: blobStore.attributes
-        )
-    ))
+    return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStore)))
   }
 
   @DirectMethod
@@ -143,7 +146,29 @@ class BlobStoreComponent
     )
   }
 
-  BlobStoreXO asBlobStore(final BlobStore blobStore) {
+  static BlobStoreConfiguration asConfiguration(final BlobStoreXO blobStoreXO) {
+    if (checkBoxMapping(blobStoreXO.isQuotaEnabled)) {
+      Map quotaAttributes = new HashMap<String, Object>()
+      quotaAttributes.put(BlobStoreQuotaSupport.TYPE_KEY, blobStoreXO.quotaType)
+      quotaAttributes.put(BlobStoreQuotaSupport.LIMIT_KEY, blobStoreXO.quotaLimit * MILLION)
+      blobStoreXO.attributes.put(BlobStoreQuotaSupport.ROOT_KEY, quotaAttributes)
+    }
+
+    new BlobStoreConfiguration(
+        name: blobStoreXO.name,
+        type: blobStoreXO.type,
+        attributes: blobStoreXO.attributes
+    )
+  }
+
+  private static boolean checkBoxMapping(final String value) {
+    return value != null && ('true'.equalsIgnoreCase(value) ||
+    'on'.equalsIgnoreCase(value)  || '1'.equalsIgnoreCase(value))
+  }
+
+  BlobStoreXO asBlobStoreXO(final BlobStore blobStore) {
+    Map quotaAttributes = blobStore.getBlobStoreConfiguration().attributes.get(BlobStoreQuotaSupport.ROOT_KEY)
+
     return new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,
@@ -153,7 +178,12 @@ class BlobStoreComponent
         availableSpace: blobStore.metrics.availableSpace,
         unlimited: blobStore.metrics.unlimited,
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
-        promotable: blobStore.promotable
+        blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
+        inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
+        promotable: blobStore.promotable,
+        isQuotaEnabled: quotaAttributes != null,
+        quotaType: quotaAttributes?.get(BlobStoreQuotaSupport.TYPE_KEY),
+        quotaLimit: (Long) (quotaAttributes?.getOrDefault(BlobStoreQuotaSupport.LIMIT_KEY, 0L) ?: 0L) / MILLION
     )
   }
 
@@ -165,7 +195,7 @@ class BlobStoreComponent
   BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
     BlobStore from = blobStoreManager.get(fromName)
     if (from.promotable) {
-      return asBlobStore(blobStorePromoter.promote(from))
+      return asBlobStoreXO(blobStorePromoter.promote(from))
     }
     throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)
   }

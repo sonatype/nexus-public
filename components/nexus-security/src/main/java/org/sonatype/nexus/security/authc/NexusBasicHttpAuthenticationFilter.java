@@ -79,7 +79,8 @@ public class NexusBasicHttpAuthenticationFilter
   public boolean onPreHandle(final ServletRequest request, final ServletResponse response, final Object mappedValue)
       throws Exception
   {
-    // Basic auth should never create sessions
+    // Basic auth should never create sessions; we do not want session overhead for non-user clients that supply
+    // credentials
     request.setAttribute(DefaultSubjectContext.SESSION_CREATION_ENABLED, Boolean.FALSE);
 
     return super.onPreHandle(request, response, mappedValue);

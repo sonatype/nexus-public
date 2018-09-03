@@ -25,7 +25,9 @@ Ext.define('NX.controller.User', {
     'NX.State',
     'NX.I18n',
     'NX.view.header.Mode',
-    'NX.util.Window'
+    'NX.util.Window',
+    'Ext.Deferred',
+    'Ext.Array'
   ],
 
   views: [
@@ -83,10 +85,10 @@ Ext.define('NX.controller.User', {
           afterrender: me.manageButtons
         },
         'nx-header-signin': {
-          click: me.showSignInWindow
+          click: me.askToAuthenticate
         },
         'nx-expire-session button[action=signin]': {
-          click: me.showSignInWindow
+          click: me.askToAuthenticate
         },
         'nx-header-signout': {
           click: me.onClickSignOut
@@ -133,36 +135,98 @@ Ext.define('NX.controller.User', {
   },
 
   /**
-   * Shows sign-in or authentication window based on the fact that we have an user or not.
+   * Requests authentication of the user with the {@code authRequest} event. If no listeners are registered or none
+   * perform authentication {@code showSignInWindow} will be called.
    *
-   * @public
-   * @param {String} [message] Message to be shown in authentication window
-   * @param {Object} [options] TODO
+   * The {@code authRequest} event is sent with an array argument; listeners are expected to push a
+   * {@code Ext.Deferred} that is resolved when the listener has completed its attempt at authentication; the deferred
+   * objects are expected to resolve with the authenticated user object if they handled authentication, or null
+   * otherwise. If any handlers fails via {@code Ext.Deferred.reject} the default path of showing the sign-in window
+   * will occur.
+   *
+   * If no user is found after all listeners deferred operations are complete the sign in window will be shown.
+   *
+   * @param message
+   * @param options
    */
   askToAuthenticate: function (message, options) {
-    var me = this;
+    var me = this,
+        authedUser = null,
+        currentUser = NX.State.getUser(),
+        handlers = [];
 
-    if (me.hasUser()) {
-      me.showAuthenticateWindow(message, Ext.apply(options || {}, {authenticateAction: me.authenticate}));
-    }
-    else {
-      me.showSignInWindow(options);
-    }
+    me.fireEvent('authRequest', handlers);
+
+    Ext.Deferred.all(handlers).then(function(authedUsers) {
+      if (Ext.isArray(authedUsers)) {
+        // take the first authenticated user
+        authedUser = Ext.Array.findBy(authedUsers, function(item) {
+          return Ext.isObject(item);
+        });
+      }
+    }, function() {
+      // one of the handlers finished via reject; assume new sign-in
+      currentUser = null;
+      authedUser = null;
+    }).always(function() {
+      if (authedUser) {
+        NX.State.setUser(authedUser);
+      }
+      else if (currentUser) {
+        me.showAuthenticateWindow(message, Ext.apply(options || {}, {authenticateAction: me.authenticate}),
+            currentUser);
+      }
+      else {
+        me.showSignInWindow(options);
+      }
+    });
   },
 
   /**
-   * Shows authentication window in order to retrieve an authentication token.
+   * Begins the process of retrieving an authentication token that will be used for a subsequent action. The auth token
+   * is requested thru the {@code authTokenRequest} event; if no listeners provide a token the user will be prompted
+   * for their credentials in order to obtain one.
+   *
+   * The {@code authTokenRequest} event is sent with an array argument and string argument:
+   *    - array: listeners are expected to push a {@code Ext.Deferred} that is resolved with a token or null once
+   *        completed. If a listener fails via {@code Ext.Deferred.reject} this will be treated as cancelling the
+   *        action.
+   *    - string: the message that would be shown in the authentication window
    *
    * @public
    * @param {String} [message] Message to be shown in authentication window
    * @param {Object} [options] TODO
    */
   doWithAuthenticationToken: function (message, options) {
-    var me = this;
+    var me = this,
+        token = null,
+        handlers = [];
 
-    me.showAuthenticateWindow(message,
-        Ext.apply(options || {}, {authenticateAction: me.retrieveAuthenticationToken})
-    );
+    me.fireEvent('authTokenRequest', handlers, message);
+
+    Ext.Deferred.all(handlers).then(function(tokens) {
+      if (Ext.isArray(tokens)) {
+        // take the first defined token
+        token = Ext.Array.findBy(tokens, function(item) {
+          return !!item;
+        });
+      }
+    }, function() {
+      token = 'cancel';
+    }).always(function() {
+      if (token !== 'cancel') {
+        if (!token) {
+          me.showAuthenticateWindow(message,
+              Ext.apply(options || {}, {authenticateAction: me.retrieveAuthenticationToken})
+          );
+        }
+        else {
+          if (Ext.isFunction(options.success)) {
+            options.success.call(options.scope, token, options);
+          }
+        }
+      }
+    });
   },
 
   /**
@@ -185,16 +249,17 @@ Ext.define('NX.controller.User', {
    * @private
    * @param {String} [message] Message to be shown in authentication window
    * @param {Object} [options] TODO
+   * @param {Object} [user] Optional user object that represents the current user
    */
-  showAuthenticateWindow: function (message, options) {
+  showAuthenticateWindow: function (message, options, user) {
     var me = this,
-        user = NX.State.getUser(),
+        username = user ? user.id : (NX.State.getUser().id || null),
         win;
 
     if (!me.getAuthenticate()) {
       win = me.getAuthenticateView().create({message: message, options: options});
-      if (me.hasUser()) {
-        win.down('form').getForm().setValues({username: user.id});
+      if (username) {
+        win.down('form').getForm().setValues({username: username});
         win.down('#password').focus();
       }
     }

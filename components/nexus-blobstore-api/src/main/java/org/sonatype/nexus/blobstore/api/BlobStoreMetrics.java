@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.util.Map;
+
 /**
  * Provides a snapshot of usage metrics for a blob-store.
  *
@@ -31,8 +33,8 @@ public interface BlobStoreMetrics
   long getTotalSize();
 
   /**
-   * An estimate of the remaining space available in the blob store, in bytes. For certain blob stores like S3, this
-   * may return a value set by a policy rather than some hard storage limit.
+   * An estimate of the remaining space available in the blob store, in bytes.  Return {@link Long#MAX_VALUE} if the
+   * available space can't be estimated or is not limited.
    */
   long getAvailableSpace();
 
@@ -40,4 +42,12 @@ public interface BlobStoreMetrics
    * Boolean flag indicating whether or not this blob store has an unlimited amount of space (S3 for example).
    */
   boolean isUnlimited();
+
+  /**
+   * An estimate of the remaining space available in the blob store, in bytes, for each file store the blob store spans.
+   * The map keys are implementation defined and should uniquely identify the file store.
+   *
+   * @since 3.next
+   */
+  Map<String, Long> getAvailableSpaceByFileStore();
 }

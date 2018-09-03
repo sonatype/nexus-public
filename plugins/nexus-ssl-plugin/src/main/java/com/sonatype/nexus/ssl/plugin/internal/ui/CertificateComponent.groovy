@@ -12,6 +12,8 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.ui
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication
+
 import java.security.cert.Certificate
 
 import javax.annotation.Nullable
@@ -66,6 +68,7 @@ extends DirectComponentSupport
   @Timed
   @ExceptionMetered
   @Validate
+  @RequiresAuthentication
   CertificateXO retrieveFromHost(final @NotEmpty String host,
                                  final @Nullable Integer port,
                                  final @Nullable String protocolHint)
@@ -97,6 +100,7 @@ extends DirectComponentSupport
   @Timed
   @ExceptionMetered
   @Validate
+  @RequiresAuthentication
   CertificateXO details(final @NotBlank @PemCertificate String pem) {
     Certificate certificate = decodePEMFormattedCertificate(pem)
     return asCertificateXO(certificate, isInTrustStore(certificate))

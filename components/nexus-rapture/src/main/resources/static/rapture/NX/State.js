@@ -201,6 +201,10 @@ Ext.define('NX.State', {
     this.controller().setValues(values);
   },
 
+  refreshNow: function() {
+    this.controller().refreshNow();
+  },
+
   /**
    * @private
    * @returns {NX.controller.State}

@@ -37,6 +37,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -73,12 +74,15 @@ public class BlobStoreManagerImpl
 
   private final BooleanSupplier provisionDefaults;
 
+  private final Provider<RepositoryManager> repositoryManagerProvider;
+
   @Inject
-  public BlobStoreManagerImpl(final EventManager eventManager,
+  public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
                               final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
                               final Map<String, Provider<BlobStore>> blobStorePrototypes,
                               final DatabaseFreezeService databaseFreezeService,
+                              final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
   {
@@ -87,6 +91,7 @@ public class BlobStoreManagerImpl
     this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -214,6 +219,18 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
+    if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
+      forceDelete(name);
+    }
+    else {
+      throw new IllegalStateException("BlobStore " + name + " is in use and cannot be deleted");
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void forceDelete(final String name) throws Exception {
+    checkNotNull(name);
     databaseFreezeService.checkUnfrozen("Unable to delete a BlobStore while database is frozen.");
 
     BlobStore blobStore = blobStore(name);
@@ -222,7 +239,6 @@ public class BlobStoreManagerImpl
     blobStore.remove();
     untrack(name);
     store.delete(blobStore.getBlobStoreConfiguration());
-
     eventManager.post(new BlobStoreDeletedEvent(blobStore));
   }
 
@@ -244,7 +260,8 @@ public class BlobStoreManagerImpl
     return blobStore;
   }
 
-  private void track(final String name, final BlobStore blobStore) {
+  @VisibleForTesting
+  void track(final String name, final BlobStore blobStore) {
     log.debug("Tracking: {}", name);
     stores.put(name, blobStore);
   }
@@ -321,5 +338,18 @@ public class BlobStoreManagerImpl
     if (!event.isLocal()) {
       consumer.accept(event);
     }
+  }
+
+  @Override
+  public long blobStoreUsageCount(final String blobStoreName) {
+    long count = 0;
+    for (BlobStore otherBlobStore : stores.values()) {
+      BlobStoreConfiguration otherBlobStoreConfig = otherBlobStore.getBlobStoreConfiguration();
+      BlobStoreDescriptor otherBlobStoreDescriptor = blobStoreDescriptors.get(otherBlobStoreConfig.getType());
+      if (otherBlobStoreDescriptor.configHasDependencyOn(otherBlobStoreConfig, blobStoreName)) {
+        count += 1;
+      }
+    }
+    return count;
   }
 }

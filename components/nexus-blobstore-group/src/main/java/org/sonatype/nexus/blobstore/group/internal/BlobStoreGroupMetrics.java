@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.blobstore.group.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.common.math.Math2;
 
 import static java.lang.Math.addExact;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * An implementation of {@link BlobStoreMetrics} that combines metrics
@@ -29,26 +34,26 @@ public class BlobStoreGroupMetrics
 
   private final long totalSize;
 
-  private final long availableSpace;
+  private final Map<String, Long> availableSpaceByFileStore;
 
   private final boolean unlimited;
 
   public BlobStoreGroupMetrics(final Iterable<BlobStoreMetrics> membersMetrics) {
-    long aggregatedBlobCount = 0l;
-    long aggregatedTotalSize = 0l;
-    long aggregatedAvailableSpace = 0l;
+    long aggregatedBlobCount = 0L;
+    long aggregatedTotalSize = 0L;
+    Map<String, Long> aggregatedAvailableSpaceByFileStore = new HashMap<>();
     boolean aggregatedUnlimited = false;
 
     for (BlobStoreMetrics memberMetrics : membersMetrics) {
-      aggregatedBlobCount = clampedAdd(aggregatedBlobCount, memberMetrics.getBlobCount());
-      aggregatedTotalSize = clampedAdd(aggregatedTotalSize, memberMetrics.getTotalSize());
-      aggregatedAvailableSpace = clampedAdd(aggregatedAvailableSpace, memberMetrics.getAvailableSpace());
+      aggregatedBlobCount = Math2.addClamped(aggregatedBlobCount, memberMetrics.getBlobCount());
+      aggregatedTotalSize = Math2.addClamped(aggregatedTotalSize, memberMetrics.getTotalSize());
+      aggregatedAvailableSpaceByFileStore.putAll(memberMetrics.getAvailableSpaceByFileStore());
       aggregatedUnlimited = aggregatedUnlimited || memberMetrics.isUnlimited();
     }
 
     this.blobCount = aggregatedBlobCount;
     this.totalSize = aggregatedTotalSize;
-    this.availableSpace = aggregatedAvailableSpace;
+    this.availableSpaceByFileStore = unmodifiableMap(aggregatedAvailableSpaceByFileStore);
     this.unlimited = aggregatedUnlimited;
   }
 
@@ -64,7 +69,9 @@ public class BlobStoreGroupMetrics
 
   @Override
   public long getAvailableSpace() {
-    return availableSpace;
+    return availableSpaceByFileStore.values().stream()
+        .reduce(Math2::addClamped)
+        .orElse(0L);
   }
 
   @Override
@@ -72,15 +79,8 @@ public class BlobStoreGroupMetrics
     return unlimited;
   }
 
-  /**
-   * Add longs with overflow clamped at {@link Long.MAX_VALUE}.
-   */
-  private long clampedAdd(final long a, final long b) {
-    try {
-      return addExact(a, b);
-    }
-    catch (ArithmeticException e) { // NOSONAR
-      return Long.MAX_VALUE;
-    }
+  @Override
+  public Map<String, Long> getAvailableSpaceByFileStore() {
+    return availableSpaceByFileStore;
   }
 }

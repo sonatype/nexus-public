@@ -23,7 +23,8 @@ Ext.define('NX.controller.State', {
     'Ext.direct.Manager',
     'NX.Dialogs',
     'NX.Messages',
-    'NX.I18n'
+    'NX.I18n',
+    'Ext.Ajax'
   ],
 
   models: [
@@ -279,6 +280,9 @@ Ext.define('NX.controller.State', {
         //<if debug>
         me.logDebug('State pooling configured for', newStatusInterval, 'seconds');
         //</if>
+
+        // fire one request for state manually to not wait for the polling interval
+        me.refreshNow();
       }
     }
     else {
@@ -414,6 +418,20 @@ Ext.define('NX.controller.State', {
    */
   refreshNow: function () {
     var me = this;
+
+    // directly query for state
+    Ext.Ajax.request({
+      url: NX.direct.api.POLLING_URLS.rapture_State_get,
+      scope: me,
+      success: function(response) {
+        var text = response && response.responseText;
+
+        if (text != null) {
+          me.onServerData(null, Ext.isObject(text) || Ext.isArray(text) ? text : Ext.decode(text));
+        }
+      }
+    });
+
     if (me.statusProvider) {
       me.statusProvider.disconnect();
       me.statusProvider.connect();

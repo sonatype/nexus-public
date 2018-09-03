@@ -16,11 +16,10 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
-import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder
-import org.sonatype.nexus.common.atlas.SystemInformationGenerator
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 
 import com.codahale.metrics.health.HealthCheck.Result
-import org.apache.commons.io.FileUtils
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -28,8 +27,6 @@ import spock.lang.Subject
 class BlobStoreHealthCheckTest
     extends Specification
 {
-  static final long MINIMUM_SIZE = 1
-
   BlobStoreManager blobStoreManager = Mock()
 
   BlobStore blobStore = Mock()
@@ -38,8 +35,12 @@ class BlobStoreHealthCheckTest
 
   BlobStoreConfiguration blobStoreConfiguration = Mock()
 
+  BlobStoreQuotaService quotaService = Mock()
+
+  BlobStoreQuotaResult quotaResult = Mock()
+
   @Subject
-  BlobStoreHealthCheck blobStoreHealthCheck = new BlobStoreHealthCheck(MINIMUM_SIZE, { -> blobStoreManager})
+  BlobStoreHealthCheck blobStoreHealthCheck = new BlobStoreHealthCheck({ -> blobStoreManager}, { -> quotaService })
 
   def "Healthy response with no BlobStores configured"() {
     when:
@@ -50,45 +51,41 @@ class BlobStoreHealthCheckTest
       blobStoreManager.browse() >> []
   }
 
-  def "Healthy response with BlobStore reporting enough available space"() {
+  def "Healthy response with BlobStore not violating its quota"() {
     when:
       Result result = blobStoreHealthCheck.check()
 
     then:
       result.healthy
       blobStoreManager.browse() >> [blobStore]
-      blobStore.metrics >> blobStoreMetrics
-      blobStoreMetrics.isUnlimited() >> false
-      blobStoreMetrics.availableSpace >> FileUtils.ONE_GB
+      quotaService.checkQuota(blobStore) >> quotaResult
+      quotaResult.violation >> false
       blobStore.blobStoreConfiguration >> blobStoreConfiguration
       blobStoreConfiguration.name >> 'test'
   }
 
-  def "Healthy response with BlobStore reporting unlimited space"() {
-    when:
-      Result result = blobStoreHealthCheck.check()
-
-    then:
-      result.healthy
-      blobStoreManager.browse() >> [blobStore]
-      blobStore.metrics >> blobStoreMetrics
-      blobStoreMetrics.isUnlimited() >> true
-  }
-
-  def "Unhealthy response with BlobStore reporting not enough available space"() {
-    given: 'An unhealthy repository'
-      String unhealthyRepositoryName = 'foo'
+  def "Unhealthy response with BlobStore violating its quota"() {
     when:
       Result result = blobStoreHealthCheck.check()
 
     then:
       !result.healthy
-      result.message.contains(unhealthyRepositoryName)
       blobStoreManager.browse() >> [blobStore]
-      blobStore.metrics >> blobStoreMetrics
-      blobStoreMetrics.isUnlimited() >> false
-      blobStoreMetrics.availableSpace >> (MINIMUM_SIZE - 1)
+      quotaService.checkQuota(blobStore) >> quotaResult
+      quotaResult.violation >> true
       blobStore.blobStoreConfiguration >> blobStoreConfiguration
-      blobStoreConfiguration.name >> unhealthyRepositoryName
+      blobStoreConfiguration.name >> 'test'
+  }
+
+  def "Healthy response with BlobStore with no quota"() {
+    when:
+      Result result = blobStoreHealthCheck.check()
+
+    then:
+      result.healthy
+      blobStoreManager.browse() >> [blobStore]
+      quotaService.checkQuota(blobStore) >> null
+      blobStore.blobStoreConfiguration >> blobStoreConfiguration
+      blobStoreConfiguration.name >> 'test'
   }
 }

@@ -83,6 +83,7 @@ import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.extdirect.model.Responses.error;
 import static org.sonatype.nexus.extdirect.model.Responses.invalid;
@@ -161,7 +162,7 @@ public class ExtDirectServlet
         response.setContentType("text/html");
         response.getWriter().append("<html><body><textarea>{\"tid\":" + tid +
             ",\"action\":\"coreui_Upload\",\"method\":\"doUpload\",\"result\":{\"success\": false,\"message\":\"" +
-            fileUploadException.getMessage() + "\"},\"type\":\"rpc\"}</textarea></body></html>").flush();
+            escapeHtml(fileUploadException.getMessage()) + "\"},\"type\":\"rpc\"}</textarea></body></html>").flush();
       }
       catch (Exception e) {
         log.warn("Unable to read the ext direct transaction id for upload", e);

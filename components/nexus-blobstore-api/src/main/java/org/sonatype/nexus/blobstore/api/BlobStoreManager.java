@@ -58,10 +58,23 @@ public interface BlobStoreManager
   void delete(String name) throws Exception;
 
   /**
+   * Delete a BlobStore by name, even if it is use.
+   *
+   * @since 3.next
+   */
+  void forceDelete(String name) throws Exception;
+
+  /**
    * Returns true if a blob store with the provided name already exists. Check is case-insensitive.
    *
    * @since 3.1
    */
   boolean exists(String name);
 
+  /**
+   * Returns the number of other blob stores that use the named blob store.
+   *
+   * @since 3.next
+   */
+  long blobStoreUsageCount(String blobStoreName);
 }

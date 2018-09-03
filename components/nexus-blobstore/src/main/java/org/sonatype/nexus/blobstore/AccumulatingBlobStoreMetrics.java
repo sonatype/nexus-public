@@ -12,7 +12,12 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.common.math.Math2;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An implementation of {@link BlobStoreMetrics} that supports adding to the blobCount and totalSize fields.
@@ -26,18 +31,18 @@ public class AccumulatingBlobStoreMetrics
 
   private long totalSize;
 
-  private final long availableSpace;
+  private final Map<String, Long> availableSpaceByFileStore;
 
   private final boolean unlimited;
 
   public AccumulatingBlobStoreMetrics(final long blobCount,
                                       final long totalSize,
-                                      final long availableSpace,
+                                      final Map<String, Long> availableSpaceByFileStore,
                                       final boolean unlimited)
   {
     this.blobCount = blobCount;
     this.totalSize = totalSize;
-    this.availableSpace = availableSpace;
+    this.availableSpaceByFileStore = checkNotNull(availableSpaceByFileStore);
     this.unlimited = unlimited;
   }
 
@@ -61,11 +66,18 @@ public class AccumulatingBlobStoreMetrics
 
   @Override
   public long getAvailableSpace() {
-    return availableSpace;
+    return availableSpaceByFileStore.values().stream()
+        .reduce(Math2::addClamped)
+        .orElse(0L);
   }
 
   @Override
   public boolean isUnlimited() {
     return unlimited;
+  }
+
+  @Override
+  public Map<String, Long> getAvailableSpaceByFileStore() {
+    return availableSpaceByFileStore;
   }
 }
