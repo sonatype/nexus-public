@@ -38,4 +38,13 @@ public interface RestoreBlobStrategy
    * @param isDryRun if {@code true}, no lasting changes will be made, only logged
    */
   void restore(Properties properties, Blob blob, String blobStoreName, boolean isDryRun);
+
+  /**
+   * Runs after all blobs have been restored to the database.
+   * 
+   * @since 3.next
+   * 
+   * @param updateAssets whether updating assets is expected or not
+   */
+  void after(boolean updateAssets);
 }

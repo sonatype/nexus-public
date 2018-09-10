@@ -20,8 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.npm.NpmFacet;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
@@ -29,10 +27,14 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.npm.NpmFacet;
+import org.sonatype.nexus.repository.npm.repair.NpmRepairPackageRootComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.6.1
@@ -42,13 +44,17 @@ import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 public class NpmRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<NpmRestoreBlobData>
 {
+  private final NpmRepairPackageRootComponent npmRepairPackageRootComponent;
+
   @Inject
   public NpmRestoreBlobStrategy(final NodeAccess nodeAccess,
                                 final RepositoryManager repositoryManager,
                                 final BlobStoreManager blobStoreManager,
-                                final DryRunPrefix dryRunPrefix)
+                                final DryRunPrefix dryRunPrefix,
+                                final NpmRepairPackageRootComponent npmRepairPackageRootComponent)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
+    this.npmRepairPackageRootComponent = checkNotNull(npmRepairPackageRootComponent);
   }
 
   @Override
@@ -116,6 +122,16 @@ public class NpmRestoreBlobStrategy
         break;
       default: // all the cases are covered
         throw new IllegalStateException("Unexpected case encountered");
+    }
+  }
+
+  @Override
+  public void after(final boolean updateAssets) {
+    if (updateAssets) {
+      npmRepairPackageRootComponent.repair();
+    }
+    else {
+      log.info("Updating assets disabled so not running repair of npm package metadata");
     }
   }
 }

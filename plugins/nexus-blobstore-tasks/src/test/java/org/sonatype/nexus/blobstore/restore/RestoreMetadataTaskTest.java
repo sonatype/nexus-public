@@ -56,6 +56,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.TYPE_ID;
@@ -263,5 +264,43 @@ public class RestoreMetadataTaskTest
 
     verifyZeroInteractions(defaultIntegrityCheckStrategy);
     verify(testIntegrityCheckStrategy).check(eq(repository), eq(fileBlobStore), any());
+  }
+
+  @Test
+  public void updateAfterAssetsWhenCallAfter() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+    
+    underTest.execute();
+    
+    verify(restoreBlobStrategy).after(true);
+  }
+
+  @Test
+  public void doNotUpdateAfterAssetsWhenDryRun() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    configuration.setBoolean(DRY_RUN, true);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy).after(false);
+  }
+
+  @Test
+  public void doNotUpdateAfterAssetsWhenRestoreFalse() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, false);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    configuration.setBoolean(DRY_RUN, true);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy).after(false);
   }
 }

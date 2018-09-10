@@ -44,7 +44,8 @@ Ext.define('NX.coreui.view.ssl.SslCertificateDetailsForm', {
           padding: 0,
           defaults: {
             xtype: 'displayfield',
-            labelAlign: 'left'
+            labelAlign: 'left',
+            renderer: Ext.htmlEncode
           },
           items: [
             { name: 'subjectCommonName', fieldLabel: NX.I18n.get('Ssl_SslCertificateDetailsForm_SubjectCommonName_FieldLabel') },
@@ -63,7 +64,8 @@ Ext.define('NX.coreui.view.ssl.SslCertificateDetailsForm', {
           padding: 0,
           defaults: {
             xtype: 'displayfield',
-            labelAlign: 'left'
+            labelAlign: 'left',
+            renderer: Ext.htmlEncode
           },
           items: [
             { name: 'issuerCommonName', fieldLabel: NX.I18n.get('Ssl_SslCertificateDetailsForm_IssuerName_FieldLabel') },

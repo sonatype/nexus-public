@@ -15,6 +15,8 @@ package org.sonatype.nexus.common.io;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 /**
  * Manages cooperation between multiple threads to reduce duplicated I/O requests.
  *
@@ -29,10 +31,18 @@ import java.util.Map;
 public interface Cooperation
 {
   @FunctionalInterface
+  interface IOCheck<T>
+  {
+    @Nullable
+    T check() throws IOException;
+  }
+
+  @FunctionalInterface
   interface IOCall<T>
   {
     /**
-     * @param failover {@code true} when this is a 'failover' thread repeating the request
+     * @param failover {@code true} if this is a 'fail over' thread that
+     *          might want to check caches before repeating the request
      */
     T call(boolean failover) throws IOException;
   }
@@ -46,7 +56,20 @@ public interface Cooperation
    * @throws IOException when the request fails due to I/O issues
    * @throws CooperationException when the current thread cannot cooperate
    */
-  <T> T cooperate(String requestKey, final IOCall<T> request) throws IOException;
+  <T> T cooperate(String requestKey, IOCall<T> request) throws IOException;
+
+  /**
+   * Requests to join with any cached cooperation results when failing over.
+   * If no cached results are found the underlying cooperation may choose to
+   * wait and try again, for example to account for lag in distributed setups.
+   *
+   * @param request function that tries to retrieve cached cooperation results
+   * @return {@code null} if no cached results were found
+   *
+   * @throws IOException when the request fails due to I/O issues
+   */
+  @Nullable
+  <T> T join(IOCheck<T> request) throws IOException;
 
   /**
    * @return number of threads cooperating per request-key.

@@ -180,7 +180,12 @@ Ext.define('NX.app.PluginStrings', {
     Wizard_Next: '@Button_Next',
     Wizard_Back: '@Button_Back',
     Wizard_Cancel: '@Button_Cancel',
-    Wizard_Screen_Progress: '{0} of {1}'
+    Wizard_Screen_Progress: '{0} of {1}',
+
+    // SearchBoxTip
+    SearchBoxTip_ExactMatch: 'Use <b>""</b> for exact match - "example"',
+    SearchBoxTip_Wildcard: 'Use <b>*</b> for wildcard - exampl*',
+    SearchBoxTip_LearnMore: 'Learn more...'
   }
 }, function(obj) {
   NX.I18n.register(obj);

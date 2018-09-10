@@ -32,7 +32,6 @@ import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -231,7 +230,7 @@ public class BrowseNodeEntityAdapter
       }
       else if (!oldComponentId.equals(newComponentId)) {
         // retry in case this is due to an out-of-order delete event
-        throw new RetryUpsertException("Node already has a component");
+        throw new BrowseNodeCollisionException("Node already has a component");
       }
     }
   }
@@ -263,7 +262,7 @@ public class BrowseNodeEntityAdapter
       }
       else if (!oldAssetId.equals(newAssetId)) {
         // retry in case this is due to an out-of-order delete event
-        throw new RetryUpsertException("Node already has an asset");
+        throw new BrowseNodeCollisionException("Node already has an asset");
       }
     }
   }
@@ -490,13 +489,10 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode}.
+   * Enables deconfliction of browse nodes.
    */
-  private static class RetryUpsertException
-      extends ONeedRetryException
-  {
-    RetryUpsertException(final String message) {
-      super(message);
-    }
+  @Override
+  public boolean resolveConflicts() {
+    return true;
   }
 }

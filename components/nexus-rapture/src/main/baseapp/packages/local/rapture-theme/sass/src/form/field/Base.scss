@@ -66,3 +66,15 @@
   width: 0;
   height: 0;
 }
+
+//hack to have the error text shown properly with grow enabled, required for non-FF browsers
+.x-form-text-grow.x-form-textarea-body {
+  padding-bottom: 10px;
+}
+
+//hack to not set the above padding on FF browsers (where it isn't necessary
+@-moz-document url-prefix() {
+  .x-form-text-grow.x-form-textarea-body {
+    padding-bottom: unset;
+  }
+}

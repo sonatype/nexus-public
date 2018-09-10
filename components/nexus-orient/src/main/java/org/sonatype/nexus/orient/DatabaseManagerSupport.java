@@ -15,6 +15,9 @@ package org.sonatype.nexus.orient;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.goodies.lifecycle.Lifecycles;
 
@@ -38,15 +41,43 @@ public abstract class DatabaseManagerSupport
     extends LifecycleSupport
     implements DatabaseManager
 {
+  private static final int DEFAULT_MAX_CONNECTIONS_PER_CORE = -1;
+
+  private static final int DEFAULT_MAX_CONNECTIONS = 25;
+
+  private static final String MAX_CONNECTIONS_PER_CORE_PROPERTY = "nexus.orient.maxConnectionsPerCore";
+
+  private static final String MAX_CONNECTIONS_PROPERTY = "nexus.orient.maxConnections";
+
+  private static final String MAX_CONNECTIONS_PER_CORE_PLACEHOLDER =
+      "${" + MAX_CONNECTIONS_PER_CORE_PROPERTY + ":-" + DEFAULT_MAX_CONNECTIONS_PER_CORE + "}";
+
+  private static final String MAX_CONNECTIONS_PLACEHOLDER =
+      "${" + MAX_CONNECTIONS_PROPERTY + ":-" + DEFAULT_MAX_CONNECTIONS + "}";
+
   public static final String SYSTEM_USER = "admin";
 
   public static final String SYSTEM_PASSWORD = "admin";
 
   private static final String EXPLAIN_PREFIX = "org.sonatype.nexus.orient.explain.";
 
-  private final Map<String,DatabasePoolImpl> pools = Maps.newHashMap();
+  private final Map<String,DatabasePoolSupport> pools = Maps.newHashMap();
 
   private final Map<String,DatabaseInstanceImpl> instances = Maps.newConcurrentMap();
+
+  private int maxConnectionsPerCore = DEFAULT_MAX_CONNECTIONS_PER_CORE;
+
+  private int maxConnections = DEFAULT_MAX_CONNECTIONS;
+
+  @Inject
+  public void setMaxConnectionsPerCore(@Named(MAX_CONNECTIONS_PER_CORE_PLACEHOLDER) final int maxConnectionsPerCore) {
+    this.maxConnectionsPerCore = maxConnectionsPerCore;
+  }
+
+  @Inject
+  public void setMaxConnections(@Named(MAX_CONNECTIONS_PLACEHOLDER) final int maxConnections) {
+    this.maxConnections = maxConnections;
+  }
 
   @Override
   protected void doStart() throws Exception {
@@ -105,9 +136,9 @@ public abstract class DatabaseManagerSupport
 
     log.info("Stopping {} pools", pools.size());
 
-    Iterator<DatabasePoolImpl> iter = pools.values().iterator();
+    Iterator<DatabasePoolSupport> iter = pools.values().iterator();
     while (iter.hasNext()) {
-      DatabasePoolImpl pool = iter.next();
+      DatabasePoolSupport pool = iter.next();
 
       if (pool.isStarted()) {
         log.info("Stopping pool: {}", pool.getName());
@@ -189,7 +220,7 @@ public abstract class DatabaseManagerSupport
     ensureStarted();
 
     synchronized (pools) {
-      DatabasePoolImpl pool = pools.get(name);
+      DatabasePoolSupport pool = pools.get(name);
       if (pool == null) {
         pool = createPool(name);
         log.debug("Created database pool: {}", pool);
@@ -209,17 +240,40 @@ public abstract class DatabaseManagerSupport
     return createPool(name);
   }
 
-  private DatabasePoolImpl createPool(final String name) {
-    // TODO: refine more control over how pool settings are configured per-database or globally
-
+  private DatabasePoolSupport createPool(final String name) {
     String uri = connectionUri(name);
-    OPartitionedDatabasePool underlying = new OPartitionedDatabasePool(uri, SYSTEM_USER, SYSTEM_PASSWORD, //
-        25, // max connections per partition
-        25); // max connections in the pool
 
-    // TODO: Do not allow shared pool() to be closed by users, only by ourselves
-    DatabasePoolImpl pool = new DatabasePoolImpl(underlying, name);
+    // primary pool for this DB which may have a per-core limit or an overall limit
+    OPartitionedDatabasePool underlying = new OPartitionedDatabasePool(
+        uri, SYSTEM_USER, SYSTEM_PASSWORD, maxConnectionsPerCore, maxConnections);
+
+    DatabasePoolSupport pool;
+
+    if (maxConnections > 0) {
+      // when there's an overall limit Orient will use a single partition
+      // and block any pending requests when there's no connections left
+      log.info("Configuring OrientDB pool {} with overall limit of {}", name, maxConnections);
+      pool = new DatabasePoolImpl(underlying, name);
+    }
+    else if (maxConnectionsPerCore > 0) {
+      // otherwise Orient uses a partition per-core which throws an ISE when
+      // there are no connections left in the partition - to fall back to the
+      // original blocking behaviour we add an overflow with an overall limit
+      // the same as the per-core limit
+      OPartitionedDatabasePool overflow = new OPartitionedDatabasePool(
+          uri, SYSTEM_USER, SYSTEM_PASSWORD, -1 /* unused */, maxConnectionsPerCore);
+
+      log.info("Configuring OrientDB pool {} with per-core limit of {}", name, maxConnectionsPerCore);
+      pool = new DatabasePoolWithOverflowImpl(underlying, overflow, name);
+    }
+    else {
+      throw new IllegalArgumentException(
+          "Either " + MAX_CONNECTIONS_PER_CORE_PROPERTY +
+              " or " + MAX_CONNECTIONS_PROPERTY + " must be positive");
+    }
+
     Lifecycles.start(pool);
+
     return pool;
   }
 
@@ -256,7 +310,7 @@ public abstract class DatabaseManagerSupport
 
   @Override
   public void replaceStorage(final OStorage storage) {
-    DatabasePoolImpl pool;
+    DatabasePoolSupport pool;
     synchronized (pools) {
       pool = pools.get(storage.getName());
     }

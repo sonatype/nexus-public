@@ -19,43 +19,73 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Default {@link DatabasePool} implementation.
+ * {@link DatabasePool} implementation with separate overflow pool.
  *
- * @since 3.0
+ * Use this when the main pool is configured with a maximum partition size rather than a maximum pool size.
+ *
+ * In that scenario a thread may receive an {@link IllegalStateException} when its partition reaches its limit,
+ * at which point we redirect the request to the overflow pool. The overflow should set a maximum pool size so
+ * it will block when no connections are currently available.
+ *
+ * This lets us use a partitioned pool while keeping the overall blocking nature of a non-partitioned pool.
+ *
+ * @since 3.next
  */
-public class DatabasePoolImpl
+public class DatabasePoolWithOverflowImpl
   extends DatabasePoolSupport
 {
   private final OPartitionedDatabasePool delegate;
 
-  public DatabasePoolImpl(final OPartitionedDatabasePool delegate, final String name) {
+  private final OPartitionedDatabasePool overflow;
+
+  public DatabasePoolWithOverflowImpl(final OPartitionedDatabasePool delegate,
+                                      final OPartitionedDatabasePool overflow,
+                                      final String name)
+  {
     super(name);
     this.delegate = checkNotNull(delegate);
+    this.overflow = checkNotNull(overflow);
   }
 
   @Override
   protected void doStop() throws Exception {
-    delegate.close();
+    try {
+      delegate.close();
+    }
+    finally {
+      overflow.close();
+    }
   }
 
   @Override
   public ODatabaseDocumentTx acquire() {
     ensureStarted();
-    return delegate.acquire();
+    try {
+      return delegate.acquire();
+    }
+    catch (IllegalStateException e) {
+      log.debug("Unable to acquire connection from main pool, trying overflow", e);
+      return overflow.acquire();
+    }
   }
 
   @Override
   public int getAvailableCount() {
-    return delegate.getAvailableConnections();
+    return delegate.getAvailableConnections() + overflow.getAvailableConnections();
   }
 
   @Override
   public int getPoolSize() {
-    return delegate.getCreatedInstances();
+    return delegate.getCreatedInstances() + overflow.getCreatedInstances();
   }
 
   @Override
   public void replaceStorage(final OStorage storage) {
-    replaceStorage(delegate, storage);
+    try {
+      replaceStorage(delegate, storage);
+    }
+    finally {
+      replaceStorage(overflow, storage);
+    }
   }
 }

@@ -1,0 +1,30 @@
+/**
+ * @class NX.ext.plugin.SearchBoxTip
+ */
+
+.nx-search-tip {
+  background-color: $color-white;
+  box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.3);
+  border: none;
+  margin-top: 2px;
+
+  .x-tip-body-default {
+    color: $color-charcoal;
+  }
+
+  .footer {
+    display: block;
+    font-size: 0.9em;
+    padding: 2px 0 0 0;
+    text-align: right;
+    width: 100%;
+  }
+
+  b {
+    font-size: 1.2em;
+  }
+
+  i {
+    font-size: 0.8em;
+  }
+}

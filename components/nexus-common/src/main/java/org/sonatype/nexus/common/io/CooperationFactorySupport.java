@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.io;
 
-import java.io.Serializable;
-
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 
@@ -38,13 +36,12 @@ public abstract class CooperationFactorySupport
    *
    * @param id unique identifier for this cooperation point
    */
-  protected abstract Cooperation build(final String id, final Config config);
+  protected abstract Cooperation build(String id, Config config);
 
   /**
    * Configuration holder for {@link Cooperation} points.
    */
   public static class Config
-      implements Serializable
   {
     protected int majorTimeoutSeconds = 0;
 

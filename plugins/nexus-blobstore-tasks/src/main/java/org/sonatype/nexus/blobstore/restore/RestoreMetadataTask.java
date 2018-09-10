@@ -144,6 +144,10 @@ public class RestoreMetadataTask
       }
     }
 
+    for (RestoreBlobStrategy strategy : restoreBlobStrategies.values()) {
+      strategy.after(!dryRun && restore);
+    }
+
     progressLogger.flush();
   }
 

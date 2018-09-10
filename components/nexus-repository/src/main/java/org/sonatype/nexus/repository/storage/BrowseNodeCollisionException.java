@@ -10,41 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+package org.sonatype.nexus.repository.storage;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
 
 /**
- * Quick search box
+ * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode} due to a collision.
  *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.view.header.QuickSearch', {
-  extend: 'NX.ext.SearchBox',
-  alias: 'widget.nx-header-quicksearch',
-  requires: [
-    'NX.I18n',
-    'NX.ext.plugin.SearchBoxTip'
-  ],
-
-  plugins: [
-    {
-      ptype: 'searchboxtip',
-      message: NX.I18n.get('SearchBoxTip_ExactMatch') + '<br>' + NX.I18n.get('SearchBoxTip_Wildcard')
-    }
-  ],
-
-  /**
-   * @override
-   */
-  initComponent: function() {
-    Ext.apply(this, {
-      itemId: 'quicksearch',
-      cls: 'nx-quicksearch',
-      width: 200,
-      emptyText: NX.I18n.get('Header_QuickSearch_Empty'),
-      ariaRole: 'search',
-      ariaLabel: NX.I18n.get('Header_QuickSearch_Tooltip')
-    });
-
-    this.callParent();
+class BrowseNodeCollisionException
+    extends ONeedRetryException
+{
+  BrowseNodeCollisionException(final String message) {
+    super(message);
   }
-});
+}

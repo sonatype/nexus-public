@@ -156,4 +156,9 @@ public abstract class BaseRestoreBlobStrategy<T>
    */
   protected abstract void createAssetFromBlob(@Nonnull final AssetBlob assetBlob, @Nonnull final T data)
       throws IOException;
+
+  @Override
+  public void after(final boolean updateAssets) {
+    //no-op    
+  }
 }

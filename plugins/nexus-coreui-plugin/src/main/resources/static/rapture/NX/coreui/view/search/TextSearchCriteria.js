@@ -21,11 +21,19 @@ Ext.define('NX.coreui.view.search.TextSearchCriteria', {
   extend: 'NX.ext.SearchBox',
   alias: 'widget.nx-coreui-searchcriteria-text',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.ext.plugin.SearchBoxTip'
   ],
   mixins: {
     searchCriteria: 'NX.coreui.view.search.SearchCriteria'
   },
+
+  plugins: [
+      {
+        ptype: 'searchboxtip',
+        message: NX.I18n.get('SearchBoxTip_Wildcard')
+      }
+  ],
 
   /**
    * @cfg [removable=false] If search criteria should be removable.

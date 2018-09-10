@@ -526,7 +526,7 @@ public abstract class EntityAdapter<T extends Entity>
    */
   protected ConflictState compare(final ODocument storedRecord, final ODocument changeRecord) {
     for (Entry<String, Object> property : storedRecord) {
-      Object changeValue = changeRecord.field(property.getKey());
+      Object changeValue = changeRecord.rawField(property.getKey());
       if (!Objects.equals(property.getValue(), changeValue)) {
         log.trace("Conflict detected in {}: {} vs {}", property.getKey(), property.getValue(), changeValue);
         return DENY;

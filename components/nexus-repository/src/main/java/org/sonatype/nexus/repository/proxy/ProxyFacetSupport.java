@@ -226,7 +226,7 @@ public abstract class ProxyFacetSupport
       Content latestContent = content;
       if (failover) {
         // re-check cache when failing over to new thread
-        latestContent = maybeGetCachedContent(context);
+        latestContent = proxyCooperation.join(() -> maybeGetCachedContent(context));
         if (!isStale(context, latestContent)) {
           return latestContent;
         }

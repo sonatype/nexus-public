@@ -13,7 +13,6 @@
 package org.sonatype.nexus.common.io;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -40,7 +39,6 @@ import static java.lang.Boolean.TRUE;
  */
 public class CooperatingFuture<T>
     extends CompletableFuture<T>
-    implements Serializable
 {
   protected static final Logger log = LoggerFactory.getLogger(CooperatingFuture.class);
 
@@ -122,10 +120,12 @@ public class CooperatingFuture<T>
       }
       log.debug("Requesting {}", this);
       T value = request.call(failover);
+      log.debug("Completing {}", this);
       complete(value);
       return value;
     }
     catch (Exception | Error e) { // NOSONAR report all errors to cooperating threads
+      log.debug("Completing {} with exception", this, e);
       completeExceptionally(e);
       throw e;
     }

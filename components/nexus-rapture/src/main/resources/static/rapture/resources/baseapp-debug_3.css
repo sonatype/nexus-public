@@ -161,6 +161,17 @@
     height: 0;
 }
 
+.x-form-text-grow.x-form-textarea-body {
+    padding-bottom: 10px;
+}
+
+@-moz-document url-prefix() {
+    
+    .x-form-text-grow.x-form-textarea-body {
+        padding-bottom: unset;
+    }
+}
+
 .x-form-checkboxgroup-body {
     /**
  * @class Ext.form.CheckboxGroup
@@ -5537,6 +5548,36 @@ fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
 
 [id^=nx-coreui-logging-feature] [id^=roweditor] .x-form-item:first-child .x-form-display-field {
     text-overflow: clip;
+}
+
+.nx-search-tip {
+    /**
+ * @class NX.ext.plugin.SearchBoxTip
+ */
+    background-color: #fff;
+    box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.3);
+    border: none;
+    margin-top: 2px;
+}
+
+.nx-search-tip .x-tip-body-default {
+    color: #444;
+}
+
+.nx-search-tip .footer {
+    display: block;
+    font-size: 0.9em;
+    padding: 2px 0 0 0;
+    text-align: right;
+    width: 100%;
+}
+
+.nx-search-tip b {
+    font-size: 1.2em;
+}
+
+.nx-search-tip i {
+    font-size: 0.8em;
 }
 
 .nx-aboutwindow .x-window {

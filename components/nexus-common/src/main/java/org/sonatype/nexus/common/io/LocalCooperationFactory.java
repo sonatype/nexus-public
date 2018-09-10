@@ -34,12 +34,12 @@ public class LocalCooperationFactory
 
   @Override
   @SuppressWarnings("unchecked")
-  protected <T> CooperatingFuture<T> putFuture(final String scopedKey, final CooperatingFuture<T> future) {
+  protected <T> CooperatingFuture<T> beginCooperation(final String scopedKey, final CooperatingFuture<T> future) {
     return (CooperatingFuture<T>) localFutures.putIfAbsent(scopedKey, future);
   }
 
   @Override
-  protected <T> void removeFuture(final String scopedKey, final CooperatingFuture<T> future) {
+  protected <T> void endCooperation(final String scopedKey, final CooperatingFuture<T> future) {
     localFutures.remove(scopedKey, future);
   }
 

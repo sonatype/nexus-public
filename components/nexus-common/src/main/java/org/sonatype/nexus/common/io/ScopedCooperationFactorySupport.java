@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.io.Cooperation.IOCheck;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toMap;
 
@@ -32,15 +36,39 @@ public abstract class ScopedCooperationFactorySupport
     return new ScopedCooperation(id, config);
   }
 
+  /**
+   * Creates a new {@link CooperatingFuture} for the given configuration.
+   */
   protected <T> CooperatingFuture<T> createFuture(final String requestKey, final Config config) {
     return new CooperatingFuture<>(requestKey, config);
   }
 
-  protected abstract <T> CooperatingFuture<T> putFuture(final String scopedKey, final CooperatingFuture<T> future);
+  /**
+   * Begins cooperation for the scoped key using the given future.
+   *
+   * @return {@code null} if the key was not already in use; otherwise the currently associated future
+   */
+  protected abstract <T> CooperatingFuture<T> beginCooperation(String scopedKey, CooperatingFuture<T> future);
 
-  protected abstract <T> void removeFuture(final String scopedKey, final CooperatingFuture<T> future);
+  /**
+   * Ends cooperation for the scoped key and its associated future.
+   *
+   * Each thread that successfully calls {@link #beginCooperation} will eventually call this with the same values.
+   */
+  protected abstract <T> void endCooperation(String scopedKey, CooperatingFuture<T> future);
 
-  protected abstract Stream<CooperatingFuture<?>> streamFutures(final String scope);
+  /**
+   * Streams all futures that are currently cooperating.
+   */
+  protected abstract Stream<CooperatingFuture<?>> streamFutures(String scope);
+
+  /**
+   * Join cache results without retrying; assumes that any caches have no lag.
+   */
+  @Nullable
+  protected <T> T join(final IOCheck<T> request) throws IOException {
+    return request.check();
+  }
 
   /**
    * {@link Cooperation} that's saved under a scoped partition of the {@link #futures()} map.
@@ -65,18 +93,23 @@ public abstract class ScopedCooperationFactorySupport
       CooperatingFuture<T> myFuture = createFuture(requestKey, config);
       String scopedKey = scope + requestKey;
 
-      CooperatingFuture<T> theirFuture = putFuture(scopedKey, myFuture);
+      CooperatingFuture<T> theirFuture = beginCooperation(scopedKey, myFuture);
       if (theirFuture == null) {
         try {
           return myFuture.call(request); // we're the lead thread, go-ahead with the I/O request
         }
         finally {
-          removeFuture(scopedKey, myFuture);
+          endCooperation(scopedKey, myFuture);
         }
       }
       else {
         return theirFuture.cooperate(request); // cooperatively wait for lead thread to complete
       }
+    }
+
+    @Override
+    public <T> T join(final IOCheck<T> request) throws IOException {
+      return ScopedCooperationFactorySupport.this.join(request);
     }
 
     @Override

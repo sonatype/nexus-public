@@ -30,14 +30,20 @@ Ext.define('NX.controller.Help', {
     'AboutWindow'
   ],
 
-  /**
-   * The base-url for help links.
-   *
-   * @private
-   * @property {String}
-   * @readonly
-   */
-  baseUrl: 'http://links.sonatype.com/products/nexus',
+  statics: {
+    /**
+     * The base-url for help links.
+     *
+     * @private
+     * @property {String}
+     * @readonly
+     */
+    baseUrl: 'http://links.sonatype.com/products/nexus',
+
+    getDocsUrl: function() {
+      return NX.controller.Help.baseUrl + '/docs/' + NX.State.getVersionMajorMinor();
+    }
+  },
 
   /**
    * @override
@@ -97,7 +103,7 @@ Ext.define('NX.controller.Help', {
    * @param {String} section
    */
   openUrl: function(section) {
-    NX.Windows.open(this.baseUrl + '/' + section);
+    NX.Windows.open(NX.controller.Help.baseUrl + '/' + section);
   },
 
   /**
@@ -111,7 +117,7 @@ Ext.define('NX.controller.Help', {
    * @private
    */
   onDocs: function() {
-    NX.Windows.open(this.baseUrl + '/docs/' + NX.State.getVersionMajorMinor());
+    NX.Windows.open(NX.controller.Help.getDocsUrl());
   },
 
   /**

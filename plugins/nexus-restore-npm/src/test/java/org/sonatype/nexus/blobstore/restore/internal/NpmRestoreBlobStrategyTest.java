@@ -32,6 +32,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.npm.repair.NpmRepairPackageRootComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -88,6 +89,9 @@ public class NpmRestoreBlobStrategyTest
 
   @Mock
   NpmFacet npmFacet;
+  
+  @Mock
+  NpmRepairPackageRootComponent npmRepairPackageRootComponent;
 
   Properties packageProps = new Properties();
 
@@ -99,7 +103,8 @@ public class NpmRestoreBlobStrategyTest
 
   @Before
   public void setup() throws IOException {
-    underTest = new NpmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    underTest = new NpmRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"),
+        npmRepairPackageRootComponent);
 
     packageProps.setProperty("@BlobStore.blob-name", TEST_PACKAGE_NAME);
     packageProps.setProperty("@Bucket.repo-name", "test-repo");
@@ -198,5 +203,19 @@ public class NpmRestoreBlobStrategyTest
     Mockito.verify(npmFacet).findPackageRootAsset(Matchers.eq(TEST_PACKAGE_NAME));
     Mockito.verify(npmFacet, Mockito.never()).putPackageRoot(Matchers.any(), Matchers.any(), Matchers.any());
     Mockito.verifyNoMoreInteractions(npmFacet);
+  }
+
+  @Test
+  public void runNpmRepairComponentAfter() throws Exception {
+    underTest.after(true);
+    
+    Mockito.verify(npmRepairPackageRootComponent).repair();
+  }
+
+  @Test
+  public void doNotRunNpmRepairComponentAfterWhenUpdatingAssetsDisabled() throws Exception {
+    underTest.after(false);
+
+    Mockito.verify(npmRepairPackageRootComponent, Mockito.never()).repair();
   }
 }
