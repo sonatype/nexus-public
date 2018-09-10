@@ -30,6 +30,7 @@ import groovy.lang.GroovyShell;
 import groovyx.remote.client.RemoteControl;
 import groovyx.remote.transport.http.HttpTransport;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +133,7 @@ public class GroovyRemoteClient
     try {
       result = shell.evaluate(new GroovyCodeSource(url));
     }
-    catch (IOException e) {
+    catch (CompilationFailedException e) {
       throw Throwables.propagate(e);
     }
 

@@ -32,6 +32,7 @@ import groovyx.remote.server.Receiver;
 import groovyx.remote.transport.http.HttpTransport;
 import groovyx.remote.transport.http.RemoteControlHttpHandler;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,7 +109,7 @@ public class GroovyRemoteControlFromJavaTest
     try {
       result = shell.evaluate(new GroovyCodeSource(url));
     }
-    catch (IOException e) {
+    catch (CompilationFailedException e) {
       throw Throwables.propagate(e);
     }
 
