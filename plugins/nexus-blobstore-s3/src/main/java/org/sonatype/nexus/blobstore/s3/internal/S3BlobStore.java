@@ -94,6 +94,8 @@ public class S3BlobStore
 
   public static final String BUCKET_KEY = "bucket";
 
+  public static final String BUCKET_PREFIX = "prefix";
+
   public static final String ACCESS_KEY_ID_KEY = "accessKeyId";
 
   public static final String SECRET_ACCESS_KEY_KEY = "secretAccessKey";
@@ -164,7 +166,7 @@ public class S3BlobStore
   @Override
   protected void doStart() throws Exception {
     // ensure blobstore is supported
-    S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), METADATA_FILENAME);
+    S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
     if (metadata.exists()) {
       metadata.load();
       String type = metadata.getProperty(TYPE_KEY);
@@ -177,6 +179,7 @@ public class S3BlobStore
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(S3Blob::new));
     storeMetrics.setBucket(getConfiguredBucket());
+    storeMetrics.setBucketPrefix(getBucketPrefix());
     storeMetrics.setS3(s3);
     storeMetrics.start();
   }
@@ -194,6 +197,10 @@ public class S3BlobStore
     return getLocation(id) + BLOB_CONTENT_SUFFIX;
   }
 
+  private String metadataFilePath() {
+    return getBucketPrefix() + METADATA_FILENAME;
+  }
+
   /**
    * Returns path for blob-id attribute file relative to root directory.
    */
@@ -205,7 +212,7 @@ public class S3BlobStore
    * Returns the location for a blob ID based on whether or not the blob ID is for a temporary or permanent blob.
    */
   private String getLocation(final BlobId id) {
-    return CONTENT_PREFIX + "/" + blobIdLocationResolver.getLocation(id);
+    return getBucketPrefix() + CONTENT_PREFIX + "/" + blobIdLocationResolver.getLocation(id);
   }
 
   @Override
@@ -553,6 +560,14 @@ public class S3BlobStore
     );
   }
 
+  private String getBucketPrefix() {
+    return Optional.ofNullable(blobStoreConfiguration.attributes(CONFIG_KEY).get(BUCKET_PREFIX))
+                   .map(Object::toString)
+                   .filter(s -> !s.isEmpty())
+                   .map(s -> s.replaceFirst("/$", "") + "/")
+                   .orElse("");
+  }
+
   /**
    * Delete files known to be part of the S3BlobStore implementation if the content directory is empty.
    */
@@ -562,7 +577,7 @@ public class S3BlobStore
     try {
       boolean contentEmpty = s3.listObjects(getConfiguredBucket(), CONTENT_PREFIX + "/").getObjectSummaries().isEmpty();
       if (contentEmpty) {
-        S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), METADATA_FILENAME);
+        S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
         metadata.remove();
         storeMetrics.remove();
         s3.deleteBucket(getConfiguredBucket());
@@ -610,7 +625,7 @@ public class S3BlobStore
 
   @Override
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
-    String subpath = format("%s/%s", DIRECT_PATH_PREFIX, prefix);
+    String subpath = getBucketPrefix() + format("%s/%s", DIRECT_PATH_PREFIX, prefix);
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), subpath);
     return stream(summaries.spliterator(), false)
       .map(S3ObjectSummary::getKey)
@@ -719,11 +734,11 @@ public class S3BlobStore
    * @see BlobIdLocationResolver
    */
   private BlobId attributePathToDirectPathBlobId(final String s3Key) { // NOSONAR
-    checkArgument(s3Key.startsWith(DIRECT_PATH_PREFIX + "/"), "Not direct path blob path: %s", s3Key);
+    checkArgument(s3Key.startsWith(getBucketPrefix() + DIRECT_PATH_PREFIX + "/"), "Not direct path blob path: %s", s3Key);
     checkArgument(s3Key.endsWith(BLOB_ATTRIBUTE_SUFFIX), "Not blob attribute path: %s", s3Key);
     String blobName = s3Key
         .substring(0, s3Key.length() - BLOB_ATTRIBUTE_SUFFIX.length())
-        .substring(DIRECT_PATH_PREFIX.length() + 1);
+        .substring((getBucketPrefix() + DIRECT_PATH_PREFIX).length() + 1);
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,
         DIRECT_PATH_BLOB_HEADER, "true"

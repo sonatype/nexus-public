@@ -233,7 +233,7 @@ public class DirectoryHelperTest
    * and deeper. {@link FileSystemException} is thrown once file path length reaches OS limit. In case
    * of repo local storage, the root was being moved under "/.nexus/trash".
    */
-  @Test(expected = FileSystemException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void moveToSubdir() throws IOException {
     final Path target = root.toPath().resolve("dir2/dir21");
     DirectoryHelper.move(root.toPath(), target);
