@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -36,6 +38,7 @@ import org.sonatype.nexus.repository.maven.internal.Attributes;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.DigestExtractor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -118,6 +121,76 @@ public class MetadataRebuilder
     }
     finally {
       UnitOfWork.end();
+    }
+  }
+
+  /**
+   * Delete the metadata for the input list of GAbVs.
+   *
+   * @param repository The repository whose metadata needs rebuilding (Maven2 format, Hosted type only).
+   * @param gavs       A list of gavs for which metadata will be deleted
+   *
+   * @since 3.next
+   */
+  public void deleteMetadata(final Repository repository, final List<String []> gavs) {
+    checkNotNull(repository);
+    checkNotNull(gavs);
+
+    List<MavenPath> pathBatch = new ArrayList<>();
+    for (String[] gav : gavs) {
+      pathBatch.addAll(getPathsByGav(repository, gav[0], gav[1], gav[2]));
+    }
+
+    try {
+      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), pathBatch);
+    }
+    catch (IOException e) {
+      log.warn("Error encountered when deleting metadata: repository={}", repository);
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Collect all {@link MavenPath} for the provided GAbV.
+   *
+   * @param repository  The repository associated with the provided GAbV (Maven2 format, Hosted type only).
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
+   * @return list of all paths for the input coordinates
+   *
+   * @since 3.next
+   */
+  private List<MavenPath> getPathsByGav(final Repository repository,
+                                        final String groupId,
+                                        final String artifactId,
+                                        final String baseVersion)
+  {
+    checkNotNull(groupId);
+    checkNotNull(artifactId);
+    checkNotNull(baseVersion);
+
+    log.debug("Collecting MavenPaths for Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}",
+        repository.getName(), groupId, artifactId, baseVersion);
+
+    List<MavenPath> paths = new ArrayList<>();
+    try {
+      // Build path for specific GAV
+      paths.add(metadataPath(groupId, artifactId, baseVersion));
+
+      // Build path for the GA; will be rebuilt as necessary but may hold the last GAV in which case rebuild would ignore it
+      paths.add(metadataPath(groupId, artifactId, null));
+
+      // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
+      // is potentially the most expensive possible path to take.
+      MavenPath groupPath = metadataPath(groupId, null, null);
+      if (MetadataUtils.read(repository, groupPath) != null) {
+        paths.add(groupPath);
+      }
+      return paths;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

@@ -43,6 +43,8 @@ import org.sonatype.nexus.orient.freeze.ReadOnlyState;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.privilege.ApplicationPermission;
 
+import org.joda.time.DateTimeZone;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.orient.server.OServer;
@@ -50,9 +52,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.groupingBy;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.SYSTEM;
+import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_INITIATED;
 
 /**
  * Implementation of {@link DatabaseFreezeService}
@@ -105,8 +111,7 @@ public class DatabaseFreezeServiceImpl
     // catch up to other hosts in the cluster on startup
     List<FreezeRequest> state = databaseFrozenStateManager.getState();
     if (!state.isEmpty()) {
-      log.info("Restoring database frozen state on startup");
-      freezeLocalDatabases();
+      refreezeOnStartup(state);
     }
   }
 
@@ -272,6 +277,33 @@ public class DatabaseFreezeServiceImpl
         log.info("Updated server role of {} database to {}", database, serverRole);
         return null;
       });
+    }
+  }
+
+  @VisibleForTesting
+  void refreezeOnStartup(final List<FreezeRequest> state) {
+    log.info("Restoring database frozen state on startup");
+    Map<InitiatorType, List<FreezeRequest>> requestsByInitiator =
+        state.stream().collect(groupingBy(FreezeRequest::getInitiatorType));
+    for (FreezeRequest request : state) {
+      log.warn("Database was frozen by {} process '{}' at {}",
+          request.getInitiatorType(), request.getInitiatorId(),
+          request.getTimestamp().withZone(DateTimeZone.getDefault()));
+    }
+    if (nodeAccess.isClustered()) {
+      log.warn("Databases must be unfrozen manually");
+      freezeLocalDatabases();
+    }
+    else {
+      // in non-clustered mode, system requests are not restored on startup
+      for (FreezeRequest request : requestsByInitiator.getOrDefault(SYSTEM, emptyList())) {
+        log.warn("Discarding freeze request by {} process '{}'", request.getInitiatorType(), request.getInitiatorId());
+        databaseFrozenStateManager.remove(request);
+      }
+      if (!requestsByInitiator.getOrDefault(USER_INITIATED, emptyList()).isEmpty()) {
+        log.warn("Databases must be unfrozen manually");
+        freezeLocalDatabases();
+      }
     }
   }
 }

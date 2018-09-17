@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -26,7 +28,6 @@ import org.sonatype.nexus.repository.storage.DefaultComponentFinder;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Objects.nonNull;
 
 /**
  * @since 3.next
@@ -43,11 +44,11 @@ public class Maven2ComponentFinder
   DefaultComponentFinder defaultComponentFinder;
 
   @Override
-  public Iterable<Component> findMatchingComponents(final Repository repository,
-                                                    final String componentId,
-                                                    final String componentGroup,
-                                                    final String componentName,
-                                                    final String componentVersion)
+  public List<Component> findMatchingComponents(final Repository repository,
+                                                final String componentId,
+                                                final String componentGroup,
+                                                final String componentName,
+                                                final String componentVersion)
   {
     if (Maven2SearchResultComponentGenerator.isSnapshotId(componentId)) {
       checkNotNull(componentVersion);

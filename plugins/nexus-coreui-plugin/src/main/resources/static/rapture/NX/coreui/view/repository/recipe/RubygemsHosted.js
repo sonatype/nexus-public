@@ -24,7 +24,8 @@ Ext.define('NX.coreui.view.repository.recipe.RubygemsHosted', {
     'NX.Conditions',
     'NX.I18n',
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted'
+    'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
   /**
@@ -35,7 +36,8 @@ Ext.define('NX.coreui.view.repository.recipe.RubygemsHosted', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet'}
+      {xtype: 'nx-coreui-repository-storage-hosted-facet'},
+      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();

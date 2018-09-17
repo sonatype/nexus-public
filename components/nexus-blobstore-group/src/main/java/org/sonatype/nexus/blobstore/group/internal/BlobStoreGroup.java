@@ -130,24 +130,22 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public Blob create(final InputStream blobData, final Map<String, String> headers) {
-    BlobStore target = fillPolicy.chooseBlobStore(this, headers);
-    if (target == null) {
-      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create", null);
-    }
-    Blob blob = target.create(blobData, headers);
-    locatedBlobs.put(blob.getId(), target);
-    return blob;
+    return create(headers, target -> target.create(blobData, headers));
   }
 
   @Override
   @Guarded(by = STARTED)
   public Blob create(final Path sourceFile, final Map<String, String> headers, final long size, final HashCode sha1) {
-    BlobStore target = fillPolicy.chooseBlobStore(this, headers);
-    if (target == null) {
+    return create(headers, target -> target.create(sourceFile, headers, size, sha1));
+  }
+
+  private Blob create(final Map<String, String> headers, final CreateBlobFunction createBlobFunction) {
+    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    if (result == null) {
       throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create", null);
     }
-    Blob blob = target.create(sourceFile, headers, size, sha1);
-    locatedBlobs.put(blob.getId(), target);
+    Blob blob = createBlobFunction.create(result);
+    locatedBlobs.put(blob.getId(), result);
     return blob;
   }
 
@@ -256,7 +254,12 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean isPromotable() {
+  public boolean isWritable() {
+    return true;
+  }
+
+  @Override
+  public boolean isGroupable() {
     return false;
   }
 
@@ -350,5 +353,15 @@ public class BlobStoreGroup
         "name='" + name + "'," +
         "members='" + members.get() + '\'' +
         '}';
+  }
+
+  /**
+   * Functional interface for caller delegation of BlobStore creation
+   *
+   * @since 3.next
+   */
+  @FunctionalInterface
+  private interface CreateBlobFunction {
+    Blob create(BlobStore blobStore);
   }
 }

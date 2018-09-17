@@ -35,6 +35,7 @@ import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -85,6 +86,8 @@ public class FileBlobStoreIT
 
   private static final int METRICS_FLUSH_TIMEOUT = 5;
 
+  private static final int QUOTA_CHECK_INTERVAL = 5;
+
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin"
@@ -114,6 +117,9 @@ public class FileBlobStoreIT
   @Mock
   DryRunPrefix dryRunPrefix;
 
+  @Mock
+  private BlobStoreQuotaService quotaService;
+
   @Before
   public void setUp() throws Exception {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
@@ -123,7 +129,7 @@ public class FileBlobStoreIT
     contentDirectory = blobStoreDirectory.resolve("content");
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
 
-    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
+    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL);
 
     fileOperations = spy(new SimpleFileOperations());
 

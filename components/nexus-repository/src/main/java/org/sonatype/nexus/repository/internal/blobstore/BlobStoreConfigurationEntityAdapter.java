@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -35,6 +37,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 /**
  * {@link BlobStoreConfiguration} entity-adapter.
@@ -147,5 +153,18 @@ public class BlobStoreConfigurationEntityAdapter
    */
   public BlobStoreConfiguration getByName(final ODatabaseDocumentTx db, final String name) {
     return read.execute(db, name);
+  }
+
+  /**
+   * Queries for the groups that a blob store is a part of.
+   *
+   * @return the {@link BlobStoreConfiguration}s that have a group member matching {@code name}
+   *
+   * @since 3.next
+   */
+  public List<BlobStoreConfiguration> getParents(final ODatabaseDocumentTx db, final String name) {
+    String query = format("SELECT FROM %s WHERE ? in attributes.group.members", getTypeName());
+    List<ODocument> results = db.command(new OSQLSynchQuery<>(query)).execute(name);
+    return results.stream().map(this::readEntity).collect(toList());
   }
 }

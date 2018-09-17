@@ -52,7 +52,7 @@ class BlobStoreHealthCheck
         .collect { it.getBlobStoreConfiguration().getName() }
 
     String stores = unhealthyBlobStores.join(',')
-    String message = "There are ${unhealthyBlobStores.size()}/${blobStoreManagerProvider.get().browse().size()} " +
+    String message = "${unhealthyBlobStores.size()}/${blobStoreManagerProvider.get().browse().size()} " +
         "blob stores violating their quota. ${stores ? 'Violating blob stores:(' + stores + ')' : ''}"
 
     Result healthCheckResult = unhealthyBlobStores ? Result.unhealthy(message) : Result.healthy(message)

@@ -16,6 +16,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
 /**
@@ -27,6 +28,11 @@ public interface BlobStoreMetricsStore
     extends Lifecycle
 {
   void setStorageDir(Path blobstoreRoot);
+
+  /**
+   * Sets the blob store whose metrics are being recorded.
+   */
+  void setBlobStore(BlobStore blobStore);
 
   /**
    * Provide the current metrics. This is an estimate.

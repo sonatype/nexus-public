@@ -256,6 +256,36 @@ class BlobStoreManagerImplTest
     }
   }
 
+  @Test
+  void 'It is promotable when the store finds no parents and the blob store is groupable'() {
+    def blobStoreName = 'child'
+    def blobStore = mock(BlobStore)
+    when(blobStore.isGroupable()).thenReturn(true)
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
+    when(store.findParents(blobStoreName)).thenReturn([])
+    assert underTest.isPromotable(blobStore)
+  }
+
+  @Test
+  void 'It is not promotable when the store finds parents'() {
+    def blobStoreName = 'child'
+    def blobStore = mock(BlobStore)
+    when(blobStore.isGroupable()).thenReturn(true)
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
+    when(store.findParents(blobStoreName)).thenReturn([new BlobStoreConfiguration()])
+    assert !underTest.isPromotable(blobStore)
+  }
+
+  @Test
+  void 'It is not promotable when the store is not groupable'() {
+    def blobStoreName = 'child'
+    def blobStore = mock(BlobStore)
+    when(blobStore.isGroupable()).thenReturn(false)
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
+    when(store.findParents(blobStoreName)).thenReturn([])
+    assert !underTest.isPromotable(blobStore)
+  }
+
   private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {
     def entity = new BlobStoreConfiguration(
         name: name,

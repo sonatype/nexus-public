@@ -54,7 +54,7 @@ public class PrivilegesExistValidator
     List<Object> missing = new LinkedList<>();
     for (Object item : value) {
       if (!ids.contains(item)) {
-        missing.add(item);
+        missing.add(getEscapeHelper().stripJavaEl(item.toString()));
       }
     }
     if (missing.isEmpty()) {

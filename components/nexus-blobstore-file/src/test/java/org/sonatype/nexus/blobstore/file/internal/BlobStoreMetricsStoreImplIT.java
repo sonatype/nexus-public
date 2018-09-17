@@ -17,8 +17,11 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -31,6 +34,8 @@ import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -45,15 +50,24 @@ public class BlobStoreMetricsStoreImplIT
 
   private static final int METRICS_FLUSH_TIMEOUT = 5;
 
+  private static final int QUOTA_CHECK_INTERVAL = 5;
+
   @Mock
   NodeAccess nodeAccess;
+
+  @Mock
+  BlobStoreQuotaService quotaService;
+
+  @Mock
+  BlobStore blobStore;
 
   @Before
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
+    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL);
     underTest.setStorageDir(blobStoreDirectory);
+    underTest.setBlobStore(blobStore);
   }
 
   @After
@@ -91,7 +105,7 @@ public class BlobStoreMetricsStoreImplIT
 
   @Test
   public void listBackingFiles() throws Exception {
-    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
+    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5);
     File[] backingFiles = underTest.listBackingFiles();
     assertThat("backing files is empty", backingFiles.length, is(0));
 
@@ -100,5 +114,15 @@ public class BlobStoreMetricsStoreImplIT
 
     backingFiles = underTest.listBackingFiles();
     assertThat("backing files contains the data file", backingFiles.length, is(1));
+  }
+
+  @Test
+  public void invokeQuotaServiceOnFlush() throws Exception {
+    underTest.start();
+
+    underTest.recordAddition(1000);
+    Thread.sleep(QUOTA_CHECK_INTERVAL * 1000);
+    await().atMost(QUOTA_CHECK_INTERVAL, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
+    verify(quotaService, times(1)).checkQuota(blobStore);
   }
 }

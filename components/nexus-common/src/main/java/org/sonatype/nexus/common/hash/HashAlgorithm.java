@@ -12,10 +12,15 @@
  */
 package org.sonatype.nexus.common.hash;
 
+import java.util.Map;
+import java.util.Optional;
+
+import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * A hash algorithm name paired with a {@link HashFunction}.
@@ -32,6 +37,9 @@ public class HashAlgorithm
 
   public static final HashAlgorithm SHA512 = new HashAlgorithm("sha512", Hashing.sha512());
 
+  public static final Map<String, HashAlgorithm> ALL_HASH_ALGORITHMS = ImmutableMap
+      .of(MD5.name, MD5, SHA1.name, SHA1, SHA256.name, SHA256, SHA512.name, SHA512);
+
   private final String name;
 
   private final HashFunction function;
@@ -47,5 +55,9 @@ public class HashAlgorithm
 
   public HashFunction function() {
     return function;
+  }
+
+  public static Optional<HashAlgorithm> getHashAlgorithm(final String algorithm) {
+    return ofNullable(ALL_HASH_ALGORITHMS.get(algorithm));
   }
 }

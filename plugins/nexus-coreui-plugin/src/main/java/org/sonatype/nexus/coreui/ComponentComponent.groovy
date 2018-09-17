@@ -159,10 +159,10 @@ class ComponentComponent
       componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
     }
 
-    Iterable<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
+    List<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
         componentXO.group, componentXO.name, componentXO.version)
 
-    def browseResult = browseService.browseComponentAssets(repository, components.getAt(0))
+    def browseResult = browseService.browseComponentAssets(repository, components.get(0))
     def repoNamesForBuckets = browseService.getRepositoryBucketNames(repository)
 
     return createAssetXOs(browseResult.results, componentXO.name, repositoryName, repoNamesForBuckets)
@@ -248,7 +248,7 @@ class ComponentComponent
       componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
     }
 
-    Iterable<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
+    List<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
         componentXO.group, componentXO.name, componentXO.version)
 
     for (Component component : components) {

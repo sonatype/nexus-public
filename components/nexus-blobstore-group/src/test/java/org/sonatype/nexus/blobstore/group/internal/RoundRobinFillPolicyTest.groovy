@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.group.internal
 
-import javax.inject.Provider
+
+import org.sonatype.nexus.blobstore.api.BlobStore
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -40,5 +42,66 @@ class RoundRobinFillPolicyTest
       initialValue      || expectedCurrentIndex | expectedNextIndex
       0                 || 0                    | 1
       Integer.MAX_VALUE || Integer.MAX_VALUE    | 0
+  }
+
+  def "It will skip blob stores that are not writable"() {
+    given: 'a blob store with some members currently not writable'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> [
+            mockMember(false, 'one'),
+            mockMember(false, 'two'),
+            mockMember(true, 'three'),
+            mockMember(true, 'four'),
+        ]
+      }
+    when: 'the policy selects the next writable blob store'
+      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+    then: 'it selects the correct member and the next index is correct'
+      blobStore.getBlobStoreConfiguration().getName() == 'three'
+      roundRobinFillPolicy.nextIndex() == 1
+  }
+
+  def "It will return null if no members are writable"() {
+    given: 'a blob store with members currently not writable'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> [
+            mockMember(false, 'one', 1),
+            mockMember(false, 'two', 1),
+        ]
+      }
+    and: 'the following initial sequence'
+      roundRobinFillPolicy.sequence.set(initialSequence)
+    when: 'the policy tries to select the blob store member'
+      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+    then: 'the selected blobstore is null and the next index is correct'
+      blobStore == null
+      roundRobinFillPolicy.nextIndex() == expectedNextIndex
+
+    where:
+      initialSequence | expectedNextIndex
+      0               | 1
+      1               | 2
+      2               | 3
+      3               | 4
+      4               | 5
+  }
+
+  @Unroll
+  def "It will return null if the group has no member"() {
+    given: 'A group with no members'
+      BlobStoreGroup blobStoreGroup = Mock() {
+        getMembers() >> []
+      }
+    when: 'the policy tries to select the blob store member'
+      def blobStore = roundRobinFillPolicy.chooseBlobStore(blobStoreGroup, [:])
+    then: 'the result is null'
+      blobStore == null
+  }
+
+  private BlobStore mockMember(availability, name, numCalled = _) {
+    Mock(BlobStore) {
+      numCalled * isWritable() >> availability;
+      getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
+    }
   }
 }

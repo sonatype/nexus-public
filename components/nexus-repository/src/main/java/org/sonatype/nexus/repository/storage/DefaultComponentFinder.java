@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -32,11 +34,11 @@ public class DefaultComponentFinder
   public static final String DEFAULT_COMPONENT_FINDER_KEY = "default";
 
   @Override
-  public Iterable<Component> findMatchingComponents(final Repository repository,
-                                                    final String componentId,
-                                                    final String componentGroup,
-                                                    final String componentName,
-                                                    final String componentVersion)
+  public List<Component> findMatchingComponents(final Repository repository,
+                                                final String componentId,
+                                                final String componentGroup,
+                                                final String componentName,
+                                                final String componentVersion)
   {
     if (null == repository || null == componentId || componentId.isEmpty()) {
       return emptyList();

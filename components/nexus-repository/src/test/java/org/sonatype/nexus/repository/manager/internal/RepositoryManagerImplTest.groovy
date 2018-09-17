@@ -40,11 +40,16 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
 import static com.google.common.collect.Lists.asList
+import static com.google.common.collect.Lists.newArrayList
+import static com.google.common.collect.Maps.newHashMap
 import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
+import static java.util.UUID.randomUUID
+import static java.util.stream.Collectors.toList
 import static org.fest.assertions.api.Assertions.assertThat
 import static org.hamcrest.Matchers.containsInAnyOrder
 import static org.hamcrest.Matchers.empty
+import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.instanceOf
 import static org.junit.Assert.assertFalse
 import static org.mockito.Matchers.any
@@ -56,6 +61,8 @@ import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME
+import static org.sonatype.nexus.repository.manager.internal.RepositoryManagerImpl.CLEANUP_ATTRIBUTES_KEY
+import static org.sonatype.nexus.repository.manager.internal.RepositoryManagerImpl.CLEANUP_NAME_KEY
 
 class RepositoryManagerImplTest
     extends TestSupport
@@ -423,5 +430,55 @@ class RepositoryManagerImplTest
     repositoryManager = buildRepositoryManagerImpl(true)
     def groupNames = repositoryManager.findContainingGroups(UNGROUPED_REPO_NAME)
     assertThat(groupNames, empty())
+  }
+
+  @Test
+  void 'repository with cleanup policy is correctly loaded'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+
+    String name = randomUUID().toString().replace('-', '')
+
+    Map<String, Object> cleanupAttributes = newHashMap()
+    cleanupAttributes.put(CLEANUP_NAME_KEY, name)
+
+    mavenCentralConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
+
+    List<Repository> repositories = repositoryManager.browseForCleanupPolicy(name).collect(toList())
+
+    assertThat(repositories.size(), equalTo(1))
+    assertThat(repositories.get(0).configuration, equalTo(mavenCentralConfiguration))
+    assertThat(repositories
+        .get(0).configuration.attributes
+        .get(CLEANUP_ATTRIBUTES_KEY)
+        .get(CLEANUP_NAME_KEY).toString(),
+        equalTo(name))
+  }
+
+  @Test
+  void 'multi repository with same cleanup policy are correctly loaded'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+
+    String name = randomUUID().toString().replace('-', '')
+
+    Map<String, Object> cleanupAttributes = newHashMap()
+    cleanupAttributes.put(CLEANUP_NAME_KEY, name)
+
+    mavenCentralConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
+    apacheSnapshotsConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
+
+    List<Repository> repositories = repositoryManager.browseForCleanupPolicy(name).collect(toList())
+
+    assertThat(repositories.size(), equalTo(2))
+    assertThat(repositories.get(0).configuration, equalTo(mavenCentralConfiguration))
+    assertThat(repositories.get(1).configuration, equalTo(apacheSnapshotsConfiguration))
+  }
+
+  @Test
+  void 'no repositories are loaded for an unknown cleanup policy'() {
+    repositoryManager = buildRepositoryManagerImpl(true)
+
+    def stream = repositoryManager.browseForCleanupPolicy(randomUUID().toString())
+
+    assertThat(stream.count()).isEqualTo(0)
   }
 }

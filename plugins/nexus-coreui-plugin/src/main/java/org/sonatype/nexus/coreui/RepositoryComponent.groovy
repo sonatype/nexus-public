@@ -122,6 +122,13 @@ class RepositoryComponent
     }
   }
 
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  List<Format> readFormats() {
+   return formats
+  }
+
   RepositoryViewPermission viewPermission(final Repository repository, final String action) {
     return new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(),
         ImmutableList.of(action))

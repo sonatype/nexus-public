@@ -41,6 +41,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
+import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.ObjectTagging;
@@ -178,6 +179,7 @@ public class S3BlobStore
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(S3Blob::new));
     storeMetrics.setBucket(getConfiguredBucket());
     storeMetrics.setS3(s3);
+    storeMetrics.setBlobStore(this);
     storeMetrics.start();
   }
 
@@ -693,8 +695,13 @@ public class S3BlobStore
   }
 
   @Override
-  public boolean isPromotable() {
-    return true;
+  public boolean isWritable() {
+    try {
+      return s3.doesBucketExistV2(getConfiguredBucket());
+    } catch (SdkBaseException e) {
+      log.warn("S3 bucket '{}' is not writable.", getConfiguredBucket(), e);
+      return false;
+    }
   }
 
   /**

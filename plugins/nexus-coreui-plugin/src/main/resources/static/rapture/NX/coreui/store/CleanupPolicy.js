@@ -13,32 +13,30 @@
 /*global Ext, NX*/
 
 /**
- * Maven2 Component Details Provider.
+ * Cleanup Policy Store.
  *
  * @since 3.next
  */
-Ext.define('NX.coreui.view.component.Maven2ComponentDetailsProvider', {
-  alias: 'nx-coreui-maven2-component-details-provider',
-  singleton: true,
-  requires: [
-    'NX.I18n'
-  ],
+Ext.define('NX.coreui.store.CleanupPolicy', {
+  extend: 'Ext.data.Store',
+  model: 'NX.coreui.model.CleanupPolicy',
 
-  getDeleteButtonText: function(componentModel) {
-    return this.isSnapshot(componentModel) ?
-        NX.I18n.get('ComponentDetails_Delete_Button_Snapshot') :
-        NX.I18n.get('ComponentDetails_Delete_Button');
+  proxy: {
+    type: 'direct',
+
+    api: {
+      read: 'NX.direct.cleanup_CleanupPolicy.readByFormat'
+    },
+
+    reader: {
+      type: 'json',
+      rootProperty: 'data',
+      successProperty: 'success'
+    }
   },
 
-  isSnapshot: function(componentModel) {
-    var id;
-
-    if (!componentModel) {
-      return false;
-    }
-
-    id = componentModel.get('id');
-    return (componentModel.get('format') === 'maven2') &&
-        id.indexOf('-SNAPSHOT') === (id.length - '-SNAPSHOT'.length);
-  }
+  sorters: [
+    { property: 'sortOrder', direction: 'DESC' },
+    { property: 'name', direction: 'ASC'}
+  ]
 });

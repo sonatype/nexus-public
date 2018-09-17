@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.httpclient.internal;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
@@ -61,10 +63,14 @@ public class HttpClientFacetImpl
     extends FacetSupport
     implements HttpClientFacet, RemoteConnectionStatusObserver
 {
+  private static final String DEFAULT = "default";
+
   private final HttpClientManager httpClientManager;
 
   @VisibleForTesting
   static final String CONFIG_KEY = "httpclient";
+
+  private final Map<String, AutoBlockConfiguration> autoBlockConfiguration;
 
   @VisibleForTesting
   static class Config
@@ -86,17 +92,23 @@ public class HttpClientFacetImpl
 
   private Config config;
 
-  private BlockingHttpClient httpClient;
+  @VisibleForTesting
+  BlockingHttpClient httpClient;
 
   @Inject
-  public HttpClientFacetImpl(final HttpClientManager httpClientManager) {
+  public HttpClientFacetImpl(final HttpClientManager httpClientManager,
+                             final Map<String, AutoBlockConfiguration> autoBlockConfiguration) {
     this.httpClientManager = checkNotNull(httpClientManager);
+    this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
   }
 
   @VisibleForTesting
-  HttpClientFacetImpl(final HttpClientManager httpClientManager, final Config config) {
-    this(httpClientManager);
+  HttpClientFacetImpl(final HttpClientManager httpClientManager,
+                      final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
+                      final Config config) {
+    this(httpClientManager, autoBlockConfiguration);
     this.config = checkNotNull(config);
+    checkNotNull(autoBlockConfiguration.get(DEFAULT));
   }
 
   @Override
@@ -228,8 +240,18 @@ public class HttpClientFacetImpl
 
     boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client
-    httpClient = new BlockingHttpClient(delegate, config, this, online);
+    httpClient = new BlockingHttpClient(delegate, config, this, online, getAutoBlockConfiguration());
     log.debug("Created HTTP client: {}", httpClient);
+  }
+
+  private AutoBlockConfiguration getAutoBlockConfiguration() {
+    AutoBlockConfiguration config = this.autoBlockConfiguration.get(getRepository().getFormat().getValue());
+    
+    if (config == null) {
+      config = autoBlockConfiguration.get(DEFAULT);
+    }
+    
+    return config;
   }
 
   private void closeHttpClient() throws IOException {

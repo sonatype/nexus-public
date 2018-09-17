@@ -22,7 +22,6 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
  * A {@link BlobStoreQuota} which checks that a blob store isn't using more space the limit.
@@ -43,12 +42,13 @@ public class SpaceUsedQuota
     checkNotNull(blobStore);
 
     long usedSpace = blobStore.getMetrics().getTotalSize();
-    Long limit = blobStore.getBlobStoreConfiguration().attributes(ROOT_KEY).get(LIMIT_KEY, Long.class);
-    checkNotNull(limit);
+    Number limitObj = blobStore.getBlobStoreConfiguration().attributes(ROOT_KEY).get(LIMIT_KEY, Number.class);
+    long limit = checkNotNull(limitObj).longValue();
+
     String name = blobStore.getBlobStoreConfiguration().getName();
     String msg = format("Blob store %s is using %s space and has a limit of %s", name,
-        byteCountToDisplaySize(usedSpace),
-        byteCountToDisplaySize(limit));
+        convertBytesToSI(usedSpace),
+        convertBytesToSI(limit));
 
     return new BlobStoreQuotaResult(usedSpace > limit, name, msg);
   }

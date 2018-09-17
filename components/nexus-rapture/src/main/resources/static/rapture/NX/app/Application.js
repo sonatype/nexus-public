@@ -85,6 +85,8 @@ Ext.define('NX.app.Application', {
     'NX.ext.grid.plugin.Filtering',
 
     // grid overrides
+    'NX.ext.grid.Panel',
+    'NX.ext.grid.column.Column',
     'NX.ext.grid.column.Date',
 
     // custom grid columns
@@ -169,7 +171,10 @@ Ext.define('NX.app.Application', {
       return NX.State.getValue('activeBundles').indexOf(symbolicName) > -1;
     },
     capabilityActive: function (typeName) {
-      return NX.State.getValue('activeCapabilities').indexOf(typeName) > -1;
+      return Ext.Array.contains(NX.State.getValue('capabilityActiveTypes'), typeName);
+    },
+    capabilityCreated: function (typeName) {
+      return Ext.Array.contains(NX.State.getValue('capabilityCreatedTypes'), typeName);
     }
   },
 

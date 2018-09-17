@@ -12,13 +12,24 @@
  */
 package org.sonatype.nexus.repository.httpclient.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
+import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,6 +38,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.CONFIG_KEY;
 
 /**
  * Tests for {@link HttpClientFacetImpl}.
@@ -34,11 +48,42 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class HttpClientFacetImplTest
     extends TestSupport
 {
+  private static final String DEFAULT = "default";
+
+  private static final String NPM = "npm";
+
   private HttpClientFacetImpl underTest;
 
   @Mock
   private HttpClientManager httpClientManager;
+  
+  @Mock
+  private Configuration configuration;
+  
+  @Mock
+  private Repository repository;
+  
+  @Mock
+  private ConfigurationFacet configurationFacet;
+  
+  @Mock
+  private AutoBlockConfiguration defaultAutoBlockConfiguration;
 
+  @Mock
+  private AutoBlockConfiguration npmAutoBlockConfiguration;
+  
+  @Mock
+  private Format npmFormat;
+  
+  @Mock
+  private Format unknownFormat;
+  
+  @Mock
+  private CloseableHttpClient closeableHttpClient;
+  
+  @Mock
+  private EventManager eventManager;
+  
   private HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
 
   private UsernameAuthenticationConfiguration usernameAuthentication = new UsernameAuthenticationConfiguration();
@@ -53,8 +98,18 @@ public class HttpClientFacetImplTest
   private static final String PASSWORD = "password";
 
   @Before
-  public void setUp() {
-    underTest = new HttpClientFacetImpl(httpClientManager, config);
+  public void setUp() throws Exception {
+    Map<String, AutoBlockConfiguration> autoBlockConfiguration = new HashMap<>();
+    autoBlockConfiguration.put(DEFAULT, defaultAutoBlockConfiguration);
+    autoBlockConfiguration.put(NPM, npmAutoBlockConfiguration);
+    
+    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, config);
+    underTest.attach(repository);
+    underTest.installDependencies(eventManager);
+    when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
+    
+    when(npmFormat.getValue()).thenReturn(NPM);
+    when(unknownFormat.getValue()).thenReturn("unknown");
 
     usernameAuthentication.setUsername(USERNAME);
     usernameAuthentication.setPassword(PASSWORD);
@@ -84,5 +139,30 @@ public class HttpClientFacetImplTest
 
     assertThat(basicAuth.getName(), is(equalTo(HttpHeaders.AUTHORIZATION)));
     assertThat(basicAuth.getValue(), is(equalTo(BASIC_AUTH_ENCODED)));
+  }
+
+  @Test
+  public void passFormatSpecificConfigurationToBlockingHttpClient() throws Exception {
+    assertConfigurationPassedToBlockingClient(npmFormat, npmAutoBlockConfiguration);
+  }
+
+  @Test
+  public void passDefaultConfigurationWhenFormatNotFound() throws Exception {
+    assertConfigurationPassedToBlockingClient(unknownFormat, defaultAutoBlockConfiguration);
+  }
+
+  private void assertConfigurationPassedToBlockingClient(final Format format,
+                                                         final AutoBlockConfiguration autoBlockConfiguration)
+      throws Exception
+  {
+    when(httpClientManager.create(any())).thenReturn(closeableHttpClient);
+    when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(repository.getFormat()).thenReturn(format);
+
+    underTest.doConfigure(configuration);
+
+    assertThat(underTest.httpClient.autoBlockConfiguration, is(equalTo(autoBlockConfiguration)));
   }
 }

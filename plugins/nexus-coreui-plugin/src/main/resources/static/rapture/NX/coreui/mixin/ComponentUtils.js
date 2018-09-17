@@ -20,8 +20,10 @@
 
 Ext.define('NX.coreui.mixin.ComponentUtils', {
   requires: [
+    'NX.Bookmarks',
     'NX.Dialogs',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.Messages'
   ],
 
   /**

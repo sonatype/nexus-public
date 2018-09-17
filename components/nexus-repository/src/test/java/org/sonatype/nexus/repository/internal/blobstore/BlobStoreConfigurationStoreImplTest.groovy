@@ -99,6 +99,36 @@ class BlobStoreConfigurationStoreImplTest
     assert list[0].attributes.file.path == 'blat'
   }
 
+  @Test
+  void 'It will return the parents by matching the attributes group members'() {
+    createConfig('member1', 'member1')
+    def entity = new BlobStoreConfiguration(
+        name: 'parent1',
+        type: 'File',
+        attributes: [group:[members:['member1']]]
+    )
+    underTest.create(entity)
+
+    def parents = underTest.findParents('member1')
+    assert parents.size() == 1
+    assert parents[0].name == 'parent1'
+  }
+
+  @Test
+  void 'It will return no parents if the blob store is not a member of any groups'() {
+    createConfig('member1', 'member1')
+    createConfig('member2', 'member2')
+    def entity = new BlobStoreConfiguration(
+        name: 'parent1',
+        type: 'File',
+        attributes: [group:[members:['member1']]]
+    )
+    underTest.create(entity)
+
+    def parents = underTest.findParents('member2')
+    assert parents.size() == 0
+  }
+
   private BlobStoreConfiguration createConfig(name = 'foo', path = 'bar') {
     def entity = new BlobStoreConfiguration(
         name: name,

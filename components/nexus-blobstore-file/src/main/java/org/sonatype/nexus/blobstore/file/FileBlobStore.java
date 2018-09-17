@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -218,6 +219,7 @@ public class FileBlobStore
       metadata.store();
     }
     storeMetrics.setStorageDir(storageDir);
+    storeMetrics.setBlobStore(this);
     storeMetrics.start();
   }
 
@@ -314,7 +316,6 @@ public class FileBlobStore
             retries < MAX_COLLISION_RETRIES ? ", retrying with new BlobId" : "!");
       }
     }
-
     throw new BlobStoreException("Cannot find free BlobId", null);
   }
 
@@ -633,8 +634,22 @@ public class FileBlobStore
   }
 
   @Override
-  public boolean isPromotable() {
-    return true;
+  public boolean isWritable() {
+    try {
+      FileStore fileStore = Files.getFileStore(contentDir);
+      long usableSpace = fileStore.getUsableSpace();
+      boolean readOnly = fileStore.isReadOnly();
+      boolean result = !readOnly && usableSpace > 0;
+      if (!result) {
+        log.warn("File blob store '{}' is not writable. Read only: {}. Usable space: {}",
+            getBlobStoreConfiguration().getName(), readOnly, usableSpace);
+      }
+      return result;
+    }
+    catch (IOException e) {
+      log.warn("File blob store '{}' is not writable.", getBlobStoreConfiguration().getName(), e);
+      return false;
+    }
   }
 
   @Override

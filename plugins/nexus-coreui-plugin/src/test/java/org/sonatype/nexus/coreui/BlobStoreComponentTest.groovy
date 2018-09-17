@@ -112,15 +112,14 @@ class BlobStoreComponentTest
   def 'it will promote a blob that is promotable'() {
     setup:
       def groupBlobName = 'myGroup'
+      def from = Mock(BlobStore)
 
     when: 'trying to promote'
       def blobStoreXO = blobStoreComponent.promoteToGroup(groupBlobName)
 
     then: 'blobStoreManager is called correctly'
-      def from = Mock(BlobStore) {
-        isPromotable() >> true
-      }
       1 * blobStoreManager.get(groupBlobName) >> from
+      1 * blobStoreManager.isPromotable(from) >> true
       1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
       1 * blobStoreConverter.promote(from) >> Mock(BlobStoreGroup) {
           getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) {
@@ -149,14 +148,16 @@ class BlobStoreComponentTest
   def 'it will not promote a blob store type that is not promotable'() {
     setup:
       def groupBlobName = 'myGroup'
+      def blobStore = Mock(BlobStore) {
+        getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: groupBlobName, attributes: [:])
+      }
 
     when: 'trying to promote'
       blobStoreComponent.promoteToGroup(groupBlobName)
 
     then: 'blobStoreManager is called correctly'
-      1 * blobStoreManager.get(groupBlobName) >> Mock(BlobStore) {
-        isPromotable() >> false
-      }
+      1 * blobStoreManager.get(groupBlobName) >> blobStore
+      1 * blobStoreManager.isPromotable(blobStore) >> false
       BlobStoreException exception = thrown()
       exception.message == 'Blob store (myGroup) could not be promoted to a blob store group'
   }

@@ -190,6 +190,11 @@ fieldset.nx-form-section {
     padding-bottom: 20px;
 }
 
+fieldset.nx-form-section > .x-fieldset-header > .x-fieldset-header-text {
+    font-size: 18px;
+    line-height: 22px;
+}
+
 fieldset.nx-form-section .x-fieldset-body {
     padding-left: 10px;
 }
@@ -198,9 +203,8 @@ fieldset.nx-form-section.nx-no-title {
     padding-top: 0;
 }
 
-fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
-    font-size: 18px;
-    line-height: 22px;
+fieldset.x-fieldset {
+    overflow: visible;
 }
 
 .nx-monospace-field textarea,

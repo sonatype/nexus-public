@@ -12,23 +12,13 @@
  */
 package org.sonatype.nexus.repository.upgrade;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.upgrade.Upgrade;
 import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.repository.search.ElasticSearchIndexCheckpoint;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRADE_MARKER;
 
 /**
  * Updates the $data-dir/elasticsearch/nexus.lsn file with a reindex marker string to
@@ -40,26 +30,10 @@ import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRAD
 @Singleton
 @Upgrades(model = ElasticSearchIndexCheckpoint.MODEL, from = "1.0", to = "1.1")
 public class ElasticSearchIndexUpgrade_1_1
-    extends ComponentSupport
-    implements Upgrade
+    extends ElasticSearchIndexUpgradeSupport
 {
-  private File nexusLsnFile;
-
   @Inject
   public ElasticSearchIndexUpgrade_1_1(final ApplicationDirectories applicationDirectories) {
-    checkNotNull(applicationDirectories);
-    this.nexusLsnFile = new File(applicationDirectories.getWorkDirectory("elasticsearch"), "nexus.lsn");
-  }
-
-  @Override
-  public void apply() throws Exception {
-    writeReindexMarker();
-  }
-
-  private void writeReindexMarker() throws IOException {
-    log.info("Write reindex marker to Elasticsearch marker file");
-    try (DataOutputStream out = new DataOutputStream(new FileOutputStream(nexusLsnFile))) {
-      out.writeBytes(INDEX_UPGRADE_MARKER);
-    }
+    super(applicationDirectories);
   }
 }

@@ -36,7 +36,8 @@ Ext.define('NX.coreui.controller.Repositories', {
     'Blobstore',
     'Repository',
     'RepositoryRecipe',
-    'RepositoryReference'
+    'RepositoryReference',
+    'CleanupPolicy'
   ],
   views: [
     'repository.RepositoryAdd',
@@ -190,6 +191,7 @@ Ext.define('NX.coreui.controller.Repositories', {
         settingsPanel.removeAllSettingsForms();
         settingsPanel.addSettingsForm({xtype: formCls.xtype, recipe: model});
         settingsPanel.loadRecord(model);
+        me.loadCleanupPolicies(model.get('format'));
 
         // Set immutable fields to readonly
         Ext.Array.each(settingsPanel.query('field[readOnlyOnUpdate=true]'), function (field) {
@@ -243,6 +245,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.setItemName(2, NX.I18n.format('Repositories_Create_Title', model.get('name')));
       me.setItemClass(2, NX.Icons.cls('repository-hosted', 'x16'));
       me.loadCreateWizard(2, {xtype: 'nx-coreui-repository-add', recipe: model});
+      me.loadCleanupPolicies(model.getId().split('-')[0]);
       if (model.getId() === 'maven2-proxy') {
         me.cleanUpdateProxyFacetContentMaxAge(-1);
       }
@@ -567,6 +570,19 @@ Ext.define('NX.coreui.controller.Repositories', {
 
       return false;
     };
+  },
+
+  loadCleanupPolicies: function(format) {
+    this.getStore('CleanupPolicy').load({
+      params: {
+        filter: [
+          {
+            property: 'format',
+            value: format
+          }
+        ]
+      }
+    });
   }
 
 });

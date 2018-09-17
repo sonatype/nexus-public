@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,7 +31,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -71,15 +74,16 @@ public class ComponentStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public Iterable<Component> getAllMatchingComponents(final Repository repository,
-                                                      final String group,
-                                                      final String name,
-                                                      final Map<String, String> formatAttributes)
+  public List<Component> getAllMatchingComponents(final Repository repository,
+                                                  final String group,
+                                                  final String name,
+                                                  final Map<String, String> formatAttributes)
   {
     checkNotNull(repository);
     checkNotNull(group);
     checkNotNull(name);
     checkNotNull(formatAttributes);
+    List<Component> filteredComponents;
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
 
@@ -89,12 +93,17 @@ public class ComponentStoreImpl
           .suffix("order by version desc");
 
       Iterable<Component> unfilteredComponents = storageTx.findComponents(query.build(), singletonList(repository));
-      return Iterables.filter(unfilteredComponents,
-          (component) -> formatAttributes.entrySet().stream()
-              .allMatch(
-                  (entry) -> Objects.equals(entry.getValue(), component.formatAttributes().get( entry.getKey() ))
+      Stream<Component> filteredStream = StreamSupport.stream(unfilteredComponents.spliterator(), false)
+          .filter(
+              (component) -> formatAttributes.entrySet().stream().allMatch(
+                  (entry) -> Objects.equals(entry.getValue(), component.formatAttributes().get(entry.getKey()))
               )
-      );
+          );
+
+      // Copy objects into a list so that the references aren't cleared after storageTx is closed - See NEXUS-17927
+      filteredComponents = ImmutableList.copyOf(filteredStream.iterator());
     }
+
+    return filteredComponents;
   }
 }

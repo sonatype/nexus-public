@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.group.internal;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,6 +29,7 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupConfigurationHelper.memberNames;
@@ -79,7 +78,7 @@ public class BlobStoreGroupDescriptor
         null,
         MANDATORY
     );
-    this.members.setStoreApi("coreui_Blobstore.read");
+    this.members.setStoreApi("coreui_Blobstore.readGroupable");
     this.members.setIdMapping("name");
     this.members.setButtons("add", "remove");
     this.members.setFromTitle("Available");
@@ -109,14 +108,20 @@ public class BlobStoreGroupDescriptor
 
   @Override
   public void validateConfig(final BlobStoreConfiguration config) {
-    Set<String> processedBlobStores = new HashSet<>();
     List<String> memberNames = memberNames(config);
     if (memberNames.isEmpty()) {
       throw new ValidationException("Blob Store '" + config.getName() + "' cannot be empty");
     }
     for (String memberName : memberNames) {
-      if (containsBlobStore(config.getName(), memberName, processedBlobStores)) {
+      if (config.getName().equals(memberName)) {
         throw new ValidationException("Blob Store '" + config.getName() + "' cannot contain itself");
+      }
+      BlobStore member = blobStoreManager.get(memberName);
+      if (!member.isGroupable()) {
+        BlobStoreConfiguration memberConfig = member.getBlobStoreConfiguration();
+        throw new ValidationException(
+            format("Blob Store '%s' is of type '%s' and is not eligible to be a group member.", memberName,
+                memberConfig.getType()));
       }
     }
   }
@@ -129,27 +134,5 @@ public class BlobStoreGroupDescriptor
   @Override
   public boolean configHasDependencyOn(final BlobStoreConfiguration config, final String blobStoreName) {
     return memberNames(config).contains(blobStoreName);
-  }
-
-  private boolean containsBlobStore(final String blobStoreName, final String memberName, final Set<String> processedBlobStores) {
-    if (processedBlobStores.contains(memberName)) {
-      return false;
-    }
-    processedBlobStores.add(memberName);
-
-    if (blobStoreName.equals(memberName)) {
-      return true;
-    }
-
-    BlobStore member = blobStoreManager.get(memberName);
-    BlobStoreConfiguration memberConfig = member.getBlobStoreConfiguration();
-    if (memberConfig.getType().equals(BlobStoreGroup.TYPE)) {
-      for (String name : memberNames(memberConfig)) {
-        if (containsBlobStore(blobStoreName, name, processedBlobStores)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }

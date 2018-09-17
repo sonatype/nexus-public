@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.manager;
 
 import java.util.Set;
 
+import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -51,4 +53,6 @@ public interface RepositoryManager
   long blobstoreUsageCount(String blobStoreName);
 
   Set<String> findContainingGroups(String name);
+
+  Stream<Repository> browseForCleanupPolicy(final String cleanupPolicyName);
 }

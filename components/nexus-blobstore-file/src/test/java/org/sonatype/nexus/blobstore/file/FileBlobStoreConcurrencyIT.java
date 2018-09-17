@@ -37,6 +37,7 @@ import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -52,8 +53,11 @@ import org.mockito.Mock;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.io.ByteStreams.nullOutputStream;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 
@@ -70,6 +74,8 @@ public class FileBlobStoreConcurrencyIT
 
   public static final int BLOB_MAX_SIZE_BYTES = 5_000_000;
 
+  private static final int QUOTA_CHECK_INTERVAL = 1;
+
   private FileBlobStore underTest;
 
   private BlobStoreMetricsStore metricsStore;
@@ -79,6 +85,9 @@ public class FileBlobStoreConcurrencyIT
 
   @Mock
   DryRunPrefix dryRunPrefix;
+
+  @Mock
+  BlobStoreQuotaService quotaService;
 
   @Before
   public void setUp() throws Exception {
@@ -94,7 +103,7 @@ public class FileBlobStoreConcurrencyIT
     final BlobStoreConfiguration config = new BlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
-    metricsStore = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess);
+    metricsStore = spy(new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL));
 
     this.underTest = new FileBlobStore(content,
         new DefaultBlobIdLocationResolver(),
@@ -192,6 +201,9 @@ public class FileBlobStoreConcurrencyIT
     runner.addTask(numberOfCompactors, () -> underTest.compact(null));
 
     runner.go();
+
+    verify(metricsStore).setBlobStore(underTest);
+    verify(quotaService, atLeastOnce()).checkQuota(underTest);
   }
 
   /**

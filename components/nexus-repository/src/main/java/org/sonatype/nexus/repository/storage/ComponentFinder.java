@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -21,9 +23,9 @@ import org.sonatype.nexus.repository.Repository;
  */
 public interface ComponentFinder
 {
-  Iterable<Component> findMatchingComponents(final Repository repository,
-                                             final String componentId,
-                                             final String componentGroup,
-                                             final String componentName,
-                                             final String componentVersion);
+  List<Component> findMatchingComponents(final Repository repository,
+                                         final String componentId,
+                                         final String componentGroup,
+                                         final String componentName,
+                                         final String componentVersion);
 }

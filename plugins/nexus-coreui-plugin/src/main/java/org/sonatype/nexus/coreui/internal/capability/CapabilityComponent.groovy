@@ -23,7 +23,7 @@ import org.sonatype.nexus.capability.Capability
 import org.sonatype.nexus.capability.CapabilityDescriptor
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry
 import org.sonatype.nexus.capability.CapabilityReference
-import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder
+import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter
 import org.sonatype.nexus.capability.CapabilityRegistry
 import org.sonatype.nexus.capability.Tag
 import org.sonatype.nexus.capability.Taggable
@@ -31,6 +31,7 @@ import org.sonatype.nexus.coreui.FormFieldXO
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.rapture.PasswordPlaceholder
+import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -47,6 +48,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.sonatype.nexus.capability.CapabilityIdentity.capabilityIdentity
+import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType
 
 // FIXME: update action name after refactor to use coreui_*
@@ -60,10 +62,15 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType
 @Singleton
 @DirectAction(action = 'capability_Capability')
 class CapabilityComponent
-extends DirectComponentSupport
+    extends DirectComponentSupport
+    implements StateContributor
 {
 
   private static final Logger log = LoggerFactory.getLogger(CapabilityComponent.class)
+
+  private static final CapabilityReferenceFilter ALL_CREATED = capabilities().includeNotExposed()
+
+  private static final CapabilityReferenceFilter ALL_ACTIVE = capabilities().includeNotExposed().active()
 
   @Inject
   private CapabilityDescriptorRegistry capabilityDescriptorRegistry
@@ -80,7 +87,7 @@ extends DirectComponentSupport
   @ExceptionMetered
   @RequiresPermissions('nexus:capabilities:read')
   List<CapabilityXO> read() {
-    return capabilityRegistry.get(CapabilityReferenceFilterBuilder.capabilities()).collect { capability ->
+    return capabilityRegistry.get(capabilities()).collect { capability ->
       asCapability(capability)
     }
   }
@@ -205,6 +212,18 @@ extends DirectComponentSupport
   void disable(final @NotEmpty String id) {
     capabilityRegistry.disable(capabilityIdentity(id))
   }
+
+  @Override
+  Map<String, Object> getState() {
+    def createdTypes = capabilityRegistry.get(ALL_CREATED).collect(capabilityToType) as Set
+    def activeTypes = capabilityRegistry.get(ALL_ACTIVE).collect(capabilityToType) as Set
+    return [
+        capabilityCreatedTypes: createdTypes,
+        capabilityActiveTypes: activeTypes
+    ]
+  }
+
+  private capabilityToType = { CapabilityReference capability -> capability.context().descriptor().type().toString() }
 
   @PackageScope
   CapabilityXO asCapability(final CapabilityReference reference) {

@@ -161,12 +161,15 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
       //first set the overall form to be editable so buttons and the like are correct.
       me.callParent([true]);
 
-      //then grab all of the dynamically generated fields and make them non-editable
-      var itemsToDisable = me.getChildItemsToDisable().filter(function(item) {
-        return item.ownerCt.xtype === 'nx-coreui-formfield-settingsfieldset';
-      });
+      //if the form has any fields
+      if (me.items != null) {
+        //then grab all of the dynamically generated fields and make them non-editable
+        var itemsToDisable = me.getChildItemsToDisable().filter(function(item) {
+          return item.ownerCt.xtype === 'nx-coreui-formfield-settingsfieldset';
+        });
 
-      me.setItemsEditable(false, itemsToDisable);
+        me.setItemsEditable(false, itemsToDisable);
+      }
     }
   }
 });

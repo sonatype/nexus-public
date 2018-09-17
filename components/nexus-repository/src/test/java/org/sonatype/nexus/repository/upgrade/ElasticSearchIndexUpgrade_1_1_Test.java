@@ -12,51 +12,18 @@
  */
 package org.sonatype.nexus.repository.upgrade;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
-
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-
-import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRADE_MARKER;
 
 public class ElasticSearchIndexUpgrade_1_1_Test
-    extends TestSupport
+    extends ElasticSearchIndexUpgradeTestSupport
 {
-
-  @Mock
-  private ApplicationDirectories appDirs;
-
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  private File elasticsearchDir;
-
-  private ElasticSearchIndexUpgrade_1_1 underTest;
-
-  @Before
-  public void setUp() throws Exception {
-    elasticsearchDir = temporaryFolder.newFolder();
-    when(appDirs.getWorkDirectory("elasticsearch")).thenReturn(elasticsearchDir);
-    underTest = new ElasticSearchIndexUpgrade_1_1(appDirs);
+  @Override
+  protected ElasticSearchIndexUpgradeSupport getElasticSearchIndexUpgrade() {
+    return new ElasticSearchIndexUpgrade_1_1(appDirs);
   }
 
   @Test
-  public void testApply() throws Exception {
-    underTest.apply();
-    try (FileInputStream in = new FileInputStream(new File(elasticsearchDir, "nexus.lsn"))) {
-      assertThat(IOUtils.toByteArray(in), is(INDEX_UPGRADE_MARKER.getBytes(StandardCharsets.UTF_8)));
-    }
+  public void applyTest() throws Exception {
+    assertElasticSearchIndexUpgraded();
   }
 }

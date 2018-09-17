@@ -16,13 +16,14 @@ import java.util.stream.Collectors
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver
-import org.sonatype.nexus.blobstore.LocationStrategy
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 import org.sonatype.nexus.common.log.DryRunPrefix
 
+import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration
@@ -57,7 +58,8 @@ class S3BlobStoreTest
 
   AmazonS3 s3 = Mock()
 
-  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, storeMetrics, dryRunPrefix)
+  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader,
+      storeMetrics, dryRunPrefix)
 
   def config = new BlobStoreConfiguration()
 
@@ -343,6 +345,20 @@ class S3BlobStoreTest
 
     then: 'the correct blob is returned'
       blobIdStream.collect(Collectors.toList()) == [blob.id]
+  }
+
+  def "A S3 blob store is writable when the client can verify that the bucket exists"() {
+    when:
+      1 * s3.doesBucketExistV2("mybucket") >> { response.call() }
+      blobStore.init(config)
+      blobStore.doStart()
+    then:
+      blobStore.isWritable() == expectedAvailability
+    where:
+      expectedAvailability | response
+      true                 | { return true }
+      false                | { return false }
+      false                | { throw new SdkClientException("Fake error") }
   }
 
   private mockS3Object(String contents) {

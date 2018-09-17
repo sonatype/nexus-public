@@ -101,4 +101,10 @@ public class BlobStoreConfigurationStoreImpl
   public BlobStoreConfiguration read(final String name) {
       return inTx(databaseInstance).call(db -> entityAdapter.getByName(db, name));
   }
+
+  @Override
+  @Guarded(by = STARTED)
+  public List<BlobStoreConfiguration> findParents(final String name) {
+    return inTx(databaseInstance).call(db -> entityAdapter.getParents(db, name));
+  }
 }

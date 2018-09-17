@@ -435,6 +435,26 @@ public class SearchServiceImpl
   }
 
   @Override
+  public SearchResponse searchUnrestrictedInRepos(final QueryBuilder query,
+                                                  @Nullable final List<SortBuilder> sort,
+                                                  final int from,
+                                                  final int size,
+                                                  final Collection<String> repoNames)
+  {
+    if (!validateQuery(query)) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+
+    final String[] searchableIndexes = getSearchableIndexes(false, repoNames);
+
+    if (searchableIndexes.length == 0) {
+      return EMPTY_SEARCH_RESPONSE;
+    }
+
+    return executeSearch(query, searchableIndexes, from, size, sort, null);
+  }
+
+  @Override
   public SearchResponse searchUnrestricted(final QueryBuilder query,
                                            @Nullable final List<SortBuilder> sort,
                                            final int from,

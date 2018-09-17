@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -113,6 +114,12 @@ public class MavenHostedFacetImpl
   public int rebuildArchetypeCatalog() throws IOException {
     log.debug("Rebuilding hosted archetype catalog for {}", getRepository().getName());
     return doRebuildArchetypeCatalog();
+  }
+
+  @Override
+  public void deleteMetadata(final List<String[]> gavs) {
+    log.debug("Deleting Maven2 metadata for {} GAVs for repository={}", gavs.size(), getRepository().getName());
+    metadataRebuilder.deleteMetadata(getRepository(), gavs);
   }
 
   @Override

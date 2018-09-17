@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
+import java.util.function.BooleanSupplier;
+
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -21,6 +24,7 @@ import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.partition;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -90,6 +94,59 @@ public class DefaultComponentMaintenanceImpl
     }
   }
 
+  @Override
+  public long deleteComponents(final Iterable<EntityId> components,
+                               final BooleanSupplier cancelledCheck,
+                               final int batchSize) 
+  {
+    checkNotNull(components);
+    checkNotNull(cancelledCheck);
+
+    UnitOfWork.beginBatch(getRepository().facet(StorageFacet.class).txSupplier());
+    long count = 0L;
+
+    try {
+      Iterable<List<EntityId>> split = partition(components, batchSize);
+      for (List<EntityId> entityIds : split) {
+        
+        if (cancelledCheck.getAsBoolean()) {
+          break;
+        }
+
+        count += doBatchDelete(entityIds, cancelledCheck);
+      }
+    }
+    finally {
+      UnitOfWork.end();
+    }
+
+    after();
+
+    return count;
+  }
+
+  @TransactionalDeleteBlob
+  protected long deleteComponentBatch(final Iterable<EntityId> components, final BooleanSupplier cancelledCheck) {
+    long count = 0L;
+
+    for (EntityId component : components) {
+      if (!cancelledCheck.getAsBoolean()) {
+        try {
+          deleteComponentTx(component, true);
+
+          log.debug("Component with ID '{}' deleted from repository {}", component, getRepository());
+
+          count++;
+        }
+        catch (Exception e ) {
+          log.debug("Unable to delete component with ID {}", component, e);
+        }
+      }
+    }
+
+    return count;
+  }
+
   @TransactionalDeleteBlob
   protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
@@ -99,5 +156,14 @@ public class DefaultComponentMaintenanceImpl
     }
     log.info("Deleting asset: {}", asset);
     tx.deleteAsset(asset, deleteBlob);
+  }
+
+  protected long doBatchDelete(final List<EntityId> entityIds, final BooleanSupplier cancelledCheck) {
+    return deleteComponentBatch(entityIds, cancelledCheck);
+  }
+
+  @Override
+  public void after() {
+    //no op
   }
 }

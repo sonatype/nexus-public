@@ -23,7 +23,8 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Hosted', {
   requires: [
     'NX.coreui.view.repository.facet.Maven2Facet',
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted'
+    'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
   /**
@@ -35,7 +36,8 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Hosted', {
     me.items = [
       { xtype: 'nx-coreui-repository-maven2-facet'},
       { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-storage-hosted-facet'}
+      { xtype: 'nx-coreui-repository-storage-hosted-facet'},
+      { xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();

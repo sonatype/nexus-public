@@ -46,6 +46,7 @@ import static com.google.common.collect.DiscreteDomain.integers
 import static com.jayway.awaitility.Awaitility.await
 import static java.util.concurrent.TimeUnit.MINUTES
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery
+import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery
 import static org.hamcrest.Matchers.is
 import static org.junit.Assert.assertThat
@@ -168,6 +169,25 @@ class SearchServiceImplIT
     // wait for all documents to be removed
     await().atMost(1, MINUTES).until({
         assertThat(Iterables.size(searchService.browseUnrestricted(exampleQuery)), is(0)) })
+  }
+
+  @Test
+  public void searchResultsArePaged() throws Exception {
+    seedComponentIndex()
+
+    def query = boolQuery()
+        .must(matchAllQuery())
+
+    def repos = repositories.stream().map { it.name }.collect()
+    def searchResponse = searchService.searchUnrestrictedInRepos(query, null, 0, 2, repos)
+
+    assert searchResponse.hits.size() == 2
+
+    def secondPage = searchService.searchUnrestrictedInRepos(query, null, 2, 4, repos)
+
+    assert secondPage.hits.size() == 4
+    assert !searchResponse.hits.contains(secondPage.hits[0])
+    assert !searchResponse.hits.contains(secondPage.hits[1])
   }
 
   private seedComponentIndex() {

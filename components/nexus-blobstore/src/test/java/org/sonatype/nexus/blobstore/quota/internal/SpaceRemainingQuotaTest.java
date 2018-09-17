@@ -52,7 +52,7 @@ public class SpaceRemainingQuotaTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(config);
     when(config.getName()).thenReturn("test");
     when(config.attributes(ROOT_KEY)).thenReturn(attributesMap);
-    when(attributesMap.get(eq(LIMIT_KEY), eq(Long.class))).thenReturn(10L);
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(10L);
 
     quota = new SpaceRemainingQuota();
   }
@@ -66,7 +66,7 @@ public class SpaceRemainingQuotaTest
   }
 
   @Test
-  public void insufficientSpaceRemaing() {
+  public void insufficientSpaceRemaining() {
     when(metrics.isUnlimited()).thenReturn(false);
     when(metrics.getAvailableSpace()).thenReturn(5L);
 

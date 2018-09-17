@@ -27,7 +27,9 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.PeriodicJobService;
 import org.sonatype.nexus.blobstore.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -42,6 +44,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Long.parseLong;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Stream.iterate;
+import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -86,10 +89,24 @@ public class BlobStoreMetricsStoreImpl
 
   private PropertiesFile propertiesFile;
 
+  private final BlobStoreQuotaService quotaService;
+
+  private BlobStore blobStore;
+
+  private PeriodicJob quotaCheckingJob;
+
+  private final int quotaCheckInterval;
+
   @Inject
-  public BlobStoreMetricsStoreImpl(final PeriodicJobService jobService, final NodeAccess nodeAccess) {
+  public BlobStoreMetricsStoreImpl(final PeriodicJobService jobService,
+                                   final NodeAccess nodeAccess,
+                                   final BlobStoreQuotaService quotaService,
+                                   @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}") final int quotaCheckInterval) {
     this.jobService = checkNotNull(jobService);
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.quotaService = checkNotNull(quotaService);
+    checkArgument(quotaCheckInterval > 0);
+    this.quotaCheckInterval = quotaCheckInterval;
   }
 
   @Override
@@ -125,12 +142,16 @@ public class BlobStoreMetricsStoreImpl
         log.error("Cannot write blob store metrics", e);
       }
     }, METRICS_FLUSH_PERIOD_SECONDS);
+
+    quotaCheckingJob = jobService.schedule(createQuotaCheckJob(blobStore, quotaService, log), quotaCheckInterval);
   }
 
   @Override
   protected void doStop() throws Exception {
     metricsWritingJob.cancel();
     metricsWritingJob = null;
+    quotaCheckingJob.cancel();
+    quotaCheckingJob = null;
     jobService.stopUsing();
 
     blobCount = null;
@@ -146,6 +167,13 @@ public class BlobStoreMetricsStoreImpl
     checkNotNull(storageDirectory);
     checkArgument(Files.isDirectory(storageDirectory));
     this.storageDirectory = storageDirectory;
+  }
+
+  @Override
+  public void setBlobStore(final BlobStore blobStore) {
+    checkState(this.blobStore == null, "Do not initialize twice");
+    checkNotNull(blobStore);
+    this.blobStore = blobStore;
   }
 
   @Override

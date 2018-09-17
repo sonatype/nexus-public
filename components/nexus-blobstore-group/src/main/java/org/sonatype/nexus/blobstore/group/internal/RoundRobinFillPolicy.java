@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.group.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +25,8 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import static java.util.Collections.rotate;
+
 /**
  * {@link FillPolicy} that divides writes to member blob stores evenly based upon a round robin selection.
  *
@@ -34,11 +37,11 @@ public class RoundRobinFillPolicy
     extends ComponentSupport
     implements FillPolicy
 {
-
   public static final String TYPE = "roundRobin";
-  private static final String NAME = "Round Robin";
 
-  private final AtomicInteger sequence = new AtomicInteger();
+  protected static final String NAME = "Round Robin";
+
+  private AtomicInteger sequence = new AtomicInteger();
 
   @Override
   public String getName() {
@@ -48,23 +51,37 @@ public class RoundRobinFillPolicy
   @Override
   @Nullable
   public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
-    int index = nextIndex();
-    log.trace("Using index {}", index);
+    return nextMember(blobStoreGroup.getMembers());
+  }
 
-    List<BlobStore> members = blobStoreGroup.getMembers();
-    if (!members.isEmpty()) {
-      return members.get(index % members.size());
-    }
-    else {
+  /**
+   * Retrieves the next writable member in the group
+   *
+   * @param members of the BlobStoreGroup
+   * @return the first writable {@link BlobStore} or null if none are writable
+   */
+  @Nullable
+  private BlobStore nextMember(final List<BlobStore> members)
+  {
+    if (members.isEmpty()) {
       return null;
     }
+    final int index = nextIndex() % members.size();
+    log.trace("Using index {}", index);
+
+    ArrayList<BlobStore> rotatedMembers = new ArrayList<>(members);
+    rotate(rotatedMembers, index);
+    return rotatedMembers.stream()
+        .filter(BlobStore::isWritable)
+        .findFirst()
+        .orElse(null);
   }
 
   @VisibleForTesting
   int nextIndex() {
     return sequence.getAndUpdate(i -> {
-        i += 1;
-        return i < 0 ? 0 : i;
+      i += 1;
+      return i < 0 ? 0 : i;
     });
   }
 }

@@ -20,12 +20,15 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.sequence.FibonacciNumberSequence;
 import org.sonatype.nexus.common.sequence.NumberSequence;
+import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
+import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
@@ -39,8 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Locale.ENGLISH;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
-import static org.sonatype.nexus.repository.http.HttpStatus.PROXY_AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.BLOCKED;
@@ -61,6 +62,9 @@ public class BlockingHttpClient
 
   private final boolean blocked;
 
+  @VisibleForTesting
+  final AutoBlockConfiguration autoBlockConfiguration;
+
   private HttpHost mainTarget;
 
   private DateTime blockedUntil;
@@ -76,13 +80,16 @@ public class BlockingHttpClient
   private RemoteConnectionStatus status = new RemoteConnectionStatus(UNINITIALISED);
 
   public BlockingHttpClient(final CloseableHttpClient delegate,
-                            final HttpClientFacetImpl.Config config,
+                            final Config config,
                             final RemoteConnectionStatusObserver statusObserver,
-                            final boolean repositoryOnline)
+                            final boolean repositoryOnline,
+                            final AutoBlockConfiguration autoBlockConfiguration)
   {
     super(delegate);
     checkNotNull(config);
     this.statusObserver = checkNotNull(statusObserver);
+    this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
+    
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
     if (repositoryOnline) {
@@ -116,7 +123,7 @@ public class BlockingHttpClient
       CloseableHttpResponse response = filterable.call();
       int statusCode = response.getStatusLine().getStatusCode();
 
-      if (isUnavailableStatus(statusCode)) {
+      if (autoBlockConfiguration.shouldBlock(statusCode)) {
         updateStatusToUnavailable(getReason(statusCode), target);
       }
       else {
@@ -190,10 +197,6 @@ public class BlockingHttpClient
       return false;
     }
     return true;
-  }
-
-  private boolean isUnavailableStatus(final int statusCode) {
-    return statusCode == SC_UNAUTHORIZED || statusCode == PROXY_AUTHENTICATION_REQUIRED || statusCode >= 500;
   }
 
   private String getReason(final Exception e) {

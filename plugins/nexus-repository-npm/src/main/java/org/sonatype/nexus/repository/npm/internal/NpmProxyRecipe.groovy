@@ -20,7 +20,6 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetProxy
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet
 
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
@@ -28,6 +27,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetProxy
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.types.ProxyType
@@ -64,7 +64,7 @@ class NpmProxyRecipe
   Provider<NpmSearchIndexFacetProxy> npmSearchIndexFacet
 
   @Inject
-  Provider<NpmSearchFacet> npmSearchFacet
+  Provider<NpmSearchFacetProxy> npmSearchFacet
 
   @Inject
   Provider<PurgeUnusedFacet> purgeUnusedFacet

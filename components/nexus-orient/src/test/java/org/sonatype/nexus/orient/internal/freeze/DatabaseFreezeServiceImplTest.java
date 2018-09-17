@@ -483,4 +483,46 @@ public class DatabaseFreezeServiceImplTest
 
     assertThat(underTest.isFrozen(), is(true));
   }
+
+  @Test
+  public void systemFreezeRequestDiscardedOnStartupWhenLocal() {
+    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
+        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+
+    when(nodeAccess.isClustered()).thenReturn(false);
+
+    underTest.refreezeOnStartup(Arrays.asList(new FreezeRequest(InitiatorType.SYSTEM, INITIATOR_ID)));
+
+    verify(databaseInstance, never()).setFrozen(true);
+  }
+
+  @Test
+  public void userFreezeRequestAppliedOnStartupWhenLocal() {
+    underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
+        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+
+    when(nodeAccess.isClustered()).thenReturn(false);
+
+    underTest.refreezeOnStartup(Arrays.asList(new FreezeRequest(InitiatorType.USER_INITIATED, INITIATOR_ID)));
+
+    verify(databaseInstance).setFrozen(true);
+  }
+
+  @Test
+  public void systemFreezeRequestsAppliedWhenHA() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    underTest.refreezeOnStartup(Arrays.asList(new FreezeRequest(InitiatorType.SYSTEM, INITIATOR_ID)));
+
+    verify(distributedConfiguration).setServerRole(DatabaseFreezeServiceImpl.SERVER_NAME, ROLES.REPLICA);
+  }
+
+  @Test
+  public void userFreezeRequestsAppliedWhenHA() {
+    when(nodeAccess.isClustered()).thenReturn(true);
+
+    underTest.refreezeOnStartup(Arrays.asList(new FreezeRequest(InitiatorType.USER_INITIATED, INITIATOR_ID)));
+
+    verify(distributedConfiguration).setServerRole(DatabaseFreezeServiceImpl.SERVER_NAME, ROLES.REPLICA);
+  }
 }

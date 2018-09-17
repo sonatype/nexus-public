@@ -37,6 +37,7 @@
     <module>nexus-blobstore-group</module>
     <module>nexus-bootstrap</module>
     <module>nexus-capability</module>
+    <module>nexus-cleanup</module>
     <module>nexus-commands</module>
     <module>nexus-common</module>
     <module>nexus-core</module>

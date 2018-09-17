@@ -67,8 +67,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_Asset_Tree_Upload_Component: 'Upload component',
 
     ComponentDetails_Delete_Button: 'Delete component',
-    ComponentDetails_Delete_Button_Snapshot: 'Delete snapshot',
     ComponentDetails_Analyze_Button: 'Analyze application',
+    ComponentDetails_Browse_Snapshots_Button: 'Browse SNAPSHOT(s)',
     ComponentDetails_Delete_Body: 'This will delete all asset(s) associated with the component: {0}',
     ComponentDetails_Delete_Title: 'Confirm deletion?',
     ComponentDetails_Delete_Success: 'Component deleted: {0}',
@@ -381,6 +381,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',
     Repository_Facet_HttpClientFacet_Authentication_Title: 'Authentication',
     Repository_Facet_HttpClientFacet_HTTP_Title: 'HTTP request settings',
+    Repository_Facet_CleanupPolicyFacet_Title: 'Cleanup Policy',
+    Repository_Facet_CleanupPolicyFacet_Policy_FieldLabel: 'Available cleanup policies',
+    Repository_Facet_CleanupPolicyFacet_Policy_HelpText: 'Select a cleanup policy',
+    Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
+    Repository_Formats_All: '(All Formats)',
 
     HealthCheckRepositoryColumn_Header: 'Health check',
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',
@@ -912,7 +917,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Metric_Health_Load_Mask: 'Loading&hellip;',
     Metric_Health_Refresh_Warning : 'Failed to refresh server status',
 
-
     // Admin -> Support -> Support Request
     SupportRequest_Text: 'Support Request',
     SupportRequest_Description: 'Submit a support request to Sonatype',
@@ -923,7 +927,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SupportZip_Title: 'Support ZIP',
     SupportZip_Description: 'Creates a ZIP file containing useful support information about your server',
     SupportZip_HelpText: '<p>No information will be sent to Sonatype when creating the support ZIP file.</p>' +
-      '<p>Support ZIP creation may take a few minutes to complete.</p>',
+    '<p>Support ZIP creation may take a few minutes to complete.</p>',
     Support_SupportZip_Contents_FieldLabel: 'Contents',
     Support_SupportZip_Report_BoxLabel: 'System information report',
     Support_SupportZip_Dump_BoxLabel: 'JVM thread-dump',
@@ -1001,6 +1005,57 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Capabilities_State_Text: 'State',
     Capability_CapabilitySummary_Notes_HelpText: 'Optional notes about configured capability',
     Capability_CapabilityStatus_EmptyText: 'This capability does not provide any status',
+
+    // Admin -> System -> Cleanup Policies
+    CleanupPolicies_Text: 'Cleanup Policies',
+    CleanupPolicies_Description: 'Manage cleanup policies',
+    CleanupPolicies_Create_Title: 'Create Cleanup Policy',
+    CleanupPolicies_Delete_Title: 'Confirm deletion?',
+    CleanupPolicies_Delete_Description: 'This Cleanup Policy is not used by any repository',
+    CleanupPolicies_Delete_Description_Multiple: 'This Cleanup Policy is used by {0} repositories',
+    CleanupPolicies_Delete_Success: 'Cleanup Policy deleted: {0}',
+    CleanupPolicy_CleanupPolicyList_Preview_Button: 'Preview results',
+    CleanupPolicy_CleanupPolicyList_New_Button: 'Create Cleanup Policy',
+    CleanupPolicy_CleanupPolicyList_Filter_EmptyState: 'No cleanup policies matched "$filter"',
+    CleanupPolicy_CleanupPolicyList_EmptyState: 'No cleanup policies defined',
+    CleanupPolicy_CleanupPolicyList_Name_Header: 'Name',
+    CleanupPolicy_CleanupPolicyList_Format_Header: 'Format',
+    CleanupPolicy_CleanupPolicyList_Notes_Header: 'Notes',
+    CleanupPolicy_CleanupPolicyFeature_Settings_Title: 'Settings',
+    CleanupPolicy_CleanupPolicyFeature_Delete_Button: 'Delete',
+    CleanupPolicy_CleanupPolicySettingsForm_Update_Success: 'Cleanup Policy updated: ',
+    CleanupPolicy_CleanupPolicySettingsForm_Update_Error: 'You do not have permission to update Cleanup Policies',
+    CleanupPolicy_CleanupPolicySettingsForm_CleanupPolicy_Title :'Cleanup Policy',
+    CleanupPolicy_CleanupPolicySettingsForm_Name_FieldLabel: 'Name',
+    CleanupPolicy_CleanupPolicySettingsForm_Name_HelpText: 'A unique name for the cleanup policy',
+    CleanupPolicy_CleanupPolicySettingsForm_Format_FieldLabel: 'Format',
+    CleanupPolicy_CleanupPolicySettingsForm_Format_HelpText: 'The format that this cleanup policy can be applied to',
+    CleanupPolicy_CleanupPolicySettingsForm_Notes_FieldLabel: 'Notes',
+    CleanupPolicy_CleanupPolicySettingsForm_Criteria_Title :'Criteria',
+    CleanupPolicy_CleanupPolicySettingsForm_AddCriteria_Text: 'Add criteria',
+    CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_FieldLabel: 'Published Before',
+    CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_HelpText: 'Restrict cleanup to components that were published to NXRM more than the given number of days ago. (Blob updated date)',
+    CleanupPolicy_CleanupPolicySettingsForm_LastDownloaded_FieldLabel: 'Last Downloaded Before',
+    CleanupPolicy_CleanupPolicySettingsForm_LastDownloaded_HelpText: 'Restrict cleanup to components that were last downloaded more than the given number of days ago. (Last downloaded	date)',
+    CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_FieldLabel: 'Release Type',
+    CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_HelpText: 'Restrict cleanup to components that are of this release type',
+    CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_Prereleases_Item: 'Pre-Release / Snapshot Versions',
+    CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_Releases_Item: 'Release Versions',
+    CleanupPolicy_CleanupPolicyAdd_Create_Error: 'You do not have permission to create Cleanup Policies',
+    CleanupPolicy_CleanupPolicyAdd_Create_Success: 'Cleanup Policy created: ',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Title: 'Cleanup Policy preview',
+    CleanupPolicy_CleanupPolicyPreviewWindow_repository_FieldLabel: 'Repository to Preview',
+    CleanupPolicy_CleanupPolicyPreviewWindow_repository_HelpText: 'Select a repository to preview what might get cleaned up if this policy was applied',
+    CleanupPolicy_CleanupPolicyPreviewWindow_repository_EmptyText: 'Select a repository',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Preview_Button: 'Preview',
+    CleanupPolicy_CleanupPolicyPreviewWindow_EmptyText_View: 'No assets in repository matched the criteria',
+    CleanupPolicy_CleanupPolicyPreviewWindow_EmptyText_Filter: 'No assets matched "$filter"',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Group_Column: 'Group',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Name_Column: 'Name',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Version_Column: 'Version',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Total_Component_Count: 'Component count (matching criteria) viewing',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Total_Component_Count_Out_Of: ' out of ',
+    CleanupPolicy_CleanupPolicyPreviewWindow_Warning: 'Results may only be a sample of what will be deleted using the current criteria',
 
     // Admin -> System -> Email Server
     SmtpSettings_Text: 'Email Server',
@@ -1183,7 +1238,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     '<tr><td>Year(optional)</td><td>empty, 1970-2099</td></tr>' +
     '</tbody>' +
     '</table>' +
-    '<br/>'+
+    '<br/>' +
     '<p>Special tokens include: * (all acceptable values), ? (no specific value), - (ranges, e.g. 10-12)</p>' +
     '</div> '
     ,
@@ -1216,7 +1271,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     User_UserAccount_Password_Button: 'Change password',
 
     // User -> NuGet Api Key
-    NuGetApiKey_Text:'NuGet API Key',
+    NuGetApiKey_Text: 'NuGet API Key',
     NuGetApiKey_Description: 'Configure credentials for NuGet repositories',
     Nuget_NuGetApiKeyDetails_Html: 'Your NuGet API Key enables pushing packages using NuGet.exe. ' +
     '<span style="font-weight: bold;">Keep this key secret!</span>',
@@ -1270,10 +1325,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Description: 'Manage IQ Server configuration',
     Clm_Connection_Success: 'Connection to IQ Server verified: {0}',
     Clm_Dashboard_Title: 'Dashboard',
-    Clm_Dashboard_Description : 'Open IQ Server Dashboard',
+    Clm_Dashboard_Description: 'Open IQ Server Dashboard',
     ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
-      'can evaluate application and organization policies.</p>' +
-      '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
+    'can evaluate application and organization policies.</p>' +
+    '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
 
     Clm_SettingsTestResults_Title: 'Applications',
     Clm_SettingsTestResults_EmptyText: 'No applications found',

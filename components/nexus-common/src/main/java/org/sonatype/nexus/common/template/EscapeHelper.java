@@ -71,4 +71,15 @@ public class EscapeHelper
   public String uri(final Object value) {
     return uri(String.valueOf(value));
   }
+
+  /**
+   * Strip java el start token from a string
+   * @since 3.next
+   */
+  public String stripJavaEl(final String value) {
+    if (value != null) {
+      return value.replaceAll("\\$+\\{", "{");
+    }
+    return null;
+  }
 }

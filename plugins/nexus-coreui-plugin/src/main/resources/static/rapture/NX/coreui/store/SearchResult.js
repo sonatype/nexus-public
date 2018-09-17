@@ -40,8 +40,5 @@ Ext.define('NX.coreui.store.SearchResult', {
   pageSize: 300,
 
   remoteFilter: true,
-  remoteSort: true,
-
-  sorters: { property: 'name', direction: 'ASC' }
-
+  remoteSort: true
 });

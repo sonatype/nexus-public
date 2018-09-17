@@ -352,4 +352,9 @@ public class BlobStoreManagerImpl
     }
     return count;
   }
+
+  @Override
+  public boolean isPromotable(final BlobStore blobStore) {
+    return blobStore.isGroupable() && store.findParents(blobStore.getBlobStoreConfiguration().getName()).isEmpty();
+  }
 }

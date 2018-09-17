@@ -53,4 +53,14 @@ public interface BlobStoreConfigurationStore
    * @since 3.next
    */
   BlobStoreConfiguration read(String name);
+
+  /**
+   * Find all parent groups of a blob store
+   *
+   * @param name of the child to search on
+   * @return list of {@link BlobStoreConfiguration} for the parent groups
+   *
+   * @since 3.next
+   */
+  List<BlobStoreConfiguration> findParents(String name);
 }

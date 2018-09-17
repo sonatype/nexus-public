@@ -77,4 +77,13 @@ public interface BlobStoreManager
    * @since 3.next
    */
   long blobStoreUsageCount(String blobStoreName);
+
+  /**
+   * Returns true if the blob store is promotable
+   * @param blobStore
+   * @return true if member is promotable
+   *
+   * @since 3.next
+   */
+  boolean isPromotable(BlobStore blobStore);
 }

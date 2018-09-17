@@ -22,7 +22,6 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 
 /**
  * A {@link BlobStoreQuota} which checks that a blob store has at least a certain amount of space left.
@@ -44,12 +43,13 @@ public class SpaceRemainingQuota
 
     long availableSpace = blobStore.getMetrics().getAvailableSpace();
     boolean isUnlimited = blobStore.getMetrics().isUnlimited();
-    Long limit = blobStore.getBlobStoreConfiguration().attributes(ROOT_KEY).get(LIMIT_KEY, Long.class);
-    checkNotNull(limit);
+    Number limitObj = blobStore.getBlobStoreConfiguration().attributes(ROOT_KEY).get(LIMIT_KEY, Number.class);
+    long limit = checkNotNull(limitObj).longValue();
     String name = blobStore.getBlobStoreConfiguration().getName();
-    String msg = format("Blob store %s is limited to %s available space and is using %s", name,
-        byteCountToDisplaySize(limit),
-        byteCountToDisplaySize(availableSpace));
+    String msg = format("Blob store %s is limited to having %s available space, and has %s space remaining",
+        name,
+        convertBytesToSI(limit),
+        convertBytesToSI(availableSpace));
 
     return new BlobStoreQuotaResult(!isUnlimited && availableSpace < limit, name, msg);
   }

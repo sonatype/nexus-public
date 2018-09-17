@@ -21,6 +21,7 @@ Ext.define('NX.coreui.controller.Assets', {
   extend: 'NX.app.Controller',
   requires: [
     'NX.Bookmarks',
+    'NX.coreui.util.Maven2ComponentActionHandler',
     'NX.Dialogs',
     'NX.I18n',
     'Ext.util.Format'
@@ -48,6 +49,7 @@ Ext.define('NX.coreui.controller.Assets', {
     {ref: 'componentDetails', selector: 'nx-coreui-component-details'},
     {ref: 'deleteComponentButton', selector: 'nx-coreui-component-details button[action=deleteComponent]'},
     {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-details button[action=analyzeApplication]'},
+    {ref: 'browseComponentButton', selector: 'nx-coreui-component-details button[action=browseComponent]'},
     {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
     {ref: 'rootContainer', selector: 'nx-main'}
   ],
@@ -93,6 +95,9 @@ Ext.define('NX.coreui.controller.Assets', {
         },
         'nx-coreui-component-details button[action=deleteComponent]': {
           click: me.deleteComponent
+        },
+        'nx-coreui-component-details button[action=browseComponent]': {
+          click: me.browseComponent
         },
         'nx-coreui-component-details button[action=analyzeApplication]': {
           click: me.mixins.componentUtils.openAnalyzeApplicationWindow
@@ -167,9 +172,10 @@ Ext.define('NX.coreui.controller.Assets', {
 
       container.down('#repositoryInfo').showInfo(repositoryInfo);
       container.down('#componentInfo').showInfo(componentInfo);
-
-      this.bindDeleteComponentButton(this.getDeleteComponentButton());
     }
+
+    this.updateDeleteButtonVisibility();
+    this.updateBrowseButtonVisibility();
   },
 
   /**
@@ -213,15 +219,6 @@ Ext.define('NX.coreui.controller.Assets', {
    *
    * @private
    */
-  bindDeleteComponentButton: function(button) {
-    this.bindButton(button, this.getComponentDetails().componentModel.get('repositoryName'));
-  },
-
-  /**
-   * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
-   *
-   * @private
-   */
   bindDeleteAssetButton: function(button) {
     this.bindButton(button, this.getAssetContainer().assetModel.get('repositoryName'));
   },
@@ -240,7 +237,6 @@ Ext.define('NX.coreui.controller.Assets', {
         showButtonFunction = function(repository) {
           if (repository && repository.get('type') !== 'group') {
             button.show();
-            button.enable();
           }
         };
 
@@ -280,6 +276,59 @@ Ext.define('NX.coreui.controller.Assets', {
           }
         });
       });
+    }
+  },
+
+  /**
+   * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
+   *
+   * @private
+   */
+  updateDeleteButtonVisibility: function() {
+    var componentModel = this.fetchComponentModelFromView(),
+        formatSpecificActionHandler = this.getFormatSpecificActionHandler(componentModel),
+        button = this.getDeleteComponentButton();
+
+    if (componentModel &&
+        (!formatSpecificActionHandler ||
+            !formatSpecificActionHandler.updateDeleteButtonVisibility(button, componentModel))
+    ) {
+      this.bindButton(button, componentModel.get('repositoryName'));
+    }
+  },
+
+  /**
+   * Enable 'Browse' button when format supports it.
+   *
+   * @private
+   */
+  updateBrowseButtonVisibility: function() {
+    var componentModel = this.fetchComponentModelFromView(),
+        formatSpecificActionHandler = this.getFormatSpecificActionHandler(componentModel),
+        button = this.getBrowseComponentButton();
+
+    if (!formatSpecificActionHandler || !formatSpecificActionHandler.updateBrowseButtonVisibility(button, componentModel)) {
+      button.hide();
+    }
+  },
+
+  /**
+   * Get the format specific component details actions
+   */
+  getFormatSpecificActionHandler: function(componentModel) {
+    var format = componentModel && componentModel.get('format'),
+        alias = format && 'nx-coreui-' + format.toLowerCase() + '-component-action-handler';
+
+    return alias && Ext.ClassManager.getByAlias(alias);
+  },
+
+  browseComponent: function() {
+    var componentModel = this.fetchComponentModelFromView(),
+        assetModel = this.fetchAssetModelFromView(),
+        formatSpecificActionHandler = this.getFormatSpecificActionHandler(componentModel);
+
+    if (formatSpecificActionHandler && formatSpecificActionHandler.browseComponent) {
+      formatSpecificActionHandler.browseComponent(componentModel, assetModel);
     }
   },
 
@@ -385,6 +434,12 @@ Ext.define('NX.coreui.controller.Assets', {
 
   fetchComponentModelFromView: function() {
     return this.getComponentDetails().componentModel;
+  },
+
+  fetchAssetModelFromView: function() {
+    var assetList = this.getAssetList(),
+        assetStore = assetList && assetList.getStore();
+    return assetStore && assetStore.getAt(0);
   },
 
   /**

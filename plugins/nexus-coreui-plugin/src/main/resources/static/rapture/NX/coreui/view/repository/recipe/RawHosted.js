@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
   alias: 'widget.nx-coreui-repository-raw-hosted',
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted'
+    'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
   /**
@@ -33,7 +34,8 @@ Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'}
+      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'},
+      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
 
     me.callParent();

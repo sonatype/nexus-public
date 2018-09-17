@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.function.BooleanSupplier;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
 
@@ -53,4 +55,24 @@ public interface ComponentMaintenance
    * @since 3.9
    */
   void deleteAsset(EntityId assetId, boolean deleteBlob);
+
+  /**
+   * Deletes a list of components
+   * 
+   * @param components list of components to delete
+   * @param cancelledCheck check for cancellation
+   * @param batchSize number of components to commit at a time
+   * @return number of components deleted
+   *
+   * @since 3.next
+   */
+  long deleteComponents(Iterable<EntityId> components, BooleanSupplier cancelledCheck, int batchSize);
+
+  /**
+   * Runs at the end of deleteComponents.
+   *
+   * @since 3.next
+   */
+  void after();
+
 }

@@ -22,9 +22,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.PeriodicJobService;
 import org.sonatype.nexus.blobstore.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -32,9 +34,11 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Long.parseLong;
+import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -75,10 +79,24 @@ public class S3BlobStoreMetricsStore
 
   private AmazonS3 s3;
 
+  private final BlobStoreQuotaService quotaService;
+
+  private BlobStore blobStore;
+
+  private PeriodicJob quotaCheckingJob;
+
+  private final int quotaCheckInterval;
+
   @Inject
-  public S3BlobStoreMetricsStore(final PeriodicJobService jobService, final NodeAccess nodeAccess) {
+  public S3BlobStoreMetricsStore(final PeriodicJobService jobService,
+                                 final NodeAccess nodeAccess,
+                                 final BlobStoreQuotaService quotaService,
+                                 @Named("${nexus.blobstore.quota.warnIntervalSeconds:-60}") final int quotaCheckInterval) {
     this.jobService = checkNotNull(jobService);
     this.nodeAccess = checkNotNull(nodeAccess);
+    this.quotaService = checkNotNull(quotaService);
+    checkArgument(quotaCheckInterval > 0);
+    this.quotaCheckInterval = quotaCheckInterval;
   }
 
   @Override
@@ -113,12 +131,16 @@ public class S3BlobStoreMetricsStore
         log.error("Cannot write blob store metrics", e);
       }
     }, METRICS_FLUSH_PERIOD_SECONDS);
+
+    quotaCheckingJob = jobService.schedule(createQuotaCheckJob(blobStore, quotaService, log), quotaCheckInterval);
   }
 
   @Override
   protected void doStop() throws Exception {
     metricsWritingJob.cancel();
     metricsWritingJob = null;
+    quotaCheckingJob.cancel();
+    quotaCheckingJob = null;
     jobService.stopUsing();
 
     blobCount = null;
@@ -126,6 +148,12 @@ public class S3BlobStoreMetricsStore
     dirty = null;
 
     propertiesFile = null;
+  }
+
+  public void setBlobStore(final BlobStore blobStore) {
+    checkState(this.blobStore == null, "Do not initialize twice");
+    checkNotNull(blobStore);
+    this.blobStore = blobStore;
   }
 
   public void setBucket(final String bucket) {

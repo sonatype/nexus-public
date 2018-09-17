@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -64,6 +65,7 @@ import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -88,6 +90,10 @@ public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
+  public static final String CLEANUP_ATTRIBUTES_KEY = "cleanup";
+
+  public static final String CLEANUP_NAME_KEY = "policyName";
+
   private final DatabaseFreezeService databaseFreezeService;
 
   private final EventManager eventManager;
@@ -447,6 +453,12 @@ public class RepositoryManagerImpl
     return blobstoreUsageStream(blobStoreName).count();
   }
 
+  @Override
+  public Stream<Repository> browseForCleanupPolicy(final String cleanupPolicyName) {
+    return stream(browse().spliterator(), false)
+        .filter(repository -> repositoryHasCleanupPolicy(repository, cleanupPolicyName));
+  }
+
   @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
     handleReplication(event, e -> create(e.getConfiguration()));
@@ -482,5 +494,15 @@ public class RepositoryManagerImpl
     else {
       log.debug("Not posting metadata update event for deleted repository {}", event.getRepositoryName());
     }
+  }
+
+  private boolean repositoryHasCleanupPolicy(final Repository repository, final String cleanupPolicyName) {
+    return ofNullable(repository.getConfiguration())
+        .map(Configuration::getAttributes)
+        .map(attributes -> attributes.get(CLEANUP_ATTRIBUTES_KEY))
+        .filter(Objects::nonNull)
+        .map(cleanupPolicyMap -> cleanupPolicyMap.get(CLEANUP_NAME_KEY))
+        .filter(cleanupPolicyName::equals)
+        .isPresent();
   }
 }

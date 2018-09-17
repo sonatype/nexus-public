@@ -6,6 +6,11 @@ fieldset.nx-form-section {
   margin-bottom: 0;
   padding-bottom: 20px;
 
+  & > .x-fieldset-header > .x-fieldset-header-text {
+    font-size: $font-size-h4;
+    line-height: 22px;
+  }
+
   .x-fieldset-body {
     padding-left: 10px;
   }
@@ -15,7 +20,8 @@ fieldset.nx-form-section {
   }
 }
 
-fieldset.nx-form-section > legend > span > div > .x-fieldset-header-text {
-  font-size: $font-size-h4;
-  line-height: 22px;
+fieldset.x-fieldset {
+  // TODO remove this if we upgrade to ExtJS 6.6.0 - NEXUS-18051
+  // See https://www.sencha.com/forum/showthread.php?423768-ExtJS-6-5-0-Fieldset-legend-are-not-visible-in-Safari-11
+  overflow: visible;
 }

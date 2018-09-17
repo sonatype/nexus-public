@@ -1,0 +1,88 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+/*global Ext, NX*/
+
+/**
+ * Maven2 Component Details Provider.
+ *
+ * @since 3.next
+ */
+Ext.define('NX.coreui.util.Maven2ComponentActionHandler', {
+  alias: 'nx-coreui-maven2-component-action-handler',
+  singleton: true,
+  requires: [
+      'NX.Bookmarks',
+      'NX.I18n'
+  ],
+
+  isSnapshot: function(componentModel) {
+    var id;
+
+    if (!componentModel) {
+      return false;
+    }
+
+    id = componentModel.get('id');
+    return (componentModel.get('format') === 'maven2') &&
+        id.indexOf('-SNAPSHOT') === (id.length - '-SNAPSHOT'.length);
+  },
+
+  updateDeleteButtonVisibility: function(button, componentModel) {
+    var visibilityUpdated;
+
+    if (this.isSnapshot(componentModel)) {
+      button.hide();
+      visibilityUpdated = true;
+    } else {
+      visibilityUpdated = false;
+    }
+
+    return visibilityUpdated;
+  },
+
+  updateBrowseButtonVisibility: function(button, componentModel) {
+    if (this.isSnapshot(componentModel)) {
+      button.show();
+    } else {
+      button.hide();
+    }
+
+    return true;
+  },
+
+  /**
+   * Browse to the selected component.
+   *
+   * @private
+   */
+  browseComponent: function(componentModel, assetModel) {
+    var repositoryName, componentGroup, componentName,
+        attributes, version, path;
+
+    if (componentModel && assetModel) {
+      repositoryName = componentModel.get('repositoryName');
+      componentGroup = componentModel.get('group').replace(/\./g, '/');
+      componentName = componentModel.get('name');
+
+      attributes = assetModel.get('attributes');
+      version = attributes.maven2 && attributes.maven2.version;
+
+      path = 'browse/browse:' + encodeURIComponent(repositoryName) + ':' +
+          encodeURIComponent(componentGroup + '/' + componentName + '/' + version);
+
+      NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken(path));
+    }
+  }
+
+
+});

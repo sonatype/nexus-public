@@ -222,10 +222,17 @@ public interface BlobStore
   boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
 
   /**
-   * Identifies if the instance is eligible to be promoted
-   *
-   * @return {@code true} if the blob is allowed to be promoted to a group
+   * Identifies if the instance is available to be written to
+   * @return {@code true} if the blob store can be written to
    * @since 3.next
    */
-  boolean isPromotable();
+  boolean isWritable();
+
+  /**
+   * Identifies if the instance can be a member of a group
+   *
+   * @return {@code true} if the blob store can be a member of a group
+   * @since 3.next
+   */
+  default boolean isGroupable() { return true; }
 }

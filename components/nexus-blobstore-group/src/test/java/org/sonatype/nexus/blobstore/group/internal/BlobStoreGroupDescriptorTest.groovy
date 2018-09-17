@@ -61,7 +61,7 @@ class BlobStoreGroupDescriptorTest
   def 'Validate invalid members #members'() {
     given: 'A config'
       def config = new BlobStoreConfiguration()
-      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self']]])
+      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self']]], false)
 
     when: 'the config is validated'
       config.name = 'self'
@@ -76,13 +76,14 @@ class BlobStoreGroupDescriptorTest
       members    || expectedMessage
       []         || '''Blob Store 'self' cannot be empty'''
       ['self']   || '''Blob Store 'self' cannot contain itself'''
-      ['nested'] || '''Blob Store 'self' cannot contain itself'''
+      ['nested'] || '''Blob Store 'nested' is of type 'Group' and is not eligible to be a group member.'''
   }
 
-  private BlobStore mockBlobStore(final String name, final String type, attributes = [:]) {
+  private BlobStore mockBlobStore(final String name, final String type, attributes = [:], Boolean groupable = true) {
     def blobStore = Mock(BlobStore)
     def config = new BlobStoreConfiguration()
     blobStore.getBlobStoreConfiguration() >> config
+    blobStore.isGroupable() >> groupable
     config.name = name
     config.type = type
     config.attributes = attributes

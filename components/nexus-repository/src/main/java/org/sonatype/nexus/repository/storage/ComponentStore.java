@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -40,8 +41,8 @@ public interface ComponentStore
    *
    * @since 3.next
    */
-  Iterable<Component> getAllMatchingComponents(final Repository repository,
-                                               final String group,
-                                               final String name,
-                                               final Map<String, String> formatAttributes);
+  List<Component> getAllMatchingComponents(final Repository repository,
+                                           final String group,
+                                           final String name,
+                                           final Map<String, String> formatAttributes);
 }

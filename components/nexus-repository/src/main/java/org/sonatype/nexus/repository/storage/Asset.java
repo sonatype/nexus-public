@@ -21,6 +21,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
@@ -214,7 +215,8 @@ public class Asset
   /**
    * Sets the last downloaded timestamp.
    */
-  Asset lastDownloaded(final DateTime lastDownloaded) {
+  @VisibleForTesting
+  public Asset lastDownloaded(final DateTime lastDownloaded) {
     this.lastDownloaded = lastDownloaded;
     return this;
   }

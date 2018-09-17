@@ -17,7 +17,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,6 +29,12 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Streams;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,6 +68,14 @@ public class DefaultComponentMetadataProducer
 
   public static final String ID = "id";
 
+  public static final String IS_PRERELEASE_KEY = "isPrerelease";
+
+  public static final String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
+
+  public static final String LAST_DOWNLOADED_KEY = "lastDownloaded";
+
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss.SSSZ");
+
   private final Set<ComponentMetadataProducerExtension> componentMetadataProducerExtensions;
 
   @Inject
@@ -81,6 +98,12 @@ public class DefaultComponentMetadataProducer
     put(metadata, NAME, component.name());
     put(metadata, VERSION, component.version());
     put(metadata, ATTRIBUTES, component.attributes().backing());
+
+    put(metadata, IS_PRERELEASE_KEY, isPrerelease(component, assets));
+    lastBlobUpdated(assets)
+        .ifPresent(dateTime -> put(metadata, LAST_BLOB_UPDATED_KEY, dateTime.toString(DATE_TIME_FORMATTER)));
+    lastDownloaded(assets)
+        .ifPresent(dateTime -> put(metadata, LAST_DOWNLOADED_KEY, dateTime.toString(DATE_TIME_FORMATTER)));
 
     List<Map<String, Object>> allAssetMetadata = new ArrayList<>();
     for (Asset asset : assets) {
@@ -108,6 +131,33 @@ public class DefaultComponentMetadataProducer
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @VisibleForTesting
+  public Optional<DateTime> lastDownloaded(final Iterable<Asset> assets)
+  {
+    return getDateTime(assets, Asset::lastDownloaded);
+  }
+
+  @VisibleForTesting
+  public Optional<DateTime> lastBlobUpdated(final Iterable<Asset> assets)
+  {
+    return getDateTime(assets, Asset::blobUpdated);
+  }
+
+  private Optional<DateTime> getDateTime(final Iterable<Asset> assets,
+                                         final Function<Asset, DateTime> dateTimeFunction)
+  {
+    return Streams.stream(assets)
+        .map(dateTimeFunction)
+        .filter(Objects::nonNull)
+        .max(DateTime::compareTo);
+  }
+
+  protected boolean isPrerelease(final Component component,
+                                 final Iterable<Asset> assets)
+  {
+    return false;
   }
 
   private String documentId(final Asset asset) {

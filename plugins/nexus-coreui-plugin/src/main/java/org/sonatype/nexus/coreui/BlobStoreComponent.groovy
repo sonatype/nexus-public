@@ -84,6 +84,14 @@ class BlobStoreComponent
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
+  List<BlobStoreXO> readGroupable() {
+    blobStoreManager.browse().findAll{ it.isGroupable() }.collect { asBlobStoreXO(it) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
     blobStoreDescriptors.findAll { key, descriptor ->
       descriptor.enabled
@@ -180,7 +188,7 @@ class BlobStoreComponent
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
-        promotable: blobStore.promotable,
+        promotable: blobStoreManager.isPromotable(blobStore),
         isQuotaEnabled: quotaAttributes != null,
         quotaType: quotaAttributes?.get(BlobStoreQuotaSupport.TYPE_KEY),
         quotaLimit: (Long) (quotaAttributes?.getOrDefault(BlobStoreQuotaSupport.LIMIT_KEY, 0L) ?: 0L) / MILLION
@@ -194,7 +202,7 @@ class BlobStoreComponent
   @Validate(groups = [Update.class, Default.class])
   BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
     BlobStore from = blobStoreManager.get(fromName)
-    if (from.promotable) {
+    if (blobStoreManager.isPromotable(from)) {
       return asBlobStoreXO(blobStorePromoter.promote(from))
     }
     throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)

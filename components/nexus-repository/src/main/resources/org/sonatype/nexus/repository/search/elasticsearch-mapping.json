@@ -94,6 +94,12 @@
         "tags": {
           "type": "string",
           "index": "not_analyzed"
+        },
+        "lastDownloaded": {
+          "type": "date"
+        },
+        "lastBlobUpdated" : {
+          "type" : "date"
         }
       }
     }

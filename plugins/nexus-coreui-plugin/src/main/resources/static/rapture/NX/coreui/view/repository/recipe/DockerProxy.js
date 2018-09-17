@@ -27,7 +27,8 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
     'NX.coreui.view.repository.facet.DockerConnectorFacet',
     'NX.coreui.view.repository.facet.DockerProxyFacet',
-    'NX.coreui.view.repository.facet.DockerV1Facet'
+    'NX.coreui.view.repository.facet.DockerV1Facet',
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
   /**
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-negativecache-facet'},
+      {xtype: 'nx-coreui-repository-cleanup-policy-facet'},
       {xtype: 'nx-coreui-repository-httpclient-facet'}
     ];
 
