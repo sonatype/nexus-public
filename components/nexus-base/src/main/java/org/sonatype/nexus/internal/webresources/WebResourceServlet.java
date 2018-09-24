@@ -63,6 +63,8 @@ public class WebResourceServlet
 
   private final XFrameOptions xframeOptions;
 
+  private static final String INDEX_PATH = "/index.html";
+
   @Inject
   public WebResourceServlet(final WebResourceService webResources,
                             final XFrameOptions xframeOptions,
@@ -82,16 +84,20 @@ public class WebResourceServlet
 
     // default-page handling
     if ("".equals(path) || "/".equals(path)) {
-      path = "/index.html";
+      path = INDEX_PATH;
     }
     else if (path.endsWith("/")) {
       path += "index.html";
+    }
+    else if (INDEX_PATH.equals(path)) {
+      response.sendRedirect(BaseUrlHolder.get()); // prevent browser from sending XHRs to incorrect URL - NEXUS-14593
+      return;
     }
 
     WebResource resource = webResources.getResource(path);
     if (resource == null) {
       // if there is an index.html for the requested path, redirect to it
-      if (webResources.getResource(path + "/index.html") != null) {
+      if (webResources.getResource(path + INDEX_PATH) != null) {
         String location = String.format("%s%s/", BaseUrlHolder.get(), path);
         log.debug("Redirecting: {} -> {}", path, location);
         response.sendRedirect(location);

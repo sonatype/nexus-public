@@ -13,10 +13,8 @@
 package org.sonatype.nexus.orient.entity;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +37,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -66,11 +63,13 @@ public final class EntityHook
 
   private static final ThreadLocal<String> isRemote = new ThreadLocal<>();
 
-  private final Map<OClass, EntityAdapter<?>> recordingAdapters = new ConcurrentHashMap<>();
+  private static final ThreadLocal<ODatabase> commitDb = new ThreadLocal<>();
+
+  private final Map<String, EntityAdapter<?>> recordingAdapters = new ConcurrentHashMap<>();
 
   private final Set<String> recordingDatabases = newSetFromMap(new ConcurrentHashMap<>());
 
-  private final Map<ODatabase, Map<ODocument, EventKind>> dbEvents = new ConcurrentHashMap<>();
+  private final Map<ODatabase, List<Object>> dbEvents = new ConcurrentHashMap<>();
 
   private final List<ODatabase> pendingDbs = synchronizedList(new ArrayList<>());
 
@@ -112,7 +111,7 @@ public final class EntityHook
    */
   public void enableEvents(final EntityAdapter adapter) {
     log.trace("Enable entity events for {}", adapter);
-    recordingAdapters.put(adapter.getSchemaType(), adapter);
+    recordingAdapters.put(adapter.getTypeName(), adapter);
     recordingDatabases.add(adapter.getDbName());
 
     pendingDbs.removeIf(db -> db.isClosed() || startRecording(db));
@@ -123,7 +122,7 @@ public final class EntityHook
    */
   public void disableEvents(final EntityAdapter adapter) {
     log.trace("Disable entity events for {}", adapter);
-    recordingAdapters.remove(adapter.getSchemaType());
+    recordingAdapters.remove(adapter.getTypeName());
     // leave database registered as recording
   }
 
@@ -165,12 +164,19 @@ public final class EntityHook
   }
 
   @Override
+  public void onBeforeTxCommit(final ODatabase db) {
+    commitDb.set(db);
+  }
+
+  @Override
   public void onAfterTxCommit(final ODatabase db) {
+    commitDb.remove();
     flushEvents(db);
   }
 
   @Override
   public void onAfterTxRollback(final ODatabase db) {
+    commitDb.remove();
     dbEvents.remove(db);
   }
 
@@ -210,27 +216,22 @@ public final class EntityHook
   }
 
   private boolean recordEvent(final ODocument document, final EventKind eventKind) {
-    final OClass schemaType = document.getSchemaClass();
-    if (schemaType != null) {
-      final EntityAdapter adapter = recordingAdapters.get(schemaType);
+    final String typeName = document.getClassName();
+    if (typeName != null) {
+      final EntityAdapter adapter = recordingAdapters.get(typeName);
       if (adapter != null) {
-        final ODatabaseInternal db = ODatabaseRecordThreadLocal.instance().get();
+        final ODatabaseInternal db = getCurrrentDb();
         if (db != null) {
           // workaround OrientDB 2.1 issue where in-TX dictionary updates are not replicated
           if (db.getStorage().isDistributed() && adapter instanceof SingletonEntityAdapter) {
             ((SingletonEntityAdapter) adapter).singleton.replicate(document, eventKind);
           }
-          Map<ODocument, EventKind> events = dbEvents.get(db);
+          List<Object> events = dbEvents.get(db);
           if (events == null) {
-            events = new LinkedHashMap<>();
+            events = new ArrayList<>();
             dbEvents.put(db, events);
           }
-          // replace mapping after merge so key always points to the latest document instance
-          // (avoids a risk that the original key became disconnected/detached at this point)
-          EventKind updatedEventKind = updateEventKind(events.remove(document), eventKind);
-          if (updatedEventKind != null) {
-            events.put(document, updatedEventKind);
-          }
+          upsertEvent(events, document, eventKind);
           return true;
         }
       }
@@ -238,8 +239,48 @@ public final class EntityHook
     return false;
   }
 
+  /**
+   * Returns the current DB connection. Normally this is whichever connection is active on the thread.
+   * But when performing a commit we always return the connection which is being committed, so we can
+   * track changes even when another connection is used to "fix" records during that commit.
+   */
+  private ODatabaseDocumentInternal getCurrrentDb() {
+    ODatabase db = commitDb.get();
+    if (db == null) {
+      db = ODatabaseRecordThreadLocal.instance().get();
+    }
+    return (ODatabaseDocumentInternal) db;
+  }
+
+  /**
+   * Maintains a paired sequence of ODocument, EventKind, ODocument, EventKind, etc...
+   *
+   * Handles both insertion and updates; updates to a document event pair does not change its position.
+   */
+  private static void upsertEvent(final List<Object> events, final ODocument document, final EventKind eventKind) {
+    // scan the list to see if we already track this document
+    for (int i = 0; i < events.size(); i += 2) {
+      if (document.equals(events.get(i))) {
+        // we want to maintain the original event kind, except if there's a last minute delete
+        if (eventKind == EventKind.DELETE && events.set(i + 1, EventKind.DELETE) == EventKind.CREATE) {
+          // delete after create in the same TX implies a phantom entity which can be discarded
+          events.remove(i);
+          events.remove(i);
+        }
+        else {
+          events.set(i, document); // refresh document in case the instance has been replaced
+        }
+        return;
+      }
+    }
+
+    // track new event pair
+    events.add(document);
+    events.add(eventKind);
+  }
+
   private void flushEvents(final ODatabase db) {
-    final Map<ODocument, EventKind> events = dbEvents.remove(db);
+    final List<Object> events = dbEvents.remove(db);
     if (events != null) {
       final UnitOfWork work = UnitOfWork.pause();
       final String remoteNodeId = isRemote.get();
@@ -263,10 +304,13 @@ public final class EntityHook
     }
   }
 
-  private void postEvents(final ODatabase db, final Map<ODocument, EventKind> events, final String remoteNodeId) {
+  /**
+   * Posts the given events; this will be a paired sequence of ODocument, EventKind, ODocument, EventKind, etc...
+   */
+  private void postEvents(final ODatabase db, final List<Object> events, final String remoteNodeId) {
     final List<EntityEvent> batchedEvents = new ArrayList<>();
-    for (final Entry<ODocument, EventKind> entry : events.entrySet()) {
-      final EntityEvent event = newEntityEvent(entry.getKey(), entry.getValue());
+    for (int i = 0; i < events.size(); i += 2) {
+      final EntityEvent event = newEntityEvent((ODocument) events.get(i), (EventKind) events.get(i + 1));
       if (event != null) {
         event.setRemoteNodeId(remoteNodeId);
         eventManager.post(event);
@@ -285,7 +329,7 @@ public final class EntityHook
 
   @Nullable
   private EntityEvent newEntityEvent(final ODocument document, final EventKind eventKind) {
-    EntityAdapter adapter = recordingAdapters.get(document.getSchemaClass());
+    EntityAdapter adapter = recordingAdapters.get(document.getClassName());
     EntityEvent event = adapter.newEvent(document, eventKind);
     if (event != null && eventManager.isAffinityEnabled()) {
       event.setAffinity(adapter.eventAffinity(document));
@@ -305,23 +349,6 @@ public final class EntityHook
       default:
         return null;
     }
-  }
-
-  /**
-   * Merges new {@link EventKind} with previous recorded state, maintaining original state where possible.
-   */
-  @Nullable
-  private static EventKind updateEventKind(@Nullable final EventKind recorded, final EventKind update) {
-    if (recorded == null) {
-      return update; // record initial observation
-    }
-    if (update == EventKind.DELETE) {
-      if (recorded == EventKind.CREATE) {
-        return null; // phantom entity; discard
-      }
-      return EventKind.DELETE; // record final delete
-    }
-    return recorded; // maintain initial observation
   }
 
   /**

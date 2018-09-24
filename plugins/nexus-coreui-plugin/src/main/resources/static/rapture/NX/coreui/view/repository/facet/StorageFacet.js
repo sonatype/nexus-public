@@ -25,6 +25,12 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
   ],
 
   /**
+   * @cfg Boolean
+   * Set whether or not strict content type validation is enabled for storage, defaults to true.
+   */
+  strictContentTypeValidation: true,
+
+  /**
    * @override
    */
   initComponent: function() {
@@ -75,7 +81,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
             itemId: 'strictContentTypeValidation',
             fieldLabel: NX.I18n.get('Repository_Facet_StorageFacet_ContentTypeValidation_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_StorageFacet_ContentTypeValidation_HelpText'),
-            value: true
+            value: me.strictContentTypeValidation
           }
         ]
       }

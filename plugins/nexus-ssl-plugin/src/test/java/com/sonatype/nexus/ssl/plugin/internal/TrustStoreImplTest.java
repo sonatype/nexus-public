@@ -16,8 +16,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.stream.Stream;
+import javax.net.ssl.SSLContext;
 
+import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreDataUpdatedEvent;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.ssl.KeyStoreManager;
@@ -30,12 +33,15 @@ import org.mockito.Mock;
 
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -196,5 +202,18 @@ public class TrustStoreImplTest
 
     verify(keyStoreManager).removeTrustCertificate("test");
     verify(databaseFreezeService).checkUnfrozen("Unable to remove a certificate while database is frozen.");
+  }
+
+  @Test
+  public void testGetSSLContext_invalidateOnKeyStoreDataEvent()
+      throws KeystoreException
+  {
+    SSLContext sslContext1 = underTest.getSSLContext();
+    SSLContext sslContext2 = underTest.getSSLContext();
+    underTest.onKeyStoreDataUpdated(new KeyStoreDataUpdatedEvent(mock(EntityMetadata.class), "trusted.ks"));
+    SSLContext sslContext3 = underTest.getSSLContext();
+
+    assertSame(sslContext1, sslContext2);
+    assertNotSame(sslContext1, sslContext3);
   }
 }

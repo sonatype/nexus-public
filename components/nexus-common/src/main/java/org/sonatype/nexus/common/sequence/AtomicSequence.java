@@ -10,34 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.common.sequence;
 
 /**
- * Repository "Settings" form for a Maven Hosted repository.
+ * Atomic sequence of monotonically increasing numbers.
  *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.recipe.RawHosted', {
-  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-raw-hosted',
-  requires: [
-    'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.StorageFacetHosted',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
-  ],
-
+@FunctionalInterface
+public interface AtomicSequence
+{
   /**
-   * @override
+   * Returns the next number in the sequence.
    */
-  initComponent: function () {
-    var me = this;
-
-    me.items = [
-      {xtype: 'nx-coreui-repository-storage-facet', strictContentTypeValidation: false},
-      {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'},
-      {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
-    ];
-
-    me.callParent();
-  }
-});
+  long next();
+}

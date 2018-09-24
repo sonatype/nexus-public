@@ -90,7 +90,7 @@ public class PyPiUploadHandler
       }
 
       if (isBlank(version)) {
-        throw new ValidationErrorsException("Metadata is missing the name attribute");
+        throw new ValidationErrorsException("Metadata is missing the version attribute");
       }
 
       String filename = isNotBlank(payload.getName()) ? payload.getName() :

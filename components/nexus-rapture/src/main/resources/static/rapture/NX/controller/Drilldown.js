@@ -727,7 +727,7 @@ Ext.define('NX.controller.Drilldown', {
             tabIndex: -1
           },
           {
-            xtype: 'image',
+            xtype: 'container',
             height: 16,
             width: 16,
             cls: 'nx-breadcrumb-icon ' + items[i].itemClass,

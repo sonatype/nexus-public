@@ -176,16 +176,20 @@ public class ConflictHook
 
     String clusterKey = storage.getName() + '#' + clusterId; // clusterIds are not unique across DBs
     String typeName = typeNamesByClusterKey.computeIfAbsent(clusterKey,
-        k -> storage.getPhysicalClusterNameById(clusterId));
-
-    if (typeName != null) {
-      // trim the shard index from any sharded cluster names
-      Matcher clusterShardMatcher = CLUSTER_SHARD_PATTERN.matcher(typeName);
-      if (clusterShardMatcher.matches()) {
-        typeName = clusterShardMatcher.group(1);
-      }
-    }
+        k -> findTypeName(storage.getPhysicalClusterNameById(clusterId)));
 
     return ofNullable(typeName).map(resolvingAdapters::get);
+  }
+
+  @Nullable
+  private static String findTypeName(@Nullable final String clusterName) {
+    if (clusterName != null) {
+      // trim the shard index from any sharded cluster names
+      Matcher clusterShardMatcher = CLUSTER_SHARD_PATTERN.matcher(clusterName);
+      if (clusterShardMatcher.matches()) {
+        return clusterShardMatcher.group(1);
+      }
+    }
+    return clusterName;
   }
 }

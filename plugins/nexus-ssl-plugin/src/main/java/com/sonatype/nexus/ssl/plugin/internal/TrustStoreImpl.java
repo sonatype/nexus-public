@@ -32,7 +32,9 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreDataEvent;
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
@@ -42,8 +44,11 @@ import org.sonatype.nexus.ssl.KeystoreException;
 import org.sonatype.nexus.ssl.TrustStore;
 
 import com.google.common.base.Throwables;
+import com.google.common.eventbus.Subscribe;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
+import static java.util.Arrays.stream;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
@@ -57,7 +62,7 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
 @Singleton
 public class TrustStoreImpl
     extends ComponentSupport
-    implements TrustStore
+    implements EventAware, TrustStore
 {
   public static final SecureRandom DEFAULT_RANDOM = null;
 
@@ -68,6 +73,8 @@ public class TrustStoreImpl
   private final KeyManager[] keyManagers;
 
   private final TrustManager[] trustManagers;
+
+  private X509TrustManager managedTrustManager;
 
   private final KeyStoreManager keyStoreManager;
 
@@ -82,7 +89,7 @@ public class TrustStoreImpl
     this.keyStoreManager = checkNotNull(keyStoreManager);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.keyManagers = getSystemKeyManagers();
-    this.trustManagers = getTrustManagers(keyStoreManager);
+    this.trustManagers = getTrustManagers();
   }
 
   @Override
@@ -135,7 +142,6 @@ public class TrustStoreImpl
         alias,
         getCertificateName(certificate),
         getCertificateSha1(certificate));
-
   }
 
   @Override
@@ -143,6 +149,9 @@ public class TrustStoreImpl
     SSLContext _sslcontext = this.sslcontext; // local variable allows concurrent removeTrustCertificate
     if (_sslcontext == null) {
       try {
+        // the trusted key store may have asychronously changed when NXRM is clustered, reload the managed store used
+        // for fallback so the context doesn't use stale key store
+        this.managedTrustManager = getManagedTrustManager(keyStoreManager);
         _sslcontext = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
         _sslcontext.init(keyManagers, trustManagers, DEFAULT_RANDOM);
         this.sslcontext = _sslcontext;
@@ -156,49 +165,25 @@ public class TrustStoreImpl
     return _sslcontext;
   }
 
-  private static TrustManager[] getTrustManagers(final KeyStoreManager keyStoreManager) throws Exception {
-    final X509TrustManager managedTrustManager = getManagedTrustManager(checkNotNull(keyStoreManager));
+  @Subscribe
+  public void onKeyStoreDataUpdated(final KeyStoreDataEvent event) {
+    sslcontext = null;
+  }
+
+  private TrustManager[] getTrustManagers() throws Exception {
     final TrustManager[] systemTrustManagers = getSystemTrustManagers();
 
-    if (systemTrustManagers != null && managedTrustManager != null) {
-      final TrustManager[] trustManagers = new TrustManager[systemTrustManagers.length];
-      for (int i = 0; i < systemTrustManagers.length; i++) {
-        final TrustManager tm = trustManagers[i] = systemTrustManagers[i];
-        if (tm instanceof X509TrustManager) {
-          trustManagers[i] = new X509TrustManager()
-          {
-            @Override
-            public void checkClientTrusted(final X509Certificate[] chain, final String authType)
-                throws CertificateException
-            {
-              ((X509TrustManager) tm).checkClientTrusted(chain, authType);
+    if (systemTrustManagers != null) {
+      return stream(systemTrustManagers)
+          .map(tm -> {
+            if (tm instanceof X509TrustManager) {
+              return new FallbackOnManagedX509TrustManager((X509TrustManager) tm);
             }
-
-            @Override
-            public void checkServerTrusted(final X509Certificate[] chain, final String authType)
-                throws CertificateException
-            {
-              try {
-                ((X509TrustManager) tm).checkServerTrusted(chain, authType);
-              }
-              catch (CertificateException e) {
-                try {
-                  managedTrustManager.checkServerTrusted(chain, authType);
-                }
-                catch (CertificateException ignore) {
-                  throw e;
-                }
-              }
+            else {
+              return tm;
             }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-              return ((X509TrustManager) tm).getAcceptedIssuers();
-            }
-          };
-        }
-      }
-      return trustManagers;
+          })
+          .toArray(TrustManager[]::new);
     }
     return null;
   }
@@ -329,6 +314,51 @@ public class TrustStoreImpl
     catch (CertificateEncodingException e) {
       log.error("Error occurred while calculating certificate SHA1", e);
       return "Unknown";
+    }
+  }
+
+  /**
+   * Wraps an {@link X509TrustManager} with one that falls back on the
+   * managed trust manager when checking if a certificate is trusted.
+   */
+  private class FallbackOnManagedX509TrustManager implements X509TrustManager {
+
+    private final X509TrustManager primary;
+
+    FallbackOnManagedX509TrustManager(final X509TrustManager primary) {
+      this.primary = checkNotNull(primary);
+    }
+
+    @Override
+    public void checkClientTrusted(final X509Certificate[] chain, final String authType)
+        throws CertificateException {
+      primary.checkClientTrusted(chain, authType);
+    }
+
+    @Override
+    public void checkServerTrusted(final X509Certificate[] chain, final String authType)
+        throws CertificateException {
+      try {
+        primary.checkServerTrusted(chain, authType);
+      }
+      catch (CertificateException e) {
+        if (managedTrustManager == null) {
+          throw e;
+        }
+        try {
+          // if managed trust manager rejects too then rethrow original rejection, otherwise accept certificate by
+          // swallowing original rejection
+          managedTrustManager.checkServerTrusted(chain, authType);
+        }
+        catch (CertificateException managedException) {
+          throw e;
+        }
+      }
+    }
+
+    @Override
+    public X509Certificate[] getAcceptedIssuers() {
+      return primary.getAcceptedIssuers();
     }
   }
 }

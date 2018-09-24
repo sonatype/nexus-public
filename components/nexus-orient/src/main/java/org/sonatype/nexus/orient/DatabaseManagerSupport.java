@@ -41,9 +41,9 @@ public abstract class DatabaseManagerSupport
     extends LifecycleSupport
     implements DatabaseManager
 {
-  private static final int DEFAULT_MAX_CONNECTIONS_PER_CORE = -1;
+  private static final int DEFAULT_MAX_CONNECTIONS_PER_CORE = 16;
 
-  private static final int DEFAULT_MAX_CONNECTIONS = 25;
+  private static final int DEFAULT_MAX_CONNECTIONS = -1;
 
   private static final String MAX_CONNECTIONS_PER_CORE_PROPERTY = "nexus.orient.maxConnectionsPerCore";
 

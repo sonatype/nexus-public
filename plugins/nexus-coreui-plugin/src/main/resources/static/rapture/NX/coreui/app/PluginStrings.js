@@ -1008,7 +1008,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     // Admin -> System -> Cleanup Policies
     CleanupPolicies_Text: 'Cleanup Policies',
-    CleanupPolicies_Description: 'Manage cleanup policies',
+    CleanupPolicies_Description: 'Manage component removal configuration',
     CleanupPolicies_Create_Title: 'Create Cleanup Policy',
     CleanupPolicies_Delete_Title: 'Confirm deletion?',
     CleanupPolicies_Delete_Description: 'This Cleanup Policy is not used by any repository',

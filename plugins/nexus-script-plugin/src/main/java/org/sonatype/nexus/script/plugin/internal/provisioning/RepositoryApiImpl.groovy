@@ -235,7 +235,7 @@ class RepositoryApiImpl
   @Nonnull
   Repository createRawHosted(final String name,
                              final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                             final boolean strictContentTypeValidation = true,
+                             final boolean strictContentTypeValidation = false,
                              final WritePolicy writePolicy = WritePolicy.ALLOW)
   {
     createRepository(createHosted(name, 'raw-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
